@@ -1,4 +1,4 @@
-const CACHE = 'aliby-client-v1';
+const CACHE = 'aliby-client-v2';
 const STATIC = [
   '/Aliby---goods/client/',
   '/Aliby---goods/client/index.html',
