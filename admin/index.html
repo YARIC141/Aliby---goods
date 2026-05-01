@@ -56,6 +56,7 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 @media(max-width:767px){
   #side-nav{display:none}
   #bottom-nav{display:block}
+  .bn-btn{width:33.333%;flex:none}
 }
 
 /* ── COMMON ── */
@@ -1678,6 +1679,50 @@ async function confirmAction() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+// ─── PULL TO REFRESH ───
+(function() {
+  let startY = 0, dy = 0, tracking = false;
+  const THRESH = 72;
+
+  const pill = document.createElement('div');
+  pill.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-56px);width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:900;box-shadow:0 2px 8px var(--shadow);transition:transform .15s;pointer-events:none';
+  pill.textContent = '↓';
+  document.body.appendChild(pill);
+
+  function scrollTop() {
+    const pb = document.querySelector('.screen.active .pb');
+    return !pb || pb.scrollTop === 0;
+  }
+
+  document.addEventListener('touchstart', e => {
+    if (!scrollTop()) return;
+    startY = e.touches[0].clientY; dy = 0; tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!tracking) return;
+    dy = Math.max(0, e.touches[0].clientY - startY);
+    const p = Math.min(dy / THRESH, 1);
+    pill.style.transform = `translateX(-50%) translateY(${Math.round((p - 1) * 56)}px)`;
+    pill.textContent = dy >= THRESH ? '↺' : '↓';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!tracking) return;
+    tracking = false;
+    pill.style.transform = 'translateX(-50%) translateY(-56px)';
+    pill.textContent = '↓';
+    if (dy >= THRESH) reloadCurrentScreen();
+  });
+
+  function reloadCurrentScreen() {
+    const el = document.querySelector('.screen.active');
+    if (!el) return;
+    const id = el.id.replace('screen-', '');
+    ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,profile:loadProfile})[id]?.();
+  }
+})();
 </script>
 </body>
 </html>
