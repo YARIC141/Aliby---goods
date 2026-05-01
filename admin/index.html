@@ -56,7 +56,8 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 @media(max-width:767px){
   #side-nav{display:none}
   #bottom-nav{display:block}
-  .bn-btn{width:33.333%;flex:none}
+  .bn-inner{justify-content:center}
+  .bn-btn{width:25%;flex:none}
 }
 
 /* ── COMMON ── */
@@ -461,7 +462,9 @@ tr:hover td{background:var(--bg-subtle)}
 <div id="bottom-nav">
   <div class="bn-inner">
     <button class="bn-btn" data-nav="stores"><span class="ico">🏪</span>Заведения</button>
+    <button class="bn-btn" data-nav="categories"><span class="ico">🗂</span>Категории</button>
     <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Меню</button>
+    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
     <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
     <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
     <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
