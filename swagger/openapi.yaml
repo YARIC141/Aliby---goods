@@ -1,0 +1,2456 @@
+openapi: 3.0.3
+info:
+  title: Aliby Foods API
+  version: 1.0.0
+  description: |
+    REST API для приложения Aliby Foods.
+
+    **Как начать:**
+    1. В поле **server** выше укажите ваш Project Ref (из `https://app.supabase.com/project/<ref>`)
+    2. Нажмите **Authorize** → введите `apikey` (anon key из Settings → API)
+    3. Для защищённых запросов: сначала выполните `POST /auth/v1/token`, скопируйте
+       `access_token` и введите в `bearerAuth`
+
+    **Уровни доступа:**
+    - `[публичный]` — не требует авторизации, только apikey-заголовок
+    - `[user]` — требует Bearer JWT авторизованного пользователя
+    - `[admin]` — требует Bearer JWT пользователя с ролью admin
+
+servers:
+  - url: https://{project_ref}.supabase.co
+    description: Supabase Cloud
+    variables:
+      project_ref:
+        default: your-project-ref
+        description: Project Reference ID из Supabase Dashboard
+
+tags:
+  - name: Auth
+    description: Регистрация, вход, управление сессией (Supabase Auth API)
+  - name: Profiles
+    description: Профили пользователей
+  - name: Stores
+    description: Заведения (кафе)
+  - name: Categories
+    description: Категории меню
+  - name: Menu Items
+    description: Позиции меню
+  - name: Subscriptions
+    description: Абонементы заведений (планы)
+  - name: User Subscriptions
+    description: Купленные абонементы пользователей
+  - name: Orders
+    description: Заказы (самовывоз)
+  - name: Order Items
+    description: Позиции заказа
+  - name: Subscription Redemptions
+    description: Записи о списаниях по абонементам
+  - name: Payments
+    description: Платежи
+  - name: Map
+    description: Растровая карта заведений (метаданные)
+  - name: Markers
+    description: Геометки на карте, привязанные к заведениям
+  - name: Storage
+    description: Файловое хранилище — фотографии меню и карта
+  - name: Edge Functions
+    description: Серверная логика (загрузка карты, абонементы, платежи)
+  - name: App Config
+    description: |
+      Конфигурация приложения — управление зумом слоёв карты, цветами, надписями и feature-флагами UI.
+
+      **Области действия (scope):**
+      - `client` — конфиг для клиентского приложения
+      - `admin` — конфиг для панели администратора
+
+      **Workflow обновления (read-modify-write):**
+      1. `GET /rest/v1/app_config?scope=eq.client` → скопировать текущий `config`
+      2. Изменить нужные поля (например `vectorMap.layers.roads.minzoom`)
+      3. `POST /rest/v1/rpc/set_app_config` с обновлённым объектом
+
+      **Применение изменений:** перезагрузка страницы не нужна — изменения применяются
+      при следующем открытии приложения пользователем (конфиг грузится при логине).
+
+security:
+  - apiKey: []
+
+# ==============================================================
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Anon Key из Supabase Dashboard → Settings → API
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-токен из /auth/v1/token (access_token)
+
+  parameters:
+    selectParam:
+      name: select
+      in: query
+      description: "Выбор полей: `*` или `id,name`, поддерживаются джойны `*,stores(*)`"
+      schema:
+        type: string
+      example: "*"
+    orderParam:
+      name: order
+      in: query
+      description: "Сортировка: `column.asc` или `column.desc`"
+      schema:
+        type: string
+      example: created_at.desc
+    limitParam:
+      name: limit
+      in: query
+      description: Максимальное количество строк
+      schema:
+        type: integer
+        default: 100
+    offsetParam:
+      name: offset
+      in: query
+      description: Смещение для пагинации
+      schema:
+        type: integer
+        default: 0
+    preferHeader:
+      name: Prefer
+      in: header
+      description: "`return=representation` — вернуть созданную/обновлённую запись"
+      schema:
+        type: string
+        enum: [return=representation, return=minimal]
+
+  schemas:
+    # ---- App Config -------------------------------------------
+    AppConfigRow:
+      type: object
+      properties:
+        scope:
+          type: string
+          enum: [client, admin]
+        config:
+          $ref: '#/components/schemas/AppConfig'
+        updated_at:
+          type: string
+          format: date-time
+
+    AppConfig:
+      type: object
+      description: Полный конфиг приложения
+      properties:
+        vectorMap:
+          type: object
+          properties:
+            tileSource:
+              type: object
+              description: Параметры источника тайлов
+              properties:
+                minzoom: { type: integer, minimum: 0, maximum: 22, example: 8 }
+                maxzoom: { type: integer, minimum: 0, maximum: 22, example: 16 }
+            layers:
+              type: object
+              description: |
+                Минимальный зум появления каждого слоя карты.
+                Чем выше значение — тем позже загружается слой, тем меньше трафика.
+              properties:
+                water:     { $ref: '#/components/schemas/LayerZoom' }
+                land_use:  { $ref: '#/components/schemas/LayerZoom' }
+                roads:     { $ref: '#/components/schemas/LayerZoom' }
+                buildings: { $ref: '#/components/schemas/LayerZoom' }
+                places:    { $ref: '#/components/schemas/LayerZoom' }
+                addresses: { $ref: '#/components/schemas/LayerZoom' }
+            labels:
+              type: object
+              description: Настройки подписей (зум появления + размер шрифта)
+              properties:
+                roads:     { $ref: '#/components/schemas/LabelConfig' }
+                buildings: { $ref: '#/components/schemas/LabelConfig' }
+                addresses: { $ref: '#/components/schemas/LabelConfig' }
+                places:    { $ref: '#/components/schemas/LabelConfig' }
+            colors:
+              type: object
+              description: HEX-цвета слоёв карты
+              properties:
+                background:    { type: string, example: "#f0ede8", description: "Фон карты" }
+                water:         { type: string, example: "#9ecfdf", description: "Заливка водоёмов" }
+                waterStroke:   { type: string, example: "#7ab8cc", description: "Контур водоёмов" }
+                park:          { type: string, example: "#b8d8b8", description: "Парки и леса" }
+                residential:   { type: string, example: "#f5f0e8", description: "Жилые кварталы" }
+                buildingFill:  { type: string, example: "#e8e0d4", description: "Заливка зданий" }
+                buildingLine:  { type: string, example: "#c8bfb0", description: "Контур зданий" }
+                motorway:      { type: string, example: "#e8a020", description: "Магистрали" }
+                primaryRoadBg: { type: string, example: "#c0b8a8", description: "Обводка главных дорог" }
+                primaryRoad:   { type: string, example: "#ffffff", description: "Главные дороги" }
+                tertiaryRoad:  { type: string, example: "#ffffff", description: "Второстепенные дороги" }
+                path:          { type: string, example: "#c8b898", description: "Пешеходные дорожки" }
+        ui:
+          type: object
+          properties:
+            features:
+              type: object
+              description: |
+                Feature-флаги навигационных разделов.
+                `true` = показать, `false` = скрыть кнопку и секцию.
+
+                **client:** sMap, sVectorMap, sStores, sMenu, sCart, sOrders, sSubscriptions, sMySubscriptions
+                **admin:**  sStores, sCategories, sMenu, sSubscriptions, sOrders, sMap, sVectorMap
+              additionalProperties:
+                type: boolean
+              example:
+                sVectorMap: true
+                sSubscriptions: false
+
+    LayerZoom:
+      type: object
+      properties:
+        minzoom:
+          type: integer
+          minimum: 0
+          maximum: 22
+          description: Минимальный зум отображения слоя
+
+    LabelConfig:
+      type: object
+      properties:
+        minzoom:
+          type: integer
+          minimum: 0
+          maximum: 22
+          description: Минимальный зум для появления подписей
+        fontSize:
+          type: number
+          minimum: 6
+          maximum: 24
+          description: Размер шрифта подписей в пикселях
+
+    # ---- Auth -------------------------------------------------
+    SignupBody:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 6
+          example: secret123
+
+    LoginBody:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@aliby.ru
+        password:
+          type: string
+          format: password
+          example: secret123
+
+    AuthSession:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          example: 3600
+        user:
+          $ref: '#/components/schemas/AuthUser'
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          example: authenticated
+
+    # ---- Domain models ----------------------------------------
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, admin]
+        full_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Store:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Кофейня Уголок
+        address:
+          type: string
+          example: ул. Ленина, 15
+        latitude:
+          type: number
+          format: double
+          example: 55.751244
+        longitude:
+          type: number
+          format: double
+          example: 37.618423
+        phone:
+          type: string
+          nullable: true
+          example: "+7(495)123-45-67"
+        working_hours:
+          type: string
+          nullable: true
+          example: "Пн-Пт 8:00-20:00, Сб 9:00-18:00"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    StoreCreate:
+      type: object
+      required: [name, address, latitude, longitude]
+      properties:
+        name:
+          type: string
+          example: Новая кофейня
+        address:
+          type: string
+          example: пр. Мира, 7
+        latitude:
+          type: number
+          format: double
+          example: 55.751244
+        longitude:
+          type: number
+          format: double
+          example: 37.618423
+        phone:
+          type: string
+          example: "+7(495)111-22-33"
+        working_hours:
+          type: string
+          example: "Ежедневно 9:00-22:00"
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Напитки
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "NULL = глобальная категория"
+        created_at:
+          type: string
+          format: date-time
+
+    CategoryCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Десерты
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "NULL = глобальная категория"
+
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          example: Латте
+        description:
+          type: string
+          nullable: true
+          example: Классический латте с мягкой пенкой
+        price:
+          type: number
+          format: double
+          example: 250.00
+        image_url:
+          type: string
+          nullable: true
+          example: https://xxx.supabase.co/storage/v1/object/public/menu-photos/latte.jpg
+        is_available:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+
+    MenuItemCreate:
+      type: object
+      required: [store_id, name, price]
+      properties:
+        store_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+          nullable: true
+        name:
+          type: string
+          example: Капучино
+        description:
+          type: string
+          example: Эспрессо с молочной пенкой
+        price:
+          type: number
+          example: 220.00
+        image_url:
+          type: string
+          nullable: true
+        is_available:
+          type: boolean
+          default: true
+
+    CoverageRules:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [all, include_categories, include_items, exclude_items]
+          example: all
+        category_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: "Используется при type=include_categories"
+        item_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: "Используется при type=include_items"
+        exclude_items:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    TimeRules:
+      type: object
+      properties:
+        weekdays:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+            maximum: 7
+          example: [1,2,3,4,5]
+          description: "1=Пн, 7=Вс. Пусто = все дни"
+        time_start:
+          type: string
+          example: "08:00"
+        time_end:
+          type: string
+          example: "20:00"
+        excluded_dates:
+          type: array
+          items:
+            type: string
+            format: date
+          example: ["2025-01-01", "2025-05-09"]
+
+    UsageLimits:
+      type: object
+      properties:
+        daily_limit:
+          type: integer
+          example: 2
+          description: Максимум списаний в день
+        min_interval_hours:
+          type: number
+          example: 1
+          description: Минимальный интервал между списаниями (часы)
+        min_order_amount:
+          type: number
+          example: 150
+          description: Минимальная сумма заказа для применения
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Кофейная карта на 10 чашек
+        price:
+          type: number
+          example: 1500.00
+        duration_days:
+          type: integer
+          example: 30
+        total_uses:
+          type: integer
+          example: 10
+          description: "0 = безлимит"
+        coverage_rules:
+          $ref: '#/components/schemas/CoverageRules'
+        time_rules:
+          $ref: '#/components/schemas/TimeRules'
+        usage_limits:
+          $ref: '#/components/schemas/UsageLimits'
+        created_at:
+          type: string
+          format: date-time
+
+    SubscriptionCreate:
+      type: object
+      required: [store_id, name, price, duration_days]
+      properties:
+        store_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Кофейная карта на 5 чашек
+        price:
+          type: number
+          example: 500.00
+        duration_days:
+          type: integer
+          example: 30
+        total_uses:
+          type: integer
+          default: 0
+          example: 5
+        coverage_rules:
+          $ref: '#/components/schemas/CoverageRules'
+        time_rules:
+          $ref: '#/components/schemas/TimeRules'
+        usage_limits:
+          $ref: '#/components/schemas/UsageLimits'
+
+    UserSubscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        subscription_id:
+          type: string
+          format: uuid
+        purchase_date:
+          type: string
+          format: date-time
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+          nullable: true
+        remaining_uses:
+          type: integer
+          nullable: true
+        used_today:
+          type: integer
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [pending, active, expired, cancelled]
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        order_time:
+          type: string
+          format: date-time
+        pickup_time:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [pending, paid, ready, issued, cancelled]
+        total_amount:
+          type: number
+          example: 450.00
+        payment_method:
+          type: string
+          enum: [card, subscription, mixed]
+          nullable: true
+        subscription_discount:
+          type: number
+          example: 0.00
+        applied_user_subscription_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    OrderCreate:
+      type: object
+      required: [user_id, store_id, total_amount]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        pickup_time:
+          type: string
+          format: date-time
+          nullable: true
+        total_amount:
+          type: number
+          example: 700.00
+        payment_method:
+          type: string
+          enum: [card, subscription, mixed]
+          nullable: true
+        applied_user_subscription_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+        menu_item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          example: 2
+        price_at_time:
+          type: number
+          example: 250.00
+
+    OrderItemCreate:
+      type: object
+      required: [order_id, menu_item_id, quantity, price_at_time]
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        menu_item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+        price_at_time:
+          type: number
+          example: 250.00
+
+    SubscriptionRedemption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_subscription_id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+          nullable: true
+        redeemed_at:
+          type: string
+          format: date-time
+        amount_discounted:
+          type: number
+          example: 250.00
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+          format: uuid
+          nullable: true
+        user_subscription_id:
+          type: string
+          format: uuid
+          nullable: true
+        amount:
+          type: number
+          example: 450.00
+        status:
+          type: string
+          enum: [pending, succeeded, cancelled, failed]
+        provider_transaction_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Map:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        storage_path:
+          type: string
+          example: map.png
+          description: Имя файла в бакете maps (для получения публичного URL)
+        mime_type:
+          type: string
+          example: image/png
+        width:
+          type: integer
+          example: 2048
+          description: Ширина изображения в пикселях
+        height:
+          type: integer
+          example: 1536
+          description: Высота изображения в пикселях
+        created_at:
+          type: string
+          format: date-time
+
+    Marker:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        map_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        x:
+          type: number
+          format: double
+          example: 340.5
+          description: Пикселей от левого края (ось X вправо)
+        y:
+          type: number
+          format: double
+          example: 210.0
+          description: Пикселей от нижнего края (ось Y вверх)
+        created_at:
+          type: string
+          format: date-time
+
+    MarkerCreate:
+      type: object
+      required: [map_id, store_id, x, y]
+      properties:
+        map_id:
+          type: string
+          format: uuid
+          description: ID текущей карты
+        store_id:
+          type: string
+          format: uuid
+          description: Заведение, к которому привязана метка
+        x:
+          type: number
+          format: double
+          example: 340.5
+        y:
+          type: number
+          format: double
+          example: 210.0
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: string
+
+# ==============================================================
+paths:
+
+  # ============================================================
+  # AUTH
+  # ============================================================
+
+  /auth/v1/signup:
+    post:
+      tags: [Auth]
+      summary: Регистрация нового пользователя
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupBody'
+      responses:
+        '200':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSession'
+        '422':
+          description: Email уже используется или слабый пароль
+
+  /auth/v1/token:
+    post:
+      tags: [Auth]
+      summary: Вход по email и паролю
+      operationId: login
+      parameters:
+        - name: grant_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [password, refresh_token]
+          example: password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/LoginBody'
+                - type: object
+                  required: [refresh_token]
+                  properties:
+                    refresh_token:
+                      type: string
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSession'
+        '400':
+          description: Неверные учётные данные
+
+  /auth/v1/logout:
+    post:
+      tags: [Auth]
+      summary: Выход из системы
+      operationId: logout
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Выход выполнен
+
+  /auth/v1/recover:
+    post:
+      tags: [Auth]
+      summary: Запрос письма для сброса пароля
+      operationId: recoverPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Письмо отправлено
+
+  /auth/v1/user:
+    get:
+      tags: [Auth]
+      summary: Данные текущего авторизованного пользователя
+      operationId: getAuthUser
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUser'
+    put:
+      tags: [Auth]
+      summary: Установить новый пароль (по recovery-токену из письма)
+      operationId: updatePassword
+      security:
+        - apiKey: []
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+      responses:
+        '200':
+          description: Пароль обновлён
+
+  # ============================================================
+  # PROFILES
+  # ============================================================
+
+  /rest/v1/profiles:
+    get:
+      tags: [Profiles]
+      summary: Получить профиль пользователя [user / admin]
+      operationId: getProfile
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - $ref: '#/components/parameters/selectParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Profile'
+    patch:
+      tags: [Profiles]
+      summary: Обновить имя пользователя [user]
+      operationId: updateProfile
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                  example: Иван Петров
+      responses:
+        '204':
+          description: Обновлено
+
+  # ============================================================
+  # STORES
+  # ============================================================
+
+  /rest/v1/stores:
+    get:
+      tags: [Stores]
+      summary: Список всех заведений [публичный]
+      operationId: getStores
+      parameters:
+        - name: id
+          in: query
+          description: "Фильтр по ID: `eq.<uuid>`"
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: "Поиск по названию: `ilike.*текст*`"
+          schema:
+            type: string
+          example: "ilike.*кофе*"
+        - $ref: '#/components/parameters/selectParam'
+        - $ref: '#/components/parameters/orderParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Store'
+    post:
+      tags: [Stores]
+      summary: Создать заведение [admin]
+      operationId: createStore
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/preferHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreCreate'
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Store'
+    patch:
+      tags: [Stores]
+      summary: Обновить заведение [admin]
+      operationId: updateStore
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+                phone:
+                  type: string
+                working_hours:
+                  type: string
+      responses:
+        '204':
+          description: Обновлено
+    delete:
+      tags: [Stores]
+      summary: Удалить заведение [admin]
+      operationId: deleteStore
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '204':
+          description: Удалено
+
+  # ============================================================
+  # CATEGORIES
+  # ============================================================
+
+  /rest/v1/categories:
+    get:
+      tags: [Categories]
+      summary: Список категорий [публичный]
+      operationId: getCategories
+      parameters:
+        - name: store_id
+          in: query
+          description: "Категории заведения: `eq.<uuid>` | Глобальные: `is.null`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - $ref: '#/components/parameters/selectParam'
+        - $ref: '#/components/parameters/orderParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+    post:
+      tags: [Categories]
+      summary: Создать категорию [admin]
+      operationId: createCategory
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/preferHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '201':
+          description: Создано
+    patch:
+      tags: [Categories]
+      summary: Переименовать категорию [admin]
+      operationId: updateCategory
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Горячие напитки
+      responses:
+        '204':
+          description: Обновлено
+    delete:
+      tags: [Categories]
+      summary: Удалить категорию [admin]
+      operationId: deleteCategory
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Удалено
+
+  # ============================================================
+  # MENU ITEMS
+  # ============================================================
+
+  /rest/v1/menu_items:
+    get:
+      tags: [Menu Items]
+      summary: Позиции меню заведения [публичный]
+      operationId: getMenuItems
+      parameters:
+        - name: store_id
+          in: query
+          description: "Обязательный фильтр по заведению: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - name: id
+          in: query
+          description: "Конкретное блюдо: `eq.<uuid>`"
+          schema:
+            type: string
+        - name: category_id
+          in: query
+          description: "Фильтр по категории: `eq.<uuid>`"
+          schema:
+            type: string
+        - name: is_available
+          in: query
+          description: "Только доступные: `eq.true`"
+          schema:
+            type: string
+          example: "eq.true"
+        - name: price
+          in: query
+          description: "Фильтр по цене: `gte.100` или `lte.500`"
+          schema:
+            type: string
+          example: "lte.500"
+        - name: name
+          in: query
+          description: "Поиск по названию (без учёта регистра): `ilike.*латте*`"
+          schema:
+            type: string
+          example: "ilike.*латте*"
+        - $ref: '#/components/parameters/selectParam'
+        - $ref: '#/components/parameters/orderParam'
+        - $ref: '#/components/parameters/limitParam'
+        - $ref: '#/components/parameters/offsetParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenuItem'
+    post:
+      tags: [Menu Items]
+      summary: Добавить позицию меню [admin]
+      operationId: createMenuItem
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/preferHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MenuItemCreate'
+      responses:
+        '201':
+          description: Создано
+    patch:
+      tags: [Menu Items]
+      summary: Обновить позицию меню [admin]
+      operationId: updateMenuItem
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                image_url:
+                  type: string
+                category_id:
+                  type: string
+                  format: uuid
+                is_available:
+                  type: boolean
+      responses:
+        '204':
+          description: Обновлено
+    delete:
+      tags: [Menu Items]
+      summary: Удалить позицию меню [admin]
+      operationId: deleteMenuItem
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Удалено
+
+  # ============================================================
+  # SUBSCRIPTIONS
+  # ============================================================
+
+  /rest/v1/subscriptions:
+    get:
+      tags: [Subscriptions]
+      summary: Абонементы заведения [публичный]
+      operationId: getSubscriptions
+      parameters:
+        - name: store_id
+          in: query
+          description: "Фильтр по заведению: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - name: id
+          in: query
+          description: "Конкретный абонемент: `eq.<uuid>`"
+          schema:
+            type: string
+        - $ref: '#/components/parameters/selectParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+    post:
+      tags: [Subscriptions]
+      summary: Создать абонемент [admin]
+      operationId: createSubscription
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/preferHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreate'
+            examples:
+              simple:
+                summary: Простой абонемент (5 чашек кофе)
+                value:
+                  store_id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Кофейная карта на 5 чашек"
+                  price: 500.00
+                  duration_days: 30
+                  total_uses: 5
+                  coverage_rules:
+                    type: all
+                  time_rules:
+                    weekdays: [1,2,3,4,5,6,7]
+                  usage_limits: {}
+              advanced:
+                summary: Расширенный (будни, только категория «Кофе»)
+                value:
+                  store_id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Рабочий кофе — 10 чашек"
+                  price: 900.00
+                  duration_days: 30
+                  total_uses: 10
+                  coverage_rules:
+                    type: include_categories
+                    category_ids: ["cat-uuid-here"]
+                  time_rules:
+                    weekdays: [1,2,3,4,5]
+                    time_start: "08:00"
+                    time_end: "18:00"
+                  usage_limits:
+                    daily_limit: 2
+                    min_interval_hours: 1
+      responses:
+        '201':
+          description: Создано
+    patch:
+      tags: [Subscriptions]
+      summary: Обновить абонемент [admin]
+      operationId: updateSubscription
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreate'
+      responses:
+        '204':
+          description: Обновлено
+    delete:
+      tags: [Subscriptions]
+      summary: Удалить абонемент [admin]
+      operationId: deleteSubscription
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Удалено
+
+  # ============================================================
+  # USER SUBSCRIPTIONS
+  # ============================================================
+
+  /rest/v1/user_subscriptions:
+    get:
+      tags: [User Subscriptions]
+      summary: Купленные абонементы пользователя [user] / по заведению [admin]
+      operationId: getUserSubscriptions
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          description: "Свои абонементы: `eq.<uuid>` (RLS ограничит только своими)"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - name: id
+          in: query
+          description: "Конкретный купленный абонемент: `eq.<uuid>`"
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: "Фильтр по статусу: `eq.active`"
+          schema:
+            type: string
+          example: "eq.active"
+        - name: select
+          in: query
+          description: "Для получения деталей плана: `*,subscriptions(*)`"
+          schema:
+            type: string
+          example: "*,subscriptions(*)"
+        - $ref: '#/components/parameters/orderParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSubscription'
+
+  # ============================================================
+  # ORDERS
+  # ============================================================
+
+  /rest/v1/orders:
+    get:
+      tags: [Orders]
+      summary: История заказов пользователя [user] / заказы заведения [admin]
+      operationId: getOrders
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: user_id
+          in: query
+          description: "Заказы пользователя: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - name: store_id
+          in: query
+          description: "Заказы заведения [admin]: `eq.<uuid>`"
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: "Конкретный заказ: `eq.<uuid>`"
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: "Фильтр по статусу: `eq.paid`"
+          schema:
+            type: string
+          example: "eq.paid"
+        - name: select
+          in: query
+          description: "С позициями: `*,order_items(*)` или `*,order_items(*,menu_items(*))`"
+          schema:
+            type: string
+          example: "*,order_items(*)"
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: "order_time.desc"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      tags: [Orders]
+      summary: Создать заказ [user]
+      operationId: createOrder
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/preferHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    patch:
+      tags: [Orders]
+      summary: Обновить статус заказа [admin]
+      operationId: updateOrderStatus
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [ready, issued, cancelled]
+      responses:
+        '204':
+          description: Обновлено
+
+  # ============================================================
+  # ORDER ITEMS
+  # ============================================================
+
+  /rest/v1/order_items:
+    get:
+      tags: [Order Items]
+      summary: Позиции заказа [user/admin]
+      operationId: getOrderItems
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: order_id
+          in: query
+          description: "Фильтр по заказу: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - $ref: '#/components/parameters/selectParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderItem'
+    post:
+      tags: [Order Items]
+      summary: Добавить позиции к заказу [user]
+      operationId: createOrderItems
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/preferHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/OrderItemCreate'
+                - type: array
+                  items:
+                    $ref: '#/components/schemas/OrderItemCreate'
+            example:
+              - order_id: "550e8400-e29b-41d4-a716-446655440001"
+                menu_item_id: "550e8400-e29b-41d4-a716-446655440002"
+                quantity: 2
+                price_at_time: 250.00
+      responses:
+        '201':
+          description: Создано
+
+  # ============================================================
+  # SUBSCRIPTION REDEMPTIONS
+  # ============================================================
+
+  /rest/v1/subscription_redemptions:
+    get:
+      tags: [Subscription Redemptions]
+      summary: История списаний по абонементу [user/admin]
+      operationId: getRedemptions
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: user_subscription_id
+          in: query
+          description: "Фильтр по купленному абонементу: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - $ref: '#/components/parameters/orderParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubscriptionRedemption'
+
+  # ============================================================
+  # PAYMENTS
+  # ============================================================
+
+  /rest/v1/payments:
+    get:
+      tags: [Payments]
+      summary: Платёж по заказу [user/admin]
+      operationId: getPayments
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: order_id
+          in: query
+          description: "Фильтр по заказу: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - name: user_subscription_id
+          in: query
+          description: "Фильтр по абонементу: `eq.<uuid>`"
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+
+  # ============================================================
+  # MAP
+  # ============================================================
+
+  /rest/v1/maps:
+    get:
+      tags: [Map]
+      summary: Метаданные текущей карты [публичный]
+      operationId: getMap
+      description: |
+        Возвращает запись о текущей карте (всегда одна).
+        Для получения изображения используйте:
+        `GET /storage/v1/object/public/maps/{storage_path}`
+      parameters:
+        - $ref: '#/components/parameters/selectParam'
+        - name: order
+          in: query
+          schema:
+            type: string
+          example: created_at.desc
+        - name: limit
+          in: query
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Map'
+              example:
+                - id: "550e8400-e29b-41d4-a716-446655440000"
+                  storage_path: map.png
+                  mime_type: image/png
+                  width: 2048
+                  height: 1536
+                  created_at: "2026-04-26T10:00:00Z"
+
+  # ============================================================
+  # MARKERS
+  # ============================================================
+
+  /rest/v1/markers:
+    get:
+      tags: [Markers]
+      summary: Геометки на карте [публичный]
+      operationId: getMarkers
+      description: |
+        Возвращает все метки текущей карты с привязанными заведениями.
+        Для отображения на карте: `select=*,stores(name,address,phone,working_hours)`
+
+        **Система координат:** (0, 0) — левый нижний угол изображения.
+        CSS-позиция метки: `left = x`, `top = imageHeight − y`.
+      parameters:
+        - name: map_id
+          in: query
+          description: "Фильтр по карте: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+        - name: store_id
+          in: query
+          description: "Фильтр по заведению: `eq.<uuid>`"
+          schema:
+            type: string
+        - $ref: '#/components/parameters/selectParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Marker'
+              examples:
+                withStores:
+                  summary: С данными заведений (select=*,stores(name,address))
+                  value:
+                    - id: "marker-uuid-1"
+                      map_id: "map-uuid"
+                      store_id: "store-uuid-1"
+                      x: 340.5
+                      y: 210.0
+                      created_at: "2026-04-26T10:01:00Z"
+                      stores:
+                        name: Кофейня Уголок
+                        address: ул. Ленина, 15
+    post:
+      tags: [Markers]
+      summary: Добавить геометку на карту [admin]
+      operationId: createMarker
+      description: |
+        Координаты (x, y) вычисляются кликом на карте в интерфейсе администратора.
+        К одному заведению можно привязать несколько меток.
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/preferHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkerCreate'
+            example:
+              map_id: "550e8400-e29b-41d4-a716-446655440000"
+              store_id: "550e8400-e29b-41d4-a716-446655440001"
+              x: 340.5
+              y: 210.0
+      responses:
+        '201':
+          description: Метка создана
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Marker'
+        '403':
+          description: Требуется роль admin
+    delete:
+      tags: [Markers]
+      summary: Удалить геометку [admin]
+      operationId: deleteMarker
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: "Фильтр: `eq.<uuid>`"
+          schema:
+            type: string
+          example: "eq.550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '204':
+          description: Метка удалена (заведение остаётся)
+        '403':
+          description: Требуется роль admin
+
+  # ============================================================
+  # STORAGE
+  # ============================================================
+
+  /storage/v1/object/public/maps/{filename}:
+    get:
+      tags: [Storage]
+      summary: Получить изображение карты [публичный]
+      operationId: getMapImage
+      description: |
+        Возвращает растровое изображение карты из публичного бакета `maps`.
+        `filename` берётся из поля `storage_path` таблицы `maps` (обычно `map.png` или `map.jpg`).
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          example: map.png
+      responses:
+        '200':
+          description: Файл изображения
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Карта не загружена
+
+  /storage/v1/object/public/menu-photos/{filename}:
+    get:
+      tags: [Storage]
+      summary: Получить фотографию блюда [публичный]
+      operationId: getMenuPhoto
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          example: latte.jpg
+      responses:
+        '200':
+          description: Файл изображения
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+
+  /storage/v1/object/menu-photos/{filename}:
+    post:
+      tags: [Storage]
+      summary: Загрузить фотографию блюда [admin]
+      operationId: uploadMenuPhoto
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+          example: new-dish.jpg
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Файл загружен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Key:
+                    type: string
+                    example: menu-photos/new-dish.jpg
+    delete:
+      tags: [Storage]
+      summary: Удалить фотографию блюда [admin]
+      operationId: deleteMenuPhoto
+      security:
+        - apiKey: []
+          bearerAuth: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Удалено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully deleted
+
+  # ============================================================
+  # EDGE FUNCTIONS
+  # ============================================================
+
+  /functions/v1/upload-map:
+    post:
+      tags: [Edge Functions]
+      summary: Загрузить растровую карту [admin]
+      operationId: uploadMap
+      description: |
+        Загружает новое изображение карты (PNG/JPEG, макс. 20 МБ, макс. 5000×5000 px).
+
+        **Важно:** при загрузке новой карты **удаляются** предыдущая карта и все геометки.
+
+        Тело запроса — `multipart/form-data`:
+        - `image` — файл изображения
+        - `width` — ширина в пикселях (клиент определяет через `Image.naturalWidth`)
+        - `height` — высота в пикселях
+
+        Возвращает метаданные новой карты и публичный URL изображения.
+      security:
+        - apiKey: []
+          bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image, width, height]
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: PNG или JPEG файл карты
+                width:
+                  type: integer
+                  example: 2048
+                  description: Ширина изображения в пикселях
+                height:
+                  type: integer
+                  example: 1536
+                  description: Высота изображения в пикселях
+      responses:
+        '200':
+          description: Карта загружена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  width:
+                    type: integer
+                    example: 2048
+                  height:
+                    type: integer
+                    example: 1536
+                  url:
+                    type: string
+                    example: "https://bucxawpwttvtwdwdtuhh.supabase.co/storage/v1/object/public/maps/map.png"
+        '400':
+          description: Неверный тип файла, размер или размеры изображения
+        '401':
+          description: Не авторизован
+        '403':
+          description: Требуется роль admin
+
+  /functions/v1/validate-subscription:
+    post:
+      tags: [Edge Functions]
+      summary: Проверить применимость абонемента к заказу [user]
+      operationId: validateSubscription
+      description: |
+        Проверяет все условия абонемента: покрытие блюд, временные ограничения,
+        дневные лимиты, интервалы. Не изменяет данные.
+      security:
+        - apiKey: []
+          bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_subscription_id, order_items]
+              properties:
+                user_subscription_id:
+                  type: string
+                  format: uuid
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                order_items:
+                  type: array
+                  items:
+                    type: object
+                    required: [menu_item_id, quantity]
+                    properties:
+                      menu_item_id:
+                        type: string
+                        format: uuid
+                      quantity:
+                        type: integer
+                        minimum: 1
+                  example:
+                    - menu_item_id: "550e8400-e29b-41d4-a716-446655440001"
+                      quantity: 2
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      valid:
+                        type: boolean
+                        example: true
+                      discount_amount:
+                        type: number
+                        example: 500.00
+                  - type: object
+                    properties:
+                      valid:
+                        type: boolean
+                        example: false
+                      reason:
+                        type: string
+                        example: "Дневной лимит использований исчерпан"
+              examples:
+                valid:
+                  summary: Абонемент применим
+                  value:
+                    valid: true
+                    discount_amount: 500.00
+                invalidTime:
+                  summary: Временное ограничение
+                  value:
+                    valid: false
+                    reason: "Действует только с 08:00 до 20:00"
+                noUses:
+                  summary: Исчерпан лимит
+                  value:
+                    valid: false
+                    reason: "Остаток использований исчерпан"
+
+  /functions/v1/redeem-subscription:
+    post:
+      tags: [Edge Functions]
+      summary: Списать использование абонемента [user]
+      operationId: redeemSubscription
+      description: |
+        Атомарно списывает одно использование абонемента и создаёт запись о списании.
+        Обновляет статус заказа на `paid`. Вызывать только после успешной
+        проверки через `validate-subscription`.
+      security:
+        - apiKey: []
+          bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_subscription_id, order_id, amount_discounted]
+              properties:
+                user_subscription_id:
+                  type: string
+                  format: uuid
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                order_id:
+                  type: string
+                  format: uuid
+                  example: "550e8400-e29b-41d4-a716-446655440001"
+                amount_discounted:
+                  type: number
+                  minimum: 0
+                  example: 500.00
+      responses:
+        '200':
+          description: Списание выполнено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redemption_id:
+                    type: string
+                    format: uuid
+                  remaining_uses:
+                    type: integer
+                    nullable: true
+                    example: 4
+        '409':
+          description: Конфликт (абонемент уже применён, не активен, исчерпан)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  # ══════════════════════════════════════════════════════════
+  # APP CONFIG
+  # ══════════════════════════════════════════════════════════
+
+  /rest/v1/app_config:
+    get:
+      tags: [App Config]
+      summary: Получить конфиг приложения [публичный]
+      operationId: getAppConfig
+      description: |
+        Читает конфиг для одной или обеих областей. Не требует авторизации пользователя.
+
+        **Примеры:**
+        - Клиентский конфиг: `?scope=eq.client&select=config`
+        - Оба конфига:       `?select=scope,config`
+      parameters:
+        - name: scope
+          in: query
+          schema: { type: string, example: "eq.client" }
+          description: Фильтр по scope (eq.client или eq.admin)
+        - name: select
+          in: query
+          schema: { type: string, example: "scope,config,updated_at" }
+      responses:
+        '200':
+          description: Список конфигов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppConfigRow'
+              examples:
+                client:
+                  summary: Клиентский конфиг
+                  value:
+                    - scope: client
+                      config:
+                        vectorMap:
+                          tileSource: { minzoom: 8, maxzoom: 16 }
+                          layers:
+                            water:     { minzoom: 0 }
+                            land_use:  { minzoom: 8 }
+                            roads:     { minzoom: 8 }
+                            buildings: { minzoom: 13 }
+                            places:    { minzoom: 14 }
+                            addresses: { minzoom: 17 }
+                          labels:
+                            roads:     { minzoom: 14, fontSize: 11 }
+                            buildings: { minzoom: 16, fontSize: 10 }
+                            addresses: { minzoom: 17, fontSize: 10 }
+                            places:    { minzoom: 15, fontSize: 10 }
+                          colors:
+                            background:    "#f0ede8"
+                            water:         "#9ecfdf"
+                            waterStroke:   "#7ab8cc"
+                            park:          "#b8d8b8"
+                            residential:   "#f5f0e8"
+                            buildingFill:  "#e8e0d4"
+                            buildingLine:  "#c8bfb0"
+                            motorway:      "#e8a020"
+                            primaryRoadBg: "#c0b8a8"
+                            primaryRoad:   "#ffffff"
+                            tertiaryRoad:  "#ffffff"
+                            path:          "#c8b898"
+                        ui:
+                          features:
+                            sMap:             true
+                            sVectorMap:       true
+                            sStores:          true
+                            sMenu:            true
+                            sCart:            true
+                            sOrders:          true
+                            sSubscriptions:   true
+                            sMySubscriptions: true
+                      updated_at: "2026-04-29T12:00:00Z"
+
+  /rest/v1/rpc/set_app_config:
+    post:
+      tags: [App Config]
+      summary: Обновить конфиг приложения (полная замена) [admin]
+      operationId: setAppConfig
+      description: |
+        Полностью заменяет конфиг для указанного scope. Требует роль admin.
+
+        **Рекомендуемый workflow:**
+        1. Сначала получите текущий конфиг через `GET /rest/v1/app_config?scope=eq.client`
+        2. Измените нужные поля в полученном JSON
+        3. Отправьте изменённый конфиг в этот endpoint
+
+        **Ключи `vectorMap.layers.<layer>.minzoom`** — минимальный зум для отображения слоя:
+        - Увеличьте `roads.minzoom` с 8 до 10 → дороги появятся позже, меньше трафика
+        - Увеличьте `buildings.minzoom` с 13 до 15 → здания на меньшем зуме не грузятся
+
+        **Ключи `vectorMap.labels.<layer>.minzoom`** — зум для появления подписей:
+        - `roads.minzoom: 16` → названия улиц только при очень близком зуме
+
+        **Ключи `vectorMap.labels.<layer>.fontSize`** — размер текста подписей (px).
+
+        **Ключи `vectorMap.colors.*`** — HEX-цвета слоёв карты.
+
+        **Ключи `ui.features.*`** — feature-флаги: `true` = показать, `false` = скрыть раздел.
+        - Для client: sMap, sVectorMap, sStores, sMenu, sCart, sOrders, sSubscriptions, sMySubscriptions
+        - Для admin:  sStores, sCategories, sMenu, sSubscriptions, sOrders, sMap, sVectorMap
+      security:
+        - apiKey: []
+          bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_scope, p_config]
+              properties:
+                p_scope:
+                  type: string
+                  enum: [client, admin]
+                  example: client
+                p_config:
+                  $ref: '#/components/schemas/AppConfig'
+            examples:
+              updateRoadsZoom:
+                summary: Поднять минзум дорог до 10 (меньше трафика)
+                value:
+                  p_scope: client
+                  p_config:
+                    vectorMap:
+                      tileSource: { minzoom: 8, maxzoom: 16 }
+                      layers:
+                        water:     { minzoom: 0 }
+                        land_use:  { minzoom: 9 }
+                        roads:     { minzoom: 10 }
+                        buildings: { minzoom: 14 }
+                        places:    { minzoom: 15 }
+                        addresses: { minzoom: 17 }
+                      labels:
+                        roads:     { minzoom: 15, fontSize: 11 }
+                        buildings: { minzoom: 16, fontSize: 10 }
+                        addresses: { minzoom: 17, fontSize: 10 }
+                        places:    { minzoom: 15, fontSize: 10 }
+                      colors:
+                        background:    "#f0ede8"
+                        water:         "#9ecfdf"
+                        waterStroke:   "#7ab8cc"
+                        park:          "#b8d8b8"
+                        residential:   "#f5f0e8"
+                        buildingFill:  "#e8e0d4"
+                        buildingLine:  "#c8bfb0"
+                        motorway:      "#e8a020"
+                        primaryRoadBg: "#c0b8a8"
+                        primaryRoad:   "#ffffff"
+                        tertiaryRoad:  "#ffffff"
+                        path:          "#c8b898"
+                    ui:
+                      features:
+                        sMap:             true
+                        sVectorMap:       true
+                        sStores:          true
+                        sMenu:            true
+                        sCart:            true
+                        sOrders:          true
+                        sSubscriptions:   true
+                        sMySubscriptions: false
+              hideSubscriptions:
+                summary: Скрыть раздел абонементов у клиентов
+                value:
+                  p_scope: client
+                  p_config:
+                    vectorMap:
+                      tileSource: { minzoom: 8, maxzoom: 16 }
+                      layers:
+                        water:     { minzoom: 0 }
+                        land_use:  { minzoom: 8 }
+                        roads:     { minzoom: 8 }
+                        buildings: { minzoom: 13 }
+                        places:    { minzoom: 14 }
+                        addresses: { minzoom: 17 }
+                      labels:
+                        roads:     { minzoom: 14, fontSize: 11 }
+                        buildings: { minzoom: 16, fontSize: 10 }
+                        addresses: { minzoom: 17, fontSize: 10 }
+                        places:    { minzoom: 15, fontSize: 10 }
+                      colors:
+                        background: "#f0ede8"
+                        water: "#9ecfdf"
+                        waterStroke: "#7ab8cc"
+                        park: "#b8d8b8"
+                        residential: "#f5f0e8"
+                        buildingFill: "#e8e0d4"
+                        buildingLine: "#c8bfb0"
+                        motorway: "#e8a020"
+                        primaryRoadBg: "#c0b8a8"
+                        primaryRoad: "#ffffff"
+                        tertiaryRoad: "#ffffff"
+                        path: "#c8b898"
+                    ui:
+                      features:
+                        sMap:             true
+                        sVectorMap:       true
+                        sStores:          true
+                        sMenu:            true
+                        sCart:            true
+                        sOrders:          true
+                        sSubscriptions:   false
+                        sMySubscriptions: false
+      responses:
+        '200':
+          description: Конфиг сохранён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppConfig'
+        '403':
+          description: Нет прав (не admin)

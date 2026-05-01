@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aliby Foods — Admin</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#000;background:#fff;height:100dvh;overflow:hidden}
+
+/* ── LAYOUT ── */
+#app{display:flex;height:100dvh;overflow:hidden}
+#side-nav{width:200px;flex-shrink:0;border-right:1px solid #ccc;display:flex;flex-direction:column;overflow:hidden}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+/* Side nav */
+.sn-header{padding:12px;border-bottom:1px solid #eee}
+.sn-logo{font-weight:700;font-size:15px;margin-bottom:2px}
+.sn-role{font-size:11px;color:#888}
+.sn-items{flex:1;overflow-y:auto;padding:8px}
+.sn-btn{padding:8px 10px;border:none;background:none;cursor:pointer;text-align:left;font-size:14px;width:100%;border-radius:2px;display:flex;align-items:center;gap:8px}
+.sn-btn:hover{background:#f5f5f5}
+.sn-btn.active{background:#000;color:#fff}
+.sn-footer{padding:10px 12px;border-top:1px solid #eee;display:flex;flex-direction:column;gap:6px}
+.sn-user{font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Mobile hamburger */
+#hamburger{display:none;position:fixed;top:10px;left:10px;z-index:300;background:#fff;border:1px solid #ccc;padding:6px 8px;cursor:pointer;font-size:18px}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:250}
+.mob-overlay.open{display:block}
+@media(max-width:767px){
+  #side-nav{position:fixed;left:-210px;top:0;bottom:0;z-index:260;transition:left .2s;background:#fff}
+  #side-nav.open{left:0}
+  #hamburger{display:block}
+  #main{padding-top:0}
+  .ph{padding-left:50px}
+}
+
+/* ── COMMON ── */
+.ph{padding:11px 16px;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ph h2{font-size:15px;font-weight:600;flex:1}
+.pb{flex:1;overflow-y:auto;padding:16px}
+.sec{margin-bottom:20px}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #eee}
+
+input,select,textarea{width:100%;border:1px solid #ccc;padding:7px 9px;font-size:14px;font-family:inherit;outline:none;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:#000}
+input[type=checkbox],input[type=radio]{width:auto}
+textarea{resize:vertical;min-height:60px}
+.fg{margin-bottom:11px}
+.fg label{display:block;font-size:12px;color:#555;margin-bottom:3px}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row .fg{flex:1;margin-bottom:0}
+
+.btn{padding:7px 14px;border:1px solid #ccc;background:none;cursor:pointer;font-size:14px;font-family:inherit;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{background:#f5f5f5}
+.btn-p{background:#000;color:#fff;border-color:#000}
+.btn-p:hover{background:#222}
+.btn-d{border-color:#c00;color:#c00}
+.btn-d:hover{background:#fff5f5}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-full{width:100%;justify-content:center}
+
+.badge{display:inline-block;padding:2px 7px;font-size:11px;border:1px solid currentColor;border-radius:2px}
+.b-pending{color:#999}.b-paid{color:#070}.b-ready{color:#00b}.b-issued{color:#555}.b-cancelled{color:#c00}
+.empty{text-align:center;padding:36px 20px;color:#aaa;font-size:13px}
+.loading{text-align:center;padding:24px;color:#aaa;font-size:13px}
+.alert{padding:9px 12px;border:1px solid #ccc;margin-bottom:10px;font-size:13px}
+.alert-e{border-color:#c00;color:#c00;background:#fff8f8}
+.alert-ok{border-color:#070;color:#070;background:#f5fff5}
+.lbl{font-size:11px;color:#888}
+hr{border:none;border-top:1px solid #eee;margin:12px 0}
+.txt-sm{font-size:12px;color:#666}
+.txt-muted{font-size:11px;color:#aaa}
+.card{border:1px solid #ccc;padding:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.toolbar input[type=search],.toolbar select{flex:1;min-width:120px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:500px}
+th,td{padding:8px 10px;border-bottom:1px solid #eee;text-align:left;font-size:13px;vertical-align:middle}
+th{font-weight:600;border-bottom:2px solid #ccc;white-space:nowrap}
+tr:hover td{background:#f9f9f9}
+.td-actions{display:flex;gap:4px;white-space:nowrap}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding:50px 12px 20px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:#fff;padding:20px;width:100%;max-width:560px;flex-shrink:0}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #eee}
+.modal-hd h3{font-size:16px;font-weight:600}
+.modal-x{background:none;border:none;cursor:pointer;font-size:20px;line-height:1;color:#888}
+.modal-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #eee}
+
+/* ── MAP ── */
+.map-admin{flex:1;position:relative;overflow:hidden;cursor:crosshair}
+.admin-map-gl{position:absolute;inset:0;width:100%;height:100%}
+.admin-store-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateX(-50%)}
+.admin-store-pin .p-dot{width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+.admin-store-pin .p-lbl{background:rgba(0,0,0,.72);color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;white-space:nowrap;margin-top:2px}
+
+/* ── AUTH ── */
+#screen-auth{align-items:center;justify-content:center;background:#fff}
+.auth-box{width:100%;max-width:360px;padding:24px 20px}
+.auth-box h1{font-size:22px;font-weight:700;margin-bottom:22px}
+
+/* ── TABS ── */
+.tab-nav{display:flex;border-bottom:1px solid #ccc;margin-bottom:14px}
+.tab-btn{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px;color:#555}
+.tab-btn.active{border-bottom-color:#000;color:#000;font-weight:600}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── SUBSCRIPTIONS form ── */
+.rules-section{border:1px solid #eee;padding:12px;margin-top:8px}
+.rules-title{font-size:12px;font-weight:600;color:#666;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.weekdays{display:flex;gap:6px;flex-wrap:wrap}
+.weekdays label{display:flex;align-items:center;gap:3px;font-size:13px;cursor:pointer}
+.weekdays label input{width:auto}
+
+/* ── IMAGE UPLOAD ── */
+.img-preview{width:100%;height:100px;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;margin-bottom:8px;overflow:hidden;background:#f9f9f9;font-size:12px;color:#bbb}
+.img-preview img{max-width:100%;max-height:100%;object-fit:contain}
+</style>
+</head>
+<body>
+
+<button id="hamburger" onclick="toggleNav()">☰</button>
+<div class="mob-overlay" id="mob-overlay" onclick="closeNav()"></div>
+
+<div id="app">
+
+<!-- ════════════════ SIDE NAV ════════════════ -->
+<nav id="side-nav">
+  <div class="sn-header">
+    <div class="sn-logo">Aliby Foods</div>
+    <div class="sn-role">Панель администратора</div>
+  </div>
+  <div class="sn-items">
+    <button class="sn-btn" data-nav="stores">🏪 Заведения</button>
+    <button class="sn-btn" data-nav="categories">🗂 Категории</button>
+    <button class="sn-btn" data-nav="menu">📋 Меню</button>
+    <button class="sn-btn" data-nav="subscriptions">🎫 Абонементы</button>
+    <button class="sn-btn" data-nav="orders">📦 Заказы</button>
+    <button class="sn-btn" data-nav="map">🗺 Карта и метки</button>
+    <button class="sn-btn" data-nav="profile">👤 Профиль</button>
+  </div>
+  <div class="sn-footer">
+    <div class="sn-user" id="sn-email"></div>
+  </div>
+</nav>
+
+<div id="main">
+
+<!-- ════════════════ AUTH ════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-box">
+    <h1>Aliby Foods Admin</h1>
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab-auth="login">Вход</button>
+      <button class="tab-btn" data-tab-auth="reg">Регистрация</button>
+    </div>
+
+    <div id="auth-login" class="tab-pane active">
+      <div id="err-login" class="alert alert-e" style="display:none"></div>
+      <div class="fg"><label>Email</label><input type="email" id="li-email" autocomplete="username"></div>
+      <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
+      <button class="btn btn-p btn-full" onclick="doLogin()">Войти</button>
+      <hr>
+      <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
+    </div>
+
+    <div id="auth-reg" class="tab-pane">
+      <div id="err-reg" class="alert alert-e" style="display:none"></div>
+      <div id="ok-reg" class="alert alert-ok" style="display:none"></div>
+      <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
+      <div class="fg"><label>Имя (необязательно)</label><input type="text" id="reg-name"></div>
+      <div class="fg"><label>Пароль (мин. 6 символов)</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
+      <button class="btn btn-p btn-full" onclick="doRegister()">Зарегистрироваться</button>
+    </div>
+
+    <div id="auth-recover" class="tab-pane">
+      <div id="ok-recover" class="alert alert-ok" style="display:none">Письмо отправлено. Проверьте почту.</div>
+      <p class="txt-sm" style="margin-bottom:10px">Введите email — пришлём ссылку для сброса пароля.</p>
+      <div class="fg"><label>Email</label><input type="email" id="rec-email"></div>
+      <button class="btn btn-p btn-full" onclick="doRecover()">Отправить ссылку</button>
+      <hr>
+      <button class="btn btn-full" onclick="showAuthTab('login')">← Назад</button>
+    </div>
+
+    <div id="auth-reset" class="tab-pane">
+      <p class="txt-sm" style="margin-bottom:10px">Введите новый пароль.</p>
+      <div class="fg"><label>Новый пароль</label><input type="password" id="rst-pwd" autocomplete="new-password"></div>
+      <button class="btn btn-p btn-full" onclick="doResetPwd()">Сохранить пароль</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ STORES ════════════════ -->
+<div id="screen-stores" class="screen">
+  <div class="ph">
+    <h2>Заведения</h2>
+    <button class="btn btn-p btn-sm" onclick="openStoreModal()">+ Добавить</button>
+  </div>
+  <div class="pb">
+    <div class="toolbar">
+      <input type="search" placeholder="Поиск по названию…" oninput="filterTable('stores-table', this.value)">
+    </div>
+    <div class="tbl-wrap">
+      <table id="stores-table">
+        <thead><tr>
+          <th>Название</th><th>Тип</th><th>Адрес</th><th>Телефон</th><th>Часы работы</th><th>Действия</th>
+        </tr></thead>
+        <tbody id="stores-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/stores</div>
+  </div>
+</div>
+
+<!-- ════════════════ CATEGORIES ════════════════ -->
+<div id="screen-categories" class="screen">
+  <div class="ph">
+    <h2>Категории меню</h2>
+    <button class="btn btn-p btn-sm" onclick="openCatModal()">+ Добавить</button>
+  </div>
+  <div class="pb">
+    <div class="toolbar">
+      <select id="cat-store-filter" onchange="loadCategories()">
+        <option value="">Все заведения</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Название</th><th>Заведение</th><th>Действия</th></tr></thead>
+        <tbody id="cats-tbody"><tr><td colspan="3" class="loading">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/categories</div>
+  </div>
+</div>
+
+<!-- ════════════════ MENU ITEMS ════════════════ -->
+<div id="screen-menu" class="screen">
+  <div class="ph">
+    <h2>Позиции меню</h2>
+    <button class="btn btn-p btn-sm" onclick="openMenuItemModal()">+ Добавить</button>
+  </div>
+  <div class="pb">
+    <div class="toolbar">
+      <select id="mi-store-filter" onchange="loadMenuItems()">
+        <option value="">Все заведения</option>
+      </select>
+      <select id="mi-cat-filter" onchange="loadMenuItems()">
+        <option value="">Все категории</option>
+      </select>
+      <input type="search" placeholder="Поиск…" id="mi-search" oninput="loadMenuItems()">
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Фото</th><th>Название</th><th>Категория</th><th>Цена</th><th>В наличии</th><th>Действия</th>
+        </tr></thead>
+        <tbody id="mi-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/menu_items</div>
+  </div>
+</div>
+
+<!-- ════════════════ SUBSCRIPTIONS ════════════════ -->
+<div id="screen-subscriptions" class="screen">
+  <div class="ph">
+    <h2>Абонементы</h2>
+    <button class="btn btn-p btn-sm" onclick="openSubModal()">+ Добавить</button>
+  </div>
+  <div class="pb">
+    <div class="toolbar">
+      <select id="sub-store-filter" onchange="loadSubscriptions()">
+        <option value="">Все заведения</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Название</th><th>Заведение</th><th>Цена</th><th>Срок (дней)</th><th>Исп.</th><th>Действия</th>
+        </tr></thead>
+        <tbody id="sub-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/subscriptions</div>
+  </div>
+</div>
+
+<!-- ════════════════ ORDERS ════════════════ -->
+<div id="screen-orders" class="screen">
+  <div class="ph"><h2>Заказы</h2></div>
+  <div class="pb">
+    <div class="toolbar">
+      <select id="ord-store-filter" onchange="loadOrders()">
+        <option value="">Все заведения</option>
+      </select>
+      <select id="ord-status-filter" onchange="loadOrders()">
+        <option value="">Все статусы</option>
+        <option value="pending">Ожидает</option>
+        <option value="paid">Оплачен</option>
+        <option value="ready">Готов</option>
+        <option value="issued">Выдан</option>
+        <option value="cancelled">Отменён</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>№</th><th>Дата</th><th>Заведение</th><th>Сумма</th><th>Статус</th><th>Действия</th>
+        </tr></thead>
+        <tbody id="ord-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/orders · PATCH /rest/v1/orders?id=eq.{id}</div>
+  </div>
+</div>
+
+<!-- ════════════════ MAP & MARKERS ════════════════ -->
+<div id="screen-map" class="screen">
+  <div class="ph">
+    <h2>Карта и метки</h2>
+    <button class="btn btn-sm" onclick="loadMapAdmin()">↺ Обновить</button>
+  </div>
+
+  <div style="display:flex;flex:1;overflow:hidden;flex-direction:column">
+
+    <!-- Marker add form -->
+    <div style="padding:10px 16px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;flex-shrink:0">
+      <div class="fg" style="min-width:180px;margin:0">
+        <label>Заведение</label>
+        <select id="marker-store-sel"></select>
+      </div>
+      <div class="fg" style="width:120px;margin:0">
+        <label>Долгота (Lng)</label>
+        <input type="number" id="marker-lng" placeholder="76.930000" step="0.000001">
+      </div>
+      <div class="fg" style="width:120px;margin:0">
+        <label>Широта (Lat)</label>
+        <input type="number" id="marker-lat" placeholder="43.260000" step="0.000001">
+      </div>
+      <div class="fg" style="width:70px;margin:0">
+        <label>Цвет</label>
+        <input type="color" id="marker-color" value="#e8430a" style="padding:2px 4px;height:33px">
+      </div>
+      <button class="btn btn-p btn-sm" onclick="addMarker()">✓ Сохранить</button>
+      <span class="txt-muted">Кликните на карту для установки координат</span>
+    </div>
+
+    <div style="display:flex;flex:1;overflow:hidden">
+      <!-- Map -->
+      <div class="map-admin" id="map-admin-area">
+        <div id="map-admin-gl" class="admin-map-gl"></div>
+      </div>
+
+      <!-- Markers list -->
+      <div style="width:240px;flex-shrink:0;border-left:1px solid #ccc;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:10px 12px;border-bottom:1px solid #eee;font-weight:600;font-size:13px">
+          Метки <span class="txt-muted" id="marker-count"></span>
+        </div>
+        <div style="flex:1;overflow-y:auto" id="markers-list">
+          <div class="loading">Загрузка…</div>
+        </div>
+        <div class="txt-muted" style="padding:6px 10px;font-size:10px">
+          RPC: get_stores_with_locations<br>
+          RPC: upsert_store_location<br>
+          RPC: update_store_marker_color
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════ PROFILE ════════════════ -->
+<div id="screen-profile" class="screen">
+  <div class="ph"><h2>Профиль</h2></div>
+  <div class="pb">
+
+    <div class="sec">
+      <div class="sec-title">Аккаунт</div>
+      <div class="card">
+        <div class="lbl">Email</div><div id="p-email" style="margin-bottom:8px"></div>
+        <div class="lbl">Роль</div><div id="p-role"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Сменить пароль</div>
+      <div class="row">
+        <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
+        <button class="btn" onclick="updatePwd()">Обновить</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <button class="btn btn-d btn-full" onclick="doLogout()">Выйти из аккаунта</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Удаление аккаунта</div>
+      <p class="txt-sm" style="margin-bottom:10px">Аккаунт и все связанные данные будут удалены безвозвратно.</p>
+      <button class="btn btn-d btn-full" onclick="doDeleteAccount()">Удалить аккаунт</button>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- #main -->
+</div><!-- #app -->
+
+<!-- ════════════════ MODALS ════════════════ -->
+
+<!-- Store modal -->
+<div class="overlay" id="m-store">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="ms-title">Заведение</h3>
+      <button class="modal-x" onclick="closeModal('m-store')">✕</button>
+    </div>
+    <input type="hidden" id="ms-id">
+    <div class="grid2">
+      <div class="fg" style="grid-column:1/-1"><label>Название *</label><input type="text" id="ms-name"></div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Адрес *</label>
+        <div class="row">
+          <div class="fg"><input type="text" id="ms-address" placeholder="ул. Ленина, 15"></div>
+          <button class="btn btn-sm" onclick="geocodeAddress()" title="GET координаты из адреса">Геокод</button>
+        </div>
+        <div class="txt-muted">POST /functions/v1/geocode</div>
+      </div>
+      <div class="fg"><label>Широта *</label><input type="number" step="any" id="ms-lat" placeholder="55.751"></div>
+      <div class="fg"><label>Долгота *</label><input type="number" step="any" id="ms-lng" placeholder="37.618"></div>
+      <div class="fg"><label>Телефон</label><input type="tel" id="ms-phone" placeholder="+7(495)…"></div>
+      <div class="fg"><label>Часы работы</label><input type="text" id="ms-hours" placeholder="Пн-Пт 8:00-20:00"></div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Тип заведения</label>
+        <select id="ms-sc"><option value="">— не указан —</option></select>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-store')">Отмена</button>
+      <button class="btn btn-p" onclick="saveStore()">Сохранить</button>
+    </div>
+    <div class="txt-muted" style="margin-top:6px">POST /rest/v1/stores · PATCH /rest/v1/stores?id=eq.{id}</div>
+  </div>
+</div>
+
+<!-- Category modal -->
+<div class="overlay" id="m-cat">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="mc-title">Категория</h3>
+      <button class="modal-x" onclick="closeModal('m-cat')">✕</button>
+    </div>
+    <input type="hidden" id="mc-id">
+    <div class="fg"><label>Название *</label><input type="text" id="mc-name"></div>
+    <div class="fg">
+      <label>Заведение (пусто = глобальная)</label>
+      <select id="mc-store"><option value="">— Глобальная —</option></select>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-cat')">Отмена</button>
+      <button class="btn btn-p" onclick="saveCat()">Сохранить</button>
+    </div>
+    <div class="txt-muted" style="margin-top:6px">POST /rest/v1/categories · PATCH /rest/v1/categories?id=eq.{id}</div>
+  </div>
+</div>
+
+<!-- Menu item modal -->
+<div class="overlay" id="m-mi">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="mmi-title">Позиция меню</h3>
+      <button class="modal-x" onclick="closeModal('m-mi')">✕</button>
+    </div>
+    <input type="hidden" id="mmi-id">
+    <div class="grid2">
+      <div class="fg">
+        <label>Заведение *</label>
+        <select id="mmi-store" onchange="loadMICategories()"></select>
+      </div>
+      <div class="fg">
+        <label>Категория</label>
+        <select id="mmi-cat"><option value="">— Без категории —</option></select>
+      </div>
+      <div class="fg" style="grid-column:1/-1"><label>Название *</label><input type="text" id="mmi-name"></div>
+      <div class="fg" style="grid-column:1/-1"><label>Описание</label><textarea id="mmi-desc" rows="2"></textarea></div>
+      <div class="fg"><label>Цена (₽) *</label><input type="number" step="0.01" id="mmi-price"></div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px">
+        <input type="checkbox" id="mmi-avail" checked style="width:auto">
+        <label for="mmi-avail">В наличии</label>
+      </div>
+    </div>
+
+    <!-- Photo upload -->
+    <div class="fg" style="margin-top:4px">
+      <label>Фото блюда</label>
+      <div class="img-preview" id="mmi-preview">Нет фото</div>
+      <div class="row">
+        <div class="fg"><input type="file" id="mmi-photo" accept="image/jpeg,image/png,image/webp" onchange="previewPhoto(this)"></div>
+        <button class="btn btn-sm" onclick="uploadPhoto()">Загрузить</button>
+      </div>
+      <div class="txt-muted">POST /storage/v1/object/menu-photos/{filename}</div>
+      <div id="mmi-img-url" class="txt-muted" style="margin-top:4px;word-break:break-all"></div>
+    </div>
+    <input type="hidden" id="mmi-image-url">
+
+    <div class="modal-ft">
+      <button class="btn btn-d btn-sm" id="mmi-delete-photo-btn" style="display:none" onclick="deletePhoto()">Удалить фото</button>
+      <button class="btn" onclick="closeModal('m-mi')">Отмена</button>
+      <button class="btn btn-p" onclick="saveMenuItem()">Сохранить</button>
+    </div>
+    <div class="txt-muted" style="margin-top:6px">POST /rest/v1/menu_items · PATCH /rest/v1/menu_items?id=eq.{id}</div>
+  </div>
+</div>
+
+<!-- Subscription modal -->
+<div class="overlay" id="m-sub">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-hd">
+      <h3 id="msub-title">Абонемент</h3>
+      <button class="modal-x" onclick="closeModal('m-sub')">✕</button>
+    </div>
+    <input type="hidden" id="msub-id">
+
+    <!-- Basic -->
+    <div class="grid2">
+      <div class="fg"><label>Заведение *</label><select id="msub-store"></select></div>
+      <div class="fg"><label>Название *</label><input type="text" id="msub-name"></div>
+      <div class="fg"><label>Цена (₽) *</label><input type="number" step="0.01" id="msub-price"></div>
+      <div class="fg"><label>Срок действия (дней) *</label><input type="number" id="msub-days"></div>
+      <div class="fg" style="grid-column:1/-1"><label>Всего использований (0 = безлимит)</label><input type="number" id="msub-uses" value="0"></div>
+    </div>
+
+    <!-- Coverage rules -->
+    <div class="rules-section">
+      <div class="rules-title">Правила покрытия (coverage_rules)</div>
+      <div class="fg">
+        <label>Тип покрытия</label>
+        <select id="msub-cov-type" onchange="updateCoverageUI()">
+          <option value="all">all — все блюда</option>
+          <option value="include_categories">include_categories — только категории</option>
+          <option value="include_items">include_items — только блюда</option>
+          <option value="exclude_items">exclude_items — все кроме</option>
+        </select>
+      </div>
+      <div id="cov-extra" style="display:none">
+        <div class="fg">
+          <label id="cov-extra-label">UUID через запятую</label>
+          <textarea id="msub-cov-ids" rows="2" placeholder="uuid1, uuid2, …"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time rules -->
+    <div class="rules-section">
+      <div class="rules-title">Временные ограничения (time_rules)</div>
+      <div class="fg">
+        <label>Дни недели (пусто = все)</label>
+        <div class="weekdays">
+          <label><input type="checkbox" value="1" class="wd"> Пн</label>
+          <label><input type="checkbox" value="2" class="wd"> Вт</label>
+          <label><input type="checkbox" value="3" class="wd"> Ср</label>
+          <label><input type="checkbox" value="4" class="wd"> Чт</label>
+          <label><input type="checkbox" value="5" class="wd"> Пт</label>
+          <label><input type="checkbox" value="6" class="wd"> Сб</label>
+          <label><input type="checkbox" value="7" class="wd"> Вс</label>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="fg"><label>Время начала</label><input type="time" id="msub-time-start"></div>
+        <div class="fg"><label>Время окончания</label><input type="time" id="msub-time-end"></div>
+      </div>
+      <div class="fg">
+        <label>Исключённые даты (ГГГГ-ММ-ДД через запятую)</label>
+        <input type="text" id="msub-excl-dates" placeholder="2025-01-01, 2025-05-09">
+      </div>
+    </div>
+
+    <!-- Usage limits -->
+    <div class="rules-section">
+      <div class="rules-title">Лимиты использования (usage_limits)</div>
+      <div class="grid2">
+        <div class="fg"><label>Макс. исп./день</label><input type="number" id="msub-daily" placeholder="2"></div>
+        <div class="fg"><label>Мин. интервал (ч)</label><input type="number" step="0.5" id="msub-interval" placeholder="1"></div>
+        <div class="fg" style="grid-column:1/-1"><label>Мин. сумма заказа (₽)</label><input type="number" id="msub-minamount" placeholder="150"></div>
+      </div>
+    </div>
+
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-sub')">Отмена</button>
+      <button class="btn btn-p" onclick="saveSubscription()">Сохранить</button>
+    </div>
+    <div class="txt-muted" style="margin-top:6px">POST /rest/v1/subscriptions · PATCH /rest/v1/subscriptions?id=eq.{id}</div>
+  </div>
+</div>
+
+<!-- Order detail modal -->
+<div class="overlay" id="m-order">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Заказ #<span id="mo-id"></span></h3>
+      <button class="modal-x" onclick="closeModal('m-order')">✕</button>
+    </div>
+    <div style="margin-bottom:10px">
+      Статус: <span class="badge" id="mo-status"></span>
+    </div>
+    <div class="txt-sm" id="mo-date" style="margin-bottom:10px"></div>
+    <div class="sec-title">Позиции</div>
+    <div id="mo-items"><div class="loading">Загрузка…</div></div>
+    <hr>
+    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+      <span>Итого</span><strong id="mo-total"></strong>
+    </div>
+    <div class="sec-title">Изменить статус</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-sm" onclick="setOrderStatus('ready')">→ Готов</button>
+      <button class="btn btn-sm" onclick="setOrderStatus('issued')">→ Выдан</button>
+      <button class="btn btn-sm btn-d" onclick="setOrderStatus('cancelled')">→ Отменить</button>
+    </div>
+    <div id="mo-payment" style="margin-top:10px;font-size:12px"></div>
+    <div class="txt-muted" style="margin-top:4px">PATCH /rest/v1/orders?id=eq.{id}</div>
+  </div>
+</div>
+
+<!-- Confirm delete modal -->
+<div class="overlay" id="m-confirm">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-hd">
+      <h3>Подтверждение</h3>
+      <button class="modal-x" onclick="closeModal('m-confirm')">✕</button>
+    </div>
+    <p id="confirm-text" style="margin-bottom:16px"></p>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-confirm')">Отмена</button>
+      <button class="btn btn-d" onclick="confirmAction()">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───
+const SB_URL  = 'https://bucxawpwttvtwdwdtuhh.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1Y3hhd3B3dHR2dHdkd2R0dWhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDY0NTYsImV4cCI6MjA5MjY4MjQ1Nn0.cjyg9QEWa3N-2uDzYwzTLL31wCxLitV_QGGhxKRBFxY';
+
+// ─── STATE ───
+const DEFAULT_MAP_CFG = {
+  tileSource: { minzoom: 8, maxzoom: 16 },
+  layers: { water:{minzoom:0}, land_use:{minzoom:10}, roads:{minzoom:8}, buildings:{minzoom:13}, places:{minzoom:14}, addresses:{minzoom:17} },
+  labels: { roads:{minzoom:14,fontSize:11}, buildings:{minzoom:16,fontSize:10}, addresses:{minzoom:17,fontSize:10}, places:{minzoom:15,fontSize:10} },
+  colors: {
+    background:'#f0ede8', water:'#9ecfdf', waterStroke:'#7ab8cc',
+    park:'#b8d8b8', residential:'#f5f0e8',
+    buildingFill:'#e8e0d4', buildingLine:'#c8bfb0',
+    motorway:'#e8a020', primaryRoadBg:'#c0b8a8', primaryRoad:'#ffffff', path:'#c8b898',
+  },
+};
+const DEFAULT_FEATURES = { sStores:true, sCategories:true, sMenu:true, sSubscriptions:true, sOrders:true, sMap:true, sVectorMap:true };
+
+const S = {
+  session: null,
+  stores: [],
+  currentOrderId: null,
+  pendingConfirm: null,
+  adminMap: null, adminMapMarkers: [], adminMapFitted: false,
+  uploadedPhotoFilename: null,
+  mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
+  features: { ...DEFAULT_FEATURES },
+};
+
+const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
+
+function buildMapStyle(cfg) {
+  const L=cfg.layers||{}, Cl=cfg.colors||{}, lbl=cfg.labels||{}, ts=cfg.tileSource||{};
+  const bg=Cl.background||'#f0ede8', wat=Cl.water||'#9ecfdf', watS=Cl.waterStroke||'#7ab8cc';
+  const park=Cl.park||'#b8d8b8', res=Cl.residential||'#f5f0e8';
+  const bF=Cl.buildingFill||'#e8e0d4', bLn=Cl.buildingLine||'#c8bfb0';
+  const mway=Cl.motorway||'#e8a020', rdBg=Cl.primaryRoadBg||'#c0b8a8';
+  const rd=Cl.primaryRoad||'#ffffff', pth=Cl.path||'#c8b898';
+  const rzm=L.roads?.minzoom??8;
+  return {
+    version:8,
+    glyphs:'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
+    sources:{vm:{type:'vector',tiles:[TILE_URL],minzoom:ts.minzoom??8,maxzoom:ts.maxzoom??16}},
+    layers:[
+      {id:'bg',type:'background',paint:{'background-color':bg}},
+      {id:'water',type:'fill',source:'vm','source-layer':'water',minzoom:L.water?.minzoom??0,
+        paint:{'fill-color':wat,'fill-outline-color':watS}},
+      {id:'landuse',type:'fill',source:'vm','source-layer':'land_use',minzoom:L.land_use?.minzoom??8,
+        paint:{'fill-color':['match',['get','class'],'park',park,'forest',park,'residential',res,bg]}},
+      {id:'bldg',type:'fill',source:'vm','source-layer':'buildings',minzoom:L.buildings?.minzoom??13,
+        paint:{'fill-color':bF,'fill-outline-color':bLn}},
+      {id:'road-motorway-bg',type:'line',source:'vm','source-layer':'roads',minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk'],true,false],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':'#b07010','line-width':['interpolate',['linear'],['zoom'],8,3,14,10,16,16]}},
+      {id:'road-primary-bg',type:'line',source:'vm','source-layer':'roads',minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk'],false,true],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':rdBg,'line-width':['interpolate',['linear'],['zoom'],8,1,14,5,16,8]}},
+      {id:'road-motorway-fg',type:'line',source:'vm','source-layer':'roads',minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk'],true,false],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':mway,'line-width':['interpolate',['linear'],['zoom'],8,2,14,7,16,12]}},
+      {id:'road-primary-fg',type:'line',source:'vm','source-layer':'roads',minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk','path','footway','cycleway'],false,true],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],8,0.5,14,3,16,6]}},
+      {id:'road-path-fg',type:'line',source:'vm','source-layer':'roads',minzoom:Math.max(rzm,12),
+        filter:['match',['get','class'],['path','footway','cycleway'],true,false],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':pth,'line-dasharray':[2,2],
+               'line-width':['interpolate',['linear'],['zoom'],12,0.5,16,2]}},
+      {id:'road-label',type:'symbol',source:'vm','source-layer':'roads',minzoom:lbl.roads?.minzoom??14,
+        layout:{'text-field':['get','name'],'symbol-placement':'line',
+                'text-size':lbl.roads?.fontSize??11,'text-font':['Open Sans Regular'],
+                'text-max-angle':30,'text-padding':10},
+        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1.5}},
+      {id:'place-label',type:'symbol',source:'vm','source-layer':'places',minzoom:lbl.places?.minzoom??15,
+        layout:{'text-field':['get','name'],'text-size':lbl.places?.fontSize??10,
+                'text-font':['Open Sans Regular'],'text-anchor':'top','text-offset':[0,0.3]},
+        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1}},
+      {id:'addr-label',type:'symbol',source:'vm','source-layer':'addresses',minzoom:lbl.addresses?.minzoom??17,
+        layout:{'text-field':['get','housenumber'],'text-size':lbl.addresses?.fontSize??10,
+                'text-font':['Open Sans Regular']},
+        paint:{'text-color':'#888','text-halo-color':'#fff','text-halo-width':1}},
+    ]
+  };
+}
+
+// ─── HELPERS ───
+async function req(path, opts = {}, _retried = false) {
+  if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
+    await refreshSession();
+  }
+  const h = { 'Content-Type': 'application/json', apikey: SB_ANON, ...opts.headers };
+  if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
+  const r = await fetch(SB_URL + path, { ...opts, headers: h });
+  const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
+  if (r.status === 401 && !_retried) {
+    const ok = await refreshSession();
+    if (ok) return req(path, opts, true);
+    localStorage.removeItem('aliby_admin_s');
+    S.session = null;
+    goTo('auth');
+    throw { message: 'Сессия истекла, войдите снова' };
+  }
+  if (!r.ok) throw body || { message: r.statusText };
+  return body;
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+const statusMap = { pending:'Ожидает', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function filterTable(tableId, q) {
+  document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
+    tr.style.display = tr.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function toggleNav() {
+  document.getElementById('side-nav').classList.toggle('open');
+  document.getElementById('mob-overlay').classList.toggle('open');
+}
+function closeNav() {
+  document.getElementById('side-nav').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('open');
+}
+
+// ─── NAV ───
+function goTo(id) {
+  if (id !== 'auth' && !S.session) { goTo('auth'); return; }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id)?.classList.add('active');
+  document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
+  closeNav();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,profile:loadProfile})[id]?.();
+}
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.nav)));
+
+// ─── APP CONFIG ───
+async function loadAppConfig() {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/app_config?scope=eq.admin&select=config`, {
+      headers: { apikey: SB_ANON, 'Accept': 'application/json' }
+    });
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!rows?.length) return;
+    const cfg = rows[0].config;
+    if (cfg?.vectorMap) S.mapCfg = cfg.vectorMap;
+    if (cfg?.ui?.features) S.features = { ...DEFAULT_FEATURES, ...cfg.ui.features };
+  } catch(e) {}
+  applyFeatureToggles();
+}
+
+function applyFeatureToggles() {
+  const f = S.features;
+  const map = { stores:'sStores', categories:'sCategories', menu:'sMenu', subscriptions:'sSubscriptions', orders:'sOrders', map:'sMap' };
+  Object.entries(map).forEach(([nav, key]) => {
+    const btn = document.querySelector(`[data-nav="${nav}"]`);
+    if (btn) btn.style.display = f[key] === false ? 'none' : '';
+  });
+}
+
+// ─── AUTH ───
+async function doLogin() {
+  const err = document.getElementById('err-login');
+  err.style.display = 'none';
+  try {
+    // POST /auth/v1/token?grant_type=password
+    const d = await req('/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
+    });
+    // Check role
+    const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
+    if (profs[0]?.role !== 'admin') { err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
+    setSession(d);
+    goTo('stores');
+  } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
+}
+
+async function doLogout() {
+  try { await req('/auth/v1/logout', { method:'POST' }); } finally {
+    localStorage.removeItem('aliby_admin_s');
+    S.session = null; goTo('auth');
+  }
+}
+
+function showAuthTab(name) {
+  document.querySelectorAll('[data-tab-auth]').forEach(b => b.classList.toggle('active', b.dataset.tabAuth === name));
+  document.querySelectorAll('#screen-auth .tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('auth-' + name)?.classList.add('active');
+}
+document.querySelectorAll('[data-tab-auth]').forEach(b => b.addEventListener('click', () => showAuthTab(b.dataset.tabAuth)));
+
+async function doRecover() {
+  try {
+    await req('/auth/v1/recover', { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
+    document.getElementById('ok-recover').style.display = 'block';
+  } catch(e) { alert(e.message || 'Ошибка'); }
+}
+
+async function doResetPwd() {
+  try {
+    await req('/auth/v1/user', { method:'PUT', body: JSON.stringify({ password: document.getElementById('rst-pwd').value }) });
+    alert('Пароль обновлён. Войдите с новым паролем.');
+    S.session = null;
+    showAuthTab('login');
+  } catch(e) { alert(e.message || 'Ошибка'); }
+}
+
+async function doRegister() {
+  const err = document.getElementById('err-reg');
+  const ok  = document.getElementById('ok-reg');
+  err.style.display = 'none'; ok.style.display = 'none';
+  try {
+    await req('/auth/v1/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email: document.getElementById('reg-email').value, password: document.getElementById('reg-pwd').value }),
+    });
+    ok.textContent = 'Аккаунт создан. Для доступа к панели попросите главного администратора назначить роль.';
+    ok.style.display = 'block';
+  } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; }
+}
+
+function setSession(d) {
+  S.session = d;
+  localStorage.setItem('aliby_admin_s', JSON.stringify(d));
+  document.getElementById('sn-email').textContent = d.user?.email || '';
+}
+
+async function refreshSession() {
+  if (!S.session?.refresh_token) return false;
+  try {
+    const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
+      body: JSON.stringify({ refresh_token: S.session.refresh_token }),
+    });
+    if (!r.ok) return false;
+    const d = await r.json();
+    if (!d.access_token) return false;
+    setSession(d);
+    return true;
+  } catch(e) { return false; }
+}
+
+async function updatePwd() {
+  const val = document.getElementById('p-newpwd').value;
+  if (!val || val.length < 6) { alert('Пароль должен быть не менее 6 символов'); return; }
+  try {
+    await req('/auth/v1/user', { method: 'PUT', body: JSON.stringify({ password: val }) });
+    alert('Пароль обновлён');
+    document.getElementById('p-newpwd').value = '';
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+async function loadProfile() {
+  try {
+    const u = await req('/auth/v1/user');
+    document.getElementById('p-email').textContent = u.email || '';
+    const profs = await req(`/rest/v1/profiles?id=eq.${u.id}`);
+    if (profs.length) document.getElementById('p-role').textContent = profs[0].role || '';
+  } catch(e) {}
+}
+
+async function doDeleteAccount() {
+  if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
+  try {
+    await req('/functions/v1/delete-account', { method: 'POST' });
+    localStorage.removeItem('aliby_admin_s');
+    S.session = null;
+    goTo('auth');
+  } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
+}
+
+// ─── STORE CATEGORIES ───
+async function loadStoreCategories() {
+  try {
+    // GET /rest/v1/store_categories?order=name.asc
+    const cats = await req('/rest/v1/store_categories?order=name.asc');
+    S.storeCategories = cats;
+    const sel = document.getElementById('ms-sc');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— не указан —</option>' + cats.map(c => `<option value="${c.id}">${esc(c.icon)} ${esc(c.name)}</option>`).join('');
+    sel.value = cur;
+  } catch(e) {}
+}
+
+// ─── STORES SECTION ───
+async function loadStores() {
+  const tbody = document.getElementById('stores-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  try {
+    // GET /rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)
+    const stores = await req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)');
+    S.stores = stores;
+    fillStoreSelects();
+    loadStoreCategories();
+    if (!stores.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет заведений</td></tr>'; return; }
+    tbody.innerHTML = stores.map(s => `
+      <tr>
+        <td>${esc(s.name)}</td>
+        <td>${s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '—'}</td>
+        <td>${esc(s.address)}</td>
+        <td>${esc(s.phone||'—')}</td>
+        <td>${esc(s.working_hours||'—')}</td>
+        <td class="td-actions">
+          <button class="btn btn-sm" onclick="openStoreModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">Ред.</button>
+          <button class="btn btn-sm btn-d" onclick="confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="empty">Ошибка загрузки</td></tr>`; }
+}
+
+function fillStoreSelects() {
+  const opts = S.stores.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  ['cat-store-filter','mi-store-filter','ord-store-filter','sub-store-filter','mc-store','mmi-store','msub-store','marker-store-sel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const current = el.value;
+    const prefix = el.options[0]?.value === '' ? el.options[0].outerHTML : '';
+    el.innerHTML = prefix + opts;
+    el.value = current;
+  });
+}
+
+function openStoreModal(store) {
+  document.getElementById('ms-title').textContent = store ? 'Редактировать заведение' : 'Новое заведение';
+  document.getElementById('ms-id').value      = store?.id      || '';
+  document.getElementById('ms-name').value    = store?.name    || '';
+  document.getElementById('ms-address').value = store?.address || '';
+  document.getElementById('ms-lat').value     = store?.latitude  || '';
+  document.getElementById('ms-lng').value     = store?.longitude || '';
+  document.getElementById('ms-phone').value   = store?.phone   || '';
+  document.getElementById('ms-hours').value   = store?.working_hours || '';
+  document.getElementById('ms-sc').value      = store?.store_category_id || '';
+  openModal('m-store');
+}
+
+async function geocodeAddress() {
+  const address = document.getElementById('ms-address').value;
+  if (!address) { alert('Введите адрес'); return; }
+  try {
+    // POST /functions/v1/geocode
+    const r = await req('/functions/v1/geocode', {
+      method: 'POST',
+      body: JSON.stringify({ address }),
+    });
+    document.getElementById('ms-lat').value = r.latitude;
+    document.getElementById('ms-lng').value = r.longitude;
+  } catch(e) { alert('Ошибка геокодирования: ' + (e.message || '')); }
+}
+
+async function saveStore() {
+  const id   = document.getElementById('ms-id').value;
+  const body = {
+    name:               document.getElementById('ms-name').value,
+    address:            document.getElementById('ms-address').value,
+    latitude:           parseFloat(document.getElementById('ms-lat').value),
+    longitude:          parseFloat(document.getElementById('ms-lng').value),
+    phone:              document.getElementById('ms-phone').value || null,
+    working_hours:      document.getElementById('ms-hours').value || null,
+    store_category_id:  document.getElementById('ms-sc').value || null,
+  };
+  try {
+    if (id) {
+      // PATCH /rest/v1/stores?id=eq.{id}
+      await req(`/rest/v1/stores?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(body) });
+    } else {
+      // POST /rest/v1/stores
+      await req('/rest/v1/stores', { method:'POST', body: JSON.stringify(body) });
+    }
+    closeModal('m-store'); loadStores();
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── CATEGORIES ───
+async function loadCategories() {
+  const tbody = document.getElementById('cats-tbody');
+  tbody.innerHTML = '<tr><td colspan="3" class="loading">Загрузка…</td></tr>';
+  try {
+    // GET /rest/v1/categories?order=name.asc
+    let url = '/rest/v1/categories?order=name.asc&select=*,stores(name)';
+    const storeId = document.getElementById('cat-store-filter')?.value;
+    if (storeId) url += `&store_id=eq.${storeId}`;
+    const cats = await req(url);
+    if (!cats.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Нет категорий</td></tr>'; return; }
+    tbody.innerHTML = cats.map(c => `
+      <tr>
+        <td>${esc(c.name)}</td>
+        <td>${esc(c.stores?.name || '— Глобальная —')}</td>
+        <td class="td-actions">
+          <button class="btn btn-sm" onclick="openCatModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Ред.</button>
+          <button class="btn btn-sm btn-d" onclick="confirmDelete('cat','${c.id}','${esc(c.name)}')">Удал.</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Ошибка</td></tr>'; }
+}
+
+function openCatModal(cat) {
+  document.getElementById('mc-title').textContent = cat ? 'Редактировать категорию' : 'Новая категория';
+  document.getElementById('mc-id').value    = cat?.id       || '';
+  document.getElementById('mc-name').value  = cat?.name     || '';
+  document.getElementById('mc-store').value = cat?.store_id || '';
+  openModal('m-cat');
+}
+
+async function saveCat() {
+  const id = document.getElementById('mc-id').value;
+  const body = {
+    name:     document.getElementById('mc-name').value,
+    store_id: document.getElementById('mc-store').value || null,
+  };
+  try {
+    if (id) {
+      // PATCH /rest/v1/categories?id=eq.{id}
+      await req(`/rest/v1/categories?id=eq.${id}`, { method:'PATCH', body: JSON.stringify({ name: body.name }) });
+    } else {
+      // POST /rest/v1/categories
+      await req('/rest/v1/categories', { method:'POST', body: JSON.stringify(body) });
+    }
+    closeModal('m-cat'); loadCategories();
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+// ─── MENU ITEMS ───
+async function loadMenuItems() {
+  const tbody = document.getElementById('mi-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  try {
+    // GET /rest/v1/menu_items?select=*,categories(name)
+    let url = '/rest/v1/menu_items?select=*,categories(name)&order=name.asc';
+    const storeId = document.getElementById('mi-store-filter')?.value;
+    const catId   = document.getElementById('mi-cat-filter')?.value;
+    const search  = document.getElementById('mi-search')?.value;
+    if (storeId) url += `&store_id=eq.${storeId}`;
+    if (catId)   url += `&category_id=eq.${catId}`;
+    if (search)  url += `&name=ilike.*${encodeURIComponent(search)}*`;
+    const items = await req(url);
+    if (!items.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет позиций</td></tr>'; return; }
+    tbody.innerHTML = items.map(i => `
+      <tr>
+        <td>${i.image_url
+          // GET /storage/v1/object/public/menu-photos/{filename}
+          ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border:1px solid #eee">`
+          : '—'}</td>
+        <td>${esc(i.name)}</td>
+        <td>${esc(i.categories?.name || '—')}</td>
+        <td>${i.price} ₽</td>
+        <td>${i.is_available ? '✓' : '—'}</td>
+        <td class="td-actions">
+          <button class="btn btn-sm" onclick="openMenuItemModal(${JSON.stringify(i).replace(/"/g,'&quot;')})">Ред.</button>
+          <button class="btn btn-sm btn-d" onclick="confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Ошибка</td></tr>'; }
+}
+
+async function loadMICategories() {
+  const storeId = document.getElementById('mmi-store').value;
+  const sel = document.getElementById('mmi-cat');
+  sel.innerHTML = '<option value="">— Без категории —</option>';
+  if (!storeId) return;
+  try {
+    // GET /rest/v1/categories?store_id=eq.{id}
+    const cats = await req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`);
+    cats.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.name; sel.appendChild(o); });
+  } catch(e) {}
+}
+
+function openMenuItemModal(item) {
+  document.getElementById('mmi-title').textContent = item ? 'Редактировать позицию' : 'Новая позиция';
+  document.getElementById('mmi-id').value       = item?.id          || '';
+  document.getElementById('mmi-name').value     = item?.name        || '';
+  document.getElementById('mmi-desc').value     = item?.description || '';
+  document.getElementById('mmi-price').value    = item?.price       || '';
+  document.getElementById('mmi-avail').checked  = item ? item.is_available : true;
+  document.getElementById('mmi-image-url').value = item?.image_url  || '';
+  document.getElementById('mmi-store').value    = item?.store_id    || '';
+  S.uploadedPhotoFilename = null;
+
+  const preview = document.getElementById('mmi-preview');
+  if (item?.image_url) {
+    preview.innerHTML = `<img src="${esc(item.image_url)}" alt="фото">`;
+    document.getElementById('mmi-delete-photo-btn').style.display = 'inline-flex';
+    document.getElementById('mmi-img-url').textContent = item.image_url;
+  } else {
+    preview.textContent = 'Нет фото';
+    document.getElementById('mmi-delete-photo-btn').style.display = 'none';
+    document.getElementById('mmi-img-url').textContent = '';
+  }
+
+  if (item?.store_id) {
+    document.getElementById('mmi-store').value = item.store_id;
+    loadMICategories().then(() => { document.getElementById('mmi-cat').value = item.category_id || ''; });
+  } else {
+    document.getElementById('mmi-cat').innerHTML = '<option value="">— Без категории —</option>';
+  }
+  document.getElementById('mmi-photo').value = '';
+  openModal('m-mi');
+}
+
+function previewPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { document.getElementById('mmi-preview').innerHTML = `<img src="${e.target.result}" alt="preview">`; };
+  reader.readAsDataURL(file);
+}
+
+async function uploadPhoto() {
+  const file = document.getElementById('mmi-photo').files[0];
+  if (!file) { alert('Выберите файл'); return; }
+  const filename = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  try {
+    // POST /storage/v1/object/menu-photos/{filename}
+    const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
+      method: 'POST',
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': file.type },
+      body: file,
+    });
+    if (!r.ok) { const e = await r.json(); throw e; }
+    const url = `${SB_URL}/storage/v1/object/public/menu-photos/${filename}`;
+    document.getElementById('mmi-image-url').value = url;
+    document.getElementById('mmi-img-url').textContent = url;
+    S.uploadedPhotoFilename = filename;
+    document.getElementById('mmi-delete-photo-btn').style.display = 'inline-flex';
+    alert('Фото загружено');
+  } catch(e) { alert('Ошибка загрузки фото: ' + (e.message || JSON.stringify(e))); }
+}
+
+async function deletePhoto() {
+  const url = document.getElementById('mmi-image-url').value;
+  if (!url) return;
+  const filename = url.split('/menu-photos/').pop();
+  if (!confirm(`Удалить фото ${filename}?`)) return;
+  try {
+    // DELETE /storage/v1/object/menu-photos/{filename}
+    await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
+      method: 'DELETE',
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token },
+    });
+    document.getElementById('mmi-image-url').value = '';
+    document.getElementById('mmi-img-url').textContent = '';
+    document.getElementById('mmi-preview').textContent = 'Нет фото';
+    document.getElementById('mmi-delete-photo-btn').style.display = 'none';
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+async function saveMenuItem() {
+  const id = document.getElementById('mmi-id').value;
+  const body = {
+    store_id:    document.getElementById('mmi-store').value,
+    category_id: document.getElementById('mmi-cat').value   || null,
+    name:        document.getElementById('mmi-name').value,
+    description: document.getElementById('mmi-desc').value  || null,
+    price:       parseFloat(document.getElementById('mmi-price').value),
+    is_available:document.getElementById('mmi-avail').checked,
+    image_url:   document.getElementById('mmi-image-url').value || null,
+  };
+  try {
+    if (id) {
+      // PATCH /rest/v1/menu_items?id=eq.{id}
+      await req(`/rest/v1/menu_items?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(body) });
+    } else {
+      // POST /rest/v1/menu_items
+      await req('/rest/v1/menu_items', { method:'POST', body: JSON.stringify(body) });
+    }
+    closeModal('m-mi'); loadMenuItems();
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── SUBSCRIPTIONS ───
+async function loadSubscriptions() {
+  const tbody = document.getElementById('sub-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  try {
+    // GET /rest/v1/subscriptions?select=*,stores(name)
+    let url = '/rest/v1/subscriptions?select=*,stores(name)&order=name.asc';
+    const storeId = document.getElementById('sub-store-filter')?.value;
+    if (storeId) url += `&store_id=eq.${storeId}`;
+    const subs = await req(url);
+    if (!subs.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет абонементов</td></tr>'; return; }
+    tbody.innerHTML = subs.map(s => `
+      <tr>
+        <td>${esc(s.name)}</td>
+        <td>${esc(s.stores?.name || '—')}</td>
+        <td>${s.price} ₽</td>
+        <td>${s.duration_days}</td>
+        <td>${s.total_uses === 0 ? '∞' : s.total_uses}</td>
+        <td class="td-actions">
+          <button class="btn btn-sm" onclick='openSubModal(${JSON.stringify(s)})'>Ред.</button>
+          <button class="btn btn-sm btn-d" onclick="confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Ошибка</td></tr>'; }
+}
+
+function openSubModal(sub) {
+  document.getElementById('msub-title').textContent = sub ? 'Редактировать абонемент' : 'Новый абонемент';
+  document.getElementById('msub-id').value     = sub?.id           || '';
+  document.getElementById('msub-store').value  = sub?.store_id     || '';
+  document.getElementById('msub-name').value   = sub?.name         || '';
+  document.getElementById('msub-price').value  = sub?.price        || '';
+  document.getElementById('msub-days').value   = sub?.duration_days|| '';
+  document.getElementById('msub-uses').value   = sub?.total_uses   ?? 0;
+
+  // Coverage
+  const cr = sub?.coverage_rules || { type: 'all' };
+  document.getElementById('msub-cov-type').value = cr.type || 'all';
+  const ids = [...(cr.category_ids||[]), ...(cr.item_ids||[]), ...(cr.exclude_items||[])].join(', ');
+  document.getElementById('msub-cov-ids').value = ids;
+  updateCoverageUI();
+
+  // Time rules
+  const tr = sub?.time_rules || {};
+  document.querySelectorAll('.wd').forEach(cb => {
+    cb.checked = tr.weekdays ? tr.weekdays.includes(parseInt(cb.value)) : false;
+  });
+  document.getElementById('msub-time-start').value  = tr.time_start    || '';
+  document.getElementById('msub-time-end').value    = tr.time_end      || '';
+  document.getElementById('msub-excl-dates').value  = (tr.excluded_dates||[]).join(', ');
+
+  // Usage limits
+  const ul = sub?.usage_limits || {};
+  document.getElementById('msub-daily').value     = ul.daily_limit          || '';
+  document.getElementById('msub-interval').value  = ul.min_interval_hours   || '';
+  document.getElementById('msub-minamount').value = ul.min_order_amount     || '';
+
+  openModal('m-sub');
+}
+
+function updateCoverageUI() {
+  const type = document.getElementById('msub-cov-type').value;
+  const extra = document.getElementById('cov-extra');
+  const lbl   = document.getElementById('cov-extra-label');
+  extra.style.display = type !== 'all' ? 'block' : 'none';
+  const labels = { include_categories:'UUID категорий', include_items:'UUID блюд', exclude_items:'UUID исключённых блюд' };
+  if (lbl) lbl.textContent = labels[type] || 'UUID';
+}
+
+async function saveSubscription() {
+  const id = document.getElementById('msub-id').value;
+  const type = document.getElementById('msub-cov-type').value;
+  const rawIds = document.getElementById('msub-cov-ids').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+  const coverage_rules = { type };
+  if (type === 'include_categories') coverage_rules.category_ids = rawIds;
+  if (type === 'include_items')      coverage_rules.item_ids = rawIds;
+  if (type === 'exclude_items')      coverage_rules.exclude_items = rawIds;
+
+  const weekdays = [...document.querySelectorAll('.wd:checked')].map(cb => parseInt(cb.value));
+  const time_rules = {};
+  if (weekdays.length) time_rules.weekdays = weekdays;
+  const ts = document.getElementById('msub-time-start').value;
+  const te = document.getElementById('msub-time-end').value;
+  if (ts) time_rules.time_start = ts;
+  if (te) time_rules.time_end = te;
+  const excl = document.getElementById('msub-excl-dates').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if (excl.length) time_rules.excluded_dates = excl;
+
+  const usage_limits = {};
+  const dl = document.getElementById('msub-daily').value;
+  const mi = document.getElementById('msub-interval').value;
+  const ma = document.getElementById('msub-minamount').value;
+  if (dl) usage_limits.daily_limit = parseFloat(dl);
+  if (mi) usage_limits.min_interval_hours = parseFloat(mi);
+  if (ma) usage_limits.min_order_amount = parseFloat(ma);
+
+  const body = {
+    store_id:      document.getElementById('msub-store').value,
+    name:          document.getElementById('msub-name').value,
+    price:         parseFloat(document.getElementById('msub-price').value),
+    duration_days: parseInt(document.getElementById('msub-days').value),
+    total_uses:    parseInt(document.getElementById('msub-uses').value) || 0,
+    coverage_rules, time_rules, usage_limits,
+  };
+
+  try {
+    if (id) {
+      // PATCH /rest/v1/subscriptions?id=eq.{id}
+      await req(`/rest/v1/subscriptions?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(body) });
+    } else {
+      // POST /rest/v1/subscriptions
+      await req('/rest/v1/subscriptions', { method:'POST', body: JSON.stringify(body) });
+    }
+    closeModal('m-sub'); loadSubscriptions();
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── ORDERS ───
+async function loadOrders() {
+  const tbody = document.getElementById('ord-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  try {
+    // GET /rest/v1/orders?select=*,stores(name)&order=order_time.desc
+    let url = '/rest/v1/orders?select=*,stores(name)&order=order_time.desc';
+    const storeId = document.getElementById('ord-store-filter')?.value;
+    const status  = document.getElementById('ord-status-filter')?.value;
+    if (storeId) url += `&store_id=eq.${storeId}`;
+    if (status)  url += `&status=eq.${status}`;
+    const orders = await req(url);
+    if (!orders.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет заказов</td></tr>'; return; }
+    tbody.innerHTML = orders.map(o => `
+      <tr>
+        <td class="txt-sm">${o.id.slice(0,8)}</td>
+        <td class="txt-sm">${fmtDate(o.order_time)}</td>
+        <td>${esc(o.stores?.name || '—')}</td>
+        <td>${o.total_amount} ₽</td>
+        <td><span class="badge b-${o.status}">${statusMap[o.status]||o.status}</span></td>
+        <td class="td-actions">
+          <button class="btn btn-sm" onclick="openOrderModal('${o.id}')">Открыть</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Ошибка</td></tr>'; }
+}
+
+async function openOrderModal(id) {
+  S.currentOrderId = id;
+  openModal('m-order');
+  document.getElementById('mo-id').textContent = id.slice(0,8);
+  document.getElementById('mo-items').innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    // GET /rest/v1/orders?id=eq.{id}
+    // GET /rest/v1/order_items?order_id=eq.{id}&select=*,menu_items(name)
+    // GET /rest/v1/payments?order_id=eq.{id}
+    const [ords, items, pmts] = await Promise.all([
+      req(`/rest/v1/orders?id=eq.${id}`),
+      req(`/rest/v1/order_items?order_id=eq.${id}&select=*,menu_items(name)`),
+      req(`/rest/v1/payments?order_id=eq.${id}`),
+    ]);
+    const o = ords[0];
+    document.getElementById('mo-status').textContent = statusMap[o.status] || o.status;
+    document.getElementById('mo-status').className   = `badge b-${o.status}`;
+    document.getElementById('mo-date').textContent   = fmtDate(o.order_time);
+    document.getElementById('mo-total').textContent  = o.total_amount + ' ₽';
+    document.getElementById('mo-items').innerHTML = items.length
+      ? items.map(i => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee"><span>${esc(i.menu_items?.name||'—')} × ${i.quantity}</span><span>${(i.price_at_time*i.quantity).toFixed(2)} ₽</span></div>`).join('')
+      : '<div class="empty">Нет позиций</div>';
+    const p = pmts[0];
+    document.getElementById('mo-payment').innerHTML = p
+      ? `Платёж: <span class="badge">${p.status}</span> · ${p.amount} ₽` : '';
+  } catch(e) { document.getElementById('mo-items').innerHTML = '<div class="empty">Ошибка</div>'; }
+}
+
+async function setOrderStatus(status) {
+  if (!S.currentOrderId) return;
+  try {
+    // PATCH /rest/v1/orders?id=eq.{id}
+    await req(`/rest/v1/orders?id=eq.${S.currentOrderId}`, { method:'PATCH', body: JSON.stringify({ status }) });
+    closeModal('m-order'); loadOrders();
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+// ─── MAP & MARKERS ───
+async function loadMapAdmin() {
+  if (!S.adminMap) {
+    S.adminMap = new maplibregl.Map({
+      container: 'map-admin-gl', style: buildMapStyle(S.mapCfg),
+      center: [0, 0], zoom: 2, attributionControl: false,
+      transformRequest: (url) => {
+        if (url.includes('/functions/v1/vector-tiles/')) return { url };
+        if (url.startsWith(SB_URL)) {
+          const headers = { apikey: SB_ANON };
+          if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
+          return { url, headers };
+        }
+      },
+    });
+    S.adminMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    S.adminMap.on('click', onMapClick);
+    S.adminMap.on('load', () => loadAdminMapMarkers());
+  } else {
+    setTimeout(() => S.adminMap.resize(), 0);
+    loadAdminMapMarkers();
+  }
+}
+
+async function loadAdminMapMarkers() {
+  const mlist = document.getElementById('markers-list');
+  mlist.innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    S.adminMapMarkers.forEach(m => m.remove());
+    S.adminMapMarkers = [];
+    // POST /rest/v1/rpc/get_stores_with_locations
+    const locs = await req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' });
+    const withCoords = locs.filter(l => l.lng != null && l.lat != null);
+
+    if (!S.adminMapFitted && withCoords.length) {
+      S.adminMapFitted = true;
+      const bounds = new maplibregl.LngLatBounds();
+      withCoords.forEach(l => bounds.extend([l.lng, l.lat]));
+      S.adminMap.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 600 });
+    }
+
+    withCoords.forEach(loc => {
+      const el = document.createElement('div');
+      el.className = 'admin-store-pin';
+      el.innerHTML = `<div class="p-dot" style="background:${esc(loc.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(loc.name)}</div>`;
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        document.getElementById('marker-store-sel').value = loc.id;
+        document.getElementById('marker-lng').value = loc.lng.toFixed(6);
+        document.getElementById('marker-lat').value = loc.lat.toFixed(6);
+        document.getElementById('marker-color').value = loc.marker_color || '#e8430a';
+      });
+      S.adminMapMarkers.push(
+        new maplibregl.Marker({ element: el }).setLngLat([loc.lng, loc.lat]).addTo(S.adminMap)
+      );
+    });
+
+    document.getElementById('marker-count').textContent = `(${withCoords.length})`;
+    mlist.innerHTML = locs.length
+      ? locs.map(loc => `
+          <div style="padding:8px 10px;border-bottom:1px solid #eee">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+              <div>
+                <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(loc.marker_color||'#e8430a')}"></span>
+                  ${esc(loc.name)}
+                </div>
+                <div class="txt-muted">${loc.lng != null ? `${loc.lng.toFixed(4)}, ${loc.lat.toFixed(4)}` : 'Координаты не заданы'}</div>
+              </div>
+              <button class="btn btn-sm" onclick="editLocPin('${loc.id}',${loc.lng??'null'},${loc.lat??'null'},'${esc(loc.marker_color||'#e8430a')}')">✎</button>
+            </div>
+          </div>`).join('')
+      : '<div class="empty">Нет заведений</div>';
+  } catch(e) { mlist.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+function onMapClick(e) {
+  const { lng, lat } = e.lngLat;
+  document.getElementById('marker-lng').value = lng.toFixed(6);
+  document.getElementById('marker-lat').value = lat.toFixed(6);
+}
+
+function editLocPin(storeId, lng, lat, color) {
+  document.getElementById('marker-store-sel').value = storeId;
+  if (lng != null) document.getElementById('marker-lng').value = parseFloat(lng).toFixed(6);
+  if (lat != null) document.getElementById('marker-lat').value = parseFloat(lat).toFixed(6);
+  document.getElementById('marker-color').value = color || '#e8430a';
+}
+
+async function addMarker() {
+  const storeId = document.getElementById('marker-store-sel').value;
+  const lng = parseFloat(document.getElementById('marker-lng').value);
+  const lat = parseFloat(document.getElementById('marker-lat').value);
+  const color = document.getElementById('marker-color').value || '#e8430a';
+  if (!storeId || isNaN(lng) || isNaN(lat)) { alert('Выберите заведение и кликните на карту для координат'); return; }
+  try {
+    // POST /rest/v1/rpc/upsert_store_location
+    await req('/rest/v1/rpc/upsert_store_location', {
+      method: 'POST',
+      body: JSON.stringify({ p_store_id: storeId, p_lng: lng, p_lat: lat, p_color: color }),
+    });
+    loadAdminMapMarkers();
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── CONFIRM DELETE ───
+function confirmDelete(type, id, name) {
+  document.getElementById('confirm-text').textContent = `Удалить «${name}»?`;
+  S.pendingConfirm = { type, id };
+  openModal('m-confirm');
+}
+
+async function confirmAction() {
+  if (!S.pendingConfirm) return;
+  const { type, id } = S.pendingConfirm;
+  try {
+    const paths = {
+      // DELETE /rest/v1/stores?id=eq.{id}
+      store: `/rest/v1/stores?id=eq.${id}`,
+      // DELETE /rest/v1/categories?id=eq.{id}
+      cat:   `/rest/v1/categories?id=eq.${id}`,
+      // DELETE /rest/v1/menu_items?id=eq.{id}
+      mi:    `/rest/v1/menu_items?id=eq.${id}`,
+      // DELETE /rest/v1/subscriptions?id=eq.{id}
+      sub:   `/rest/v1/subscriptions?id=eq.${id}`,
+    };
+    await req(paths[type], { method:'DELETE' });
+    closeModal('m-confirm');
+    S.pendingConfirm = null;
+    const reloaders = { store: loadStores, cat: loadCategories, mi: loadMenuItems, sub: loadSubscriptions };
+    reloaders[type]?.();
+  } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
+}
+
+// ─── INIT ───
+(async function init() {
+  await loadAppConfig();
+  try {
+    const saved = localStorage.getItem('aliby_admin_s');
+    if (saved) {
+      const d = JSON.parse(saved);
+      if (d?.access_token) {
+        const expired = d.expires_at && (Date.now() / 1000 > d.expires_at);
+        if (expired) {
+          S.session = d;
+          document.getElementById('sn-email').textContent = d.user?.email || '';
+          refreshSession().then(ok => {
+            if (ok) goTo('stores');
+            else { localStorage.removeItem('aliby_admin_s'); S.session = null; goTo('auth'); }
+          });
+        } else {
+          setSession(d);
+          goTo('stores');
+        }
+        return;
+      }
+    }
+  } catch(e) {}
+  // Recovery link hash: #type=recovery&access_token=...
+  const hash = new URLSearchParams((window.location.hash || '').replace('#', ''));
+  if (hash.get('type') === 'recovery') {
+    S.session = { access_token: hash.get('access_token') };
+    showAuthTab('reset');
+    document.getElementById('screen-auth').classList.add('active');
+    return;
+  }
+  goTo('auth');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aliby Foods</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:#000;background:#fff;height:100dvh;overflow:hidden}
+
+/* ── LAYOUT ── */
+#app{display:flex;height:100dvh;overflow:hidden}
+#side-nav{width:180px;flex-shrink:0;border-right:1px solid #ccc;display:flex;flex-direction:column;padding:12px 8px;gap:2px}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.screen{display:none;flex:1;flex-direction:column;overflow:hidden}
+.screen.active{display:flex}
+
+.sn-logo{font-weight:700;font-size:16px;padding:8px 6px 12px;border-bottom:1px solid #eee;margin-bottom:6px}
+.sn-btn{padding:8px 10px;border:none;background:none;cursor:pointer;text-align:left;font-size:14px;width:100%;border-radius:2px}
+.sn-btn:hover{background:#f5f5f5}
+.sn-btn.active{background:#000;color:#fff}
+.sn-spacer{flex:1}
+.sn-user{font-size:11px;color:#888;padding:4px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+#bottom-nav{display:none;flex-shrink:0;border-top:1px solid #ccc}
+.bn-inner{display:flex}
+.bn-btn{flex:1;padding:9px 4px 7px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:#555}
+.bn-btn .ico{font-size:19px;line-height:1}
+.bn-btn.active{color:#000;font-weight:600}
+
+@media(max-width:767px){
+  #side-nav{display:none}
+  #bottom-nav{display:block}
+}
+
+/* ── PAGE STRUCTURE ── */
+.ph{padding:11px 16px;border-bottom:1px solid #ccc;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ph h2{font-size:15px;font-weight:600;flex:1}
+.pb{flex:1;overflow-y:auto;padding:16px}
+
+/* ── COMMON ── */
+.sec{margin-bottom:20px}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#666;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #eee}
+input,select,textarea{width:100%;border:1px solid #ccc;padding:7px 9px;font-size:14px;font-family:inherit;outline:none;background:#fff}
+input:focus,select:focus,textarea:focus{border-color:#000}
+textarea{resize:vertical;min-height:60px}
+.fg{margin-bottom:11px}
+.fg label{display:block;font-size:12px;color:#555;margin-bottom:3px}
+.btn{padding:7px 14px;border:1px solid #ccc;background:none;cursor:pointer;font-size:14px;font-family:inherit;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{background:#f5f5f5}
+.btn-p{background:#000;color:#fff;border-color:#000}
+.btn-p:hover{background:#222}
+.btn-d{border-color:#c00;color:#c00}
+.btn-d:hover{background:#fff5f5}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-full{width:100%;justify-content:center}
+.btn-back{background:none;border:none;cursor:pointer;font-size:14px;color:#555;padding:0;flex-shrink:0}
+.card{border:1px solid #ccc;padding:11px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row .fg{flex:1;margin-bottom:0}
+.badge{display:inline-block;padding:2px 7px;font-size:11px;border:1px solid currentColor;border-radius:2px}
+.b-pending{color:#999}.b-paid{color:#070}.b-ready{color:#00b}.b-issued{color:#555}.b-cancelled{color:#c00}
+.b-active{color:#070}.b-expired{color:#c00}.b-sub-pending{color:#888}
+.empty{text-align:center;padding:36px 20px;color:#aaa;font-size:13px}
+.loading{text-align:center;padding:24px;color:#aaa;font-size:13px}
+.alert{padding:9px 12px;border:1px solid #ccc;margin-bottom:10px;font-size:13px}
+.alert-e{border-color:#c00;color:#c00;background:#fff8f8}
+.alert-ok{border-color:#070;color:#070;background:#f5fff5}
+.lbl{font-size:11px;color:#888}
+hr{border:none;border-top:1px solid #eee;margin:12px 0}
+.txt-sm{font-size:12px;color:#666}
+.txt-muted{font-size:11px;color:#aaa}
+
+/* ── TABS ── */
+.tab-nav{display:flex;border-bottom:1px solid #ccc;margin-bottom:14px}
+.tab-btn{padding:8px 16px;border:none;background:none;cursor:pointer;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px;color:#555}
+.tab-btn.active{border-bottom-color:#000;color:#000;font-weight:600}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── AUTH ── */
+#screen-auth{align-items:center;justify-content:center;background:#fff}
+.auth-box{width:100%;max-width:360px;padding:24px 20px}
+.auth-box h1{font-size:22px;font-weight:700;margin-bottom:22px}
+
+/* ── MAP ── */
+.map-layout{display:flex;flex:1;overflow:hidden}
+.sl-panel{width:260px;flex-shrink:0;border-right:1px solid #ccc;display:flex;flex-direction:column;overflow:hidden}
+.sl-search{padding:8px;border-bottom:1px solid #ccc;flex-shrink:0}
+.sl-search input{padding:6px 9px}
+.sl-list{flex:1;overflow-y:auto}
+.sl-item{padding:10px 12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.sl-item:hover{background:#f9f9f9}
+.sl-item.sel{background:#f0f0f0}
+.sl-item .sli-name{font-weight:600;font-size:13px;margin-bottom:2px}
+.sl-item .sli-addr{font-size:11px;color:#888}
+.map-area{flex:1;position:relative;overflow:hidden}
+.map-gl{position:absolute;inset:0;width:100%;height:100%}
+.store-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateX(-50%)}
+.store-pin .p-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.4);flex-shrink:0}
+.store-pin .p-lbl{background:rgba(255,255,255,.95);border:1px solid #ddd;font-size:11px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;margin-top:3px;box-shadow:0 1px 3px rgba(0,0,0,.15);max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.map-popup{position:absolute;bottom:12px;left:12px;right:12px;background:#fff;border:1px solid #ccc;padding:12px;max-width:300px;z-index:10}
+.map-popup.hidden{display:none}
+.popup-close{float:right;background:none;border:none;cursor:pointer;font-size:16px;line-height:1}
+
+@media(max-width:600px){
+  .map-layout{flex-direction:column}
+  .sl-panel{width:100%;max-height:42%;border-right:none;border-bottom:1px solid #ccc}
+}
+
+/* ── STORE ── */
+.store-hero{display:flex;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid #eee}
+.store-logo{width:88px;height:88px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;color:#ccc;font-size:12px}
+.store-logo img{width:100%;height:100%;object-fit:cover}
+.store-meta h2{font-size:17px;font-weight:700;margin-bottom:3px}
+.store-meta .cuisine{font-size:12px;color:#888;margin-bottom:6px}
+.store-meta .meta-line{font-size:12px;color:#555;margin-bottom:2px}
+.subs-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.sub-card{min-width:155px;max-width:180px;border:1px solid #ccc;padding:10px;flex-shrink:0}
+.sub-card h4{font-size:13px;font-weight:600;margin-bottom:3px}
+.sub-card .sub-price{font-size:15px;font-weight:700;margin-bottom:3px}
+.sub-card .sub-meta{font-size:11px;color:#888;margin-bottom:8px}
+
+/* ── MENU ── */
+.menu-toolbar{padding:8px 14px;border-bottom:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;align-items:center}
+.menu-toolbar input[type=search]{flex:1;min-width:120px}
+.menu-toolbar label{display:flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap}
+.menu-toolbar label input{width:auto}
+.cat-bar{display:flex;gap:6px;overflow-x:auto;padding:8px 14px;border-bottom:1px solid #eee;flex-shrink:0}
+.cat-bar::-webkit-scrollbar{height:3px}.cat-bar::-webkit-scrollbar-thumb{background:#ccc}
+.chip{padding:4px 12px;border:1px solid #ccc;background:none;cursor:pointer;font-size:12px;white-space:nowrap;font-family:inherit}
+.chip.active{background:#000;color:#fff;border-color:#000}
+.items-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:900px){.items-grid{grid-template-columns:repeat(3,1fr)}}
+.item-card{border:1px solid #ccc}
+.item-img{width:100%;height:80px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#ccc;overflow:hidden}
+.item-img img{width:100%;height:100%;object-fit:cover}
+.item-body{padding:8px}
+.item-name{font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3}
+.item-desc{font-size:11px;color:#888;margin-bottom:4px;line-height:1.3}
+.item-price{font-weight:700;font-size:14px;margin-bottom:6px}
+.item-unavail{font-size:11px;color:#c00}
+.qty-ctrl{display:flex;align-items:center;gap:4px}
+.qty-btn{width:24px;height:24px;border:1px solid #ccc;background:none;cursor:pointer;font-size:16px;padding:0;display:flex;align-items:center;justify-content:center}
+.qty-val{min-width:24px;text-align:center;font-size:13px}
+
+/* ── CART ── */
+.cart-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.cart-body{flex:1;overflow-y:auto}
+.cart-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid #eee;gap:8px}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-price{font-size:12px;color:#666}
+.cart-foot{border-top:1px solid #ccc;padding:14px 16px;flex-shrink:0}
+.cart-sub-block{border:1px solid #ccc;padding:11px;margin-bottom:12px}
+.cart-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:14px}
+.cart-total-row{font-weight:700;font-size:15px;border-top:1px solid #eee;padding-top:8px;margin-top:2px}
+.pay-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+
+/* ── ORDERS ── */
+.order-card{border:1px solid #ccc;padding:11px;margin-bottom:8px;cursor:pointer}
+.order-card:hover{background:#f9f9f9}
+.order-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.order-id{font-weight:600;font-size:13px}
+.order-date{font-size:12px;color:#888;margin-bottom:4px}
+
+/* ── MY SUBS ── */
+.usub-card{border:1px solid #ccc;padding:11px;margin-bottom:8px;cursor:pointer}
+.usub-card:hover{background:#f9f9f9}
+.usub-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.usub-name{font-weight:600;font-size:14px}
+.usub-stats{display:flex;gap:12px;margin-top:6px}
+.usub-stat .lbl{display:block;margin-bottom:2px}
+.usub-stat strong{font-size:14px}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-start;justify-content:center;padding:50px 12px 20px;overflow-y:auto}
+.overlay.open{display:flex}
+.modal{background:#fff;padding:20px;width:100%;max-width:480px;flex-shrink:0}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #eee}
+.modal-hd h3{font-size:16px;font-weight:600}
+.modal-x{background:none;border:none;cursor:pointer;font-size:20px;line-height:1;color:#888}
+.modal-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;padding-top:12px;border-top:1px solid #eee}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════════════ DESKTOP SIDE NAV ════════════════ -->
+<nav id="side-nav">
+  <div class="sn-logo">Aliby Foods</div>
+  <button class="sn-btn" data-nav="map">🗺 Карта</button>
+  <button class="sn-btn" data-nav="store">🏪 Заведение</button>
+  <button class="sn-btn" data-nav="menu">📋 Меню</button>
+  <button class="sn-btn" data-nav="cart">🛒 Корзина <span id="sn-cart-cnt"></span></button>
+  <button class="sn-btn" data-nav="orders">📦 Заказы</button>
+  <button class="sn-btn" data-nav="subscriptions">🎫 Абонементы</button>
+  <button class="sn-btn" data-nav="profile">👤 Профиль</button>
+  <div class="sn-spacer"></div>
+  <div class="sn-user" id="sn-email"></div>
+</nav>
+
+<div id="main">
+
+<!-- ════════════════ AUTH ════════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-box">
+    <h1>Aliby Foods</h1>
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab-auth="login">Вход</button>
+      <button class="tab-btn" data-tab-auth="reg">Регистрация</button>
+    </div>
+
+    <div id="auth-login" class="tab-pane active">
+      <div id="err-login" class="alert alert-e" style="display:none"></div>
+      <div class="fg"><label>Email</label><input type="email" id="li-email" autocomplete="username"></div>
+      <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
+      <button class="btn btn-p btn-full" onclick="doLogin()">Войти</button>
+      <hr>
+      <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
+    </div>
+
+    <div id="auth-reg" class="tab-pane">
+      <div id="err-reg" class="alert alert-e" style="display:none"></div>
+      <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
+      <div class="fg"><label>Имя (необязательно)</label><input type="text" id="reg-name"></div>
+      <div class="fg"><label>Пароль (мин. 6 символов)</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
+      <button class="btn btn-p btn-full" onclick="doRegister()">Зарегистрироваться</button>
+    </div>
+
+    <div id="auth-recover" class="tab-pane">
+      <div id="ok-recover" class="alert alert-ok" style="display:none">Письмо отправлено. Проверьте почту.</div>
+      <p class="txt-sm" style="margin-bottom:10px">Введите email — пришлём ссылку для сброса пароля.</p>
+      <div class="fg"><label>Email</label><input type="email" id="rec-email"></div>
+      <button class="btn btn-p btn-full" onclick="doRecover()">Отправить ссылку</button>
+      <hr>
+      <button class="btn btn-full" onclick="showAuthTab('login')">← Назад</button>
+    </div>
+
+    <div id="auth-reset" class="tab-pane">
+      <p class="txt-sm" style="margin-bottom:10px">Введите новый пароль.</p>
+      <div class="fg"><label>Новый пароль</label><input type="password" id="rst-pwd" autocomplete="new-password"></div>
+      <button class="btn btn-p btn-full" onclick="doResetPwd()">Сохранить пароль</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ MAP ════════════════ -->
+<div id="screen-map" class="screen">
+  <div class="ph"><h2>Карта заведений</h2></div>
+  <div class="map-layout">
+
+    <div class="sl-panel">
+      <div class="sl-search">
+        <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)">
+      </div>
+      <div class="sl-list" id="sl-list"><div class="loading">Загрузка…</div></div>
+    </div>
+
+    <div class="map-area" id="map-area">
+      <div id="map-gl" class="map-gl"></div>
+      <div class="map-popup hidden" id="map-popup">
+        <button class="popup-close" onclick="closePopup()">✕</button>
+        <strong id="pp-name"></strong>
+        <div class="txt-sm" id="pp-addr" style="margin-top:3px"></div>
+        <div class="txt-sm" id="pp-hours"></div>
+        <div class="txt-sm" id="pp-phone"></div>
+        <button class="btn btn-p btn-sm btn-full" style="margin-top:9px" onclick="openStoreFromPopup()">
+          Открыть заведение →
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════ STORE ════════════════ -->
+<div id="screen-store" class="screen">
+  <div class="ph">
+    <button class="btn-back" onclick="goTo('map')">← Карта</button>
+    <h2 id="store-ph-name">Заведение</h2>
+    <button class="btn btn-sm" onclick="goTo('menu')">Меню →</button>
+  </div>
+  <div class="pb">
+
+    <div class="store-hero">
+      <div class="store-logo" id="store-logo">Фото</div>
+      <div class="store-meta" style="flex:1">
+        <h2 id="st-name"></h2>
+        <div class="cuisine" id="st-cuisine"></div>
+        <div class="meta-line" id="st-addr"></div>
+        <div class="meta-line" id="st-hours"></div>
+        <div class="meta-line" id="st-phone"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Абонементы <span class="txt-muted">GET /rest/v1/subscriptions</span></div>
+      <div class="subs-row" id="store-subs"><div class="loading">Загрузка…</div></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Рекомендуемые блюда <span class="txt-muted">GET /rest/v1/menu_items?limit=4</span></div>
+      <div class="items-grid" id="store-rec"><div class="loading">Загрузка…</div></div>
+      <button class="btn btn-full" style="margin-top:8px" onclick="goTo('menu')">Смотреть всё меню →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════ MENU ════════════════ -->
+<div id="screen-menu" class="screen">
+  <div class="ph">
+    <button class="btn-back" onclick="goTo('store')">← Заведение</button>
+    <h2 id="menu-ph-name">Меню</h2>
+    <button class="btn btn-sm" onclick="goTo('cart')">Корзина&nbsp;<span id="menu-cart-cnt">0</span></button>
+  </div>
+
+  <div class="cat-bar" id="cat-bar">
+    <button class="chip active" data-cid="">Все</button>
+  </div>
+
+  <div class="menu-toolbar">
+    <input type="search" id="m-search" placeholder="Поиск блюда…" oninput="debouncedMenuLoad()">
+    <select id="m-sort" onchange="loadMenuItems()">
+      <option value="">Сортировка</option>
+      <option value="price.asc">Цена ↑</option>
+      <option value="price.desc">Цена ↓</option>
+      <option value="name.asc">А–Я</option>
+    </select>
+    <label><input type="checkbox" id="m-avail" onchange="loadMenuItems()"> Только в наличии</label>
+  </div>
+
+  <div class="pb" style="padding-top:8px">
+    <div class="items-grid" id="menu-items"><div class="loading">Загрузка…</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ CART ════════════════ -->
+<div id="screen-cart" class="screen">
+  <div class="ph"><h2>Корзина</h2></div>
+  <div class="cart-layout">
+    <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
+    <div class="cart-foot" id="cart-foot" style="display:none">
+
+      <div class="cart-sub-block">
+        <div class="sec-title" style="border:none;margin-bottom:8px">Применить абонемент</div>
+        <div class="row">
+          <div class="fg"><select id="cart-sub-sel"><option value="">— Выбрать абонемент —</option></select></div>
+          <button class="btn btn-sm" onclick="validateSub()">Проверить</button>
+        </div>
+        <div id="sub-val-res" style="margin-top:6px;font-size:12px"></div>
+        <div class="txt-muted" style="margin-top:4px">POST /functions/v1/validate-subscription</div>
+      </div>
+
+      <div class="cart-row"><span>Подытог</span><span id="c-subtotal">0 ₽</span></div>
+      <div class="cart-row" id="c-disc-row" style="display:none;color:#070">
+        <span>Скидка по абонементу</span><span id="c-discount"></span>
+      </div>
+      <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
+
+      <div class="fg" style="margin-top:12px">
+        <label>Время самовывоза (необязательно)</label>
+        <input type="datetime-local" id="c-pickup">
+      </div>
+
+      <div class="pay-btns">
+        <button class="btn btn-p" onclick="payBySub()">Абонементом</button>
+        <button class="btn btn-p" onclick="payByCard()">Картой</button>
+      </div>
+      <div class="txt-muted" style="text-align:center;margin-top:6px">
+        POST /rest/v1/orders → /rest/v1/order_items → /functions/v1/create-payment
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ ORDERS ════════════════ -->
+<div id="screen-orders" class="screen">
+  <div class="ph"><h2>Мои заказы</h2></div>
+  <div class="pb">
+    <div class="fg">
+      <select id="ord-filter" onchange="loadOrders()">
+        <option value="">Все статусы</option>
+        <option value="pending">Ожидает оплаты</option>
+        <option value="paid">Оплачен</option>
+        <option value="ready">Готов к выдаче</option>
+        <option value="issued">Выдан</option>
+        <option value="cancelled">Отменён</option>
+      </select>
+    </div>
+    <div id="orders-list"><div class="loading">Загрузка…</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ MY SUBSCRIPTIONS ════════════════ -->
+<div id="screen-subscriptions" class="screen">
+  <div class="ph"><h2>Мои абонементы</h2></div>
+  <div class="pb">
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab-sub="active">Активные</button>
+      <button class="tab-btn" data-tab-sub="all">Все</button>
+    </div>
+    <div id="sub-active" class="tab-pane active">
+      <div id="usubs-active"><div class="loading">Загрузка…</div></div>
+    </div>
+    <div id="sub-all" class="tab-pane">
+      <div id="usubs-all"><div class="loading">Загрузка…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ PROFILE ════════════════ -->
+<div id="screen-profile" class="screen">
+  <div class="ph"><h2>Профиль</h2></div>
+  <div class="pb">
+
+    <div class="sec">
+      <div class="sec-title">Аккаунт</div>
+      <div class="card">
+        <div class="lbl">Email</div><div id="p-email" style="margin-bottom:8px"></div>
+        <div class="lbl">Роль</div><div id="p-role"></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Имя</div>
+      <div class="row">
+        <div class="fg"><input type="text" id="p-name" placeholder="Ваше имя"></div>
+        <button class="btn" onclick="updateName()">Сохранить</button>
+      </div>
+      <div class="txt-muted">PATCH /rest/v1/profiles?id=eq.{uuid}</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Сменить пароль</div>
+      <div class="row">
+        <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
+        <button class="btn" onclick="updatePwd()">Обновить</button>
+      </div>
+      <div class="txt-muted">PUT /auth/v1/user</div>
+    </div>
+
+    <div class="sec">
+      <button class="btn btn-d btn-full" onclick="doLogout()">Выйти из аккаунта</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Удаление аккаунта</div>
+      <p class="txt-sm" style="margin-bottom:10px">Аккаунт и все связанные данные будут удалены безвозвратно.</p>
+      <button class="btn btn-d btn-full" onclick="doDeleteAccount()">Удалить аккаунт</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════ BOTTOM NAV ════════════════ -->
+<div id="bottom-nav">
+  <div class="bn-inner">
+    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
+    <button class="bn-btn" data-nav="store"><span class="ico">🏪</span>Заведение</button>
+    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Меню</button>
+    <button class="bn-btn" data-nav="cart"><span class="ico">🛒</span>Корзина</button>
+    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
+  </div>
+</div>
+
+</div><!-- #main -->
+</div><!-- #app -->
+
+<!-- ════════════════ MODALS ════════════════ -->
+
+<div class="overlay" id="m-order">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Заказ #<span id="mo-id"></span></h3>
+      <button class="modal-x" onclick="closeModal('m-order')">✕</button>
+    </div>
+    <div style="margin-bottom:10px">Статус: <span class="badge" id="mo-status"></span></div>
+    <div class="txt-sm" id="mo-date" style="margin-bottom:10px"></div>
+    <div class="sec-title">Позиции</div>
+    <div id="mo-items"><div class="loading">Загрузка…</div></div>
+    <hr>
+    <div class="cart-row"><span>Итого</span><strong id="mo-total"></strong></div>
+    <div class="cart-row txt-sm"><span>Способ оплаты</span><span id="mo-pay-method"></span></div>
+    <div id="mo-payment" style="margin-top:8px;font-size:12px"></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-usub">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="mu-name">Абонемент</h3>
+      <button class="modal-x" onclick="closeModal('m-usub')">✕</button>
+    </div>
+    <div class="grid2" style="gap:8px;margin-bottom:14px">
+      <div class="card"><div class="lbl">Осталось исп.</div><strong id="mu-uses" style="font-size:18px"></strong></div>
+      <div class="card"><div class="lbl">Действует до</div><strong id="mu-exp" style="font-size:15px"></strong></div>
+    </div>
+    <div class="sec-title">История списаний</div>
+    <div id="mu-redemptions"><div class="loading">Загрузка…</div></div>
+    <div class="txt-muted" style="margin-top:6px">GET /rest/v1/subscription_redemptions?user_subscription_id=eq.{id}</div>
+  </div>
+</div>
+
+<div class="overlay" id="m-buy">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Купить абонемент</h3>
+      <button class="modal-x" onclick="closeModal('m-buy')">✕</button>
+    </div>
+    <div id="mb-info" class="card" style="margin-bottom:14px"></div>
+    <p class="txt-sm" style="margin-bottom:14px">
+      Нажмите «Купить» — вы будете перенаправлены на страницу оплаты YooKassa.<br>
+      <span class="txt-muted">POST /functions/v1/create-payment</span>
+    </p>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-buy')">Отмена</button>
+      <button class="btn btn-p" onclick="buySubscription()">Купить →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───
+const SB_URL  = 'https://bucxawpwttvtwdwdtuhh.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1Y3hhd3B3dHR2dHdkd2R0dWhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDY0NTYsImV4cCI6MjA5MjY4MjQ1Nn0.cjyg9QEWa3N-2uDzYwzTLL31wCxLitV_QGGhxKRBFxY';
+
+// ─── DEFAULTS ───
+const DEFAULT_MAP_CFG = {
+  tileSource: { minzoom: 8, maxzoom: 16 },
+  layers: {
+    water:    { minzoom: 0  }, land_use: { minzoom: 10 },
+    roads:    { minzoom: 8  }, buildings:{ minzoom: 13 },
+    places:   { minzoom: 14 }, addresses:{ minzoom: 17 },
+  },
+  labels: {
+    roads:    { minzoom: 14, fontSize: 11 },
+    places:   { minzoom: 15, fontSize: 10 },
+    addresses:{ minzoom: 17, fontSize: 10 },
+  },
+  colors: {
+    background:'#f0ede8', water:'#9ecfdf', waterStroke:'#7ab8cc',
+    park:'#b8d8b8', residential:'#f5f0e8',
+    buildingFill:'#e8e0d4', buildingLine:'#c8bfb0',
+    motorway:'#e8a020', primaryRoadBg:'#c0b8a8', primaryRoad:'#ffffff', path:'#c8b898',
+  },
+};
+const DEFAULT_FEATURES = {
+  sMap:true, sVectorMap:true, sStores:true, sMenu:true,
+  sCart:true, sOrders:true, sSubscriptions:true, sMySubscriptions:true,
+};
+
+// ─── STATE ───
+const S = {
+  session: null, profile: null, store: null,
+  cart: [], cartStoreId: null, appliedSub: null,
+  menuCatId: '', pendingSubId: null,
+  map: null, mapMarkers: [], mapFitted: false,
+  mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
+  features: { ...DEFAULT_FEATURES },
+};
+
+const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
+
+function buildMapStyle(cfg) {
+  const L   = cfg.layers    || {};
+  const Cl  = cfg.colors    || {};
+  const lbl = cfg.labels    || {};
+  const ts  = cfg.tileSource|| {};
+  const bg   = Cl.background    || '#f0ede8';
+  const wat  = Cl.water         || '#9ecfdf';
+  const watS = Cl.waterStroke   || '#7ab8cc';
+  const park = Cl.park          || '#b8d8b8';
+  const res  = Cl.residential   || '#f5f0e8';
+  const bF   = Cl.buildingFill  || '#e8e0d4';
+  const bLn  = Cl.buildingLine  || '#c8bfb0';
+  const mway = Cl.motorway      || '#e8a020';
+  const rdBg = Cl.primaryRoadBg || '#c0b8a8';
+  const rd   = Cl.primaryRoad   || '#ffffff';
+  const pth  = Cl.path          || '#c8b898';
+  const rzm  = L.roads?.minzoom ?? 8;
+  return {
+    version: 8,
+    glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
+    sources: { vm: { type:'vector', tiles:[TILE_URL], minzoom:ts.minzoom??8, maxzoom:ts.maxzoom??16 } },
+    layers: [
+      { id:'bg',   type:'background', paint:{'background-color':bg} },
+      { id:'water', type:'fill', source:'vm', 'source-layer':'water', minzoom:L.water?.minzoom??0,
+        paint:{'fill-color':wat,'fill-outline-color':watS} },
+      { id:'landuse', type:'fill', source:'vm', 'source-layer':'land_use', minzoom:L.land_use?.minzoom??8,
+        paint:{'fill-color':['match',['get','class'],'park',park,'forest',park,'residential',res,bg]} },
+      { id:'bldg', type:'fill', source:'vm', 'source-layer':'buildings', minzoom:L.buildings?.minzoom??13,
+        paint:{'fill-color':bF,'fill-outline-color':bLn} },
+      { id:'road-motorway-bg', type:'line', source:'vm', 'source-layer':'roads', minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk'],true,false],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':'#b07010','line-width':['interpolate',['linear'],['zoom'],8,3,14,10,16,16]} },
+      { id:'road-primary-bg', type:'line', source:'vm', 'source-layer':'roads', minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk'],false,true],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':rdBg,'line-width':['interpolate',['linear'],['zoom'],8,1,14,5,16,8]} },
+      { id:'road-motorway-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk'],true,false],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':mway,'line-width':['interpolate',['linear'],['zoom'],8,2,14,7,16,12]} },
+      { id:'road-primary-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:rzm,
+        filter:['match',['get','class'],['motorway','trunk','path','footway','cycleway'],false,true],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],8,0.5,14,3,16,6]} },
+      { id:'road-path-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:Math.max(rzm,12),
+        filter:['match',['get','class'],['path','footway','cycleway'],true,false],
+        layout:{'line-cap':'round','line-join':'round'},
+        paint:{'line-color':pth,'line-dasharray':[2,2],
+               'line-width':['interpolate',['linear'],['zoom'],12,0.5,16,2]} },
+      { id:'road-label', type:'symbol', source:'vm', 'source-layer':'roads', minzoom:lbl.roads?.minzoom??14,
+        layout:{'text-field':['get','name'],'symbol-placement':'line',
+                'text-size':lbl.roads?.fontSize??11,'text-font':['Open Sans Regular'],
+                'text-max-angle':30,'text-padding':10},
+        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1.5} },
+      { id:'place-label', type:'symbol', source:'vm', 'source-layer':'places', minzoom:lbl.places?.minzoom??15,
+        layout:{'text-field':['get','name'],'text-size':lbl.places?.fontSize??10,
+                'text-font':['Open Sans Regular'],'text-anchor':'top','text-offset':[0,0.3]},
+        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1} },
+      { id:'addr-label', type:'symbol', source:'vm', 'source-layer':'addresses', minzoom:lbl.addresses?.minzoom??17,
+        layout:{'text-field':['get','housenumber'],'text-size':lbl.addresses?.fontSize??10,
+                'text-font':['Open Sans Regular']},
+        paint:{'text-color':'#888','text-halo-color':'#fff','text-halo-width':1} },
+    ]
+  };
+}
+
+// ─── HELPERS ───
+async function req(path, opts = {}, _retried = false) {
+  if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
+    await refreshSession();
+  }
+  const h = { 'Content-Type': 'application/json', apikey: SB_ANON, ...opts.headers };
+  if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
+  const r = await fetch(SB_URL + path, { ...opts, headers: h });
+  const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
+  if (r.status === 401 && !_retried) {
+    const ok = await refreshSession();
+    if (ok) return req(path, opts, true);
+    localStorage.removeItem('aliby_s');
+    S.session = null; S.profile = null;
+    goTo('auth');
+    throw { message: 'Сессия истекла, войдите снова' };
+  }
+  if (!r.ok) throw body || { message: r.statusText };
+  return body;
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; }
+const statusMap = { pending:'Ожидает', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+const subStMap  = { pending:'Ожидает', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
+const payMap    = { card:'Карта', subscription:'Абонемент', mixed:'Смешанный' };
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
+
+// ─── NAV ───
+function goTo(id) {
+  if (id !== 'auth' && !S.session) { goTo('auth'); return; }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id)?.classList.add('active');
+  document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
+  ({map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,orders:loadOrders,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
+}
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.nav)));
+
+function showAuthTab(name) {
+  document.querySelectorAll('[data-tab-auth]').forEach(b => b.classList.toggle('active', b.dataset.tabAuth === name));
+  document.querySelectorAll('#screen-auth .tab-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('auth-' + name)?.classList.add('active');
+}
+document.querySelectorAll('[data-tab-auth]').forEach(b => b.addEventListener('click', () => showAuthTab(b.dataset.tabAuth)));
+
+document.querySelectorAll('[data-tab-sub]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('[data-tab-sub]').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('#screen-subscriptions .tab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('sub-' + b.dataset.tabSub)?.classList.add('active');
+  });
+});
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── APP CONFIG ───
+async function loadAppConfig() {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/app_config?scope=eq.client&select=config`, {
+      headers: { apikey: SB_ANON, 'Accept': 'application/json' }
+    });
+    if (!r.ok) return;
+    const rows = await r.json();
+    if (!rows?.length) return;
+    const cfg = rows[0].config;
+    if (cfg?.vectorMap) S.mapCfg = cfg.vectorMap;
+    if (cfg?.ui?.features) S.features = { ...DEFAULT_FEATURES, ...cfg.ui.features };
+  } catch(e) {}
+  applyFeatureToggles();
+}
+
+function applyFeatureToggles() {
+  const f = S.features;
+  const map = { map: 'sMap', store: 'sStores', menu: 'sMenu', cart: 'sCart', orders: 'sOrders', subscriptions: 'sMySubscriptions' };
+  Object.entries(map).forEach(([nav, key]) => {
+    const btn = document.querySelector(`[data-nav="${nav}"]`);
+    if (btn) btn.style.display = f[key] === false ? 'none' : '';
+  });
+}
+
+// ─── AUTH ───
+async function doLogin() {
+  const err = document.getElementById('err-login');
+  err.style.display = 'none';
+  try {
+    // POST /auth/v1/token?grant_type=password
+    const d = await req('/auth/v1/token?grant_type=password', {
+      method:'POST',
+      body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
+    });
+    setSession(d); goTo('map');
+  } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
+}
+
+async function doRegister() {
+  const err = document.getElementById('err-reg');
+  err.style.display = 'none';
+  try {
+    // POST /auth/v1/signup
+    const d = await req('/auth/v1/signup', {
+      method:'POST',
+      body: JSON.stringify({ email: document.getElementById('reg-email').value, password: document.getElementById('reg-pwd').value }),
+    });
+    setSession(d); goTo('map');
+  } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; }
+}
+
+async function doRecover() {
+  try {
+    // POST /auth/v1/recover
+    await req('/auth/v1/recover', { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
+    document.getElementById('ok-recover').style.display = 'block';
+  } catch(e) { alert(e.message || 'Ошибка'); }
+}
+
+async function doResetPwd() {
+  try {
+    // PUT /auth/v1/user
+    await req('/auth/v1/user', { method:'PUT', body: JSON.stringify({ password: document.getElementById('rst-pwd').value }) });
+    alert('Пароль обновлён'); goTo('map');
+  } catch(e) { alert(e.message || 'Ошибка'); }
+}
+
+async function doLogout() {
+  try { await req('/auth/v1/logout', { method:'POST' }); } finally {
+    localStorage.removeItem('aliby_s');
+    S.session = null; S.profile = null; goTo('auth');
+  }
+}
+
+async function doDeleteAccount() {
+  if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
+  try {
+    await req('/functions/v1/delete-account', { method: 'POST' });
+    localStorage.removeItem('aliby_s');
+    S.session = null; S.profile = null;
+    goTo('auth');
+  } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
+}
+
+function setSession(d) {
+  S.session = d;
+  localStorage.setItem('aliby_s', JSON.stringify(d));
+  document.getElementById('sn-email').textContent = d.user?.email || '';
+}
+
+async function refreshSession() {
+  if (!S.session?.refresh_token) return false;
+  try {
+    const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
+      body: JSON.stringify({ refresh_token: S.session.refresh_token }),
+    });
+    if (!r.ok) return false;
+    const d = await r.json();
+    if (!d.access_token) return false;
+    setSession(d);
+    return true;
+  } catch(e) { return false; }
+}
+
+// ─── MAP ───
+async function loadMap() {
+  loadStoreList();
+  loadMapData();
+}
+
+async function loadStoreList() {
+  const el = document.getElementById('sl-list');
+  try {
+    // GET /rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)
+    const stores = await req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)');
+    el.innerHTML = '';
+    if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
+    stores.forEach(st => {
+      const d = document.createElement('div');
+      d.className = 'sl-item' + (S.store?.id === st.id ? ' sel' : '');
+      d.innerHTML = `<div><div class="sli-name">${esc(st.name)}</div><div class="sli-addr">${esc(st.address)}</div></div><span>→</span>`;
+      d.addEventListener('click', () => showStorePopup(st, d));
+      el.appendChild(d);
+    });
+  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+async function loadMapData() {
+  if (S.map) { setTimeout(() => S.map.resize(), 0); loadStoreMarkers(); return; }
+  S.map = new maplibregl.Map({
+    container: 'map-gl', style: buildMapStyle(S.mapCfg),
+    center: [0, 0], zoom: 2, attributionControl: false,
+    transformRequest: (url) => {
+      if (url.includes('/functions/v1/vector-tiles/')) return { url };
+      if (url.startsWith(SB_URL)) {
+        const headers = { apikey: SB_ANON };
+        if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
+        return { url, headers };
+      }
+    },
+  });
+  S.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+  S.map.on('load', loadStoreMarkers);
+}
+
+async function loadStoreMarkers() {
+  try {
+    S.mapMarkers.forEach(m => m.remove());
+    S.mapMarkers = [];
+    // POST /rest/v1/rpc/get_stores_with_locations
+    const stores = await req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' });
+    const bounds = new maplibregl.LngLatBounds();
+    let hasCoords = false;
+    stores.forEach(st => {
+      if (st.lng == null || st.lat == null) return;
+      hasCoords = true;
+      bounds.extend([st.lng, st.lat]);
+      const el = document.createElement('div');
+      el.className = 'store-pin';
+      el.innerHTML = `<div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(st.name)}</div>`;
+      el.addEventListener('click', () => showStorePopup(st, null));
+      S.mapMarkers.push(new maplibregl.Marker({ element: el }).setLngLat([st.lng, st.lat]).addTo(S.map));
+    });
+    if (hasCoords && !S.mapFitted) {
+      S.mapFitted = true;
+      S.map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 600 });
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function filterStores(q) {
+  document.querySelectorAll('.sl-item').forEach(el =>
+    el.style.display = el.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'
+  );
+}
+
+function showStorePopup(st, listItem) {
+  if (!st) return;
+  S.store = st;
+  document.querySelectorAll('.sl-item').forEach(el => el.classList.remove('sel'));
+  listItem?.classList.add('sel');
+  document.getElementById('pp-name').textContent  = st.name || '';
+  document.getElementById('pp-addr').textContent  = st.address || '';
+  document.getElementById('pp-hours').textContent = st.working_hours || '';
+  document.getElementById('pp-phone').textContent = st.phone || '';
+  document.getElementById('map-popup').classList.remove('hidden');
+}
+function closePopup() { document.getElementById('map-popup').classList.add('hidden'); }
+function openStoreFromPopup() { closePopup(); goTo('store'); }
+
+// ─── STORE ───
+async function loadStore() {
+  if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
+  const st = S.store;
+  document.getElementById('store-ph-name').textContent = st.name;
+  document.getElementById('st-name').textContent   = st.name;
+  document.getElementById('st-addr').textContent   = st.address || '';
+  document.getElementById('st-hours').textContent  = st.working_hours || '';
+  document.getElementById('st-phone').textContent  = st.phone || '';
+  const sc = st.store_categories;
+  document.getElementById('st-cuisine').textContent = sc ? (sc.icon ? sc.icon + ' ' + sc.name : sc.name) : '';
+  await Promise.all([loadStoreSubs(), loadStoreRec()]);
+}
+
+async function loadStoreSubs() {
+  const el = document.getElementById('store-subs');
+  try {
+    // GET /rest/v1/subscriptions?store_id=eq.{id}
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`);
+    if (!subs.length) { el.innerHTML = '<span class="txt-sm">Нет абонементов</span>'; return; }
+    el.innerHTML = subs.map(s => `
+      <div class="sub-card">
+        <h4>${esc(s.name)}</h4>
+        <div class="sub-price">${s.price} ₽</div>
+        <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
+        <button class="btn btn-p btn-sm" onclick="openBuyModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Купить</button>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
+}
+
+async function loadStoreRec() {
+  const el = document.getElementById('store-rec');
+  try {
+    // GET /rest/v1/menu_items?store_id=eq.{id}&is_available=eq.true&limit=4
+    const items = await req(`/rest/v1/menu_items?store_id=eq.${S.store.id}&is_available=eq.true&limit=4`);
+    if (!items.length) { el.innerHTML = '<div class="empty">Пусто</div>'; return; }
+    el.innerHTML = items.map(renderItemCard).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">Ошибка</div>'; }
+}
+
+// ─── MENU ───
+async function loadMenu() {
+  if (!S.store) return;
+  document.getElementById('menu-ph-name').textContent = S.store.name;
+  await Promise.all([loadCategories(), loadMenuItems()]);
+}
+
+async function loadCategories() {
+  const bar = document.getElementById('cat-bar');
+  try {
+    // GET /rest/v1/categories?store_id=eq.{id}&order=name.asc
+    const cats = await req(`/rest/v1/categories?store_id=eq.${S.store.id}&order=name.asc`);
+    bar.innerHTML = `<button class="chip${!S.menuCatId?' active':''}" data-cid="">Все</button>`;
+    cats.forEach(c => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (S.menuCatId === c.id ? ' active' : '');
+      b.dataset.cid = c.id; b.textContent = c.name;
+      b.addEventListener('click', () => { S.menuCatId = c.id; updateCatActive(); loadMenuItems(); });
+      bar.appendChild(b);
+    });
+    bar.querySelector('[data-cid=""]').addEventListener('click', () => { S.menuCatId = ''; updateCatActive(); loadMenuItems(); });
+  } catch(e) {}
+}
+
+function updateCatActive() {
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cid === S.menuCatId));
+}
+
+async function loadMenuItems() {
+  const el = document.getElementById('menu-items');
+  if (!S.store) return;
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    // GET /rest/v1/menu_items with filters
+    let url = `/rest/v1/menu_items?store_id=eq.${S.store.id}`;
+    if (S.menuCatId) url += `&category_id=eq.${S.menuCatId}`;
+    const q = document.getElementById('m-search')?.value;
+    if (q) url += `&name=ilike.*${encodeURIComponent(q)}*`;
+    if (document.getElementById('m-avail')?.checked) url += '&is_available=eq.true';
+    const sort = document.getElementById('m-sort')?.value;
+    if (sort) url += `&order=${sort}`;
+    const items = await req(url);
+    if (!items.length) { el.innerHTML = '<div class="empty">Позиций нет</div>'; return; }
+    el.innerHTML = items.map(renderItemCard).join('');
+    updateCartCount();
+  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+function renderItemCard(item) {
+  const inCart = S.cart.find(c => c.item.id === item.id);
+  const qty = inCart?.qty || 0;
+  // GET /storage/v1/object/public/menu-photos/{filename} via image_url field
+  const imgHtml = item.image_url
+    ? `<img src="${esc(item.image_url)}" alt="${esc(item.name)}">`
+    : 'Фото';
+  const itemJson = esc(JSON.stringify(item));
+  return `<div class="item-card">
+    <div class="item-img">${imgHtml}</div>
+    <div class="item-body">
+      <div class="item-name">${esc(item.name)}</div>
+      ${item.description ? `<div class="item-desc">${esc(item.description)}</div>` : ''}
+      <div class="item-price">${item.price} ₽</div>
+      ${item.is_available
+        ? qty > 0
+          ? `<div class="qty-ctrl"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
+          : `<button class="btn btn-p btn-sm" onclick="addToCartById('${item.id}')">В корзину</button>`
+        : '<span class="item-unavail">Недоступно</span>'}
+    </div>
+  </div>`;
+}
+
+// Store items by id for add to cart without JSON injection
+const itemCache = new Map();
+function cacheItem(item) { itemCache.set(item.id, item); return item; }
+async function addToCartById(id) {
+  let item = itemCache.get(id);
+  if (!item) {
+    try {
+      // GET /rest/v1/menu_items?id=eq.{id}
+      const r = await req(`/rest/v1/menu_items?id=eq.${id}`);
+      item = r[0]; if (item) itemCache.set(id, item);
+    } catch(e) { return; }
+  }
+  if (!item) return;
+  if (S.cartStoreId && S.cartStoreId !== S.store?.id) {
+    if (!confirm('В корзине товары из другого заведения. Очистить?')) return;
+    S.cart = []; S.appliedSub = null;
+  }
+  S.cartStoreId = S.store?.id;
+  const ex = S.cart.find(c => c.item.id === item.id);
+  if (ex) ex.qty++; else S.cart.push({ item, qty: 1 });
+  updateCartCount(); loadMenuItems();
+}
+
+function changeQty(id, delta) {
+  const i = S.cart.findIndex(c => c.item.id === id);
+  if (i < 0) return;
+  S.cart[i].qty += delta;
+  if (S.cart[i].qty <= 0) S.cart.splice(i, 1);
+  updateCartCount(); loadMenuItems();
+}
+
+function updateCartCount() {
+  const n = S.cart.reduce((s, c) => s + c.qty, 0);
+  document.getElementById('sn-cart-cnt').textContent = n > 0 ? `(${n})` : '';
+  const mc = document.getElementById('menu-cart-cnt');
+  if (mc) mc.textContent = n;
+}
+
+// ─── CART ───
+async function renderCart() {
+  const body = document.getElementById('cart-body');
+  const foot = document.getElementById('cart-foot');
+  if (!S.cart.length) { body.innerHTML = '<div class="empty">Корзина пуста</div>'; foot.style.display = 'none'; return; }
+  foot.style.display = 'block';
+  let sub = 0;
+  body.innerHTML = S.cart.map(({ item, qty }) => {
+    const sum = item.price * qty; sub += sum;
+    return `<div class="cart-item">
+      <div class="ci-info"><div class="ci-name">${esc(item.name)}</div><div class="ci-price">${item.price} ₽ × ${qty} = ${sum} ₽</div></div>
+      <div class="qty-ctrl"><button class="qty-btn" onclick="cartQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button></div>
+    </div>`;
+  }).join('');
+  const disc = S.appliedSub?.amount || 0;
+  document.getElementById('c-subtotal').textContent = sub + ' ₽';
+  document.getElementById('c-disc-row').style.display = disc > 0 ? 'flex' : 'none';
+  document.getElementById('c-discount').textContent = '−' + disc + ' ₽';
+  document.getElementById('c-total').textContent = Math.max(0, sub - disc) + ' ₽';
+  // Load active subscriptions for selector
+  try {
+    // GET /rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)
+    const usubs = await req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)');
+    const sel = document.getElementById('cart-sub-sel');
+    sel.innerHTML = '<option value="">— Выбрать абонемент —</option>';
+    usubs.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u.id;
+      o.textContent = `${u.subscriptions?.name || 'Абонемент'} (${u.remaining_uses ?? '∞'} исп.)`;
+      sel.appendChild(o);
+    });
+  } catch(e) {}
+}
+
+function cartQty(id, d) {
+  const i = S.cart.findIndex(c => c.item.id === id);
+  if (i < 0) return;
+  S.cart[i].qty += d;
+  if (S.cart[i].qty <= 0) S.cart.splice(i, 1);
+  updateCartCount(); renderCart();
+}
+
+async function validateSub() {
+  const subId = document.getElementById('cart-sub-sel').value;
+  const res = document.getElementById('sub-val-res');
+  if (!subId) { res.textContent = 'Выберите абонемент'; return; }
+  res.textContent = 'Проверка…';
+  try {
+    // POST /functions/v1/validate-subscription
+    const r = await req('/functions/v1/validate-subscription', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_subscription_id: subId,
+        order_items: S.cart.map(c => ({ menu_item_id: c.item.id, quantity: c.qty })),
+      }),
+    });
+    if (r.valid) {
+      S.appliedSub = { userSubId: subId, amount: r.discount_amount };
+      res.innerHTML = `<span style="color:#070">✓ Скидка ${r.discount_amount} ₽ применима</span>`;
+      renderCart();
+    } else {
+      S.appliedSub = null;
+      res.innerHTML = `<span style="color:#c00">✗ ${esc(r.reason)}</span>`;
+    }
+  } catch(e) { res.textContent = 'Ошибка проверки'; }
+}
+
+async function payBySub()  { if (!S.appliedSub) { alert('Сначала проверьте абонемент'); return; } await checkoutOrder('subscription'); }
+async function payByCard() { await checkoutOrder('card'); }
+
+async function checkoutOrder(method) {
+  try {
+    const sub  = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+    const disc = method === 'subscription' ? (S.appliedSub?.amount || 0) : 0;
+    const pickup = document.getElementById('c-pickup').value;
+
+    // POST /rest/v1/orders
+    const orders = await req('/rest/v1/orders?select=*', {
+      method: 'POST', headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({
+        user_id: S.session.user.id, store_id: S.cartStoreId,
+        total_amount: Math.max(0, sub - disc), payment_method: method,
+        pickup_time: pickup || null,
+        applied_user_subscription_id: method === 'subscription' ? S.appliedSub?.userSubId : null,
+        subscription_discount: disc,
+      }),
+    });
+    const orderId = orders[0].id;
+
+    // POST /rest/v1/order_items
+    await req('/rest/v1/order_items', {
+      method: 'POST',
+      body: JSON.stringify(S.cart.map(c => ({
+        order_id: orderId, menu_item_id: c.item.id,
+        quantity: c.qty, price_at_time: c.item.price,
+      }))),
+    });
+
+    if (method === 'subscription') {
+      // POST /functions/v1/redeem-subscription
+      await req('/functions/v1/redeem-subscription', {
+        method: 'POST',
+        body: JSON.stringify({ user_subscription_id: S.appliedSub.userSubId, order_id: orderId, amount_discounted: disc }),
+      });
+      S.cart = []; S.appliedSub = null; updateCartCount();
+      alert('Заказ оформлен! Оплата по абонементу выполнена.'); goTo('orders');
+    } else {
+      // POST /functions/v1/create-payment
+      const pmt = await req('/functions/v1/create-payment', {
+        method: 'POST',
+        body: JSON.stringify({ type: 'order', entity_id: orderId, return_url: window.location.href }),
+      });
+      S.cart = []; updateCartCount();
+      if (pmt.confirmation_url) window.location.href = pmt.confirmation_url;
+    }
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── ORDERS ───
+async function loadOrders() {
+  const el = document.getElementById('orders-list');
+  const status = document.getElementById('ord-filter').value;
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    // GET /rest/v1/orders?user_id=eq.{id}&order=order_time.desc
+    let url = `/rest/v1/orders?user_id=eq.${S.session.user.id}&order=order_time.desc`;
+    if (status) url += `&status=eq.${status}`;
+    const orders = await req(url);
+    if (!orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
+    el.innerHTML = orders.map(o => `
+      <div class="order-card" onclick="openOrderModal('${o.id}')">
+        <div class="order-hd">
+          <span class="order-id">№${o.id.slice(0,8)}</span>
+          <span class="badge b-${o.status}">${statusMap[o.status] || o.status}</span>
+        </div>
+        <div class="order-date">${fmtDate(o.order_time)}</div>
+        <div><strong>${o.total_amount} ₽</strong><span class="txt-sm"> · ${payMap[o.payment_method] || '—'}</span></div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+async function openOrderModal(id) {
+  openModal('m-order');
+  document.getElementById('mo-id').textContent = id.slice(0,8);
+  document.getElementById('mo-items').innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    // GET /rest/v1/orders?id=eq.{id}
+    // GET /rest/v1/order_items?order_id=eq.{id}&select=*,menu_items(name)
+    // GET /rest/v1/payments?order_id=eq.{id}
+    const [ords, items, pmts] = await Promise.all([
+      req(`/rest/v1/orders?id=eq.${id}`),
+      req(`/rest/v1/order_items?order_id=eq.${id}&select=*,menu_items(name)`),
+      req(`/rest/v1/payments?order_id=eq.${id}`),
+    ]);
+    const o = ords[0];
+    document.getElementById('mo-status').textContent = statusMap[o.status] || o.status;
+    document.getElementById('mo-status').className   = `badge b-${o.status}`;
+    document.getElementById('mo-date').textContent   = fmtDate(o.order_time);
+    document.getElementById('mo-total').textContent  = o.total_amount + ' ₽';
+    document.getElementById('mo-pay-method').textContent = payMap[o.payment_method] || '—';
+    document.getElementById('mo-items').innerHTML = items.length
+      ? items.map(i => `<div class="cart-row"><span>${esc(i.menu_items?.name || '—')} × ${i.quantity}</span><span>${(i.price_at_time * i.quantity).toFixed(2)} ₽</span></div>`).join('')
+      : '<div class="empty">Нет позиций</div>';
+    const p = pmts[0];
+    document.getElementById('mo-payment').innerHTML = p
+      ? `Платёж: <span class="badge">${p.status}</span> · ${p.amount} ₽` : '';
+  } catch(e) { document.getElementById('mo-items').innerHTML = '<div class="empty">Ошибка</div>'; }
+}
+
+// ─── MY SUBSCRIPTIONS ───
+async function loadMySubscriptions() {
+  document.getElementById('usubs-active').innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    // GET /rest/v1/user_subscriptions?select=*,subscriptions(*)
+    const [active, all] = await Promise.all([
+      req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)'),
+      req('/rest/v1/user_subscriptions?select=*,subscriptions(*)&order=purchase_date.desc'),
+    ]);
+    document.getElementById('usubs-active').innerHTML = active.length
+      ? active.map(renderUserSub).join('') : '<div class="empty">Нет активных абонементов</div>';
+    document.getElementById('usubs-all').innerHTML = all.length
+      ? all.map(renderUserSub).join('') : '<div class="empty">Нет абонементов</div>';
+  } catch(e) { document.getElementById('usubs-active').innerHTML = '<div class="empty">Ошибка</div>'; }
+}
+
+function renderUserSub(us) {
+  const plan = us.subscriptions;
+  return `<div class="usub-card" onclick="openSubModal('${us.id}','${esc(plan?.name||'')}','${us.end_date||''}',${us.remaining_uses??'null'})">
+    <div class="usub-hd">
+      <span class="usub-name">${esc(plan?.name || 'Абонемент')}</span>
+      <span class="badge b-${us.status}">${subStMap[us.status] || us.status}</span>
+    </div>
+    <div class="usub-stats">
+      <div class="usub-stat"><span class="lbl">Осталось исп.</span><strong>${us.remaining_uses ?? '∞'}</strong></div>
+      <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(us.end_date)}</strong></div>
+    </div>
+  </div>`;
+}
+
+async function openSubModal(id, name, endDate, uses) {
+  openModal('m-usub');
+  document.getElementById('mu-name').textContent = name;
+  document.getElementById('mu-uses').textContent = uses ?? '∞';
+  document.getElementById('mu-exp').textContent  = fmtShortDate(endDate);
+  document.getElementById('mu-redemptions').innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    // GET /rest/v1/subscription_redemptions?user_subscription_id=eq.{id}&order=redeemed_at.desc
+    const r = await req(`/rest/v1/subscription_redemptions?user_subscription_id=eq.${id}&order=redeemed_at.desc`);
+    document.getElementById('mu-redemptions').innerHTML = r.length
+      ? r.map(x => `<div class="cart-row"><div><div>${fmtDate(x.redeemed_at)}</div><div class="txt-muted">Заказ: ${x.order_id?.slice(0,8)||'—'}</div></div><strong>−${x.amount_discounted} ₽</strong></div>`).join('')
+      : '<div class="empty">Списаний нет</div>';
+  } catch(e) { document.getElementById('mu-redemptions').innerHTML = '<div class="empty">Ошибка</div>'; }
+}
+
+function openBuyModal(id, name, price, days, uses) {
+  S.pendingSubId = id;
+  document.getElementById('mb-info').innerHTML = `
+    <strong>${esc(name)}</strong><br>
+    <span class="lbl">Цена:</span> ${price} ₽ &nbsp;
+    <span class="lbl">Срок:</span> ${days} дн. &nbsp;
+    <span class="lbl">Использований:</span> ${uses === 0 ? 'безлимит' : uses}`;
+  openModal('m-buy');
+}
+
+async function buySubscription() {
+  if (!S.pendingSubId) return;
+  try {
+    // POST /functions/v1/create-payment
+    const p = await req('/functions/v1/create-payment', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'subscription', entity_id: S.pendingSubId, return_url: window.location.href }),
+    });
+    closeModal('m-buy');
+    if (p.confirmation_url) window.location.href = p.confirmation_url;
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── PROFILE ───
+async function loadProfile() {
+  try {
+    // GET /auth/v1/user
+    const u = await req('/auth/v1/user');
+    document.getElementById('p-email').textContent = u.email;
+    // GET /rest/v1/profiles?id=eq.{uuid}
+    const profs = await req(`/rest/v1/profiles?id=eq.${u.id}`);
+    if (profs.length) {
+      S.profile = profs[0];
+      document.getElementById('p-role').textContent  = profs[0].role;
+      document.getElementById('p-name').value        = profs[0].full_name || '';
+    }
+  } catch(e) {}
+}
+
+async function updateName() {
+  try {
+    // PATCH /rest/v1/profiles?id=eq.{uuid}
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ full_name: document.getElementById('p-name').value }),
+    });
+    alert('Имя сохранено');
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+async function updatePwd() {
+  try {
+    // PUT /auth/v1/user
+    await req('/auth/v1/user', {
+      method: 'PUT',
+      body: JSON.stringify({ password: document.getElementById('p-newpwd').value }),
+    });
+    alert('Пароль обновлён');
+    document.getElementById('p-newpwd').value = '';
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+// ─── INIT ───
+(async function init() {
+  await loadAppConfig();
+  try {
+    const saved = localStorage.getItem('aliby_s');
+    if (saved) {
+      const d = JSON.parse(saved);
+      if (d?.access_token) {
+        const expired = d.expires_at && (Date.now() / 1000 > d.expires_at);
+        if (expired) {
+          S.session = d;
+          document.getElementById('sn-email').textContent = d.user?.email || '';
+          refreshSession().then(ok => {
+            if (ok) goTo('map');
+            else { localStorage.removeItem('aliby_s'); S.session = null; goTo('auth'); }
+          });
+        } else {
+          setSession(d); goTo('map');
+        }
+        return;
+      }
+    }
+  } catch(e) {}
+  // Recovery link hash: #type=recovery&access_token=...
+  const hash = new URLSearchParams((window.location.hash || '').replace('#',''));
+  if (hash.get('type') === 'recovery') {
+    S.session = { access_token: hash.get('access_token') };
+    showAuthTab('reset');
+    document.getElementById('screen-auth').classList.add('active');
+    return;
+  }
+  goTo('auth');
+})();
+</script>
+</body>
+</html>
