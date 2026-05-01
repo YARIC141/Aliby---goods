@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#e8743b">
 <title>Aliby Foods</title>
+<link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <style>
@@ -102,7 +104,8 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 /* ── MAP ── */
 .map-layout{display:flex;flex:1;overflow:hidden}
 .sl-panel{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,max-height .25s ease}
-.sl-panel.collapsed{width:0;min-width:0;border-right:none}
+.map-layout.no-map .map-area{flex:0;min-width:0;width:0;overflow:hidden}
+.map-layout.no-map .sl-panel{flex:1;width:auto;border-right:none}
 .sl-search{padding:8px;border-bottom:1px solid var(--border);flex-shrink:0}
 .sl-search input{padding:6px 9px}
 .sl-list{flex:1;overflow-y:auto}
@@ -123,7 +126,8 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 @media(max-width:600px){
   .map-layout{flex-direction:column}
   .sl-panel{width:100%;max-height:42%;border-right:none;border-bottom:1px solid var(--border)}
-  .sl-panel.collapsed{width:100%;max-height:0;border-bottom:none}
+  .map-layout.no-map .map-area{flex:0;height:0}
+  .map-layout.no-map .sl-panel{flex:1;max-height:none;border-bottom:none}
 }
 
 /* ── STORE ── */
@@ -278,7 +282,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <div id="screen-map" class="screen">
   <div class="ph">
     <h2>Карта заведений</h2>
-    <button class="btn btn-sm" id="map-panel-btn" onclick="toggleMapPanel()">◀ Свернуть</button>
+    <button class="btn btn-sm" id="map-panel-btn" onclick="toggleMapPanel()">Скрыть карту</button>
   </div>
   <div class="map-layout">
 
@@ -711,6 +715,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 // ─── NAV ───
 function goTo(id) {
   if (id !== 'auth' && !S.session) { goTo('auth'); return; }
+  if (id !== 'auth') localStorage.setItem('aliby_nav', id);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.getElementById('screen-' + id)?.classList.add('active');
@@ -892,11 +897,11 @@ async function loadMapData() {
 }
 
 function toggleMapPanel() {
-  const panel = document.querySelector('.sl-panel');
+  const layout = document.querySelector('.map-layout');
   const btn = document.getElementById('map-panel-btn');
-  const collapsed = panel.classList.toggle('collapsed');
-  btn.textContent = collapsed ? '▶ Список' : '◀ Свернуть';
-  if (S.map) setTimeout(() => S.map.resize(), 280);
+  const hidden = layout.classList.toggle('no-map');
+  btn.textContent = hidden ? 'Показать карту' : 'Скрыть карту';
+  if (!hidden && S.map) setTimeout(() => S.map.resize(), 50);
 }
 
 async function loadStoreMarkers() {
@@ -933,6 +938,7 @@ function filterStores(q) {
 function showStorePopup(st, listItem) {
   if (!st) return;
   S.store = st;
+  try { localStorage.setItem('aliby_store', JSON.stringify(st)); } catch(e) {}
   document.querySelectorAll('.sl-item').forEach(el => el.classList.remove('sel'));
   listItem?.classList.add('sel');
   document.getElementById('pp-name').textContent  = st.name || '';
@@ -1101,7 +1107,7 @@ async function addToCartById(id) {
   S.cartStoreId = S.store?.id;
   const ex = S.cart.find(c => c.item.id === item.id);
   if (ex) ex.qty++; else S.cart.push({ item, qty: 1 });
-  updateCartCount(); loadMenuItems();
+  saveCart(); updateCartCount(); loadMenuItems();
 }
 
 function changeQty(id, delta) {
@@ -1109,7 +1115,11 @@ function changeQty(id, delta) {
   if (i < 0) return;
   S.cart[i].qty += delta;
   if (S.cart[i].qty <= 0) S.cart.splice(i, 1);
-  updateCartCount(); loadMenuItems();
+  saveCart(); updateCartCount(); loadMenuItems();
+}
+
+function saveCart() {
+  try { localStorage.setItem('aliby_cart', JSON.stringify({ storeId: S.cartStoreId, items: S.cart })); } catch(e) {}
 }
 
 function updateCartCount() {
@@ -1395,6 +1405,21 @@ async function updatePwd() {
   } catch(e) { alert('Ошибка: ' + (e.message || '')); }
 }
 
+// ─── NAV / CART RESTORE ───
+async function restoreNav() {
+  try {
+    const sc = localStorage.getItem('aliby_cart');
+    if (sc) { const d = JSON.parse(sc); S.cart = d.items || []; S.cartStoreId = d.storeId || null; updateCartCount(); }
+  } catch(e) {}
+  try {
+    const ss = localStorage.getItem('aliby_store');
+    if (ss) S.store = JSON.parse(ss);
+  } catch(e) {}
+  const SCREENS = ['map','store','menu','cart','orders','subscriptions','profile'];
+  const nav = localStorage.getItem('aliby_nav');
+  goTo(nav && SCREENS.includes(nav) ? nav : 'map');
+}
+
 // ─── INIT ───
 (async function init() {
   document.getElementById('theme-chk').checked = document.documentElement.classList.contains('dark');
@@ -1409,11 +1434,11 @@ async function updatePwd() {
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(ok => {
-            if (ok) goTo('map');
+            if (ok) restoreNav();
             else { localStorage.removeItem('aliby_s'); S.session = null; goTo('auth'); }
           });
         } else {
-          setSession(d); goTo('map');
+          setSession(d); restoreNav();
         }
         return;
       }
@@ -1429,6 +1454,10 @@ async function updatePwd() {
   }
   goTo('auth');
 })();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
 </script>
 </body>
 </html>
