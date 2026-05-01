@@ -1426,7 +1426,7 @@ async function loadMapAdmin() {
       container: 'map-admin-gl', style: buildMapStyle(S.mapCfg),
       center: [0, 0], zoom: 2, attributionControl: false,
       transformRequest: (url) => {
-        if (url.includes('/functions/v1/vector-tiles/')) return { url };
+        if (url.includes('/functions/v1/vector-tiles/')) return { url, headers: { apikey: SB_ANON } };
         if (url.startsWith(SB_URL)) {
           const headers = { apikey: SB_ANON };
           if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
