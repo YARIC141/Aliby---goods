@@ -43,10 +43,16 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 
 /* Bottom nav (mobile) */
 #bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--border)}
-.bn-inner{display:flex}
-.bn-btn{flex:1;padding:9px 4px 7px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
+.bn-inner{display:flex;flex-wrap:wrap}
+.bn-btn{flex:1;min-width:60px;padding:7px 4px 6px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
 .bn-btn .ico{font-size:19px;line-height:1}
 .bn-btn.active{color:var(--fg);font-weight:600}
+
+/* Coverage item picker */
+.item-picker{max-height:160px;overflow-y:auto;border:1px solid var(--border);padding:4px;display:flex;flex-direction:column;gap:2px}
+.item-picker label{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:4px 6px;border-radius:2px}
+.item-picker label:hover{background:var(--bg-subtle)}
+.item-picker label input{width:auto;flex-shrink:0}
 @media(max-width:767px){
   #side-nav{display:none}
   #bottom-nav{display:block}
@@ -581,7 +587,7 @@ tr:hover td{background:var(--bg-subtle)}
 
     <!-- Basic -->
     <div class="grid2">
-      <div class="fg"><label>Заведение *</label><select id="msub-store"></select></div>
+      <div class="fg"><label>Заведение *</label><select id="msub-store" onchange="updateCoverageUI()"></select></div>
       <div class="fg"><label>Название *</label><input type="text" id="msub-name"></div>
       <div class="fg"><label>Цена (₽) *</label><input type="number" step="0.01" id="msub-price"></div>
       <div class="fg"><label>Срок действия (дней) *</label><input type="number" id="msub-days"></div>
@@ -602,8 +608,9 @@ tr:hover td{background:var(--bg-subtle)}
       </div>
       <div id="cov-extra" style="display:none">
         <div class="fg">
-          <label id="cov-extra-label">UUID через запятую</label>
-          <textarea id="msub-cov-ids" rows="2" placeholder="uuid1, uuid2, …"></textarea>
+          <label id="cov-extra-label">Выбор</label>
+          <input type="search" id="msub-cov-search" placeholder="Поиск…" oninput="filterCovItems(this.value)" style="margin-bottom:6px">
+          <div id="msub-cov-list" class="item-picker"><div class="loading" style="padding:8px;font-size:12px">Выберите заведение</div></div>
         </div>
       </div>
     </div>
@@ -1311,10 +1318,13 @@ function openSubModal(sub) {
 
   // Coverage
   const cr = sub?.coverage_rules || { type: 'all' };
-  document.getElementById('msub-cov-type').value = cr.type || 'all';
-  const ids = [...(cr.category_ids||[]), ...(cr.item_ids||[]), ...(cr.exclude_items||[])].join(', ');
-  document.getElementById('msub-cov-ids').value = ids;
-  updateCoverageUI();
+  const covType = cr.type || 'all';
+  document.getElementById('msub-cov-type').value = covType;
+  document.getElementById('cov-extra').style.display = covType !== 'all' ? 'block' : 'none';
+  const labels = { include_categories:'Категории', include_items:'Блюда', exclude_items:'Исключить блюда' };
+  document.getElementById('cov-extra-label').textContent = labels[covType] || '';
+  document.getElementById('msub-cov-search').value = '';
+  const preselected = [...(cr.category_ids||[]), ...(cr.item_ids||[]), ...(cr.exclude_items||[])];
 
   // Time rules
   const tr = sub?.time_rules || {};
@@ -1332,21 +1342,60 @@ function openSubModal(sub) {
   document.getElementById('msub-minamount').value = ul.min_order_amount     || '';
 
   openModal('m-sub');
+  loadCovItems(preselected);
 }
+
+let _covItems = [];
 
 function updateCoverageUI() {
   const type = document.getElementById('msub-cov-type').value;
-  const extra = document.getElementById('cov-extra');
-  const lbl   = document.getElementById('cov-extra-label');
-  extra.style.display = type !== 'all' ? 'block' : 'none';
-  const labels = { include_categories:'UUID категорий', include_items:'UUID блюд', exclude_items:'UUID исключённых блюд' };
-  if (lbl) lbl.textContent = labels[type] || 'UUID';
+  document.getElementById('cov-extra').style.display = type !== 'all' ? 'block' : 'none';
+  const lbl = document.getElementById('cov-extra-label');
+  const labels = { include_categories:'Категории', include_items:'Блюда', exclude_items:'Исключить блюда' };
+  if (lbl) lbl.textContent = labels[type] || '';
+  document.getElementById('msub-cov-search').value = '';
+  loadCovItems();
 }
+
+async function loadCovItems(preselected = []) {
+  const type    = document.getElementById('msub-cov-type').value;
+  const storeId = document.getElementById('msub-store').value;
+  const list    = document.getElementById('msub-cov-list');
+  _covItems = [];
+  if (type === 'all') { list.innerHTML = ''; return; }
+  if (!storeId) {
+    list.innerHTML = '<div class="empty" style="padding:8px;font-size:12px">Выберите заведение</div>';
+    return;
+  }
+  list.innerHTML = '<div class="loading" style="padding:8px;font-size:12px">Загрузка…</div>';
+  try {
+    if (type === 'include_categories') {
+      _covItems = await req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`);
+    } else {
+      _covItems = await req(`/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc&select=id,name`);
+    }
+  } catch(e) { list.innerHTML = '<div class="empty" style="padding:8px">Ошибка загрузки</div>'; return; }
+  renderCovItems(preselected);
+}
+
+function renderCovItems(preselected = []) {
+  const list = document.getElementById('msub-cov-list');
+  const q = (document.getElementById('msub-cov-search')?.value || '').toLowerCase();
+  const checked = new Set(preselected);
+  list.querySelectorAll('input:checked').forEach(cb => checked.add(cb.value));
+  const items = q ? _covItems.filter(i => i.name.toLowerCase().includes(q)) : _covItems;
+  if (!items.length) { list.innerHTML = '<div class="empty" style="padding:8px;font-size:12px">Нет элементов</div>'; return; }
+  list.innerHTML = items.map(i =>
+    `<label><input type="checkbox" value="${i.id}"${checked.has(i.id) ? ' checked' : ''}>${esc(i.name)}</label>`
+  ).join('');
+}
+
+function filterCovItems() { renderCovItems(); }
 
 async function saveSubscription() {
   const id = document.getElementById('msub-id').value;
   const type = document.getElementById('msub-cov-type').value;
-  const rawIds = document.getElementById('msub-cov-ids').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const rawIds = [...document.querySelectorAll('#msub-cov-list input:checked')].map(cb => cb.value);
 
   const coverage_rules = { type };
   if (type === 'include_categories') coverage_rules.category_ids = rawIds;
