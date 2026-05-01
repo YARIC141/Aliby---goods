@@ -101,7 +101,8 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 /* ── MAP ── */
 .map-layout{display:flex;flex:1;overflow:hidden}
-.sl-panel{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sl-panel{width:260px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .25s ease,max-height .25s ease}
+.sl-panel.collapsed{width:0;min-width:0;border-right:none}
 .sl-search{padding:8px;border-bottom:1px solid var(--border);flex-shrink:0}
 .sl-search input{padding:6px 9px}
 .sl-list{flex:1;overflow-y:auto}
@@ -122,6 +123,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 @media(max-width:600px){
   .map-layout{flex-direction:column}
   .sl-panel{width:100%;max-height:42%;border-right:none;border-bottom:1px solid var(--border)}
+  .sl-panel.collapsed{width:100%;max-height:0;border-bottom:none}
 }
 
 /* ── STORE ── */
@@ -147,6 +149,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .chip{padding:4px 12px;border:1px solid var(--border);background:none;cursor:pointer;font-size:12px;white-space:nowrap;font-family:inherit;color:var(--fg)}
 .chip.active{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .items-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.subs-grid{display:flex;flex-wrap:wrap;gap:10px;padding-bottom:4px}
 @media(min-width:900px){.items-grid{grid-template-columns:repeat(3,1fr)}}
 .item-card{border:1px solid var(--border)}
 .item-img{width:100%;height:80px;background:var(--bg-muted);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);overflow:hidden}
@@ -273,7 +276,10 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 <!-- ════════════════ MAP ════════════════ -->
 <div id="screen-map" class="screen">
-  <div class="ph"><h2>Карта заведений</h2></div>
+  <div class="ph">
+    <h2>Карта заведений</h2>
+    <button class="btn btn-sm" id="map-panel-btn" onclick="toggleMapPanel()">◀ Свернуть</button>
+  </div>
   <div class="map-layout">
 
     <div class="sl-panel">
@@ -593,7 +599,7 @@ const DEFAULT_FEATURES = {
 const S = {
   session: null, profile: null, store: null,
   cart: [], cartStoreId: null, appliedSub: null,
-  menuCatId: '', pendingSubId: null,
+  menuCatId: '', menuStoreSubs: [], pendingSubId: null,
   map: null, mapMarkers: [], mapFitted: false,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
@@ -885,6 +891,14 @@ async function loadMapData() {
   S.map.on('load', loadStoreMarkers);
 }
 
+function toggleMapPanel() {
+  const panel = document.querySelector('.sl-panel');
+  const btn = document.getElementById('map-panel-btn');
+  const collapsed = panel.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▶ Список' : '◀ Свернуть';
+  if (S.map) setTimeout(() => S.map.resize(), 280);
+}
+
 async function loadStoreMarkers() {
   try {
     S.mapMarkers.forEach(m => m.remove());
@@ -980,8 +994,11 @@ async function loadMenu() {
 async function loadCategories() {
   const bar = document.getElementById('cat-bar');
   try {
-    // GET /rest/v1/categories?store_id=eq.{id}&order=name.asc
-    const cats = await req(`/rest/v1/categories?store_id=eq.${S.store.id}&order=name.asc`);
+    const [cats, subs] = await Promise.all([
+      req(`/rest/v1/categories?store_id=eq.${S.store.id}&order=name.asc`),
+      req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`),
+    ]);
+    S.menuStoreSubs = subs;
     bar.innerHTML = `<button class="chip${!S.menuCatId?' active':''}" data-cid="">Все</button>`;
     cats.forEach(c => {
       const b = document.createElement('button');
@@ -990,6 +1007,13 @@ async function loadCategories() {
       b.addEventListener('click', () => { S.menuCatId = c.id; updateCatActive(); loadMenuItems(); });
       bar.appendChild(b);
     });
+    if (subs.length) {
+      const b = document.createElement('button');
+      b.className = 'chip' + (S.menuCatId === '__subs__' ? ' active' : '');
+      b.dataset.cid = '__subs__'; b.textContent = '🎫 Абонементы';
+      b.addEventListener('click', () => { S.menuCatId = '__subs__'; updateCatActive(); loadMenuItems(); });
+      bar.appendChild(b);
+    }
     bar.querySelector('[data-cid=""]').addEventListener('click', () => { S.menuCatId = ''; updateCatActive(); loadMenuItems(); });
   } catch(e) {}
 }
@@ -1001,6 +1025,22 @@ function updateCatActive() {
 async function loadMenuItems() {
   const el = document.getElementById('menu-items');
   if (!S.store) return;
+
+  if (S.menuCatId === '__subs__') {
+    el.className = 'subs-grid';
+    const subs = S.menuStoreSubs;
+    if (!subs.length) { el.innerHTML = '<div class="empty">Нет абонементов</div>'; return; }
+    el.innerHTML = subs.map(s => `
+      <div class="sub-card">
+        <h4>${esc(s.name)}</h4>
+        <div class="sub-price">${s.price} ₽</div>
+        <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
+        <button class="btn btn-p btn-sm" onclick="openBuyModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Купить</button>
+      </div>`).join('');
+    return;
+  }
+
+  el.className = 'items-grid';
   el.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
     // GET /rest/v1/menu_items with filters
