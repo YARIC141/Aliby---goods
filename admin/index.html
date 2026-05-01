@@ -41,16 +41,15 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 .sn-footer{padding:10px 12px;border-top:1px solid var(--border-light);display:flex;flex-direction:column;gap:6px}
 .sn-user{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* Mobile hamburger */
-#hamburger{display:none;position:fixed;top:10px;left:10px;z-index:300;background:var(--bg);border:1px solid var(--border);padding:6px 8px;cursor:pointer;font-size:18px;color:var(--fg)}
-.mob-overlay{display:none;position:fixed;inset:0;background:var(--bg-overlay);z-index:250}
-.mob-overlay.open{display:block}
+/* Bottom nav (mobile) */
+#bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--border)}
+.bn-inner{display:flex}
+.bn-btn{flex:1;padding:9px 4px 7px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
+.bn-btn .ico{font-size:19px;line-height:1}
+.bn-btn.active{color:var(--fg);font-weight:600}
 @media(max-width:767px){
-  #side-nav{position:fixed;left:-210px;top:0;bottom:0;z-index:260;transition:left .2s;background:var(--bg)}
-  #side-nav.open{left:0}
-  #hamburger{display:block}
-  #main{padding-top:0}
-  .ph{padding-left:50px}
+  #side-nav{display:none}
+  #bottom-nav{display:block}
 }
 
 /* ── COMMON ── */
@@ -156,9 +155,6 @@ tr:hover td{background:var(--bg-subtle)}
 <script>if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
 <body>
-
-<button id="hamburger" onclick="toggleNav()">☰</button>
-<div class="mob-overlay" id="mob-overlay" onclick="closeNav()"></div>
 
 <div id="app">
 
@@ -451,6 +447,17 @@ tr:hover td{background:var(--bg-subtle)}
       <button class="btn btn-d btn-full" onclick="doDeleteAccount()">Удалить аккаунт</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ════════════════ BOTTOM NAV ════════════════ -->
+<div id="bottom-nav">
+  <div class="bn-inner">
+    <button class="bn-btn" data-nav="stores"><span class="ico">🏪</span>Заведения</button>
+    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Меню</button>
+    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
+    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
+    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
   </div>
 </div>
 
@@ -815,15 +822,6 @@ function filterTable(tableId, q) {
   });
 }
 
-function toggleNav() {
-  document.getElementById('side-nav').classList.toggle('open');
-  document.getElementById('mob-overlay').classList.toggle('open');
-}
-function closeNav() {
-  document.getElementById('side-nav').classList.remove('open');
-  document.getElementById('mob-overlay').classList.remove('open');
-}
-
 // ─── NAV ───
 function goTo(id) {
   if (id !== 'auth' && !S.session) { goTo('auth'); return; }
@@ -831,7 +829,6 @@ function goTo(id) {
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.getElementById('screen-' + id)?.classList.add('active');
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  closeNav();
   ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,profile:loadProfile})[id]?.();
 }
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.nav)));
