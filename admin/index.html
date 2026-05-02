@@ -372,14 +372,8 @@ tr:hover td{background:var(--bg-subtle)}
         <label>Заведение</label>
         <select id="marker-store-sel"></select>
       </div>
-      <div class="fg" style="width:120px;margin:0">
-        <label>Долгота (Lng)</label>
-        <input type="number" id="marker-lng" placeholder="76.930000" step="0.000001">
-      </div>
-      <div class="fg" style="width:120px;margin:0">
-        <label>Широта (Lat)</label>
-        <input type="number" id="marker-lat" placeholder="43.260000" step="0.000001">
-      </div>
+      <input type="hidden" id="marker-lng">
+      <input type="hidden" id="marker-lat">
       <div class="fg" style="width:70px;margin:0">
         <label>Цвет</label>
         <input type="color" id="marker-color" value="#e8430a" style="padding:2px 4px;height:33px">
