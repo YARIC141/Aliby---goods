@@ -1517,10 +1517,7 @@ if ('serviceWorker' in navigator) {
   });
 
   function reloadCurrentScreen() {
-    const el = document.querySelector('.screen.active');
-    if (!el) return;
-    const id = el.id.replace('screen-', '');
-    ({map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,orders:loadOrders,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
+    window.location.reload();
   }
 })();
 </script>
