@@ -1,34 +1,21 @@
-const CACHE = 'aliby-client-v4';
-const STATIC = [
-  '/Aliby---goods/client/',
-  '/Aliby---goods/client/index.html',
-  '/Aliby---goods/client/manifest.json',
-];
+const CACHE = 'aliby-tiles-v1';
+const TILE_PATH = '/functions/v1/vector-tiles/';
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC).catch(() => {})));
-  self.skipWaiting();
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
-  const url = e.request.url;
-  // Network-only for Supabase API and auth
-  if (url.includes('supabase.co') || url.includes('unpkg.com')) return;
-  // Cache-first for everything else
+  if (!e.request.url.includes(TILE_PATH)) return; // всё кроме тайлов — сеть напрямую
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
-      if (resp.ok && e.request.method === 'GET') {
-        const clone = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
+      if (resp.ok) caches.open(CACHE).then(c => c.put(e.request, resp.clone()));
       return resp;
     }))
   );

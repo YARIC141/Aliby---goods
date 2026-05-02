@@ -121,6 +121,8 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .store-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateX(-50%)}
 .store-pin .p-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 5px var(--shadow);flex-shrink:0}
 .store-pin .p-lbl{background:var(--bg-popup);border:1px solid var(--border);font-size:11px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;margin-top:3px;box-shadow:0 1px 3px var(--shadow);max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.geo-toast{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:var(--bg-popup);border:1px solid var(--border);padding:8px 14px;border-radius:6px;font-size:12px;color:var(--fg);z-index:20;white-space:nowrap;box-shadow:0 2px 8px var(--shadow);pointer-events:none;opacity:0;transition:opacity .3s}
+.geo-toast.show{opacity:1}
 .map-popup{position:absolute;bottom:12px;left:12px;right:12px;background:var(--bg);border:1px solid var(--border);padding:12px;max-width:300px;z-index:10}
 .map-popup.hidden{display:none}
 .popup-close{float:right;background:none;border:none;cursor:pointer;font-size:16px;line-height:1;color:var(--fg)}
@@ -297,6 +299,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
     <div class="map-area" id="map-area">
       <div id="map-gl" class="map-gl"></div>
+      <div id="geo-toast" class="geo-toast"></div>
       <div class="map-popup hidden" id="map-popup">
         <button class="popup-close" onclick="closePopup()">✕</button>
         <strong id="pp-name"></strong>
@@ -897,6 +900,13 @@ async function loadMapData() {
     },
   });
   S.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+  const geoCtrl = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true },
+    trackUserLocation: true,
+    showUserHeading: true,
+  });
+  S.map.addControl(geoCtrl, 'top-right');
+  geoCtrl.on('error', () => showGeoToast('Геолокация недоступна или запрещена'));
   S.map.on('load', loadStoreMarkers);
 }
 
@@ -952,6 +962,13 @@ function showStorePopup(st, listItem) {
   document.getElementById('map-popup').classList.remove('hidden');
 }
 function closePopup() { document.getElementById('map-popup').classList.add('hidden'); }
+function showGeoToast(msg) {
+  const t = document.getElementById('geo-toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
 function openStoreFromPopup() { closePopup(); goTo('store'); }
 
 // ─── STORE ───
