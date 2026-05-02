@@ -1525,6 +1525,7 @@ async function loadMapAdmin() {
       },
     });
     S.adminMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    S.adminMap.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: true, showUserHeading: true }), 'top-right');
     S.adminMap.on('click', onMapClick);
     S.adminMap.on('load', () => loadAdminMapMarkers());
   } else {
