@@ -389,13 +389,8 @@ tr:hover td{background:var(--bg-subtle)}
     </div>
 
     <div style="display:flex;flex:1;overflow:hidden">
-      <!-- Map -->
-      <div class="map-admin" id="map-admin-area">
-        <div id="map-admin-gl" class="admin-map-gl"></div>
-      </div>
-
       <!-- Markers list -->
-      <div style="width:240px;flex-shrink:0;border-left:1px solid #ccc;display:flex;flex-direction:column;overflow:hidden">
+      <div style="width:240px;flex-shrink:0;border-right:1px solid #ccc;display:flex;flex-direction:column;overflow:hidden">
         <div style="padding:10px 12px;border-bottom:1px solid #eee;font-weight:600;font-size:13px">
           Метки <span class="txt-muted" id="marker-count"></span>
         </div>
@@ -407,6 +402,11 @@ tr:hover td{background:var(--bg-subtle)}
           RPC: upsert_store_location<br>
           RPC: update_store_marker_color
         </div>
+      </div>
+
+      <!-- Map -->
+      <div class="map-admin" id="map-admin-area">
+        <div id="map-admin-gl" class="admin-map-gl"></div>
       </div>
     </div>
 
@@ -1577,7 +1577,7 @@ async function loadAdminMapMarkers() {
                   <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(loc.marker_color||'#e8430a')}"></span>
                   ${esc(loc.name)}
                 </div>
-                <div class="txt-muted">${loc.lng != null ? `${loc.lng.toFixed(4)}, ${loc.lat.toFixed(4)}` : 'Координаты не заданы'}</div>
+                <div class="txt-muted">${loc.lng == null ? 'Координаты не заданы' : ''}</div>
               </div>
               <button class="btn btn-sm" onclick="editLocPin('${loc.id}',${loc.lng??'null'},${loc.lat??'null'},'${esc(loc.marker_color||'#e8430a')}')">✎</button>
             </div>
