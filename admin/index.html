@@ -388,24 +388,19 @@ tr:hover td{background:var(--bg-subtle)}
       <span class="txt-muted">Кликните на карту для установки координат</span>
     </div>
 
-    <div style="display:flex;flex:1;overflow:hidden">
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
       <!-- Markers list -->
-      <div style="width:240px;flex-shrink:0;border-right:1px solid #ccc;display:flex;flex-direction:column;overflow:hidden">
-        <div style="padding:10px 12px;border-bottom:1px solid #eee;font-weight:600;font-size:13px">
+      <div style="border-bottom:1px solid var(--border);display:flex;flex-direction:column;max-height:220px;overflow:hidden">
+        <div style="padding:8px 12px;border-bottom:1px solid var(--border-light);font-weight:600;font-size:13px;flex-shrink:0">
           Метки <span class="txt-muted" id="marker-count"></span>
         </div>
         <div style="flex:1;overflow-y:auto" id="markers-list">
           <div class="loading">Загрузка…</div>
         </div>
-        <div class="txt-muted" style="padding:6px 10px;font-size:10px">
-          RPC: get_stores_with_locations<br>
-          RPC: upsert_store_location<br>
-          RPC: update_store_marker_color
-        </div>
       </div>
 
       <!-- Map -->
-      <div class="map-admin" id="map-admin-area">
+      <div class="map-admin" id="map-admin-area" style="flex:1">
         <div id="map-admin-gl" class="admin-map-gl"></div>
       </div>
     </div>
@@ -494,8 +489,8 @@ tr:hover td{background:var(--bg-subtle)}
         </div>
         <div class="txt-muted">POST /functions/v1/geocode</div>
       </div>
-      <div class="fg"><label>Широта *</label><input type="number" step="any" id="ms-lat" placeholder="55.751"></div>
-      <div class="fg"><label>Долгота *</label><input type="number" step="any" id="ms-lng" placeholder="37.618"></div>
+      <input type="hidden" id="ms-lat">
+      <input type="hidden" id="ms-lng">
       <div class="fg"><label>Телефон</label><input type="tel" id="ms-phone" placeholder="+7(495)…"></div>
       <div class="fg"><label>Часы работы</label><input type="text" id="ms-hours" placeholder="Пн-Пт 8:00-20:00"></div>
       <div class="fg" style="grid-column:1/-1">
