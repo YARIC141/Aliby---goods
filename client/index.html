@@ -625,7 +625,7 @@ const DEFAULT_FEATURES = {
 const S = {
   session: null, profile: null, store: null,
   cart: [], cartStoreId: null, appliedSub: null, subCart: [],
-  menuCatId: '', menuStoreSubs: [], pendingSubId: null,
+  menuCatId: '', menuStoreSubs: [], pendingSub: null,
   map: null, mapMarkers: [], mapFitted: false, allStores: [], mapCats: new Set(),
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
@@ -1563,7 +1563,7 @@ async function checkoutSubs() {
 }
 
 function openBuyModal(id, name, price, days, uses) {
-  S.pendingSubId = id;
+  S.pendingSub = { id, name, price, duration_days: days, total_uses: uses };
   document.getElementById('mb-info').innerHTML = `
     <strong>${esc(name)}</strong><br>
     <span class="lbl">Цена:</span> ${price} ₽ &nbsp;
@@ -1573,15 +1573,29 @@ function openBuyModal(id, name, price, days, uses) {
 }
 
 async function buySubscription() {
-  if (!S.pendingSubId) return;
+  if (!S.pendingSub) return;
+  if (!S.session) { alert('Войдите в аккаунт'); return; }
+  const sub = S.pendingSub;
   try {
-    // POST /functions/v1/create-payment
-    const p = await req('/functions/v1/create-payment', {
+    const today = new Date();
+    const end = new Date(today);
+    end.setDate(end.getDate() + sub.duration_days);
+    await req('/rest/v1/user_subscriptions', {
       method: 'POST',
-      body: JSON.stringify({ type: 'subscription', entity_id: S.pendingSubId, return_url: window.location.href }),
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id: S.session.user.id,
+        subscription_id: sub.id,
+        status: 'active',
+        start_date: today.toISOString().split('T')[0],
+        end_date: end.toISOString().split('T')[0],
+        remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
+      }),
     });
     closeModal('m-buy');
-    if (p.confirmation_url) window.location.href = p.confirmation_url;
+    S.pendingSub = null;
+    alert('Абонемент куплен! Оплата имитирована.');
+    goTo('subscriptions');
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
