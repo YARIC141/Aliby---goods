@@ -922,7 +922,19 @@ async function loadMapStores() {
     }));
     renderMapCategoryChips();
     applyMapFilter();
+    fitMapToAllStores();
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+function fitMapToAllStores() {
+  if (S.mapFitted || !S.map) return;
+  const pts = S.allStores.filter(st => st.lng != null && st.lat != null);
+  if (!pts.length) return;
+  const bounds = new maplibregl.LngLatBounds();
+  pts.forEach(st => bounds.extend([st.lng, st.lat]));
+  S.mapFitted = true;
+  const doFit = () => S.map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 600 });
+  if (S.map.loaded()) doFit(); else S.map.once('load', doFit);
 }
 
 function renderMapCategoryChips() {
@@ -977,22 +989,14 @@ function renderStoreList(stores) {
 function renderMapMarkers(stores) {
   S.mapMarkers.forEach(m => m.remove());
   S.mapMarkers = [];
-  const bounds = new maplibregl.LngLatBounds();
-  let hasCoords = false;
   stores.forEach(st => {
     if (st.lng == null || st.lat == null) return;
-    hasCoords = true;
-    bounds.extend([st.lng, st.lat]);
     const el = document.createElement('div');
     el.className = 'store-pin';
     el.innerHTML = `<div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(st.name)}</div>`;
     el.addEventListener('click', () => showStorePopup(st, null));
     S.mapMarkers.push(new maplibregl.Marker({ element: el }).setLngLat([st.lng, st.lat]).addTo(S.map));
   });
-  if (hasCoords && !S.mapFitted) {
-    S.mapFitted = true;
-    S.map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 600 });
-  }
 }
 
 async function loadMapData() {
