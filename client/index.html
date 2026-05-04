@@ -33,8 +33,7 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 @keyframes navSlideInRight{from{transform:translateX(100%)} to{transform:translateX(0)}}
 @keyframes navSlideOutLeft {from{transform:translateX(0)} to{transform:translateX(-100%)}}
 @keyframes navSlideOutRight{from{transform:translateX(0)} to{transform:translateX(100%)}}
-.bn-lbl{display:flex;align-items:center;justify-content:center;gap:1px;line-height:1.2;text-align:center}
-.nav-help{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1px solid currentColor;font-size:8px;cursor:pointer;margin-left:2px;vertical-align:middle;line-height:1;opacity:.55;flex-shrink:0}
+.screen-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;cursor:pointer;margin-left:6px;vertical-align:middle;line-height:1;opacity:.7;flex-shrink:0;user-select:none}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden}
 .screen.active{display:flex}
 
@@ -319,7 +318,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <!-- ════════════════ MAP ════════════════ -->
 <div id="screen-map" class="screen">
   <div class="ph">
-    <h2>Карта заведений</h2>
+    <h2>Карта заведений<span class="screen-help" data-info="Карта всех заведений поблизости. Нажмите на метку, чтобы посмотреть информацию о заведении.">?</span></h2>
     <button class="btn btn-sm" id="map-panel-btn" onclick="toggleMapPanel()">Скрыть карту</button>
   </div>
   <div class="map-layout">
@@ -354,7 +353,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <div id="screen-store" class="screen">
   <div class="ph">
     <button class="btn-back" onclick="goTo('map')">← Карта</button>
-    <h2 id="store-ph-name">Заведение</h2>
+    <h2 id="store-ph-name">Заведение<span class="screen-help" data-info="Информация о выбранном заведении: меню, часы работы и контакты.">?</span></h2>
     <button class="btn btn-sm" onclick="goTo('menu')">Меню →</button>
   </div>
   <div class="pb">
@@ -388,7 +387,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <div id="screen-menu" class="screen">
   <div class="ph">
     <button class="btn-back" onclick="goTo('store')">← Заведение</button>
-    <h2 id="menu-ph-name">Товары и Услуги</h2>
+    <h2 id="menu-ph-name">Товары и Услуги<span class="screen-help" data-info="Каталог товаров и услуг выбранного заведения. Добавляйте понравившееся в корзину.">?</span></h2>
     <button class="btn btn-sm" onclick="goTo('cart')">Корзина&nbsp;<span id="menu-cart-cnt">0</span></button>
   </div>
 
@@ -414,7 +413,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 <!-- ════════════════ CART ════════════════ -->
 <div id="screen-cart" class="screen">
-  <div class="ph"><h2>Корзина</h2></div>
+  <div class="ph"><h2>Корзина<span class="screen-help" data-info="Здесь хранятся товары и услуги, которые вы выбрали. Тут же можно их оплатить.">?</span></h2></div>
   <div class="cart-layout">
     <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
       <div style="padding:10px 16px 4px;font-size:13px;font-weight:600;background:var(--bg-muted)">🎫 Абонементы к покупке</div>
@@ -455,7 +454,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 <!-- ════════════════ ORDERS ════════════════ -->
 <div id="screen-orders" class="screen">
-  <div class="ph"><h2>Мои заказы</h2></div>
+  <div class="ph"><h2>Мои заказы<span class="screen-help" data-info="История ваших заказов и текущий статус каждого из них.">?</span></h2></div>
   <div class="pb">
     <div class="fg">
       <select id="ord-filter" onchange="loadOrders()">
@@ -473,7 +472,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 <!-- ════════════════ MY SUBSCRIPTIONS ════════════════ -->
 <div id="screen-subscriptions" class="screen">
-  <div class="ph"><h2>Абонементы</h2></div>
+  <div class="ph"><h2>Абонементы<span class="screen-help" data-info="Ваши абонементы — многоразовые скидки на любимые блюда и услуги.">?</span></h2></div>
   <div class="pb">
     <div class="tab-nav">
       <button class="tab-btn active" data-tab-sub="store">Заведение</button>
@@ -494,7 +493,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 <!-- ════════════════ PROFILE ════════════════ -->
 <div id="screen-profile" class="screen">
-  <div class="ph"><h2>Профиль</h2></div>
+  <div class="ph"><h2>Профиль<span class="screen-help" data-info="Настройки профиля: смена темы оформления и данные аккаунта.">?</span></h2></div>
   <div class="pb">
 
     <div class="sec">
@@ -550,13 +549,13 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
   <div class="bn-row">
-    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span><span class="bn-lbl">Карта<span class="nav-help" data-info="Карта всех заведений поблизости. Нажмите на метку, чтобы посмотреть информацию о заведении.">?</span></span></button>
-    <button class="bn-btn" data-nav="store"><span class="ico">🏪</span><span class="bn-lbl">Заведение<span class="nav-help" data-info="Информация о выбранном заведении: меню, часы работы и контакты.">?</span></span></button>
-    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span><span class="bn-lbl">Товары и<br>Услуги<span class="nav-help" data-info="Каталог товаров и услуг выбранного заведения. Добавляйте понравившееся в корзину.">?</span></span></button>
-    <button class="bn-btn" data-nav="cart"><span class="ico">🛒</span><span class="bn-lbl">Корзина<span class="nav-help" data-info="Здесь хранятся товары и услуги, которые вы выбрали. Тут же можно их оплатить.">?</span></span></button>
-    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span><span class="bn-lbl">Заказы<span class="nav-help" data-info="История ваших заказов и текущий статус каждого из них.">?</span></span></button>
-    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span><span class="bn-lbl">Абонементы<span class="nav-help" data-info="Ваши абонементы — многоразовые скидки на любимые блюда и услуги.">?</span></span></button>
-    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span><span class="bn-lbl">Профиль<span class="nav-help" data-info="Настройки профиля: смена темы оформления и данные аккаунта.">?</span></span></button>
+    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
+    <button class="bn-btn" data-nav="store"><span class="ico">🏪</span>Заведение</button>
+    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Товары и<br>Услуги</button>
+    <button class="bn-btn" data-nav="cart"><span class="ico">🛒</span>Корзина</button>
+    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
+    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
+    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
   </div>
 </div>
 <div id="nav-info-popup"></div>
@@ -856,7 +855,7 @@ function animateScreenChange(fromId, toId, dir) {
 
 let _navInfoTimer;
 document.addEventListener('click', e => {
-  const nh = e.target.closest('.nav-help');
+  const nh = e.target.closest('.screen-help');
   if (nh) {
     e.stopPropagation();
     const popup = document.getElementById('nav-info-popup');

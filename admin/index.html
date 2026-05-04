@@ -31,8 +31,7 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 @keyframes navSlideInRight{from{transform:translateX(100%)} to{transform:translateX(0)}}
 @keyframes navSlideOutLeft {from{transform:translateX(0)} to{transform:translateX(-100%)}}
 @keyframes navSlideOutRight{from{transform:translateX(0)} to{transform:translateX(100%)}}
-.bn-lbl{display:flex;align-items:center;justify-content:center;gap:1px;line-height:1.2;text-align:center}
-.nav-help{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1px solid currentColor;font-size:8px;cursor:pointer;margin-left:2px;vertical-align:middle;line-height:1;opacity:.55;flex-shrink:0}
+.screen-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:10px;cursor:pointer;margin-left:6px;vertical-align:middle;line-height:1;opacity:.7;flex-shrink:0;user-select:none}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden}
 .screen.active{display:flex}
 
@@ -258,7 +257,7 @@ tr:hover td{background:var(--bg-subtle)}
 <!-- ════════════════ STORES ════════════════ -->
 <div id="screen-stores" class="screen">
   <div class="ph">
-    <h2>Заведения</h2>
+    <h2>Заведения<span class="screen-help" data-info="Управление заведениями. Добавляйте и редактируйте адрес, часы работы, цвет метки на карте.">?</span></h2>
     <button class="btn btn-p btn-sm" onclick="openStoreModal()">+ Добавить</button>
   </div>
   <div class="pb">
@@ -280,7 +279,7 @@ tr:hover td{background:var(--bg-subtle)}
 <!-- ════════════════ CATEGORIES ════════════════ -->
 <div id="screen-categories" class="screen">
   <div class="ph">
-    <h2>Категории меню</h2>
+    <h2>Категории меню<span class="screen-help" data-info="Категории для группировки товаров и услуг. Используются при настройке правил абонементов.">?</span></h2>
     <button class="btn btn-p btn-sm" onclick="openCatModal()">+ Добавить</button>
   </div>
   <div class="pb">
@@ -302,7 +301,7 @@ tr:hover td{background:var(--bg-subtle)}
 <!-- ════════════════ MENU ITEMS ════════════════ -->
 <div id="screen-menu" class="screen">
   <div class="ph">
-    <h2>Товары и Услуги</h2>
+    <h2>Товары и Услуги<span class="screen-help" data-info="Каталог товаров и услуг заведения. Добавляйте позиции с ценой, описанием, фото и признаком наличия.">?</span></h2>
     <button class="btn btn-p btn-sm" onclick="openMenuItemModal()">+ Добавить</button>
   </div>
   <div class="pb">
@@ -330,7 +329,7 @@ tr:hover td{background:var(--bg-subtle)}
 <!-- ════════════════ SUBSCRIPTIONS ════════════════ -->
 <div id="screen-subscriptions" class="screen">
   <div class="ph">
-    <h2>Абонементы</h2>
+    <h2>Абонементы<span class="screen-help" data-info="Абонементы для клиентов. Настраивайте правила скидок, временные ограничения и лимиты использования.">?</span></h2>
     <button class="btn btn-p btn-sm" onclick="openSubModal()">+ Добавить</button>
   </div>
   <div class="pb">
@@ -353,7 +352,7 @@ tr:hover td{background:var(--bg-subtle)}
 
 <!-- ════════════════ ORDERS ════════════════ -->
 <div id="screen-orders" class="screen">
-  <div class="ph"><h2>Заказы</h2></div>
+  <div class="ph"><h2>Заказы<span class="screen-help" data-info="Все заказы клиентов. Фильтрация по заведению и статусу, просмотр деталей каждого заказа.">?</span></h2></div>
   <div class="pb">
     <div class="toolbar">
       <select id="ord-store-filter" onchange="loadOrders()">
@@ -383,7 +382,7 @@ tr:hover td{background:var(--bg-subtle)}
 <!-- ════════════════ MAP & MARKERS ════════════════ -->
 <div id="screen-map" class="screen">
   <div class="ph">
-    <h2>Карта и метки</h2>
+    <h2>Карта и метки<span class="screen-help" data-info="Интерактивная карта заведений. Выберите заведение и кликните на карту чтобы задать его координаты.">?</span></h2>
     <button class="btn btn-sm" onclick="loadMapAdmin()">↺ Обновить</button>
   </div>
 
@@ -430,7 +429,7 @@ tr:hover td{background:var(--bg-subtle)}
 
 <!-- ════════════════ PROFILE ════════════════ -->
 <div id="screen-profile" class="screen">
-  <div class="ph"><h2>Профиль</h2></div>
+  <div class="ph"><h2>Профиль<span class="screen-help" data-info="Настройки администратора: смена темы оформления и данные аккаунта.">?</span></h2></div>
   <div class="pb">
 
     <div class="sec">
@@ -476,12 +475,12 @@ tr:hover td{background:var(--bg-subtle)}
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
   <div class="bn-row">
-    <button class="bn-btn" data-nav="stores"><span class="ico">🏪</span><span class="bn-lbl">Заведения<span class="nav-help" data-info="Управление заведениями. Добавляйте и редактируйте адрес, часы работы, цвет метки.">?</span></span></button>
-    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span><span class="bn-lbl">Карта<span class="nav-help" data-info="Интерактивная карта заведений. Выберите заведение и кликните на карту чтобы задать его координаты.">?</span></span></button>
-    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span><span class="bn-lbl">Товары и<br>Услуги<span class="nav-help" data-info="Каталог товаров и услуг. Добавляйте позиции с ценой, описанием, фото и признаком наличия.">?</span></span></button>
-    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span><span class="bn-lbl">Абонементы<span class="nav-help" data-info="Абонементы для клиентов. Настраивайте правила скидок, временные ограничения и лимиты.">?</span></span></button>
-    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span><span class="bn-lbl">Заказы<span class="nav-help" data-info="Все заказы клиентов. Фильтрация по заведению и статусу, просмотр деталей.">?</span></span></button>
-    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span><span class="bn-lbl">Профиль<span class="nav-help" data-info="Настройки администратора: смена темы оформления и данные аккаунта.">?</span></span></button>
+    <button class="bn-btn" data-nav="stores"><span class="ico">🏪</span>Заведения</button>
+    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
+    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Товары и<br>Услуги</button>
+    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
+    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
+    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
   </div>
 </div>
 <div id="nav-info-popup"></div>
@@ -907,7 +906,7 @@ function animateScreenChange(fromId, toId, dir) {
 
 let _navInfoTimer;
 document.addEventListener('click', e => {
-  const nh = e.target.closest('.nav-help');
+  const nh = e.target.closest('.screen-help');
   if (nh) {
     e.stopPropagation();
     const popup = document.getElementById('nav-info-popup');
