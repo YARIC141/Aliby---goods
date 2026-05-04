@@ -405,12 +405,8 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
       <div class="cart-sub-block">
         <div class="sec-title" style="border:none;margin-bottom:8px">Применить абонемент</div>
-        <div class="row">
-          <div class="fg"><select id="cart-sub-sel"><option value="">— Выбрать абонемент —</option></select></div>
-          <button class="btn btn-sm" onclick="validateSub()">Проверить</button>
-        </div>
+        <select id="cart-sub-sel" style="width:100%" onchange="validateSub()"><option value="">— без абонемента —</option></select>
         <div id="sub-val-res" style="margin-top:6px;font-size:12px"></div>
-        <div class="txt-muted" style="margin-top:4px">POST /functions/v1/validate-subscription</div>
       </div>
 
       <div class="cart-row"><span>Подытог</span><span id="c-subtotal">0 ₽</span></div>
@@ -658,7 +654,7 @@ const DEFAULT_FEATURES = {
 // ─── STATE ───
 const S = {
   session: null, profile: null, store: null,
-  cart: [], cartStoreId: null, appliedSub: null, subCart: [],
+  cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [],
   menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
   map: null, mapMarkers: [], mapFitted: false, allStores: [], mapCats: new Set(),
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
@@ -1385,6 +1381,30 @@ function updateCartCount() {
 }
 
 // ─── CART ───
+function updateCartTotals() {
+  const subtotal = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+  const disc = S.appliedSub?.amount || 0;
+  document.getElementById('c-subtotal').textContent = subtotal + ' ₽';
+  document.getElementById('c-disc-row').style.display = disc > 0 ? 'flex' : 'none';
+  document.getElementById('c-discount').textContent = '−' + disc + ' ₽';
+  document.getElementById('c-total').textContent = Math.max(0, subtotal - disc) + ' ₽';
+}
+
+function calcCartDisc(us) {
+  const plan = us.subscriptions;
+  if (!plan) return 0;
+  const ipu = plan.items_per_use ?? 1;
+  let remaining = ipu, disc = 0;
+  for (const { item, qty } of S.cart) {
+    if (remaining <= 0) break;
+    if (!subCoversItem(plan, item)) continue;
+    const apply = Math.min(qty, remaining);
+    disc += item.price * apply;
+    remaining -= apply;
+  }
+  return disc;
+}
+
 async function renderCart() {
   renderSubCartSection();
   const body = document.getElementById('cart-body');
@@ -1395,31 +1415,38 @@ async function renderCart() {
     return;
   }
   foot.style.display = 'block';
-  let sub = 0;
   body.innerHTML = S.cart.map(({ item, qty }) => {
-    const sum = item.price * qty; sub += sum;
+    const sum = item.price * qty;
     return `<div class="cart-item">
       <div class="ci-info"><div class="ci-name">${esc(item.name)}</div><div class="ci-price">${item.price} ₽ × ${qty} = ${sum} ₽</div></div>
       <div class="qty-ctrl"><button class="qty-btn" onclick="cartQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button></div>
     </div>`;
   }).join('');
-  const disc = S.appliedSub?.amount || 0;
-  document.getElementById('c-subtotal').textContent = sub + ' ₽';
-  document.getElementById('c-disc-row').style.display = disc > 0 ? 'flex' : 'none';
-  document.getElementById('c-discount').textContent = '−' + disc + ' ₽';
-  document.getElementById('c-total').textContent = Math.max(0, sub - disc) + ' ₽';
-  // Load active subscriptions for selector
+  updateCartTotals();
+  await loadCartSubs();
+}
+
+async function loadCartSubs() {
   try {
-    // GET /rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)
     const usubs = await req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)');
+    S.cartUsubs = usubs.filter(u => u.subscriptions?.store_id === S.cartStoreId);
     const sel = document.getElementById('cart-sub-sel');
-    sel.innerHTML = '<option value="">— Выбрать абонемент —</option>';
-    usubs.forEach(u => {
+    const prev = S.appliedSub?.userSubId || sel.value;
+    sel.innerHTML = '<option value="">— без абонемента —</option>';
+    S.cartUsubs.forEach(u => {
       const o = document.createElement('option');
       o.value = u.id;
       o.textContent = `${u.subscriptions?.name || 'Абонемент'} (${u.remaining_uses ?? '∞'} исп.)`;
       sel.appendChild(o);
     });
+    if (prev && [...sel.options].some(o => o.value === prev)) {
+      sel.value = prev;
+      await validateSub(true);
+    } else if (!S.appliedSub) {
+      let bestDisc = 0, bestId = '';
+      S.cartUsubs.forEach(u => { const d = calcCartDisc(u); if (d > bestDisc) { bestDisc = d; bestId = u.id; } });
+      if (bestId) { sel.value = bestId; await validateSub(false); }
+    }
   } catch(e) {}
 }
 
@@ -1427,17 +1454,36 @@ function cartQty(id, d) {
   const i = S.cart.findIndex(c => c.item.id === id);
   if (i < 0) return;
   S.cart[i].qty += d;
-  if (S.cart[i].qty <= 0) S.cart.splice(i, 1);
+  if (S.cart[i].qty <= 0) { S.cart.splice(i, 1); S.appliedSub = null; }
   updateCartCount(); renderCart();
 }
 
-async function validateSub() {
+async function validateSub(silent = false) {
   const subId = document.getElementById('cart-sub-sel').value;
   const res = document.getElementById('sub-val-res');
-  if (!subId) { res.textContent = 'Выберите абонемент'; return; }
+  if (!subId) { S.appliedSub = null; res.textContent = ''; updateCartTotals(); return; }
   res.textContent = 'Проверка…';
+
+  if (!silent) {
+    const us = S.cartUsubs.find(u => u.id === subId);
+    if (us) {
+      const plan = us.subscriptions;
+      const ipu = plan?.items_per_use ?? 1;
+      let totalCovered = 0;
+      S.cart.forEach(({ item, qty }) => { if (subCoversItem(plan, item)) totalCovered += qty; });
+      if (totalCovered > ipu) {
+        const disc = calcCartDisc(us);
+        const ok = confirm(
+          `Абонемент покрывает до ${ipu} шт. за одно списание.\n` +
+          `В корзине ${totalCovered} шт. подходящих позиций.\n` +
+          `Скидка применится только к ${ipu} шт. — ${disc} ₽.\n\nПродолжить?`
+        );
+        if (!ok) { S.appliedSub = null; res.textContent = ''; document.getElementById('cart-sub-sel').value = ''; updateCartTotals(); return; }
+      }
+    }
+  }
+
   try {
-    // POST /functions/v1/validate-subscription
     const r = await req('/functions/v1/validate-subscription', {
       method: 'POST',
       body: JSON.stringify({
@@ -1447,12 +1493,12 @@ async function validateSub() {
     });
     if (r.valid) {
       S.appliedSub = { userSubId: subId, amount: r.discount_amount };
-      res.innerHTML = `<span style="color:#070">✓ Скидка ${r.discount_amount} ₽ применима</span>`;
-      renderCart();
+      res.innerHTML = `<span style="color:#070">✓ Скидка ${r.discount_amount} ₽</span>`;
     } else {
       S.appliedSub = null;
       res.innerHTML = `<span style="color:#c00">✗ ${esc(r.reason)}</span>`;
     }
+    updateCartTotals();
   } catch(e) { res.textContent = 'Ошибка проверки'; }
 }
 
@@ -1615,6 +1661,8 @@ async function openSubModal(id) {
     document.getElementById('mu-desc').textContent = plan.description || '';
     const conds = [];
     conds.push(`<div class="cart-row"><span class="lbl">Покрытие</span><span>${fmtCoverage(plan.coverage_rules)}</span></div>`);
+    const ipu = plan.items_per_use ?? 1;
+    conds.push(`<div class="cart-row"><span class="lbl">За 1 списание</span><span>до ${ipu} шт.</span></div>`);
     const tr = plan.time_rules;
     if (tr?.weekdays) conds.push(`<div class="cart-row"><span class="lbl">Дни</span><span>${fmtWeekdays(tr.weekdays)}</span></div>`);
     if (tr?.time_start) conds.push(`<div class="cart-row"><span class="lbl">Время</span><span>${tr.time_start}–${tr.time_end}</span></div>`);
@@ -1665,11 +1713,13 @@ async function loadSubStore() {
 
 function renderSubItemCard(sub) {
   const inCart = S.subCart.find(c => c.sub.id === sub.id);
+  const ipu = sub.items_per_use ?? 1;
   return `<div class="item-card">
     <div class="item-img" style="font-size:30px;background:var(--bg-subtle)">🎫</div>
     <div class="item-body">
       <div class="item-name">${esc(sub.name)}</div>
-      <div class="item-desc">${sub.duration_days} дн. · ${sub.total_uses === 0 ? 'безлимит' : sub.total_uses + ' исп.'}</div>
+      <div class="item-desc">${sub.duration_days} дн. · ${sub.total_uses === 0 ? 'безлимит' : sub.total_uses + ' исп.'} · до ${ipu} шт./списание</div>
+      ${sub.description ? `<div class="item-desc" style="margin-bottom:4px">${esc(sub.description)}</div>` : ''}
       <div class="item-price">${sub.price} ₽</div>
       ${inCart
         ? `<button class="btn btn-sm" style="opacity:.65" onclick="removeFromSubCart('${sub.id}')">✓ В корзине</button>`

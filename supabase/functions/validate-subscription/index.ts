@@ -89,6 +89,7 @@ Deno.serve(async (req: Request) => {
   const sub = userSub.subscriptions as {
     store_id: string
     total_uses: number
+    items_per_use: number
     coverage_rules: CoverageRules
     time_rules: TimeRules
     usage_limits: UsageLimits
@@ -202,49 +203,49 @@ Deno.serve(async (req: Request) => {
   }
 
   // ---- Проверка правил покрытия --------------------------------------
+  // Не отклоняем заказ если часть позиций не покрыта — просто не даём на них скидку.
 
   const menuItemMap = new Map(menuItems.map((i) => [i.id, i]))
   const coveredItemIds: Set<string> = new Set()
 
   for (const item of menuItems) {
     switch (coverageRules.type) {
-      case 'all': {
+      case 'all':
         coveredItemIds.add(item.id)
         break
-      }
       case 'include_categories': {
-        const inCategory = item.category_id && coverageRules.category_ids?.includes(item.category_id)
+        const inCat = item.category_id && coverageRules.category_ids?.includes(item.category_id)
         const excluded = coverageRules.exclude_items?.includes(item.id)
-        if (!inCategory || excluded) {
-          return jsonResponse({ valid: false, reason: `Абонемент не покрывает блюдо "${item.name}"` })
-        }
-        coveredItemIds.add(item.id)
+        if (inCat && !excluded) coveredItemIds.add(item.id)
         break
       }
-      case 'include_items': {
-        if (!coverageRules.item_ids?.includes(item.id)) {
-          return jsonResponse({ valid: false, reason: `Абонемент не покрывает блюдо "${item.name}"` })
-        }
-        coveredItemIds.add(item.id)
+      case 'include_items':
+        if (coverageRules.item_ids?.includes(item.id)) coveredItemIds.add(item.id)
         break
-      }
-      case 'exclude_items': {
-        if (coverageRules.exclude_items?.includes(item.id)) {
-          return jsonResponse({ valid: false, reason: `Абонемент не покрывает блюдо "${item.name}"` })
-        }
-        coveredItemIds.add(item.id)
+      case 'exclude_items':
+        if (!coverageRules.exclude_items?.includes(item.id)) coveredItemIds.add(item.id)
         break
-      }
     }
   }
 
-  // ---- Расчёт скидки -------------------------------------------------
+  if (coveredItemIds.size === 0) {
+    return jsonResponse({ valid: false, reason: 'Ни одна позиция заказа не покрывается абонементом' })
+  }
 
+  // ---- Расчёт скидки с учётом items_per_use --------------------------
+  // items_per_use — сколько единиц товара покрывается за одно списание.
+
+  const itemsPerUse = sub.items_per_use ?? 1
   let discountAmount = 0
+  let remaining = itemsPerUse
+
   for (const orderItem of order_items) {
+    if (remaining <= 0) break
     const menuItem = menuItemMap.get(orderItem.menu_item_id)
     if (menuItem && coveredItemIds.has(orderItem.menu_item_id)) {
-      discountAmount += Number(menuItem.price) * orderItem.quantity
+      const apply = Math.min(orderItem.quantity, remaining)
+      discountAmount += Number(menuItem.price) * apply
+      remaining -= apply
     }
   }
 
@@ -256,5 +257,5 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  return jsonResponse({ valid: true, discount_amount: discountAmount })
+  return jsonResponse({ valid: true, discount_amount: discountAmount, items_per_use: itemsPerUse })
 })
