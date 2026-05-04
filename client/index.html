@@ -81,6 +81,8 @@ textarea{resize:vertical;min-height:60px}
 .b-active{color:#070}.b-expired{color:#c00}.b-sub-pending{color:#888}
 .empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px}
 .loading{text-align:center;padding:24px;color:var(--muted);font-size:13px}
+@keyframes skshimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk{background:linear-gradient(90deg,var(--bg-muted) 25%,var(--bg-hover) 50%,var(--bg-muted) 75%);background-size:200% 100%;animation:skshimmer 1.4s infinite linear;border-radius:2px;display:block;margin-bottom:5px}
 .alert{padding:9px 12px;border:1px solid var(--border);margin-bottom:10px;font-size:13px}
 .alert-e{border-color:#c00;color:#c00;background:rgba(200,0,0,.08)}
 .alert-ok{border-color:#070;color:#070;background:rgba(0,128,0,.08)}
@@ -622,6 +624,26 @@ const S = {
 
 const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
 
+// ─── SKELETONS ───
+const SK = {
+  _b: (h, w, mb=5) => `<div class="sk" style="height:${h}px;width:${w};margin-bottom:${mb}px"></div>`,
+  storeList: (n=5) => Array.from({length:n}, () =>
+    `<div class="sl-item"><div style="flex:1">${SK._b(13,'55%',5)}${SK._b(10,'75%',0)}</div></div>`
+  ).join(''),
+  subCards: (n=2) => Array.from({length:n}, () =>
+    `<div class="sub-card">${SK._b(13,'80%')}${SK._b(15,'40%')}${SK._b(10,'60%')}${SK._b(28,'70%',0)}</div>`
+  ).join(''),
+  itemCards: (n=4) => Array.from({length:n}, () =>
+    `<div class="item-card"><div class="sk" style="height:80px;margin-bottom:0;border-radius:0"></div><div class="item-body">${SK._b(13,'85%')}${SK._b(10,'50%')}${SK._b(11,'35%',0)}</div></div>`
+  ).join(''),
+  orderCards: (n=3) => Array.from({length:n}, () =>
+    `<div class="order-card" style="cursor:default"><div style="display:flex;justify-content:space-between;margin-bottom:5px">${SK._b(13,'80px',0)}<div style="width:8px"></div>${SK._b(13,'55px',0)}</div>${SK._b(10,'130px')}${SK._b(10,'80px',0)}</div>`
+  ).join(''),
+  usubCards: (n=3) => Array.from({length:n}, () =>
+    `<div class="usub-card" style="cursor:default"><div style="display:flex;justify-content:space-between;margin-bottom:6px">${SK._b(14,'55%',0)}<div style="width:8px"></div>${SK._b(14,'60px',0)}</div>${SK._b(10,'40%')}${SK._b(10,'60px',0)}</div>`
+  ).join(''),
+};
+
 function buildMapStyle(cfg) {
   const L   = cfg.layers    || {};
   const Cl  = cfg.colors    || {};
@@ -874,7 +896,7 @@ async function loadMap() {
 
 async function loadMapStores() {
   const el = document.getElementById('sl-list');
-  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  el.innerHTML = SK.storeList();
   try {
     const [stores, locs] = await Promise.all([
       req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)'),
@@ -1030,6 +1052,8 @@ async function loadStore() {
   document.getElementById('st-phone').textContent  = st.phone || '';
   const sc = st.store_categories;
   document.getElementById('st-cuisine').textContent = sc ? (sc.icon ? sc.icon + ' ' + sc.name : sc.name) : '';
+  document.getElementById('store-subs').innerHTML = SK.subCards(2);
+  document.getElementById('store-rec').innerHTML  = SK.itemCards(4);
   await Promise.all([loadStoreSubs(), loadStoreRec()]);
 }
 
@@ -1116,7 +1140,7 @@ async function loadMenuItems() {
   }
 
   el.className = 'items-grid';
-  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  el.innerHTML = SK.itemCards(6);
   try {
     // GET /rest/v1/menu_items with filters
     let url = `/rest/v1/menu_items?store_id=eq.${S.store.id}`;
@@ -1320,7 +1344,7 @@ async function checkoutOrder(method) {
 async function loadOrders() {
   const el = document.getElementById('orders-list');
   const status = document.getElementById('ord-filter').value;
-  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  el.innerHTML = SK.orderCards();
   try {
     // GET /rest/v1/orders?user_id=eq.{id}&order=order_time.desc
     let url = `/rest/v1/orders?user_id=eq.${S.session.user.id}&order=order_time.desc`;
@@ -1342,7 +1366,7 @@ async function loadOrders() {
 async function openOrderModal(id) {
   openModal('m-order');
   document.getElementById('mo-id').textContent = id.slice(0,8);
-  document.getElementById('mo-items').innerHTML = '<div class="loading">Загрузка…</div>';
+  document.getElementById('mo-items').innerHTML = SK.orderCards(2);
   try {
     // GET /rest/v1/orders?id=eq.{id}
     // GET /rest/v1/order_items?order_id=eq.{id}&select=*,menu_items(name)
@@ -1369,7 +1393,8 @@ async function openOrderModal(id) {
 
 // ─── MY SUBSCRIPTIONS ───
 async function loadMySubscriptions() {
-  document.getElementById('usubs-active').innerHTML = '<div class="loading">Загрузка…</div>';
+  document.getElementById('usubs-active').innerHTML = SK.usubCards();
+  document.getElementById('usubs-all').innerHTML    = SK.usubCards();
   try {
     // GET /rest/v1/user_subscriptions?select=*,subscriptions(*)
     const [active, all] = await Promise.all([
@@ -1402,7 +1427,7 @@ async function openSubModal(id, name, endDate, uses) {
   document.getElementById('mu-name').textContent = name;
   document.getElementById('mu-uses').textContent = uses ?? '∞';
   document.getElementById('mu-exp').textContent  = fmtShortDate(endDate);
-  document.getElementById('mu-redemptions').innerHTML = '<div class="loading">Загрузка…</div>';
+  document.getElementById('mu-redemptions').innerHTML = SK.orderCards(2);
   try {
     // GET /rest/v1/subscription_redemptions?user_subscription_id=eq.{id}&order=redeemed_at.desc
     const r = await req(`/rest/v1/subscription_redemptions?user_subscription_id=eq.${id}&order=redeemed_at.desc`);
