@@ -40,17 +40,14 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 .sn-user{font-size:11px;color:var(--muted);padding:4px 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 #bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--border)}
-.bn-inner{display:flex;flex-wrap:wrap}
-.bn-btn{flex:1;min-width:60px;padding:7px 4px 6px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
+.bn-row{display:flex}
+.bn-btn{flex:1;padding:7px 4px 6px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
 .bn-btn .ico{font-size:19px;line-height:1}
 .bn-btn.active{color:var(--fg);font-weight:600}
 
 @media(max-width:767px){
   #side-nav{display:none}
   #bottom-nav{display:block}
-  .bn-inner{justify-content:center}
-  .bn-btn{flex:0 0 25%;max-width:25%}
-  .bn-btn:nth-child(n+5){flex:0 0 calc(100% / 3);max-width:calc(100% / 3)}
 }
 
 /* ── PAGE STRUCTURE ── */
@@ -514,11 +511,13 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
-  <div class="bn-inner">
+  <div class="bn-row">
     <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
     <button class="bn-btn" data-nav="store"><span class="ico">🏪</span>Заведение</button>
     <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Меню</button>
     <button class="bn-btn" data-nav="cart"><span class="ico">🛒</span>Корзина</button>
+  </div>
+  <div class="bn-row">
     <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
     <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
