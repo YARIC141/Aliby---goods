@@ -139,7 +139,9 @@ tr:hover td{background:var(--bg-subtle)}
 .tab-pane.active{display:block}
 
 /* ── TOOLTIP HINT ── */
-.hint{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:9px;cursor:help;margin-left:3px;vertical-align:middle;line-height:1;flex-shrink:0}
+.hint{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:9px;cursor:pointer;margin-left:3px;vertical-align:middle;line-height:1;flex-shrink:0;user-select:none}
+#hint-popup{position:fixed;z-index:9999;max-width:260px;background:var(--card);border:1px solid var(--border-light);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.45;color:var(--fg);box-shadow:0 4px 16px rgba(0,0,0,.18);display:none}
+#hint-popup.show{display:block}
 
 /* ── SUBSCRIPTIONS form ── */
 .rules-section{border:1px solid var(--border-light);padding:12px;margin-top:8px}
@@ -532,34 +534,34 @@ tr:hover td{background:var(--bg-subtle)}
     <input type="hidden" id="mmi-id">
     <div class="grid2">
       <div class="fg">
-        <label>Заведение * <span class="hint" title="К какому заведению относится позиция">?</span></label>
+        <label>Заведение * <span class="hint" data-tip="К какому заведению относится позиция">?</span></label>
         <select id="mmi-store" onchange="loadMICategories()"></select>
       </div>
       <div class="fg">
-        <label>Категория <span class="hint" title="Раздел меню (Кофе, Бургеры и т.д.). Используется для фильтрации и правил абонементов">?</span></label>
+        <label>Категория <span class="hint" data-tip="Раздел меню (Кофе, Бургеры и т.д.). Используется для фильтрации и правил абонементов">?</span></label>
         <select id="mmi-cat"><option value="">— Без категории —</option></select>
       </div>
       <div class="fg" style="grid-column:1/-1">
-        <label>Название * <span class="hint" title="Полное название товара или услуги, которое увидит клиент">?</span></label>
+        <label>Название * <span class="hint" data-tip="Полное название товара или услуги, которое увидит клиент">?</span></label>
         <input type="text" id="mmi-name">
       </div>
       <div class="fg" style="grid-column:1/-1">
-        <label>Описание <span class="hint" title="Краткое описание состава, особенностей или условий оказания услуги">?</span></label>
+        <label>Описание <span class="hint" data-tip="Краткое описание состава, особенностей или условий оказания услуги">?</span></label>
         <textarea id="mmi-desc" rows="2"></textarea>
       </div>
       <div class="fg">
-        <label>Цена (₽) * <span class="hint" title="Цена за одну единицу товара или услуги в рублях">?</span></label>
+        <label>Цена (₽) * <span class="hint" data-tip="Цена за одну единицу товара или услуги в рублях">?</span></label>
         <input type="number" step="0.01" id="mmi-price">
       </div>
       <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px">
         <input type="checkbox" id="mmi-avail" checked style="width:auto">
-        <label for="mmi-avail">В наличии <span class="hint" title="Снимите галочку, чтобы временно скрыть позицию от клиентов">?</span></label>
+        <label for="mmi-avail">В наличии <span class="hint" data-tip="Снимите галочку, чтобы временно скрыть позицию от клиентов">?</span></label>
       </div>
     </div>
 
     <!-- Photo upload -->
     <div class="fg" style="margin-top:4px">
-      <label>Фото <span class="hint" title="Рекомендуемый размер: 800×600 px. Форматы: JPEG, PNG, WebP. Оптимально до 500 КБ">?</span></label>
+      <label>Фото <span class="hint" data-tip="Рекомендуемый размер: 800×600 px. Форматы: JPEG, PNG, WebP. Оптимально до 500 КБ">?</span></label>
       <div class="img-preview" id="mmi-preview">Нет фото</div>
       <div class="row">
         <div class="fg"><input type="file" id="mmi-photo" accept="image/jpeg,image/png,image/webp" onchange="previewPhoto(this)"></div>
@@ -590,18 +592,18 @@ tr:hover td{background:var(--bg-subtle)}
 
     <!-- Basic -->
     <div class="grid2">
-      <div class="fg"><label>Заведение * <span class="hint" title="Заведение, к товарам которого применяется абонемент">?</span></label><select id="msub-store" onchange="updateCoverageUI()"></select></div>
-      <div class="fg"><label>Название * <span class="hint" title="Название абонемента, видимое клиентам в разделе 'Абонементы'">?</span></label><input type="text" id="msub-name"></div>
-      <div class="fg"><label>Цена (₽) * <span class="hint" title="Стоимость покупки абонемента клиентом в рублях">?</span></label><input type="number" step="0.01" id="msub-price"></div>
-      <div class="fg"><label>Срок действия (дней) * <span class="hint" title="Через сколько дней после покупки абонемент истекает">?</span></label><input type="number" id="msub-days"></div>
-      <div class="fg" style="grid-column:1/-1"><label>Всего использований <span class="hint" title="Сколько раз можно использовать абонемент за весь срок. 0 = без ограничений (безлимит)">?</span></label><input type="number" id="msub-uses" value="0"></div>
+      <div class="fg"><label>Заведение * <span class="hint" data-tip="Заведение, к товарам которого применяется абонемент">?</span></label><select id="msub-store" onchange="updateCoverageUI()"></select></div>
+      <div class="fg"><label>Название * <span class="hint" data-tip="Название абонемента, видимое клиентам в разделе 'Абонементы'">?</span></label><input type="text" id="msub-name"></div>
+      <div class="fg"><label>Цена (₽) * <span class="hint" data-tip="Стоимость покупки абонемента клиентом в рублях">?</span></label><input type="number" step="0.01" id="msub-price"></div>
+      <div class="fg"><label>Срок действия (дней) * <span class="hint" data-tip="Через сколько дней после покупки абонемент истекает">?</span></label><input type="number" id="msub-days"></div>
+      <div class="fg" style="grid-column:1/-1"><label>Всего использований <span class="hint" data-tip="Сколько раз можно использовать абонемент за весь срок. 0 = без ограничений (безлимит)">?</span></label><input type="number" id="msub-uses" value="0"></div>
     </div>
 
     <!-- Coverage rules -->
     <div class="rules-section">
       <div class="rules-title">Правила покрытия (coverage_rules)</div>
       <div class="fg">
-        <label>Тип покрытия <span class="hint" title="all — на всё меню заведения; include_categories — только выбранные категории; include_items — только выбранные позиции; exclude_items — всё кроме выбранных">?</span></label>
+        <label>Тип покрытия <span class="hint" data-tip="all — на всё меню заведения; include_categories — только выбранные категории; include_items — только выбранные позиции; exclude_items — всё кроме выбранных">?</span></label>
         <select id="msub-cov-type" onchange="updateCoverageUI()">
           <option value="all">all — все блюда</option>
           <option value="include_categories">include_categories — только категории</option>
@@ -622,7 +624,7 @@ tr:hover td{background:var(--bg-subtle)}
     <div class="rules-section">
       <div class="rules-title">Временные ограничения (time_rules)</div>
       <div class="fg">
-        <label>Дни недели (пусто = все)<span class="hint" title="В какие дни недели действует абонемент. Если ничего не отмечено — работает каждый день.">?</span></label>
+        <label>Дни недели (пусто = все)<span class="hint" data-tip="В какие дни недели действует абонемент. Если ничего не отмечено — работает каждый день.">?</span></label>
         <div class="weekdays">
           <label><input type="checkbox" value="1" class="wd"> Пн</label>
           <label><input type="checkbox" value="2" class="wd"> Вт</label>
@@ -634,11 +636,11 @@ tr:hover td{background:var(--bg-subtle)}
         </div>
       </div>
       <div class="grid2">
-        <div class="fg"><label>Время начала<span class="hint" title="С какого времени (по Москве) абонемент начинает действовать. Пусто — без ограничения.">?</span></label><input type="time" id="msub-time-start"></div>
-        <div class="fg"><label>Время окончания<span class="hint" title="До какого времени (по Москве) абонемент действует. Пусто — без ограничения.">?</span></label><input type="time" id="msub-time-end"></div>
+        <div class="fg"><label>Время начала<span class="hint" data-tip="С какого времени (по Москве) абонемент начинает действовать. Пусто — без ограничения.">?</span></label><input type="time" id="msub-time-start"></div>
+        <div class="fg"><label>Время окончания<span class="hint" data-tip="До какого времени (по Москве) абонемент действует. Пусто — без ограничения.">?</span></label><input type="time" id="msub-time-end"></div>
       </div>
       <div class="fg">
-        <label>Исключённые даты (ГГГГ-ММ-ДД через запятую)<span class="hint" title="Конкретные даты, в которые абонемент не действует. Например: праздники. Формат ГГГГ-ММ-ДД, через запятую.">?</span></label>
+        <label>Исключённые даты (ГГГГ-ММ-ДД через запятую)<span class="hint" data-tip="Конкретные даты, в которые абонемент не действует. Например: праздники. Формат ГГГГ-ММ-ДД, через запятую.">?</span></label>
         <input type="text" id="msub-excl-dates" placeholder="2025-01-01, 2025-05-09">
       </div>
     </div>
@@ -647,9 +649,9 @@ tr:hover td{background:var(--bg-subtle)}
     <div class="rules-section">
       <div class="rules-title">Лимиты использования (usage_limits)</div>
       <div class="grid2">
-        <div class="fg"><label>Макс. исп./день<span class="hint" title="Сколько раз в день можно использовать абонемент. Пусто — без ограничения.">?</span></label><input type="number" id="msub-daily" placeholder="2"></div>
-        <div class="fg"><label>Мин. интервал (ч)<span class="hint" title="Минимальное время между двумя использованиями абонемента, в часах. Например: 4 — нельзя использовать чаще раза в 4 часа.">?</span></label><input type="number" step="0.5" id="msub-interval" placeholder="1"></div>
-        <div class="fg" style="grid-column:1/-1"><label>Мин. сумма заказа (₽)<span class="hint" title="Минимальная сумма, на которую должны попасть покрытые позиции, чтобы абонемент применился.">?</span></label><input type="number" id="msub-minamount" placeholder="150"></div>
+        <div class="fg"><label>Макс. исп./день<span class="hint" data-tip="Сколько раз в день можно использовать абонемент. Пусто — без ограничения.">?</span></label><input type="number" id="msub-daily" placeholder="2"></div>
+        <div class="fg"><label>Мин. интервал (ч)<span class="hint" data-tip="Минимальное время между двумя использованиями абонемента, в часах. Например: 4 — нельзя использовать чаще раза в 4 часа.">?</span></label><input type="number" step="0.5" id="msub-interval" placeholder="1"></div>
+        <div class="fg" style="grid-column:1/-1"><label>Мин. сумма заказа (₽)<span class="hint" data-tip="Минимальная сумма, на которую должны попасть покрытые позиции, чтобы абонемент применился.">?</span></label><input type="number" id="msub-minamount" placeholder="150"></div>
       </div>
     </div>
 
@@ -1744,6 +1746,35 @@ if ('serviceWorker' in navigator) {
     const id = el.id.replace('screen-', '');
     ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,profile:loadProfile})[id]?.();
   }
+})();
+
+// ─── HINT POPUPS ───
+(function(){
+  const popup = document.createElement('div');
+  popup.id = 'hint-popup';
+  document.body.appendChild(popup);
+
+  document.addEventListener('click', function(e){
+    const hint = e.target.closest('.hint');
+    if(hint){
+      e.stopPropagation();
+      const tip = hint.getAttribute('data-tip');
+      if(!tip) return;
+      popup.textContent = tip;
+      popup.classList.add('show');
+      const r = hint.getBoundingClientRect();
+      const pw = 260;
+      let left = r.left;
+      let top = r.bottom + 6;
+      if(left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+      if(left < 8) left = 8;
+      if(top + 100 > window.innerHeight) top = r.top - popup.offsetHeight - 6;
+      popup.style.left = left + 'px';
+      popup.style.top  = top  + 'px';
+    } else {
+      popup.classList.remove('show');
+    }
+  });
 })();
 </script>
 </body>
