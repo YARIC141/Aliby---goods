@@ -1693,7 +1693,12 @@ async function restoreNav() {
 })();
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
+  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(reg => reg.update())
+      .catch(() => {});
+  });
 }
 
 // ─── PULL TO REFRESH ───
