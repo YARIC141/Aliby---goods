@@ -241,7 +241,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   <div class="sn-logo">Aliby Foods</div>
   <button class="sn-btn" data-nav="map">🗺 Карта</button>
   <button class="sn-btn" data-nav="store">🏪 Заведение</button>
-  <button class="sn-btn" data-nav="menu">📋 Меню</button>
+  <button class="sn-btn" data-nav="menu">📋 Товары и Услуги</button>
   <button class="sn-btn" data-nav="cart">🛒 Корзина <span id="sn-cart-cnt"></span></button>
   <button class="sn-btn" data-nav="orders">📦 Заказы</button>
   <button class="sn-btn" data-nav="subscriptions">🎫 Абонементы</button>
@@ -367,7 +367,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <div id="screen-menu" class="screen">
   <div class="ph">
     <button class="btn-back" onclick="goTo('store')">← Заведение</button>
-    <h2 id="menu-ph-name">Меню</h2>
+    <h2 id="menu-ph-name">Товары и Услуги</h2>
     <button class="btn btn-sm" onclick="goTo('cart')">Корзина&nbsp;<span id="menu-cart-cnt">0</span></button>
   </div>
 
@@ -531,7 +531,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   <div class="bn-row">
     <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
     <button class="bn-btn" data-nav="store"><span class="ico">🏪</span>Заведение</button>
-    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Меню</button>
+    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="cart"><span class="ico">🛒</span>Корзина</button>
     <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
@@ -1020,7 +1020,7 @@ function renderStoreList(stores) {
     const d = document.createElement('div');
     d.className = 'sl-item' + (S.store?.id === st.id ? ' sel' : '');
     d.innerHTML = `<div><div class="sli-name">${esc(st.name)}</div><div class="sli-addr">${esc(st.address)}</div></div><span>→</span>`;
-    d.addEventListener('click', () => showStorePopup(st, d));
+    d.addEventListener('click', () => { showStorePopup(st, d); goTo('store'); });
     el.appendChild(d);
   });
 }
