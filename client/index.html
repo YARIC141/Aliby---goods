@@ -44,6 +44,8 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 .bn-btn{flex:1;padding:6px 2px 5px;border:none;background:none;cursor:pointer;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
 .bn-btn .ico{font-size:20px;line-height:1}
 .bn-btn.active{color:var(--fg);font-weight:600}
+#nav-info-popup{position:fixed;bottom:66px;left:50%;transform:translateX(-50%) translateY(8px);max-width:280px;width:calc(100% - 32px);background:var(--card);border:1px solid var(--border-light);border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.45;color:var(--fg);box-shadow:0 4px 20px rgba(0,0,0,.15);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:800;text-align:center}
+#nav-info-popup.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 
 @media(max-width:767px){
   #side-nav{display:none}
@@ -538,6 +540,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
     <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
   </div>
 </div>
+<div id="nav-info-popup"></div>
 
 </div><!-- #main -->
 </div><!-- #app -->
@@ -805,7 +808,27 @@ function goTo(id) {
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   ({map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,orders:loadOrders,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
 }
-document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.nav)));
+const NAV_INFO_CLIENT = {
+  map:           'Карта всех заведений поблизости. Нажмите на метку, чтобы посмотреть информацию о заведении.',
+  store:         'Информация о выбранном заведении: меню, часы работы и контакты.',
+  menu:          'Каталог товаров и услуг выбранного заведения. Добавляйте понравившееся в корзину.',
+  cart:          'Здесь хранятся товары и услуги, которые вы выбрали. Тут же можно их оплатить.',
+  orders:        'История ваших заказов и текущий статус каждого из них.',
+  subscriptions: 'Ваши абонементы — многоразовые скидки на любимые блюда и услуги.',
+  profile:       'Настройки профиля: смена темы оформления и данные аккаунта.',
+};
+let _navInfoTimer;
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
+  const info = NAV_INFO_CLIENT[b.dataset.nav];
+  if (info) {
+    const popup = document.getElementById('nav-info-popup');
+    popup.textContent = info;
+    popup.classList.add('show');
+    clearTimeout(_navInfoTimer);
+    _navInfoTimer = setTimeout(() => popup.classList.remove('show'), 3500);
+  }
+  goTo(b.dataset.nav);
+}));
 
 function showAuthTab(name) {
   document.querySelectorAll('[data-tab-auth]').forEach(b => b.classList.toggle('active', b.dataset.tabAuth === name));
