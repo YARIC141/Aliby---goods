@@ -110,6 +110,9 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .map-layout.no-map .sl-panel{flex:1;width:auto;border-right:none}
 .sl-search{padding:8px;border-bottom:1px solid var(--border);flex-shrink:0}
 .sl-search input{padding:6px 9px}
+.sl-cats{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sl-cats:empty{display:none}
+.sl-cats .chip{padding:3px 9px;font-size:11px}
 .sl-list{flex:1;overflow-y:auto}
 .sl-item{padding:10px 12px;border-bottom:1px solid var(--border-light);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .sl-item:hover{background:var(--bg-subtle)}
@@ -294,6 +297,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <div class="sl-search">
         <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)">
       </div>
+      <div class="sl-cats" id="sl-cats"></div>
       <div class="sl-list" id="sl-list"><div class="loading">Загрузка…</div></div>
     </div>
 
@@ -611,7 +615,7 @@ const S = {
   session: null, profile: null, store: null,
   cart: [], cartStoreId: null, appliedSub: null,
   menuCatId: '', menuStoreSubs: [], pendingSubId: null,
-  map: null, mapMarkers: [], mapFitted: false,
+  map: null, mapMarkers: [], mapFitted: false, allStores: [], mapCats: new Set(),
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
 };
@@ -864,29 +868,102 @@ async function refreshSession() {
 
 // ─── MAP ───
 async function loadMap() {
-  loadStoreList();
+  loadMapStores();
   loadMapData();
 }
 
-async function loadStoreList() {
+async function loadMapStores() {
   const el = document.getElementById('sl-list');
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
-    // GET /rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)
-    const stores = await req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)');
-    el.innerHTML = '';
-    if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
-    stores.forEach(st => {
-      const d = document.createElement('div');
-      d.className = 'sl-item' + (S.store?.id === st.id ? ' sel' : '');
-      d.innerHTML = `<div><div class="sli-name">${esc(st.name)}</div><div class="sli-addr">${esc(st.address)}</div></div><span>→</span>`;
-      d.addEventListener('click', () => showStorePopup(st, d));
-      el.appendChild(d);
-    });
+    const [stores, locs] = await Promise.all([
+      req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)'),
+      req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
+    ]);
+    const locMap = new Map(locs.map(l => [l.id, l]));
+    S.allStores = stores.map(st => ({
+      ...st,
+      lng: locMap.get(st.id)?.lng ?? null,
+      lat: locMap.get(st.id)?.lat ?? null,
+      marker_color: locMap.get(st.id)?.marker_color ?? '#e8430a',
+    }));
+    renderMapCategoryChips();
+    applyMapFilter();
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
+function renderMapCategoryChips() {
+  const el = document.getElementById('sl-cats');
+  const catsMap = new Map();
+  S.allStores.forEach(st => {
+    if (st.store_category_id && st.store_categories) {
+      catsMap.set(st.store_category_id, st.store_categories);
+    }
+  });
+  if (!catsMap.size) { el.innerHTML = ''; return; }
+  const sorted = [...catsMap.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
+  el.innerHTML = '';
+  sorted.forEach(([id, cat]) => {
+    const btn = document.createElement('button');
+    btn.className = 'chip' + (S.mapCats.has(id) ? ' active' : '');
+    btn.textContent = (cat.icon ? cat.icon + ' ' : '') + cat.name;
+    btn.addEventListener('click', () => {
+      S.mapCats.has(id) ? S.mapCats.delete(id) : S.mapCats.add(id);
+      btn.classList.toggle('active', S.mapCats.has(id));
+      applyMapFilter();
+    });
+    el.appendChild(btn);
+  });
+}
+
+function applyMapFilter(q) {
+  if (q === undefined) q = document.querySelector('#screen-map .sl-search input')?.value || '';
+  const ql = q.toLowerCase();
+  const filtered = S.allStores.filter(st => {
+    if (S.mapCats.size && !S.mapCats.has(st.store_category_id)) return false;
+    if (ql && !st.name.toLowerCase().includes(ql) && !(st.address || '').toLowerCase().includes(ql)) return false;
+    return true;
+  });
+  renderStoreList(filtered);
+  if (S.map) renderMapMarkers(filtered);
+}
+
+function renderStoreList(stores) {
+  const el = document.getElementById('sl-list');
+  el.innerHTML = '';
+  if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
+  stores.forEach(st => {
+    const d = document.createElement('div');
+    d.className = 'sl-item' + (S.store?.id === st.id ? ' sel' : '');
+    d.innerHTML = `<div><div class="sli-name">${esc(st.name)}</div><div class="sli-addr">${esc(st.address)}</div></div><span>→</span>`;
+    d.addEventListener('click', () => showStorePopup(st, d));
+    el.appendChild(d);
+  });
+}
+
+function renderMapMarkers(stores) {
+  S.mapMarkers.forEach(m => m.remove());
+  S.mapMarkers = [];
+  const bounds = new maplibregl.LngLatBounds();
+  let hasCoords = false;
+  stores.forEach(st => {
+    if (st.lng == null || st.lat == null) return;
+    hasCoords = true;
+    bounds.extend([st.lng, st.lat]);
+    const el = document.createElement('div');
+    el.className = 'store-pin';
+    el.innerHTML = `<div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(st.name)}</div>`;
+    el.addEventListener('click', () => showStorePopup(st, null));
+    S.mapMarkers.push(new maplibregl.Marker({ element: el }).setLngLat([st.lng, st.lat]).addTo(S.map));
+  });
+  if (hasCoords && !S.mapFitted) {
+    S.mapFitted = true;
+    S.map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 600 });
+  }
+}
+
 async function loadMapData() {
-  if (S.map) { setTimeout(() => S.map.resize(), 0); loadStoreMarkers(); return; }
+  if (S.map) { setTimeout(() => S.map.resize(), 0); applyMapFilter(); return; }
   S.map = new maplibregl.Map({
     container: 'map-gl', style: buildMapStyle(S.mapCfg),
     center: [0, 0], zoom: 2, attributionControl: false,
@@ -907,7 +984,7 @@ async function loadMapData() {
   });
   S.map.addControl(geoCtrl, 'top-right');
   geoCtrl.on('error', () => showGeoToast('Геолокация недоступна или запрещена'));
-  S.map.on('load', loadStoreMarkers);
+  S.map.on('load', applyMapFilter);
 }
 
 function toggleMapPanel() {
@@ -918,36 +995,7 @@ function toggleMapPanel() {
   if (!hidden && S.map) setTimeout(() => S.map.resize(), 50);
 }
 
-async function loadStoreMarkers() {
-  try {
-    S.mapMarkers.forEach(m => m.remove());
-    S.mapMarkers = [];
-    // POST /rest/v1/rpc/get_stores_with_locations
-    const stores = await req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' });
-    const bounds = new maplibregl.LngLatBounds();
-    let hasCoords = false;
-    stores.forEach(st => {
-      if (st.lng == null || st.lat == null) return;
-      hasCoords = true;
-      bounds.extend([st.lng, st.lat]);
-      const el = document.createElement('div');
-      el.className = 'store-pin';
-      el.innerHTML = `<div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(st.name)}</div>`;
-      el.addEventListener('click', () => showStorePopup(st, null));
-      S.mapMarkers.push(new maplibregl.Marker({ element: el }).setLngLat([st.lng, st.lat]).addTo(S.map));
-    });
-    if (hasCoords && !S.mapFitted) {
-      S.mapFitted = true;
-      S.map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 600 });
-    }
-  } catch(e) { /* ignore */ }
-}
-
-function filterStores(q) {
-  document.querySelectorAll('.sl-item').forEach(el =>
-    el.style.display = el.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'
-  );
-}
+function filterStores(q) { applyMapFilter(q); }
 
 function showStorePopup(st, listItem) {
   if (!st) return;
@@ -1482,8 +1530,9 @@ if ('serviceWorker' in navigator) {
 
 // ─── PULL TO REFRESH ───
 (function() {
-  let startY = 0, dy = 0, tracking = false;
+  let startY = 0, startX = 0, dy = 0, tracking = false;
   const THRESH = 72;
+  const INIT_ZONE = 80; // px от верха — трекинг стартует только здесь
 
   const pill = document.createElement('div');
   pill.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-56px);width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:900;box-shadow:0 2px 8px var(--shadow);transition:transform .15s;pointer-events:none';
@@ -1497,12 +1546,19 @@ if ('serviceWorker' in navigator) {
 
   document.addEventListener('touchstart', e => {
     if (!scrollTop()) return;
-    startY = e.touches[0].clientY; dy = 0; tracking = true;
+    const t = e.touches[0];
+    if (t.clientY > INIT_ZONE) return; // касание вне верхней зоны — игнор
+    startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
     if (!tracking) return;
-    dy = Math.max(0, e.touches[0].clientY - startY);
+    const t = e.touches[0];
+    const rawDy = t.clientY - startY;
+    const rawDx = Math.abs(t.clientX - startX);
+    // Ранняя отмена при горизонтальном жесте (swipe влево/вправо)
+    if (rawDx > rawDy && rawDy < THRESH / 4) { tracking = false; return; }
+    dy = Math.max(0, rawDy);
     const p = Math.min(dy / THRESH, 1);
     pill.style.transform = `translateX(-50%) translateY(${Math.round((p - 1) * 56)}px)`;
     pill.textContent = dy >= THRESH ? '↺' : '↓';

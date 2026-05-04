@@ -24,6 +24,8 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request, { cache: 'no-cache' }));
+    e.respondWith(
+      fetch(e.request, { cache: 'reload' }).catch(() => caches.match(e.request))
+    );
   }
 });
