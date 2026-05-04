@@ -748,7 +748,7 @@ const S = {
   currentOrderId: null,
   pendingConfirm: null,
   adminMap: null, adminMapMarkers: [], adminMapFitted: false,
-  mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null,
+  mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null, mapPendingStore: null,
   uploadedPhotoFilename: null,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
@@ -1137,7 +1137,13 @@ async function saveStore() {
       closeModal('m-store'); loadStores();
     } else {
       // POST /rest/v1/stores
-      await req('/rest/v1/stores', { method:'POST', body: JSON.stringify(body) });
+      const created = await req('/rest/v1/stores', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        headers: { 'Prefer': 'return=representation' },
+      });
+      const newId = Array.isArray(created) ? created[0]?.id : created?.id;
+      S.mapPendingStore = newId || null;
       closeModal('m-store'); loadStores(); goTo('map');
     }
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
@@ -1636,6 +1642,17 @@ async function loadAdminMapMarkers() {
             </div>
           </div>`).join('')
       : '<div class="empty">Нет заведений</div>';
+
+    if (S.mapPendingStore) {
+      const pending = S.mapStoreData.find(l => l.id === S.mapPendingStore);
+      S.mapPendingStore = null;
+      selectStoreForMapEdit(
+        pending?.id ?? '',
+        pending?.lng ?? null,
+        pending?.lat ?? null,
+        pending?.marker_color ?? '#e8430a'
+      );
+    }
   } catch(e) { mlist.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
