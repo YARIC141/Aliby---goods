@@ -947,7 +947,7 @@ function applyMapFilter(q) {
     return true;
   });
   renderStoreList(filtered);
-  if (S.map) renderMapMarkers(filtered);
+  if (S.map) renderMapMarkers(S.mapCats.size ? filtered : []);
 }
 
 function renderStoreList(stores) {
