@@ -232,10 +232,23 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .toggle-sw input:checked + .toggle-track{background:#2563eb}
 .toggle-track::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
 .toggle-sw input:checked + .toggle-track::before{transform:translateX(18px)}
+#splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:opacity .5s}
+#splash.hide{opacity:0;pointer-events:none}
+.sp1,.sp2{font-size:18px;color:var(--fg-sec);margin:0;line-height:1.5;text-align:center}
+.sp3{font-size:38px;font-weight:700;color:var(--fg);margin:0 0 4px;line-height:1.2}
+.sp-icon{width:100px;height:100px;border-radius:22px;margin-top:20px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
 </style>
 <script>if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
 <body>
+
+<div id="splash">
+  <p class="sp1">Если возникнут подозрения,</p>
+  <p class="sp2">то у тебя есть</p>
+  <p class="sp3">Aliby</p>
+  <img class="sp-icon" src="icons/icon-192.png" alt="Aliby">
+</div>
+
 <div id="app">
 
 <!-- ════════════════ DESKTOP SIDE NAV ════════════════ -->
@@ -1912,6 +1925,15 @@ async function restoreNav() {
   const nav = localStorage.getItem('aliby_nav');
   goTo(nav && SCREENS.includes(nav) ? nav : 'map');
 }
+
+// ─── SPLASH ───
+function hideSplash() {
+  const el = document.getElementById('splash');
+  if (!el) return;
+  el.classList.add('hide');
+  setTimeout(() => el.remove(), 500);
+}
+setTimeout(hideSplash, 2000);
 
 // ─── INIT ───
 (async function init() {
