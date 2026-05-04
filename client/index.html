@@ -49,7 +49,8 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
   #side-nav{display:none}
   #bottom-nav{display:block}
   .bn-inner{justify-content:center}
-  .bn-btn{width:25%;flex:none}
+  .bn-btn{flex:0 0 25%;max-width:25%}
+  .bn-btn:nth-child(n+5){flex:0 0 calc(100% / 3);max-width:calc(100% / 3)}
 }
 
 /* ── PAGE STRUCTURE ── */
