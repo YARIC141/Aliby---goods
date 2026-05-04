@@ -42,10 +42,10 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 .sn-user{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Bottom nav (mobile) */
-#bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--border)}
+#bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--border);margin-top:auto}
 .bn-row{display:flex}
-.bn-btn{flex:1;padding:7px 4px 6px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
-.bn-btn .ico{font-size:19px;line-height:1}
+.bn-btn{flex:1;padding:6px 2px 5px;border:none;background:none;cursor:pointer;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
+.bn-btn .ico{font-size:20px;line-height:1}
 .bn-btn.active{color:var(--fg);font-weight:600}
 
 /* Coverage item picker */
@@ -452,8 +452,6 @@ tr:hover td{background:var(--bg-subtle)}
     <button class="bn-btn" data-nav="categories"><span class="ico">🗂</span>Категории</button>
     <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Меню</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
-  </div>
-  <div class="bn-row">
     <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
     <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
     <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
