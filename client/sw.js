@@ -1,4 +1,5 @@
-const CACHE = 'aliby-tiles-v3';
+// v4
+const CACHE = 'aliby-tiles';
 const TILE_PATH = '/functions/v1/vector-tiles/';
 
 self.addEventListener('install', () => self.skipWaiting());
