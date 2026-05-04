@@ -26,7 +26,13 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 /* ── LAYOUT ── */
 #app{display:flex;height:100dvh;overflow:hidden}
 #side-nav{width:200px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
+@keyframes navSlideInLeft {from{transform:translateX(-100%)}to{transform:translateX(0)}}
+@keyframes navSlideInRight{from{transform:translateX(100%)} to{transform:translateX(0)}}
+@keyframes navSlideOutLeft {from{transform:translateX(0)} to{transform:translateX(-100%)}}
+@keyframes navSlideOutRight{from{transform:translateX(0)} to{transform:translateX(100%)}}
+.bn-lbl{display:flex;align-items:center;justify-content:center;gap:1px;line-height:1.2;text-align:center}
+.nav-help{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;border:1px solid currentColor;font-size:8px;cursor:pointer;margin-left:2px;vertical-align:middle;line-height:1;opacity:.55;flex-shrink:0}
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden}
 .screen.active{display:flex}
 
@@ -470,12 +476,12 @@ tr:hover td{background:var(--bg-subtle)}
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
   <div class="bn-row">
-    <button class="bn-btn" data-nav="stores"><span class="ico">🏪</span>Заведения</button>
-    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
-    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Товары и<br>Услуги</button>
-    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
-    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
-    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
+    <button class="bn-btn" data-nav="stores"><span class="ico">🏪</span><span class="bn-lbl">Заведения<span class="nav-help" data-info="Управление заведениями. Добавляйте и редактируйте адрес, часы работы, цвет метки.">?</span></span></button>
+    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span><span class="bn-lbl">Карта<span class="nav-help" data-info="Интерактивная карта заведений. Выберите заведение и кликните на карту чтобы задать его координаты.">?</span></span></button>
+    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span><span class="bn-lbl">Товары и<br>Услуги<span class="nav-help" data-info="Каталог товаров и услуг. Добавляйте позиции с ценой, описанием, фото и признаком наличия.">?</span></span></button>
+    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span><span class="bn-lbl">Абонементы<span class="nav-help" data-info="Абонементы для клиентов. Настраивайте правила скидок, временные ограничения и лимиты.">?</span></span></button>
+    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span><span class="bn-lbl">Заказы<span class="nav-help" data-info="Все заказы клиентов. Фильтрация по заведению и статусу, просмотр деталей.">?</span></span></button>
+    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span><span class="bn-lbl">Профиль<span class="nav-help" data-info="Настройки администратора: смена темы оформления и данные аккаунта.">?</span></span></button>
   </div>
 </div>
 <div id="nav-info-popup"></div>
@@ -749,6 +755,7 @@ const S = {
   pendingConfirm: null,
   adminMap: null, adminMapMarkers: [], adminMapFitted: false,
   mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null, mapPendingStore: null,
+  navHistory: [], navIdx: -1,
   uploadedPhotoFilename: null,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
@@ -864,35 +871,78 @@ function filterTable(tableId, q) {
 }
 
 // ─── NAV ───
-function goTo(id) {
+function goTo(id, opts = {}) {
   if (id !== 'auth' && !S.session) { goTo('auth'); return; }
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
+  if (!opts.fromSwipe) {
+    S.navHistory = S.navHistory.slice(0, S.navIdx + 1);
+    if (S.navHistory[S.navHistory.length - 1] !== id) { S.navHistory.push(id); S.navIdx++; }
+  }
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
-  document.getElementById('screen-' + id)?.classList.add('active');
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,profile:loadProfile})[id]?.();
+  if (opts.dir && prevId && prevId !== id) {
+    document.getElementById('screen-' + id)?.classList.add('active');
+    animateScreenChange(prevId, id, opts.dir);
+  } else {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + id)?.classList.add('active');
+  }
 }
-const NAV_INFO_ADMIN = {
-  stores:        'Управление заведениями. Добавляйте и редактируйте адрес, часы работы, цвет метки.',
-  map:           'Интерактивная карта заведений. Выберите заведение и кликните на карту чтобы задать его координаты.',
-  menu:          'Каталог товаров и услуг. Добавляйте позиции с ценой, описанием, фото и признаком наличия.',
-  categories:    'Категории меню для группировки товаров и услуг. Используются в правилах абонементов.',
-  subscriptions: 'Абонементы для клиентов. Настраивайте правила скидок, временные ограничения и лимиты.',
-  orders:        'Все заказы клиентов. Фильтрация по заведению и статусу, просмотр деталей.',
-  profile:       'Настройки администратора: смена темы оформления и данные аккаунта.',
-};
+
+function animateScreenChange(fromId, toId, dir) {
+  const fromEl = document.getElementById('screen-' + fromId);
+  const toEl   = document.getElementById('screen-' + toId);
+  if (!fromEl || !toEl) return;
+  const D = 280;
+  Object.assign(fromEl.style, {position:'absolute',top:'0',left:'0',width:'100%',height:'100%',zIndex:'50',
+    animation:`${dir==='back'?'navSlideOutRight':'navSlideOutLeft'} ${D}ms ease forwards`});
+  toEl.style.animation = `${dir==='back'?'navSlideInLeft':'navSlideInRight'} ${D}ms ease forwards`;
+  setTimeout(() => {
+    fromEl.classList.remove('active');
+    ['position','top','left','width','height','zIndex','animation'].forEach(p => fromEl.style[p]='');
+    toEl.style.animation = '';
+  }, D + 10);
+}
+
 let _navInfoTimer;
-document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
-  const info = NAV_INFO_ADMIN[b.dataset.nav];
-  if (info) {
+document.addEventListener('click', e => {
+  const nh = e.target.closest('.nav-help');
+  if (nh) {
+    e.stopPropagation();
     const popup = document.getElementById('nav-info-popup');
-    popup.textContent = info;
+    popup.textContent = nh.getAttribute('data-info');
     popup.classList.add('show');
     clearTimeout(_navInfoTimer);
     _navInfoTimer = setTimeout(() => popup.classList.remove('show'), 3500);
+    return;
   }
-  goTo(b.dataset.nav);
-}));
+  if (!e.target.closest('#nav-info-popup')) document.getElementById('nav-info-popup')?.classList.remove('show');
+});
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.nav)));
+
+// ─── SWIPE NAVIGATION ───
+(function(){
+  let sx, sy;
+  const MAP_SEL = '#map-admin-gl,.maplibregl-canvas,.maplibregl-map';
+  document.addEventListener('touchstart', e => {
+    if (e.target.closest(MAP_SEL)) return;
+    if (e.touches.length !== 1) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if (e.target.closest(MAP_SEL) || sx == null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = e.changedTouches[0].clientY - sy;
+    sx = sy = null;
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0 && S.navIdx > 0) {
+      S.navIdx--; goTo(S.navHistory[S.navIdx], {fromSwipe:true, dir:'back'});
+    } else if (dx > 0 && S.navIdx < S.navHistory.length - 1) {
+      S.navIdx++; goTo(S.navHistory[S.navIdx], {fromSwipe:true, dir:'forward'});
+    }
+  }, {passive:true});
+})();
 
 function toggleTheme() {
   const dark = document.getElementById('theme-chk').checked;
