@@ -41,8 +41,8 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 
 #bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--border)}
 .bn-row{display:flex}
-.bn-btn{flex:1;padding:7px 4px 6px;border:none;background:none;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
-.bn-btn .ico{font-size:19px;line-height:1}
+.bn-btn{flex:1;padding:6px 2px 5px;border:none;background:none;cursor:pointer;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
+.bn-btn .ico{font-size:20px;line-height:1}
 .bn-btn.active{color:var(--fg);font-weight:600}
 
 @media(max-width:767px){
@@ -533,8 +533,6 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
     <button class="bn-btn" data-nav="store"><span class="ico">🏪</span>Заведение</button>
     <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Меню</button>
     <button class="bn-btn" data-nav="cart"><span class="ico">🛒</span>Корзина</button>
-  </div>
-  <div class="bn-row">
     <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
     <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
@@ -1262,7 +1260,7 @@ function renderItemCard(item) {
   const best = getBestDisc(item);
   const discPrice = best ? Math.max(0, item.price - best.disc) : null;
   const priceHtml = best
-    ? `<span class="price-orig">${item.price} ₽</span><span class="price-sub">${discPrice} ₽</span>`
+    ? `<span class="price-orig">${item.price} ₽</span><span class="price-sub">${discPrice} ₽ по абонементу</span>`
     : `${item.price} ₽`;
   return `<div class="item-card" onclick="openItemDetail('${item.id}')">
     <div class="item-img">${imgHtml}</div>
@@ -1296,7 +1294,7 @@ function openItemDetail(id) {
   const best = getBestDisc(item);
   const discPrice = best ? Math.max(0, item.price - best.disc) : null;
   document.getElementById('mi-price').innerHTML = best
-    ? `<span class="price-orig">${item.price} ₽</span> → <span class="price-sub">${discPrice} ₽</span> по абонементу`
+    ? `<span class="price-orig">${item.price} ₽</span><span class="price-sub">${discPrice} ₽ по абонементу</span>`
     : `${item.price} ₽`;
 
   const applicable = getApplicableSubs(item);
