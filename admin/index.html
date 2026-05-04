@@ -369,20 +369,23 @@ tr:hover td{background:var(--bg-subtle)}
 
   <div style="display:flex;flex:1;overflow:hidden;flex-direction:column">
 
-    <!-- Marker add form -->
+    <!-- Map edit toolbar -->
     <div style="padding:10px 16px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;flex-shrink:0">
       <div class="fg" style="min-width:180px;margin:0">
         <label>Заведение</label>
-        <select id="marker-store-sel"></select>
+        <select id="marker-store-sel" onchange="onMapStoreChange()">
+          <option value="">— Выберите заведение —</option>
+        </select>
       </div>
-      <input type="hidden" id="marker-lng">
-      <input type="hidden" id="marker-lat">
-      <div class="fg" style="width:70px;margin:0">
+      <div class="fg" style="width:70px;margin:0" id="map-color-wrap" style="display:none">
         <label>Цвет</label>
         <input type="color" id="marker-color" value="#e8430a" style="padding:2px 4px;height:33px">
       </div>
-      <button class="btn btn-p btn-sm" onclick="addMarker()">✓ Сохранить</button>
-      <span class="txt-muted">Кликните на карту для установки координат</span>
+      <input type="hidden" id="marker-lng">
+      <input type="hidden" id="marker-lat">
+      <span id="map-status" class="txt-muted" style="align-self:center">Выберите заведение</span>
+      <button id="map-save-btn" class="btn btn-p btn-sm" style="display:none" onclick="saveMapCoords()">✓ Сохранить</button>
+      <button id="map-cancel-btn" class="btn btn-sm" style="display:none" onclick="cancelMapEdit()">✕ Отменить</button>
     </div>
 
     <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
@@ -731,6 +734,7 @@ const S = {
   currentOrderId: null,
   pendingConfirm: null,
   adminMap: null, adminMapMarkers: [], adminMapFitted: false,
+  mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null,
   uploadedPhotoFilename: null,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
@@ -1041,7 +1045,7 @@ async function loadStores() {
 
 function fillStoreSelects() {
   const opts = S.stores.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
-  ['cat-store-filter','mi-store-filter','ord-store-filter','sub-store-filter','mc-store','mmi-store','msub-store','marker-store-sel'].forEach(id => {
+  ['cat-store-filter','mi-store-filter','ord-store-filter','sub-store-filter','mc-store','mmi-store','msub-store'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const current = el.value;
@@ -1049,6 +1053,9 @@ function fillStoreSelects() {
     el.innerHTML = prefix + opts;
     el.value = current;
   });
+  // marker-store-sel keeps its own blank option
+  const mss = document.getElementById('marker-store-sel');
+  if (mss) { const cur = mss.value; mss.innerHTML = '<option value="">— Выберите заведение —</option>' + opts; mss.value = cur; }
 }
 
 function openStoreModal(store) {
@@ -1552,8 +1559,10 @@ async function loadAdminMapMarkers() {
   try {
     S.adminMapMarkers.forEach(m => m.remove());
     S.adminMapMarkers = [];
+    if (S.mapDraftMarker) { S.mapDraftMarker.remove(); S.mapDraftMarker = null; }
     // POST /rest/v1/rpc/get_stores_with_locations
     const locs = await req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' });
+    S.mapStoreData = locs;
     const withCoords = locs.filter(l => l.lng != null && l.lat != null);
 
     if (!S.adminMapFitted && withCoords.length) {
@@ -1569,10 +1578,7 @@ async function loadAdminMapMarkers() {
       el.innerHTML = `<div class="p-dot" style="background:${esc(loc.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(loc.name)}</div>`;
       el.addEventListener('click', e => {
         e.stopPropagation();
-        document.getElementById('marker-store-sel').value = loc.id;
-        document.getElementById('marker-lng').value = loc.lng.toFixed(6);
-        document.getElementById('marker-lat').value = loc.lat.toFixed(6);
-        document.getElementById('marker-color').value = loc.marker_color || '#e8430a';
+        selectStoreForMapEdit(loc.id, loc.lng, loc.lat, loc.marker_color);
       });
       S.adminMapMarkers.push(
         new maplibregl.Marker({ element: el }).setLngLat([loc.lng, loc.lat]).addTo(S.adminMap)
@@ -1591,40 +1597,88 @@ async function loadAdminMapMarkers() {
                 </div>
                 <div class="txt-muted">${loc.lng == null ? 'Координаты не заданы' : ''}</div>
               </div>
-              <button class="btn btn-sm" onclick="editLocPin('${loc.id}',${loc.lng??'null'},${loc.lat??'null'},'${esc(loc.marker_color||'#e8430a')}')">✎</button>
+              <button class="btn btn-sm" onclick="selectStoreForMapEdit('${loc.id}',${loc.lng??'null'},${loc.lat??'null'},'${esc(loc.marker_color||'#e8430a')}')">✎</button>
             </div>
           </div>`).join('')
       : '<div class="empty">Нет заведений</div>';
   } catch(e) { mlist.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
+function onMapStoreChange() {
+  const storeId = document.getElementById('marker-store-sel').value;
+  if (!storeId) { cancelMapEdit(); return; }
+  const loc = S.mapStoreData.find(l => l.id === storeId);
+  selectStoreForMapEdit(storeId, loc?.lng ?? null, loc?.lat ?? null, loc?.marker_color ?? '#e8430a');
+}
+
+function selectStoreForMapEdit(storeId, lng, lat, color) {
+  document.getElementById('marker-store-sel').value = storeId;
+  document.getElementById('marker-color').value = color || '#e8430a';
+  document.getElementById('marker-lng').value = '';
+  document.getElementById('marker-lat').value = '';
+
+  S.mapEditing = true;
+  S.mapOrigCoords = (lng != null && lat != null) ? { lng: parseFloat(lng), lat: parseFloat(lat) } : null;
+
+  if (S.mapDraftMarker) { S.mapDraftMarker.remove(); S.mapDraftMarker = null; }
+
+  document.getElementById('map-save-btn').style.display = 'none';
+  document.getElementById('map-cancel-btn').style.display = 'none';
+  document.getElementById('map-status').textContent = 'Кликните на карту для установки координат';
+
+  if (lng != null && lat != null && S.adminMap) {
+    S.adminMap.flyTo({ center: [parseFloat(lng), parseFloat(lat)], zoom: Math.max(S.adminMap.getZoom(), 14), duration: 600 });
+  }
+}
+
 function onMapClick(e) {
+  if (!S.mapEditing) return;
   const { lng, lat } = e.lngLat;
   document.getElementById('marker-lng').value = lng.toFixed(6);
   document.getElementById('marker-lat').value = lat.toFixed(6);
+
+  if (S.mapDraftMarker) { S.mapDraftMarker.remove(); S.mapDraftMarker = null; }
+
+  const color = document.getElementById('marker-color').value || '#e8430a';
+  const el = document.createElement('div');
+  el.className = 'admin-store-pin';
+  el.style.cssText = 'opacity:.75;pointer-events:none';
+  el.innerHTML = `<div class="p-dot" style="background:${esc(color)};box-shadow:0 0 0 3px rgba(255,255,255,.8),0 0 0 5px ${esc(color)}"></div>`;
+  S.mapDraftMarker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(S.adminMap);
+
+  document.getElementById('map-save-btn').style.display = '';
+  document.getElementById('map-cancel-btn').style.display = '';
+  document.getElementById('map-status').textContent = `${lng.toFixed(5)}, ${lat.toFixed(5)}`;
 }
 
-function editLocPin(storeId, lng, lat, color) {
-  document.getElementById('marker-store-sel').value = storeId;
-  if (lng != null) document.getElementById('marker-lng').value = parseFloat(lng).toFixed(6);
-  if (lat != null) document.getElementById('marker-lat').value = parseFloat(lat).toFixed(6);
-  document.getElementById('marker-color').value = color || '#e8430a';
-}
-
-async function addMarker() {
+async function saveMapCoords() {
   const storeId = document.getElementById('marker-store-sel').value;
   const lng = parseFloat(document.getElementById('marker-lng').value);
   const lat = parseFloat(document.getElementById('marker-lat').value);
   const color = document.getElementById('marker-color').value || '#e8430a';
-  if (!storeId || isNaN(lng) || isNaN(lat)) { alert('Выберите заведение и кликните на карту для координат'); return; }
+  if (!storeId || isNaN(lng) || isNaN(lat)) return;
   try {
     // POST /rest/v1/rpc/upsert_store_location
     await req('/rest/v1/rpc/upsert_store_location', {
       method: 'POST',
       body: JSON.stringify({ p_store_id: storeId, p_lng: lng, p_lat: lat, p_color: color }),
     });
+    cancelMapEdit();
     loadAdminMapMarkers();
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+function cancelMapEdit() {
+  if (S.mapDraftMarker) { S.mapDraftMarker.remove(); S.mapDraftMarker = null; }
+  S.mapEditing = false;
+  S.mapOrigCoords = null;
+  document.getElementById('marker-lng').value = '';
+  document.getElementById('marker-lat').value = '';
+  document.getElementById('marker-store-sel').value = '';
+  document.getElementById('marker-color').value = '#e8430a';
+  document.getElementById('map-save-btn').style.display = 'none';
+  document.getElementById('map-cancel-btn').style.display = 'none';
+  document.getElementById('map-status').textContent = 'Выберите заведение';
 }
 
 // ─── CONFIRM DELETE ───
