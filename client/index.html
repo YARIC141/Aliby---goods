@@ -385,6 +385,11 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <div id="screen-cart" class="screen">
   <div class="ph"><h2>Корзина</h2></div>
   <div class="cart-layout">
+    <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
+      <div style="padding:10px 16px 4px;font-size:13px;font-weight:600;background:var(--bg-muted)">🎫 Абонементы к покупке</div>
+      <div id="sub-cart-list"></div>
+      <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button></div>
+    </div>
     <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
     <div class="cart-foot" id="cart-foot" style="display:none">
 
@@ -441,13 +446,17 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 
 <!-- ════════════════ MY SUBSCRIPTIONS ════════════════ -->
 <div id="screen-subscriptions" class="screen">
-  <div class="ph"><h2>Мои абонементы</h2></div>
+  <div class="ph"><h2>Абонементы</h2></div>
   <div class="pb">
     <div class="tab-nav">
-      <button class="tab-btn active" data-tab-sub="active">Активные</button>
+      <button class="tab-btn active" data-tab-sub="store">Заведение</button>
+      <button class="tab-btn" data-tab-sub="active">Активные</button>
       <button class="tab-btn" data-tab-sub="all">Все</button>
     </div>
-    <div id="sub-active" class="tab-pane active">
+    <div id="sub-store" class="tab-pane active">
+      <div id="sub-store-list" class="items-grid" style="padding-top:8px"></div>
+    </div>
+    <div id="sub-active" class="tab-pane">
       <div id="usubs-active"><div class="loading">Загрузка…</div></div>
     </div>
     <div id="sub-all" class="tab-pane">
@@ -615,7 +624,7 @@ const DEFAULT_FEATURES = {
 // ─── STATE ───
 const S = {
   session: null, profile: null, store: null,
-  cart: [], cartStoreId: null, appliedSub: null,
+  cart: [], cartStoreId: null, appliedSub: null, subCart: [],
   menuCatId: '', menuStoreSubs: [], pendingSubId: null,
   map: null, mapMarkers: [], mapFitted: false, allStores: [], mapCats: new Set(),
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
@@ -643,6 +652,8 @@ const SK = {
     `<div class="usub-card" style="cursor:default"><div style="display:flex;justify-content:space-between;margin-bottom:6px">${SK._b(14,'55%',0)}<div style="width:8px"></div>${SK._b(14,'60px',0)}</div>${SK._b(10,'40%')}${SK._b(10,'60px',0)}</div>`
   ).join(''),
 };
+
+const subCache = new Map();
 
 function buildMapStyle(cfg) {
   const L   = cfg.layers    || {};
@@ -1239,9 +1250,14 @@ function updateCartCount() {
 
 // ─── CART ───
 async function renderCart() {
+  renderSubCartSection();
   const body = document.getElementById('cart-body');
   const foot = document.getElementById('cart-foot');
-  if (!S.cart.length) { body.innerHTML = '<div class="empty">Корзина пуста</div>'; foot.style.display = 'none'; return; }
+  if (!S.cart.length) {
+    body.innerHTML = `<div class="empty">${S.subCart.length ? 'Блюда не добавлены' : 'Корзина пуста'}</div>`;
+    foot.style.display = 'none';
+    return;
+  }
   foot.style.display = 'block';
   let sub = 0;
   body.innerHTML = S.cart.map(({ item, qty }) => {
@@ -1341,17 +1357,9 @@ async function checkoutOrder(method) {
         method: 'POST',
         body: JSON.stringify({ user_subscription_id: S.appliedSub.userSubId, order_id: orderId, amount_discounted: disc }),
       });
-      S.cart = []; S.appliedSub = null; updateCartCount();
-      alert('Заказ оформлен! Оплата по абонементу выполнена.'); goTo('orders');
-    } else {
-      // POST /functions/v1/create-payment
-      const pmt = await req('/functions/v1/create-payment', {
-        method: 'POST',
-        body: JSON.stringify({ type: 'order', entity_id: orderId, return_url: window.location.href }),
-      });
-      S.cart = []; updateCartCount();
-      if (pmt.confirmation_url) window.location.href = pmt.confirmation_url;
     }
+    S.cart = []; S.appliedSub = null; updateCartCount();
+    alert('Заказ оформлен! Оплата имитирована.'); goTo('orders');
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
@@ -1408,6 +1416,7 @@ async function openOrderModal(id) {
 
 // ─── MY SUBSCRIPTIONS ───
 async function loadMySubscriptions() {
+  loadSubStore();
   document.getElementById('usubs-active').innerHTML = SK.usubCards();
   document.getElementById('usubs-all').innerHTML    = SK.usubCards();
   try {
@@ -1450,6 +1459,107 @@ async function openSubModal(id, name, endDate, uses) {
       ? r.map(x => `<div class="cart-row"><div><div>${fmtDate(x.redeemed_at)}</div><div class="txt-muted">Заказ: ${x.order_id?.slice(0,8)||'—'}</div></div><strong>−${x.amount_discounted} ₽</strong></div>`).join('')
       : '<div class="empty">Списаний нет</div>';
   } catch(e) { document.getElementById('mu-redemptions').innerHTML = '<div class="empty">Ошибка</div>'; }
+}
+
+// ─── STORE SUBSCRIPTIONS (buy new) ───
+async function loadSubStore() {
+  const el = document.getElementById('sub-store-list');
+  if (!el) return;
+  if (!S.store) {
+    el.innerHTML = '<div class="empty" style="grid-column:1/-1">Выберите заведение на экране карты</div>';
+    return;
+  }
+  el.innerHTML = SK.itemCards(3);
+  try {
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}&order=price.asc`);
+    if (!subs.length) { el.innerHTML = '<div class="empty" style="grid-column:1/-1">Нет абонементов</div>'; return; }
+    subs.forEach(s => subCache.set(s.id, s));
+    el.innerHTML = subs.map(renderSubItemCard).join('');
+  } catch(e) { el.innerHTML = '<div class="empty" style="grid-column:1/-1">Ошибка загрузки</div>'; }
+}
+
+function renderSubItemCard(sub) {
+  const inCart = S.subCart.find(c => c.sub.id === sub.id);
+  return `<div class="item-card">
+    <div class="item-img" style="font-size:30px;background:var(--bg-subtle)">🎫</div>
+    <div class="item-body">
+      <div class="item-name">${esc(sub.name)}</div>
+      <div class="item-desc">${sub.duration_days} дн. · ${sub.total_uses === 0 ? 'безлимит' : sub.total_uses + ' исп.'}</div>
+      <div class="item-price">${sub.price} ₽</div>
+      ${inCart
+        ? `<button class="btn btn-sm" style="opacity:.65" onclick="removeFromSubCart('${sub.id}')">✓ В корзине</button>`
+        : `<button class="btn btn-p btn-sm" onclick="addSubToCart('${sub.id}')">В корзину</button>`}
+    </div>
+  </div>`;
+}
+
+function addSubToCart(id) {
+  const sub = subCache.get(id);
+  if (!sub) return;
+  if (!S.subCart.find(c => c.sub.id === id)) {
+    S.subCart.push({ sub });
+    saveSubCart();
+  }
+  loadSubStore();
+  renderSubCartSection();
+}
+
+function removeFromSubCart(id) {
+  S.subCart = S.subCart.filter(c => c.sub.id !== id);
+  saveSubCart();
+  loadSubStore();
+  renderSubCartSection();
+}
+
+function saveSubCart() {
+  try { localStorage.setItem('aliby_subcart', JSON.stringify({ subs: S.subCart })); } catch(e) {}
+}
+
+function renderSubCartSection() {
+  const sect = document.getElementById('sub-cart-sect');
+  const list = document.getElementById('sub-cart-list');
+  if (!sect) return;
+  if (!S.subCart.length) { sect.style.display = 'none'; return; }
+  sect.style.display = 'block';
+  list.innerHTML = S.subCart.map(({ sub }) =>
+    `<div class="cart-item">
+      <div class="ci-info">
+        <div class="ci-name">🎫 ${esc(sub.name)}</div>
+        <div class="ci-price">${sub.duration_days} дн. · ${sub.total_uses === 0 ? 'безлимит' : sub.total_uses + ' исп.'} — ${sub.price} ₽</div>
+      </div>
+      <button class="qty-btn" onclick="removeFromSubCart('${sub.id}')" title="Убрать">✕</button>
+    </div>`
+  ).join('');
+}
+
+async function checkoutSubs() {
+  if (!S.subCart.length) return;
+  if (!S.session) { alert('Войдите в аккаунт'); return; }
+  const items = [...S.subCart];
+  try {
+    const today = new Date();
+    for (const { sub } of items) {
+      const end = new Date(today);
+      end.setDate(end.getDate() + sub.duration_days);
+      await req('/rest/v1/user_subscriptions', {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          user_id: S.session.user.id,
+          subscription_id: sub.id,
+          status: 'active',
+          start_date: today.toISOString().split('T')[0],
+          end_date: end.toISOString().split('T')[0],
+          remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
+        }),
+      });
+    }
+    S.subCart = [];
+    saveSubCart();
+    renderSubCartSection();
+    alert(items.length === 1 ? 'Абонемент куплен! Оплата имитирована.' : `${items.length} абонемента куплено! Оплата имитирована.`);
+    goTo('subscriptions');
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
 function openBuyModal(id, name, price, days, uses) {
@@ -1519,6 +1629,10 @@ async function restoreNav() {
   try {
     const sc = localStorage.getItem('aliby_cart');
     if (sc) { const d = JSON.parse(sc); S.cart = d.items || []; S.cartStoreId = d.storeId || null; updateCartCount(); }
+  } catch(e) {}
+  try {
+    const ssc = localStorage.getItem('aliby_subcart');
+    if (ssc) { const d = JSON.parse(ssc); S.subCart = d.subs || []; S.subCart.forEach(c => subCache.set(c.sub.id, c.sub)); }
   } catch(e) {}
   try {
     const ss = localStorage.getItem('aliby_store');
