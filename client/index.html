@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -573,13 +573,21 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <h3 id="mu-name">Абонемент</h3>
       <button class="modal-x" onclick="closeModal('m-usub')">✕</button>
     </div>
-    <div class="grid2" style="gap:8px;margin-bottom:14px">
-      <div class="card"><div class="lbl">Осталось исп.</div><strong id="mu-uses" style="font-size:18px"></strong></div>
-      <div class="card"><div class="lbl">Действует до</div><strong id="mu-exp" style="font-size:15px"></strong></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div id="mu-store" class="txt-muted" style="font-size:13px"></div>
+      <span id="mu-badge" class="badge"></span>
     </div>
+    <div class="grid2" style="gap:8px;margin-bottom:14px">
+      <div class="card"><div class="lbl">С</div><strong id="mu-start" style="font-size:14px"></strong></div>
+      <div class="card"><div class="lbl">До</div><strong id="mu-exp" style="font-size:14px"></strong></div>
+      <div class="card"><div class="lbl">Осталось</div><strong id="mu-uses" style="font-size:18px"></strong></div>
+      <div class="card"><div class="lbl">Использовано</div><strong id="mu-used" style="font-size:14px"></strong></div>
+    </div>
+    <div id="mu-desc" style="margin-bottom:14px;color:var(--fg-sec);font-size:13px;line-height:1.5"></div>
+    <div class="sec-title">Условия</div>
+    <div id="mu-conditions" style="margin-bottom:14px"></div>
     <div class="sec-title">История списаний</div>
     <div id="mu-redemptions"><div class="loading">Загрузка…</div></div>
-    <div class="txt-muted" style="margin-top:6px">GET /rest/v1/subscription_redemptions?user_subscription_id=eq.{id}</div>
   </div>
 </div>
 
@@ -1324,8 +1332,7 @@ function goToSubCard(userSubId) {
   goTo('subscriptions');
   setTimeout(() => {
     document.querySelector('[data-tab-sub="active"]')?.click();
-    const us = S.menuUserSubs.find(u => u.id === userSubId);
-    if (us) openSubModal(userSubId, us.subscriptions?.name || '', us.end_date || '', us.remaining_uses ?? null);
+    openSubModal(userSubId);
   }, 250);
 }
 
@@ -1563,7 +1570,7 @@ async function loadMySubscriptions() {
 
 function renderUserSub(us) {
   const plan = us.subscriptions;
-  return `<div class="usub-card" onclick="openSubModal('${us.id}','${esc(plan?.name||'')}','${us.end_date||''}',${us.remaining_uses??'null'})">
+  return `<div class="usub-card" onclick="openSubModal('${us.id}')">
     <div class="usub-hd">
       <span class="usub-name">${esc(plan?.name || 'Абонемент')}</span>
       <span class="badge b-${us.status}">${subStMap[us.status] || us.status}</span>
@@ -1575,19 +1582,68 @@ function renderUserSub(us) {
   </div>`;
 }
 
-async function openSubModal(id, name, endDate, uses) {
+async function openSubModal(id) {
   openModal('m-usub');
-  document.getElementById('mu-name').textContent = name;
-  document.getElementById('mu-uses').textContent = uses ?? '∞';
-  document.getElementById('mu-exp').textContent  = fmtShortDate(endDate);
+  document.getElementById('mu-name').textContent = 'Загрузка…';
+  document.getElementById('mu-store').textContent = '';
+  const badge = document.getElementById('mu-badge');
+  badge.textContent = ''; badge.className = 'badge';
+  document.getElementById('mu-start').textContent = '…';
+  document.getElementById('mu-exp').textContent = '…';
+  document.getElementById('mu-uses').textContent = '…';
+  document.getElementById('mu-used').textContent = '…';
+  document.getElementById('mu-desc').textContent = '';
+  document.getElementById('mu-conditions').innerHTML = '';
   document.getElementById('mu-redemptions').innerHTML = SK.orderCards(2);
   try {
-    // GET /rest/v1/subscription_redemptions?user_subscription_id=eq.{id}&order=redeemed_at.desc
-    const r = await req(`/rest/v1/subscription_redemptions?user_subscription_id=eq.${id}&order=redeemed_at.desc`);
-    document.getElementById('mu-redemptions').innerHTML = r.length
-      ? r.map(x => `<div class="cart-row"><div><div>${fmtDate(x.redeemed_at)}</div><div class="txt-muted">Заказ: ${x.order_id?.slice(0,8)||'—'}</div></div><strong>−${x.amount_discounted} ₽</strong></div>`).join('')
+    const [usList, redemptions] = await Promise.all([
+      req(`/rest/v1/user_subscriptions?id=eq.${id}&select=*,subscriptions(*,stores(name))`),
+      req(`/rest/v1/subscription_redemptions?user_subscription_id=eq.${id}&order=redeemed_at.desc`)
+    ]);
+    const us = usList[0];
+    if (!us) { document.getElementById('mu-name').textContent = 'Не найдено'; return; }
+    const plan = us.subscriptions || {};
+    document.getElementById('mu-name').textContent = plan.name || 'Абонемент';
+    document.getElementById('mu-store').textContent = plan.stores?.name || '';
+    badge.textContent = subStMap[us.status] || us.status;
+    badge.className = `badge b-${us.status}`;
+    document.getElementById('mu-start').textContent = fmtShortDate(us.start_date);
+    document.getElementById('mu-exp').textContent = fmtShortDate(us.end_date);
+    document.getElementById('mu-uses').textContent = us.remaining_uses ?? '∞';
+    const total = plan.total_uses || 0;
+    document.getElementById('mu-used').textContent = total > 0 ? total - (us.remaining_uses ?? 0) : '∞';
+    document.getElementById('mu-desc').textContent = plan.description || '';
+    const conds = [];
+    conds.push(`<div class="cart-row"><span class="lbl">Покрытие</span><span>${fmtCoverage(plan.coverage_rules)}</span></div>`);
+    const tr = plan.time_rules;
+    if (tr?.weekdays) conds.push(`<div class="cart-row"><span class="lbl">Дни</span><span>${fmtWeekdays(tr.weekdays)}</span></div>`);
+    if (tr?.time_start) conds.push(`<div class="cart-row"><span class="lbl">Время</span><span>${tr.time_start}–${tr.time_end}</span></div>`);
+    const ul = plan.usage_limits;
+    if (ul?.daily_limit) conds.push(`<div class="cart-row"><span class="lbl">В день</span><span>до ${ul.daily_limit} исп.</span></div>`);
+    if (ul?.min_interval_hours) conds.push(`<div class="cart-row"><span class="lbl">Интервал</span><span>не чаще раза в ${ul.min_interval_hours} ч.</span></div>`);
+    if (ul?.min_order_amount) conds.push(`<div class="cart-row"><span class="lbl">Мин. заказ</span><span>${ul.min_order_amount} ₽</span></div>`);
+    document.getElementById('mu-conditions').innerHTML = conds.join('');
+    document.getElementById('mu-redemptions').innerHTML = redemptions.length
+      ? redemptions.map(x => `<div class="cart-row"><div><div>${fmtDate(x.redeemed_at)}</div><div class="txt-muted">Заказ: ${x.order_id?.slice(0,8)||'—'}</div></div><strong>−${x.amount_discounted} ₽</strong></div>`).join('')
       : '<div class="empty">Списаний нет</div>';
-  } catch(e) { document.getElementById('mu-redemptions').innerHTML = '<div class="empty">Ошибка</div>'; }
+  } catch(e) { document.getElementById('mu-name').textContent = 'Ошибка'; }
+}
+
+function fmtWeekdays(days) {
+  if (!days || days.length === 7) return 'Ежедневно';
+  const seq = days.join(',');
+  if (seq === '1,2,3,4,5') return 'Пн–Пт';
+  if (seq === '4,5,6,7') return 'Чт–Вс';
+  const n = ['','Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  return days.map(d => n[d] || d).join(', ');
+}
+
+function fmtCoverage(rules) {
+  if (!rules || rules.type === 'all') return 'Весь ассортимент';
+  if (rules.type === 'include_categories') return 'Отдельные категории меню';
+  if (rules.type === 'include_items') return 'Отдельные товары';
+  if (rules.type === 'exclude_items') return 'Весь ассортимент (кроме избранных товаров)';
+  return 'Особые условия';
 }
 
 // ─── STORE SUBSCRIPTIONS (buy new) ───

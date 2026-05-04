@@ -1,4 +1,4 @@
-// v4
+// v5
 const CACHE = 'aliby-tiles';
 const TILE_PATH = '/functions/v1/vector-tiles/';
 
