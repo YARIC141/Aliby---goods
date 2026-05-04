@@ -162,14 +162,24 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .items-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .subs-grid{display:flex;flex-wrap:wrap;gap:10px;padding-bottom:4px}
 @media(min-width:900px){.items-grid{grid-template-columns:repeat(3,1fr)}}
-.item-card{border:1px solid var(--border)}
+.item-card{border:1px solid var(--border);cursor:pointer}
+.item-card:active{background:var(--bg-subtle)}
 .item-img{width:100%;height:80px;background:var(--bg-muted);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);overflow:hidden}
 .item-img img{width:100%;height:100%;object-fit:cover}
 .item-body{padding:8px}
 .item-name{font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3}
+.item-name.sub-on{color:var(--accent)}
 .item-desc{font-size:11px;color:var(--muted);margin-bottom:4px;line-height:1.3}
 .item-price{font-weight:700;font-size:14px;margin-bottom:6px}
+.price-orig{font-size:11px;font-weight:400;color:var(--muted);text-decoration:line-through;margin-right:3px}
+.price-sub{font-weight:700;color:var(--accent)}
 .item-unavail{font-size:11px;color:#c00}
+#mi-img{width:100%;height:160px;background:var(--bg-muted);display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;margin-bottom:12px;font-size:40px}
+#mi-img img{width:100%;height:100%;object-fit:cover}
+.mi-sub-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;border-radius:2px}
+.mi-sub-row:hover{background:var(--bg-subtle)}
+.mi-sub-name{font-size:13px;font-weight:600}
+.mi-sub-disc{font-size:13px;color:var(--accent);font-weight:700}
 .qty-ctrl{display:flex;align-items:center;gap:4px}
 .qty-btn{width:24px;height:24px;border:1px solid var(--border);background:none;cursor:pointer;font-size:16px;padding:0;display:flex;align-items:center;justify-content:center;color:var(--fg)}
 .qty-val{min-width:24px;text-align:center;font-size:13px}
@@ -573,6 +583,22 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   </div>
 </div>
 
+<div class="overlay" id="m-item">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="mi-name"></h3>
+      <button class="modal-x" onclick="closeModal('m-item')">✕</button>
+    </div>
+    <div id="mi-img"></div>
+    <div id="mi-desc" class="item-desc" style="margin-bottom:8px"></div>
+    <div id="mi-price" class="item-price" style="margin-bottom:10px"></div>
+    <div id="mi-subs"></div>
+    <div class="modal-ft" style="margin-top:14px">
+      <button id="mi-cart-btn" class="btn btn-p btn-full" onclick="addToCartFromDetail()">В корзину</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="m-buy">
   <div class="modal">
     <div class="modal-hd">
@@ -625,7 +651,7 @@ const DEFAULT_FEATURES = {
 const S = {
   session: null, profile: null, store: null,
   cart: [], cartStoreId: null, appliedSub: null, subCart: [],
-  menuCatId: '', menuStoreSubs: [], pendingSub: null,
+  menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
   map: null, mapMarkers: [], mapFitted: false, allStores: [], mapCats: new Set(),
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
@@ -1113,7 +1139,48 @@ async function loadStoreRec() {
 async function loadMenu() {
   if (!S.store) return;
   document.getElementById('menu-ph-name').textContent = S.store.name;
-  await Promise.all([loadCategories(), loadMenuItems()]);
+  await Promise.all([loadCategories(), loadMenuUserSubs()]);
+  loadMenuItems();
+}
+
+async function loadMenuUserSubs() {
+  if (!S.session) { S.menuUserSubs = []; return; }
+  try {
+    const all = await req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)');
+    S.menuUserSubs = all.filter(us => us.subscriptions?.store_id === S.store?.id);
+  } catch(e) { S.menuUserSubs = []; }
+}
+
+function subCoversItem(sub, item) {
+  const r = sub.coverage_rules ?? { type: 'all' };
+  switch (r.type) {
+    case 'all': return true;
+    case 'include_categories':
+      return !!(item.category_id && r.category_ids?.includes(item.category_id) && !r.exclude_items?.includes(item.id));
+    case 'include_items':
+      return !!(r.item_ids?.includes(item.id));
+    case 'exclude_items':
+      return !(r.exclude_items?.includes(item.id));
+    default: return false;
+  }
+}
+
+function calcSubDisc(price, sub) {
+  if (!sub.discount_value) return Number(price);
+  if (sub.discount_type === 'percent') return Math.round(Number(price) * Number(sub.discount_value)) / 100;
+  return Math.min(Number(sub.discount_value), Number(price));
+}
+
+function getApplicableSubs(item) {
+  return S.menuUserSubs
+    .filter(us => us.subscriptions && subCoversItem(us.subscriptions, item))
+    .map(us => ({ us, sub: us.subscriptions, disc: calcSubDisc(item.price, us.subscriptions) }));
+}
+
+function getBestDisc(item) {
+  const list = getApplicableSubs(item);
+  if (!list.length) return null;
+  return list.reduce((best, x) => x.disc > best.disc ? x : best);
 }
 
 async function loadCategories() {
@@ -1184,26 +1251,88 @@ async function loadMenuItems() {
 }
 
 function renderItemCard(item) {
+  itemCache.set(item.id, item);
   const inCart = S.cart.find(c => c.item.id === item.id);
   const qty = inCart?.qty || 0;
-  // GET /storage/v1/object/public/menu-photos/{filename} via image_url field
-  const imgHtml = item.image_url
-    ? `<img src="${esc(item.image_url)}" alt="${esc(item.name)}">`
-    : 'Фото';
-  const itemJson = esc(JSON.stringify(item));
-  return `<div class="item-card">
+  const imgHtml = item.image_url ? `<img src="${esc(item.image_url)}" alt="${esc(item.name)}">` : 'Фото';
+  const best = getBestDisc(item);
+  const discPrice = best ? Math.max(0, item.price - best.disc) : null;
+  const priceHtml = best
+    ? `<span class="price-orig">${item.price} ₽</span><span class="price-sub">${discPrice} ₽</span>`
+    : `${item.price} ₽`;
+  return `<div class="item-card" onclick="openItemDetail('${item.id}')">
     <div class="item-img">${imgHtml}</div>
     <div class="item-body">
-      <div class="item-name">${esc(item.name)}</div>
+      <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
       ${item.description ? `<div class="item-desc">${esc(item.description)}</div>` : ''}
-      <div class="item-price">${item.price} ₽</div>
+      <div class="item-price">${priceHtml}</div>
       ${item.is_available
         ? qty > 0
-          ? `<div class="qty-ctrl"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
-          : `<button class="btn btn-p btn-sm" onclick="addToCartById('${item.id}')">В корзину</button>`
+          ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
+          : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В корзину</button>`
         : '<span class="item-unavail">Недоступно</span>'}
     </div>
   </div>`;
+}
+
+let _detailItem = null;
+
+function openItemDetail(id) {
+  const item = itemCache.get(id);
+  if (!item) return;
+  _detailItem = item;
+  document.getElementById('mi-name').textContent = item.name;
+  document.getElementById('mi-img').innerHTML = item.image_url
+    ? `<img src="${esc(item.image_url)}" alt="${esc(item.name)}">`
+    : '🍽';
+  const descEl = document.getElementById('mi-desc');
+  descEl.textContent = item.description || '';
+  descEl.style.display = item.description ? '' : 'none';
+
+  const best = getBestDisc(item);
+  const discPrice = best ? Math.max(0, item.price - best.disc) : null;
+  document.getElementById('mi-price').innerHTML = best
+    ? `<span class="price-orig">${item.price} ₽</span> → <span class="price-sub">${discPrice} ₽</span> по абонементу`
+    : `${item.price} ₽`;
+
+  const applicable = getApplicableSubs(item);
+  const subsEl = document.getElementById('mi-subs');
+  if (applicable.length) {
+    const sorted = [...applicable].sort((a, b) => b.disc - a.disc);
+    subsEl.innerHTML = `<div class="sec-title" style="border:none;padding:0;margin-bottom:6px">Действующие абонементы</div>`
+      + sorted.map(({ us, sub, disc }) => {
+          const discLabel = sub.discount_value
+            ? (sub.discount_type === 'percent' ? `−${sub.discount_value}%` : `−${disc} ₽`)
+            : '🆓 Бесплатно';
+          return `<div class="mi-sub-row" onclick="goToSubCard('${us.id}')">
+            <span class="mi-sub-name">🎫 ${esc(sub.name)}</span>
+            <span class="mi-sub-disc">${discLabel}</span>
+          </div>`;
+        }).join('');
+  } else {
+    subsEl.innerHTML = '';
+  }
+
+  const btn = document.getElementById('mi-cart-btn');
+  btn.disabled = !item.is_available;
+  btn.textContent = item.is_available ? 'В корзину' : 'Недоступно';
+  openModal('m-item');
+}
+
+function goToSubCard(userSubId) {
+  closeModal('m-item');
+  goTo('subscriptions');
+  setTimeout(() => {
+    document.querySelector('[data-tab-sub="active"]')?.click();
+    const us = S.menuUserSubs.find(u => u.id === userSubId);
+    if (us) openSubModal(userSubId, us.subscriptions?.name || '', us.end_date || '', us.remaining_uses ?? null);
+  }, 250);
+}
+
+function addToCartFromDetail() {
+  if (!_detailItem) return;
+  closeModal('m-item');
+  addToCartById(_detailItem.id);
 }
 
 // Store items by id for add to cart without JSON injection
