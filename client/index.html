@@ -1003,7 +1003,7 @@ async function doRegister() {
 
 async function doRecover() {
   try {
-    await req('/auth/v1/recover', { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value, redirect_to: 'https://yaric141.github.io/Aliby---goods/client/' }) });
+    await req('/auth/v1/recover?redirect_to=' + encodeURIComponent('https://yaric141.github.io/Aliby---goods/client/'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
     document.getElementById('ok-recover').style.display = 'block';
   } catch(e) { alert(e.message || 'Ошибка'); }
 }
