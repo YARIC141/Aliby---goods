@@ -959,12 +959,22 @@ async function doRegister() {
   const err = document.getElementById('err-reg');
   err.style.display = 'none';
   try {
-    // POST /auth/v1/signup
     const d = await req('/auth/v1/signup', {
       method:'POST',
-      body: JSON.stringify({ email: document.getElementById('reg-email').value, password: document.getElementById('reg-pwd').value }),
+      body: JSON.stringify({
+        email: document.getElementById('reg-email').value,
+        password: document.getElementById('reg-pwd').value,
+        data: { display_name: document.getElementById('reg-name').value.trim() || '' },
+      }),
     });
-    setSession(d); goTo('map');
+    if (d?.access_token) {
+      setSession(d); goTo('map');
+    } else {
+      err.className = 'alert alert-ok';
+      err.textContent = 'Аккаунт создан! Войдите с вашим email и паролем.';
+      err.style.display = 'block';
+      showAuthTab('login');
+    }
   } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; }
 }
 
