@@ -1,0 +1,101 @@
+/* Aliby — Design tokens
+   Bold contrast direction. Default is dark; html.light flips to light.
+   Sub-themes: [data-app="client"] uses ember/crimson, [data-app="admin"] uses ember/ice.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Type */
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Spacing scale (8pt rhythm) */
+  --sp-1: 4px;  --sp-2: 8px;   --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px;  --sp-7: 32px; --sp-8: 40px; --sp-9: 56px;
+
+  /* Radius — overridable by tweak (sharp/soft/pill) */
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 14px;
+  --r-4: 20px;
+  --r-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(.2,.7,.3,1);
+  --ease-emph: cubic-bezier(.16,.84,.32,1);
+  --t-fast: 160ms;
+  --t-med: 280ms;
+  --t-slow: 480ms;
+
+  /* Brand semantic — neutral defaults; per-theme overrides below */
+  --brand-ember: oklch(0.74 0.17 55);   /* warm amber, evolves #e8743b */
+  --brand-ember-deep: oklch(0.62 0.19 38);
+  --brand-crimson: oklch(0.66 0.20 22); /* client warm secondary */
+  --brand-ice: oklch(0.78 0.10 220);    /* admin cool secondary */
+  --brand-honey: oklch(0.86 0.13 95);
+
+  --ok: oklch(0.74 0.16 150);
+  --warn: oklch(0.82 0.16 85);
+  --err: oklch(0.65 0.21 25);
+  --info: oklch(0.72 0.13 240);
+}
+
+/* ─────────── DARK (default) ─────────── */
+:root, html.dark {
+  --bg: oklch(0.16 0.012 60);
+  --bg-1: oklch(0.19 0.013 60);  /* surface */
+  --bg-2: oklch(0.22 0.014 60);  /* raised */
+  --bg-3: oklch(0.26 0.015 60);  /* overlay */
+  --line: oklch(0.30 0.012 60 / .8);
+  --line-soft: oklch(0.30 0.012 60 / .35);
+
+  --fg: oklch(0.96 0.012 80);
+  --fg-2: oklch(0.82 0.012 80);
+  --fg-3: oklch(0.66 0.012 80);
+  --fg-4: oklch(0.50 0.012 80);
+
+  --glass: oklch(0.22 0.014 60 / .55);
+  --glass-line: oklch(1 0 0 / .08);
+  --shadow-1: 0 1px 0 rgb(255 255 255 / .04) inset, 0 8px 24px rgb(0 0 0 / .35);
+  --shadow-2: 0 1px 0 rgb(255 255 255 / .06) inset, 0 24px 64px rgb(0 0 0 / .50);
+  --glow-ember: 0 0 0 1px oklch(0.74 0.17 55 / .35), 0 8px 32px oklch(0.74 0.17 55 / .25);
+
+  --grid-dot: oklch(1 0 0 / .04);
+}
+
+/* ─────────── LIGHT ─────────── */
+html.light {
+  --bg: oklch(0.985 0.005 80);
+  --bg-1: oklch(0.965 0.006 80);
+  --bg-2: oklch(0.94 0.007 80);
+  --bg-3: oklch(0.91 0.008 80);
+  --line: oklch(0.82 0.008 80);
+  --line-soft: oklch(0.86 0.008 80 / .7);
+
+  --fg: oklch(0.18 0.012 60);
+  --fg-2: oklch(0.32 0.012 60);
+  --fg-3: oklch(0.48 0.012 60);
+  --fg-4: oklch(0.62 0.012 60);
+
+  --glass: oklch(1 0 0 / .65);
+  --glass-line: oklch(0.18 0 0 / .08);
+  --shadow-1: 0 1px 0 rgb(255 255 255 / .8) inset, 0 8px 24px rgb(40 30 20 / .08);
+  --shadow-2: 0 1px 0 rgb(255 255 255 / .9) inset, 0 24px 64px rgb(40 30 20 / .14);
+  --glow-ember: 0 0 0 1px oklch(0.62 0.19 38 / .3), 0 8px 32px oklch(0.62 0.19 38 / .2);
+
+  --grid-dot: oklch(0.18 0 0 / .07);
+}
+
+/* Sub-theme accents */
+[data-app="client"] { --accent: var(--brand-ember); --accent-2: var(--brand-crimson); --accent-deep: var(--brand-ember-deep); }
+[data-app="admin"]  { --accent: var(--brand-ice);   --accent-2: var(--brand-ember);   --accent-deep: oklch(0.55 0.10 220); }
+
+/* Density tweaks */
+[data-density="compact"]  { --sp-3: 8px;  --sp-4: 12px; --sp-5: 16px; --sp-6: 18px; }
+[data-density="spacious"] { --sp-3: 14px; --sp-4: 18px; --sp-5: 24px; --sp-6: 28px; }
+
+/* Radius tweaks */
+[data-radius="sharp"] { --r-1: 0px; --r-2: 0px; --r-3: 2px; --r-4: 4px; }
+[data-radius="pill"]  { --r-1: 12px; --r-2: 16px; --r-3: 22px; --r-4: 28px; }

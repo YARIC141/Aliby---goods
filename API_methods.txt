@@ -1,0 +1,411 @@
+================================================================
+API-МЕТОДЫ ПРИЛОЖЕНИЯ ALIBY FOODS
+================================================================
+Бэкенд: Supabase (PostgREST REST API + Auth API + Edge Functions)
+Базовый URL: https://<project>.supabase.co
+Аутентификация: Bearer JWT-токен в заголовке Authorization
+
+Условные обозначения:
+  [публичный]  — доступен без аутентификации
+  [user]       — требует JWT-токен авторизованного пользователя
+  [admin]      — требует JWT-токен пользователя с ролью admin
+
+================================================================
+1. АУТЕНТИФИКАЦИЯ (Supabase Auth API)
+================================================================
+
+POST /auth/v1/signup
+  Назначение: регистрация нового пользователя
+  Тело запроса: { email, password }
+  Ответ: { user, session (access_token, refresh_token) }
+
+POST /auth/v1/token?grant_type=password
+  Назначение: вход по email и паролю
+  Тело запроса: { email, password }
+  Ответ: { access_token, refresh_token, user }
+
+POST /auth/v1/token?grant_type=refresh_token
+  Назначение: обновление истёкшего access_token
+  Тело запроса: { refresh_token }
+  Ответ: { access_token, refresh_token }
+
+POST /auth/v1/logout
+  Назначение: выход из системы, инвалидация токена
+  Заголовки: Authorization: Bearer <token>
+  Ответ: 204 No Content
+
+POST /auth/v1/recover
+  Назначение: запрос письма для восстановления пароля
+  Тело запроса: { email }
+  Ответ: 200 OK
+
+PUT /auth/v1/user
+  Назначение: установка нового пароля по ссылке из письма
+  Заголовки: Authorization: Bearer <recovery_token>
+  Тело запроса: { password }
+  Ответ: { user }
+
+GET /auth/v1/user
+  Назначение: получить данные текущего пользователя
+  Заголовки: Authorization: Bearer <token>
+  Ответ: { id, email, ... }
+
+================================================================
+2. ПРОФИЛИ ПОЛЬЗОВАТЕЛЕЙ (таблица profiles)
+================================================================
+
+GET /rest/v1/profiles?id=eq.<uuid>
+  Назначение: получить профиль пользователя (роль, имя)
+  Доступ: [user] — только свой профиль (RLS)
+  Ответ: [{ id, role, full_name, created_at }]
+
+PATCH /rest/v1/profiles?id=eq.<uuid>
+  Назначение: обновить имя пользователя
+  Доступ: [user] — только свой профиль
+  Тело запроса: { full_name }
+  Ответ: 204 No Content
+
+================================================================
+3. ЗАВЕДЕНИЯ (таблица stores)
+================================================================
+
+GET /rest/v1/stores
+  Назначение: получить список всех заведений
+  Доступ: [публичный]
+  Пример параметров: ?select=id,name,latitude,longitude,address
+  Ответ: [{ id, name, address, latitude, longitude, phone, working_hours, created_at, updated_at }]
+
+GET /rest/v1/stores?id=eq.<uuid>
+  Назначение: получить данные конкретного заведения
+  Доступ: [публичный]
+  Ответ: [{ id, name, address, latitude, longitude, phone, working_hours, created_at, updated_at }]
+
+POST /rest/v1/stores
+  Назначение: создать новое заведение
+  Доступ: [admin]
+  Заголовки: Authorization: Bearer <token>, Content-Type: application/json, Prefer: return=representation
+  Тело запроса: { name, address, latitude, longitude, phone, working_hours }
+  Ответ: 201 Created, [{ id, name, ... }]
+
+PATCH /rest/v1/stores?id=eq.<uuid>
+  Назначение: обновить данные заведения
+  Доступ: [admin]
+  Заголовки: Authorization: Bearer <token>
+  Тело запроса: любые поля из { name, address, latitude, longitude, phone, working_hours }
+  Ответ: 204 No Content
+
+DELETE /rest/v1/stores?id=eq.<uuid>
+  Назначение: удалить заведение (каскадно удаляет позиции меню и абонементы)
+  Доступ: [admin]
+  Ответ: 204 No Content
+
+================================================================
+4. КАТЕГОРИИ МЕНЮ (таблица categories)
+================================================================
+
+GET /rest/v1/categories
+  Назначение: получить все категории (глобальные и конкретного заведения)
+  Доступ: [публичный]
+  Пример параметров: ?store_id=eq.<uuid> (категории заведения) или ?store_id=is.null (глобальные)
+  Ответ: [{ id, name, store_id, created_at }]
+
+POST /rest/v1/categories
+  Назначение: создать новую категорию
+  Доступ: [admin]
+  Тело запроса: { name, store_id } (store_id = null для глобальной категории)
+  Ответ: 201 Created
+
+PATCH /rest/v1/categories?id=eq.<uuid>
+  Назначение: переименовать категорию
+  Доступ: [admin]
+  Тело запроса: { name }
+  Ответ: 204 No Content
+
+DELETE /rest/v1/categories?id=eq.<uuid>
+  Назначение: удалить категорию
+  Доступ: [admin]
+  Примечание: перед удалением необходимо переназначить блюда этой категории
+  Ответ: 204 No Content
+
+================================================================
+5. ПОЗИЦИИ МЕНЮ (таблица menu_items)
+================================================================
+
+GET /rest/v1/menu_items?store_id=eq.<uuid>
+  Назначение: получить все позиции меню заведения
+  Доступ: [публичный]
+  Дополнительные параметры:
+    &is_available=eq.true         — только доступные блюда
+    &category_id=eq.<uuid>        — фильтр по категории
+    &price=gte.<число>&price=lte.<число>  — фильтр по цене
+    &name=ilike.*<текст>*         — поиск по названию (без учёта регистра)
+    &order=price.asc              — сортировка
+  Ответ: [{ id, store_id, name, description, price, image_url, category_id, is_available, created_at }]
+
+GET /rest/v1/menu_items?id=eq.<uuid>
+  Назначение: получить детали конкретного блюда
+  Доступ: [публичный]
+  Ответ: [{ id, store_id, name, description, price, image_url, category_id, is_available, created_at }]
+
+POST /rest/v1/menu_items
+  Назначение: добавить позицию в меню
+  Доступ: [admin]
+  Тело запроса: { store_id, name, description, price, image_url, category_id, is_available }
+  Ответ: 201 Created
+
+PATCH /rest/v1/menu_items?id=eq.<uuid>
+  Назначение: обновить позицию меню (данные блюда, доступность)
+  Доступ: [admin]
+  Тело запроса: любые поля из { name, description, price, image_url, category_id, is_available }
+  Ответ: 204 No Content
+
+DELETE /rest/v1/menu_items?id=eq.<uuid>
+  Назначение: удалить позицию меню
+  Доступ: [admin]
+  Ответ: 204 No Content
+
+================================================================
+6. АБОНЕМЕНТЫ (таблица subscriptions)
+================================================================
+
+GET /rest/v1/subscriptions?store_id=eq.<uuid>
+  Назначение: получить список абонементов заведения
+  Доступ: [публичный]
+  Ответ: [{ id, store_id, name, price, duration_days, total_uses, coverage_rules, time_rules, usage_limits, created_at }]
+  Примечание: coverage_rules, time_rules, usage_limits — JSONB-объекты с расширенными условиями
+
+GET /rest/v1/subscriptions?id=eq.<uuid>
+  Назначение: получить детали и условия конкретного абонемента
+  Доступ: [публичный]
+  Ответ: [{ id, store_id, name, price, duration_days, total_uses, coverage_rules, time_rules, usage_limits, created_at }]
+  Структура coverage_rules: { type, category_ids, exclude_items }
+  Структура time_rules:     { weekdays, time_start, time_end, excluded_dates }
+  Структура usage_limits:   { daily_limit, min_interval_hours, min_order_amount }
+
+POST /rest/v1/subscriptions
+  Назначение: создать абонемент
+  Доступ: [admin]
+  Тело запроса: { store_id, name, price, duration_days, total_uses, coverage_rules, time_rules, usage_limits }
+  Ответ: 201 Created
+
+PATCH /rest/v1/subscriptions?id=eq.<uuid>
+  Назначение: обновить абонемент
+  Доступ: [admin]
+  Тело запроса: любые поля абонемента
+  Ответ: 204 No Content
+
+DELETE /rest/v1/subscriptions?id=eq.<uuid>
+  Назначение: удалить абонемент (недоступен для новых покупок)
+  Доступ: [admin]
+  Ответ: 204 No Content
+
+================================================================
+7. КУПЛЕННЫЕ АБОНЕМЕНТЫ ПОЛЬЗОВАТЕЛЯ (таблица user_subscriptions)
+================================================================
+
+GET /rest/v1/user_subscriptions?user_id=eq.<uuid>
+  Назначение: получить абонементы текущего пользователя
+  Доступ: [user] — только свои абонементы (RLS)
+  Дополнительные параметры:
+    &status=eq.active             — только активные
+    &select=*,subscriptions(*)    — с деталями абонемента
+  Ответ: [{ id, user_id, subscription_id, purchase_date, start_date, end_date, remaining_uses, used_today, last_used_at, status }]
+
+GET /rest/v1/user_subscriptions?id=eq.<uuid>
+  Назначение: детали конкретного купленного абонемента
+  Доступ: [user] — только свой (RLS)
+  Ответ: [{ id, user_id, subscription_id, ... }]
+
+GET /rest/v1/user_subscriptions?store_id=eq.<uuid>   (через join)
+  Назначение: список покупок абонементов по заведению (для отчёта)
+  Доступ: [admin]
+  Параметры: ?select=*,subscriptions!inner(store_id)&subscriptions.store_id=eq.<uuid>
+  Ответ: список user_subscriptions с вложенными данными subscriptions
+
+  Примечание: создание и активация user_subscriptions происходит через
+  Edge Function payment-webhook после успешной оплаты (не через прямой POST).
+
+================================================================
+8. ЗАКАЗЫ (таблица orders)
+================================================================
+
+GET /rest/v1/orders?user_id=eq.<uuid>
+  Назначение: история заказов пользователя
+  Доступ: [user] — только свои заказы (RLS)
+  Параметры: &order=order_time.desc&select=*,order_items(*)
+  Ответ: [{ id, user_id, store_id, order_time, pickup_time, status, total_amount, payment_method, subscription_discount, applied_user_subscription_id }]
+
+GET /rest/v1/orders?store_id=eq.<uuid>
+  Назначение: заказы по заведению для администратора
+  Доступ: [admin]
+  Параметры: &status=eq.paid&select=*,order_items(*,menu_items(*))
+  Ответ: список заказов с позициями и деталями блюд
+
+GET /rest/v1/orders?id=eq.<uuid>
+  Назначение: детали конкретного заказа
+  Доступ: [user] или [admin]
+  Ответ: [{ id, ..., order_items: [...] }]
+
+POST /rest/v1/orders
+  Назначение: создать заказ (статус pending)
+  Доступ: [user]
+  Тело запроса: { user_id, store_id, pickup_time, total_amount, payment_method, applied_user_subscription_id }
+  Ответ: 201 Created, [{ id, ... }]
+
+POST /rest/v1/order_items
+  Назначение: добавить позиции к заказу
+  Доступ: [user]
+  Тело запроса: [{ order_id, menu_item_id, quantity, price_at_time }, ...]
+  Заголовки: Prefer: return=representation
+  Ответ: 201 Created
+
+PATCH /rest/v1/orders?id=eq.<uuid>
+  Назначение: обновить статус заказа (ready / issued)
+  Доступ: [admin]
+  Тело запроса: { status }
+  Возможные статусы: pending / paid / ready / issued / cancelled
+  Ответ: 204 No Content
+
+================================================================
+9. ОПЛАТА (таблица payments)
+================================================================
+
+GET /rest/v1/payments?order_id=eq.<uuid>
+  Назначение: получить статус платежа по заказу
+  Доступ: [user] — только свои платежи (RLS)
+  Ответ: [{ id, order_id, amount, status, provider_transaction_id, created_at }]
+
+  Примечание: записи в таблице payments создаются и обновляются
+  исключительно через Edge Functions (create-payment, payment-webhook).
+  Прямая запись в эту таблицу через REST API не предусмотрена.
+
+================================================================
+10. СПИСАНИЯ ПО АБОНЕМЕНТАМ (таблица subscription_redemptions)
+================================================================
+
+GET /rest/v1/subscription_redemptions?user_subscription_id=eq.<uuid>
+  Назначение: история списаний по конкретному абонементу пользователя
+  Доступ: [user] — только свои (RLS)
+  Ответ: [{ id, user_subscription_id, order_id, redeemed_at, amount_discounted }]
+
+GET /rest/v1/subscription_redemptions?select=*,user_subscriptions!inner(subscription_id)...
+  Назначение: статистика списаний по абонементам заведения
+  Доступ: [admin]
+  Ответ: агрегированные данные по использованиям абонементов
+
+  Примечание: создание записей происходит через Edge Function при
+  успешном применении абонемента к заказу (не через прямой POST).
+
+================================================================
+11. ФАЙЛОВОЕ ХРАНИЛИЩЕ (Supabase Storage)
+================================================================
+
+POST /storage/v1/object/menu-photos/<filename>
+  Назначение: загрузить фотографию блюда
+  Доступ: [admin]
+  Заголовки: Authorization: Bearer <token>, Content-Type: image/jpeg (или image/png)
+  Тело запроса: бинарный файл изображения
+  Ответ: { Key: "menu-photos/<filename>" }
+
+GET /storage/v1/object/public/menu-photos/<filename>
+  Назначение: получить публичное изображение блюда
+  Доступ: [публичный]
+  Ответ: файл изображения
+
+DELETE /storage/v1/object/menu-photos/<filename>
+  Назначение: удалить изображение блюда
+  Доступ: [admin]
+  Ответ: { message: "Successfully deleted" }
+
+================================================================
+12. EDGE FUNCTIONS (серверная логика)
+================================================================
+
+POST /functions/v1/geocode
+  Назначение: преобразование адреса в координаты (lat/lon)
+              через Яндекс.Геокодер. Ключ API хранится на сервере.
+  Доступ: [admin]
+  Тело запроса: { address: "ул. Ленина 15, Москва" }
+  Ответ: { latitude: 55.751244, longitude: 37.618423 }
+  Ошибки: 400 если адрес не найден, 503 если геокодер недоступен
+
+POST /functions/v1/create-payment
+  Назначение: инициировать оплату через ЮKassa.
+              Создаёт запись в payments (status=pending) и
+              возвращает URL страницы оплаты.
+  Доступ: [user]
+  Тело запроса:
+    Для оплаты заказа:       { type: "order",        entity_id: "<order_uuid>" }
+    Для покупки абонемента:  { type: "subscription",  entity_id: "<subscription_uuid>" }
+  Ответ: { payment_id: "...", confirmation_url: "https://yookassa.ru/checkout/..." }
+  Ошибки: 404 если entity не найдена, 409 если уже оплачена
+
+POST /functions/v1/payment-webhook
+  Назначение: обработать уведомление от ЮKassa об изменении
+              статуса платежа. Вызывается платёжным шлюзом, не клиентом.
+  Доступ: внутренний (проверяется подпись ЮKassa)
+  Тело запроса: объект события ЮKassa { event, object }
+  Обрабатываемые события:
+    payment.succeeded  — обновить статус платежа на succeeded;
+                         заказ → status=paid;
+                         абонемент → status=active, заполнить start_date,
+                         end_date, remaining_uses=total_uses
+    payment.canceled   — обновить статус на cancelled;
+                         заказ/абонемент → cancelled
+  Ответ: 200 OK (при любом корректном запросе, чтобы ЮKassa не повторяла)
+
+POST /functions/v1/validate-subscription
+  Назначение: проверить возможность применения абонемента к заказу.
+              Проверяет покрытие блюд, временные ограничения, лимиты.
+  Доступ: [user]
+  Тело запроса: { user_subscription_id, order_items: [{ menu_item_id, quantity }] }
+  Ответ при успехе:   { valid: true, discount_amount: 450.00 }
+  Ответ при ошибке:   { valid: false, reason: "Абонемент не покрывает блюдо X" }
+  Возможные причины отказа:
+    "Абонемент не покрывает блюдо <name>"
+    "Действует только в будние дни"
+    "Действует только с HH:MM до HH:MM"
+    "Дневной лимит использований исчерпан"
+    "Минимальный интервал между списаниями не выдержан"
+    "Сумма заказа ниже минимальной (<N> руб.)"
+    "Остаток использований исчерпан"
+    "Срок действия абонемента истёк"
+
+POST /functions/v1/redeem-subscription
+  Назначение: применить абонемент к заказу — списать использование
+              и создать запись в subscription_redemptions.
+              Вызывается только после успешной проверки validate-subscription.
+  Доступ: [user]
+  Тело запроса: { user_subscription_id, order_id, amount_discounted }
+  Ответ: { redemption_id, remaining_uses }
+  Ошибки: 409 если повторное применение к тому же заказу
+
+================================================================
+13. ПАРАМЕТРЫ ФИЛЬТРАЦИИ И СОРТИРОВКИ (PostgREST)
+================================================================
+
+Суффиксы фильтрации для GET-запросов:
+  eq.<value>     — равно
+  neq.<value>    — не равно
+  gt.<value>     — больше
+  gte.<value>    — больше или равно
+  lt.<value>     — меньше
+  lte.<value>    — меньше или равно
+  is.null        — значение NULL
+  is.true        — булево true
+  ilike.*text*   — поиск без учёта регистра (% = *)
+  in.(v1,v2)     — входит в список
+
+Параметры запроса:
+  select=col1,col2,related_table(col)  — выбор полей и JOIN
+  order=column.asc / order=column.desc — сортировка
+  limit=N                              — ограничение количества строк
+  offset=N                             — пропустить N строк (пагинация)
+
+Заголовки:
+  Authorization: Bearer <jwt>          — аутентификация
+  Content-Type: application/json       — для POST/PATCH
+  Prefer: return=representation        — вернуть созданный/обновлённый объект
+  Range: 0-9                           — постраничная выборка
+
+================================================================

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aliby — Design</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <link rel="stylesheet" href="aliby.css" />
+  <style>
+    html, body { height: 100%; }
+    body { background: #f0eee9; }
+  </style>
+  <template id="__bundler_thumbnail">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="20" fill="#1a1612"/>
+      <path d="M30 75 L48 28 C49.5 25 52.5 25 54 28 L72 75" fill="none" stroke="#e8743b" stroke-width="6" stroke-linecap="round"/>
+      <line x1="40" y1="55" x2="62" y2="55" stroke="#e8743b" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="78" cy="75" r="4" fill="#e8743b"/>
+    </svg>
+  </template>
+
+  <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- Components & frames -->
+  <script type="text/babel" src="brand.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="browser-window.jsx"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="brandbook.jsx"></script>
+
+  <!-- Screens -->
+  <script type="text/babel" src="client-screens-1.jsx"></script>
+  <script type="text/babel" src="client-screens-2.jsx"></script>
+  <script type="text/babel" src="client-desktop.jsx"></script>
+  <script type="text/babel" src="admin-mobile.jsx"></script>
+  <script type="text/babel" src="admin-desktop.jsx"></script>
+
+  <!-- App shell -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    /* Phone artboard wrapper — picks Aliby tokens to recolor inner area, places content above status bar */
+    function Phone({ children, dark = true, app = 'client', label }) {
+      return (
+        <IOSDevice dark={dark} width={390} height={780}>
+          <div data-screen-label={label} data-app={app} className={dark ? 'dark' : 'light'}
+               style={{
+                 width: '100%', height: '100%',
+                 paddingTop: 50, /* clear status bar */
+                 background: 'var(--bg)', color: 'var(--fg)',
+                 fontFamily: 'var(--font-sans)',
+                 display: 'flex', flexDirection: 'column',
+                 position: 'relative', overflow: 'hidden',
+               }}>
+            {children}
+          </div>
+        </IOSDevice>
+      );
+    }
+
+    /* Browser window wrapper for desktop screens */
+    function Desktop({ children, label, app = 'client', url = 'app.aliby.com' }) {
+      return (
+        <ChromeWindow url={url} width={1280} height={820} tabs={[{ title: 'Aliby' }]}>
+          <div data-screen-label={label} data-app={app} className="dark" style={{ background: 'var(--bg)' }}>
+            {children}
+          </div>
+        </ChromeWindow>
+      );
+    }
+
+    function App() {
+      const tweakDefaults = /*EDITMODE-BEGIN*/{
+        "theme": "light",
+        "density": "default",
+        "radius": "default",
+        "accent": "ice",
+        "animations": true
+      }/*EDITMODE-END*/;
+
+      const [tweaks, setTweak] = useTweaks(tweakDefaults);
+
+      useEffect(() => {
+        const html = document.documentElement;
+        html.classList.toggle('dark', tweaks.theme === 'dark');
+        html.classList.toggle('light', tweaks.theme === 'light');
+        html.dataset.density = tweaks.density;
+        html.dataset.radius = tweaks.radius;
+        html.dataset.anim = tweaks.animations ? 'on' : 'off';
+        // accent override
+        const map = {
+          ember: { a: 'oklch(0.74 0.17 55)',  a2: 'oklch(0.66 0.20 22)' },
+          crimson: { a: 'oklch(0.66 0.20 22)', a2: 'oklch(0.74 0.17 55)' },
+          ice:   { a: 'oklch(0.78 0.10 220)', a2: 'oklch(0.74 0.17 55)' },
+          honey: { a: 'oklch(0.86 0.13 95)',  a2: 'oklch(0.66 0.20 22)' },
+        }[tweaks.accent] || {};
+        if (map.a) {
+          html.style.setProperty('--brand-ember', map.a);
+          html.style.setProperty('--accent', map.a);
+          html.style.setProperty('--accent-2', map.a2);
+        } else {
+          html.style.removeProperty('--brand-ember');
+          html.style.removeProperty('--accent');
+          html.style.removeProperty('--accent-2');
+        }
+      }, [tweaks]);
+
+      return (
+        <>
+          <DesignCanvas>
+            {/* ─────────── BRAND ─────────── */}
+            <DCSection id="brand" title="Aliby — Brand Book"
+                       subtitle="Identity, palette, type, components, iconography, motion">
+              <DCArtboard id="bb" label="Brand book v1.0" width={1280} height={2200}>
+                <div className="dark"><Brandbook /></div>
+              </DCArtboard>
+            </DCSection>
+
+            {/* ─────────── CLIENT — MOBILE ─────────── */}
+            <DCSection id="client-mobile" title="Client App · Mobile"
+                       subtitle="Гость находит, выбирает и заказывает">
+              <DCArtboard id="splash" label="01 · Splash" width={390} height={780}>
+                <Phone label="01 Splash"><ClientSplash /></Phone>
+              </DCArtboard>
+              <DCArtboard id="auth" label="02 · Sign in" width={390} height={780}>
+                <Phone label="02 Auth"><ClientAuth /></Phone>
+              </DCArtboard>
+              <DCArtboard id="map" label="03 · Map · nearby" width={390} height={780}>
+                <Phone label="03 Map"><ClientMap /></Phone>
+              </DCArtboard>
+              <DCArtboard id="store" label="04 · Store · Buna" width={390} height={780}>
+                <Phone label="04 Store"><ClientStore /></Phone>
+              </DCArtboard>
+              <DCArtboard id="menu" label="05 · Menu" width={390} height={780}>
+                <Phone label="05 Menu"><ClientMenu /></Phone>
+              </DCArtboard>
+              <DCArtboard id="cart" label="06 · Cart · checkout" width={390} height={780}>
+                <Phone label="06 Cart"><ClientCart /></Phone>
+              </DCArtboard>
+              <DCArtboard id="orders" label="07 · Orders · live" width={390} height={780}>
+                <Phone label="07 Orders"><ClientOrders /></Phone>
+              </DCArtboard>
+              <DCArtboard id="subs" label="08 · Subscriptions" width={390} height={780}>
+                <Phone label="08 Subs"><ClientSubs /></Phone>
+              </DCArtboard>
+              <DCArtboard id="profile" label="09 · Profile" width={390} height={780}>
+                <Phone label="09 Profile"><ClientProfile /></Phone>
+              </DCArtboard>
+            </DCSection>
+
+            {/* ─────────── CLIENT — DESKTOP ─────────── */}
+            <DCSection id="client-desktop" title="Client App · Desktop"
+                       subtitle="Веб-версия для планирования и брони">
+              <DCArtboard id="map-d" label="Map · discover" width={1280} height={820}>
+                <Desktop label="Client desktop · Map" url="aliby.com/map">
+                  <ClientDesktopMap />
+                </Desktop>
+              </DCArtboard>
+              <DCArtboard id="menu-d" label="Store menu + cart drawer" width={1280} height={820}>
+                <Desktop label="Client desktop · Store" url="aliby.com/buna">
+                  <ClientDesktopMenu />
+                </Desktop>
+              </DCArtboard>
+            </DCSection>
+
+            {/* ─────────── ADMIN — MOBILE ─────────── */}
+            <DCSection id="admin-mobile" title="Admin · Mobile"
+                       subtitle="Бариста и менеджер заведения — на ходу">
+              <DCArtboard id="dash" label="Dashboard" width={390} height={780}>
+                <Phone label="Admin · Dashboard" app="admin"><AdminDashboard /></Phone>
+              </DCArtboard>
+              <DCArtboard id="orders-a" label="Orders queue" width={390} height={780}>
+                <Phone label="Admin · Orders" app="admin"><AdminOrders /></Phone>
+              </DCArtboard>
+            </DCSection>
+
+            {/* ─────────── ADMIN — DESKTOP ─────────── */}
+            <DCSection id="admin-desktop" title="Admin · Desktop"
+                       subtitle="Управление меню, абонементами и заведениями">
+              <DCArtboard id="dash-d" label="Studio · overview" width={1280} height={820}>
+                <Desktop label="Admin desktop" app="admin" url="studio.aliby.com">
+                  <AdminDesktop />
+                </Desktop>
+              </DCArtboard>
+            </DCSection>
+
+            <DCPostIt top={120} left={1340} rotate={-3} width={220}>
+              Aliby = «у тебя есть алиби» — приложение, которое подтверждает: ты ел вкусно, тепло, по-настоящему.
+            </DCPostIt>
+            <DCPostIt top={1100} left={-260} rotate={2} width={200}>
+              Каждый экран — на одной сетке 8pt. Type, цвета и тени — из брендбука.
+            </DCPostIt>
+          </DesignCanvas>
+
+          {/* ─── Tweaks ─── */}
+          <TweaksPanel title="Tweaks · Aliby">
+            <TweakSection title="Theme">
+              <TweakRadio
+                label="Mode"
+                value={tweaks.theme}
+                onChange={(v) => setTweak('theme', v)}
+                options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light' }]}
+              />
+              <TweakSelect
+                label="Accent"
+                value={tweaks.accent}
+                onChange={(v) => setTweak('accent', v)}
+                options={[
+                  { value: 'ember', label: 'Ember (default)' },
+                  { value: 'crimson', label: 'Crimson' },
+                  { value: 'ice', label: 'Ice' },
+                  { value: 'honey', label: 'Honey' },
+                ]}
+              />
+            </TweakSection>
+            <TweakSection title="Density & shape">
+              <TweakRadio
+                label="Density"
+                value={tweaks.density}
+                onChange={(v) => setTweak('density', v)}
+                options={[
+                  { value: 'compact', label: 'Compact' },
+                  { value: 'default', label: 'Default' },
+                  { value: 'spacious', label: 'Spacious' },
+                ]}
+              />
+              <TweakRadio
+                label="Radius"
+                value={tweaks.radius}
+                onChange={(v) => setTweak('radius', v)}
+                options={[
+                  { value: 'sharp', label: 'Sharp' },
+                  { value: 'default', label: 'Default' },
+                  { value: 'pill', label: 'Pill' },
+                ]}
+              />
+            </TweakSection>
+            <TweakSection title="Motion">
+              <TweakToggle label="Animations" value={tweaks.animations} onChange={(v) => setTweak('animations', v)} />
+            </TweakSection>
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

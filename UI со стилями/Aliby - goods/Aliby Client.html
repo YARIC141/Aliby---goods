@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aliby Foods — Client</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="aliby.css">
+<style>
+/* ─────────── App-specific layout ─────────── */
+html, body { height: 100dvh; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--bg);
+  overflow: hidden;
+}
+[data-app="client"] { color-scheme: light dark; }
+
+#app { display: flex; height: 100dvh; overflow: hidden; }
+
+/* ── Side nav (desktop) ── */
+#side-nav {
+  width: 232px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+  gap: 4px;
+  background: var(--bg-1);
+}
+.sn-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 8px 18px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 12px;
+}
+.sn-brand-mark {
+  width: 32px; height: 32px;
+  border-radius: var(--r-2);
+  background: var(--accent);
+  display: grid; place-items: center;
+  color: oklch(0.16 0.012 60);
+  font: 400 22px/1 var(--font-display);
+  letter-spacing: -0.04em;
+}
+.sn-brand-name {
+  font: 400 22px/1 var(--font-display);
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.sn-brand-name em { font-style: italic; color: var(--accent); }
+.sn-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border: 0; background: none;
+  text-align: left; font: 500 13.5px/1.2 var(--font-sans);
+  color: var(--fg-2);
+  border-radius: var(--r-2);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+  position: relative;
+}
+.sn-btn:hover { background: var(--bg-2); color: var(--fg); }
+.sn-btn[data-active="true"] {
+  background: var(--accent);
+  color: oklch(0.16 0.012 60);
+  box-shadow: var(--glow-ember);
+}
+.sn-btn .sn-ico { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.9; }
+.sn-btn[data-active="true"] .sn-ico { opacity: 1; }
+.sn-btn .sn-cnt {
+  margin-left: auto;
+  background: var(--bg-3); color: var(--fg-2);
+  font: 500 11px/1 var(--font-mono);
+  padding: 3px 7px; border-radius: var(--r-pill);
+  min-width: 22px; text-align: center;
+}
+.sn-btn[data-active="true"] .sn-cnt {
+  background: oklch(0.16 0.012 60 / .25); color: oklch(0.16 0.012 60);
+}
+.sn-spacer { flex: 1; }
+.sn-user {
+  font: 400 11px/1.4 var(--font-mono);
+  color: var(--fg-4);
+  padding: 8px;
+  border-top: 1px solid var(--line-soft);
+  margin-top: 8px;
+  word-break: break-all;
+}
+
+/* ── Main column ── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  position: relative;
+  background: var(--bg);
+}
+.screen { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.screen[data-active="true"] { display: flex; }
+.ph {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line-soft);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+.ph h2 {
+  flex: 1;
+  font: 400 28px/1.1 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--fg);
+  margin: 0;
+}
+.ph h2 em { font-style: italic; color: var(--accent); }
+.btn-back {
+  background: none; border: 0; cursor: pointer;
+  color: var(--fg-3); font-family: var(--font-sans); font-size: 14px;
+  padding: 6px 10px; border-radius: var(--r-1);
+}
+.btn-back:hover { background: var(--bg-2); color: var(--fg); }
+.pb { flex: 1; overflow-y: auto; padding: 24px; }
+
+/* ── Bottom nav (mobile) ── */
+#bottom-nav {
+  display: none;
+  flex-shrink: 0;
+  border-top: 1px solid var(--line-soft);
+  background: var(--bg-1);
+}
+.bn-row { display: flex; }
+.bn-btn {
+  flex: 1;
+  padding: 8px 4px 10px;
+  border: 0; background: none; cursor: pointer;
+  font: 500 10px/1.2 var(--font-sans);
+  color: var(--fg-3);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  text-align: center;
+}
+.bn-btn .bn-ico { width: 22px; height: 22px; opacity: 0.7; }
+.bn-btn[data-active="true"] {
+  color: var(--accent);
+}
+.bn-btn[data-active="true"] .bn-ico { opacity: 1; }
+
+@media (max-width: 900px) {
+  #side-nav { display: none; }
+  #bottom-nav { display: block; }
+  .ph { padding: 14px 16px; }
+  .ph h2 { font-size: 22px; }
+  .pb { padding: 16px; }
+}
+
+/* ─────────── AUTH ─────────── */
+#screen-auth { align-items: center; justify-content: center; }
+.auth-box {
+  width: 100%;
+  max-width: 380px;
+  padding: 32px;
+  margin: 0 16px;
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  box-shadow: var(--shadow-1);
+}
+.auth-brand {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px;
+}
+.auth-brand-mark {
+  width: 44px; height: 44px;
+  border-radius: var(--r-2);
+  background: var(--accent);
+  display: grid; place-items: center;
+  color: oklch(0.16 0.012 60);
+  font: 400 30px/1 var(--font-display);
+}
+.auth-brand h1 {
+  font: 400 32px/1 var(--font-display);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.auth-brand h1 em { font-style: italic; color: var(--accent); }
+.auth-brand .auth-sub { font: 400 12px/1 var(--font-sans); color: var(--fg-3); margin-top: 4px; }
+
+.fg { margin-bottom: 14px; }
+.fg .label { margin-bottom: 6px; }
+.row { display: flex; gap: 8px; align-items: flex-end; }
+.row .fg { flex: 1; margin-bottom: 0; }
+.btn-full { width: 100%; }
+hr.div { border: 0; border-top: 1px solid var(--line-soft); margin: 16px 0; }
+
+.alert {
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2);
+  margin-bottom: 12px;
+  font: 400 13px/1.4 var(--font-sans);
+}
+.alert-e { background: oklch(from var(--err) l c h / .12); border-color: oklch(from var(--err) l c h / .35); color: var(--err); }
+.alert-ok { background: oklch(from var(--ok) l c h / .12); border-color: oklch(from var(--ok) l c h / .35); color: var(--ok); }
+
+.tabs-auth {
+  display: flex; gap: 4px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 18px;
+}
+.tab-pane { display: none; }
+.tab-pane[data-active="true"] { display: block; }
+
+/* ─────────── MAP ─────────── */
+.map-layout { display: flex; flex: 1; overflow: hidden; }
+.sl-panel {
+  width: 320px; flex-shrink: 0;
+  border-right: 1px solid var(--line-soft);
+  display: flex; flex-direction: column;
+  background: var(--bg-1);
+}
+.sl-search { padding: 12px; border-bottom: 1px solid var(--line-soft); }
+.sl-cats {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.sl-list { flex: 1; overflow-y: auto; }
+.sl-item {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  cursor: pointer;
+  transition: background var(--t-fast);
+}
+.sl-item:hover, .sl-item[data-sel="true"] { background: var(--bg-2); }
+.sli-name {
+  font: 600 13px/1.3 var(--font-sans);
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.sli-addr {
+  font: 400 11.5px/1.3 var(--font-sans);
+  color: var(--fg-3);
+}
+.sli-distance {
+  font: 500 11px/1 var(--font-mono);
+  color: var(--accent);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.map-area {
+  flex: 1; position: relative;
+  background:
+    radial-gradient(ellipse at 30% 20%, oklch(from var(--accent) l c h / .14) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 75%, oklch(from var(--accent-2) l c h / .12) 0%, transparent 50%),
+    var(--bg-2);
+  overflow: hidden;
+}
+.map-area::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, var(--line-soft) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line-soft) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.map-area::after {
+  content: 'Карта · MapLibre GL';
+  position: absolute; bottom: 12px; right: 14px;
+  font: 400 10px/1 var(--font-mono);
+  color: var(--fg-4);
+  letter-spacing: 0.05em;
+}
+.store-pin {
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  transform: translate(-50%, -100%);
+  pointer-events: auto;
+}
+.store-pin .p-dot {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  box-shadow: 0 4px 12px oklch(0 0 0 / .4);
+  position: relative;
+}
+.store-pin .p-dot::after {
+  content: '';
+  position: absolute; left: 50%; top: 100%;
+  width: 2px; height: 8px;
+  background: var(--accent);
+  transform: translateX(-50%);
+}
+.store-pin .p-lbl {
+  margin-top: 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  font: 600 11px/1 var(--font-sans);
+  color: var(--fg);
+  padding: 4px 8px;
+  border-radius: var(--r-1);
+  white-space: nowrap;
+  box-shadow: 0 2px 8px oklch(0 0 0 / .3);
+}
+
+.map-popup {
+  position: absolute; left: 16px; right: 16px; bottom: 16px;
+  max-width: 360px;
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  padding: 16px;
+  box-shadow: var(--shadow-2);
+  z-index: 5;
+}
+.map-popup[hidden] { display: none; }
+.popup-close {
+  float: right;
+  background: none; border: 0; cursor: pointer;
+  color: var(--fg-3); font-size: 16px;
+}
+.geo-toast {
+  position: absolute; top: 16px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  font: 400 12px/1 var(--font-sans);
+  color: var(--fg);
+  box-shadow: var(--shadow-1);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--t-med);
+}
+.geo-toast[data-show="true"] { opacity: 1; }
+
+@media (max-width: 768px) {
+  .map-layout { flex-direction: column; }
+  .sl-panel { width: 100%; max-height: 50%; border-right: 0; border-bottom: 1px solid var(--line-soft); }
+}
+
+/* ─────────── STORE ─────────── */
+.store-hero {
+  display: flex; gap: 18px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.store-logo {
+  width: 120px; height: 120px;
+  border-radius: var(--r-3);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.store-meta { flex: 1; min-width: 0; }
+.store-meta h2 {
+  font: 400 32px/1 var(--font-display);
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+}
+.store-meta .cuisine {
+  font: 400 13px/1 var(--font-mono);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+.meta-line {
+  font: 400 13px/1.5 var(--font-sans);
+  color: var(--fg-2);
+  display: flex; align-items: center; gap: 8px;
+}
+.meta-line .meta-ico {
+  width: 14px; height: 14px;
+  color: var(--fg-4); flex-shrink: 0;
+}
+
+.sec { margin-bottom: 28px; }
+.sec-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.sec-title {
+  font: 400 11px/1 var(--font-mono);
+  color: var(--fg-4);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.sec-link {
+  font: 500 13px/1 var(--font-sans);
+  color: var(--accent);
+  background: none; border: 0; cursor: pointer;
+}
+
+.subs-row {
+  display: flex; gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin: 0 -8px;
+  padding: 0 8px 8px;
+}
+.sub-card {
+  min-width: 220px; max-width: 240px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  padding: 16px;
+  background: var(--bg-1);
+  flex-shrink: 0;
+  display: flex; flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.sub-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--accent);
+}
+.sub-card h4 {
+  font: 600 14px/1.3 var(--font-sans);
+  margin: 4px 0 8px;
+  color: var(--fg);
+}
+.sub-price {
+  font: 400 28px/1 var(--font-display);
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.sub-price .sub-cur {
+  font: 500 14px/1 var(--font-sans);
+  color: var(--fg-3);
+  margin-left: 2px;
+}
+.sub-meta {
+  font: 400 11px/1.4 var(--font-mono);
+  color: var(--fg-3);
+  margin-bottom: 14px;
+}
+.sub-card-active::before { background: var(--ok); }
+.sub-card .sub-status {
+  position: absolute; top: 14px; right: 14px;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.item-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--t-fast), transform var(--t-fast);
+  display: flex; flex-direction: column;
+}
+.item-card:hover { border-color: var(--line); transform: translateY(-1px); }
+.item-img {
+  height: 120px;
+  background: var(--bg-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--fg-4);
+  font: 400 22px/1 var(--font-display);
+  font-style: italic;
+  position: relative;
+  overflow: hidden;
+}
+.item-img.has-photo {
+  background: linear-gradient(135deg,
+    oklch(from var(--accent) l c h / .15),
+    oklch(from var(--accent-2) l c h / .12));
+}
+.item-body { padding: 12px; flex: 1; display: flex; flex-direction: column; }
+.item-name {
+  font: 600 13px/1.3 var(--font-sans);
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.item-name.sub-on { color: var(--accent); }
+.item-desc {
+  font: 400 11.5px/1.4 var(--font-sans);
+  color: var(--fg-3);
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.item-foot {
+  margin-top: auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px;
+}
+.item-price {
+  font: 500 14px/1 var(--font-sans);
+  color: var(--fg);
+}
+.price-orig {
+  font: 400 11px/1 var(--font-sans);
+  color: var(--fg-4);
+  text-decoration: line-through;
+  margin-right: 4px;
+}
+.price-sub { color: var(--accent); font-weight: 600; }
+.item-unavail {
+  font: 500 10px/1 var(--font-mono);
+  color: var(--err);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─────────── MENU TOOLBAR ─────────── */
+.menu-toolbar {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--line-soft);
+  align-items: center;
+  flex-shrink: 0;
+}
+.menu-toolbar .input { flex: 1; min-width: 180px; height: 36px; }
+.menu-toolbar select { height: 36px; }
+.menu-toolbar label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 400 12px/1 var(--font-sans); color: var(--fg-2);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.menu-toolbar input[type="checkbox"] { accent-color: var(--accent); }
+
+.cat-bar {
+  display: flex; gap: 6px;
+  overflow-x: auto;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--line-soft);
+  flex-shrink: 0;
+}
+.cat-bar::-webkit-scrollbar { display: none; }
+
+/* ─────────── CART ─────────── */
+.cart-layout {
+  display: flex; flex-direction: column;
+  flex: 1; overflow: hidden;
+}
+.cart-body { flex: 1; overflow-y: auto; padding: 16px 24px; }
+.cart-section {
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.cart-section-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-soft);
+  font: 600 13px/1 var(--font-sans);
+  display: flex; align-items: center; gap: 8px;
+  color: var(--fg);
+}
+.cart-section-head .cs-ico { width: 16px; height: 16px; color: var(--accent); }
+.cart-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.cart-item:first-of-type { border-top: 0; }
+.ci-thumb {
+  width: 44px; height: 44px;
+  border-radius: var(--r-2);
+  background: var(--bg-2);
+  display: grid; place-items: center;
+  color: var(--fg-4);
+  font: 400 18px/1 var(--font-display);
+  flex-shrink: 0;
+}
+.ci-info { flex: 1; min-width: 0; }
+.ci-name {
+  font: 600 13px/1.3 var(--font-sans);
+  color: var(--fg);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ci-price { font: 400 12px/1.4 var(--font-mono); color: var(--fg-3); }
+.qty-ctrl {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bg-2);
+  border-radius: var(--r-pill);
+  padding: 4px;
+}
+.qty-btn {
+  width: 26px; height: 26px;
+  border: 0; background: var(--bg-1);
+  color: var(--fg);
+  cursor: pointer;
+  border-radius: 50%;
+  font: 500 14px/1 var(--font-sans);
+  display: grid; place-items: center;
+}
+.qty-btn:hover { background: var(--accent); color: oklch(0.16 0.012 60); }
+.qty-val {
+  min-width: 24px; text-align: center;
+  font: 600 13px/1 var(--font-mono);
+  color: var(--fg);
+}
+.ci-rm {
+  background: none; border: 0; cursor: pointer;
+  color: var(--fg-4);
+  width: 32px; height: 32px;
+  border-radius: var(--r-1);
+  display: grid; place-items: center;
+}
+.ci-rm:hover { background: oklch(from var(--err) l c h / .15); color: var(--err); }
+
+.cart-foot {
+  border-top: 1px solid var(--line-soft);
+  padding: 16px 24px 24px;
+  background: var(--bg-1);
+  flex-shrink: 0;
+}
+.cart-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0;
+  font: 400 14px/1 var(--font-sans); color: var(--fg-2);
+}
+.cart-row .num { font-family: var(--font-mono); }
+.cart-row.disc { color: var(--ok); }
+.cart-row.total {
+  font: 400 22px/1 var(--font-display);
+  color: var(--fg);
+  border-top: 1px solid var(--line-soft);
+  padding-top: 12px;
+  margin-top: 6px;
+}
+.pay-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--fg-4);
+  font: 400 13px/1.5 var(--font-sans);
+}
+.empty .empty-mark {
+  width: 56px; height: 56px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-3);
+  margin: 0 auto 14px;
+  display: grid; place-items: center;
+  color: var(--fg-4);
+  font: 400 28px/1 var(--font-display);
+  font-style: italic;
+}
+.loading {
+  text-align: center;
+  padding: 28px;
+  color: var(--fg-4);
+  font: 400 12px/1.5 var(--font-mono);
+}
+
+/* ─────────── ORDERS ─────────── */
+.order-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color var(--t-fast);
+}
+.order-card:hover { border-color: var(--line); }
+.order-hd {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.order-id {
+  font: 600 14px/1 var(--font-mono);
+  color: var(--fg);
+}
+.order-date {
+  font: 400 11.5px/1.4 var(--font-sans);
+  color: var(--fg-3);
+  margin-bottom: 8px;
+}
+.order-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--line-soft);
+  padding-top: 10px; margin-top: 10px;
+}
+.order-total {
+  font: 400 18px/1 var(--font-display);
+  color: var(--fg);
+}
+.order-store {
+  font: 400 12px/1.3 var(--font-sans);
+  color: var(--fg-3);
+}
+
+/* ─────────── MY SUBS ─────────── */
+.usub-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color var(--t-fast);
+  position: relative;
+  overflow: hidden;
+}
+.usub-card::before {
+  content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+  background: var(--accent);
+}
+.usub-card:hover { border-color: var(--line); }
+.usub-card[data-status="expired"]::before { background: var(--err); }
+.usub-card[data-status="pending"]::before { background: var(--warn); }
+.usub-hd {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+  padding-left: 8px;
+}
+.usub-name {
+  font: 600 14px/1.3 var(--font-sans);
+  color: var(--fg);
+}
+.usub-store {
+  font: 400 12px/1.3 var(--font-sans);
+  color: var(--fg-3);
+  margin-bottom: 12px;
+  padding-left: 8px;
+}
+.usub-stats {
+  display: flex; gap: 16px;
+  padding-left: 8px;
+}
+.usub-stat .lbl {
+  display: block;
+  font: 400 10px/1 var(--font-mono);
+  color: var(--fg-4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+.usub-stat strong {
+  font: 400 18px/1 var(--font-display);
+  color: var(--fg);
+  font-weight: normal;
+}
+
+/* ─────────── PROFILE ─────────── */
+.profile-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-3);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.profile-card .label { margin-bottom: 4px; }
+.profile-card .val {
+  font: 400 14px/1.4 var(--font-sans);
+  color: var(--fg);
+  margin-bottom: 14px;
+}
+.profile-card .val:last-child { margin-bottom: 0; }
+.profile-card .val.mono { font-family: var(--font-mono); font-size: 13px; }
+.theme-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+
+/* ─────────── MODAL ─────────── */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: oklch(0 0 0 / .65);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  align-items: flex-start; justify-content: center;
+  padding: 60px 16px 20px;
+  overflow-y: auto;
+}
+.overlay[data-open="true"] { display: flex; }
+.modal {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-3);
+  width: 100%; max-width: 520px;
+  padding: 24px;
+  box-shadow: var(--shadow-2);
+  flex-shrink: 0;
+}
+.modal-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 16px;
+  gap: 10px;
+}
+.modal-hd h3 {
+  font: 400 24px/1.1 var(--font-display);
+  margin: 0;
+}
+.modal-x {
+  background: none; border: 0; cursor: pointer;
+  width: 32px; height: 32px;
+  border-radius: var(--r-1);
+  color: var(--fg-3);
+  font-size: 18px;
+}
+.modal-x:hover { background: var(--bg-2); color: var(--fg); }
+.modal-ft {
+  display: flex; gap: 8px; justify-content: flex-end;
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid var(--line-soft);
+}
+.modal-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0;
+}
+
+/* Item modal */
+#mi-img {
+  height: 200px;
+  background: var(--bg-2);
+  border-radius: var(--r-2);
+  display: grid; place-items: center;
+  color: var(--fg-4);
+  font: 400 40px/1 var(--font-display);
+  font-style: italic;
+  margin-bottom: 14px;
+}
+.mi-sub-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-2);
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+.mi-sub-row:hover { background: var(--bg-2); border-color: var(--accent); }
+.mi-sub-row[data-on="true"] {
+  border-color: var(--accent);
+  background: oklch(from var(--accent) l c h / .08);
+}
+.mi-sub-name { font: 600 13px/1.3 var(--font-sans); }
+.mi-sub-disc {
+  font: 400 18px/1 var(--font-display);
+  color: var(--accent);
+}
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
+
+.txt-muted {
+  font: 400 10.5px/1.4 var(--font-mono);
+  color: var(--fg-4);
+}
+
+/* ─────────── SPLASH ─────────── */
+#splash {
+  position: fixed; inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  transition: opacity var(--t-slow) var(--ease-out);
+}
+#splash[data-hide="true"] {
+  opacity: 0; pointer-events: none;
+}
+.sp1, .sp2 {
+  font: 400 18px/1.4 var(--font-display);
+  color: var(--fg-3); margin: 0;
+  font-style: italic;
+  text-align: center;
+}
+.sp3 {
+  font: 400 56px/1 var(--font-display);
+  letter-spacing: -0.02em;
+  margin: 8px 0 0;
+}
+.sp3 em { color: var(--accent); font-style: italic; }
+.sp-mark {
+  width: 88px; height: 88px;
+  margin-top: 20px;
+  background: var(--accent);
+  border-radius: var(--r-3);
+  display: grid; place-items: center;
+  color: oklch(0.16 0.012 60);
+  font: 400 64px/1 var(--font-display);
+  letter-spacing: -0.04em;
+  box-shadow: var(--glow-ember);
+  animation: pulseEmber 2.4s ease-in-out infinite;
+}
+</style>
+<script>
+  // Persist theme before paint
+  const _t = localStorage.getItem('aliby_theme');
+  if (_t === 'light') document.documentElement.classList.replace('dark', 'light');
+</script>
+</head>
+<body data-app="client">
+
+<!-- ═══════ SPLASH ═══════ -->
+<div id="splash" data-screen-label="Splash">
+  <p class="sp1">Если возникнут подозрения,</p>
+  <p class="sp2">то у тебя есть</p>
+  <p class="sp3">A<em>l</em>iby</p>
+  <div class="sp-mark">A</div>
+</div>
+
+<div id="app">
+
+  <!-- ═══════ SIDE NAV (desktop) ═══════ -->
+  <nav id="side-nav">
+    <div class="sn-brand">
+      <div class="sn-brand-mark">A</div>
+      <div>
+        <div class="sn-brand-name">A<em>l</em>iby</div>
+        <div class="txt-muted" style="margin-top:2px">Foods</div>
+      </div>
+    </div>
+    <button class="sn-btn" data-nav="map">
+      <svg class="sn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
+      Карта
+    </button>
+    <button class="sn-btn" data-nav="store">
+      <svg class="sn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg>
+      Заведение
+    </button>
+    <button class="sn-btn" data-nav="menu">
+      <svg class="sn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+      Товары и Услуги
+    </button>
+    <button class="sn-btn" data-nav="cart">
+      <svg class="sn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h2l2.5 12h11l2-9H6"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
+      Корзина <span class="sn-cnt" id="sn-cart-cnt">0</span>
+    </button>
+    <button class="sn-btn" data-nav="orders">
+      <svg class="sn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7l8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></svg>
+      Заказы
+    </button>
+    <button class="sn-btn" data-nav="subscriptions">
+      <svg class="sn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M3 11h18"/><path d="M7 15h4"/></svg>
+      Абонементы
+    </button>
+    <button class="sn-btn" data-nav="profile">
+      <svg class="sn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4.5 5-7 8-7s6.5 2.5 8 7"/></svg>
+      Профиль
+    </button>
+    <div class="sn-spacer"></div>
+    <div class="sn-user" id="sn-email">guest@aliby.foods</div>
+  </nav>
+
+  <!-- ═══════ MAIN ═══════ -->
+  <div id="main">
+
+    <!-- ─── AUTH ─── -->
+    <div id="screen-auth" class="screen" data-screen-label="01 Auth">
+      <div class="auth-box">
+        <div class="auth-brand">
+          <div class="auth-brand-mark">A</div>
+          <div>
+            <h1>A<em>l</em>iby <span style="font-size:18px;color:var(--fg-3)">Foods</span></h1>
+            <div class="auth-sub">Если возникнут подозрения — у тебя есть Aliby</div>
+          </div>
+        </div>
+
+        <div class="tabs tabs-auth">
+          <button class="tab" data-tab-auth="login" data-active="true">Вход</button>
+          <button class="tab" data-tab-auth="reg">Регистрация</button>
+          <button class="tab" data-tab-auth="recover">Восстановление</button>
+        </div>
+
+        <div id="auth-login" class="tab-pane" data-active="true">
+          <div id="err-login" class="alert alert-e" hidden></div>
+          <div class="fg"><label class="label">Email</label><input class="input" type="email" id="li-email" placeholder="you@example.com" autocomplete="username"></div>
+          <div class="fg"><label class="label">Пароль</label><input class="input" type="password" id="li-pwd" autocomplete="current-password"></div>
+          <button class="btn btn-primary btn-full" onclick="doLogin()">Войти</button>
+          <hr class="div">
+          <button class="btn btn-ghost btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
+        </div>
+
+        <div id="auth-reg" class="tab-pane">
+          <div id="err-reg" class="alert alert-e" hidden></div>
+          <div id="ok-reg" class="alert alert-ok" hidden>Регистрация успешна. Подтвердите email.</div>
+          <div class="fg"><label class="label">Email</label><input class="input" type="email" id="reg-email" autocomplete="username"></div>
+          <div class="fg"><label class="label">Имя (необязательно)</label><input class="input" type="text" id="reg-name"></div>
+          <div class="fg"><label class="label">Пароль (мин. 6 символов)</label><input class="input" type="password" id="reg-pwd" autocomplete="new-password"></div>
+          <button class="btn btn-primary btn-full" onclick="doRegister()">Зарегистрироваться</button>
+        </div>
+
+        <div id="auth-recover" class="tab-pane">
+          <div id="ok-recover" class="alert alert-ok" hidden>Письмо отправлено. Проверьте почту.</div>
+          <p class="t-sm" style="margin-bottom:12px">Введите email — пришлём ссылку для сброса пароля.</p>
+          <div class="fg"><label class="label">Email</label><input class="input" type="email" id="rec-email"></div>
+          <button class="btn btn-primary btn-full" onclick="doRecover()">Отправить ссылку</button>
+          <hr class="div">
+          <button class="btn btn-ghost btn-full" onclick="showAuthTab('login')">← Назад</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MAP ─── -->
+    <div id="screen-map" class="screen" data-screen-label="02 Map">
+      <div class="ph">
+        <h2>Карта <em>заведений</em></h2>
+        <button class="btn btn-sm btn-ghost" id="map-panel-btn" onclick="toggleMapPanel()">Скрыть карту</button>
+      </div>
+      <div class="map-layout" id="map-layout">
+        <aside class="sl-panel">
+          <div class="sl-search">
+            <input class="input" type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)">
+          </div>
+          <div class="sl-cats" id="sl-cats">
+            <button class="chip" data-active="true" data-cat="">Все</button>
+            <button class="chip" data-cat="cafe">Кафе</button>
+            <button class="chip" data-cat="restaurant">Рестораны</button>
+            <button class="chip" data-cat="coffee">Кофейни</button>
+            <button class="chip" data-cat="bakery">Пекарни</button>
+            <button class="chip" data-cat="bar">Бары</button>
+          </div>
+          <div class="sl-list" id="sl-list">
+            <div class="loading">Загрузка…</div>
+          </div>
+        </aside>
+        <div class="map-area" id="map-area">
+          <div class="geo-toast" id="geo-toast">Определяем ваше местоположение…</div>
+          <div class="map-popup" id="map-popup" hidden>
+            <button class="popup-close" onclick="closePopup()">✕</button>
+            <strong id="pp-name" class="serif" style="font-size:20px">—</strong>
+            <div class="t-sm" id="pp-addr" style="margin-top:6px">—</div>
+            <div class="t-sm" id="pp-hours">—</div>
+            <div class="t-sm" id="pp-phone">—</div>
+            <button class="btn btn-primary btn-sm btn-full" style="margin-top:14px" onclick="openStoreFromPopup()">Открыть заведение →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── STORE ─── -->
+    <div id="screen-store" class="screen" data-screen-label="03 Store">
+      <div class="ph">
+        <button class="btn-back" onclick="goTo('map')">← Карта</button>
+        <h2 id="store-ph-name">Заведение</h2>
+        <button class="btn btn-sm btn-primary" onclick="goTo('menu')">Меню →</button>
+      </div>
+      <div class="pb">
+        <div class="store-hero">
+          <div class="store-logo stripe-ph" id="store-logo">Фото</div>
+          <div class="store-meta">
+            <h2 id="st-name">—</h2>
+            <div class="cuisine" id="st-cuisine">—</div>
+            <div class="meta-line"><svg class="meta-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-7.5-7-13a7 7 0 1 1 14 0c0 5.5-7 13-7 13Z"/><circle cx="12" cy="8" r="2.5"/></svg><span id="st-addr">—</span></div>
+            <div class="meta-line"><svg class="meta-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="st-hours">—</span></div>
+            <div class="meta-line"><svg class="meta-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A14 14 0 0 1 4 6a2 2 0 0 1 2-2"/></svg><span id="st-phone">—</span></div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-head">
+            <div class="sec-title">Абонементы</div>
+            <span class="txt-muted">GET /rest/v1/subscriptions</span>
+          </div>
+          <div class="subs-row" id="store-subs">
+            <div class="loading">Загрузка…</div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-head">
+            <div class="sec-title">Рекомендуемые блюда</div>
+            <span class="txt-muted">GET /rest/v1/menu_items?limit=4</span>
+          </div>
+          <div class="items-grid" id="store-rec">
+            <div class="loading">Загрузка…</div>
+          </div>
+          <button class="btn btn-ghost btn-full" style="margin-top:14px" onclick="goTo('menu')">Смотреть всё меню →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MENU ─── -->
+    <div id="screen-menu" class="screen" data-screen-label="04 Menu">
+      <div class="ph">
+        <button class="btn-back" onclick="goTo('store')">← Заведение</button>
+        <h2 id="menu-ph-name">Товары и <em>Услуги</em></h2>
+        <button class="btn btn-sm btn-primary" onclick="goTo('cart')">Корзина <span id="menu-cart-cnt" style="margin-left:4px;font-family:var(--font-mono)">0</span></button>
+      </div>
+      <div class="cat-bar" id="cat-bar">
+        <button class="chip" data-cid="" data-active="true">Все</button>
+      </div>
+      <div class="menu-toolbar">
+        <input class="input" type="search" id="m-search" placeholder="Поиск блюда…">
+        <select class="input" id="m-sort" style="width:auto;min-width:140px">
+          <option value="">Сортировка</option>
+          <option value="price.asc">Цена ↑</option>
+          <option value="price.desc">Цена ↓</option>
+          <option value="name.asc">А–Я</option>
+        </select>
+        <label><input type="checkbox" id="m-avail"> Только в наличии</label>
+      </div>
+      <div class="pb" style="padding-top:18px">
+        <div class="items-grid" id="menu-items">
+          <div class="loading">Загрузка…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CART ─── -->
+    <div id="screen-cart" class="screen" data-screen-label="05 Cart">
+      <div class="ph"><h2>Корзина</h2></div>
+      <div class="cart-layout">
+
+        <div class="cart-body" id="cart-body">
+
+          <div class="cart-section" id="sub-cart-sect" hidden>
+            <div class="cart-section-head">
+              <svg class="cs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M3 11h18"/></svg>
+              Абонементы к покупке
+            </div>
+            <div id="sub-cart-list"></div>
+            <div style="padding:12px 16px;border-top:1px solid var(--line-soft)">
+              <button class="btn btn-primary btn-full" onclick="checkoutSubs()">Купить абонементы</button>
+            </div>
+          </div>
+
+          <div class="cart-section" id="goods-cart-sect">
+            <div class="cart-section-head">
+              <svg class="cs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h2l2.5 12h11l2-9H6"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>
+              Товары и услуги
+            </div>
+            <div id="cart-items">
+              <div class="empty"><div class="empty-mark">∅</div>Корзина пуста</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cart-foot" id="cart-foot" hidden>
+          <div class="profile-card" style="margin-bottom:14px">
+            <label class="label">Применить абонемент</label>
+            <select class="input" id="cart-sub-sel" onchange="validateSub()">
+              <option value="">— без абонемента —</option>
+            </select>
+            <div id="sub-val-res" class="t-sm" style="margin-top:8px"></div>
+          </div>
+
+          <div class="cart-row"><span>Подытог</span><span class="num" id="c-subtotal">0 ₽</span></div>
+          <div class="cart-row disc" id="c-disc-row" hidden>
+            <span>Скидка по абонементу</span><span class="num" id="c-discount">−0 ₽</span>
+          </div>
+          <div class="cart-row total"><span>Итого</span><span id="c-total">0 ₽</span></div>
+
+          <div class="fg" style="margin-top:14px">
+            <label class="label">Время самовывоза (необязательно)</label>
+            <input class="input" type="datetime-local" id="c-pickup">
+          </div>
+
+          <div class="pay-btns">
+            <button class="btn btn-lg" onclick="payBySub()">Абонементом</button>
+            <button class="btn btn-primary btn-lg" onclick="payByCard()">Картой</button>
+          </div>
+          <div class="txt-muted" style="text-align:center;margin-top:10px">
+            POST /rest/v1/orders → /rest/v1/order_items → /functions/v1/create-payment
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ─── ORDERS ─── -->
+    <div id="screen-orders" class="screen" data-screen-label="06 Orders">
+      <div class="ph"><h2>Мои <em>заказы</em></h2></div>
+      <div class="pb">
+        <div class="fg">
+          <select class="input" id="ord-filter" onchange="loadOrders()">
+            <option value="">Все статусы</option>
+            <option value="pending">Ожидает оплаты</option>
+            <option value="paid">Оплачен</option>
+            <option value="ready">Готов к выдаче</option>
+            <option value="issued">Выдан</option>
+            <option value="cancelled">Отменён</option>
+          </select>
+        </div>
+        <div id="orders-list">
+          <div class="loading">Загрузка…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SUBSCRIPTIONS ─── -->
+    <div id="screen-subscriptions" class="screen" data-screen-label="07 Subscriptions">
+      <div class="ph"><h2><em>Абонементы</em></h2></div>
+      <div class="pb">
+        <div class="tabs" style="margin-bottom:18px">
+          <button class="tab" data-tab-sub="store" data-active="true">Заведение</button>
+          <button class="tab" data-tab-sub="active">Активные</button>
+          <button class="tab" data-tab-sub="all">Все</button>
+        </div>
+        <div id="sub-store" class="tab-pane" data-active="true">
+          <div id="sub-store-list" class="items-grid"></div>
+        </div>
+        <div id="sub-active" class="tab-pane">
+          <div id="usubs-active"><div class="loading">Загрузка…</div></div>
+        </div>
+        <div id="sub-all" class="tab-pane">
+          <div id="usubs-all"><div class="loading">Загрузка…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PROFILE ─── -->
+    <div id="screen-profile" class="screen" data-screen-label="08 Profile">
+      <div class="ph"><h2>Профиль</h2></div>
+      <div class="pb">
+
+        <div class="profile-card">
+          <label class="label">Аккаунт</label>
+          <label class="label" style="margin-top:8px;font-size:10px">Email</label>
+          <div class="val mono" id="p-email">—</div>
+          <label class="label" style="font-size:10px">Роль</label>
+          <div class="val" id="p-role">customer</div>
+        </div>
+
+        <div class="profile-card">
+          <label class="label">Имя</label>
+          <div class="row">
+            <div class="fg" style="margin:0"><input class="input" type="text" id="p-name" placeholder="Ваше имя"></div>
+            <button class="btn" onclick="updateName()">Сохранить</button>
+          </div>
+          <div class="txt-muted" style="margin-top:8px">PATCH /rest/v1/profiles?id=eq.{uuid}</div>
+        </div>
+
+        <div class="profile-card">
+          <label class="label">Сменить пароль</label>
+          <div class="row">
+            <div class="fg" style="margin:0"><input class="input" type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
+            <button class="btn" onclick="updatePwd()">Обновить</button>
+          </div>
+          <div class="txt-muted" style="margin-top:8px">PUT /auth/v1/user</div>
+        </div>
+
+        <div class="profile-card">
+          <label class="label">Оформление</label>
+          <div class="theme-row">
+            <span class="t">Тёмная тема</span>
+            <button class="switch" id="theme-sw" data-on="true" onclick="toggleTheme()" aria-label="Тема"></button>
+          </div>
+        </div>
+
+        <button class="btn btn-full" style="margin-bottom:14px" onclick="doLogout()">Выйти из аккаунта</button>
+
+        <div class="profile-card">
+          <label class="label" style="color:var(--err)">Удаление аккаунта</label>
+          <p class="t-sm" style="margin-bottom:14px">Аккаунт и все связанные данные будут удалены безвозвратно.</p>
+          <button class="btn btn-full" style="border-color:oklch(from var(--err) l c h / .4);color:var(--err)" onclick="doDeleteAccount()">Удалить аккаунт</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /#main -->
+
+  <!-- ═══════ BOTTOM NAV (mobile) ═══════ -->
+  <div id="bottom-nav">
+    <div class="bn-row">
+      <button class="bn-btn" data-nav="map">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
+        Карта
+      </button>
+      <button class="bn-btn" data-nav="store">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/></svg>
+        Заведение
+      </button>
+      <button class="bn-btn" data-nav="menu">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        Меню
+      </button>
+      <button class="bn-btn" data-nav="cart">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h2l2.5 12h11l2-9H6"/></svg>
+        Корзина
+      </button>
+      <button class="bn-btn" data-nav="orders">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7l8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7"/></svg>
+        Заказы
+      </button>
+      <button class="bn-btn" data-nav="subscriptions">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M3 11h18"/></svg>
+        Абон.
+      </button>
+      <button class="bn-btn" data-nav="profile">
+        <svg class="bn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="9" r="4"/><path d="M4 21c1.5-4.5 5-7 8-7s6.5 2.5 8 7"/></svg>
+        Профиль
+      </button>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- Item detail -->
+<div class="overlay" id="m-item">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="mi-name">Позиция</h3>
+      <button class="modal-x" onclick="closeModal('m-item')">✕</button>
+    </div>
+    <div id="mi-img"><span style="font-style:italic">Фото</span></div>
+    <div id="mi-desc" class="t" style="margin-bottom:12px;color:var(--fg-2)">—</div>
+    <div id="mi-price" style="font:400 28px/1 var(--font-display);margin-bottom:14px">— ₽</div>
+    <div id="mi-subs"></div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-item')">Отмена</button>
+      <button class="btn btn-primary" id="mi-cart-btn" onclick="addToCartFromDetail()">В корзину</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order detail -->
+<div class="overlay" id="m-order">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Заказ #<span id="mo-id">—</span></h3>
+      <button class="modal-x" onclick="closeModal('m-order')">✕</button>
+    </div>
+    <div class="modal-row" style="margin-bottom:6px">
+      <span class="t-sm">Статус</span>
+      <span class="badge" id="mo-status">—</span>
+    </div>
+    <div class="modal-row" style="margin-bottom:14px">
+      <span class="t-sm">Дата</span>
+      <span class="t-sm mono" id="mo-date">—</span>
+    </div>
+    <div class="divider">Позиции</div>
+    <div id="mo-items"><div class="loading">Загрузка…</div></div>
+    <hr class="div">
+    <div class="modal-row total" style="font:400 22px/1 var(--font-display)">
+      <span>Итого</span><strong id="mo-total" style="font-weight:normal">— ₽</strong>
+    </div>
+    <div class="modal-row t-sm">
+      <span>Способ оплаты</span><span id="mo-pay-method">—</span>
+    </div>
+    <div id="mo-payment" class="txt-muted" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<!-- Buy subscription -->
+<div class="overlay" id="m-buy">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Купить абонемент</h3>
+      <button class="modal-x" onclick="closeModal('m-buy')">✕</button>
+    </div>
+    <div id="mb-info" class="profile-card" style="margin-bottom:14px"></div>
+    <p class="t-sm" style="margin-bottom:14px">
+      Нажмите «Купить» — вы будете перенаправлены на страницу оплаты YooKassa.
+    </p>
+    <div class="txt-muted" style="margin-bottom:6px">POST /functions/v1/create-payment</div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-buy')">Отмена</button>
+      <button class="btn btn-primary" onclick="buySubscription()">Купить →</button>
+    </div>
+  </div>
+</div>
+
+<!-- User subscription detail -->
+<div class="overlay" id="m-usub">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="mu-name">Абонемент</h3>
+      <button class="modal-x" onclick="closeModal('m-usub')">✕</button>
+    </div>
+    <div class="modal-row" style="margin-bottom:14px">
+      <span id="mu-store" class="t-sm muted">—</span>
+      <span class="badge" id="mu-badge">—</span>
+    </div>
+    <div class="grid2" style="margin-bottom:18px">
+      <div class="profile-card" style="padding:12px;margin:0"><label class="label">С</label><div class="val mono" id="mu-start" style="margin:0">—</div></div>
+      <div class="profile-card" style="padding:12px;margin:0"><label class="label">До</label><div class="val mono" id="mu-exp" style="margin:0">—</div></div>
+      <div class="profile-card" style="padding:12px;margin:0"><label class="label">Осталось</label><div style="font:400 22px/1 var(--font-display)" id="mu-uses">—</div></div>
+      <div class="profile-card" style="padding:12px;margin:0"><label class="label">Использовано</label><div style="font:400 22px/1 var(--font-display)" id="mu-used">—</div></div>
+    </div>
+    <div id="mu-desc" class="t" style="margin-bottom:14px;color:var(--fg-2)">—</div>
+    <div class="divider">Условия</div>
+    <div id="mu-conditions" style="margin-bottom:14px"></div>
+    <div class="divider">История списаний</div>
+    <div id="mu-redemptions"><div class="loading">Загрузка…</div></div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   ALIBY CLIENT — front-end logic
+   Real text & flow taken from _ref/client.html, with mocked
+   data so screens are fully populated without backend.
+   ════════════════════════════════════════════════════════════ */
+
+// ─── CONFIG ───
+const SB_URL  = 'https://bucxawpwttvtwdwdtuhh.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const RUB = n => `${Math.round(Number(n)||0).toLocaleString('ru-RU')} ₽`;
+
+// ─── MOCK DATA (shape mirrors Supabase response) ───
+const STORES = [
+  { id:'s1', name:'Чёрная пенка', cuisine:'cafe', address:'ул. Покровка, 14', phone:'+7 (495) 123-45-67', hours:'Пн–Вс 8:00–22:00', x:0.32, y:0.28, color:'oklch(0.74 0.17 55)', distance:'120 м' },
+  { id:'s2', name:'Базилик', cuisine:'restaurant', address:'Большая Никитская, 22', phone:'+7 (495) 222-11-99', hours:'12:00–24:00', x:0.58, y:0.46, color:'oklch(0.66 0.20 22)', distance:'350 м' },
+  { id:'s3', name:'Ферма', cuisine:'cafe', address:'ул. Маросейка, 8', phone:'+7 (495) 555-12-33', hours:'9:00–23:00', x:0.46, y:0.62, color:'oklch(0.74 0.16 150)', distance:'520 м' },
+  { id:'s4', name:'Тесто', cuisine:'bakery', address:'Пятницкая, 31', phone:'+7 (495) 678-90-12', hours:'7:00–21:00', x:0.74, y:0.34, color:'oklch(0.86 0.13 95)', distance:'780 м' },
+  { id:'s5', name:'Двор Бар', cuisine:'bar', address:'Покровский бул., 4', phone:'+7 (495) 333-44-55', hours:'18:00–04:00', x:0.22, y:0.72, color:'oklch(0.65 0.21 25)', distance:'1.1 км' },
+  { id:'s6', name:'Карамель', cuisine:'coffee', address:'Малая Бронная, 6', phone:'+7 (495) 444-55-66', hours:'8:00–20:00', x:0.84, y:0.62, color:'oklch(0.78 0.10 220)', distance:'1.4 км' },
+];
+const CATS = [
+  { id:'c1', store_id:'s1', name:'Кофе' },
+  { id:'c2', store_id:'s1', name:'Десерты' },
+  { id:'c3', store_id:'s1', name:'Завтраки' },
+  { id:'c4', store_id:'s1', name:'Напитки' },
+];
+const ITEMS = [
+  { id:'i1', store_id:'s1', cat_id:'c1', name:'Капучино', desc:'Классический эспрессо с молочной пенкой, 250 мл', price:280, available:true },
+  { id:'i2', store_id:'s1', cat_id:'c1', name:'Раф ванильный', desc:'Эспрессо, сливки, ваниль, 300 мл', price:340, available:true },
+  { id:'i3', store_id:'s1', cat_id:'c1', name:'Флэт уайт', desc:'Двойной эспрессо и микропена, 200 мл', price:300, available:true },
+  { id:'i4', store_id:'s1', cat_id:'c2', name:'Чизкейк Нью-Йорк', desc:'Творожный, на песочной основе', price:420, available:true },
+  { id:'i5', store_id:'s1', cat_id:'c2', name:'Тарт лимонный', desc:'Курд, безе, песочное тесто', price:380, available:false },
+  { id:'i6', store_id:'s1', cat_id:'c3', name:'Сырники', desc:'С домашним вареньем и сметаной', price:460, available:true },
+  { id:'i7', store_id:'s1', cat_id:'c3', name:'Авокадо-тост', desc:'Цельнозерновой хлеб, авокадо, яйцо-пашот', price:520, available:true },
+  { id:'i8', store_id:'s1', cat_id:'c4', name:'Лимонад облепиха', desc:'Облепиха, имбирь, мёд', price:320, available:true },
+];
+const SUBS = [
+  { id:'sub1', store_id:'s1', name:'Утренний кофе', price:1990, days:30, uses:30, discount_pct:50,
+    coverage_rules:{ type:'include_categories', cats:['c1'] },
+    time_rules:{ days:[1,2,3,4,5], time_start:'07:00', time_end:'12:00' },
+    usage_limits:{ daily:1, interval_h:0 },
+    desc:'Любой кофе со скидкой 50% по будням до полудня. До одного использования в день.' },
+  { id:'sub2', store_id:'s1', name:'Безлимитные десерты', price:3490, days:30, uses:0, discount_pct:30,
+    coverage_rules:{ type:'include_categories', cats:['c2'] },
+    time_rules:{}, usage_limits:{ interval_h:4 },
+    desc:'Все десерты со скидкой 30% без ограничения по количеству. Минимум 4 часа между использованиями.' },
+  { id:'sub3', store_id:'s1', name:'Завтрак каждый день', price:5990, days:30, uses:30, discount_pct:40,
+    coverage_rules:{ type:'include_categories', cats:['c3'] },
+    time_rules:{ time_start:'08:00', time_end:'12:00' }, usage_limits:{ daily:1 },
+    desc:'Любой завтрак со скидкой 40% до полудня. По одному в день.' },
+];
+const USER_SUBS = [
+  { id:'us1', sub_id:'sub1', store_id:'s1', status:'active', uses_left:18, uses_total:30, used:12,
+    starts_at:'2026-04-15', expires_at:'2026-05-15' },
+  { id:'us2', sub_id:'sub3', store_id:'s1', status:'expired', uses_left:0, uses_total:30, used:30,
+    starts_at:'2026-03-01', expires_at:'2026-03-31' },
+];
+const ORDERS = [
+  { id:101, store_id:'s1', status:'ready', total:740, pay_method:'card',
+    created_at:'2026-05-05T09:42:00',
+    items:[{name:'Капучино', qty:1, price:280},{name:'Авокадо-тост', qty:1, price:520},{name:'Лимонад облепиха', qty:0, price:320}] },
+  { id:100, store_id:'s1', status:'paid', total:980, pay_method:'card',
+    created_at:'2026-05-04T18:11:00',
+    items:[{name:'Раф ванильный', qty:2, price:340},{name:'Чизкейк Нью-Йорк', qty:1, price:420}] },
+  { id:97, store_id:'s2', status:'issued', total:2450, pay_method:'card',
+    created_at:'2026-05-02T20:30:00',
+    items:[{name:'Паста карбонара', qty:2, price:890},{name:'Сальтимбокка', qty:1, price:670}] },
+  { id:91, store_id:'s1', status:'cancelled', total:280, pay_method:'card',
+    created_at:'2026-04-28T07:55:00',
+    items:[{name:'Капучино', qty:1, price:280}] },
+];
+
+const STATUS_MAP = {
+  pending:   { ru:'Ожидает оплаты', cls:'badge-warn' },
+  paid:      { ru:'Оплачен',        cls:'badge-info' },
+  ready:     { ru:'Готов к выдаче', cls:'badge-ok'   },
+  issued:    { ru:'Выдан',          cls:''           },
+  cancelled: { ru:'Отменён',        cls:'badge-err'  },
+};
+const SUB_STATUS_MAP = {
+  active:  { ru:'Активен',          cls:'badge-ok'   },
+  expired: { ru:'Истёк',            cls:'badge-err'  },
+  pending: { ru:'Ожидает оплаты',   cls:'badge-warn' },
+};
+
+// ─── STATE ───
+const S = {
+  session: { email:'sasha@aliby.foods', name:'Александра' },
+  storeId: 's1',
+  cart: [
+    { id:'i1', qty:1 },
+    { id:'i7', qty:1 },
+  ],
+  cartSubId: '',
+  pendingItem: null,
+  pendingSubBuy: null,
+  menuCatId: '',
+  menuSearch: '',
+  menuSort: '',
+  menuAvailOnly: false,
+};
+
+// ─── UTILS ───
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = d => new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const fmtDateOnly = d => new Date(d).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+const $ = q => document.querySelector(q);
+const $$ = q => document.querySelectorAll(q);
+
+function findStore(id) { return STORES.find(s => s.id === id); }
+function findItem(id) { return ITEMS.find(i => i.id === id); }
+function findSub(id) { return SUBS.find(s => s.id === id); }
+function findCat(id) { return CATS.find(c => c.id === id); }
+
+// Subs that cover this item
+function subsForItem(item) {
+  return SUBS.filter(s => {
+    if (s.store_id !== item.store_id) return false;
+    const r = s.coverage_rules || {};
+    if (r.type === 'all') return true;
+    if (r.type === 'include_categories') return r.cats?.includes(item.cat_id);
+    if (r.type === 'include_items') return r.items?.includes(item.id);
+    if (r.type === 'exclude_items') return !r.items?.includes(item.id);
+    return false;
+  });
+}
+
+// ─── NAV ───
+function goTo(id) {
+  $$('.screen').forEach(s => s.dataset.active = 'false');
+  $('#screen-'+id).dataset.active = 'true';
+  $$('[data-nav]').forEach(b => b.dataset.active = (b.dataset.nav === id) ? 'true' : 'false');
+  ({
+    map: loadMap, store: loadStore, menu: loadMenu, cart: loadCart,
+    orders: loadOrders, subscriptions: loadSubsScreen, profile: loadProfile,
+  })[id]?.();
+}
+
+// ─── AUTH (mock) ───
+function showAuthTab(t) {
+  $$('[data-tab-auth]').forEach(b => b.dataset.active = (b.dataset.tabAuth === t) ? 'true' : 'false');
+  $$('.tab-pane[id^="auth-"]').forEach(p => p.dataset.active = 'false');
+  $('#auth-'+t).dataset.active = 'true';
+}
+$$('[data-tab-auth]').forEach(b => b.onclick = () => showAuthTab(b.dataset.tabAuth));
+$$('[data-tab-sub]').forEach(b => b.onclick = () => {
+  const t = b.dataset.tabSub;
+  $$('[data-tab-sub]').forEach(x => x.dataset.active = (x.dataset.tabSub === t) ? 'true' : 'false');
+  $$('#screen-subscriptions .tab-pane').forEach(p => p.dataset.active = 'false');
+  $('#sub-'+t).dataset.active = 'true';
+});
+
+function doLogin() { /* POST /auth/v1/token */ goTo('map'); }
+function doRegister() { $('#ok-reg').hidden = false; }
+function doRecover() { $('#ok-recover').hidden = false; }
+function doLogout() { goTo('auth'); }
+function doDeleteAccount() { /* DELETE */ }
+function updateName() {}
+function updatePwd() {}
+
+// ─── MAP ───
+function loadMap() {
+  const list = $('#sl-list');
+  list.innerHTML = STORES.map(s => `
+    <div class="sl-item" data-store="${s.id}" onclick="selectStoreFromList('${s.id}')">
+      <div>
+        <div class="sli-name">${esc(s.name)}</div>
+        <div class="sli-addr">${esc(s.address)}</div>
+      </div>
+      <div class="sli-distance">${s.distance}</div>
+    </div>
+  `).join('');
+
+  const map = $('#map-area');
+  // Wipe existing pins (keep popup, toast)
+  map.querySelectorAll('.store-pin').forEach(p => p.remove());
+  STORES.forEach(s => {
+    const pin = document.createElement('div');
+    pin.className = 'store-pin';
+    pin.style.left = (s.x * 100) + '%';
+    pin.style.top  = (s.y * 100) + '%';
+    pin.onclick = e => { e.stopPropagation(); openPopup(s); };
+    pin.innerHTML = `<div class="p-dot" style="background:${s.color};box-shadow:0 4px 12px ${s.color.replace(')', ' / .4)')}"></div><div class="p-lbl">${esc(s.name)}</div>`;
+    map.appendChild(pin);
+  });
+
+  // Geo toast briefly
+  const toast = $('#geo-toast');
+  toast.dataset.show = 'true';
+  setTimeout(() => { toast.textContent = 'Москва, центр'; }, 800);
+  setTimeout(() => { toast.dataset.show = 'false'; }, 2400);
+}
+function filterStores(q) {
+  q = q.toLowerCase().trim();
+  $$('#sl-list .sl-item').forEach(el => {
+    el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+function selectStoreFromList(id) {
+  const st = findStore(id);
+  $$('.sl-item').forEach(e => e.dataset.sel = 'false');
+  $(`.sl-item[data-store="${id}"]`).dataset.sel = 'true';
+  openPopup(st);
+}
+function openPopup(s) {
+  S.storeId = s.id;
+  $('#pp-name').textContent = s.name;
+  $('#pp-addr').textContent = s.address;
+  $('#pp-hours').textContent = s.hours;
+  $('#pp-phone').textContent = s.phone;
+  $('#map-popup').hidden = false;
+}
+function closePopup() { $('#map-popup').hidden = true; }
+function openStoreFromPopup() { closePopup(); goTo('store'); }
+function toggleMapPanel() {
+  const layout = $('#map-layout');
+  const panel = layout.querySelector('.sl-panel');
+  const area = layout.querySelector('.map-area');
+  const hide = !area.dataset.hidden || area.dataset.hidden === 'false';
+  area.dataset.hidden = hide ? 'true' : 'false';
+  area.style.flex = hide ? '0' : '1';
+  area.style.width = hide ? '0' : '';
+  area.style.overflow = hide ? 'hidden' : '';
+  panel.style.borderRight = hide ? '0' : '';
+  $('#map-panel-btn').textContent = hide ? 'Показать карту' : 'Скрыть карту';
+}
+$('#sl-cats').addEventListener('click', e => {
+  const chip = e.target.closest('.chip'); if (!chip) return;
+  $$('#sl-cats .chip').forEach(c => c.dataset.active = 'false');
+  chip.dataset.active = 'true';
+  const cat = chip.dataset.cat;
+  $$('#sl-list .sl-item').forEach(el => {
+    const id = el.dataset.store;
+    const st = findStore(id);
+    el.style.display = (!cat || st.cuisine === cat) ? '' : 'none';
+  });
+});
+
+// ─── STORE ───
+function loadStore() {
+  const s = findStore(S.storeId);
+  $('#st-name').textContent = s.name;
+  $('#store-ph-name').textContent = s.name;
+  $('#st-cuisine').textContent = ({ cafe:'Кафе', restaurant:'Ресторан', coffee:'Кофейня', bakery:'Пекарня', bar:'Бар' })[s.cuisine] || '—';
+  $('#st-addr').textContent = s.address;
+  $('#st-hours').textContent = s.hours;
+  $('#st-phone').textContent = s.phone;
+
+  // Subs row
+  const storeSubs = SUBS.filter(x => x.store_id === s.id);
+  $('#store-subs').innerHTML = storeSubs.map(sb => {
+    const userOwns = USER_SUBS.find(u => u.sub_id === sb.id && u.status === 'active');
+    return `
+    <div class="sub-card${userOwns ? ' sub-card-active' : ''}">
+      ${userOwns ? '<span class="badge badge-ok sub-status">У вас есть</span>' : ''}
+      <h4>${esc(sb.name)}</h4>
+      <div class="sub-price">${Math.round(sb.price).toLocaleString('ru-RU')}<span class="sub-cur">₽</span></div>
+      <div class="sub-meta">
+        ${sb.uses === 0 ? 'безлимит' : sb.uses + ' исп.'} · ${sb.days} дн.
+      </div>
+      <button class="btn btn-sm ${userOwns ? 'btn-ghost' : 'btn-primary'}" onclick="${userOwns ? `goTo('subscriptions')` : `openBuySub('${sb.id}')`}">
+        ${userOwns ? 'Открыть' : 'Купить'}
+      </button>
+    </div>`;
+  }).join('') || '<div class="empty">Нет абонементов</div>';
+
+  // Recommended items (first 4 from store)
+  const rec = ITEMS.filter(i => i.store_id === s.id).slice(0, 4);
+  $('#store-rec').innerHTML = rec.map(itemCardHTML).join('');
+}
+
+function itemCardHTML(it) {
+  const subsOn = subsForItem(it);
+  const bestDisc = subsOn.reduce((m, s) => Math.max(m, s.discount_pct || 0), 0);
+  const discPrice = bestDisc ? Math.round(it.price * (1 - bestDisc/100)) : null;
+  return `
+    <div class="item-card" onclick="openItem('${it.id}')">
+      <div class="item-img has-photo">
+        <span style="font-style:italic">${esc(it.name.slice(0,2).toUpperCase())}</span>
+      </div>
+      <div class="item-body">
+        <div class="item-name${subsOn.length ? ' sub-on' : ''}">${esc(it.name)}</div>
+        <div class="item-desc">${esc(it.desc)}</div>
+        <div class="item-foot">
+          <div class="item-price">
+            ${discPrice
+              ? `<span class="price-orig">${RUB(it.price)}</span><span class="price-sub">${RUB(discPrice)}</span>`
+              : RUB(it.price)
+            }
+          </div>
+          ${it.available ? '' : '<span class="item-unavail">нет</span>'}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── MENU ───
+function loadMenu() {
+  const s = findStore(S.storeId);
+  $('#menu-ph-name').innerHTML = `${esc(s.name)} <span style="color:var(--fg-3);font-size:18px">— меню</span>`;
+
+  // Cat bar
+  const cats = CATS.filter(c => c.store_id === s.id);
+  $('#cat-bar').innerHTML = `<button class="chip" data-cid="" ${S.menuCatId === '' ? 'data-active="true"' : ''}>Все</button>`
+    + cats.map(c => `<button class="chip" data-cid="${c.id}" ${S.menuCatId === c.id ? 'data-active="true"' : ''}>${esc(c.name)}</button>`).join('');
+  $('#cat-bar').onclick = e => {
+    const chip = e.target.closest('.chip'); if (!chip) return;
+    $$('#cat-bar .chip').forEach(c => c.dataset.active = 'false');
+    chip.dataset.active = 'true';
+    S.menuCatId = chip.dataset.cid;
+    renderMenuItems();
+  };
+
+  $('#m-search').oninput = e => { S.menuSearch = e.target.value; renderMenuItems(); };
+  $('#m-sort').onchange = e => { S.menuSort = e.target.value; renderMenuItems(); };
+  $('#m-avail').onchange = e => { S.menuAvailOnly = e.target.checked; renderMenuItems(); };
+
+  renderMenuItems();
+  updateCartCnt();
+}
+function renderMenuItems() {
+  let items = ITEMS.filter(i => i.store_id === S.storeId);
+  if (S.menuCatId) items = items.filter(i => i.cat_id === S.menuCatId);
+  if (S.menuAvailOnly) items = items.filter(i => i.available);
+  if (S.menuSearch) {
+    const q = S.menuSearch.toLowerCase();
+    items = items.filter(i => i.name.toLowerCase().includes(q) || (i.desc||'').toLowerCase().includes(q));
+  }
+  if (S.menuSort === 'price.asc')  items.sort((a,b) => a.price - b.price);
+  if (S.menuSort === 'price.desc') items.sort((a,b) => b.price - a.price);
+  if (S.menuSort === 'name.asc')   items.sort((a,b) => a.name.localeCompare(b.name));
+  $('#menu-items').innerHTML = items.length ? items.map(itemCardHTML).join('') : '<div class="empty"><div class="empty-mark">∅</div>Ничего не найдено</div>';
+}
+
+function openItem(id) {
+  const it = findItem(id);
+  S.pendingItem = id;
+  $('#mi-name').textContent = it.name;
+  $('#mi-desc').textContent = it.desc;
+  const subs = subsForItem(it);
+  const bestDisc = subs.reduce((m, s) => Math.max(m, s.discount_pct || 0), 0);
+  const discPrice = bestDisc ? Math.round(it.price * (1 - bestDisc/100)) : null;
+  $('#mi-price').innerHTML = discPrice
+    ? `<span class="price-orig" style="font-size:16px">${RUB(it.price)}</span><span class="price-sub">${RUB(discPrice)}</span>`
+    : RUB(it.price);
+  $('#mi-subs').innerHTML = subs.length
+    ? `<div class="divider">Покрывают абонементы</div>` + subs.map(s => `
+      <div class="mi-sub-row" onclick="goTo('subscriptions')">
+        <div>
+          <div class="mi-sub-name">${esc(s.name)}</div>
+          <div class="t-sm muted">${RUB(s.price)} · ${s.days} дн.</div>
+        </div>
+        <div class="mi-sub-disc">−${s.discount_pct}%</div>
+      </div>`).join('')
+    : '';
+  $('#mi-cart-btn').textContent = it.available ? 'В корзину' : 'Нет в наличии';
+  $('#mi-cart-btn').disabled = !it.available;
+  openModal('m-item');
+}
+function addToCartFromDetail() {
+  if (!S.pendingItem) return;
+  const it = S.cart.find(c => c.id === S.pendingItem);
+  if (it) it.qty++; else S.cart.push({ id: S.pendingItem, qty: 1 });
+  S.pendingItem = null;
+  closeModal('m-item');
+  updateCartCnt();
+}
+function updateCartCnt() {
+  const n = S.cart.reduce((s, c) => s + c.qty, 0);
+  $('#sn-cart-cnt').textContent = n;
+  $('#menu-cart-cnt').textContent = n;
+}
+
+// ─── CART ───
+function loadCart() {
+  if (!S.cart.length) {
+    $('#cart-items').innerHTML = '<div class="empty"><div class="empty-mark">∅</div>Корзина пуста</div>';
+    $('#cart-foot').hidden = true;
+    return;
+  }
+
+  $('#cart-items').innerHTML = S.cart.map(c => {
+    const it = findItem(c.id);
+    return `
+      <div class="cart-item">
+        <div class="ci-thumb">${esc(it.name.slice(0,1))}</div>
+        <div class="ci-info">
+          <div class="ci-name">${esc(it.name)}</div>
+          <div class="ci-price">${RUB(it.price)} × ${c.qty}</div>
+        </div>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="cartQty('${c.id}', -1)">−</button>
+          <span class="qty-val">${c.qty}</span>
+          <button class="qty-btn" onclick="cartQty('${c.id}', 1)">+</button>
+        </div>
+        <button class="ci-rm" onclick="cartRm('${c.id}')" title="Удалить">×</button>
+      </div>`;
+  }).join('');
+
+  // Build subscription select
+  const storeId = findItem(S.cart[0].id).store_id;
+  const userActive = USER_SUBS.filter(u => u.store_id === storeId && u.status === 'active');
+  $('#cart-sub-sel').innerHTML = '<option value="">— без абонемента —</option>' +
+    userActive.map(u => {
+      const sub = findSub(u.sub_id);
+      return `<option value="${u.id}">${esc(sub.name)} · осталось ${u.uses_left} исп.</option>`;
+    }).join('');
+
+  $('#cart-foot').hidden = false;
+  recalcCart();
+}
+function cartQty(id, d) {
+  const it = S.cart.find(c => c.id === id);
+  if (!it) return;
+  it.qty = Math.max(1, it.qty + d);
+  loadCart(); updateCartCnt();
+}
+function cartRm(id) {
+  S.cart = S.cart.filter(c => c.id !== id);
+  loadCart(); updateCartCnt();
+}
+function recalcCart() {
+  const subtotal = S.cart.reduce((s, c) => s + findItem(c.id).price * c.qty, 0);
+  let discount = 0;
+  const subUsId = $('#cart-sub-sel').value;
+  if (subUsId) {
+    const us = USER_SUBS.find(u => u.id === subUsId);
+    const sub = findSub(us.sub_id);
+    discount = S.cart.reduce((s, c) => {
+      const it = findItem(c.id);
+      const covered = subsForItem(it).find(x => x.id === sub.id);
+      if (!covered) return s;
+      return s + it.price * c.qty * (sub.discount_pct/100);
+    }, 0);
+  }
+  $('#c-subtotal').textContent = RUB(subtotal);
+  $('#c-disc-row').hidden = discount === 0;
+  $('#c-discount').textContent = '−' + RUB(discount);
+  $('#c-total').textContent = RUB(subtotal - discount);
+}
+function validateSub() { recalcCart(); }
+function payBySub() { /* POST /rest/v1/orders */ }
+function payByCard() { /* POST /functions/v1/create-payment */ }
+function checkoutSubs() {}
+
+// ─── ORDERS ───
+function loadOrders() {
+  const filter = $('#ord-filter').value;
+  const list = ORDERS.filter(o => !filter || o.status === filter);
+  $('#orders-list').innerHTML = list.length ? list.map(o => {
+    const st = findStore(o.store_id);
+    const stat = STATUS_MAP[o.status];
+    return `
+      <div class="order-card" onclick="openOrder(${o.id})">
+        <div class="order-hd">
+          <span class="order-id">#${o.id}</span>
+          <span class="badge ${stat.cls}">${stat.ru}</span>
+        </div>
+        <div class="order-date">${fmtDate(o.created_at)}</div>
+        <div class="order-foot">
+          <span class="order-store">${esc(st.name)}</span>
+          <span class="order-total">${RUB(o.total)}</span>
+        </div>
+      </div>`;
+  }).join('') : '<div class="empty"><div class="empty-mark">∅</div>Заказов пока нет</div>';
+}
+function openOrder(id) {
+  const o = ORDERS.find(x => x.id === id);
+  const stat = STATUS_MAP[o.status];
+  $('#mo-id').textContent = o.id;
+  $('#mo-status').textContent = stat.ru;
+  $('#mo-status').className = 'badge ' + stat.cls;
+  $('#mo-date').textContent = fmtDate(o.created_at);
+  $('#mo-items').innerHTML = o.items.filter(i => i.qty > 0).map(i => `
+    <div class="modal-row">
+      <span class="t">${esc(i.name)} × ${i.qty}</span>
+      <span class="num t">${RUB(i.price * i.qty)}</span>
+    </div>`).join('');
+  $('#mo-total').textContent = RUB(o.total);
+  $('#mo-pay-method').textContent = ({ card:'Карта', sub:'Абонемент' })[o.pay_method] || '—';
+  $('#mo-payment').textContent = `payment_id: ${o.id}-yk · ${o.pay_method}`;
+  openModal('m-order');
+}
+
+// ─── SUBSCRIPTIONS ───
+function loadSubsScreen() {
+  // Store tab — sub cards for buying
+  const storeSubs = SUBS.filter(x => x.store_id === S.storeId);
+  $('#sub-store-list').innerHTML = storeSubs.map(sb => `
+    <div class="sub-card" style="min-width:0;max-width:none">
+      <h4>${esc(sb.name)}</h4>
+      <div class="sub-price">${Math.round(sb.price).toLocaleString('ru-RU')}<span class="sub-cur">₽</span></div>
+      <div class="sub-meta">
+        ${sb.uses === 0 ? 'безлимит' : sb.uses + ' исп.'} · ${sb.days} дн. · −${sb.discount_pct}%
+      </div>
+      <p class="t-sm" style="margin-bottom:14px;color:var(--fg-3);min-height:38px">${esc(sb.desc)}</p>
+      <button class="btn btn-primary btn-sm" onclick="openBuySub('${sb.id}')">Купить</button>
+    </div>
+  `).join('') || '<div class="empty">Нет абонементов</div>';
+
+  // Active tab
+  const active = USER_SUBS.filter(u => u.status === 'active');
+  $('#usubs-active').innerHTML = active.length ? active.map(usubCardHTML).join('') : '<div class="empty">Активных абонементов нет</div>';
+
+  // All tab
+  $('#usubs-all').innerHTML = USER_SUBS.length ? USER_SUBS.map(usubCardHTML).join('') : '<div class="empty">У вас пока нет абонементов</div>';
+}
+function usubCardHTML(u) {
+  const sub = findSub(u.sub_id);
+  const st = findStore(u.store_id);
+  const stat = SUB_STATUS_MAP[u.status];
+  return `
+    <div class="usub-card" data-status="${u.status}" onclick="openUsub('${u.id}')">
+      <div class="usub-hd">
+        <span class="usub-name">${esc(sub.name)}</span>
+        <span class="badge ${stat.cls}">${stat.ru}</span>
+      </div>
+      <div class="usub-store">${esc(st.name)}</div>
+      <div class="usub-stats">
+        <div class="usub-stat"><span class="lbl">Осталось</span><strong>${u.uses_left}</strong></div>
+        <div class="usub-stat"><span class="lbl">Использовано</span><strong>${u.used}</strong></div>
+        <div class="usub-stat"><span class="lbl">До</span><strong>${fmtDateOnly(u.expires_at)}</strong></div>
+      </div>
+    </div>`;
+}
+function openUsub(id) {
+  const u = USER_SUBS.find(x => x.id === id);
+  const sub = findSub(u.sub_id);
+  const st = findStore(u.store_id);
+  const stat = SUB_STATUS_MAP[u.status];
+  $('#mu-name').textContent = sub.name;
+  $('#mu-store').textContent = st.name;
+  $('#mu-badge').textContent = stat.ru;
+  $('#mu-badge').className = 'badge ' + stat.cls;
+  $('#mu-start').textContent = fmtDateOnly(u.starts_at);
+  $('#mu-exp').textContent = fmtDateOnly(u.expires_at);
+  $('#mu-uses').textContent = u.uses_left || '∞';
+  $('#mu-used').textContent = u.used;
+  $('#mu-desc').textContent = sub.desc;
+
+  // Conditions
+  const t = sub.time_rules || {}, l = sub.usage_limits || {};
+  const cond = [];
+  cond.push(`<div class="modal-row"><span class="t-sm muted">Скидка</span><span class="t">−${sub.discount_pct}%</span></div>`);
+  if (t.days?.length) cond.push(`<div class="modal-row"><span class="t-sm muted">Дни</span><span class="t">${t.days.map(d => ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'][d-1]).join(', ')}</span></div>`);
+  if (t.time_start || t.time_end) cond.push(`<div class="modal-row"><span class="t-sm muted">Время</span><span class="t">${t.time_start || '—'} – ${t.time_end || '—'}</span></div>`);
+  if (l.daily) cond.push(`<div class="modal-row"><span class="t-sm muted">Макс./день</span><span class="t">${l.daily}</span></div>`);
+  if (l.interval_h) cond.push(`<div class="modal-row"><span class="t-sm muted">Мин. интервал</span><span class="t">${l.interval_h} ч</span></div>`);
+  $('#mu-conditions').innerHTML = cond.join('');
+
+  // Redemptions mock
+  $('#mu-redemptions').innerHTML = u.used > 0 ? Array.from({length: Math.min(u.used, 4)}, (_, i) => `
+    <div class="modal-row">
+      <span class="t-sm">2026-05-${String(5-i).padStart(2,'0')} ${10+i}:${String(15+i*7%60).padStart(2,'0')}</span>
+      <span class="t-sm muted">−${sub.discount_pct}% · 1 исп.</span>
+    </div>`).join('') : '<div class="t-sm muted">Списаний пока нет</div>';
+
+  openModal('m-usub');
+}
+function openBuySub(id) {
+  const sb = findSub(id);
+  S.pendingSubBuy = id;
+  $('#mb-info').innerHTML = `
+    <label class="label">Абонемент</label>
+    <div class="val" style="font:400 22px/1.2 var(--font-display)">${esc(sb.name)}</div>
+    <div class="grid2">
+      <div><label class="label">Цена</label><div class="val mono">${RUB(sb.price)}</div></div>
+      <div><label class="label">Срок</label><div class="val mono">${sb.days} дн.</div></div>
+      <div><label class="label">Использований</label><div class="val mono">${sb.uses === 0 ? 'безлимит' : sb.uses}</div></div>
+      <div><label class="label">Скидка</label><div class="val mono">−${sb.discount_pct}%</div></div>
+    </div>`;
+  openModal('m-buy');
+}
+function buySubscription() { closeModal('m-buy'); }
+
+// ─── PROFILE ───
+function loadProfile() {
+  $('#p-email').textContent = S.session.email;
+  $('#p-name').value = S.session.name || '';
+}
+function toggleTheme() {
+  const cur = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  const nxt = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.classList.replace(cur, nxt);
+  localStorage.setItem('aliby_theme', nxt);
+  $('#theme-sw').dataset.on = (nxt === 'dark') ? 'true' : 'false';
+}
+
+// ─── MODAL ───
+function openModal(id) { $('#'+id).dataset.open = 'true'; }
+function closeModal(id) { $('#'+id).dataset.open = 'false'; }
+$$('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.dataset.open = 'false'; }));
+
+// ─── BIND NAV ───
+$$('[data-nav]').forEach(b => b.onclick = () => goTo(b.dataset.nav));
+
+// ─── BOOT ───
+document.documentElement.classList.add(localStorage.getItem('aliby_theme') === 'light' ? 'light' : 'dark');
+document.documentElement.classList.remove(localStorage.getItem('aliby_theme') === 'light' ? 'dark' : 'light');
+$('#theme-sw').dataset.on = !document.documentElement.classList.contains('light') ? 'true' : 'false';
+
+setTimeout(() => {
+  $('#splash').dataset.hide = 'true';
+  setTimeout(() => $('#splash').remove(), 600);
+}, 1100);
+
+goTo('map');
+loadCart();
+updateCartCnt();
+</script>
+
+</body>
+</html>

@@ -47,7 +47,7 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 #bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--border);margin-top:auto}
 .bn-row{display:flex}
 .bn-btn{flex:1;padding:6px 2px 5px;border:none;background:none;cursor:pointer;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--fg-sec)}
-.bn-btn .ico{font-size:23px;line-height:1;display:block}
+.bn-btn .ico{font-size:20px;line-height:1}
 .bn-btn.active{color:var(--fg);font-weight:600}
 #nav-info-popup{position:fixed;bottom:66px;left:50%;transform:translateX(-50%) translateY(8px);max-width:280px;width:calc(100% - 32px);background:var(--card);border:1px solid var(--border-light);border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.45;color:var(--fg);box-shadow:0 4px 20px rgba(0,0,0,.15);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:800;text-align:center}
 #nav-info-popup.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
@@ -55,15 +55,6 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
 @media(max-width:767px){
   #side-nav{display:none}
   #bottom-nav{display:block}
-}
-@media(max-width:767px){
-  body.nav-right #bottom-nav{position:fixed;right:0;top:0;bottom:0;width:68px;border-top:none;border-left:1px solid var(--border);background:var(--bg);z-index:100;display:flex!important;flex-direction:column;justify-content:flex-end;padding-bottom:env(safe-area-inset-bottom,0px);margin-top:0}
-  body.nav-right .bn-row{flex-direction:column;width:100%;height:auto}
-  body.nav-right .bn-btn{flex:0;padding:8px 2px;font-size:9px;width:100%;line-height:1.3;word-break:break-word}
-  body.nav-right .bn-btn .ico{font-size:23px}
-  body.nav-right #main{padding-right:68px}
-  body.nav-right #nav-info-popup{bottom:auto;top:50%;left:auto;right:72px;transform:translateY(-50%) translateX(8px);max-width:220px;width:calc(100% - 84px)}
-  body.nav-right #nav-info-popup.show{transform:translateY(-50%) translateX(0)}
 }
 
 /* ── PAGE STRUCTURE ── */
@@ -453,6 +444,9 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
         <button class="btn btn-p" onclick="payBySub()">Абонементом</button>
         <button class="btn btn-p" onclick="payByCard()">Картой</button>
       </div>
+      <div class="txt-muted" style="text-align:center;margin-top:6px">
+        POST /rest/v1/orders → /rest/v1/order_items → /functions/v1/create-payment
+      </div>
 
     </div>
   </div>
@@ -537,13 +531,6 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
           <span class="toggle-track"></span>
         </label>
       </div>
-      <div class="theme-row" style="margin-top:10px">
-        <span>Меню сбоку</span>
-        <label class="toggle-sw">
-          <input type="checkbox" id="nav-pos-chk" onchange="toggleNavPos()">
-          <span class="toggle-track"></span>
-        </label>
-      </div>
     </div>
 
     <div class="sec">
@@ -562,13 +549,13 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
   <div class="bn-row">
-    <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Карта</button>
-    <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведение</button>
-    <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
-    <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Корзина</button>
-    <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>Заказы</button>
-    <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
-    <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
+    <button class="bn-btn" data-nav="map"><span class="ico">🗺</span>Карта</button>
+    <button class="bn-btn" data-nav="store"><span class="ico">🏪</span>Заведение</button>
+    <button class="bn-btn" data-nav="menu"><span class="ico">📋</span>Товары и<br>Услуги</button>
+    <button class="bn-btn" data-nav="cart"><span class="ico">🛒</span>Корзина</button>
+    <button class="bn-btn" data-nav="orders"><span class="ico">📦</span>Заказы</button>
+    <button class="bn-btn" data-nav="subscriptions"><span class="ico">🎫</span>Абонементы</button>
+    <button class="bn-btn" data-nav="profile"><span class="ico">👤</span>Профиль</button>
   </div>
 </div>
 <div id="nav-info-popup"></div>
@@ -642,7 +629,10 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <button class="modal-x" onclick="closeModal('m-buy')">✕</button>
     </div>
     <div id="mb-info" class="card" style="margin-bottom:14px"></div>
-    <p class="txt-sm" style="margin-bottom:14px">Нажмите «Купить» для оформления абонемента.</p>
+    <p class="txt-sm" style="margin-bottom:14px">
+      Нажмите «Купить» — вы будете перенаправлены на страницу оплаты YooKassa.<br>
+      <span class="txt-muted">POST /functions/v1/create-payment</span>
+    </p>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-buy')">Отмена</button>
       <button class="btn btn-p" onclick="buySubscription()">Купить →</button>
@@ -814,7 +804,7 @@ async function req(path, opts = {}, _retried = false) {
   return body;
 }
 function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function fmtDate(d) {
   if (!d) return '—';
@@ -926,19 +916,6 @@ function toggleTheme() {
   localStorage.setItem('aliby_theme', dark ? 'dark' : 'light');
 }
 
-function applyNavPos() {
-  const right = localStorage.getItem('aliby_nav_pos') === 'right';
-  document.body.classList.toggle('nav-right', right);
-  const chk = document.getElementById('nav-pos-chk');
-  if (chk) chk.checked = right;
-}
-
-function toggleNavPos() {
-  const pos = document.getElementById('nav-pos-chk').checked ? 'right' : 'bottom';
-  localStorage.setItem('aliby_nav_pos', pos);
-  applyNavPos();
-}
-
 // ─── APP CONFIG ───
 async function loadAppConfig() {
   try {
@@ -982,22 +959,12 @@ async function doRegister() {
   const err = document.getElementById('err-reg');
   err.style.display = 'none';
   try {
+    // POST /auth/v1/signup
     const d = await req('/auth/v1/signup', {
       method:'POST',
-      body: JSON.stringify({
-        email: document.getElementById('reg-email').value,
-        password: document.getElementById('reg-pwd').value,
-        data: { display_name: document.getElementById('reg-name').value.trim() || '' },
-      }),
+      body: JSON.stringify({ email: document.getElementById('reg-email').value, password: document.getElementById('reg-pwd').value }),
     });
-    if (d?.access_token) {
-      setSession(d); goTo('map');
-    } else {
-      err.className = 'alert alert-ok';
-      err.textContent = 'Аккаунт создан! Войдите с вашим email и паролем.';
-      err.style.display = 'block';
-      showAuthTab('login');
-    }
+    setSession(d); goTo('map');
   } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; }
 }
 
@@ -1650,21 +1617,14 @@ async function checkoutOrder(method) {
     });
 
     if (method === 'subscription') {
+      // POST /functions/v1/redeem-subscription
       await req('/functions/v1/redeem-subscription', {
         method: 'POST',
         body: JSON.stringify({ user_subscription_id: S.appliedSub.userSubId, order_id: orderId, amount_discounted: disc }),
       });
     }
-    if (method === 'card') {
-      // Имитация оплаты: сразу переводим заказ в статус paid
-      await req(`/rest/v1/orders?id=eq.${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'paid' }),
-      });
-    }
     S.cart = []; S.appliedSub = null; updateCartCount();
-    const msg = method === 'card' ? 'Заказ оформлен! Оплата картой имитирована.' : 'Заказ оформлен!';
-    alert(msg); goTo('orders');
+    alert('Заказ оформлен! Оплата имитирована.'); goTo('orders');
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
@@ -1696,9 +1656,13 @@ async function openOrderModal(id) {
   document.getElementById('mo-id').textContent = id.slice(0,8);
   document.getElementById('mo-items').innerHTML = SK.orderCards(2);
   try {
-    const [ords, items] = await Promise.all([
+    // GET /rest/v1/orders?id=eq.{id}
+    // GET /rest/v1/order_items?order_id=eq.{id}&select=*,menu_items(name)
+    // GET /rest/v1/payments?order_id=eq.{id}
+    const [ords, items, pmts] = await Promise.all([
       req(`/rest/v1/orders?id=eq.${id}`),
       req(`/rest/v1/order_items?order_id=eq.${id}&select=*,menu_items(name)`),
+      req(`/rest/v1/payments?order_id=eq.${id}`),
     ]);
     const o = ords[0];
     document.getElementById('mo-status').textContent = statusMap[o.status] || o.status;
@@ -1709,6 +1673,9 @@ async function openOrderModal(id) {
     document.getElementById('mo-items').innerHTML = items.length
       ? items.map(i => `<div class="cart-row"><span>${esc(i.menu_items?.name || '—')} × ${i.quantity}</span><span>${(i.price_at_time * i.quantity).toFixed(2)} ₽</span></div>`).join('')
       : '<div class="empty">Нет позиций</div>';
+    const p = pmts[0];
+    document.getElementById('mo-payment').innerHTML = p
+      ? `Платёж: <span class="badge">${p.status}</span> · ${p.amount} ₽` : '';
   } catch(e) { document.getElementById('mo-items').innerHTML = '<div class="empty">Ошибка</div>'; }
 }
 
@@ -2020,7 +1987,6 @@ setTimeout(hideSplash, 2000);
 // ─── INIT ───
 (async function init() {
   document.getElementById('theme-chk').checked = document.documentElement.classList.contains('dark');
-  applyNavPos();
   await loadAppConfig();
   try {
     const saved = localStorage.getItem('aliby_s');

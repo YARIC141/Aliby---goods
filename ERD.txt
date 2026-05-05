@@ -1,0 +1,114 @@
+erDiagram
+    profiles {
+        uuid id PK "auth.users() reference"
+        text role "user/admin"
+        text full_name "Иван Петров"
+        timestamptz created_at "2025-01-15T10:00:00Z"
+    }
+
+    stores {
+        uuid id PK "gen_random_uuid()"
+        text name "Кофейня Уголок"
+        text address "ул. Ленина 15"
+        float8 latitude "55.751244"
+        float8 longitude "37.618423"
+        text phone "+7(495)123-45-67"
+        text working_hours "Пн-Пт 8:00-20:00, Сб 9:00-18:00"
+        timestamptz created_at "now()"
+        timestamptz updated_at "now()"
+    }
+
+    categories {
+        uuid id PK "gen_random_uuid()"
+        text name "Кофе"
+        timestamptz created_at "now()"
+    }
+
+    menu_items {
+        uuid id PK "gen_random_uuid()"
+        uuid store_id FK "stores.id"
+        text name "Латте"
+        text description "Классический латте с мягкой пенкой"
+        numeric price "250.00"
+        text image_url "https://xxx.supabase.co/storage/v1/object/public/menu-photos/latte.jpg"
+        uuid category_id FK "categories.id"
+        boolean is_available "true"
+        timestamptz created_at "now()"
+    }
+
+    subscriptions {
+        uuid id PK "gen_random_uuid()"
+        uuid store_id FK "stores.id"
+        text name "Кофейная карта на 5 чашек"
+        numeric price "500.00"
+        int duration_days "30"
+        int total_uses "5"
+        jsonb coverage_rules '{"type":"include_categories","category_ids":["cat-uuid-1"],"exclude_items":[]}'
+        jsonb time_rules '{"weekdays":[1,2,3,4,5,6,7],"time_start":"08:00","time_end":"20:00","excluded_dates":["2025-01-01"]}'
+        jsonb usage_limits '{"daily_limit":2,"min_interval_hours":1,"min_order_amount":150}'
+        timestamptz created_at "now()"
+    }
+
+    user_subscriptions {
+        uuid id PK "gen_random_uuid()"
+        uuid user_id FK "profiles.id"
+        uuid subscription_id FK "subscriptions.id"
+        timestamptz purchase_date "now()"
+        timestamptz start_date "now()"
+        timestamptz end_date "'2025-03-01T23:59:59Z'"
+        int remaining_uses "4"
+        int used_today "1"
+        timestamptz last_used_at "2025-02-10T14:30:00Z"
+        text status "active"
+    }
+
+    orders {
+        uuid id PK "gen_random_uuid()"
+        uuid user_id FK "profiles.id"
+        uuid store_id FK "stores.id"
+        timestamptz order_time "now()"
+        timestamptz pickup_time "2025-02-10T15:30:00Z"
+        text status "paid"
+        numeric total_amount "450.00"
+        text payment_method "card"
+        numeric subscription_discount "250.00"
+        uuid applied_user_subscription_id FK "user_subscriptions.id (nullable)"
+    }
+
+    order_items {
+        uuid id PK "gen_random_uuid()"
+        uuid order_id FK "orders.id"
+        uuid menu_item_id FK "menu_items.id"
+        int quantity "2"
+        numeric price_at_time "250.00"
+    }
+
+    subscription_redemptions {
+        uuid id PK "gen_random_uuid()"
+        uuid user_subscription_id FK "user_subscriptions.id"
+        uuid order_id FK "orders.id (nullable)"
+        timestamptz redeemed_at "now()"
+        numeric amount_discounted "250.00"
+    }
+
+    payments {
+        uuid id PK "gen_random_uuid()"
+        uuid order_id FK "orders.id"
+        numeric amount "450.00"
+        text status "succeeded"
+        text provider_transaction_id "tr_abc123xyz"
+        timestamptz created_at "now()"
+    }
+
+    %% Отношения
+    profiles ||--o{ user_subscriptions : "покупает"
+    stores ||--o{ menu_items : "содержит"
+    stores ||--o{ subscriptions : "предлагает"
+    categories ||--o{ menu_items : "группирует"
+    subscriptions ||--o{ user_subscriptions : "покупается"
+    user_subscriptions ||--o{ subscription_redemptions : "расходуется"
+    orders ||--o{ order_items : "содержит"
+    menu_items ||--o{ order_items : "включается в"
+    orders ||--o{ subscription_redemptions : "списывается через"
+    orders ||--o{ payments : "оплачивается"
+    orders }o--|| user_subscriptions : "применяет"
