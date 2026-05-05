@@ -225,7 +225,6 @@ tr:hover td{background:var(--bg-subtle)}
     <h1>Aliby Foods Admin</h1>
     <div class="tab-nav">
       <button class="tab-btn active" data-tab-auth="login">Вход</button>
-      <button class="tab-btn" data-tab-auth="reg">Регистрация</button>
     </div>
 
     <div id="auth-login" class="tab-pane active">
@@ -235,15 +234,6 @@ tr:hover td{background:var(--bg-subtle)}
       <button class="btn btn-p btn-full" onclick="doLogin()">Войти</button>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
-    </div>
-
-    <div id="auth-reg" class="tab-pane">
-      <div id="err-reg" class="alert alert-e" style="display:none"></div>
-      <div id="ok-reg" class="alert alert-ok" style="display:none"></div>
-      <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
-      <div class="fg"><label>Имя (необязательно)</label><input type="text" id="reg-name"></div>
-      <div class="fg"><label>Пароль (мин. 6 символов)</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
-      <button class="btn btn-p btn-full" onclick="doRegister()">Зарегистрироваться</button>
     </div>
 
     <div id="auth-recover" class="tab-pane">
@@ -1049,20 +1039,6 @@ async function doResetPwd() {
     S.session = null;
     showAuthTab('login');
   } catch(e) { alert(e.message || 'Ошибка'); }
-}
-
-async function doRegister() {
-  const err = document.getElementById('err-reg');
-  const ok  = document.getElementById('ok-reg');
-  err.style.display = 'none'; ok.style.display = 'none';
-  try {
-    await req('/auth/v1/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email: document.getElementById('reg-email').value, password: document.getElementById('reg-pwd').value }),
-    });
-    ok.textContent = 'Аккаунт создан. Для доступа к панели попросите главного администратора назначить роль.';
-    ok.style.display = 'block';
-  } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; }
 }
 
 function setSession(d) {
