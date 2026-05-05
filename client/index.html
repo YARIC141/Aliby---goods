@@ -56,6 +56,15 @@ body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;color:var(--f
   #side-nav{display:none}
   #bottom-nav{display:block}
 }
+@media(max-width:767px){
+  body.nav-right #bottom-nav{position:fixed;right:0;top:0;bottom:0;width:52px;border-top:none;border-left:1px solid var(--border);background:var(--bg);z-index:100;display:flex!important;flex-direction:column;justify-content:flex-end;padding-bottom:env(safe-area-inset-bottom,0px);margin-top:0}
+  body.nav-right .bn-row{flex-direction:column;width:100%;height:auto}
+  body.nav-right .bn-btn{flex:0;padding:10px 4px;font-size:0;width:100%}
+  body.nav-right .bn-btn .ico{font-size:20px}
+  body.nav-right #main{padding-right:52px}
+  body.nav-right #nav-info-popup{bottom:auto;top:50%;left:auto;right:56px;transform:translateY(-50%) translateX(8px);max-width:240px;width:calc(100% - 68px)}
+  body.nav-right #nav-info-popup.show{transform:translateY(-50%) translateX(0)}
+}
 
 /* ── PAGE STRUCTURE ── */
 .ph{padding:11px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
@@ -531,6 +540,13 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
           <span class="toggle-track"></span>
         </label>
       </div>
+      <div class="theme-row" style="margin-top:10px">
+        <span>Меню сбоку</span>
+        <label class="toggle-sw">
+          <input type="checkbox" id="nav-pos-chk" onchange="toggleNavPos()">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
     </div>
 
     <div class="sec">
@@ -914,6 +930,19 @@ function toggleTheme() {
   const dark = document.getElementById('theme-chk').checked;
   document.documentElement.classList.toggle('dark', dark);
   localStorage.setItem('aliby_theme', dark ? 'dark' : 'light');
+}
+
+function applyNavPos() {
+  const right = localStorage.getItem('aliby_nav_pos') === 'right';
+  document.body.classList.toggle('nav-right', right);
+  const chk = document.getElementById('nav-pos-chk');
+  if (chk) chk.checked = right;
+}
+
+function toggleNavPos() {
+  const pos = document.getElementById('nav-pos-chk').checked ? 'right' : 'bottom';
+  localStorage.setItem('aliby_nav_pos', pos);
+  applyNavPos();
 }
 
 // ─── APP CONFIG ───
@@ -1997,6 +2026,7 @@ setTimeout(hideSplash, 2000);
 // ─── INIT ───
 (async function init() {
   document.getElementById('theme-chk').checked = document.documentElement.classList.contains('dark');
+  applyNavPos();
   await loadAppConfig();
   try {
     const saved = localStorage.getItem('aliby_s');
