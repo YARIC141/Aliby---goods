@@ -3,7 +3,13 @@
 
 $DUCKDB     = "C:\Users\Yarich\AppData\Local\Microsoft\WinGet\Links\duckdb.exe"
 $IMPORT_URL = "https://bucxawpwttvtwdwdtuhh.supabase.co/functions/v1/vector-map-import"
-$SVC_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1Y3hhd3B3dHR2dHdkd2R0dWhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzEwNjQ1NiwiZXhwIjoyMDkyNjgyNDU2fQ.GrTJ4WjwgkBUSSSLIgjKSYt6EGln8U1eYlxGe9EhfzM"
+
+# Получить JWT: войдите в приложение → F12 → Application → localStorage → aliby_admin_s → access_token
+$SVC_KEY = $env:ALIBY_USER_JWT
+if (-not $SVC_KEY) {
+  Write-Host "Введите JWT пользователя yarich92@gmail.com (из localStorage aliby_admin_s.access_token):" -ForegroundColor Yellow
+  $SVC_KEY = Read-Host
+}
 $RELEASE    = "2026-04-15.0"
 $S3         = "s3://overturemaps-us-west-2/release/$RELEASE"
 
