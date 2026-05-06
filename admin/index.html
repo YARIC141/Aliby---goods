@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -588,7 +588,7 @@ tr.row-click:hover td{background:var(--bg-hover)}
       <h3>QR-код и ссылка</h3>
       <button class="modal-x" onclick="closeModal('m-store-qr')">✕</button>
     </div>
-    <canvas id="qr-canvas" style="display:block;margin:0 auto 4px;max-width:100%"></canvas>
+    <div id="qr-container" style="margin:0 auto 8px;display:flex;justify-content:center"></div>
     <div class="qr-link-text" id="qr-link-text"></div>
     <div class="modal-ft" style="justify-content:center">
       <button class="btn" id="qr-copy-btn" onclick="copyStoreLink()">Скопировать ссылку</button>
@@ -1300,7 +1300,9 @@ function showStoreQR() {
   const url = _storeDeepLink();
   document.getElementById('qr-link-text').textContent = url;
   document.getElementById('qr-copy-btn').textContent = 'Скопировать ссылку';
-  QRCode.toCanvas(document.getElementById('qr-canvas'), url, { width: 260 }, () => {});
+  const container = document.getElementById('qr-container');
+  container.innerHTML = '';
+  new QRCode(container, { text: url, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff' });
   openModal('m-store-qr');
 }
 
