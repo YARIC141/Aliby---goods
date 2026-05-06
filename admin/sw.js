@@ -32,17 +32,23 @@ self.addEventListener('fetch', e => {
 });
 
 self.addEventListener('push', e => {
-  if (!e.data) return;
-  let data;
-  try { data = e.data.json(); } catch { return; }
+  let title = 'Aliby Admin', body = '', extra = {};
+  if (e.data) {
+    try {
+      const d = e.data.json();
+      title = d.title || title;
+      body  = d.body  || body;
+      extra = d.data  || extra;
+    } catch { body = e.data.text() || body; }
+  }
   e.waitUntil(
-    self.registration.showNotification(data.title || 'Aliby Admin', {
-      body:    data.body || '',
+    self.registration.showNotification(title, {
+      body,
       icon:    '/icons/icon-192.png',
       badge:   '/icons/icon-192.png',
-      data:    data.data || {},
+      data:    extra,
       vibrate: [200, 100, 200],
-      tag:     data.data?.orderId || 'aliby-admin',
+      tag:     extra.orderId || 'aliby-admin',
     })
   );
 });
