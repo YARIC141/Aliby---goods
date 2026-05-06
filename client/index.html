@@ -884,10 +884,13 @@ document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',
 (function(){
   let sx, sy;
   const MAP_SEL = '#map-gl,.maplibregl-canvas,.maplibregl-map';
+  const EDGE = 30;
   document.addEventListener('touchstart', e => {
     if (e.target.closest(MAP_SEL)) return;
     if (e.touches.length !== 1) return;
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    const x = e.touches[0].clientX;
+    if (x > EDGE && x < window.innerWidth - EDGE) return;
+    sx = x; sy = e.touches[0].clientY;
   }, {passive:true});
   document.addEventListener('touchend', e => {
     if (e.target.closest(MAP_SEL) || sx == null) return;
@@ -975,7 +978,9 @@ async function doLogin() {
       method:'POST',
       body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
     });
-    setSession(d); goTo('map'); subscribePush('client');
+    setSession(d);
+    if (!(await navigateDeepLink())) goTo('map');
+    subscribePush('client');
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
@@ -992,7 +997,9 @@ async function doRegister() {
       }),
     });
     if (d?.access_token) {
-      setSession(d); goTo('map'); subscribePush('client');
+      setSession(d);
+      if (!(await navigateDeepLink())) goTo('map');
+      subscribePush('client');
     } else {
       err.className = 'alert alert-ok';
       err.textContent = 'Аккаунт создан! Войдите с вашим email и паролем.';
@@ -2003,6 +2010,7 @@ async function restoreNav() {
     const ss = localStorage.getItem('aliby_store');
     if (ss) S.store = JSON.parse(ss);
   } catch(e) {}
+  if (deepStoreId) { await navigateDeepLink(); return; }
   const SCREENS = ['map','store','menu','cart','orders','subscriptions','profile'];
   const nav = localStorage.getItem('aliby_nav');
   goTo(nav && SCREENS.includes(nav) ? nav : 'map');
@@ -2017,11 +2025,32 @@ function hideSplash() {
 }
 setTimeout(hideSplash, 2000);
 
+// ─── DEEPLINK ───
+let deepStoreId = null;
+
+async function navigateDeepLink() {
+  if (!deepStoreId) return false;
+  const id = deepStoreId;
+  deepStoreId = null;
+  try {
+    const rows = await req(`/rest/v1/stores?id=eq.${id}&select=*,store_categories(name,icon)&limit=1`);
+    if (rows?.[0]) {
+      S.store = rows[0];
+      try { localStorage.setItem('aliby_store', JSON.stringify(S.store)); } catch(e) {}
+      goTo('menu');
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
 // ─── INIT ───
 (async function init() {
   document.getElementById('theme-chk').checked = document.documentElement.classList.contains('dark');
   applyNavPos();
   await loadAppConfig();
+  const hash = new URLSearchParams((window.location.hash || '').replace('#',''));
+  deepStoreId = hash.get('store') || null;
   try {
     const saved = localStorage.getItem('aliby_s');
     if (saved) {
@@ -2043,7 +2072,6 @@ setTimeout(hideSplash, 2000);
     }
   } catch(e) {}
   // Recovery link hash: #type=recovery&access_token=...
-  const hash = new URLSearchParams((window.location.hash || '').replace('#',''));
   if (hash.get('type') === 'recovery') {
     S.session = { access_token: hash.get('access_token') };
     showAuthTab('reset');

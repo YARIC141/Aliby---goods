@@ -8,6 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -190,6 +191,14 @@ tr:hover td{background:var(--bg-subtle)}
 .sp1,.sp2{font-size:18px;color:var(--fg-sec);margin:0;line-height:1.5;text-align:center}
 .sp3{font-size:38px;font-weight:700;color:var(--fg);margin:0 0 4px;line-height:1.2}
 .sp-icon{width:100px;height:100px;border-radius:22px;margin-top:20px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
+tr.row-click{cursor:pointer}
+tr.row-click:hover td{background:var(--bg-hover)}
+.detail-fields{display:flex;flex-direction:column;gap:0;margin-bottom:12px}
+.detail-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-light)}
+.detail-row:last-child{border-bottom:none}
+.detail-lbl{color:var(--muted);min-width:110px;font-size:13px}
+.detail-val{font-size:13px;word-break:break-word}
+.qr-link-text{word-break:break-all;font-size:12px;color:var(--muted);margin:10px 0;line-height:1.5}
 </style>
 <script>if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
@@ -547,6 +556,44 @@ tr:hover td{background:var(--bg-subtle)}
       <button class="btn btn-p" onclick="saveStore()">Сохранить</button>
     </div>
     <div class="txt-muted" style="margin-top:6px">POST /rest/v1/stores · PATCH /rest/v1/stores?id=eq.{id}</div>
+  </div>
+</div>
+
+<!-- Store detail modal -->
+<div class="overlay" id="m-store-detail">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="msd-name">Заведение</h3>
+      <button class="modal-x" onclick="closeModal('m-store-detail')">✕</button>
+    </div>
+    <div class="detail-fields">
+      <div class="detail-row"><span class="detail-lbl">Адрес</span><span class="detail-val" id="msd-address">—</span></div>
+      <div class="detail-row"><span class="detail-lbl">Телефон</span><span class="detail-val" id="msd-phone">—</span></div>
+      <div class="detail-row"><span class="detail-lbl">Часы работы</span><span class="detail-val" id="msd-hours">—</span></div>
+      <div class="detail-row"><span class="detail-lbl">Тип заведения</span><span class="detail-val" id="msd-cat">—</span></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-store-detail')">Закрыть</button>
+      <button class="btn" onclick="shareStoreLink()">Поделиться</button>
+      <button class="btn" onclick="showStoreQR()">QR и ссылка</button>
+      <button class="btn btn-p" onclick="editCurrentStore()">Редактировать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store QR modal -->
+<div class="overlay" id="m-store-qr">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div class="modal-hd">
+      <h3>QR-код и ссылка</h3>
+      <button class="modal-x" onclick="closeModal('m-store-qr')">✕</button>
+    </div>
+    <canvas id="qr-canvas" style="display:block;margin:0 auto 4px;max-width:100%"></canvas>
+    <div class="qr-link-text" id="qr-link-text"></div>
+    <div class="modal-ft" style="justify-content:center">
+      <button class="btn" id="qr-copy-btn" onclick="copyStoreLink()">Скопировать ссылку</button>
+      <button class="btn btn-p" onclick="shareStoreLink()">Поделиться</button>
+    </div>
   </div>
 </div>
 
@@ -950,10 +997,13 @@ document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',
 (function(){
   let sx, sy;
   const MAP_SEL = '#map-admin-gl,.maplibregl-canvas,.maplibregl-map';
+  const EDGE = 30;
   document.addEventListener('touchstart', e => {
     if (e.target.closest(MAP_SEL)) return;
     if (e.touches.length !== 1) return;
-    sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    const x = e.touches[0].clientX;
+    if (x > EDGE && x < window.innerWidth - EDGE) return;
+    sx = x; sy = e.touches[0].clientY;
   }, {passive:true});
   document.addEventListener('touchend', e => {
     if (e.target.closest(MAP_SEL) || sx == null) return;
@@ -1137,13 +1187,13 @@ async function loadStores() {
     loadStoreCategories();
     if (!stores.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет заведений</td></tr>'; return; }
     tbody.innerHTML = stores.map(s => `
-      <tr>
+      <tr class="row-click" onclick="openStoreDetail(${JSON.stringify(s).replace(/"/g,'&quot;')})">
         <td>${esc(s.name)}</td>
         <td>${s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '—'}</td>
         <td>${esc(s.address)}</td>
         <td>${esc(s.phone||'—')}</td>
         <td>${esc(s.working_hours||'—')}</td>
-        <td class="td-actions">
+        <td class="td-actions" onclick="event.stopPropagation()">
           <button class="btn btn-sm" onclick="openStoreModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">Ред.</button>
           <button class="btn btn-sm btn-d" onclick="confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
         </td>
@@ -1221,6 +1271,54 @@ async function saveStore() {
       closeModal('m-store'); loadStores(); goTo('map');
     }
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── STORE DETAIL / QR ───
+let _detailStore = null;
+
+function openStoreDetail(store) {
+  _detailStore = store;
+  document.getElementById('msd-name').textContent = store.name || '';
+  document.getElementById('msd-address').textContent = store.address || '—';
+  document.getElementById('msd-phone').textContent = store.phone || '—';
+  document.getElementById('msd-hours').textContent = store.working_hours || '—';
+  document.getElementById('msd-cat').textContent = store.store_categories
+    ? (store.store_categories.icon + ' ' + store.store_categories.name) : '—';
+  openModal('m-store-detail');
+}
+
+function editCurrentStore() {
+  closeModal('m-store-detail');
+  openStoreModal(_detailStore);
+}
+
+function _storeDeepLink() {
+  return `https://yaric141.github.io/Aliby---goods/client/#store=${_detailStore.id}`;
+}
+
+function showStoreQR() {
+  const url = _storeDeepLink();
+  document.getElementById('qr-link-text').textContent = url;
+  document.getElementById('qr-copy-btn').textContent = 'Скопировать ссылку';
+  QRCode.toCanvas(document.getElementById('qr-canvas'), url, { width: 260 }, () => {});
+  openModal('m-store-qr');
+}
+
+function copyStoreLink() {
+  navigator.clipboard.writeText(_storeDeepLink()).then(() => {
+    const btn = document.getElementById('qr-copy-btn');
+    btn.textContent = 'Скопировано!';
+    setTimeout(() => { btn.textContent = 'Скопировать ссылку'; }, 2000);
+  });
+}
+
+function shareStoreLink() {
+  const url = _storeDeepLink();
+  if (navigator.share) {
+    navigator.share({ title: _detailStore?.name || 'Aliby', url });
+  } else {
+    navigator.clipboard?.writeText(url).then(() => alert('Ссылка скопирована'));
+  }
 }
 
 // ─── CATEGORIES ───
