@@ -1,10 +1,11 @@
 import webpush from 'npm:web-push@3'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const SB_URL    = Deno.env.get('SUPABASE_URL')!
-const SVC_KEY   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const VAPID_PUB = Deno.env.get('VAPID_PUBLIC_KEY')!
-const VAPID_JWK = JSON.parse(Deno.env.get('VAPID_PRIVATE_JWK')!)
+const SB_URL         = Deno.env.get('SUPABASE_URL')!
+const SVC_KEY        = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const WEBHOOK_SECRET = Deno.env.get('PUSH_WEBHOOK_SECRET')!
+const VAPID_PUB      = Deno.env.get('VAPID_PUBLIC_KEY')!
+const VAPID_JWK      = JSON.parse(Deno.env.get('VAPID_PRIVATE_JWK')!)
 
 // Derive base64url private key scalar from JWK
 const VAPID_PRIV = VAPID_JWK.d as string
@@ -29,7 +30,7 @@ async function sendToSub(sub: Sub, payload: string, db: ReturnType<typeof create
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.headers.get('Authorization') !== `Bearer ${SVC_KEY}`) {
+  if (req.headers.get('x-push-secret') !== WEBHOOK_SECRET) {
     return new Response('Unauthorized', { status: 401 })
   }
 
