@@ -2010,7 +2010,10 @@ async function restoreNav() {
     const ss = localStorage.getItem('aliby_store');
     if (ss) S.store = JSON.parse(ss);
   } catch(e) {}
-  if (deepStoreId) { await navigateDeepLink(); return; }
+  if (deepStoreId) {
+    const ok = await navigateDeepLink();
+    if (ok) return;
+  }
   const SCREENS = ['map','store','menu','cart','orders','subscriptions','profile'];
   const nav = localStorage.getItem('aliby_nav');
   goTo(nav && SCREENS.includes(nav) ? nav : 'map');
@@ -2040,9 +2043,20 @@ async function navigateDeepLink() {
       goTo('menu');
       return true;
     }
-  } catch(e) {}
+    showGeoToast('Заведение не найдено');
+  } catch(e) {
+    if (S.session) showGeoToast('Не удалось загрузить заведение');
+  }
   return false;
 }
+
+window.addEventListener('hashchange', () => {
+  const hash = new URLSearchParams((window.location.hash || '').replace('#', ''));
+  const storeId = hash.get('store');
+  if (!storeId || !S.session) return;
+  deepStoreId = storeId;
+  navigateDeepLink();
+});
 
 // ─── INIT ───
 (async function init() {
