@@ -1904,16 +1904,11 @@ async function subscribePush(app) {
       });
     }
     const j = sub.toJSON();
+    const uid = S.session.user?.id;
+    await req(`/rest/v1/push_subscriptions?user_id=eq.${uid}&app=eq.${app}`, { method: 'DELETE' });
     await req('/rest/v1/push_subscriptions', {
       method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({
-        user_id:  S.session.user?.id,
-        app,
-        endpoint: j.endpoint,
-        p256dh:   j.keys.p256dh,
-        auth_key: j.keys.auth,
-      }),
+      body: JSON.stringify({ user_id: uid, app, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth_key: j.keys.auth }),
     });
   } catch(e) { console.warn('Push subscribe:', e); }
 }
