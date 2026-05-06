@@ -884,7 +884,7 @@ document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',
 (function(){
   let sx, sy;
   const MAP_SEL = '#map-gl,.maplibregl-canvas,.maplibregl-map';
-  const EDGE = 30;
+  const EDGE = 60;
   document.addEventListener('touchstart', e => {
     if (e.target.closest(MAP_SEL)) return;
     if (e.touches.length !== 1) return;

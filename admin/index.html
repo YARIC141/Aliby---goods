@@ -997,7 +997,7 @@ document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',
 (function(){
   let sx, sy;
   const MAP_SEL = '#map-admin-gl,.maplibregl-canvas,.maplibregl-map';
-  const EDGE = 30;
+  const EDGE = 60;
   document.addEventListener('touchstart', e => {
     if (e.target.closest(MAP_SEL)) return;
     if (e.touches.length !== 1) return;
@@ -1300,10 +1300,10 @@ function showStoreQR() {
   const url = _storeDeepLink();
   document.getElementById('qr-link-text').textContent = url;
   document.getElementById('qr-copy-btn').textContent = 'Скопировать ссылку';
+  openModal('m-store-qr');
   const container = document.getElementById('qr-container');
   container.innerHTML = '';
   new QRCode(container, { text: url, width: 256, height: 256, colorDark: '#000000', colorLight: '#ffffff' });
-  openModal('m-store-qr');
 }
 
 function copyStoreLink() {
