@@ -7,7 +7,7 @@ CREATE TABLE public.push_subscriptions (
   p256dh     TEXT        NOT NULL,
   auth_key   TEXT        NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (user_id, app, endpoint)
+  UNIQUE (user_id, app)
 );
 
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
