@@ -678,6 +678,22 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   </div>
 </div>
 
+<div class="overlay" id="m-gift-confirm">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Подарочный абонемент</h3>
+      <button class="modal-x" onclick="closeModal('m-gift-confirm')">✕</button>
+    </div>
+    <p style="font-size:14px;line-height:1.6;margin-bottom:20px">
+      Срок действия абонемента начинается <strong>с момента покупки</strong>, а не с момента активации одаряемым. Учтите это при выборе срока абонемента.
+    </p>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-gift-confirm')">Отмена</button>
+      <button class="btn btn-p" id="gift-confirm-ok">ОК</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="m-sub-detail">
   <div class="modal">
     <div class="modal-hd">
@@ -1290,7 +1306,7 @@ function renderSubCard(s) {
       : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`}
     ${inGift
       ? `<button class="btn btn-sm btn-full" style="margin-top:4px;opacity:.65" onclick="event.stopPropagation();removeFromGiftCart('${s.id}')">🎁 В корзине</button>`
-      : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();addGiftToCart('${s.id}')">Приобрести в подарок</button>`}
+      : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftConfirm('${s.id}')">Приобрести в подарок</button>`}
   </div>`;
 }
 
@@ -1972,6 +1988,14 @@ function removeFromSubCart(id) {
   refreshSubCardViews();
 }
 
+function openGiftConfirm(id) {
+  document.getElementById('gift-confirm-ok').onclick = () => {
+    closeModal('m-gift-confirm');
+    addGiftToCart(id);
+  };
+  openModal('m-gift-confirm');
+}
+
 function addGiftToCart(id) {
   const sub = subPlans[id];
   if (!sub) return;
@@ -2103,7 +2127,7 @@ function openSubDetailModal(id) {
   descEl.textContent    = s.description || '';
   descEl.style.display  = s.description ? 'block' : 'none';
   document.getElementById('msd-buy-btn').onclick  = () => { closeModal('m-sub-detail'); addSubToCart(s.id); showGeoToast('Добавлено в корзину'); };
-  document.getElementById('msd-gift-btn').onclick = () => { closeModal('m-sub-detail'); addGiftToCart(s.id); showGeoToast('Добавлено в корзину подарков'); };
+  document.getElementById('msd-gift-btn').onclick = () => { closeModal('m-sub-detail'); openGiftConfirm(s.id); };
   openModal('m-sub-detail');
 }
 
