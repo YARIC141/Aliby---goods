@@ -452,6 +452,12 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <div id="sub-cart-list"></div>
       <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button></div>
     </div>
+    <div id="gift-sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
+      <div style="padding:10px 16px 4px;font-size:13px;font-weight:600;background:var(--bg-muted)">🎁 Подарочные абонементы</div>
+      <div style="padding:2px 16px 6px;font-size:11px;color:var(--muted)">Срок начинается с момента покупки</div>
+      <div id="gift-sub-cart-list"></div>
+      <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutGiftSubs()">Купить подарочные абонементы</button></div>
+    </div>
     <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
     <div class="cart-foot" id="cart-foot" style="display:none">
 
@@ -742,7 +748,7 @@ const DEFAULT_FEATURES = {
 // ─── STATE ───
 const S = {
   session: null, profile: null, store: null,
-  cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [],
+  cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [],
   menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
   map: null, mapMarkers: [], mapFitted: false, allStores: [], mapCats: new Set(),
   navHistory: [], navIdx: -1,
@@ -1273,12 +1279,18 @@ async function loadStore() {
 }
 
 function renderSubCard(s) {
+  const inCart = S.subCart.find(c => c.sub.id === s.id);
+  const inGift = S.giftSubCart.find(c => c.sub.id === s.id);
   return `<div class="sub-card" onclick="openSubDetailModal('${s.id}')">
     <h4>${esc(s.name)}</h4>
     <div class="sub-price">${s.price} ₽</div>
     <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
-    <button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();openBuyModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Купить</button>
-    <button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Приобрести в подарок</button>
+    ${inCart
+      ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">✓ В корзине</button>`
+      : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`}
+    ${inGift
+      ? `<button class="btn btn-sm btn-full" style="margin-top:4px;opacity:.65" onclick="event.stopPropagation();removeFromGiftCart('${s.id}')">🎁 В корзине</button>`
+      : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();addGiftToCart('${s.id}')">Приобрести в подарок</button>`}
   </div>`;
 }
 
@@ -1569,6 +1581,7 @@ function calcCartDisc(us) {
 
 async function renderCart() {
   renderSubCartSection();
+  renderGiftCartSection();
   const body = document.getElementById('cart-body');
   const foot = document.getElementById('cart-foot');
   if (!S.cart.length) {
@@ -1929,26 +1942,56 @@ function renderSubItemCard(sub) {
   </div>`;
 }
 
+function refreshSubCardViews() {
+  const storeId = S.store?.id;
+  if (!storeId) return;
+  const subs = Object.values(subPlans).filter(s => s.store_id === storeId);
+  if (!subs.length) return;
+  const html = subs.map(renderSubCard).join('');
+  const storeEl = document.getElementById('store-subs');
+  if (storeEl?.children.length) storeEl.innerHTML = html;
+  const subStoreEl = document.getElementById('sub-store-list');
+  if (subStoreEl?.children.length) subStoreEl.innerHTML = html;
+}
+
 function addSubToCart(id) {
-  const sub = subCache.get(id);
+  const sub = subPlans[id];
   if (!sub) return;
   if (!S.subCart.find(c => c.sub.id === id)) {
     S.subCart.push({ sub });
     saveSubCart();
   }
-  loadSubStore();
   renderSubCartSection();
+  refreshSubCardViews();
 }
 
 function removeFromSubCart(id) {
   S.subCart = S.subCart.filter(c => c.sub.id !== id);
   saveSubCart();
-  loadSubStore();
   renderSubCartSection();
+  refreshSubCardViews();
+}
+
+function addGiftToCart(id) {
+  const sub = subPlans[id];
+  if (!sub) return;
+  if (!S.giftSubCart.find(c => c.sub.id === id)) {
+    S.giftSubCart.push({ sub });
+    saveSubCart();
+  }
+  renderGiftCartSection();
+  refreshSubCardViews();
+}
+
+function removeFromGiftCart(id) {
+  S.giftSubCart = S.giftSubCart.filter(c => c.sub.id !== id);
+  saveSubCart();
+  renderGiftCartSection();
+  refreshSubCardViews();
 }
 
 function saveSubCart() {
-  try { localStorage.setItem('aliby_subcart', JSON.stringify({ subs: S.subCart })); } catch(e) {}
+  try { localStorage.setItem('aliby_subcart', JSON.stringify({ subs: S.subCart, gifts: S.giftSubCart })); } catch(e) {}
 }
 
 function renderSubCartSection() {
@@ -1964,6 +2007,23 @@ function renderSubCartSection() {
         <div class="ci-price">${sub.duration_days} дн. · ${sub.total_uses === 0 ? 'безлимит' : sub.total_uses + ' исп.'} — ${sub.price} ₽</div>
       </div>
       <button class="qty-btn" onclick="removeFromSubCart('${sub.id}')" title="Убрать">✕</button>
+    </div>`
+  ).join('');
+}
+
+function renderGiftCartSection() {
+  const sect = document.getElementById('gift-sub-cart-sect');
+  const list = document.getElementById('gift-sub-cart-list');
+  if (!sect) return;
+  if (!S.giftSubCart.length) { sect.style.display = 'none'; return; }
+  sect.style.display = 'block';
+  list.innerHTML = S.giftSubCart.map(({ sub }) =>
+    `<div class="cart-item">
+      <div class="ci-info">
+        <div class="ci-name">🎁 ${esc(sub.name)}</div>
+        <div class="ci-price">${sub.duration_days} дн. · ${sub.total_uses === 0 ? 'безлимит' : sub.total_uses + ' исп.'} — ${sub.price} ₽</div>
+      </div>
+      <button class="qty-btn" onclick="removeFromGiftCart('${sub.id}')" title="Убрать">✕</button>
     </div>`
   ).join('');
 }
@@ -1993,8 +2053,42 @@ async function checkoutSubs() {
     S.subCart = [];
     saveSubCart();
     renderSubCartSection();
+    refreshSubCardViews();
     alert(items.length === 1 ? 'Абонемент куплен! Оплата имитирована.' : `${items.length} абонемента куплено! Оплата имитирована.`);
     goTo('subscriptions');
+  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+async function checkoutGiftSubs() {
+  if (!S.giftSubCart.length) return;
+  if (!S.session) { alert('Войдите в аккаунт'); return; }
+  const items = [...S.giftSubCart];
+  try {
+    const today = new Date();
+    for (const { sub } of items) {
+      const end = new Date(today);
+      end.setDate(end.getDate() + sub.duration_days);
+      await req('/rest/v1/user_subscriptions', {
+        method: 'POST',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          user_id: S.session.user.id,
+          subscription_id: sub.id,
+          status: 'active',
+          start_date: today.toISOString().split('T')[0],
+          end_date: end.toISOString().split('T')[0],
+          remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
+          gift_status: 'pending',
+        }),
+      });
+    }
+    S.giftSubCart = [];
+    saveSubCart();
+    renderGiftCartSection();
+    refreshSubCardViews();
+    alert(items.length === 1 ? 'Подарочный абонемент куплен! ID доступен в разделе «Подарки».' : `${items.length} подарочных абонемента куплено!`);
+    goTo('subscriptions');
+    setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
@@ -2008,8 +2102,8 @@ function openSubDetailModal(id) {
   const descEl = document.getElementById('msd-desc');
   descEl.textContent    = s.description || '';
   descEl.style.display  = s.description ? 'block' : 'none';
-  document.getElementById('msd-buy-btn').onclick  = () => { closeModal('m-sub-detail'); openBuyModal(s.id, s.name, s.price, s.duration_days, s.total_uses); };
-  document.getElementById('msd-gift-btn').onclick = () => { closeModal('m-sub-detail'); openGiftModal(s.id, s.name, s.price, s.duration_days, s.total_uses); };
+  document.getElementById('msd-buy-btn').onclick  = () => { closeModal('m-sub-detail'); addSubToCart(s.id); showGeoToast('Добавлено в корзину'); };
+  document.getElementById('msd-gift-btn').onclick = () => { closeModal('m-sub-detail'); addGiftToCart(s.id); showGeoToast('Добавлено в корзину подарков'); };
   openModal('m-sub-detail');
 }
 
@@ -2123,7 +2217,7 @@ async function restoreNav() {
   } catch(e) {}
   try {
     const ssc = localStorage.getItem('aliby_subcart');
-    if (ssc) { const d = JSON.parse(ssc); S.subCart = d.subs || []; S.subCart.forEach(c => subCache.set(c.sub.id, c.sub)); }
+    if (ssc) { const d = JSON.parse(ssc); S.subCart = d.subs || []; S.giftSubCart = d.gifts || []; [...S.subCart, ...S.giftSubCart].forEach(c => { subPlans[c.sub.id] = c.sub; }); }
   } catch(e) {}
   try {
     const ss = localStorage.getItem('aliby_store');
