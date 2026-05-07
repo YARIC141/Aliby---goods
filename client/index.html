@@ -1282,8 +1282,11 @@ function renderSubCard(s) {
   </div>`;
 }
 
-async function loadStoreSubs() {
-  const el = document.getElementById('store-subs');
+async function loadStoreSubs(targetEl) {
+  const el = targetEl || document.getElementById('store-subs');
+  if (!el) return;
+  if (!S.store) { el.innerHTML = '<span class="txt-sm">Выберите заведение</span>'; return; }
+  el.innerHTML = SK.subCards(2);
   try {
     // GET /rest/v1/subscriptions?store_id=eq.{id}
     const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`);
@@ -1901,17 +1904,12 @@ function fmtCoverage(rules) {
 async function loadSubStore() {
   const el = document.getElementById('sub-store-list');
   if (!el) return;
+  el.className = 'subs-row';
   if (!S.store) {
-    el.innerHTML = '<div class="empty" style="grid-column:1/-1">Выберите заведение на экране карты</div>';
+    el.innerHTML = '<div class="empty">Выберите заведение на экране карты</div>';
     return;
   }
-  el.innerHTML = SK.itemCards(3);
-  try {
-    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}&order=price.asc`);
-    if (!subs.length) { el.innerHTML = '<div class="empty" style="grid-column:1/-1">Нет абонементов</div>'; return; }
-    subs.forEach(s => subCache.set(s.id, s));
-    el.innerHTML = subs.map(renderSubItemCard).join('');
-  } catch(e) { el.innerHTML = '<div class="empty" style="grid-column:1/-1">Ошибка загрузки</div>'; }
+  await loadStoreSubs(el);
 }
 
 function renderSubItemCard(sub) {
