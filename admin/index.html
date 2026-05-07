@@ -381,13 +381,14 @@ tr.row-click:hover td{background:var(--bg-hover)}
         <option value="issued">Выдан</option>
         <option value="cancelled">Отменён</option>
       </select>
+      <input id="ord-email-search" type="search" placeholder="Поиск по почте…" oninput="loadOrders()" style="flex:1;min-width:160px">
     </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>№</th><th>Дата</th><th>Заведение</th><th>Сумма</th><th>Статус</th><th>Действия</th>
+          <th>№</th><th>Дата</th><th>Заведение</th><th>Клиент</th><th>Сумма</th><th>Статус</th><th>Действия</th>
         </tr></thead>
-        <tbody id="ord-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
+        <tbody id="ord-tbody"><tr><td colspan="7" class="loading">Загрузка…</td></tr></tbody>
       </table>
     </div>
     <div class="txt-muted" style="margin-top:8px">GET /rest/v1/orders · PATCH /rest/v1/orders?id=eq.{id}</div>
@@ -772,7 +773,8 @@ tr.row-click:hover td{background:var(--bg-hover)}
     <div style="margin-bottom:10px">
       Статус: <span class="badge" id="mo-status"></span>
     </div>
-    <div class="txt-sm" id="mo-date" style="margin-bottom:10px"></div>
+    <div class="txt-sm" id="mo-date" style="margin-bottom:6px"></div>
+    <div class="txt-sm" style="margin-bottom:10px">Клиент: <span id="mo-email" style="color:var(--fg-sec)"></span></div>
     <div class="sec-title">Позиции</div>
     <div id="mo-items"><div class="loading">Загрузка…</div></div>
     <hr>
@@ -1662,28 +1664,31 @@ async function saveSubscription() {
 // ─── ORDERS ───
 async function loadOrders() {
   const tbody = document.getElementById('ord-tbody');
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка…</td></tr>';
   try {
     // GET /rest/v1/orders?select=*,stores(name)&order=order_time.desc
     let url = '/rest/v1/orders?select=*,stores(name)&order=order_time.desc';
     const storeId = document.getElementById('ord-store-filter')?.value;
     const status  = document.getElementById('ord-status-filter')?.value;
+    const email   = document.getElementById('ord-email-search')?.value.trim();
     if (storeId) url += `&store_id=eq.${storeId}`;
     if (status)  url += `&status=eq.${status}`;
+    if (email)   url += `&user_email=ilike.%25${encodeURIComponent(email)}%25`;
     const orders = await req(url);
-    if (!orders.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет заказов</td></tr>'; return; }
+    if (!orders.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Нет заказов</td></tr>'; return; }
     tbody.innerHTML = orders.map(o => `
       <tr>
         <td class="txt-sm">${o.id.slice(0,8)}</td>
         <td class="txt-sm">${fmtDate(o.order_time)}</td>
         <td>${esc(o.stores?.name || '—')}</td>
+        <td class="txt-sm">${esc(o.user_email || '—')}</td>
         <td>${o.total_amount} ₽</td>
         <td><span class="badge b-${o.status}">${statusMap[o.status]||o.status}</span></td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick="openOrderModal('${o.id}')">Открыть</button>
         </td>
       </tr>`).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Ошибка</td></tr>'; }
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Ошибка</td></tr>'; }
 }
 
 async function openOrderModal(id) {
@@ -1700,6 +1705,7 @@ async function openOrderModal(id) {
     document.getElementById('mo-status').textContent = statusMap[o.status] || o.status;
     document.getElementById('mo-status').className   = `badge b-${o.status}`;
     document.getElementById('mo-date').textContent   = fmtDate(o.order_time);
+    document.getElementById('mo-email').textContent  = o.user_email || '—';
     document.getElementById('mo-total').textContent  = o.total_amount + ' ₽';
     document.getElementById('mo-items').innerHTML = items.length
       ? items.map(i => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee"><span>${esc(i.menu_items?.name||'—')} × ${i.quantity}</span><span>${(i.price_at_time*i.quantity).toFixed(2)} ₽</span></div>`).join('')
