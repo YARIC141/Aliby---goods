@@ -500,8 +500,13 @@ tr.row-click:hover td{background:var(--bg-hover)}
     <h2>Статистика</h2>
     <button class="btn btn-sm" onclick="loadAnalytics()">↺</button>
   </div>
+  <div style="padding:10px 16px 0">
+    <select id="an-store-sel" onchange="loadAnalytics()" style="width:100%">
+      <option value="">— Выберите заведение —</option>
+    </select>
+  </div>
   <div class="pb" id="analytics-content" style="padding:12px 16px">
-    <div class="loading">Загрузка…</div>
+    <div class="txt-muted" style="text-align:center;padding:24px 0">Выберите заведение</div>
   </div>
 </div>
 
@@ -1989,20 +1994,35 @@ async function subscribePush(app) {
 
 async function loadAnalytics() {
   const el = document.getElementById('analytics-content');
+  const sel = document.getElementById('an-store-sel');
+  if (sel && sel.options.length <= 1) {
+    let stores = S.stores?.length ? S.stores : [];
+    if (!stores.length) {
+      try { stores = await req('/rest/v1/stores?order=name.asc&select=id,name'); } catch(e) { stores = []; }
+    }
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">— Выберите заведение —</option>' +
+      stores.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    if (prev) sel.value = prev;
+  }
+  const storeId = sel?.value || '';
+  if (!storeId) {
+    el.innerHTML = '<div class="txt-muted" style="text-align:center;padding:24px 0">Выберите заведение для просмотра статистики</div>';
+    return;
+  }
   el.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
     const today = new Date(); today.setHours(0,0,0,0);
-    const [orders, items] = await Promise.all([
-      req(`/rest/v1/orders?order_time=gte.${today.toISOString()}&select=total_amount,status`),
-      req('/rest/v1/order_items?select=quantity,menu_items(name)'),
-    ]);
+    const orders = await req(`/rest/v1/orders?order_time=gte.${today.toISOString()}&store_id=eq.${storeId}&select=id,total_amount,status,order_items(quantity,menu_items(name))`);
     const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total_amount), 0);
     const byStatus = {};
     for (const o of orders) byStatus[o.status] = (byStatus[o.status]||0) + 1;
     const itemMap = {};
-    for (const i of items) {
-      const n = i.menu_items?.name || '—';
-      itemMap[n] = (itemMap[n]||0) + Number(i.quantity);
+    for (const o of orders) {
+      for (const i of (o.order_items || [])) {
+        const n = i.menu_items?.name || '—';
+        itemMap[n] = (itemMap[n]||0) + Number(i.quantity);
+      }
     }
     const top = Object.entries(itemMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
     el.innerHTML = `

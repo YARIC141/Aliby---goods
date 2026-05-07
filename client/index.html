@@ -251,6 +251,17 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .sp1,.sp2{font-size:18px;color:var(--fg-sec);margin:0;line-height:1.5;text-align:center}
 .sp3{font-size:38px;font-weight:700;color:var(--fg);margin:0 0 4px;line-height:1.2}
 .sp-icon{width:100px;height:100px;border-radius:22px;margin-top:20px;box-shadow:0 6px 24px rgba(0,0,0,.15)}
+.home-savings{background:var(--bg-subtle);border-radius:12px;padding:16px;margin-bottom:18px;text-align:center}
+.home-savings-val{font-size:30px;font-weight:700;color:var(--fg)}
+.home-savings-lbl{font-size:12px;color:var(--muted);margin-top:3px}
+.recent-card{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light);cursor:pointer}
+.recent-card:last-child{border-bottom:none}
+.recent-card-img{width:54px;height:54px;border-radius:8px;background:var(--bg-muted);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden}
+.recent-card-img img{width:100%;height:100%;object-fit:cover}
+.recent-card-body{flex:1;min-width:0}
+.recent-card-name{font-weight:600;font-size:14px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-card-store{font-size:12px;color:#1a73e8;cursor:pointer;text-decoration:underline}
+.recent-card-meta{font-size:11px;color:var(--muted);margin-top:2px}
 </style>
 <script>if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
@@ -268,6 +279,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <!-- ════════════════ DESKTOP SIDE NAV ════════════════ -->
 <nav id="side-nav">
   <div class="sn-logo">Aliby Foods</div>
+  <button class="sn-btn" data-nav="home">🏠 Главная</button>
   <button class="sn-btn" data-nav="map">🗺 Карта</button>
   <button class="sn-btn" data-nav="store">🏪 Заведение</button>
   <button class="sn-btn" data-nav="menu">📋 Товары и Услуги</button>
@@ -321,6 +333,14 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <div class="fg"><label>Новый пароль</label><input type="password" id="rst-pwd" autocomplete="new-password"></div>
       <button class="btn btn-p btn-full" onclick="doResetPwd()">Сохранить пароль</button>
     </div>
+  </div>
+</div>
+
+<!-- ════════════════ HOME ════════════════ -->
+<div id="screen-home" class="screen">
+  <div class="ph"><h2>Главная</h2></div>
+  <div class="pb" id="home-content" style="padding:12px 16px">
+    <div class="loading">Загрузка…</div>
   </div>
 </div>
 
@@ -562,6 +582,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
   <div class="bn-row">
+    <button class="bn-btn" data-nav="home"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Главная</button>
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Карта</button>
     <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведение</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
@@ -839,7 +860,7 @@ function goTo(id, opts = {}) {
   }
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  ({map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,orders:loadOrders,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
+  ({home:loadHome,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,orders:loadOrders,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1989,7 +2010,7 @@ async function restoreNav() {
     const ok = await navigateDeepLink();
     if (ok) return;
   }
-  const SCREENS = ['map','store','menu','cart','orders','subscriptions','profile'];
+  const SCREENS = ['home','map','store','menu','cart','orders','subscriptions','profile'];
   const nav = localStorage.getItem('aliby_nav');
   goTo(nav && SCREENS.includes(nav) ? nav : 'map');
 }
@@ -2002,6 +2023,59 @@ function hideSplash() {
   setTimeout(() => el.remove(), 500);
 }
 setTimeout(hideSplash, 2000);
+
+// ─── HOME ───
+async function loadHome() {
+  const el = document.getElementById('home-content');
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    const uid = S.session?.user?.id;
+    if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
+    const orders = await req(
+      `/rest/v1/orders?user_id=eq.${uid}&order=order_time.desc&limit=10&select=id,order_time,status,subscription_discount,stores(id,name),order_items(quantity,price_at_time,menu_items(id,name,image_url,description,price,category_id,is_available))`
+    );
+    const totalSaved = orders
+      .filter(o => o.status !== 'cancelled')
+      .reduce((s, o) => s + Number(o.subscription_discount || 0), 0);
+    const recentItems = [];
+    for (const order of orders) {
+      if (order.status === 'cancelled') continue;
+      for (const oi of (order.order_items || [])) {
+        const mi = oi.menu_items;
+        if (!mi) continue;
+        itemCache.set(mi.id, mi);
+        recentItems.push({ item: mi, qty: oi.quantity, price: oi.price_at_time, store: order.stores, date: order.order_time });
+        if (recentItems.length >= 10) break;
+      }
+      if (recentItems.length >= 10) break;
+    }
+    const savingsHtml = `
+      <div class="home-savings">
+        <div class="home-savings-val">${totalSaved.toFixed(0)} ₽</div>
+        <div class="home-savings-lbl">сэкономлено по абонементам за всё время</div>
+      </div>`;
+    const itemsHtml = recentItems.length
+      ? `<h3 style="margin:0 0 10px">Недавние покупки</h3>` +
+        recentItems.map(ri => `
+          <div class="recent-card" onclick="openItemDetail('${ri.item.id}')">
+            <div class="recent-card-img">${ri.item.image_url ? `<img src="${esc(ri.item.image_url)}" alt="">` : '🍽'}</div>
+            <div class="recent-card-body">
+              <div class="recent-card-name">${esc(ri.item.name)}</div>
+              <span class="recent-card-store" onclick="event.stopPropagation();openStoreFromHome('${ri.store?.id || ''}','${esc(ri.store?.name || '')}')">${esc(ri.store?.name || '—')}</span>
+              <div class="recent-card-meta">${fmtShortDate(ri.date)}${ri.qty > 1 ? ' · ' + ri.qty + ' шт' : ''} · ${ri.price} ₽</div>
+            </div>
+          </div>`).join('')
+      : '<div class="empty" style="margin-top:12px">Ещё нет покупок</div>';
+    el.innerHTML = savingsHtml + itemsHtml;
+  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+function openStoreFromHome(storeId, storeName) {
+  if (!storeId) return;
+  S.store = { id: storeId, name: storeName };
+  try { localStorage.setItem('aliby_store', JSON.stringify(S.store)); } catch(e) {}
+  goTo('menu');
+}
 
 // ─── DEEPLINK ───
 let deepStoreId = null;
