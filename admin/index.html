@@ -382,6 +382,8 @@ tr.row-click:hover td{background:var(--bg-hover)}
         <option value="cancelled">Отменён</option>
       </select>
       <input id="ord-email-search" type="search" placeholder="Поиск по почте…" oninput="loadOrders()" style="flex:1;min-width:160px">
+      <input id="ord-date-from" type="date" onchange="loadOrders()" title="С">
+      <input id="ord-date-to"   type="date" onchange="loadOrders()" title="По">
     </div>
     <div class="tbl-wrap">
       <table>
@@ -1662,18 +1664,33 @@ async function saveSubscription() {
 }
 
 // ─── ORDERS ───
+function ordTodayStr() {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD local date
+}
+function initOrdDateFilters() {
+  const today = ordTodayStr();
+  const from = document.getElementById('ord-date-from');
+  const to   = document.getElementById('ord-date-to');
+  if (!from.value) from.value = today;
+  if (!to.value)   to.value   = today;
+}
 async function loadOrders() {
+  initOrdDateFilters();
   const tbody = document.getElementById('ord-tbody');
   tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка…</td></tr>';
   try {
     // GET /rest/v1/orders?select=*,stores(name)&order=order_time.desc
     let url = '/rest/v1/orders?select=*,stores(name)&order=order_time.desc';
-    const storeId = document.getElementById('ord-store-filter')?.value;
-    const status  = document.getElementById('ord-status-filter')?.value;
-    const email   = document.getElementById('ord-email-search')?.value.trim();
-    if (storeId) url += `&store_id=eq.${storeId}`;
-    if (status)  url += `&status=eq.${status}`;
-    if (email)   url += `&user_email=ilike.%25${encodeURIComponent(email)}%25`;
+    const storeId  = document.getElementById('ord-store-filter')?.value;
+    const status   = document.getElementById('ord-status-filter')?.value;
+    const email    = document.getElementById('ord-email-search')?.value.trim();
+    const dateFrom = document.getElementById('ord-date-from')?.value;
+    const dateTo   = document.getElementById('ord-date-to')?.value;
+    if (storeId)  url += `&store_id=eq.${storeId}`;
+    if (status)   url += `&status=eq.${status}`;
+    if (email)    url += `&user_email=ilike.%25${encodeURIComponent(email)}%25`;
+    if (dateFrom) url += `&order_time=gte.${dateFrom}T00:00:00`;
+    if (dateTo)   url += `&order_time=lte.${dateTo}T23:59:59`;
     const orders = await req(url);
     if (!orders.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Нет заказов</td></tr>'; return; }
     tbody.innerHTML = orders.map(o => `
