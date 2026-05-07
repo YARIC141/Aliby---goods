@@ -161,10 +161,12 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 .store-meta .cuisine{font-size:12px;color:var(--muted);margin-bottom:6px}
 .store-meta .meta-line{font-size:12px;color:var(--fg-sec);margin-bottom:2px}
 .subs-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.sub-card{min-width:155px;max-width:180px;border:1px solid var(--border);padding:10px;flex-shrink:0}
+.sub-card{min-width:155px;max-width:180px;border:1px solid var(--border);padding:10px;flex-shrink:0;cursor:pointer;transition:background .15s}
+.sub-card:hover{background:var(--bg-subtle)}
+.sub-card:active{background:var(--bg-muted)}
 .sub-card h4{font-size:13px;font-weight:600;margin-bottom:3px}
 .sub-card .sub-price{font-size:15px;font-weight:700;margin-bottom:3px}
-.sub-card .sub-meta{font-size:11px;color:var(--muted);margin-bottom:8px}
+.sub-card .sub-meta{font-size:11px;color:var(--muted);margin-bottom:0}
 
 /* ── MENU ── */
 .menu-toolbar{padding:8px 14px;border-bottom:1px solid var(--border-light);display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;align-items:center}
@@ -670,6 +672,25 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
   </div>
 </div>
 
+<div class="overlay" id="m-sub-detail">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="msd-name"></h3>
+      <button class="modal-x" onclick="closeModal('m-sub-detail')">✕</button>
+    </div>
+    <div class="grid2" style="gap:8px;margin-bottom:14px">
+      <div class="card" style="text-align:center"><div class="lbl">Цена</div><strong id="msd-price" style="font-size:18px"></strong></div>
+      <div class="card" style="text-align:center"><div class="lbl">Срок</div><strong id="msd-days" style="font-size:18px"></strong></div>
+      <div class="card" style="text-align:center;grid-column:span 2"><div class="lbl">Использований</div><strong id="msd-uses" style="font-size:18px"></strong></div>
+    </div>
+    <div id="msd-desc" style="margin-bottom:14px;color:var(--fg-sec);font-size:13px;line-height:1.5;display:none"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-p" id="msd-buy-btn">Купить</button>
+      <button class="btn" id="msd-gift-btn">Приобрести в подарок</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="m-buy">
   <div class="modal">
     <div class="modal-hd">
@@ -728,6 +749,8 @@ const S = {
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
 };
+
+const subPlans = {}; // cache of subscription plan objects keyed by id
 
 const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
 
@@ -1255,13 +1278,12 @@ async function loadStoreSubs() {
     // GET /rest/v1/subscriptions?store_id=eq.{id}
     const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`);
     if (!subs.length) { el.innerHTML = '<span class="txt-sm">Нет абонементов</span>'; return; }
+    subs.forEach(s => { subPlans[s.id] = s; });
     el.innerHTML = subs.map(s => `
-      <div class="sub-card">
+      <div class="sub-card" onclick="openSubDetailModal('${s.id}')">
         <h4>${esc(s.name)}</h4>
         <div class="sub-price">${s.price} ₽</div>
         <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
-        <button class="btn btn-p btn-sm" onclick="openBuyModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Купить</button>
-        <button class="btn btn-sm" style="margin-top:4px" onclick="openGiftModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Приобрести в подарок</button>
       </div>`).join('');
   } catch(e) { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
 }
@@ -1363,13 +1385,12 @@ async function loadMenuItems() {
     el.className = 'subs-grid';
     const subs = S.menuStoreSubs;
     if (!subs.length) { el.innerHTML = '<div class="empty">Нет абонементов</div>'; return; }
+    subs.forEach(s => { subPlans[s.id] = s; });
     el.innerHTML = subs.map(s => `
-      <div class="sub-card">
+      <div class="sub-card" onclick="openSubDetailModal('${s.id}')">
         <h4>${esc(s.name)}</h4>
         <div class="sub-price">${s.price} ₽</div>
         <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
-        <button class="btn btn-p btn-sm" onclick="openBuyModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Купить</button>
-        <button class="btn btn-sm" style="margin-top:4px" onclick="openGiftModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Приобрести в подарок</button>
       </div>`).join('');
     return;
   }
@@ -1977,6 +1998,21 @@ async function checkoutSubs() {
     alert(items.length === 1 ? 'Абонемент куплен! Оплата имитирована.' : `${items.length} абонемента куплено! Оплата имитирована.`);
     goTo('subscriptions');
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+function openSubDetailModal(id) {
+  const s = subPlans[id];
+  if (!s) return;
+  document.getElementById('msd-name').textContent  = s.name;
+  document.getElementById('msd-price').textContent = s.price + ' ₽';
+  document.getElementById('msd-days').textContent  = s.duration_days + ' дн.';
+  document.getElementById('msd-uses').textContent  = s.total_uses === 0 ? 'безлимит' : s.total_uses;
+  const descEl = document.getElementById('msd-desc');
+  descEl.textContent    = s.description || '';
+  descEl.style.display  = s.description ? 'block' : 'none';
+  document.getElementById('msd-buy-btn').onclick  = () => { closeModal('m-sub-detail'); openBuyModal(s.id, s.name, s.price, s.duration_days, s.total_uses); };
+  document.getElementById('msd-gift-btn').onclick = () => { closeModal('m-sub-detail'); openGiftModal(s.id, s.name, s.price, s.duration_days, s.total_uses); };
+  openModal('m-sub-detail');
 }
 
 function openBuyModal(id, name, price, days, uses) {
