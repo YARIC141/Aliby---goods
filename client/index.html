@@ -505,6 +505,7 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
       <button class="tab-btn active" data-tab-sub="store">Заведение</button>
       <button class="tab-btn" data-tab-sub="active">Активные</button>
       <button class="tab-btn" data-tab-sub="all">Все</button>
+      <button class="tab-btn" data-tab-sub="gifts">Подарки</button>
     </div>
     <div id="sub-store" class="tab-pane active">
       <div id="sub-store-list" class="items-grid" style="padding-top:8px"></div>
@@ -514,6 +515,18 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
     </div>
     <div id="sub-all" class="tab-pane">
       <div id="usubs-all"><div class="loading">Загрузка…</div></div>
+    </div>
+    <div id="sub-gifts" class="tab-pane">
+      <h3 style="margin:0 0 10px">Мои подарки</h3>
+      <div id="usubs-gifts"><div class="loading">Загрузка…</div></div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <h3 style="margin:0 0 6px">Активировать подаренный абонемент</h3>
+        <p class="txt-sm" style="margin-bottom:10px;color:var(--muted)">Введите ID абонемента, который вам передали</p>
+        <div style="display:flex;gap:8px">
+          <input id="gift-activate-input" type="text" placeholder="ID абонемента…" style="flex:1;min-width:0">
+          <button class="btn btn-p" onclick="activateGift()">Активировать</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -660,10 +673,13 @@ hr{border:none;border-top:1px solid var(--border-light);margin:12px 0}
 <div class="overlay" id="m-buy">
   <div class="modal">
     <div class="modal-hd">
-      <h3>Купить абонемент</h3>
+      <h3 id="mb-title">Купить абонемент</h3>
       <button class="modal-x" onclick="closeModal('m-buy')">✕</button>
     </div>
     <div id="mb-info" class="card" style="margin-bottom:14px"></div>
+    <div id="mb-gift-warn" style="display:none;background:#fff8e1;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#7c5c00;line-height:1.5">
+      ⚠️ Срок действия подарочного абонемента начинается <strong>с момента покупки</strong>, а не с момента активации получателем. После покупки вы получите ID абонемента — передайте его получателю в разделе «Подарки».
+    </div>
     <p class="txt-sm" style="margin-bottom:14px">Нажмите «Купить» для оформления абонемента.</p>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-buy')">Отмена</button>
@@ -1245,6 +1261,7 @@ async function loadStoreSubs() {
         <div class="sub-price">${s.price} ₽</div>
         <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
         <button class="btn btn-p btn-sm" onclick="openBuyModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Купить</button>
+        <button class="btn btn-sm" style="margin-top:4px" onclick="openGiftModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Приобрести в подарок</button>
       </div>`).join('');
   } catch(e) { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
 }
@@ -1352,6 +1369,7 @@ async function loadMenuItems() {
         <div class="sub-price">${s.price} ₽</div>
         <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
         <button class="btn btn-p btn-sm" onclick="openBuyModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Купить</button>
+        <button class="btn btn-sm" style="margin-top:4px" onclick="openGiftModal('${s.id}','${esc(s.name)}',${s.price},${s.duration_days},${s.total_uses})">Приобрести в подарок</button>
       </div>`).join('');
     return;
   }
@@ -1721,16 +1739,20 @@ async function loadMySubscriptions() {
   loadSubStore();
   document.getElementById('usubs-active').innerHTML = SK.usubCards();
   document.getElementById('usubs-all').innerHTML    = SK.usubCards();
+  document.getElementById('usubs-gifts').innerHTML  = SK.usubCards();
   try {
     // GET /rest/v1/user_subscriptions?select=*,subscriptions(*)
-    const [active, all] = await Promise.all([
-      req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)'),
-      req('/rest/v1/user_subscriptions?select=*,subscriptions(*)&order=purchase_date.desc'),
+    const [active, all, gifts] = await Promise.all([
+      req('/rest/v1/user_subscriptions?status=eq.active&gift_status=is.null&select=*,subscriptions(*)'),
+      req('/rest/v1/user_subscriptions?gift_status=is.null&select=*,subscriptions(*)&order=purchase_date.desc'),
+      req('/rest/v1/user_subscriptions?gift_status=in.(pending,activated)&select=*,subscriptions(*)&order=purchase_date.desc'),
     ]);
     document.getElementById('usubs-active').innerHTML = active.length
       ? active.map(renderUserSub).join('') : '<div class="empty">Нет активных абонементов</div>';
     document.getElementById('usubs-all').innerHTML = all.length
       ? all.map(renderUserSub).join('') : '<div class="empty">Нет абонементов</div>';
+    document.getElementById('usubs-gifts').innerHTML = gifts.length
+      ? gifts.map(renderGiftSub).join('') : '<div class="empty">Нет подарочных абонементов</div>';
   } catch(e) { document.getElementById('usubs-active').innerHTML = '<div class="empty">Ошибка</div>'; }
 }
 
@@ -1746,6 +1768,46 @@ function renderUserSub(us) {
       <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(us.end_date)}</strong></div>
     </div>
   </div>`;
+}
+
+function renderGiftSub(us) {
+  const plan      = us.subscriptions;
+  const isPending = us.gift_status === 'pending';
+  const statusLbl = isPending ? 'Ожидает активации' : 'Активирован';
+  const badgeCls  = isPending ? 'b-active' : 'b-issued';
+  return `<div class="usub-card" style="cursor:default">
+    <div class="usub-hd">
+      <span class="usub-name">${esc(plan?.name || 'Абонемент')}</span>
+      <span class="badge ${badgeCls}">${statusLbl}</span>
+    </div>
+    <div class="usub-stats">
+      <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(us.end_date)}</strong></div>
+      <div class="usub-stat"><span class="lbl">Использований</span><strong>${us.remaining_uses ?? '∞'}</strong></div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);word-break:break-all">ID: ${us.id}</div>
+  </div>`;
+}
+
+async function activateGift() {
+  const input  = document.getElementById('gift-activate-input');
+  const giftId = input?.value.trim();
+  if (!giftId) { showGeoToast('Введите ID абонемента'); return; }
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  try {
+    await req('/rest/v1/rpc/activate_gift_subscription', {
+      method: 'POST',
+      body: JSON.stringify({ p_gift_sub_id: giftId }),
+    });
+    if (input) input.value = '';
+    showGeoToast('Абонемент успешно активирован!');
+    loadMySubscriptions();
+    setTimeout(() => document.querySelector('[data-tab-sub="active"]')?.click(), 300);
+  } catch(e) {
+    const msg = String(e.message || e);
+    if (msg.includes('not_found'))       showGeoToast('Абонемент не найден или уже активирован');
+    else if (msg.includes('self_activation')) showGeoToast('Нельзя активировать собственный подарок');
+    else showGeoToast('Ошибка активации');
+  }
 }
 
 async function openSubModal(id) {
@@ -1918,7 +1980,23 @@ async function checkoutSubs() {
 }
 
 function openBuyModal(id, name, price, days, uses) {
-  S.pendingSub = { id, name, price, duration_days: days, total_uses: uses };
+  S.pendingSub   = { id, name, price, duration_days: days, total_uses: uses };
+  S.pendingGift  = false;
+  document.getElementById('mb-title').textContent = 'Купить абонемент';
+  document.getElementById('mb-gift-warn').style.display = 'none';
+  document.getElementById('mb-info').innerHTML = `
+    <strong>${esc(name)}</strong><br>
+    <span class="lbl">Цена:</span> ${price} ₽ &nbsp;
+    <span class="lbl">Срок:</span> ${days} дн. &nbsp;
+    <span class="lbl">Использований:</span> ${uses === 0 ? 'безлимит' : uses}`;
+  openModal('m-buy');
+}
+
+function openGiftModal(id, name, price, days, uses) {
+  S.pendingSub   = { id, name, price, duration_days: days, total_uses: uses };
+  S.pendingGift  = true;
+  document.getElementById('mb-title').textContent = 'Приобрести в подарок';
+  document.getElementById('mb-gift-warn').style.display = 'block';
   document.getElementById('mb-info').innerHTML = `
     <strong>${esc(name)}</strong><br>
     <span class="lbl">Цена:</span> ${price} ₽ &nbsp;
@@ -1930,27 +2008,37 @@ function openBuyModal(id, name, price, days, uses) {
 async function buySubscription() {
   if (!S.pendingSub) return;
   if (!S.session) { alert('Войдите в аккаунт'); return; }
-  const sub = S.pendingSub;
+  const sub    = S.pendingSub;
+  const isGift = !!S.pendingGift;
   try {
     const today = new Date();
     const end = new Date(today);
     end.setDate(end.getDate() + sub.duration_days);
+    const body = {
+      user_id:        S.session.user.id,
+      subscription_id: sub.id,
+      status:         'active',
+      start_date:     today.toISOString().split('T')[0],
+      end_date:       end.toISOString().split('T')[0],
+      remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
+    };
+    if (isGift) body.gift_status = 'pending';
     await req('/rest/v1/user_subscriptions', {
       method: 'POST',
       headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id: S.session.user.id,
-        subscription_id: sub.id,
-        status: 'active',
-        start_date: today.toISOString().split('T')[0],
-        end_date: end.toISOString().split('T')[0],
-        remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
-      }),
+      body: JSON.stringify(body),
     });
     closeModal('m-buy');
-    S.pendingSub = null;
-    alert('Абонемент куплен! Оплата имитирована.');
-    goTo('subscriptions');
+    S.pendingSub  = null;
+    S.pendingGift = false;
+    if (isGift) {
+      alert('Подарочный абонемент куплен! ID абонемента отображается в разделе «Подарки» — передайте его получателю.');
+      goTo('subscriptions');
+      setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
+    } else {
+      alert('Абонемент куплен! Оплата имитирована.');
+      goTo('subscriptions');
+    }
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
