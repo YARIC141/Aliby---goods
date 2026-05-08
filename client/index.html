@@ -2474,12 +2474,13 @@ async function loadHome() {
   try {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
-    const orders = await req(
-      `/rest/v1/orders?user_id=eq.${uid}&order=order_time.desc&limit=20&select=id,order_time,status,total_amount,subscription_discount,stores(id,name),order_items(quantity,price_at_time,menu_items(id,name,image_url,description,price,category_id,is_available))`
-    );
+    const [orders, allSavings] = await Promise.all([
+      req(`/rest/v1/orders?user_id=eq.${uid}&order=order_time.desc&limit=20&select=id,order_time,status,total_amount,subscription_discount,stores(id,name),order_items(quantity,price_at_time,menu_items(id,name,image_url,description,price,category_id,is_available))`),
+      req(`/rest/v1/orders?user_id=eq.${uid}&status=neq.cancelled&subscription_discount=gt.0&select=order_time,subscription_discount,total_amount`),
+    ]);
     const doneOrders = orders.filter(o => o.status !== 'cancelled');
-    const totalSaved = doneOrders.reduce((s, o) => s + Number(o.subscription_discount || 0), 0);
-    const totalPaid  = doneOrders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+    const totalSaved = allSavings.reduce((s, o) => s + Number(o.subscription_discount || 0), 0);
+    const totalPaid  = allSavings.reduce((s, o) => s + Number(o.total_amount || 0), 0);
     const pct = (totalSaved + totalPaid) > 0 ? Math.round(totalSaved / (totalSaved + totalPaid) * 100) : 0;
     const recentItems = [];
     for (const order of orders) {
@@ -2500,7 +2501,7 @@ async function loadHome() {
         <div class="home-savings-lbl">сэкономлено по абонементам за всё время</div>
       </div>`;
     const monthMap = {};
-    for (const o of doneOrders) {
+    for (const o of allSavings) {
       const disc = Number(o.subscription_discount || 0);
       if (!disc) continue;
       const d = new Date(o.order_time);
