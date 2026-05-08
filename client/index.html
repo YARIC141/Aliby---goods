@@ -215,6 +215,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .store-meta .cuisine{font:400 14px/1 var(--font-mono);color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 .store-meta .meta-line{font:400 14px/1.5 var(--font-sans);color:var(--fg-2);margin-bottom:2px}
 .subs-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.subs-col{display:flex;flex-direction:column;gap:10px}
+.subs-col .sub-card{min-width:0;max-width:none;width:100%}
 .subs-row::-webkit-scrollbar{height:4px}.subs-row::-webkit-scrollbar-thumb{background:var(--line-soft);border-radius:var(--r-pill)}
 .sub-card{min-width:200px;max-width:240px;border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex-shrink:0;cursor:pointer;transition:border-color var(--t-fast),transform var(--t-fast);position:relative;overflow:hidden}
 .sub-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
@@ -400,9 +402,9 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
   <button class="sn-btn" data-nav="home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Главная</button>
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
+  <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
   <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина <span id="sn-cart-cnt"></span></button>
   <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Заказы</button>
-  <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
   <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   <div class="sn-spacer"></div>
   <div class="sn-user" id="sn-email"></div>
@@ -514,12 +516,12 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
     </div>
 
     <div class="sec">
-      <div class="sec-title">Абонементы <span class="txt-muted">GET /rest/v1/subscriptions</span></div>
+      <div class="sec-title">Абонементы</div>
       <div class="subs-row" id="store-subs"><div class="loading">Загрузка…</div></div>
     </div>
 
+    <div class="sec-title" style="margin:16px 0 4px">Товары и Услуги</div>
     <div class="cat-bar" id="cat-bar" style="margin:0 -20px;position:sticky;top:0;z-index:5;background:var(--bg-1)">
-      <button class="chip active" data-cid="">Все</button>
     </div>
 
     <div class="menu-toolbar" style="margin:0 -20px">
@@ -663,7 +665,6 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
         <div class="fg"><input type="text" id="p-name" placeholder="Ваше имя"></div>
         <button class="btn" onclick="updateName()">Сохранить</button>
       </div>
-      <div class="txt-muted">PATCH /rest/v1/profiles?id=eq.{uuid}</div>
     </div>
 
     <div class="sec">
@@ -672,7 +673,6 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
         <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
         <button class="btn" onclick="updatePwd()">Обновить</button>
       </div>
-      <div class="txt-muted">PUT /auth/v1/user</div>
     </div>
 
     <div class="sec">
@@ -723,9 +723,9 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
     <button class="bn-btn" data-nav="home"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Главная</button>
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
+    <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
     <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Корзина</button>
     <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>Заказы</button>
-    <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
@@ -1533,22 +1533,17 @@ async function loadCategories() {
       req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`),
     ]);
     S.menuStoreSubs = subs;
-    bar.innerHTML = `<button class="chip${!S.menuCatId?' active':''}" data-cid="">Все</button>`;
+    bar.innerHTML = '';
     cats.forEach(c => {
       const b = document.createElement('button');
       b.className = 'chip' + (S.menuCatId === c.id ? ' active' : '');
       b.dataset.cid = c.id; b.textContent = c.name;
-      b.addEventListener('click', () => { S.menuCatId = c.id; updateCatActive(); loadMenuItems(); });
+      b.addEventListener('click', () => {
+        S.menuCatId = S.menuCatId === c.id ? '' : c.id;
+        updateCatActive(); loadMenuItems();
+      });
       bar.appendChild(b);
     });
-    if (subs.length) {
-      const b = document.createElement('button');
-      b.className = 'chip' + (S.menuCatId === '__subs__' ? ' active' : '');
-      b.dataset.cid = '__subs__'; b.textContent = '🎫 Абонементы';
-      b.addEventListener('click', () => { S.menuCatId = '__subs__'; updateCatActive(); loadMenuItems(); });
-      bar.appendChild(b);
-    }
-    bar.querySelector('[data-cid=""]').addEventListener('click', () => { S.menuCatId = ''; updateCatActive(); loadMenuItems(); });
   } catch(e) {}
 }
 
@@ -1559,15 +1554,6 @@ function updateCatActive() {
 async function loadMenuItems() {
   const el = document.getElementById('menu-items');
   if (!S.store) return;
-
-  if (S.menuCatId === '__subs__') {
-    el.className = 'subs-grid';
-    const subs = S.menuStoreSubs;
-    if (!subs.length) { el.innerHTML = '<div class="empty">Нет абонементов</div>'; return; }
-    subs.forEach(s => { subPlans[s.id] = s; });
-    el.innerHTML = subs.map(renderSubCard).join('');
-    return;
-  }
 
   el.className = 'items-grid';
   el.innerHTML = SK.itemCards(6);
@@ -2111,7 +2097,7 @@ function fmtCoverage(rules) {
 async function loadSubStore() {
   const el = document.getElementById('sub-store-list');
   if (!el) return;
-  el.className = 'subs-row';
+  el.className = 'subs-col';
   if (!S.store) {
     el.innerHTML = '<div class="empty">Выберите заведение на экране карты</div>';
     return;
