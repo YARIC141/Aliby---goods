@@ -335,6 +335,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .home-savings-val{font:400 36px/1 var(--font-display);color:var(--ok)}
 .home-savings-pct{font:600 18px/1 var(--font-sans);color:var(--ok);margin-top:4px}
 .home-savings-lbl{font:400 14px/1 var(--font-sans);color:var(--fg-4);margin-top:6px}
+.home-chart{background:var(--bg-1);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px 16px 6px;margin-bottom:20px}
+.home-chart-title{font:400 12px/1 var(--font-mono);text-transform:uppercase;letter-spacing:.12em;color:var(--fg-4);margin-bottom:10px}
 .recent-card{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line-soft);cursor:pointer;transition:background var(--t-fast)}
 .recent-card:last-child{border-bottom:none}
 .recent-card-img{width:56px;height:56px;border-radius:var(--r-2);background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden}
@@ -2438,6 +2440,33 @@ function hideSplash() {
 }
 setTimeout(hideSplash, 2000);
 
+// ─── SAVINGS CHART ───
+function renderSavingsChart(data) {
+  if (!data.length) return '';
+  const W = 340, H = 168;
+  const pad = { top: 26, right: 16, bottom: 26, left: 10 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+  const n = data.length;
+  const maxVal = Math.max(...data.map(d => d.amount), 1);
+  const xOf = i => pad.left + (n === 1 ? cW / 2 : (i / (n - 1)) * cW);
+  const yOf = v => pad.top + cH * (1 - v / maxVal);
+  const fmt = v => v >= 1000 ? (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + 'к' : Math.round(v) + ' ₽';
+
+  let line = '', dots = '', amtLabels = '', monLabels = '';
+  if (n > 1) {
+    const pts = data.map((d, i) => `${xOf(i).toFixed(1)},${yOf(d.amount).toFixed(1)}`).join(' ');
+    line = `<polyline points="${pts}" fill="none" stroke="var(--ok)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity=".75"/>`;
+  }
+  data.forEach((d, i) => {
+    const x = xOf(i).toFixed(1), y = yOf(d.amount).toFixed(1);
+    dots      += `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--ok)" stroke="var(--bg-1)" stroke-width="1.5"/>`;
+    amtLabels += `<text x="${x}" y="${(+y - 8).toFixed(1)}" text-anchor="middle" font-size="10" font-family="sans-serif" fill="var(--fg-2)">${fmt(d.amount)}</text>`;
+    monLabels += `<text x="${x}" y="${H - 2}" text-anchor="middle" font-size="10" font-family="sans-serif" fill="var(--fg-4)">${d.label}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">${line}${dots}${amtLabels}${monLabels}</svg>`;
+}
+
 // ─── HOME ───
 async function loadHome() {
   const el = document.getElementById('home-content');
@@ -2470,6 +2499,22 @@ async function loadHome() {
         ${pct > 0 ? `<div class="home-savings-pct">${pct}% от всех трат</div>` : ''}
         <div class="home-savings-lbl">сэкономлено по абонементам за всё время</div>
       </div>`;
+    const monthMap = {};
+    for (const o of doneOrders) {
+      const disc = Number(o.subscription_discount || 0);
+      if (!disc) continue;
+      const d = new Date(o.order_time);
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}`;
+      const label = d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.','');
+      if (!monthMap[key]) monthMap[key] = { label, amount: 0 };
+      monthMap[key].amount += disc;
+    }
+    const chartData = Object.entries(monthMap).sort(([a],[b]) => a < b ? -1 : 1).map(([,v]) => v);
+    const chartHtml = chartData.length ? `
+      <div class="home-chart">
+        <div class="home-chart-title">Экономия по месяцам</div>
+        ${renderSavingsChart(chartData)}
+      </div>` : '';
     const itemsHtml = recentItems.length
       ? `<h3 style="margin:0 0 10px">Недавние покупки</h3>` +
         recentItems.map(ri => `
@@ -2482,7 +2527,7 @@ async function loadHome() {
             <span class="recent-card-store" onclick="event.stopPropagation();openStoreFromHome('${ri.store?.id || ''}','${esc(ri.store?.name || '')}')">${esc(ri.store?.name || '—')}</span>
           </div>`).join('')
       : '<div class="empty" style="margin-top:12px">Ещё нет покупок</div>';
-    el.innerHTML = savingsHtml + itemsHtml;
+    el.innerHTML = savingsHtml + chartHtml + itemsHtml;
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
