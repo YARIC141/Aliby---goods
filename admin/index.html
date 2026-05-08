@@ -45,13 +45,16 @@
   --muted:var(--fg-4);--fg-sec:var(--fg-2);--fg-ter:var(--fg-3);
   --bg-popup:var(--bg-1);--bg-overlay:oklch(0 0 0 / .42);
   --bg-input:var(--bg-1);--shadow:rgba(0,0,0,.22);
+  --pat:oklch(0 0 0 / .052);
+  --glass:oklch(0.985 0.005 80 / .76);
+  --glass-sm:oklch(0.985 0.005 80 / .84);
 }
 
 /* ── DARK ── */
 html.dark{
-  --bg:oklch(0.16 0.012 60);--bg-1:oklch(0.19 0.013 60);
-  --bg-2:oklch(0.22 0.014 60);--bg-3:oklch(0.26 0.015 60);
-  --line:oklch(0.30 0.012 60 / .8);--line-soft:oklch(0.30 0.012 60 / .35);
+  --bg:oklch(0.22 0.010 60);--bg-1:oklch(0.26 0.011 60);
+  --bg-2:oklch(0.30 0.012 60);--bg-3:oklch(0.34 0.013 60);
+  --line:oklch(0.42 0.012 60 / .8);--line-soft:oklch(0.42 0.012 60 / .35);
   --fg:oklch(0.96 0.012 80);--fg-2:oklch(0.82 0.012 80);
   --fg-3:oklch(0.66 0.012 80);--fg-4:oklch(0.50 0.012 80);
   --shadow-1:0 1px 0 rgb(255 255 255 / .04) inset,0 8px 24px rgb(0 0 0 / .35);
@@ -64,13 +67,19 @@ html.dark{
   --muted:var(--fg-4);--fg-sec:var(--fg-2);--fg-ter:var(--fg-3);
   --bg-popup:var(--bg-1);--bg-overlay:oklch(0 0 0 / .65);
   --bg-input:var(--bg-1);--shadow:rgba(0,0,0,.6);
+  --pat:oklch(1 0 0 / .06);
+  --glass:oklch(0.26 0.011 60 / .76);
+  --glass-sm:oklch(0.26 0.011 60 / .84);
 }
 html,body{background:var(--bg)}
+html{zoom:var(--fzoom,1)}
 body{font-family:var(--font-sans);font-size:14px;color:var(--fg);height:100dvh;overflow:hidden}
+#bg-ornament{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#bg-ornament .op{fill:var(--pat)}
 
 /* ── LAYOUT ── */
-#app{display:flex;height:100dvh;overflow:hidden}
-#side-nav{width:210px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;overflow:hidden;background:var(--bg-1)}
+#app{display:flex;height:100dvh;overflow:hidden;position:relative;z-index:1}
+#side-nav{width:210px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;overflow:hidden;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
 @keyframes navSlideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}
 @keyframes navSlideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
@@ -122,7 +131,7 @@ body{font-family:var(--font-sans);font-size:14px;color:var(--fg);height:100dvh;o
 .a-item{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line-soft);font:400 13px/1 var(--font-sans)}
 
 /* ── COMMON ── */
-.ph{padding:13px 20px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--bg)}
+.ph{padding:13px 20px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .ph h2{font:400 26px/1.1 var(--font-display);letter-spacing:-0.01em;color:var(--fg);flex:1;margin:0}
 .pb{flex:1;overflow-y:auto;padding:20px}
 .sec{margin-bottom:24px}
@@ -159,7 +168,7 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .txt-sm{font:400 12px/1.4 var(--font-sans);color:var(--fg-3)}
 .txt-muted{font:400 10.5px/1.4 var(--font-mono);color:var(--fg-4)}
-.card{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--bg-1)}
+.card{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:600px){.grid2{grid-template-columns:1fr}}
 
@@ -178,7 +187,7 @@ tr:hover td{background:var(--bg-1)}
 /* ── MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:oklch(0 0 0 / .65);backdrop-filter:blur(4px);z-index:200;align-items:flex-start;justify-content:center;padding:50px 12px 20px;overflow-y:auto}
 .overlay.open{display:flex}
-.modal{background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-3);padding:22px;width:100%;max-width:560px;flex-shrink:0;box-shadow:var(--shadow-2)}
+.modal{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:var(--r-3);padding:22px;width:100%;max-width:560px;flex-shrink:0;box-shadow:var(--shadow-2)}
 .modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line-soft)}
 .modal-hd h3{font:400 24px/1.1 var(--font-display);margin:0}
 .modal-x{background:none;border:none;cursor:pointer;font-size:18px;line-height:1;color:var(--fg-3);width:32px;height:32px;border-radius:var(--r-1);display:flex;align-items:center;justify-content:center;transition:background var(--t-fast)}
@@ -258,6 +267,31 @@ tr.row-click:hover td{background:var(--bg-2)}
 <script>if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
 <body>
+
+<svg id="bg-ornament" aria-hidden="true">
+  <defs>
+    <pattern id="bgpat" x="0" y="0" width="72" height="72" patternUnits="userSpaceOnUse">
+      <g class="op">
+        <g transform="translate(36,36)">
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z"/>
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z" transform="rotate(90)"/>
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z" transform="rotate(180)"/>
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z" transform="rotate(270)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(45)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(135)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(225)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(315)"/>
+          <circle r="3.5"/>
+        </g>
+        <path d="M36,0 L39,5 L36,10 L33,5Z"/>
+        <path d="M36,72 L33,67 L36,62 L39,67Z"/>
+        <path d="M0,36 L5,33 L10,36 L5,39Z"/>
+        <path d="M72,36 L67,39 L62,36 L67,33Z"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#bgpat)"/>
+</svg>
 
 <div id="splash">
   <p class="sp1">Если возникнут подозрения,</p>

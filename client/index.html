@@ -70,10 +70,13 @@ html.dark{
   --glass-sm:oklch(0.26 0.011 60 / .84);
 }
 html,body{background:var(--bg)}
-body{font-family:var(--font-sans);font-size:17px;color:var(--fg);height:100dvh;overflow:hidden;background-image:radial-gradient(circle,var(--pat) 1.5px,transparent 1.5px),radial-gradient(circle,var(--pat) 1.5px,transparent 1.5px),linear-gradient(45deg,var(--pat) .5px,transparent .5px),linear-gradient(-45deg,var(--pat) .5px,transparent .5px);background-size:36px 36px;background-position:0 0,18px 18px,0 0,0 0}
+html{zoom:var(--fzoom,1)}
+body{font-family:var(--font-sans);font-size:17px;color:var(--fg);height:100dvh;overflow:hidden}
+#bg-ornament{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#bg-ornament .op{fill:var(--pat)}
 
 /* ── LAYOUT ── */
-#app{display:flex;height:100dvh;overflow:hidden}
+#app{display:flex;height:100dvh;overflow:hidden;position:relative;z-index:1}
 #side-nav{width:210px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;padding:16px 12px;gap:2px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
 @keyframes navSlideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}
@@ -307,6 +310,14 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .toggle-sw input:checked + .toggle-track{background:var(--accent)}
 .toggle-track::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s}
 .toggle-sw input:checked + .toggle-track::before{transform:translateX(18px)}
+.seg-ctrl{display:flex;border:1px solid var(--line);border-radius:var(--r-2);overflow:hidden;width:100%}
+.seg-ctrl button{flex:1;padding:8px 4px;border:none;border-right:1px solid var(--line);background:none;cursor:pointer;font:500 15px/1 var(--font-sans);color:var(--fg-3);transition:background var(--t-fast),color var(--t-fast)}
+.seg-ctrl button:last-child{border-right:none}
+.seg-ctrl button.seg-active{background:var(--accent);color:var(--accent-fg)}
+.color-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+.color-row:last-of-type{border-bottom:none}
+.color-row span{font:400 16px/1 var(--font-sans);color:var(--fg-2)}
+.color-row input[type=color]{width:44px;height:30px;border:1px solid var(--line);border-radius:var(--r-2);padding:2px 3px;cursor:pointer;background:var(--bg-2)}
 
 /* ── SPLASH ── */
 #splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:opacity var(--t-slow) var(--ease-out)}
@@ -329,9 +340,47 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .recent-card-meta{font:400 13px/1 var(--font-sans);color:var(--fg-4)}
 .recent-card-store{font:500 14px/1.3 var(--font-sans);color:var(--accent);cursor:pointer;flex-shrink:0;text-align:right;max-width:110px;white-space:normal;line-height:1.3}
 </style>
-<script>if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
+<script>
+if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark');
+(function(){
+  var s=parseFloat(localStorage.getItem('aliby_fscale')||'1');
+  if(s!==1)document.documentElement.style.zoom=s;
+  try{
+    var c=JSON.parse(localStorage.getItem('aliby_colors')||'{}'),r=document.documentElement;
+    if(c.accent)r.style.setProperty('--accent',c.accent);
+    if(c.bg){r.style.setProperty('--bg',c.bg);r.style.setProperty('--glass',c.bg+'c2');r.style.setProperty('--glass-sm',c.bg+'d6');}
+    if(c.surface)r.style.setProperty('--bg-1',c.surface);
+    if(c.pat){var t=c.pat,rv=parseInt(t.slice(1,3),16),gv=parseInt(t.slice(3,5),16),bv=parseInt(t.slice(5,7),16),av=r.classList.contains('dark')?0.08:0.06;r.style.setProperty('--pat','rgb('+rv+' '+gv+' '+bv+' / '+av+')');}
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
+
+<svg id="bg-ornament" aria-hidden="true">
+  <defs>
+    <pattern id="bgpat" x="0" y="0" width="72" height="72" patternUnits="userSpaceOnUse">
+      <g class="op">
+        <g transform="translate(36,36)">
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z"/>
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z" transform="rotate(90)"/>
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z" transform="rotate(180)"/>
+          <path d="M0,0 C-5,-8-4,-17 0,-21 C4,-17 5,-8 0,0Z" transform="rotate(270)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(45)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(135)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(225)"/>
+          <path d="M0,0 C-3,-4-3,-10 0,-13 C3,-10 3,-4 0,0Z" transform="rotate(315)"/>
+          <circle r="3.5"/>
+        </g>
+        <path d="M36,0 L39,5 L36,10 L33,5Z"/>
+        <path d="M36,72 L33,67 L36,62 L39,67Z"/>
+        <path d="M0,36 L5,33 L10,36 L5,39Z"/>
+        <path d="M72,36 L67,39 L62,36 L67,33Z"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#bgpat)"/>
+</svg>
 
 <div id="splash">
   <p class="sp1">Если возникнут подозрения,</p>
@@ -648,6 +697,26 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
           <input type="checkbox" id="nav-pos-chk" onchange="toggleNavPos()">
           <span class="toggle-track"></span>
         </label>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Цвета оформления</div>
+      <div class="card" style="padding:8px 12px">
+        <div class="color-row"><span>Акцент</span><input type="color" id="cp-accent" oninput="onColorPick('accent',this.value)"></div>
+        <div class="color-row"><span>Карточки</span><input type="color" id="cp-surface" oninput="onColorPick('surface',this.value)"></div>
+        <div class="color-row"><span>Фон</span><input type="color" id="cp-bg" oninput="onColorPick('bg',this.value)"></div>
+        <div class="color-row"><span>Орнамент</span><input type="color" id="cp-pat" oninput="onColorPick('pat',this.value)"></div>
+      </div>
+      <button class="btn btn-sm" style="margin-top:8px" onclick="resetColors()">Сбросить цвета</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Масштаб текста</div>
+      <div class="seg-ctrl">
+        <button data-scale="1" onclick="setFontScale(1)">100%</button>
+        <button data-scale="1.25" onclick="setFontScale(1.25)">125%</button>
+        <button data-scale="1.5" onclick="setFontScale(1.5)">150%</button>
       </div>
     </div>
 
@@ -1062,6 +1131,48 @@ function toggleNavPos() {
   const pos = document.getElementById('nav-pos-chk').checked ? 'right' : 'bottom';
   localStorage.setItem('aliby_nav_pos', pos);
   applyNavPos();
+}
+
+function setFontScale(scale) {
+  document.documentElement.style.zoom = scale;
+  localStorage.setItem('aliby_fscale', scale);
+  document.querySelectorAll('[data-scale]').forEach(b =>
+    b.classList.toggle('seg-active', parseFloat(b.dataset.scale) === scale));
+}
+
+function onColorPick(type, hex) {
+  const r = document.documentElement;
+  const colors = JSON.parse(localStorage.getItem('aliby_colors') || '{}');
+  colors[type] = hex;
+  localStorage.setItem('aliby_colors', JSON.stringify(colors));
+  if (type === 'accent') {
+    r.style.setProperty('--accent', hex);
+  } else if (type === 'bg') {
+    r.style.setProperty('--bg', hex);
+    r.style.setProperty('--glass', hex + 'c2');
+    r.style.setProperty('--glass-sm', hex + 'd6');
+  } else if (type === 'surface') {
+    r.style.setProperty('--bg-1', hex);
+  } else if (type === 'pat') {
+    const rv = parseInt(hex.slice(1,3),16), gv = parseInt(hex.slice(3,5),16), bv = parseInt(hex.slice(5,7),16);
+    const av = r.classList.contains('dark') ? 0.08 : 0.06;
+    r.style.setProperty('--pat', `rgb(${rv} ${gv} ${bv} / ${av})`);
+  }
+}
+
+function resetColors() {
+  localStorage.removeItem('aliby_colors');
+  document.documentElement.removeAttribute('style');
+  // Re-apply only theme and zoom
+  const dark = localStorage.getItem('aliby_theme') === 'dark';
+  document.documentElement.classList.toggle('dark', dark);
+  const scale = parseFloat(localStorage.getItem('aliby_fscale') || '1');
+  if (scale !== 1) document.documentElement.style.zoom = scale;
+  // Reset picker inputs
+  ['cp-accent','cp-surface','cp-bg','cp-pat'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '#888888';
+  });
 }
 
 // ─── APP CONFIG ───
@@ -2293,10 +2404,8 @@ async function buySubscription() {
 // ─── PROFILE ───
 async function loadProfile() {
   try {
-    // GET /auth/v1/user
     const u = await req('/auth/v1/user');
     document.getElementById('p-email').textContent = u.email;
-    // GET /rest/v1/profiles?id=eq.{uuid}
     const profs = await req(`/rest/v1/profiles?id=eq.${u.id}`);
     if (profs.length) {
       S.profile = profs[0];
@@ -2304,6 +2413,17 @@ async function loadProfile() {
       document.getElementById('p-name').value        = profs[0].full_name || '';
     }
   } catch(e) {}
+  // init customization controls
+  try {
+    const colors = JSON.parse(localStorage.getItem('aliby_colors') || '{}');
+    if (colors.accent) document.getElementById('cp-accent').value = colors.accent;
+    if (colors.surface) document.getElementById('cp-surface').value = colors.surface;
+    if (colors.bg) document.getElementById('cp-bg').value = colors.bg;
+    if (colors.pat) document.getElementById('cp-pat').value = colors.pat;
+  } catch(e) {}
+  const scale = parseFloat(localStorage.getItem('aliby_fscale') || '1');
+  document.querySelectorAll('[data-scale]').forEach(b =>
+    b.classList.toggle('seg-active', parseFloat(b.dataset.scale) === scale));
 }
 
 async function updateName() {
