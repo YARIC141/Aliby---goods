@@ -246,7 +246,9 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .item-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);margin-bottom:2px}
 .item-name.sub-on{color:var(--ok)}
 .item-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3);margin-bottom:6px}
-.item-price{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-bottom:6px}
+.item-price{display:flex;flex-direction:row;align-items:flex-end;gap:6px;margin-bottom:6px}
+.price-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto}
+.sub-note{font:400 11px/1.3 var(--font-sans);color:var(--fg-3);padding-left:4px;flex:1}
 .price-val{font:400 19px/1 var(--font-display);color:var(--fg)}
 .price-orig{font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:line-through}
 .price-sub{font:400 19px/1 var(--font-display);color:var(--ok)}
@@ -397,7 +399,7 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
   <div class="sn-logo">Aliby Foods</div>
   <button class="sn-btn" data-nav="home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Главная</button>
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
-  <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
+  <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
   <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина <span id="sn-cart-cnt"></span></button>
   <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Заказы</button>
   <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
@@ -498,14 +500,12 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
   <div class="ph">
     <button class="btn-back" onclick="goTo('map')">← Карта</button>
     <h2 id="store-ph-name">Заведение<span class="screen-help" data-info="Информация о выбранном заведении: меню, часы работы и контакты.">?</span></h2>
-    <button class="btn btn-sm" onclick="goTo('menu')">Меню →</button>
   </div>
   <div class="pb">
 
     <div class="store-hero">
       <div class="store-logo" id="store-logo">Фото</div>
       <div class="store-meta" style="flex:1">
-        <h2 id="st-name"></h2>
         <div class="cuisine" id="st-cuisine"></div>
         <div class="meta-line" id="st-addr"></div>
         <div class="meta-line" id="st-hours"></div>
@@ -518,11 +518,22 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
       <div class="subs-row" id="store-subs"><div class="loading">Загрузка…</div></div>
     </div>
 
-    <div class="sec">
-      <div class="sec-title">Рекомендуемые блюда <span class="txt-muted">GET /rest/v1/menu_items?limit=4</span></div>
-      <div class="items-grid" id="store-rec"><div class="loading">Загрузка…</div></div>
-      <button class="btn btn-full" style="margin-top:8px" onclick="goTo('menu')">Смотреть всё меню →</button>
+    <div class="cat-bar" id="cat-bar" style="margin:0 -20px;position:sticky;top:0;z-index:5;background:var(--bg-1)">
+      <button class="chip active" data-cid="">Все</button>
     </div>
+
+    <div class="menu-toolbar" style="margin:0 -20px">
+      <input type="search" id="m-search" placeholder="Поиск блюда…" oninput="debouncedMenuLoad()">
+      <select id="m-sort" onchange="loadMenuItems()">
+        <option value="">Сортировка</option>
+        <option value="price.asc">Цена ↑</option>
+        <option value="price.desc">Цена ↓</option>
+        <option value="name.asc">А–Я</option>
+      </select>
+      <label><input type="checkbox" id="m-avail" onchange="loadMenuItems()"> Только в наличии</label>
+    </div>
+
+    <div class="items-grid" id="menu-items" style="margin-top:8px"><div class="loading">Загрузка…</div></div>
 
   </div>
 </div>
@@ -535,24 +546,6 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
     <button class="btn btn-sm" onclick="goTo('cart')">Корзина&nbsp;<span id="menu-cart-cnt">0</span></button>
   </div>
 
-  <div class="cat-bar" id="cat-bar">
-    <button class="chip active" data-cid="">Все</button>
-  </div>
-
-  <div class="menu-toolbar">
-    <input type="search" id="m-search" placeholder="Поиск блюда…" oninput="debouncedMenuLoad()">
-    <select id="m-sort" onchange="loadMenuItems()">
-      <option value="">Сортировка</option>
-      <option value="price.asc">Цена ↑</option>
-      <option value="price.desc">Цена ↓</option>
-      <option value="name.asc">А–Я</option>
-    </select>
-    <label><input type="checkbox" id="m-avail" onchange="loadMenuItems()"> Только в наличии</label>
-  </div>
-
-  <div class="pb" style="padding-top:8px">
-    <div class="items-grid" id="menu-items"><div class="loading">Загрузка…</div></div>
-  </div>
 </div>
 
 <!-- ════════════════ CART ════════════════ -->
@@ -729,7 +722,7 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
   <div class="bn-row">
     <button class="bn-btn" data-nav="home"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Главная</button>
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Заведения</button>
-    <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
+    <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Корзина</button>
     <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>Заказы</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
@@ -1035,6 +1028,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 
 // ─── NAV ───
 function goTo(id, opts = {}) {
+  if (id === 'menu') id = 'store';
   if (id !== 'auth' && !S.session) { goTo('auth'); return; }
   if (id !== 'auth') localStorage.setItem('aliby_nav', id);
   const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
@@ -1442,15 +1436,15 @@ async function loadStore() {
   if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
   const st = S.store;
   document.getElementById('store-ph-name').textContent = st.name;
-  document.getElementById('st-name').textContent   = st.name;
   document.getElementById('st-addr').textContent   = st.address || '';
   document.getElementById('st-hours').textContent  = st.working_hours || '';
   document.getElementById('st-phone').textContent  = st.phone || '';
   const sc = st.store_categories;
   document.getElementById('st-cuisine').textContent = sc ? (sc.icon ? sc.icon + ' ' + sc.name : sc.name) : '';
   document.getElementById('store-subs').innerHTML = SK.subCards(2);
-  document.getElementById('store-rec').innerHTML  = SK.itemCards(4);
-  await Promise.all([loadStoreSubs(), loadStoreRec()]);
+  document.getElementById('menu-items').innerHTML = SK.itemCards(6);
+  await Promise.all([loadStoreSubs(), loadCategories(), loadMenuUserSubs()]);
+  loadMenuItems();
 }
 
 function renderSubCard(s) {
@@ -1482,15 +1476,6 @@ async function loadStoreSubs(targetEl) {
   } catch(e) { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
 }
 
-async function loadStoreRec() {
-  const el = document.getElementById('store-rec');
-  try {
-    // GET /rest/v1/menu_items?store_id=eq.{id}&is_available=eq.true&limit=4
-    const items = await req(`/rest/v1/menu_items?store_id=eq.${S.store.id}&is_available=eq.true&limit=4`);
-    if (!items.length) { el.innerHTML = '<div class="empty">Пусто</div>'; return; }
-    el.innerHTML = items.map(renderItemCard).join('');
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка</div>'; }
-}
 
 // ─── MENU ───
 async function loadMenu() {
@@ -1648,12 +1633,13 @@ function renderItemCard(item) {
   const priceHtml = best
     ? `<span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.price} ₽</span>`
     : `<span class="price-val">${item.price} ₽</span>`;
+  const subNoteHtml = best ? `<span class="sub-note">По абонементу «${esc(best.sub.name)}»</span>` : '';
   return `<div class="item-card" onclick="openItemDetail('${item.id}')">
     <div class="item-img">${imgHtml}</div>
     <div class="item-body">
       <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
       ${item.description ? `<div class="item-desc">${esc(item.description)}</div>` : ''}
-      <div class="item-price">${priceHtml}</div>
+      <div class="item-price">${subNoteHtml}<div class="price-wrap">${priceHtml}</div></div>
       ${item.is_available
         ? qty > 0
           ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
@@ -1678,8 +1664,8 @@ function openItemDetail(id) {
   const best = getBestDisc(item);
   const discPrice = best ? Math.max(0, item.price - best.disc) : null;
   document.getElementById('mi-price').innerHTML = best
-    ? `<span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.price} ₽</span>`
-    : `<span class="price-val">${item.price} ₽</span>`;
+    ? `<div class="price-wrap"><span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.price} ₽</span></div>`
+    : `<div class="price-wrap"><span class="price-val">${item.price} ₽</span></div>`;
 
   const applicable = getApplicableSubs(item);
   const subsEl = document.getElementById('mi-subs');
