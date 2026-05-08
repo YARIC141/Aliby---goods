@@ -70,13 +70,13 @@ html.dark{
   --glass-sm:oklch(0.26 0.011 60 / .84);
 }
 html,body{background:var(--bg)}
-html{zoom:var(--fzoom,1)}
-body{font-family:var(--font-sans);font-size:17px;color:var(--fg);height:100dvh;overflow:hidden}
+body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden}
 #bg-ornament{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 #bg-ornament .op{fill:var(--pat)}
+#zoom-root{zoom:var(--fzoom,1);height:calc(100dvh/var(--fzoom,1));overflow:hidden;position:relative;z-index:1}
 
 /* ── LAYOUT ── */
-#app{display:flex;height:100dvh;overflow:hidden;position:relative;z-index:1}
+#app{display:flex;height:100dvh;overflow:hidden}
 #side-nav{width:210px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;padding:16px 12px;gap:2px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
 @keyframes navSlideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}
@@ -344,7 +344,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark');
 (function(){
   var s=parseFloat(localStorage.getItem('aliby_fscale')||'1');
-  if(s!==1)document.documentElement.style.zoom=s;
+  document.documentElement.style.setProperty('--fzoom',s);
   try{
     var c=JSON.parse(localStorage.getItem('aliby_colors')||'{}'),r=document.documentElement;
     if(c.accent)r.style.setProperty('--accent',c.accent);
@@ -381,6 +381,7 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
   </defs>
   <rect width="100%" height="100%" fill="url(#bgpat)"/>
 </svg>
+<div id="zoom-root">
 
 <div id="splash">
   <p class="sp1">Если возникнут подозрения,</p>
@@ -1134,7 +1135,7 @@ function toggleNavPos() {
 }
 
 function setFontScale(scale) {
-  document.documentElement.style.zoom = scale;
+  document.documentElement.style.setProperty('--fzoom', scale);
   localStorage.setItem('aliby_fscale', scale);
   document.querySelectorAll('[data-scale]').forEach(b =>
     b.classList.toggle('seg-active', parseFloat(b.dataset.scale) === scale));
@@ -1162,13 +1163,8 @@ function onColorPick(type, hex) {
 
 function resetColors() {
   localStorage.removeItem('aliby_colors');
-  document.documentElement.removeAttribute('style');
-  // Re-apply only theme and zoom
-  const dark = localStorage.getItem('aliby_theme') === 'dark';
-  document.documentElement.classList.toggle('dark', dark);
-  const scale = parseFloat(localStorage.getItem('aliby_fscale') || '1');
-  if (scale !== 1) document.documentElement.style.zoom = scale;
-  // Reset picker inputs
+  ['--accent','--bg','--bg-1','--glass','--glass-sm','--pat'].forEach(v =>
+    document.documentElement.style.removeProperty(v));
   ['cp-accent','cp-surface','cp-bg','cp-pat'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '#888888';
@@ -2693,5 +2689,6 @@ async function subscribePush(app) {
   }
 })();
 </script>
+</div><!-- #zoom-root -->
 </body>
 </html>
