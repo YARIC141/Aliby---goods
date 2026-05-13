@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<title>Aliby Foods — Admin</title>
+<title>Alliby Foods — Admin</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -264,7 +264,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 .detail-val{font:400 13px/1.4 var(--font-sans);word-break:break-word}
 .qr-link-text{word-break:break-all;font:400 12px/1.5 var(--font-mono);color:var(--fg-4);margin:10px 0}
 </style>
-<script>if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
+<script>if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
 <body>
 
@@ -296,8 +296,8 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div id="splash">
   <p class="sp1">Если возникнут подозрения,</p>
   <p class="sp2">то у тебя есть</p>
-  <p class="sp3">Aliby</p>
-  <img class="sp-icon" src="icons/icon-192.png" alt="Aliby">
+  <p class="sp3">Alliby</p>
+  <img class="sp-icon" src="icons/icon-192.png" alt="Alliby">
 </div>
 
 <div id="app">
@@ -305,7 +305,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 <!-- ════════════════ SIDE NAV ════════════════ -->
 <nav id="side-nav">
   <div class="sn-header">
-    <div class="sn-logo">Aliby Foods</div>
+    <div class="sn-logo">Alliby Foods</div>
     <div class="sn-role">Панель администратора</div>
   </div>
   <div class="sn-items">
@@ -327,7 +327,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 <!-- ════════════════ AUTH ════════════════ -->
 <div id="screen-auth" class="screen">
   <div class="auth-box">
-    <h1>Aliby Foods Admin</h1>
+    <h1>Alliby Foods Admin</h1>
     <div class="tab-nav">
       <button class="tab-btn active" data-tab-auth="login">Вход</button>
     </div>
@@ -900,8 +900,9 @@ tr.row-click:hover td{background:var(--bg-2)}
 
 <script>
 // ─── CONFIG ───
-const SB_URL  = 'https://bucxawpwttvtwdwdtuhh.supabase.co';
-const SB_ANON = 'sb_publishable_6KJ_2BqjmK5cnZrrlYsojA_L148hBhH';
+const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
+const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://bucxawpwttvtwdwdtuhh.supabase.co';
+const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_6KJ_2BqjmK5cnZrrlYsojA_L148hBhH';
 
 // ─── STATE ───
 const DEFAULT_MAP_CFG = {
@@ -1013,7 +1014,7 @@ async function req(path, opts = {}, _retried = false) {
   if (r.status === 401 && !_retried) {
     const ok = await refreshSession();
     if (ok) return req(path, opts, true);
-    localStorage.removeItem('aliby_admin_s');
+    localStorage.removeItem('alliby_admin_s');
     S.session = null;
     goTo('auth');
     throw { message: 'Сессия истекла, войдите снова' };
@@ -1095,11 +1096,11 @@ document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click',
 function toggleTheme() {
   const dark = document.getElementById('theme-chk').checked;
   document.documentElement.classList.toggle('dark', dark);
-  localStorage.setItem('aliby_theme', dark ? 'dark' : 'light');
+  localStorage.setItem('alliby_theme', dark ? 'dark' : 'light');
 }
 
 function applyNavPos() {
-  const right = localStorage.getItem('aliby_admin_nav_pos') === 'right';
+  const right = localStorage.getItem('alliby_admin_nav_pos') === 'right';
   document.body.classList.toggle('nav-right', right);
   const chk = document.getElementById('nav-pos-chk');
   if (chk) chk.checked = right;
@@ -1107,7 +1108,7 @@ function applyNavPos() {
 
 function toggleNavPos() {
   const pos = document.getElementById('nav-pos-chk').checked ? 'right' : 'bottom';
-  localStorage.setItem('aliby_admin_nav_pos', pos);
+  localStorage.setItem('alliby_admin_nav_pos', pos);
   applyNavPos();
 }
 
@@ -1156,7 +1157,7 @@ async function doLogin() {
 
 async function doLogout() {
   try { await req('/auth/v1/logout', { method:'POST' }); } finally {
-    localStorage.removeItem('aliby_admin_s');
+    localStorage.removeItem('alliby_admin_s');
     S.session = null; goTo('auth');
   }
 }
@@ -1186,7 +1187,7 @@ async function doResetPwd() {
 
 function setSession(d) {
   S.session = d;
-  localStorage.setItem('aliby_admin_s', JSON.stringify(d));
+  localStorage.setItem('alliby_admin_s', JSON.stringify(d));
   document.getElementById('sn-email').textContent = d.user?.email || '';
 }
 
@@ -1229,7 +1230,7 @@ async function doDeleteAccount() {
   if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
   try {
     await req('/functions/v1/delete-account', { method: 'POST' });
-    localStorage.removeItem('aliby_admin_s');
+    localStorage.removeItem('alliby_admin_s');
     S.session = null;
     goTo('auth');
   } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
@@ -1390,7 +1391,7 @@ function copyStoreLink() {
 function shareStoreLink() {
   const url = _storeDeepLink();
   if (navigator.share) {
-    navigator.share({ title: _detailStore?.name || 'Aliby', url });
+    navigator.share({ title: _detailStore?.name || 'Alliby', url });
   } else {
     navigator.clipboard?.writeText(url).then(() => alert('Ссылка скопирована'));
   }
@@ -1835,7 +1836,7 @@ async function loadMapAdmin() {
       container: 'map-admin-gl', style: buildMapStyle(S.mapCfg),
       center: [0, 0], zoom: 2, attributionControl: false,
       transformRequest: (url) => {
-        if (url.includes('/functions/v1/vector-tiles/')) return { url, headers: { apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON } };
+        if (url.includes('/functions/v1/vector-tiles/')) return { url, headers: { apikey: SB_ANON } };
         if (url.startsWith(SB_URL)) {
           const headers = { apikey: SB_ANON };
           if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
@@ -2036,7 +2037,7 @@ setTimeout(hideSplash, 2000);
   applyNavPos();
   await loadAppConfig();
   try {
-    const saved = localStorage.getItem('aliby_admin_s');
+    const saved = localStorage.getItem('alliby_admin_s');
     if (saved) {
       const d = JSON.parse(saved);
       if (d?.access_token) {
@@ -2046,7 +2047,7 @@ setTimeout(hideSplash, 2000);
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(ok => {
             if (ok) { goTo('stores'); subscribePush('admin'); }
-            else { localStorage.removeItem('aliby_admin_s'); S.session = null; goTo('auth'); }
+            else { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
           });
         } else {
           setSession(d);

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<title>Aliby Foods</title>
+<title>Alliby Foods</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -347,12 +347,12 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .recent-card-store{font:500 14px/1.3 var(--font-sans);color:var(--accent);cursor:pointer;flex-shrink:0;text-align:right;max-width:110px;white-space:normal;line-height:1.3}
 </style>
 <script>
-if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classList.add('dark');
+if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
 (function(){
-  var s=parseFloat(localStorage.getItem('aliby_fscale')||'1');
+  var s=parseFloat(localStorage.getItem('alliby_fscale')||'1');
   document.documentElement.style.setProperty('--fzoom',s);
   try{
-    var c=JSON.parse(localStorage.getItem('aliby_colors')||'{}'),r=document.documentElement;
+    var c=JSON.parse(localStorage.getItem('alliby_colors')||'{}'),r=document.documentElement;
     if(c.accent)r.style.setProperty('--accent',c.accent);
     if(c.bg){r.style.setProperty('--bg',c.bg);r.style.setProperty('--glass',c.bg+'c2');r.style.setProperty('--glass-sm',c.bg+'d6');}
     if(c.surface)r.style.setProperty('--bg-1',c.surface);
@@ -392,15 +392,15 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
 <div id="splash">
   <p class="sp1">Если возникнут подозрения,</p>
   <p class="sp2">то у тебя есть</p>
-  <p class="sp3">Aliby</p>
-  <img class="sp-icon" src="icons/icon-192.png" alt="Aliby">
+  <p class="sp3">Alliby</p>
+  <img class="sp-icon" src="icons/icon-192.png" alt="Alliby">
 </div>
 
 <div id="app">
 
 <!-- ════════════════ DESKTOP SIDE NAV ════════════════ -->
 <nav id="side-nav">
-  <div class="sn-logo">Aliby Foods</div>
+  <div class="sn-logo">Alliby Foods</div>
   <button class="sn-btn" data-nav="home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Главная</button>
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
@@ -417,7 +417,7 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
 <!-- ════════════════ AUTH ════════════════ -->
 <div id="screen-auth" class="screen">
   <div class="auth-box">
-    <h1>Aliby Foods</h1>
+    <h1>Alliby Foods</h1>
     <div class="tab-nav">
       <button class="tab-btn active" data-tab-auth="login">Вход</button>
       <button class="tab-btn" data-tab-auth="reg">Регистрация</button>
@@ -850,8 +850,9 @@ if(localStorage.getItem('aliby_theme')==='dark')document.documentElement.classLi
 
 <script>
 // ─── CONFIG ───
-const SB_URL  = 'https://bucxawpwttvtwdwdtuhh.supabase.co';
-const SB_ANON = 'sb_publishable_6KJ_2BqjmK5cnZrrlYsojA_L148hBhH';
+const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
+const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://bucxawpwttvtwdwdtuhh.supabase.co';
+const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_6KJ_2BqjmK5cnZrrlYsojA_L148hBhH';
 
 // ─── DEFAULTS ───
 const DEFAULT_MAP_CFG = {
@@ -1005,7 +1006,7 @@ async function req(path, opts = {}, _retried = false) {
   if (r.status === 401 && !_retried) {
     const ok = await refreshSession();
     if (ok) return req(path, opts, true);
-    localStorage.removeItem('aliby_s');
+    localStorage.removeItem('alliby_s');
     S.session = null; S.profile = null;
     goTo('auth');
     throw { message: 'Сессия истекла, войдите снова' };
@@ -1032,7 +1033,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 function goTo(id, opts = {}) {
   if (id === 'menu') id = 'store';
   if (id !== 'auth' && !S.session) { goTo('auth'); return; }
-  if (id !== 'auth') localStorage.setItem('aliby_nav', id);
+  if (id !== 'auth') localStorage.setItem('alliby_nav', id);
   const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
   if (!opts.fromSwipe) {
     S.navHistory = S.navHistory.slice(0, S.navIdx + 1);
@@ -1103,11 +1104,11 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function toggleTheme() {
   const dark = document.getElementById('theme-chk').checked;
   document.documentElement.classList.toggle('dark', dark);
-  localStorage.setItem('aliby_theme', dark ? 'dark' : 'light');
+  localStorage.setItem('alliby_theme', dark ? 'dark' : 'light');
 }
 
 function applyNavPos() {
-  const right = localStorage.getItem('aliby_nav_pos') === 'right';
+  const right = localStorage.getItem('alliby_nav_pos') === 'right';
   document.body.classList.toggle('nav-right', right);
   const chk = document.getElementById('nav-pos-chk');
   if (chk) chk.checked = right;
@@ -1115,22 +1116,22 @@ function applyNavPos() {
 
 function toggleNavPos() {
   const pos = document.getElementById('nav-pos-chk').checked ? 'right' : 'bottom';
-  localStorage.setItem('aliby_nav_pos', pos);
+  localStorage.setItem('alliby_nav_pos', pos);
   applyNavPos();
 }
 
 function setFontScale(scale) {
   document.documentElement.style.setProperty('--fzoom', scale);
-  localStorage.setItem('aliby_fscale', scale);
+  localStorage.setItem('alliby_fscale', scale);
   document.querySelectorAll('[data-scale]').forEach(b =>
     b.classList.toggle('seg-active', parseFloat(b.dataset.scale) === scale));
 }
 
 function onColorPick(type, hex) {
   const r = document.documentElement;
-  const colors = JSON.parse(localStorage.getItem('aliby_colors') || '{}');
+  const colors = JSON.parse(localStorage.getItem('alliby_colors') || '{}');
   colors[type] = hex;
-  localStorage.setItem('aliby_colors', JSON.stringify(colors));
+  localStorage.setItem('alliby_colors', JSON.stringify(colors));
   if (type === 'accent') {
     r.style.setProperty('--accent', hex);
   } else if (type === 'bg') {
@@ -1147,7 +1148,7 @@ function onColorPick(type, hex) {
 }
 
 function resetColors() {
-  localStorage.removeItem('aliby_colors');
+  localStorage.removeItem('alliby_colors');
   ['--accent','--bg','--bg-1','--glass','--glass-sm','--pat'].forEach(v =>
     document.documentElement.style.removeProperty(v));
   ['cp-accent','cp-surface','cp-bg','cp-pat'].forEach(id => {
@@ -1239,7 +1240,7 @@ async function doResetPwd() {
 
 async function doLogout() {
   try { await req('/auth/v1/logout', { method:'POST' }); } finally {
-    localStorage.removeItem('aliby_s');
+    localStorage.removeItem('alliby_s');
     S.session = null; S.profile = null; goTo('auth');
   }
 }
@@ -1248,7 +1249,7 @@ async function doDeleteAccount() {
   if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
   try {
     await req('/functions/v1/delete-account', { method: 'POST' });
-    localStorage.removeItem('aliby_s');
+    localStorage.removeItem('alliby_s');
     S.session = null; S.profile = null;
     goTo('auth');
   } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
@@ -1256,7 +1257,7 @@ async function doDeleteAccount() {
 
 function setSession(d) {
   S.session = d;
-  localStorage.setItem('aliby_s', JSON.stringify(d));
+  localStorage.setItem('alliby_s', JSON.stringify(d));
   document.getElementById('sn-email').textContent = d.user?.email || '';
 }
 
@@ -1382,7 +1383,7 @@ async function loadMapData() {
     container: 'map-gl', style: buildMapStyle(S.mapCfg),
     center: [0, 0], zoom: 2, attributionControl: false,
     transformRequest: (url) => {
-      if (url.includes('/functions/v1/vector-tiles/')) return { url, headers: { apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON } };
+      if (url.includes('/functions/v1/vector-tiles/')) return { url, headers: { apikey: SB_ANON } };
       if (url.startsWith(SB_URL)) {
         const headers = { apikey: SB_ANON };
         if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
@@ -1414,7 +1415,7 @@ function filterStores(q) { applyMapFilter(q); }
 function showStorePopup(st, listItem) {
   if (!st) return;
   S.store = st;
-  try { localStorage.setItem('aliby_store', JSON.stringify(st)); } catch(e) {}
+  try { localStorage.setItem('alliby_store', JSON.stringify(st)); } catch(e) {}
   document.querySelectorAll('.sl-item').forEach(el => el.classList.remove('sel'));
   listItem?.classList.add('sel');
   document.getElementById('pp-name').textContent  = st.name || '';
@@ -1726,7 +1727,7 @@ function changeQty(id, delta) {
 }
 
 function saveCart() {
-  try { localStorage.setItem('aliby_cart', JSON.stringify({ storeId: S.cartStoreId, items: S.cart })); } catch(e) {}
+  try { localStorage.setItem('alliby_cart', JSON.stringify({ storeId: S.cartStoreId, items: S.cart })); } catch(e) {}
 }
 
 function updateCartCount() {
@@ -2181,7 +2182,7 @@ function removeFromGiftCart(id) {
 }
 
 function saveSubCart() {
-  try { localStorage.setItem('aliby_subcart', JSON.stringify({ subs: S.subCart, gifts: S.giftSubCart })); } catch(e) {}
+  try { localStorage.setItem('alliby_subcart', JSON.stringify({ subs: S.subCart, gifts: S.giftSubCart })); } catch(e) {}
 }
 
 function renderSubCartSection() {
@@ -2374,13 +2375,13 @@ async function loadProfile() {
   } catch(e) {}
   // init customization controls
   try {
-    const colors = JSON.parse(localStorage.getItem('aliby_colors') || '{}');
+    const colors = JSON.parse(localStorage.getItem('alliby_colors') || '{}');
     if (colors.accent) document.getElementById('cp-accent').value = colors.accent;
     if (colors.surface) document.getElementById('cp-surface').value = colors.surface;
     if (colors.bg) document.getElementById('cp-bg').value = colors.bg;
     if (colors.pat) document.getElementById('cp-pat').value = colors.pat;
   } catch(e) {}
-  const scale = parseFloat(localStorage.getItem('aliby_fscale') || '1');
+  const scale = parseFloat(localStorage.getItem('alliby_fscale') || '1');
   document.querySelectorAll('[data-scale]').forEach(b =>
     b.classList.toggle('seg-active', parseFloat(b.dataset.scale) === scale));
 }
@@ -2411,15 +2412,15 @@ async function updatePwd() {
 // ─── NAV / CART RESTORE ───
 async function restoreNav() {
   try {
-    const sc = localStorage.getItem('aliby_cart');
+    const sc = localStorage.getItem('alliby_cart');
     if (sc) { const d = JSON.parse(sc); S.cart = d.items || []; S.cartStoreId = d.storeId || null; updateCartCount(); }
   } catch(e) {}
   try {
-    const ssc = localStorage.getItem('aliby_subcart');
+    const ssc = localStorage.getItem('alliby_subcart');
     if (ssc) { const d = JSON.parse(ssc); S.subCart = d.subs || []; S.giftSubCart = d.gifts || []; [...S.subCart, ...S.giftSubCart].forEach(c => { subPlans[c.sub.id] = c.sub; }); }
   } catch(e) {}
   try {
-    const ss = localStorage.getItem('aliby_store');
+    const ss = localStorage.getItem('alliby_store');
     if (ss) S.store = JSON.parse(ss);
   } catch(e) {}
   if (deepStoreId) {
@@ -2427,7 +2428,7 @@ async function restoreNav() {
     if (ok) return;
   }
   const SCREENS = ['home','map','store','menu','cart','orders','subscriptions','profile'];
-  const nav = localStorage.getItem('aliby_nav');
+  const nav = localStorage.getItem('alliby_nav');
   goTo(nav && SCREENS.includes(nav) ? nav : 'map');
 }
 
@@ -2535,7 +2536,7 @@ async function loadHome() {
 function openStoreFromHome(storeId, storeName) {
   if (!storeId) return;
   S.store = { id: storeId, name: storeName };
-  try { localStorage.setItem('aliby_store', JSON.stringify(S.store)); } catch(e) {}
+  try { localStorage.setItem('alliby_store', JSON.stringify(S.store)); } catch(e) {}
   goTo('menu');
 }
 
@@ -2550,7 +2551,7 @@ async function navigateDeepLink() {
     const rows = await req(`/rest/v1/stores?id=eq.${id}&select=*,store_categories(name,icon)&limit=1`);
     if (rows?.[0]) {
       S.store = rows[0];
-      try { localStorage.setItem('aliby_store', JSON.stringify(S.store)); } catch(e) {}
+      try { localStorage.setItem('alliby_store', JSON.stringify(S.store)); } catch(e) {}
       goTo('menu');
       return true;
     }
@@ -2577,7 +2578,7 @@ window.addEventListener('hashchange', () => {
   const hash = new URLSearchParams((window.location.hash || '').replace('#',''));
   deepStoreId = hash.get('store') || null;
   try {
-    const saved = localStorage.getItem('aliby_s');
+    const saved = localStorage.getItem('alliby_s');
     if (saved) {
       const d = JSON.parse(saved);
       if (d?.access_token) {
@@ -2587,7 +2588,7 @@ window.addEventListener('hashchange', () => {
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(ok => {
             if (ok) { restoreNav(); subscribePush('client'); }
-            else { localStorage.removeItem('aliby_s'); S.session = null; goTo('auth'); }
+            else { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
           });
         } else {
           setSession(d); restoreNav(); subscribePush('client');

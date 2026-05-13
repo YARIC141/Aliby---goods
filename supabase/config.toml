@@ -1,7 +1,7 @@
 # Конфигурация локального окружения Supabase
 # Docs: https://supabase.com/docs/guides/cli/config
 
-project_id = "aliby-foods"
+project_id = "alliby-foods"
 
 [api]
 enabled = true
