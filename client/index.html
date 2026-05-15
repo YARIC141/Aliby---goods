@@ -851,8 +851,13 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <script>
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
-const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://bucxawpwttvtwdwdtuhh.supabase.co';
-const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_6KJ_2BqjmK5cnZrrlYsojA_L148hBhH';
+const _VPS   = location.hostname === 'alliby.ru';
+const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321'
+              : _VPS   ? 'https://alliby.ru'
+              :           'https://bucxawpwttvtwdwdtuhh.supabase.co';
+const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
+              : _VPS   ? 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq'
+              :           'sb_publishable_6KJ_2BqjmK5cnZrrlYsojA_L148hBhH';
 
 // ─── DEFAULTS ───
 const DEFAULT_MAP_CFG = {
