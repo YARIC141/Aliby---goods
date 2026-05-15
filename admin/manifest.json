@@ -1,7 +1,7 @@
 {
   "name": "Alliby Admin",
   "short_name": "Alliby Admin",
-  "description": "Панель управления Alliby Foods",
+  "description": "Панель управления Alliby",
   "start_url": "/Aliby---goods/admin/",
   "scope": "/Aliby---goods/admin/",
   "display": "standalone",
