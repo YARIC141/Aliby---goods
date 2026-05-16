@@ -313,7 +313,6 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="categories"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Категории</button>
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
-    <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Заказы</button>
     <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Карта и метки</button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
@@ -455,36 +454,6 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div>
 
 <!-- ════════════════ ORDERS ════════════════ -->
-<div id="screen-orders" class="screen">
-  <div class="ph"><h2>Заказы<span class="screen-help" data-info="Все заказы клиентов. Фильтрация по заведению и статусу, просмотр деталей каждого заказа.">?</span></h2></div>
-  <div class="pb">
-    <div class="toolbar">
-      <select id="ord-store-filter" onchange="loadOrders()">
-        <option value="">Все заведения</option>
-      </select>
-      <select id="ord-status-filter" onchange="loadOrders()">
-        <option value="">Все статусы</option>
-        <option value="pending">Ожидает</option>
-        <option value="paid">Оплачен</option>
-        <option value="ready">Готов</option>
-        <option value="issued">Выдан</option>
-        <option value="cancelled">Отменён</option>
-      </select>
-      <input id="ord-email-search" type="search" placeholder="Поиск по почте…" oninput="loadOrders()" style="flex:1;min-width:160px">
-      <input id="ord-date-from" type="date" onchange="loadOrders()" title="С">
-      <input id="ord-date-to"   type="date" onchange="loadOrders()" title="По">
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>№</th><th>Дата</th><th>Заведение</th><th>Клиент</th><th>Сумма</th><th>Статус</th><th>Действия</th>
-        </tr></thead>
-        <tbody id="ord-tbody"><tr><td colspan="7" class="loading">Загрузка…</td></tr></tbody>
-      </table>
-    </div>
-    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/orders · PATCH /rest/v1/orders?id=eq.{id}</div>
-  </div>
-</div>
 
 <!-- ════════════════ MAP & MARKERS ════════════════ -->
 <div id="screen-map" class="screen">
@@ -586,21 +555,6 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
-<!-- ════════════════ ANALYTICS ════════════════ -->
-<div id="screen-analytics" class="screen">
-  <div class="ph">
-    <h2>Статистика</h2>
-    <button class="btn btn-sm" onclick="loadAnalytics()">↺</button>
-  </div>
-  <div style="padding:10px 16px 0">
-    <select id="an-store-sel" onchange="loadAnalytics()" style="width:100%">
-      <option value="">— Выберите заведение —</option>
-    </select>
-  </div>
-  <div class="pb" id="analytics-content" style="padding:12px 16px">
-    <div class="txt-muted" style="text-align:center;padding:24px 0">Выберите заведение</div>
-  </div>
-</div>
 
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
@@ -609,8 +563,6 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Карта</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
-    <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>Заказы</button>
-    <button class="bn-btn" data-nav="analytics" onclick="loadAnalytics()"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Статистика</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
@@ -854,34 +806,6 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
-<!-- Order detail modal -->
-<div class="overlay" id="m-order">
-  <div class="modal">
-    <div class="modal-hd">
-      <h3>Заказ #<span id="mo-id"></span></h3>
-      <button class="modal-x" onclick="closeModal('m-order')">✕</button>
-    </div>
-    <div style="margin-bottom:10px">
-      Статус: <span class="badge" id="mo-status"></span>
-    </div>
-    <div class="txt-sm" id="mo-date" style="margin-bottom:6px"></div>
-    <div class="txt-sm" style="margin-bottom:10px">Клиент: <span id="mo-email" style="color:var(--fg-sec)"></span></div>
-    <div class="sec-title">Позиции</div>
-    <div id="mo-items"><div class="loading">Загрузка…</div></div>
-    <hr>
-    <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-      <span>Итого</span><strong id="mo-total"></strong>
-    </div>
-    <div class="sec-title">Изменить статус</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-sm" onclick="setOrderStatus('ready')">→ Готов</button>
-      <button class="btn btn-sm" onclick="setOrderStatus('issued')">→ Выдан</button>
-      <button class="btn btn-sm btn-d" onclick="setOrderStatus('cancelled')">→ Отменить</button>
-    </div>
-    <div id="mo-payment" style="margin-top:10px;font-size:12px"></div>
-    <div class="txt-muted" style="margin-top:4px">PATCH /rest/v1/orders?id=eq.{id}</div>
-  </div>
-</div>
 
 <!-- Confirm delete modal -->
 <div class="overlay" id="m-confirm">
@@ -1056,7 +980,7 @@ function goTo(id, opts = {}) {
   }
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,profile:loadProfile})[id]?.();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,map:loadMapAdmin,profile:loadProfile})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1769,70 +1693,7 @@ function initOrdDateFilters() {
   if (!from.value) from.value = today;
   if (!to.value)   to.value   = today;
 }
-async function loadOrders() {
-  initOrdDateFilters();
-  const tbody = document.getElementById('ord-tbody');
-  tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка…</td></tr>';
-  try {
-    // GET /rest/v1/orders?select=*,stores(name)&order=order_time.desc
-    let url = '/rest/v1/orders?select=*,stores(name)&order=order_time.desc';
-    const storeId  = document.getElementById('ord-store-filter')?.value;
-    const status   = document.getElementById('ord-status-filter')?.value;
-    const email    = document.getElementById('ord-email-search')?.value.trim();
-    const dateFrom = document.getElementById('ord-date-from')?.value;
-    const dateTo   = document.getElementById('ord-date-to')?.value;
-    if (storeId)  url += `&store_id=eq.${storeId}`;
-    if (status)   url += `&status=eq.${status}`;
-    if (email)    url += `&user_email=ilike.%25${encodeURIComponent(email)}%25`;
-    if (dateFrom) url += `&order_time=gte.${dateFrom}T00:00:00`;
-    if (dateTo)   url += `&order_time=lte.${dateTo}T23:59:59`;
-    const orders = await req(url);
-    if (!orders.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Нет заказов</td></tr>'; return; }
-    tbody.innerHTML = orders.map(o => `
-      <tr>
-        <td class="txt-sm">${o.id.slice(0,8)}</td>
-        <td class="txt-sm">${fmtDate(o.order_time)}</td>
-        <td>${esc(o.stores?.name || '—')}</td>
-        <td class="txt-sm">${esc(o.user_email || '—')}</td>
-        <td>${o.total_amount} ₽</td>
-        <td><span class="badge b-${o.status}">${statusMap[o.status]||o.status}</span></td>
-        <td class="td-actions">
-          <button class="btn btn-sm" onclick="openOrderModal('${o.id}')">Открыть</button>
-        </td>
-      </tr>`).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Ошибка</td></tr>'; }
-}
 
-async function openOrderModal(id) {
-  S.currentOrderId = id;
-  openModal('m-order');
-  document.getElementById('mo-id').textContent = id.slice(0,8);
-  document.getElementById('mo-items').innerHTML = '<div class="loading">Загрузка…</div>';
-  try {
-    const [ords, items] = await Promise.all([
-      req(`/rest/v1/orders?id=eq.${id}`),
-      req(`/rest/v1/order_items?order_id=eq.${id}&select=*,menu_items(name)`),
-    ]);
-    const o = ords[0];
-    document.getElementById('mo-status').textContent = statusMap[o.status] || o.status;
-    document.getElementById('mo-status').className   = `badge b-${o.status}`;
-    document.getElementById('mo-date').textContent   = fmtDate(o.order_time);
-    document.getElementById('mo-email').textContent  = o.user_email || '—';
-    document.getElementById('mo-total').textContent  = o.total_amount + ' ₽';
-    document.getElementById('mo-items').innerHTML = items.length
-      ? items.map(i => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee"><span>${esc(i.menu_items?.name||'—')} × ${i.quantity}</span><span>${(i.price_at_time*i.quantity).toFixed(2)} ₽</span></div>`).join('')
-      : '<div class="empty">Нет позиций</div>';
-  } catch(e) { document.getElementById('mo-items').innerHTML = '<div class="empty">Ошибка</div>'; }
-}
-
-async function setOrderStatus(status) {
-  if (!S.currentOrderId) return;
-  try {
-    // PATCH /rest/v1/orders?id=eq.{id}
-    await req(`/rest/v1/orders?id=eq.${S.currentOrderId}`, { method:'PATCH', body: JSON.stringify({ status }) });
-    closeModal('m-order'); loadOrders();
-  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
-}
 
 // ─── MAP & MARKERS ───
 async function loadMapAdmin() {
@@ -2051,13 +1912,12 @@ setTimeout(hideSplash, 2000);
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(ok => {
-            if (ok) { goTo('stores'); subscribePush('admin'); }
+            if (ok) { goTo('stores'); }
             else { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
           });
         } else {
           setSession(d);
           goTo('stores');
-          subscribePush('admin');
         }
         return;
       }
@@ -2076,83 +1936,6 @@ setTimeout(hideSplash, 2000);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
-  navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data?.type === 'OPEN_ORDER' && e.data.orderId) {
-      goTo('orders'); openOrderModal(e.data.orderId);
-    }
-  });
-}
-
-function urlBase64ToUint8Array(b) {
-  const p = b.replace(/-/g,'+').replace(/_/g,'/').padEnd(b.length+(4-b.length%4)%4,'=');
-  const r = atob(p); const o = new Uint8Array(r.length);
-  for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i);
-  return o;
-}
-
-async function subscribePush(app) {
-  if (!('PushManager' in window) || !S.session) return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-    }
-    const j = sub.toJSON();
-    await req('/rest/v1/push_subscriptions', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({ user_id: S.session.user?.id, app, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth_key: j.keys.auth }),
-    });
-  } catch(e) { console.warn('Push subscribe:', e); }
-}
-
-async function loadAnalytics() {
-  const el = document.getElementById('analytics-content');
-  const sel = document.getElementById('an-store-sel');
-  if (sel && sel.options.length <= 1) {
-    let stores = S.stores?.length ? S.stores : [];
-    if (!stores.length) {
-      try { stores = await req('/rest/v1/stores?order=name.asc&select=id,name'); } catch(e) { stores = []; }
-    }
-    const prev = sel.value;
-    sel.innerHTML = '<option value="">— Выберите заведение —</option>' +
-      stores.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
-    if (prev) sel.value = prev;
-  }
-  const storeId = sel?.value || '';
-  if (!storeId) {
-    el.innerHTML = '<div class="txt-muted" style="text-align:center;padding:24px 0">Выберите заведение для просмотра статистики</div>';
-    return;
-  }
-  el.innerHTML = '<div class="loading">Загрузка…</div>';
-  try {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const orders = await req(`/rest/v1/orders?order_time=gte.${today.toISOString()}&store_id=eq.${storeId}&select=id,total_amount,status,order_items(quantity,menu_items(name))`);
-    const revenue = orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total_amount), 0);
-    const byStatus = {};
-    for (const o of orders) byStatus[o.status] = (byStatus[o.status]||0) + 1;
-    const itemMap = {};
-    for (const o of orders) {
-      for (const i of (o.order_items || [])) {
-        const n = i.menu_items?.name || '—';
-        itemMap[n] = (itemMap[n]||0) + Number(i.quantity);
-      }
-    }
-    const top = Object.entries(itemMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    el.innerHTML = `
-      <div class="analytics-grid">
-        <div class="a-card"><div class="a-val">${orders.length}</div><div class="a-lbl">Заказов сегодня</div></div>
-        <div class="a-card"><div class="a-val">${revenue.toFixed(0)} ₽</div><div class="a-lbl">Выручка сегодня</div></div>
-        ${Object.entries(statusMap).map(([s,l]) => byStatus[s] ? `<div class="a-card"><div class="a-val">${byStatus[s]}</div><div class="a-lbl">${l}</div></div>` : '').join('')}
-      </div>
-      <h3 style="margin:8px 0">Топ позиций</h3>
-      ${top.length ? top.map(([n,q],i)=>`<div class="a-item"><span>${i+1}. ${esc(n)}</span><span>${q} шт</span></div>`).join('') : '<div class="empty">Нет данных</div>'}
-    `;
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
 // ─── PULL TO REFRESH ───
@@ -2203,7 +1986,7 @@ async function loadAnalytics() {
     const el = document.querySelector('.screen.active');
     if (!el) return;
     const id = el.id.replace('screen-', '');
-    ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,profile:loadProfile})[id]?.();
+    ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,map:loadMapAdmin,profile:loadProfile})[id]?.();
   }
 })();
 

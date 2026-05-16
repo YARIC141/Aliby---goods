@@ -405,8 +405,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
   <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
-  <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина <span id="sn-cart-cnt"></span></button>
-  <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> Заказы</button>
+  <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина и заказ <span id="sn-cart-cnt"></span></button>
   <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   <div class="sn-spacer"></div>
   <div class="sn-user" id="sn-email"></div>
@@ -547,14 +546,14 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="ph">
     <button class="btn-back" onclick="goTo('store')">← Заведение</button>
     <h2 id="menu-ph-name">Товары и Услуги<span class="screen-help" data-info="Каталог товаров и услуг выбранного заведения. Добавляйте понравившееся в корзину.">?</span></h2>
-    <button class="btn btn-sm" onclick="goTo('cart')">Корзина&nbsp;<span id="menu-cart-cnt">0</span></button>
+    <button class="btn btn-sm" onclick="goTo('cart')">Корзина и заказ&nbsp;<span id="menu-cart-cnt">0</span></button>
   </div>
 
 </div>
 
 <!-- ════════════════ CART ════════════════ -->
 <div id="screen-cart" class="screen">
-  <div class="ph"><h2>Корзина<span class="screen-help" data-info="Здесь хранятся товары и услуги, которые вы выбрали. Тут же можно их оплатить.">?</span></h2></div>
+  <div class="ph"><h2>Корзина и заказ<span class="screen-help" data-info="Здесь хранятся товары и услуги, которые вы хотите заказать, а также абонементы к покупке.">?</span></h2></div>
   <div class="cart-layout">
     <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
       <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted)">🎫 Абонементы к покупке</div>
@@ -569,50 +568,12 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
     <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
     <div class="cart-foot" id="cart-foot" style="display:none">
-
-      <div class="cart-sub-block">
-        <div class="sec-title" style="border:none;margin-bottom:8px">Применить абонемент</div>
-        <select id="cart-sub-sel" style="width:100%" onchange="validateSub()"><option value="">— без абонемента —</option></select>
-        <div id="sub-val-res" style="margin-top:6px;font-size:14px"></div>
-      </div>
-
       <div class="cart-row"><span>Подытог</span><span id="c-subtotal">0 ₽</span></div>
-      <div class="cart-row" id="c-disc-row" style="display:none;color:#070">
-        <span>Скидка по абонементу</span><span id="c-discount"></span>
-      </div>
       <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
-
-      <div class="fg" style="margin-top:12px">
-        <label>Время самовывоза (необязательно)</label>
-        <input type="datetime-local" id="c-pickup">
-      </div>
-
-      <div class="pay-btns">
-        <button class="btn btn-p" onclick="payBySub()">Абонементом</button>
-        <button class="btn btn-p" onclick="payByCard()">Картой</button>
-      </div>
-
     </div>
   </div>
 </div>
 
-<!-- ════════════════ ORDERS ════════════════ -->
-<div id="screen-orders" class="screen">
-  <div class="ph"><h2>Мои заказы<span class="screen-help" data-info="История ваших заказов и текущий статус каждого из них.">?</span></h2></div>
-  <div class="pb">
-    <div class="fg">
-      <select id="ord-filter" onchange="loadOrders()">
-        <option value="">Все статусы</option>
-        <option value="pending">Ожидает оплаты</option>
-        <option value="paid">Оплачен</option>
-        <option value="ready">Готов к выдаче</option>
-        <option value="issued">Выдан</option>
-        <option value="cancelled">Отменён</option>
-      </select>
-    </div>
-    <div id="orders-list"><div class="loading">Загрузка…</div></div>
-  </div>
-</div>
 
 <!-- ════════════════ MY SUBSCRIPTIONS ════════════════ -->
 <div id="screen-subscriptions" class="screen">
@@ -726,8 +687,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
-    <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Корзина</button>
-    <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></span>Заказы</button>
+    <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Корзина<br>и заказ</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
@@ -738,22 +698,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ MODALS ════════════════ -->
 
-<div class="overlay" id="m-order">
-  <div class="modal">
-    <div class="modal-hd">
-      <h3>Заказ #<span id="mo-id"></span></h3>
-      <button class="modal-x" onclick="closeModal('m-order')">✕</button>
-    </div>
-    <div style="margin-bottom:10px">Статус: <span class="badge" id="mo-status"></span></div>
-    <div class="txt-sm" id="mo-date" style="margin-bottom:10px"></div>
-    <div class="sec-title">Позиции</div>
-    <div id="mo-items"><div class="loading">Загрузка…</div></div>
-    <hr>
-    <div class="cart-row"><span>Итого</span><strong id="mo-total"></strong></div>
-    <div class="cart-row txt-sm"><span>Способ оплаты</span><span id="mo-pay-method"></span></div>
-    <div id="mo-payment" style="margin-top:8px;font-size:12px"></div>
-  </div>
-</div>
 
 <div class="overlay" id="m-usub">
   <div class="modal">
@@ -790,7 +734,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <div id="mi-price" class="item-price" style="margin-bottom:10px"></div>
     <div id="mi-subs"></div>
     <div class="modal-ft" style="margin-top:14px">
-      <button id="mi-cart-btn" class="btn btn-p btn-full" onclick="addToCartFromDetail()">В корзину</button>
+      <button id="mi-cart-btn" class="btn btn-p btn-full" onclick="addToCartFromDetail()">В заказ</button>
     </div>
   </div>
 </div>
@@ -1046,7 +990,7 @@ function goTo(id, opts = {}) {
   }
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  ({home:loadHome,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,orders:loadOrders,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
+  ({home:loadHome,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1199,7 +1143,6 @@ async function doLogin() {
     });
     setSession(d);
     if (!(await navigateDeepLink())) goTo('map');
-    subscribePush('client');
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
@@ -1218,7 +1161,6 @@ async function doRegister() {
     if (d?.access_token) {
       setSession(d);
       if (!(await navigateDeepLink())) goTo('map');
-      subscribePush('client');
     } else {
       err.className = 'alert alert-ok';
       err.textContent = 'Аккаунт создан! Войдите с вашим email и паролем.';
@@ -1637,7 +1579,7 @@ function renderItemCard(item) {
       ${item.is_available
         ? qty > 0
           ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
-          : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В корзину</button>`
+          : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В заказ</button>`
         : '<span class="item-unavail">Недоступно</span>'}
     </div>
   </div>`;
@@ -1681,7 +1623,7 @@ function openItemDetail(id) {
 
   const btn = document.getElementById('mi-cart-btn');
   btn.disabled = !item.is_available;
-  btn.textContent = item.is_available ? 'В корзину' : 'Недоступно';
+  btn.textContent = item.is_available ? 'В заказ' : 'Недоступно';
   openModal('m-item');
 }
 
@@ -1745,26 +1687,8 @@ function updateCartCount() {
 // ─── CART ───
 function updateCartTotals() {
   const subtotal = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
-  const disc = S.appliedSub?.amount || 0;
   document.getElementById('c-subtotal').textContent = subtotal + ' ₽';
-  document.getElementById('c-disc-row').style.display = disc > 0 ? 'flex' : 'none';
-  document.getElementById('c-discount').textContent = '−' + disc + ' ₽';
-  document.getElementById('c-total').textContent = Math.max(0, subtotal - disc) + ' ₽';
-}
-
-function calcCartDisc(us) {
-  const plan = us.subscriptions;
-  if (!plan) return 0;
-  const ipu = plan.items_per_use ?? 1;
-  let remaining = ipu, disc = 0;
-  for (const { item, qty } of S.cart) {
-    if (remaining <= 0) break;
-    if (!subCoversItem(plan, item)) continue;
-    const apply = Math.min(qty, remaining);
-    disc += item.price * apply;
-    remaining -= apply;
-  }
-  return disc;
+  document.getElementById('c-total').textContent = subtotal + ' ₽';
 }
 
 async function renderCart() {
@@ -1786,31 +1710,6 @@ async function renderCart() {
     </div>`;
   }).join('');
   updateCartTotals();
-  await loadCartSubs();
-}
-
-async function loadCartSubs() {
-  try {
-    const usubs = await req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)');
-    S.cartUsubs = usubs.filter(u => u.subscriptions?.store_id === S.cartStoreId);
-    const sel = document.getElementById('cart-sub-sel');
-    const prev = S.appliedSub?.userSubId || sel.value;
-    sel.innerHTML = '<option value="">— без абонемента —</option>';
-    S.cartUsubs.forEach(u => {
-      const o = document.createElement('option');
-      o.value = u.id;
-      o.textContent = `${u.subscriptions?.name || 'Абонемент'} (${u.remaining_uses ?? '∞'} исп.)`;
-      sel.appendChild(o);
-    });
-    if (prev && [...sel.options].some(o => o.value === prev)) {
-      sel.value = prev;
-      await validateSub(true);
-    } else if (!S.appliedSub) {
-      let bestDisc = 0, bestId = '';
-      S.cartUsubs.forEach(u => { const d = calcCartDisc(u); if (d > bestDisc) { bestDisc = d; bestId = u.id; } });
-      if (bestId) { sel.value = bestId; await validateSub(false); }
-    }
-  } catch(e) {}
 }
 
 function cartQty(id, d) {
@@ -1819,144 +1718,6 @@ function cartQty(id, d) {
   S.cart[i].qty += d;
   if (S.cart[i].qty <= 0) { S.cart.splice(i, 1); S.appliedSub = null; }
   updateCartCount(); renderCart();
-}
-
-async function validateSub(silent = false) {
-  const subId = document.getElementById('cart-sub-sel').value;
-  const res = document.getElementById('sub-val-res');
-  if (!subId) { S.appliedSub = null; res.textContent = ''; updateCartTotals(); return; }
-  res.textContent = 'Проверка…';
-
-  if (!silent) {
-    const us = S.cartUsubs.find(u => u.id === subId);
-    if (us) {
-      const plan = us.subscriptions;
-      const ipu = plan?.items_per_use ?? 1;
-      let totalCovered = 0;
-      S.cart.forEach(({ item, qty }) => { if (subCoversItem(plan, item)) totalCovered += qty; });
-      if (totalCovered > ipu) {
-        const disc = calcCartDisc(us);
-        const ok = confirm(
-          `Абонемент покрывает до ${ipu} шт. за одно списание.\n` +
-          `В корзине ${totalCovered} шт. подходящих позиций.\n` +
-          `Скидка применится только к ${ipu} шт. — ${disc} ₽.\n\nПродолжить?`
-        );
-        if (!ok) { S.appliedSub = null; res.textContent = ''; document.getElementById('cart-sub-sel').value = ''; updateCartTotals(); return; }
-      }
-    }
-  }
-
-  try {
-    const r = await req('/functions/v1/validate-subscription', {
-      method: 'POST',
-      body: JSON.stringify({
-        user_subscription_id: subId,
-        order_items: S.cart.map(c => ({ menu_item_id: c.item.id, quantity: c.qty })),
-      }),
-    });
-    if (r.valid) {
-      S.appliedSub = { userSubId: subId, amount: r.discount_amount };
-      res.innerHTML = `<span style="color:#070">✓ Скидка ${r.discount_amount} ₽</span>`;
-    } else {
-      S.appliedSub = null;
-      res.innerHTML = `<span style="color:#c00">✗ ${esc(r.reason)}</span>`;
-    }
-    updateCartTotals();
-  } catch(e) { res.textContent = 'Ошибка проверки'; }
-}
-
-async function payBySub()  { if (!S.appliedSub) { alert('Сначала проверьте абонемент'); return; } await checkoutOrder('subscription'); }
-async function payByCard() { await checkoutOrder('card'); }
-
-async function checkoutOrder(method) {
-  try {
-    const sub  = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
-    const disc = method === 'subscription' ? (S.appliedSub?.amount || 0) : 0;
-    const pickup = document.getElementById('c-pickup').value;
-
-    // POST /rest/v1/orders
-    const orders = await req('/rest/v1/orders?select=*', {
-      method: 'POST', headers: { Prefer: 'return=representation' },
-      body: JSON.stringify({
-        user_id: S.session.user.id, store_id: S.cartStoreId,
-        total_amount: Math.max(0, sub - disc), payment_method: method,
-        pickup_time: pickup || null,
-        applied_user_subscription_id: method === 'subscription' ? S.appliedSub?.userSubId : null,
-        subscription_discount: disc,
-      }),
-    });
-    const orderId = orders[0].id;
-
-    // POST /rest/v1/order_items
-    await req('/rest/v1/order_items', {
-      method: 'POST',
-      body: JSON.stringify(S.cart.map(c => ({
-        order_id: orderId, menu_item_id: c.item.id,
-        quantity: c.qty, price_at_time: c.item.price,
-      }))),
-    });
-
-    if (method === 'subscription') {
-      await req('/functions/v1/redeem-subscription', {
-        method: 'POST',
-        body: JSON.stringify({ user_subscription_id: S.appliedSub.userSubId, order_id: orderId, amount_discounted: disc }),
-      });
-    }
-    if (method === 'card') {
-      // Имитация оплаты: сразу переводим заказ в статус paid
-      await req(`/rest/v1/orders?id=eq.${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'paid' }),
-      });
-    }
-    S.cart = []; S.appliedSub = null; updateCartCount();
-    const msg = method === 'card' ? 'Заказ оформлен! Оплата картой имитирована.' : 'Заказ оформлен!';
-    alert(msg); goTo('orders');
-  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
-}
-
-// ─── ORDERS ───
-async function loadOrders() {
-  const el = document.getElementById('orders-list');
-  const status = document.getElementById('ord-filter').value;
-  el.innerHTML = SK.orderCards();
-  try {
-    // GET /rest/v1/orders?user_id=eq.{id}&order=order_time.desc
-    let url = `/rest/v1/orders?user_id=eq.${S.session.user.id}&order=order_time.desc`;
-    if (status) url += `&status=eq.${status}`;
-    const orders = await req(url);
-    if (!orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
-    el.innerHTML = orders.map(o => `
-      <div class="order-card" onclick="openOrderModal('${o.id}')">
-        <div class="order-hd">
-          <span class="order-id">№${o.id.slice(0,8)}</span>
-          <span class="badge b-${o.status}">${statusMap[o.status] || o.status}</span>
-        </div>
-        <div class="order-date">${fmtDate(o.order_time)}</div>
-        <div><strong>${o.total_amount} ₽</strong><span class="txt-sm"> · ${payMap[o.payment_method] || '—'}</span></div>
-      </div>`).join('');
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
-}
-
-async function openOrderModal(id) {
-  openModal('m-order');
-  document.getElementById('mo-id').textContent = id.slice(0,8);
-  document.getElementById('mo-items').innerHTML = SK.orderCards(2);
-  try {
-    const [ords, items] = await Promise.all([
-      req(`/rest/v1/orders?id=eq.${id}`),
-      req(`/rest/v1/order_items?order_id=eq.${id}&select=*,menu_items(name)`),
-    ]);
-    const o = ords[0];
-    document.getElementById('mo-status').textContent = statusMap[o.status] || o.status;
-    document.getElementById('mo-status').className   = `badge b-${o.status}`;
-    document.getElementById('mo-date').textContent   = fmtDate(o.order_time);
-    document.getElementById('mo-total').textContent  = o.total_amount + ' ₽';
-    document.getElementById('mo-pay-method').textContent = payMap[o.payment_method] || '—';
-    document.getElementById('mo-items').innerHTML = items.length
-      ? items.map(i => `<div class="cart-row"><span>${esc(i.menu_items?.name || '—')} × ${i.quantity}</span><span>${(i.price_at_time * i.quantity).toFixed(2)} ₽</span></div>`).join('')
-      : '<div class="empty">Нет позиций</div>';
-  } catch(e) { document.getElementById('mo-items').innerHTML = '<div class="empty">Ошибка</div>'; }
 }
 
 // ─── MY SUBSCRIPTIONS ───
@@ -2432,7 +2193,7 @@ async function restoreNav() {
     const ok = await navigateDeepLink();
     if (ok) return;
   }
-  const SCREENS = ['home','map','store','menu','cart','orders','subscriptions','profile'];
+  const SCREENS = ['home','map','store','menu','cart','subscriptions','profile'];
   const nav = localStorage.getItem('alliby_nav');
   goTo(nav && SCREENS.includes(nav) ? nav : 'map');
 }
@@ -2446,33 +2207,6 @@ function hideSplash() {
 }
 setTimeout(hideSplash, 2000);
 
-// ─── SAVINGS CHART ───
-function renderSavingsChart(data) {
-  if (!data.length) return '';
-  const W = 340, H = 168;
-  const pad = { top: 26, right: 16, bottom: 26, left: 10 };
-  const cW = W - pad.left - pad.right;
-  const cH = H - pad.top - pad.bottom;
-  const n = data.length;
-  const maxVal = Math.max(...data.map(d => d.amount), 1);
-  const xOf = i => pad.left + (n === 1 ? cW / 2 : (i / (n - 1)) * cW);
-  const yOf = v => pad.top + cH * (1 - v / maxVal);
-  const fmt = v => v >= 1000 ? (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + 'к' : Math.round(v) + ' ₽';
-
-  let line = '', dots = '', amtLabels = '', monLabels = '';
-  if (n > 1) {
-    const pts = data.map((d, i) => `${xOf(i).toFixed(1)},${yOf(d.amount).toFixed(1)}`).join(' ');
-    line = `<polyline points="${pts}" fill="none" stroke="var(--ok)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity=".75"/>`;
-  }
-  data.forEach((d, i) => {
-    const x = xOf(i).toFixed(1), y = yOf(d.amount).toFixed(1);
-    dots      += `<circle cx="${x}" cy="${y}" r="3.5" fill="var(--ok)" stroke="var(--bg-1)" stroke-width="1.5"/>`;
-    amtLabels += `<text x="${x}" y="${(+y - 8).toFixed(1)}" text-anchor="middle" font-size="10" font-family="sans-serif" fill="var(--fg-2)">${fmt(d.amount)}</text>`;
-    monLabels += `<text x="${x}" y="${H - 2}" text-anchor="middle" font-size="10" font-family="sans-serif" fill="var(--fg-4)">${d.label}</text>`;
-  });
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible">${line}${dots}${amtLabels}${monLabels}</svg>`;
-}
-
 // ─── HOME ───
 async function loadHome() {
   const el = document.getElementById('home-content');
@@ -2480,61 +2214,23 @@ async function loadHome() {
   try {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
-    const [orders, allSavings] = await Promise.all([
-      req(`/rest/v1/orders?user_id=eq.${uid}&order=order_time.desc&limit=20&select=id,order_time,status,total_amount,subscription_discount,stores(id,name),order_items(quantity,price_at_time,menu_items(id,name,image_url,description,price,category_id,is_available))`),
-      req(`/rest/v1/orders?user_id=eq.${uid}&status=neq.cancelled&subscription_discount=gt.0&select=order_time,subscription_discount,total_amount`),
-    ]);
-    const doneOrders = orders.filter(o => o.status !== 'cancelled');
-    const totalSaved = allSavings.reduce((s, o) => s + Number(o.subscription_discount || 0), 0);
-    const totalPaid  = allSavings.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-    const pct = (totalSaved + totalPaid) > 0 ? Math.round(totalSaved / (totalSaved + totalPaid) * 100) : 0;
-    const recentItems = [];
-    for (const order of orders) {
-      if (order.status === 'cancelled') continue;
-      for (const oi of (order.order_items || [])) {
-        const mi = oi.menu_items;
-        if (!mi) continue;
-        itemCache.set(mi.id, mi);
-        recentItems.push({ item: mi, qty: oi.quantity, price: oi.price_at_time, store: order.stores, date: order.order_time });
-        if (recentItems.length >= 5) break;
-      }
-      if (recentItems.length >= 5) break;
+    const active = await req('/rest/v1/user_subscriptions?status=eq.active&gift_status=is.null&select=id,remaining_uses,end_date,subscriptions(name)&order=purchase_date.desc&limit=5');
+    if (!active.length) {
+      el.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--fg-3)">Нет активных абонементов.<br><br>Перейдите в <strong>Заведения</strong>, чтобы приобрести абонемент.</div>';
+      return;
     }
-    const savingsHtml = `
-      <div class="home-savings">
-        <div class="home-savings-val">${totalSaved.toFixed(0)} ₽</div>
-        ${pct > 0 ? `<div class="home-savings-pct">${pct}% от всех трат</div>` : ''}
-        <div class="home-savings-lbl">сэкономлено по абонементам за всё время</div>
-      </div>`;
-    const monthMap = {};
-    for (const o of allSavings) {
-      const disc = Number(o.subscription_discount || 0);
-      if (!disc) continue;
-      const d = new Date(o.order_time);
-      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}`;
-      const label = d.toLocaleDateString('ru-RU', { month: 'short' }).replace('.','');
-      if (!monthMap[key]) monthMap[key] = { label, amount: 0 };
-      monthMap[key].amount += disc;
-    }
-    const chartData = Object.entries(monthMap).sort(([a],[b]) => a < b ? -1 : 1).map(([,v]) => v);
-    const chartHtml = chartData.length ? `
-      <div class="home-chart">
-        <div class="home-chart-title">Экономия по месяцам</div>
-        ${renderSavingsChart(chartData)}
-      </div>` : '';
-    const itemsHtml = recentItems.length
-      ? `<h3 style="margin:0 0 10px">Недавние покупки</h3>` +
-        recentItems.map(ri => `
-          <div class="recent-card" onclick="openItemDetail('${ri.item.id}')">
-            <div class="recent-card-img">${itemFallbackImg(ri.item,'')}</div>
-            <div class="recent-card-body">
-              <div class="recent-card-name">${esc(ri.item.name)}</div>
-              <div class="recent-card-meta">${fmtShortDate(ri.date)}${ri.qty > 1 ? ' · ' + ri.qty + ' шт' : ''} · ${ri.price} ₽</div>
-            </div>
-            <span class="recent-card-store" onclick="event.stopPropagation();openStoreFromHome('${ri.store?.id || ''}','${esc(ri.store?.name || '')}')">${esc(ri.store?.name || '—')}</span>
-          </div>`).join('')
-      : '<div class="empty" style="margin-top:12px">Ещё нет покупок</div>';
-    el.innerHTML = savingsHtml + chartHtml + itemsHtml;
+    el.innerHTML = '<h3 style="margin:0 0 12px">Активные абонементы</h3>' +
+      active.map(u => `
+        <div class="usub-card" onclick="goTo('subscriptions')" style="cursor:pointer">
+          <div class="usub-hd">
+            <span class="usub-name">${esc(u.subscriptions?.name || 'Абонемент')}</span>
+            <span class="badge b-active">активен</span>
+          </div>
+          <div class="usub-stats">
+            <div class="usub-stat"><span class="lbl">Осталось исп.</span><strong>${u.remaining_uses ?? '∞'}</strong></div>
+            <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(u.end_date)}</strong></div>
+          </div>
+        </div>`).join('');
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
@@ -2592,11 +2288,11 @@ window.addEventListener('hashchange', () => {
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(ok => {
-            if (ok) { restoreNav(); subscribePush('client'); }
+            if (ok) { restoreNav(); }
             else { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
           });
         } else {
-          setSession(d); restoreNav(); subscribePush('client');
+          setSession(d); restoreNav();
         }
         return;
       }
@@ -2614,43 +2310,11 @@ window.addEventListener('hashchange', () => {
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
-  navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data?.type === 'OPEN_ORDER' && e.data.orderId) {
-      goTo('orders'); openOrderModal(e.data.orderId);
-    }
-  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
       .then(reg => reg.update())
       .catch(() => {});
   });
-}
-
-function urlBase64ToUint8Array(b) {
-  const p = b.replace(/-/g,'+').replace(/_/g,'/').padEnd(b.length+(4-b.length%4)%4,'=');
-  const r = atob(p); const o = new Uint8Array(r.length);
-  for (let i = 0; i < r.length; i++) o[i] = r.charCodeAt(i);
-  return o;
-}
-
-async function subscribePush(app) {
-  if (!('PushManager' in window) || !S.session) return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-    }
-    const j = sub.toJSON();
-    await req('/rest/v1/push_subscriptions', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({ user_id: S.session.user?.id, app, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth_key: j.keys.auth }),
-    });
-  } catch(e) { console.warn('Push subscribe:', e); }
 }
 
 // ─── PULL TO REFRESH ───
