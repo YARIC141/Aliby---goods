@@ -1,4 +1,4 @@
-// v9
+// v10
 const CACHE = 'alliby-tiles';
 const TILE_PATH = '/functions/v1/vector-tiles/';
 
@@ -48,26 +48,26 @@ self.addEventListener('push', e => {
       badge:   '/icons/icon-192.png',
       data:    extra,
       vibrate: [200, 100, 200],
-      tag:     extra.orderId || 'aliby',
+      tag:     extra.screen || 'aliby',
     })
   );
 });
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const orderId = e.notification.data?.orderId;
-  const scope   = self.registration.scope;
+  const screen = e.notification.data?.screen || 'home';
+  const scope  = self.registration.scope;
 
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       for (const client of clients) {
         if (client.url.startsWith(scope)) {
           client.focus();
-          client.postMessage({ type: 'OPEN_ORDER', orderId });
+          client.postMessage({ type: 'NAVIGATE', screen });
           return;
         }
       }
-      return self.clients.openWindow(scope + (orderId ? '#orders' : ''));
+      return self.clients.openWindow(scope);
     })
   );
 });

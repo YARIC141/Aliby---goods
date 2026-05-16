@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -458,7 +459,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ HOME ════════════════ -->
 <div id="screen-home" class="screen">
-  <div class="ph"><h2>Главная</h2></div>
+  <div class="ph"><h2>Главная</h2><button class="btn btn-sm" onclick="showQrModal()">QR-код</button></div>
   <div class="pb" id="home-content" style="padding:12px 16px">
     <div class="loading">Загрузка…</div>
   </div>
@@ -792,6 +793,18 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   </div>
 </div>
 
+<!-- ════════════════ QR MODAL ════════════════ -->
+<div class="overlay" id="m-qr">
+  <div class="modal" style="max-width:320px;text-align:center">
+    <div class="modal-hd">
+      <h3>Мой QR-код</h3>
+      <button class="modal-x" onclick="closeModal('m-qr')">✕</button>
+    </div>
+    <div id="qr-canvas" style="display:flex;justify-content:center;padding:8px 0"></div>
+    <p class="txt-sm" style="margin-top:10px;color:var(--fg-3)">Покажите код администратору для списания абонемента</p>
+  </div>
+</div>
+
 <script>
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
@@ -974,6 +987,59 @@ function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : 
 const statusMap = { pending:'Создан', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const VAPID_PUBLIC_KEY = 'BAqiEa54OoLDA-bJ74rSG-4C_au7IbwXL3ZEybKY-GqlQEcwnRHJrZBIAxiX4pVMuJ1FdvtNSQMOQg8lRv-d2hc';
 const subStMap  = { pending:'Ожидает', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
+
+// ─── PUSH ───
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function subscribePush(app) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    const json = sub.toJSON();
+    await req('/rest/v1/push_subscriptions', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify({
+        user_id: S.session.user.id,
+        app,
+        endpoint: json.endpoint,
+        p256dh: json.keys.p256dh,
+        auth_key: json.keys.auth,
+      }),
+    });
+  } catch {}
+}
+
+// ─── QR CODE ───
+function showQrModal() {
+  const uid = S.session?.user?.id;
+  if (!uid) return;
+  const container = document.getElementById('qr-canvas');
+  container.innerHTML = '';
+  new QRCode(container, { text: uid, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+  openModal('m-qr');
+}
+
+// ─── SW MESSAGES ───
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'NAVIGATE') {
+      const scr = e.data.screen || 'home';
+      goTo(scr);
+    }
+  });
+}
 const payMap    = { card:'Карта', subscription:'Абонемент', mixed:'Смешанный' };
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
@@ -1142,6 +1208,7 @@ async function doLogin() {
       body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
     });
     setSession(d);
+    subscribePush('client');
     if (!(await navigateDeepLink())) goTo('map');
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
@@ -1160,6 +1227,7 @@ async function doRegister() {
     });
     if (d?.access_token) {
       setSession(d);
+      subscribePush('client');
       if (!(await navigateDeepLink())) goTo('map');
     } else {
       err.className = 'alert alert-ok';
@@ -2214,24 +2282,88 @@ async function loadHome() {
   try {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
-    const active = await req('/rest/v1/user_subscriptions?status=eq.active&gift_status=is.null&select=id,remaining_uses,end_date,subscriptions(name)&order=purchase_date.desc&limit=5');
-    if (!active.length) {
-      el.innerHTML = '<div style="text-align:center;padding:32px 0;color:var(--fg-3)">Нет активных абонементов.<br><br>Перейдите в <strong>Заведения</strong>, чтобы приобрести абонемент.</div>';
-      return;
-    }
-    el.innerHTML = '<h3 style="margin:0 0 12px">Активные абонементы</h3>' +
-      active.map(u => `
-        <div class="usub-card" onclick="goTo('subscriptions')" style="cursor:pointer">
-          <div class="usub-hd">
-            <span class="usub-name">${esc(u.subscriptions?.name || 'Абонемент')}</span>
-            <span class="badge b-active">активен</span>
-          </div>
-          <div class="usub-stats">
-            <div class="usub-stat"><span class="lbl">Осталось исп.</span><strong>${u.remaining_uses ?? '∞'}</strong></div>
-            <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(u.end_date)}</strong></div>
-          </div>
-        </div>`).join('');
+
+    const [active, redemptions] = await Promise.all([
+      req('/rest/v1/user_subscriptions?status=eq.active&gift_status=is.null&select=id,remaining_uses,end_date,subscriptions(name)&order=purchase_date.desc&limit=10'),
+      req('/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions(subscriptions(name,stores(name)))&order=redeemed_at.desc&limit=50'),
+    ]);
+
+    const totalSaved = redemptions.reduce((s, r) => s + (Number(r.amount_discounted) || 0), 0);
+    const chartHtml = redemptions.length ? renderSavingsChart(redemptions, totalSaved) : '';
+
+    const activeHtml = active.length
+      ? '<div class="sec-title" style="margin-bottom:8px">Активные абонементы</div>' +
+        active.map(u => `
+          <div class="usub-card" onclick="goTo('subscriptions')" style="cursor:pointer;margin-bottom:8px">
+            <div class="usub-hd">
+              <span class="usub-name">${esc(u.subscriptions?.name || 'Абонемент')}</span>
+              <span class="badge b-active">активен</span>
+            </div>
+            <div class="usub-stats">
+              <div class="usub-stat"><span class="lbl">Осталось исп.</span><strong>${u.remaining_uses ?? '∞'}</strong></div>
+              <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(u.end_date)}</strong></div>
+            </div>
+          </div>`).join('')
+      : '<div style="text-align:center;padding:20px 0;color:var(--fg-3)">Нет активных абонементов.<br>Перейдите в <strong>Заведения</strong>.</div>';
+
+    const histHtml = redemptions.length
+      ? '<div class="sec-title" style="margin:16px 0 8px">История списаний</div>' +
+        redemptions.map(r => {
+          const subName = r.user_subscriptions?.subscriptions?.name || 'Абонемент';
+          const storeName = r.user_subscriptions?.subscriptions?.stores?.name || '';
+          const disc = Number(r.amount_discounted) || 0;
+          return `<div class="card" style="margin-bottom:6px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font:500 14px/1.2 var(--font-sans)">${esc(subName)}</div>
+              ${storeName ? `<div class="txt-muted">${esc(storeName)}</div>` : ''}
+              <div class="txt-muted">${fmtShortDate(r.redeemed_at)}</div>
+            </div>
+            <div style="font:600 16px/1 var(--font-display);color:var(--ok)">−${disc.toFixed(0)} ₽</div>
+          </div>`;
+        }).join('')
+      : '';
+
+    el.innerHTML = chartHtml + activeHtml + histHtml;
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+function renderSavingsChart(redemptions, totalSaved) {
+  // Group by day (last 7 days)
+  const now = new Date();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    days.push({ label: d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}), total: 0, key: d.toISOString().slice(0,10) });
+  }
+  redemptions.forEach(r => {
+    const key = r.redeemed_at ? r.redeemed_at.slice(0, 10) : '';
+    const day = days.find(d => d.key === key);
+    if (day) day.total += Number(r.amount_discounted) || 0;
+  });
+  const max = Math.max(...days.map(d => d.total), 1);
+  const bars = days.map(d => {
+    const h = Math.round((d.total / max) * 48);
+    const active = d.total > 0;
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font:500 10px/1 var(--font-mono);color:var(--fg-4)">${active ? d.total.toFixed(0) : ''}</div>
+      <div style="width:100%;max-width:32px;height:48px;display:flex;align-items:flex-end">
+        <div style="width:100%;height:${h || 2}px;background:${active ? 'var(--ok)' : 'var(--bg-3)'};border-radius:3px 3px 0 0;transition:height .3s"></div>
+      </div>
+      <div style="font:400 9px/1 var(--font-mono);color:var(--fg-4);writing-mode:vertical-lr;transform:rotate(180deg);height:28px;overflow:hidden">${d.label}</div>
+    </div>`;
+  }).join('');
+
+  const count = redemptions.length;
+  return `<div class="card" style="margin-bottom:14px;padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+      <div>
+        <div style="font:400 22px/1 var(--font-display);color:var(--ok)">−${totalSaved.toFixed(0)} ₽</div>
+        <div class="txt-muted" style="margin-top:2px">сэкономлено · ${count} исп.</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:4px;align-items:flex-end">${bars}</div>
+  </div>`;
 }
 
 function openStoreFromHome(storeId, storeName) {
@@ -2288,11 +2420,11 @@ window.addEventListener('hashchange', () => {
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(ok => {
-            if (ok) { restoreNav(); }
+            if (ok) { restoreNav(); subscribePush('client'); }
             else { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
           });
         } else {
-          setSession(d); restoreNav();
+          setSession(d); restoreNav(); subscribePush('client');
         }
         return;
       }

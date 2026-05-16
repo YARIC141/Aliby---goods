@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -313,6 +314,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="categories"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Категории</button>
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
+    <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg> QR</button>
     <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Карта и метки</button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
@@ -556,6 +558,24 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div>
 
 
+<!-- ════════════════ QR SCANNER ════════════════ -->
+<div id="screen-qr" class="screen">
+  <div class="ph"><h2>Сканер QR</h2></div>
+  <div class="pb">
+    <div style="margin-bottom:12px;display:flex;gap:8px">
+      <button class="btn btn-p" id="qr-start-btn" onclick="startQrCamera()">📷 Сканировать QR</button>
+      <button class="btn" id="qr-stop-btn" style="display:none" onclick="stopQrCamera()">✕ Остановить</button>
+    </div>
+    <div id="qr-video-wrap" style="display:none;position:relative;margin-bottom:14px">
+      <video id="qr-video" autoplay playsinline muted style="width:100%;max-width:400px;border-radius:var(--r-3);border:2px solid var(--accent);display:block"></video>
+      <canvas id="qr-canvas" style="display:none"></canvas>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:160px;height:160px;border:2px solid rgba(255,255,255,.7);border-radius:10px;pointer-events:none"></div>
+    </div>
+    <div id="qr-status" class="txt-muted" style="margin-bottom:12px"></div>
+    <div id="qr-results"></div>
+  </div>
+</div>
+
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
   <div class="bn-row">
@@ -563,6 +583,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Карта</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
+    <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></span>QR</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
@@ -572,6 +593,25 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div><!-- #app -->
 
 <!-- ════════════════ MODALS ════════════════ -->
+
+<!-- Redeem confirm modal -->
+<div class="overlay" id="m-redeem">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-hd">
+      <h3>Списать использование</h3>
+      <button class="modal-x" onclick="closeModal('m-redeem')">✕</button>
+    </div>
+    <div id="redeem-info" style="margin-bottom:16px;font:400 14px/1.5 var(--font-sans);color:var(--fg-2)"></div>
+    <div class="fg">
+      <label>Количество списаний</label>
+      <input type="number" id="redeem-qty" value="1" min="1" max="20" style="max-width:100px">
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-redeem')">Отмена</button>
+      <button class="btn btn-p" onclick="confirmRedeem()">ОК — Списать</button>
+    </div>
+  </div>
+</div>
 
 <!-- Store modal -->
 <div class="overlay" id="m-store">
@@ -980,7 +1020,8 @@ function goTo(id, opts = {}) {
   }
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,map:loadMapAdmin,profile:loadProfile})[id]?.();
+  if (prevId === 'qr' && id !== 'qr') stopQrCamera();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1938,6 +1979,150 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
 }
 
+// ─── QR SCANNER ───
+let _qrStream = null;
+let _qrAnimId = null;
+let _redeemSubId = null;
+
+function loadQrScreen() {
+  stopQrCamera();
+  document.getElementById('qr-results').innerHTML = '';
+  document.getElementById('qr-status').textContent = 'Нажмите «Сканировать QR» для запуска камеры';
+}
+
+async function startQrCamera() {
+  if (_qrStream) stopQrCamera();
+  const video = document.getElementById('qr-video');
+  const wrap  = document.getElementById('qr-video-wrap');
+  const status = document.getElementById('qr-status');
+  try {
+    _qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = _qrStream;
+    wrap.style.display = 'block';
+    document.getElementById('qr-start-btn').style.display = 'none';
+    document.getElementById('qr-stop-btn').style.display = '';
+    status.textContent = 'Наведите камеру на QR-код клиента…';
+    video.onloadedmetadata = () => { video.play(); scanQrFrame(); };
+  } catch (e) {
+    status.textContent = 'Ошибка доступа к камере: ' + (e.message || e);
+  }
+}
+
+function stopQrCamera() {
+  if (_qrAnimId) { cancelAnimationFrame(_qrAnimId); _qrAnimId = null; }
+  if (_qrStream) { _qrStream.getTracks().forEach(t => t.stop()); _qrStream = null; }
+  const video = document.getElementById('qr-video');
+  if (video) { video.srcObject = null; }
+  const wrap = document.getElementById('qr-video-wrap');
+  if (wrap) wrap.style.display = 'none';
+  const startBtn = document.getElementById('qr-start-btn');
+  if (startBtn) startBtn.style.display = '';
+  const stopBtn = document.getElementById('qr-stop-btn');
+  if (stopBtn) stopBtn.style.display = 'none';
+}
+
+function scanQrFrame() {
+  const video  = document.getElementById('qr-video');
+  const canvas = document.getElementById('qr-canvas');
+  if (!video || !_qrStream || video.readyState < 2) { _qrAnimId = requestAnimationFrame(scanQrFrame); return; }
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
+  if (code?.data && isValidUuid(code.data)) {
+    stopQrCamera();
+    handleQrResult(code.data);
+  } else {
+    _qrAnimId = requestAnimationFrame(scanQrFrame);
+  }
+}
+
+function isValidUuid(s) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+
+async function handleQrResult(userId) {
+  const status  = document.getElementById('qr-status');
+  const results = document.getElementById('qr-results');
+  status.textContent = 'QR считан, загрузка абонементов…';
+  results.innerHTML  = '<div class="loading">Загрузка…</div>';
+  try {
+    const subs = await req(
+      `/rest/v1/user_subscriptions?user_id=eq.${userId}&status=eq.active&select=id,remaining_uses,end_date,subscriptions(id,name,price,total_uses,store_id,stores(id,name))&order=purchase_date.desc`
+    );
+    if (!subs.length) {
+      results.innerHTML = '<div class="empty">У клиента нет активных абонементов</div>';
+      status.textContent = '';
+      return;
+    }
+    // Group by store
+    const byStore = {};
+    subs.forEach(us => {
+      const storeId   = us.subscriptions?.store_id || 'none';
+      const storeName = us.subscriptions?.stores?.name || 'Без заведения';
+      if (!byStore[storeId]) byStore[storeId] = { storeName, items: [] };
+      byStore[storeId].items.push(us);
+    });
+    results.innerHTML = Object.values(byStore).map(g => `
+      <div class="sec-title" style="margin-bottom:6px">${esc(g.storeName)}</div>
+      ${g.items.map(us => {
+        const sub = us.subscriptions;
+        const disc = (sub?.total_uses > 0 && sub?.price) ? (sub.price / sub.total_uses).toFixed(0) : '—';
+        return `<div class="card" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font:600 14px/1.2 var(--font-sans)">${esc(sub?.name || 'Абонемент')}</div>
+            <div class="txt-muted">Осталось: ${us.remaining_uses ?? '∞'} · −${disc} ₽/исп.</div>
+            <div class="txt-muted">До ${us.end_date ? new Date(us.end_date).toLocaleDateString('ru-RU') : '∞'}</div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="openRedeemModal('${us.id}','${esc(sub?.name||'')}',${us.remaining_uses})">Потратить</button>
+        </div>`;
+      }).join('')}
+    `).join('<hr style="margin:12px 0">');
+    status.textContent = `Найдено абонементов: ${subs.length}`;
+  } catch(e) {
+    results.innerHTML = '<div class="empty">Ошибка загрузки абонементов</div>';
+    status.textContent = '';
+  }
+}
+
+function openRedeemModal(userSubId, subName, remaining) {
+  _redeemSubId = userSubId;
+  document.getElementById('redeem-info').innerHTML =
+    `<strong>${esc(subName)}</strong><br>Осталось использований: <strong>${remaining ?? '∞'}</strong>`;
+  document.getElementById('redeem-qty').value = 1;
+  openModal('m-redeem');
+}
+
+async function confirmRedeem() {
+  if (!_redeemSubId) return;
+  const qty = parseInt(document.getElementById('redeem-qty').value, 10) || 1;
+  closeModal('m-redeem');
+  const status = document.getElementById('qr-status');
+  status.textContent = 'Списываем…';
+  try {
+    const res = await req('/functions/v1/admin-redeem', {
+      method: 'POST',
+      body: JSON.stringify({ user_subscription_id: _redeemSubId, quantity: qty }),
+    });
+    status.textContent = `Списано ${res.redeemed} исп. · осталось ${res.remaining_uses} · −${(res.amount_discounted||0).toFixed(0)} ₽`;
+    // Refresh the current results by re-scanning logic is not needed; just update displayed card
+    document.querySelectorAll('#qr-results .card').forEach(card => {
+      if (card.querySelector(`[onclick*="${_redeemSubId}"]`)) {
+        const muted = card.querySelectorAll('.txt-muted')[0];
+        if (muted) muted.textContent = `Осталось: ${res.remaining_uses}`;
+        const btn = card.querySelector('button');
+        if (btn) btn.setAttribute('onclick', `openRedeemModal('${_redeemSubId}','',${res.remaining_uses})`);
+      }
+    });
+    _redeemSubId = null;
+  } catch(e) {
+    status.textContent = 'Ошибка: ' + (e.message || 'неизвестная ошибка');
+    _redeemSubId = null;
+  }
+}
+
 // ─── PULL TO REFRESH ───
 (function() {
   let startY = 0, startX = 0, dy = 0, tracking = false;
@@ -1986,7 +2171,7 @@ if ('serviceWorker' in navigator) {
     const el = document.querySelector('.screen.active');
     if (!el) return;
     const id = el.id.replace('screen-', '');
-    ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,map:loadMapAdmin,profile:loadProfile})[id]?.();
+    ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile})[id]?.();
   }
 })();
 
