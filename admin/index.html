@@ -1983,6 +1983,7 @@ if ('serviceWorker' in navigator) {
 let _qrStream = null;
 let _qrAnimId = null;
 let _redeemSubId = null;
+let _scannedUserId = null;
 
 function loadQrScreen() {
   stopQrCamera();
@@ -2044,6 +2045,7 @@ function isValidUuid(s) {
 }
 
 async function handleQrResult(userId) {
+  _scannedUserId = userId;
   const status  = document.getElementById('qr-status');
   const results = document.getElementById('qr-results');
   status.textContent = 'QR считан, загрузка абонементов…';
@@ -2101,25 +2103,17 @@ async function confirmRedeem() {
   closeModal('m-redeem');
   const status = document.getElementById('qr-status');
   status.textContent = 'Списываем…';
+  const subId = _redeemSubId;
+  _redeemSubId = null;
   try {
     const res = await req('/functions/v1/admin-redeem', {
       method: 'POST',
-      body: JSON.stringify({ user_subscription_id: _redeemSubId, quantity: qty }),
+      body: JSON.stringify({ user_subscription_id: subId, quantity: qty }),
     });
-    status.textContent = `Списано ${res.redeemed} исп. · осталось ${res.remaining_uses} · −${(res.amount_discounted||0).toFixed(0)} ₽`;
-    // Refresh the current results by re-scanning logic is not needed; just update displayed card
-    document.querySelectorAll('#qr-results .card').forEach(card => {
-      if (card.querySelector(`[onclick*="${_redeemSubId}"]`)) {
-        const muted = card.querySelectorAll('.txt-muted')[0];
-        if (muted) muted.textContent = `Осталось: ${res.remaining_uses}`;
-        const btn = card.querySelector('button');
-        if (btn) btn.setAttribute('onclick', `openRedeemModal('${_redeemSubId}','',${res.remaining_uses})`);
-      }
-    });
-    _redeemSubId = null;
+    status.textContent = `✓ Списано ${res.redeemed} исп. · осталось ${res.remaining_uses} · −${(res.amount_discounted||0).toFixed(0)} ₽`;
+    if (_scannedUserId) await handleQrResult(_scannedUserId);
   } catch(e) {
-    status.textContent = 'Ошибка: ' + (e.message || 'неизвестная ошибка');
-    _redeemSubId = null;
+    status.textContent = '✕ Ошибка: ' + (e.message || 'неизвестная ошибка');
   }
 }
 

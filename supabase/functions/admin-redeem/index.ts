@@ -97,7 +97,7 @@ Deno.serve(async (req: Request) => {
             )
           } catch (e: unknown) {
             const status = (e as { statusCode?: number }).statusCode
-            if (status === 410 || status === 404) {
+            if (status === 410 || status === 404 || status === 401) {
               await svc.from('push_subscriptions').delete().eq('id', ps.id)
             }
           }
