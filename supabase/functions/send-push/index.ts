@@ -6,11 +6,9 @@ const SVC_KEY        = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const WEBHOOK_SECRET = Deno.env.get('PUSH_WEBHOOK_SECRET')!
 const VAPID_PUB      = Deno.env.get('VAPID_PUBLIC_KEY')!
 const VAPID_JWK      = JSON.parse(Deno.env.get('VAPID_PRIVATE_JWK')!)
+const VAPID_PRIV     = VAPID_JWK.d as string
 
-// Derive base64url private key scalar from JWK
-const VAPID_PRIV = VAPID_JWK.d as string
-
-webpush.setVapidDetails('mailto:yarich92@gmail.com', VAPID_PUB, VAPID_PRIV)
+webpush.setVapidDetails('https://alliby.ru', VAPID_PUB, VAPID_PRIV)
 
 type Sub = { id: string; endpoint: string; p256dh: string; auth_key: string }
 
@@ -72,6 +70,8 @@ Deno.serve(async (req: Request) => {
     return new Response('ok')
   }
 
-  await Promise.all(subs.map((sub) => sendToSub(sub, JSON.stringify(notif), db)))
-  return new Response('ok')
+  // Send response immediately, push in background
+  const response = new Response('ok')
+  Promise.all(subs.map((sub) => sendToSub(sub, JSON.stringify(notif), db))).catch(() => {})
+  return response
 })

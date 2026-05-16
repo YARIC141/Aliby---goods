@@ -2113,7 +2113,7 @@ async function confirmRedeem() {
     status.textContent = `✓ Списано ${res.redeemed} исп. · осталось ${res.remaining_uses} · −${(res.amount_discounted||0).toFixed(0)} ₽`;
     if (_scannedUserId) await handleQrResult(_scannedUserId);
   } catch(e) {
-    status.textContent = '✕ Ошибка: ' + (e.message || 'неизвестная ошибка');
+    status.textContent = '✕ Ошибка: ' + (e?.error || e?.message || String(e) || 'неизвестная ошибка');
   }
 }
 

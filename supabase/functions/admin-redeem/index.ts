@@ -12,7 +12,7 @@ try {
   const jwkStr = Deno.env.get('VAPID_PRIVATE_JWK')
   if (pub && jwkStr) {
     const jwk = JSON.parse(jwkStr)
-    webpush.setVapidDetails('mailto:yarich92@gmail.com', pub, jwk.d as string)
+    webpush.setVapidDetails('https://alliby.ru', pub, jwk.d as string)
     vapidReady = true
   }
 } catch { /* push disabled until VAPID keys are filled */ }
