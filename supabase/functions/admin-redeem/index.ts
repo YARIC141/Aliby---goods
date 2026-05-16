@@ -1,4 +1,3 @@
-import webpush from 'npm:web-push@3'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { handleCors, jsonResponse } from '../_shared/cors.ts'
 
@@ -6,20 +5,17 @@ const SB_URL  = Deno.env.get('SUPABASE_URL')!
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
 const SVC_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-let vapidReady = false
-try {
-  const pub = Deno.env.get('VAPID_PUBLIC_KEY')
-  const jwkStr = Deno.env.get('VAPID_PRIVATE_JWK')
-  if (pub && jwkStr) {
-    const jwk = JSON.parse(jwkStr)
-    webpush.setVapidDetails('https://alliby.ru', pub, jwk.d as string)
-    vapidReady = true
-  }
-} catch { /* push disabled until VAPID keys are filled */ }
-
 type PushSub = { id: string; endpoint: string; p256dh: string; auth_key: string }
 
-async function sendPush(svc: ReturnType<typeof createClient>, clientUserId: string, sub: { name: string } | null, redeemed: number, remaining_uses: number) {
+async function sendPush(svc: ReturnType<typeof createClient>, clientUserId: string, subName: string, redeemed: number, remaining_uses: number) {
+  const pub = Deno.env.get('VAPID_PUBLIC_KEY')
+  const jwkStr = Deno.env.get('VAPID_PRIVATE_JWK')
+  if (!pub || !jwkStr) return
+
+  const { default: webpush } = await import('npm:web-push@3')
+  const jwk = JSON.parse(jwkStr)
+  webpush.setVapidDetails('https://alliby.ru', pub, jwk.d as string)
+
   const { data: pushSubs } = await svc
     .from('push_subscriptions')
     .select('id,endpoint,p256dh,auth_key')
@@ -28,7 +24,6 @@ async function sendPush(svc: ReturnType<typeof createClient>, clientUserId: stri
 
   if (!pushSubs?.length) return
 
-  const subName = sub?.name || 'Абонемент'
   const payload = JSON.stringify({
     title: 'Абонемент использован',
     body: `${subName}: −${redeemed === 1 ? '1 использование' : redeemed + ' исп.'} · осталось ${remaining_uses}`,
@@ -37,14 +32,11 @@ async function sendPush(svc: ReturnType<typeof createClient>, clientUserId: stri
 
   await Promise.all((pushSubs as PushSub[]).map(async ps => {
     try {
-      const ctrl = new AbortController()
-      const timer = setTimeout(() => ctrl.abort(), 8000)
       await webpush.sendNotification(
         { endpoint: ps.endpoint, keys: { p256dh: ps.p256dh, auth: ps.auth_key } },
         payload,
         { TTL: 86400 },
       )
-      clearTimeout(timer)
     } catch (e: unknown) {
       const status = (e as { statusCode?: number }).statusCode
       if (status === 410 || status === 404 || status === 401) {
@@ -110,9 +102,9 @@ Deno.serve(async (req: Request) => {
 
   const response = jsonResponse({ success: true, remaining_uses, redeemed, amount_discounted: discPerUse * redeemed })
 
-  // Fire push after sending response — do not block
-  if (vapidReady && clientUserId) {
-    sendPush(svc, clientUserId, sub, redeemed, remaining_uses).catch(() => {})
+  // Dynamic import runs after response — webpush cold-start doesn't block the user
+  if (clientUserId) {
+    sendPush(svc, clientUserId, sub?.name || 'Абонемент', redeemed, remaining_uses).catch(() => {})
   }
 
   return response

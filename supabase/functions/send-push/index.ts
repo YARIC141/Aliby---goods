@@ -1,19 +1,17 @@
-import webpush from 'npm:web-push@3'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SB_URL         = Deno.env.get('SUPABASE_URL')!
 const SVC_KEY        = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const WEBHOOK_SECRET = Deno.env.get('PUSH_WEBHOOK_SECRET')!
-const VAPID_PUB      = Deno.env.get('VAPID_PUBLIC_KEY')!
-const VAPID_JWK      = JSON.parse(Deno.env.get('VAPID_PRIVATE_JWK')!)
-const VAPID_PRIV     = VAPID_JWK.d as string
-
-webpush.setVapidDetails('https://alliby.ru', VAPID_PUB, VAPID_PRIV)
 
 type Sub = { id: string; endpoint: string; p256dh: string; auth_key: string }
 
 async function sendToSub(sub: Sub, payload: string, db: ReturnType<typeof createClient>): Promise<void> {
   try {
+    const pub    = Deno.env.get('VAPID_PUBLIC_KEY')!
+    const jwk    = JSON.parse(Deno.env.get('VAPID_PRIVATE_JWK')!)
+    const { default: webpush } = await import('npm:web-push@3')
+    webpush.setVapidDetails('https://alliby.ru', pub, jwk.d as string)
     await webpush.sendNotification(
       { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
       payload,
@@ -70,7 +68,7 @@ Deno.serve(async (req: Request) => {
     return new Response('ok')
   }
 
-  // Send response immediately, push in background
+  // Return immediately — push runs in background after response
   const response = new Response('ok')
   Promise.all(subs.map((sub) => sendToSub(sub, JSON.stringify(notif), db))).catch(() => {})
   return response
