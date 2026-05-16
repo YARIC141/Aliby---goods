@@ -19,6 +19,41 @@ try {
 
 type PushSub = { id: string; endpoint: string; p256dh: string; auth_key: string }
 
+async function sendPush(svc: ReturnType<typeof createClient>, clientUserId: string, sub: { name: string } | null, redeemed: number, remaining_uses: number) {
+  const { data: pushSubs } = await svc
+    .from('push_subscriptions')
+    .select('id,endpoint,p256dh,auth_key')
+    .eq('user_id', clientUserId)
+    .eq('app', 'client')
+
+  if (!pushSubs?.length) return
+
+  const subName = sub?.name || 'Абонемент'
+  const payload = JSON.stringify({
+    title: 'Абонемент использован',
+    body: `${subName}: −${redeemed === 1 ? '1 использование' : redeemed + ' исп.'} · осталось ${remaining_uses}`,
+    data: { screen: 'home' },
+  })
+
+  await Promise.all((pushSubs as PushSub[]).map(async ps => {
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 8000)
+      await webpush.sendNotification(
+        { endpoint: ps.endpoint, keys: { p256dh: ps.p256dh, auth: ps.auth_key } },
+        payload,
+        { TTL: 86400 },
+      )
+      clearTimeout(timer)
+    } catch (e: unknown) {
+      const status = (e as { statusCode?: number }).statusCode
+      if (status === 410 || status === 404 || status === 401) {
+        await svc.from('push_subscriptions').delete().eq('id', ps.id)
+      }
+    }
+  }))
+}
+
 Deno.serve(async (req: Request) => {
   const corsRes = handleCors(req)
   if (corsRes) return corsRes
@@ -73,38 +108,12 @@ Deno.serve(async (req: Request) => {
     redeemed++
   }
 
-  if (vapidReady && clientUserId) {
-    try {
-      const { data: pushSubs } = await svc
-        .from('push_subscriptions')
-        .select('id,endpoint,p256dh,auth_key')
-        .eq('user_id', clientUserId)
-        .eq('app', 'client')
+  const response = jsonResponse({ success: true, remaining_uses, redeemed, amount_discounted: discPerUse * redeemed })
 
-      if (pushSubs?.length) {
-        const subName = sub?.name || 'Абонемент'
-        const payload = JSON.stringify({
-          title: 'Абонемент использован',
-          body: `${subName}: −${redeemed === 1 ? '1 использование' : redeemed + ' исп.'} · осталось ${remaining_uses}`,
-          data: { screen: 'home' },
-        })
-        await Promise.all((pushSubs as PushSub[]).map(async ps => {
-          try {
-            await webpush.sendNotification(
-              { endpoint: ps.endpoint, keys: { p256dh: ps.p256dh, auth: ps.auth_key } },
-              payload,
-              { TTL: 86400 },
-            )
-          } catch (e: unknown) {
-            const status = (e as { statusCode?: number }).statusCode
-            if (status === 410 || status === 404 || status === 401) {
-              await svc.from('push_subscriptions').delete().eq('id', ps.id)
-            }
-          }
-        }))
-      }
-    } catch { /* non-fatal */ }
+  // Fire push after sending response — do not block
+  if (vapidReady && clientUserId) {
+    sendPush(svc, clientUserId, sub, redeemed, remaining_uses).catch(() => {})
   }
 
-  return jsonResponse({ success: true, remaining_uses, redeemed, amount_discounted: discPerUse * redeemed })
+  return response
 })
