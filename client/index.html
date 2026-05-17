@@ -71,7 +71,7 @@ html.dark{
   --glass-sm:oklch(0.26 0.011 60 / .84);
 }
 html,body{background:var(--bg);overscroll-behavior-y:none}
-body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden}
+body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden;height:100dvh}
 #bg-ornament{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 #bg-ornament .op{fill:var(--pat)}
 #zoom-root{zoom:var(--fzoom,1);height:calc(100dvh/var(--fzoom,1));overflow:hidden;position:relative;z-index:1;overscroll-behavior-y:none}
@@ -1476,11 +1476,12 @@ async function loadMenu() {
   loadMenuItems();
 }
 
-async function loadMenuUserSubs() {
+async function loadMenuUserSubs(storeId) {
   if (!S.session) { S.menuUserSubs = []; return; }
+  const sid = storeId || S.store?.id;
   try {
     const all = await req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)');
-    S.menuUserSubs = all.filter(us => us.subscriptions?.store_id === S.store?.id);
+    S.menuUserSubs = all.filter(us => !sid || us.subscriptions?.store_id === sid);
   } catch(e) { S.menuUserSubs = []; }
 }
 
@@ -1787,13 +1788,14 @@ async function renderCart() {
   renderSubCartSection();
   renderGiftCartSection();
   // Если данные по абонементам не загружены — подгружаем (например, после обновления страницы)
-  if (S.store) {
+  const cartStoreId = S.store?.id || S.cartStoreId;
+  if (cartStoreId) {
     const needStore = !S.menuStoreSubs.length;
     const needUser  = S.session && !S.menuUserSubs.length;
     if (needStore || needUser) {
       await Promise.all([
-        needStore ? req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`).then(r => { S.menuStoreSubs = r; }).catch(() => {}) : Promise.resolve(),
-        needUser  ? loadMenuUserSubs() : Promise.resolve(),
+        needStore ? req(`/rest/v1/subscriptions?store_id=eq.${cartStoreId}`).then(r => { S.menuStoreSubs = r; }).catch(() => {}) : Promise.resolve(),
+        needUser  ? loadMenuUserSubs(cartStoreId) : Promise.resolve(),
       ]);
     }
   }
@@ -2245,13 +2247,20 @@ async function buySubscription() {
     closeModal('m-buy');
     S.pendingSub  = null;
     S.pendingGift = false;
+    // Сбрасываем кэш абонементов чтобы корзина пересчитала цены
+    S.menuUserSubs = [];
+    if (S.cart.length) {
+      const sid = S.store?.id || S.cartStoreId;
+      await loadMenuUserSubs(sid);
+    }
     if (isGift) {
       alert('Подарочный абонемент куплен! ID абонемента отображается в разделе «Подарки» — передайте его получателю.');
       goTo('subscriptions');
       setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
     } else {
       alert('Абонемент куплен! Оплата имитирована.');
-      goTo('subscriptions');
+      // Если в корзине есть товары — показать корзину с пересчитанными ценами
+      if (S.cart.length) { goTo('cart'); } else { goTo('subscriptions'); }
     }
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
@@ -2538,10 +2547,9 @@ if ('serviceWorker' in navigator) {
 
 // ─── PULL TO REFRESH ───
 (function() {
-  let startY = 0, startX = 0, rawStartY = 0, dy = 0, tracking = false;
+  let startY = 0, startX = 0, dy = 0, tracking = false;
   const THRESH = 72;
-  const INIT_ZONE = 80; // px от верха — PTR-трекинг стартует только здесь
-  const SCROLLABLES = '.pb, .sl-list, .cart-body, .overlay';
+  const INIT_ZONE = 80;
 
   const pill = document.createElement('div');
   pill.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-56px);width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:900;box-shadow:0 2px 8px var(--shadow);transition:transform .15s;pointer-events:none';
@@ -2554,24 +2562,15 @@ if ('serviceWorker' in navigator) {
   }
 
   document.addEventListener('touchstart', e => {
-    rawStartY = e.touches[0].clientY;
-    tracking = false;
     if (!scrollTop()) return;
     const t = e.touches[0];
-    if (t.clientY > INIT_ZONE) return; // касание вне верхней зоны — игнор
+    if (t.clientY > INIT_ZONE) return;
     startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
-    const t = e.touches[0];
-    // Блокируем нативный pull-to-refresh для любого свайпа вниз,
-    // если под пальцем нет прокрученного контента
-    if (t.clientY > rawStartY) {
-      const scrollEl = e.target.closest(SCROLLABLES);
-      if (!scrollEl || scrollEl.scrollTop <= 0) e.preventDefault();
-    }
-    // Анимация пилюли
     if (!tracking) return;
+    const t = e.touches[0];
     const rawDy = t.clientY - startY;
     const rawDx = Math.abs(t.clientX - startX);
     if (rawDx > rawDy && rawDy < THRESH / 4) { tracking = false; return; }
@@ -2579,7 +2578,7 @@ if ('serviceWorker' in navigator) {
     const p = Math.min(dy / THRESH, 1);
     pill.style.transform = `translateX(-50%) translateY(${Math.round((p - 1) * 56)}px)`;
     pill.textContent = dy >= THRESH ? '↺' : '↓';
-  }, { passive: false }); // non-passive — нужен для preventDefault
+  }, { passive: true });
 
   document.addEventListener('touchend', () => {
     if (!tracking) return;
@@ -2590,7 +2589,10 @@ if ('serviceWorker' in navigator) {
   });
 
   function reloadCurrentScreen() {
-    window.location.reload();
+    const el = document.querySelector('.screen.active');
+    if (!el) return;
+    const id = el.id.replace('screen-', '');
+    ({home:loadHome,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
   }
 })();
 </script>
