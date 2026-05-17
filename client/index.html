@@ -70,7 +70,7 @@ html.dark{
   --glass:oklch(0.26 0.011 60 / .76);
   --glass-sm:oklch(0.26 0.011 60 / .84);
 }
-html,body{background:var(--bg)}
+html,body{background:var(--bg);overscroll-behavior-y:none}
 body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden}
 #bg-ornament{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
 #bg-ornament .op{fill:var(--pat)}
@@ -203,9 +203,10 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 
 @media(max-width:600px){
   .map-layout{flex-direction:column}
-  .sl-panel{width:100%;max-height:42%;border-right:none;border-bottom:1px solid var(--border)}
+  .sl-panel{width:100%;max-height:57%;border-right:none;border-bottom:1px solid var(--border)}
   .map-layout.no-map .map-area{flex:0;height:0}
   .map-layout.no-map .sl-panel{flex:1;max-height:none;border-bottom:none}
+  .map-gl{bottom:8px}
 }
 
 /* ── STORE ── */
