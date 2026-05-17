@@ -980,41 +980,7 @@ function fmtDate(d) {
 }
 function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; }
 const statusMap = { pending:'Создан', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
-const VAPID_PUBLIC_KEY = 'BDr-H1qxxx-sXpgYwlbX7NTE7dNKefaiSxl8IL2ff7j8g6Dj3pL6ST57kK5L3xPq19AUs3HbeNtCMb6wWNsX1Mw';
 const subStMap  = { pending:'Ожидает', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
-
-// ─── PUSH ───
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
-
-async function subscribePush(app) {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-    });
-    const json = sub.toJSON();
-    await req('/rest/v1/push_subscriptions', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
-      body: JSON.stringify({
-        user_id: S.session.user.id,
-        app,
-        endpoint: json.endpoint,
-        p256dh: json.keys.p256dh,
-        auth_key: json.keys.auth,
-      }),
-    });
-  } catch {}
-}
 
 // ─── QR CODE ───
 function showQrModal() {
@@ -1203,7 +1169,6 @@ async function doLogin() {
       body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
     });
     setSession(d);
-    subscribePush('client');
     if (!(await navigateDeepLink())) goTo('map');
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
@@ -1222,7 +1187,6 @@ async function doRegister() {
     });
     if (d?.access_token) {
       setSession(d);
-      subscribePush('client');
       if (!(await navigateDeepLink())) goTo('map');
     } else {
       err.className = 'alert alert-ok';
@@ -2415,11 +2379,11 @@ window.addEventListener('hashchange', () => {
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(ok => {
-            if (ok) { restoreNav(); subscribePush('client'); }
+            if (ok) { restoreNav(); }
             else { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
           });
         } else {
-          setSession(d); restoreNav(); subscribePush('client');
+          setSession(d); restoreNav();
         }
         return;
       }
