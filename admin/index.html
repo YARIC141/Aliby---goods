@@ -1693,9 +1693,19 @@ async function loadSubModalItems(storeId, selectedId) {
 }
 
 async function saveSubscription() {
-  const id     = document.getElementById('msub-id').value;
-  const itemId = document.getElementById('msub-item').value;
-  if (!itemId) { alert('Выберите товар или услугу'); return; }
+  const id       = document.getElementById('msub-id').value;
+  const storeId  = document.getElementById('msub-store').value;
+  const name     = document.getElementById('msub-name').value.trim();
+  const itemId   = document.getElementById('msub-item').value;
+  const price    = document.getElementById('msub-price').value;
+  const discVal  = document.getElementById('msub-disc-value').value;
+  const days     = document.getElementById('msub-days').value;
+  if (!storeId)                            { alert('Выберите заведение'); return; }
+  if (!name)                               { alert('Введите название абонемента'); return; }
+  if (!itemId)                             { alert('Выберите товар или услугу'); return; }
+  if (!price    || parseFloat(price) <= 0) { alert('Введите цену абонемента'); return; }
+  if (!discVal  || parseFloat(discVal)<= 0){ alert('Введите размер скидки'); return; }
+  if (!days     || parseInt(days)    <= 0) { alert('Введите срок действия в днях'); return; }
 
   const coverage_rules = { type: 'include_items', item_ids: [itemId] };
 
