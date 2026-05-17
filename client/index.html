@@ -120,7 +120,7 @@ body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden
 /* ── PAGE STRUCTURE ── */
 .ph{padding:13px 20px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .ph h2{font:400 26px/1.1 var(--font-display);letter-spacing:-0.01em;color:var(--fg);flex:1;margin:0}
-.pb{flex:1;overflow-y:auto;padding:20px}
+.pb{flex:1;overflow-y:auto;padding:20px;overscroll-behavior-y:none}
 
 /* ── COMMON ── */
 .sec{margin-bottom:24px}
@@ -184,7 +184,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-cats:empty{display:none}
 .sl-cats .chip{padding:3px 10px;font-size:13px}
-.sl-list{flex:1;overflow-y:auto}
+.sl-list{flex:1;overflow-y:auto;overscroll-behavior-y:none}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:var(--bg-2)}
 .sl-item.sel{background:var(--bg-2)}
@@ -270,7 +270,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 
 /* ── CART ── */
 .cart-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
-.cart-body{flex:1;overflow-y:auto}
+.cart-body{flex:1;overflow-y:auto;overscroll-behavior-y:none}
 .cart-item{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px}
 .ci-info{flex:1;min-width:0}
 .ci-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
