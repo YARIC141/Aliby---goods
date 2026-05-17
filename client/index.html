@@ -269,14 +269,14 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 /* ── CART ── */
 .cart-layout{display:flex;flex-direction:column;height:100%;overflow:hidden}
 .cart-body{flex:1;overflow-y:auto;overscroll-behavior-y:none}
-.cart-item{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px}
+.cart-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px;flex-wrap:wrap}
 .ci-info{flex:1;min-width:0}
 .ci-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ci-price{font:400 14px/1.4 var(--font-mono);color:var(--fg-3)}
 .ci-price-strike{text-decoration:line-through;color:var(--fg-4)}
 .ci-sub-price{font:500 14px/1.4 var(--font-mono);color:var(--ok)}
-.ci-sub-note{font:400 11px/1.3 var(--font-sans);color:var(--fg-3);margin-top:2px}
-.ci-sub-hint{font:400 11px/1.3 var(--font-sans);color:var(--fg-4);margin-top:3px;font-style:italic}
+.ci-sub-note{font:400 11px/1.3 var(--font-sans);color:var(--fg-3);width:100%;padding-top:4px}
+.ci-sub-hint{font:400 11px/1.3 var(--font-sans);color:var(--fg-4);font-style:italic;width:100%;padding-top:4px}
 .cart-sub-banner{padding:9px 18px;font:400 12px/1.4 var(--font-sans);color:var(--ok);background:oklch(from var(--ok) l c h / .08);border-bottom:1px solid var(--line-soft)}
 .cart-foot{border-top:1px solid var(--line-soft);padding:14px 18px;flex-shrink:0;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .cart-sub-block{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:12px;margin-bottom:12px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
@@ -1786,6 +1786,17 @@ function updateCartTotals() {
 async function renderCart() {
   renderSubCartSection();
   renderGiftCartSection();
+  // Если данные по абонементам не загружены — подгружаем (например, после обновления страницы)
+  if (S.store) {
+    const needStore = !S.menuStoreSubs.length;
+    const needUser  = S.session && !S.menuUserSubs.length;
+    if (needStore || needUser) {
+      await Promise.all([
+        needStore ? req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`).then(r => { S.menuStoreSubs = r; }).catch(() => {}) : Promise.resolve(),
+        needUser  ? loadMenuUserSubs() : Promise.resolve(),
+      ]);
+    }
+  }
   const body = document.getElementById('cart-body');
   const foot = document.getElementById('cart-foot');
   if (!S.cart.length) {
@@ -1816,13 +1827,13 @@ async function renderCart() {
         subNoteHtml = `<div class="ci-sub-hint">По абонементу «${esc(hint.sub.name)}» — ${hint.price} ₽</div>`;
       }
     }
-    return `<div class="cart-item" style="align-items:flex-start">
+    return `<div class="cart-item">
       <div class="ci-info">
         <div class="ci-name">${esc(item.name)}</div>
         ${priceHtml}
-        ${subNoteHtml}
       </div>
       <div class="qty-ctrl" style="flex-shrink:0"><button class="qty-btn" onclick="cartQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button></div>
+      ${subNoteHtml}
     </div>`;
   }).join('') + (alloc
     ? `<div class="cart-sub-banner">✓ Применён абонемент «${esc(alloc.sub.name)}»${alloc.coveredQty < alloc.totalQty ? ` к ${alloc.coveredQty} из ${alloc.totalQty} товаров` : ''}</div>`

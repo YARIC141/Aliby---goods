@@ -437,9 +437,9 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>Название</th><th>Заведение</th><th>Цена</th><th>Срок (дней)</th><th>Исп.</th><th>Действия</th>
+          <th>Название</th><th>Заведение</th><th>Цена</th><th>Скидка</th><th>Срок (дней)</th><th>Исп.</th><th>Действия</th>
         </tr></thead>
-        <tbody id="sub-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
+        <tbody id="sub-tbody"><tr><td colspan="7" class="loading">Загрузка…</td></tr></tbody>
       </table>
     </div>
     <div class="txt-muted" style="margin-top:8px">GET /rest/v1/subscriptions</div>
@@ -760,32 +760,17 @@ tr.row-click:hover td{background:var(--bg-2)}
 
     <!-- Basic -->
     <div class="grid2">
-      <div class="fg"><label>Заведение * <span class="hint" data-tip="Заведение, к товарам которого применяется абонемент">?</span></label><select id="msub-store" onchange="updateCoverageUI()"></select></div>
-      <div class="fg"><label>Название * <span class="hint" data-tip="Название абонемента, видимое клиентам в разделе «Абонементы»">?</span></label><textarea id="msub-name" rows="2" style="resize:none" placeholder="Название абонемента, которое увидят клиенты"></textarea></div>
-      <div class="fg"><label>Цена (₽) * <span class="hint" data-tip="Стоимость покупки абонемента клиентом в рублях">?</span></label><input type="number" step="0.01" id="msub-price" placeholder="Стоимость покупки в рублях"></div>
-      <div class="fg"><label>Срок действия (дней) * <span class="hint" data-tip="Через сколько дней после покупки абонемент истекает">?</span></label><input type="number" id="msub-days" placeholder="Через сколько дней истекает"></div>
-      <div class="fg" style="grid-column:1/-1"><label>Всего использований <span class="hint" data-tip="Сколько раз можно использовать абонемент за весь срок. 0 = без ограничений (безлимит)">?</span></label><input type="number" id="msub-uses" value="0" placeholder="0 = безлимит"></div>
-    </div>
-
-    <!-- Coverage rules -->
-    <div class="rules-section">
-      <div class="rules-title">Правила покрытия (coverage_rules)</div>
-      <div class="fg">
-        <label>Тип покрытия <span class="hint" data-tip="all — на всё меню заведения; include_categories — только выбранные категории; include_items — только выбранные позиции; exclude_items — всё кроме выбранных">?</span></label>
-        <select id="msub-cov-type" onchange="updateCoverageUI()">
-          <option value="all">all — все блюда</option>
-          <option value="include_categories">include_categories — только категории</option>
-          <option value="include_items">include_items — только блюда</option>
-          <option value="exclude_items">exclude_items — все кроме</option>
-        </select>
-      </div>
-      <div id="cov-extra" style="display:none">
-        <div class="fg">
-          <label id="cov-extra-label">Выбор</label>
-          <input type="search" id="msub-cov-search" placeholder="Поиск…" oninput="filterCovItems(this.value)" style="margin-bottom:6px">
-          <div id="msub-cov-list" class="item-picker"><div class="loading" style="padding:8px;font-size:12px">Выберите заведение</div></div>
-        </div>
-      </div>
+      <div class="fg"><label>Заведение *</label><select id="msub-store" onchange="onSubStoreChange()"></select></div>
+      <div class="fg"><label>Название *</label><textarea id="msub-name" rows="2" style="resize:none" placeholder="Название абонемента, которое увидят клиенты"></textarea></div>
+      <div class="fg"><label>Товар / услуга *</label><select id="msub-item"><option value="">— сначала выберите заведение —</option></select></div>
+      <div class="fg"><label>Цена абонемента (₽) *</label><input type="number" step="0.01" id="msub-price" placeholder="Стоимость покупки в рублях"></div>
+      <div class="fg"><label>Тип скидки *</label><select id="msub-disc-type">
+        <option value="percent">% от цены товара</option>
+        <option value="fixed">Фиксированная скидка (₽)</option>
+      </select></div>
+      <div class="fg"><label>Размер скидки *</label><input type="number" step="0.01" id="msub-disc-value" placeholder="Напр. 20 (%) или 50 (₽)"></div>
+      <div class="fg"><label>Срок действия (дней) *</label><input type="number" id="msub-days" placeholder="Через сколько дней истекает"></div>
+      <div class="fg"><label>Всего использований <span class="hint" data-tip="0 = безлимит">?</span></label><input type="number" id="msub-uses" value="0" placeholder="0 = безлимит"></div>
     </div>
 
     <!-- Time rules -->
@@ -1634,123 +1619,85 @@ async function saveMenuItem() {
 // ─── SUBSCRIPTIONS ───
 async function loadSubscriptions() {
   const tbody = document.getElementById('sub-tbody');
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка…</td></tr>';
   try {
-    // GET /rest/v1/subscriptions?select=*,stores(name)
     let url = '/rest/v1/subscriptions?select=*,stores(name)&order=name.asc';
     const storeId = document.getElementById('sub-store-filter')?.value;
     if (storeId) url += `&store_id=eq.${storeId}`;
     const subs = await req(url);
-    if (!subs.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет абонементов</td></tr>'; return; }
-    tbody.innerHTML = subs.map(s => `
-      <tr>
+    if (!subs.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Нет абонементов</td></tr>'; return; }
+    tbody.innerHTML = subs.map(s => {
+      const discLabel = s.discount_value
+        ? (s.discount_type === 'percent' ? `${s.discount_value}%` : `${s.discount_value} ₽`)
+        : '—';
+      return `<tr>
         <td>${esc(s.name)}</td>
         <td>${esc(s.stores?.name || '—')}</td>
         <td>${s.price} ₽</td>
+        <td>${discLabel}</td>
         <td>${s.duration_days}</td>
         <td>${s.total_uses === 0 ? '∞' : s.total_uses}</td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick='openSubModal(${JSON.stringify(s)})'>Ред.</button>
           <button class="btn btn-sm btn-d" onclick="confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
         </td>
-      </tr>`).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Ошибка</td></tr>'; }
+      </tr>`;
+    }).join('');
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Ошибка</td></tr>'; }
 }
 
 function openSubModal(sub) {
   document.getElementById('msub-title').textContent = sub ? 'Редактировать абонемент' : 'Новый абонемент';
-  document.getElementById('msub-id').value     = sub?.id           || '';
-  document.getElementById('msub-store').value  = sub?.store_id     || '';
-  document.getElementById('msub-name').value   = sub?.name         || '';
-  document.getElementById('msub-price').value  = sub?.price        || '';
-  document.getElementById('msub-days').value   = sub?.duration_days|| '';
-  document.getElementById('msub-uses').value   = sub?.total_uses   ?? 0;
-
-  // Coverage
-  const cr = sub?.coverage_rules || { type: 'all' };
-  const covType = cr.type || 'all';
-  document.getElementById('msub-cov-type').value = covType;
-  document.getElementById('cov-extra').style.display = covType !== 'all' ? 'block' : 'none';
-  const labels = { include_categories:'Категории', include_items:'Блюда', exclude_items:'Исключить блюда' };
-  document.getElementById('cov-extra-label').textContent = labels[covType] || '';
-  document.getElementById('msub-cov-search').value = '';
-  const preselected = [...(cr.category_ids||[]), ...(cr.item_ids||[]), ...(cr.exclude_items||[])];
+  document.getElementById('msub-id').value          = sub?.id            || '';
+  document.getElementById('msub-store').value       = sub?.store_id      || '';
+  document.getElementById('msub-name').value        = sub?.name          || '';
+  document.getElementById('msub-price').value       = sub?.price         || '';
+  document.getElementById('msub-days').value        = sub?.duration_days || '';
+  document.getElementById('msub-uses').value        = sub?.total_uses    ?? 0;
+  document.getElementById('msub-disc-type').value   = sub?.discount_type  || 'percent';
+  document.getElementById('msub-disc-value').value  = sub?.discount_value ?? '';
 
   // Time rules
   const tr = sub?.time_rules || {};
   document.querySelectorAll('.wd').forEach(cb => {
     cb.checked = tr.weekdays ? tr.weekdays.includes(parseInt(cb.value)) : false;
   });
-  document.getElementById('msub-time-start').value  = tr.time_start    || '';
-  document.getElementById('msub-time-end').value    = tr.time_end      || '';
+  document.getElementById('msub-time-start').value  = tr.time_start       || '';
+  document.getElementById('msub-time-end').value    = tr.time_end         || '';
   document.getElementById('msub-excl-dates').value  = (tr.excluded_dates||[]).join(', ');
 
   // Usage limits
   const ul = sub?.usage_limits || {};
-  document.getElementById('msub-daily').value     = ul.daily_limit          || '';
-  document.getElementById('msub-interval').value  = ul.min_interval_hours   || '';
-  document.getElementById('msub-minamount').value = ul.min_order_amount     || '';
+  document.getElementById('msub-daily').value     = ul.daily_limit        || '';
+  document.getElementById('msub-interval').value  = ul.min_interval_hours || '';
+  document.getElementById('msub-minamount').value = ul.min_order_amount   || '';
 
+  const preselectedItem = sub?.coverage_rules?.item_ids?.[0] || '';
   openModal('m-sub');
-  loadCovItems(preselected);
+  loadSubModalItems(sub?.store_id || '', preselectedItem);
 }
 
-let _covItems = [];
-
-function updateCoverageUI() {
-  const type = document.getElementById('msub-cov-type').value;
-  document.getElementById('cov-extra').style.display = type !== 'all' ? 'block' : 'none';
-  const lbl = document.getElementById('cov-extra-label');
-  const labels = { include_categories:'Категории', include_items:'Блюда', exclude_items:'Исключить блюда' };
-  if (lbl) lbl.textContent = labels[type] || '';
-  document.getElementById('msub-cov-search').value = '';
-  loadCovItems();
+async function onSubStoreChange() {
+  await loadSubModalItems(document.getElementById('msub-store').value, '');
 }
 
-async function loadCovItems(preselected = []) {
-  const type    = document.getElementById('msub-cov-type').value;
-  const storeId = document.getElementById('msub-store').value;
-  const list    = document.getElementById('msub-cov-list');
-  _covItems = [];
-  if (type === 'all') { list.innerHTML = ''; return; }
-  if (!storeId) {
-    list.innerHTML = '<div class="empty" style="padding:8px;font-size:12px">Выберите заведение</div>';
-    return;
-  }
-  list.innerHTML = '<div class="loading" style="padding:8px;font-size:12px">Загрузка…</div>';
+async function loadSubModalItems(storeId, selectedId) {
+  const sel = document.getElementById('msub-item');
+  if (!storeId) { sel.innerHTML = '<option value="">— сначала выберите заведение —</option>'; return; }
+  sel.innerHTML = '<option value="">— загрузка… —</option>';
   try {
-    if (type === 'include_categories') {
-      _covItems = await req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`);
-    } else {
-      _covItems = await req(`/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc&select=id,name`);
-    }
-  } catch(e) { list.innerHTML = '<div class="empty" style="padding:8px">Ошибка загрузки</div>'; return; }
-  renderCovItems(preselected);
+    const items = await req(`/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc&select=id,name,price`);
+    sel.innerHTML = '<option value="">— выберите товар / услугу —</option>' +
+      items.map(it => `<option value="${it.id}"${it.id === selectedId ? ' selected' : ''}>${esc(it.name)} — ${it.price} ₽</option>`).join('');
+  } catch(e) { sel.innerHTML = '<option value="">Ошибка загрузки</option>'; }
 }
-
-function renderCovItems(preselected = []) {
-  const list = document.getElementById('msub-cov-list');
-  const q = (document.getElementById('msub-cov-search')?.value || '').toLowerCase();
-  const checked = new Set(preselected);
-  list.querySelectorAll('input:checked').forEach(cb => checked.add(cb.value));
-  const items = q ? _covItems.filter(i => i.name.toLowerCase().includes(q)) : _covItems;
-  if (!items.length) { list.innerHTML = '<div class="empty" style="padding:8px;font-size:12px">Нет элементов</div>'; return; }
-  list.innerHTML = items.map(i =>
-    `<label><input type="checkbox" value="${i.id}"${checked.has(i.id) ? ' checked' : ''}>${esc(i.name)}</label>`
-  ).join('');
-}
-
-function filterCovItems() { renderCovItems(); }
 
 async function saveSubscription() {
-  const id = document.getElementById('msub-id').value;
-  const type = document.getElementById('msub-cov-type').value;
-  const rawIds = [...document.querySelectorAll('#msub-cov-list input:checked')].map(cb => cb.value);
+  const id     = document.getElementById('msub-id').value;
+  const itemId = document.getElementById('msub-item').value;
+  if (!itemId) { alert('Выберите товар или услугу'); return; }
 
-  const coverage_rules = { type };
-  if (type === 'include_categories') coverage_rules.category_ids = rawIds;
-  if (type === 'include_items')      coverage_rules.item_ids = rawIds;
-  if (type === 'exclude_items')      coverage_rules.exclude_items = rawIds;
+  const coverage_rules = { type: 'include_items', item_ids: [itemId] };
 
   const weekdays = [...document.querySelectorAll('.wd:checked')].map(cb => parseInt(cb.value));
   const time_rules = {};
@@ -1771,20 +1718,20 @@ async function saveSubscription() {
   if (ma) usage_limits.min_order_amount = parseFloat(ma);
 
   const body = {
-    store_id:      document.getElementById('msub-store').value,
-    name:          document.getElementById('msub-name').value,
-    price:         parseFloat(document.getElementById('msub-price').value),
-    duration_days: parseInt(document.getElementById('msub-days').value),
-    total_uses:    parseInt(document.getElementById('msub-uses').value) || 0,
+    store_id:       document.getElementById('msub-store').value,
+    name:           document.getElementById('msub-name').value,
+    price:          parseFloat(document.getElementById('msub-price').value),
+    discount_type:  document.getElementById('msub-disc-type').value,
+    discount_value: parseFloat(document.getElementById('msub-disc-value').value) || 0,
+    duration_days:  parseInt(document.getElementById('msub-days').value),
+    total_uses:     parseInt(document.getElementById('msub-uses').value) || 0,
     coverage_rules, time_rules, usage_limits,
   };
 
   try {
     if (id) {
-      // PATCH /rest/v1/subscriptions?id=eq.{id}
       await req(`/rest/v1/subscriptions?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(body) });
     } else {
-      // POST /rest/v1/subscriptions
       await req('/rest/v1/subscriptions', { method:'POST', body: JSON.stringify(body) });
     }
     closeModal('m-sub'); loadSubscriptions();
