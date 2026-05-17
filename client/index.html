@@ -2269,9 +2269,9 @@ async function loadHome() {
 
     el.innerHTML = chartHtml +
       '<div style="display:flex;justify-content:center;margin:8px 0 4px"><div id="home-qr-box" style="padding:16px;background:#fff;border-radius:12px;display:inline-block"></div></div>' +
-      '<div class="txt-muted" style="text-align:center;margin-bottom:16px;font-size:13px">Покажите QR администратору для списания</div>' +
-      histHtml +
-      '<button class="btn" style="width:100%;margin-top:16px" onclick="loadHome()">Обновить статус абонементов</button>';
+      '<div class="txt-muted" style="text-align:center;margin-bottom:10px;font-size:13px">Покажите QR администратору для списания</div>' +
+      '<button class="btn" style="width:100%;margin-bottom:16px" onclick="loadHome()">Обновить статус абонементов</button>' +
+      histHtml;
 
     const qrBox = document.getElementById('home-qr-box');
     if (qrBox) new QRCode(qrBox, { text: uid, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M, colorDark: '#000000', colorLight: '#ffffff' });
