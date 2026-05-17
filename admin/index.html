@@ -315,7 +315,6 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
     <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg> Сканер абонементов</button>
-    <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Карта и метки</button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
   <div class="sn-footer">
@@ -369,15 +368,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div class="toolbar">
       <input type="search" placeholder="Поиск по названию…" oninput="filterTable('stores-table', this.value)">
     </div>
-    <div class="tbl-wrap">
-      <table id="stores-table">
-        <thead><tr>
-          <th>Название</th><th>Тип</th><th>Адрес</th><th>Телефон</th><th>Часы работы</th><th>Действия</th>
-        </tr></thead>
-        <tbody id="stores-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
-      </table>
-    </div>
-    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/stores</div>
+    <div id="stores-list"><div class="loading">Загрузка…</div></div>
   </div>
 </div>
 
@@ -457,11 +448,11 @@ tr.row-click:hover td{background:var(--bg-2)}
 
 <!-- ════════════════ ORDERS ════════════════ -->
 
-<!-- ════════════════ MAP & MARKERS ════════════════ -->
+<!-- ════════════════ MAP ════════════════ -->
 <div id="screen-map" class="screen">
   <div class="ph">
-    <h2>Карта и метки<span class="screen-help" data-info="Интерактивная карта заведений. Выберите заведение и кликните на карту чтобы задать его координаты.">?</span></h2>
-    <button class="btn btn-sm" onclick="loadMapAdmin()">↺ Обновить</button>
+    <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
+    <h2 id="map-screen-title">Карта</h2>
   </div>
 
   <div style="display:flex;flex:1;overflow:hidden;flex-direction:column">
@@ -476,40 +467,9 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
 
-    <!-- Map edit toolbar -->
-    <div id="map-toolbar" style="padding:10px 16px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;flex-shrink:0">
-      <div class="fg" style="min-width:180px;margin:0">
-        <label>Заведение</label>
-        <select id="marker-store-sel" onchange="onMapStoreChange()">
-          <option value="">— Выберите заведение —</option>
-        </select>
-      </div>
-      <div class="fg" style="width:70px;margin:0" id="map-color-wrap" style="display:none">
-        <label>Цвет</label>
-        <input type="color" id="marker-color" value="#e8430a" style="padding:2px 4px;height:33px">
-      </div>
-      <input type="hidden" id="marker-lng">
-      <input type="hidden" id="marker-lat">
-      <span id="map-status" class="txt-muted" style="align-self:center">Выберите заведение</span>
-      <button id="map-save-btn" class="btn btn-p btn-sm" style="display:none" onclick="saveMapCoords()">✓ Сохранить</button>
-      <button id="map-cancel-btn" class="btn btn-sm" style="display:none" onclick="cancelMapEdit()">✕ Отменить</button>
-    </div>
-
-    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden">
-      <!-- Markers list -->
-      <div style="border-bottom:1px solid var(--border);display:flex;flex-direction:column;max-height:220px;overflow:hidden">
-        <div style="padding:8px 12px;border-bottom:1px solid var(--border-light);font-weight:600;font-size:13px;flex-shrink:0">
-          Метки <span class="txt-muted" id="marker-count"></span>
-        </div>
-        <div style="flex:1;overflow-y:auto" id="markers-list">
-          <div class="loading">Загрузка…</div>
-        </div>
-      </div>
-
-      <!-- Map -->
-      <div class="map-admin" id="map-admin-area" style="flex:1">
-        <div id="map-admin-gl" class="admin-map-gl"></div>
-      </div>
+    <!-- Map -->
+    <div class="map-admin" id="map-admin-area" style="flex:1">
+      <div id="map-admin-gl" class="admin-map-gl"></div>
     </div>
 
   </div>
@@ -594,7 +554,6 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div id="bottom-nav">
   <div class="bn-row">
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
-    <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Карта</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
     <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></span>Сканер<br>абонементов</button>
@@ -659,8 +618,14 @@ tr.row-click:hover td{background:var(--bg-2)}
         <select id="ms-sc"><option value="">— не указан —</option></select>
       </div>
     </div>
-    <div id="ms-coords-status" style="font:400 12px/1.3 var(--font-mono);margin:10px 0 4px;padding:6px 10px;border-radius:var(--r-1);background:var(--bg-2)"></div>
-    <button class="btn" style="width:100%;margin-bottom:12px" onclick="pickOnMap()">🗺 Указать на карте</button>
+    <div id="ms-coords-status" style="font:400 12px/1.3 var(--font-mono);margin:10px 0 6px;padding:6px 10px;border-radius:var(--r-1);background:var(--bg-2)"></div>
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+      <button class="btn" style="flex:1" onclick="pickOnMap()">🗺 Указать на карте</button>
+      <div style="flex-shrink:0;text-align:center">
+        <div style="font:400 11px/1 var(--font-sans);color:var(--fg-4);margin-bottom:4px">Цвет метки</div>
+        <input type="color" id="ms-color" value="#e8430a" style="padding:2px 4px;height:33px;width:52px;cursor:pointer">
+      </div>
+    </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-store')">Отмена</button>
       <button class="btn btn-p" onclick="saveStore()">Сохранить</button>
@@ -909,7 +874,7 @@ const S = {
   pendingConfirm: null,
   adminMap: null, adminMapMarkers: [], adminMapFitted: false,
   mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null, mapPendingStore: null,
-  mapPickMode: false, mapPickDraftMarker: null, mapPickCoords: null, storeFormDraft: null,
+  mapPickMode: false, mapPickDraftMarker: null, mapPickCoords: null, storeFormDraft: null, mapViewStore: null,
   navHistory: [], navIdx: -1,
   uploadedPhotoFilename: null,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
@@ -1237,28 +1202,43 @@ async function loadStoreCategories() {
 
 // ─── STORES SECTION ───
 async function loadStores() {
-  const tbody = document.getElementById('stores-tbody');
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  const el = document.getElementById('stores-list');
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
-    // GET /rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)
-    const stores = await req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)');
-    S.stores = stores;
+    const [stores, locs] = await Promise.all([
+      req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)'),
+      req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
+    ]);
+    const locMap = new Map(locs.map(l => [l.id, l]));
+    S.stores = stores.map(s => ({ ...s, _loc: locMap.get(s.id) || null }));
     fillStoreSelects();
     loadStoreCategories();
-    if (!stores.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет заведений</td></tr>'; return; }
-    tbody.innerHTML = stores.map(s => `
-      <tr class="row-click" onclick="openStoreDetail(${JSON.stringify(s).replace(/"/g,'&quot;')})">
-        <td>${esc(s.name)}</td>
-        <td>${s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '—'}</td>
-        <td>${esc(s.address)}</td>
-        <td>${esc(s.phone||'—')}</td>
-        <td>${esc(s.working_hours||'—')}</td>
-        <td class="td-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-sm" onclick="openStoreModal(${JSON.stringify(s).replace(/"/g,'&quot;')})">Ред.</button>
-          <button class="btn btn-sm btn-d" onclick="confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
-        </td>
-      </tr>`).join('');
-  } catch(e) { tbody.innerHTML = `<tr><td colspan="6" class="empty">Ошибка загрузки</td></tr>`; }
+    if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
+    el.innerHTML = S.stores.map(s => {
+      const color = esc(s._loc?.marker_color || '#e8430a');
+      const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
+      const sd = JSON.stringify(s).replace(/"/g, '&quot;');
+      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></span>
+              <strong style="font:600 14px/1.2 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</strong>
+              ${cat ? `<span class="txt-muted" style="font-size:12px;white-space:nowrap">${cat}</span>` : ''}
+            </div>
+            ${s.address ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px">📍 ${esc(s.address)}</div>` : ''}
+            ${s.working_hours ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px">🕐 ${esc(s.working_hours)}</div>` : ''}
+            ${s.phone ? `<div class="txt-muted" style="font-size:12px">📞 ${esc(s.phone)}</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="openStoreModal(${sd})">Ред.</button>
+            ${s._loc?.lng != null ? `<button class="btn btn-sm" onclick="showOnMap(${sd})">📍 Карта</button>` : ''}
+            <button class="btn btn-sm btn-d" onclick="confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
 function fillStoreSelects() {
@@ -1271,9 +1251,6 @@ function fillStoreSelects() {
     el.innerHTML = prefix + opts;
     el.value = current;
   });
-  // marker-store-sel keeps its own blank option
-  const mss = document.getElementById('marker-store-sel');
-  if (mss) { const cur = mss.value; mss.innerHTML = '<option value="">— Выберите заведение —</option>' + opts; mss.value = cur; }
 }
 
 function openStoreModal(store) {
@@ -1281,11 +1258,12 @@ function openStoreModal(store) {
   document.getElementById('ms-id').value      = store?.id      || '';
   document.getElementById('ms-name').value    = store?.name    || '';
   document.getElementById('ms-address').value = store?.address || '';
-  document.getElementById('ms-lat').value     = store?.latitude  || '';
-  document.getElementById('ms-lng').value     = store?.longitude || '';
+  document.getElementById('ms-lat').value     = store?.latitude  ?? store?._loc?.lat ?? '';
+  document.getElementById('ms-lng').value     = store?.longitude ?? store?._loc?.lng ?? '';
   document.getElementById('ms-phone').value   = store?.phone   || '';
   document.getElementById('ms-hours').value   = store?.working_hours || '';
   document.getElementById('ms-sc').value      = store?.store_category_id || '';
+  document.getElementById('ms-color').value   = store?._loc?.marker_color || '#e8430a';
   updateStoreCoordsStatus();
   openModal('m-store');
 }
@@ -1304,6 +1282,12 @@ function updateStoreCoordsStatus() {
   }
 }
 
+function showOnMap(store) {
+  S.mapViewStore = store._loc || null;
+  document.getElementById('map-screen-title').textContent = store.name || 'Карта';
+  goTo('map');
+}
+
 function pickOnMap() {
   S.storeFormDraft = {
     id:      document.getElementById('ms-id').value,
@@ -1314,6 +1298,7 @@ function pickOnMap() {
     sc:      document.getElementById('ms-sc').value,
     lat:     document.getElementById('ms-lat').value,
     lng:     document.getElementById('ms-lng').value,
+    color:   document.getElementById('ms-color').value,
   };
   S.mapPickMode = true;
   S.mapPickCoords = null;
@@ -1330,13 +1315,13 @@ function usePickedCoords() {
   S.storeFormDraft = null;
   if (S.mapPickDraftMarker) { S.mapPickDraftMarker.remove(); S.mapPickDraftMarker = null; }
   document.getElementById('map-pick-bar').style.display = 'none';
-  document.getElementById('map-toolbar').style.display = '';
   document.getElementById('ms-id').value      = d.id;
   document.getElementById('ms-name').value    = d.name;
   document.getElementById('ms-address').value = d.address;
   document.getElementById('ms-phone').value   = d.phone;
   document.getElementById('ms-hours').value   = d.hours;
   document.getElementById('ms-sc').value      = d.sc;
+  document.getElementById('ms-color').value   = d.color || '#e8430a';
   document.getElementById('ms-lat').value     = lat;
   document.getElementById('ms-lng').value     = lng;
   updateStoreCoordsStatus();
@@ -1348,7 +1333,6 @@ function cancelPickMode() {
   S.mapPickCoords = null;
   if (S.mapPickDraftMarker) { S.mapPickDraftMarker.remove(); S.mapPickDraftMarker = null; }
   document.getElementById('map-pick-bar').style.display = 'none';
-  document.getElementById('map-toolbar').style.display = '';
   if (S.storeFormDraft) {
     const d = S.storeFormDraft;
     S.storeFormDraft = null;
@@ -1358,6 +1342,7 @@ function cancelPickMode() {
     document.getElementById('ms-phone').value   = d.phone;
     document.getElementById('ms-hours').value   = d.hours;
     document.getElementById('ms-sc').value      = d.sc;
+    document.getElementById('ms-color').value   = d.color || '#e8430a';
     document.getElementById('ms-lat').value     = d.lat;
     document.getElementById('ms-lng').value     = d.lng;
     updateStoreCoordsStatus();
@@ -1366,32 +1351,37 @@ function cancelPickMode() {
 }
 
 async function saveStore() {
-  const id   = document.getElementById('ms-id').value;
-  const body = {
+  const id    = document.getElementById('ms-id').value;
+  const lat   = parseFloat(document.getElementById('ms-lat').value);
+  const lng   = parseFloat(document.getElementById('ms-lng').value);
+  const color = document.getElementById('ms-color').value || '#e8430a';
+  const body  = {
     name:               document.getElementById('ms-name').value,
     address:            document.getElementById('ms-address').value,
-    latitude:           parseFloat(document.getElementById('ms-lat').value),
-    longitude:          parseFloat(document.getElementById('ms-lng').value),
+    latitude:           isNaN(lat) ? null : lat,
+    longitude:          isNaN(lng) ? null : lng,
     phone:              document.getElementById('ms-phone').value || null,
     working_hours:      document.getElementById('ms-hours').value || null,
     store_category_id:  document.getElementById('ms-sc').value || null,
   };
   try {
+    let storeId = id;
     if (id) {
-      // PATCH /rest/v1/stores?id=eq.{id}
       await req(`/rest/v1/stores?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(body) });
-      closeModal('m-store'); loadStores();
     } else {
-      // POST /rest/v1/stores
       const created = await req('/rest/v1/stores', {
-        method: 'POST',
-        body: JSON.stringify(body),
+        method: 'POST', body: JSON.stringify(body),
         headers: { 'Prefer': 'return=representation' },
       });
-      const newId = Array.isArray(created) ? created[0]?.id : created?.id;
-      S.mapPendingStore = newId || null;
-      closeModal('m-store'); loadStores(); goTo('map');
+      storeId = Array.isArray(created) ? created[0]?.id : created?.id;
     }
+    if (storeId && !isNaN(lat) && !isNaN(lng)) {
+      await req('/rest/v1/rpc/upsert_store_location', {
+        method: 'POST',
+        body: JSON.stringify({ p_store_id: storeId, p_lng: lng, p_lat: lat, p_color: color }),
+      });
+    }
+    closeModal('m-store'); loadStores();
   } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
@@ -1814,12 +1804,10 @@ function initOrdDateFilters() {
 }
 
 
-// ─── MAP & MARKERS ───
+// ─── MAP ───
 async function loadMapAdmin() {
   const pickBar = document.getElementById('map-pick-bar');
-  const toolbar = document.getElementById('map-toolbar');
   if (pickBar) pickBar.style.display = S.mapPickMode ? '' : 'none';
-  if (toolbar) toolbar.style.display = S.mapPickMode ? 'none' : '';
   if (S.mapPickMode) {
     document.getElementById('map-pick-status').textContent = 'Ожидание клика…';
     document.getElementById('map-pick-use-btn').style.display = 'none';
@@ -1848,18 +1836,21 @@ async function loadMapAdmin() {
 }
 
 async function loadAdminMapMarkers() {
-  const mlist = document.getElementById('markers-list');
-  mlist.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
     S.adminMapMarkers.forEach(m => m.remove());
     S.adminMapMarkers = [];
     if (S.mapDraftMarker) { S.mapDraftMarker.remove(); S.mapDraftMarker = null; }
-    // POST /rest/v1/rpc/get_stores_with_locations
     const locs = await req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' });
     S.mapStoreData = locs;
     const withCoords = locs.filter(l => l.lng != null && l.lat != null);
 
-    if (!S.adminMapFitted && withCoords.length) {
+    if (S.mapViewStore) {
+      const v = S.mapViewStore; S.mapViewStore = null;
+      if (v.lng != null && v.lat != null) {
+        S.adminMap.flyTo({ center: [v.lng, v.lat], zoom: 16, duration: 800 });
+        S.adminMapFitted = true;
+      }
+    } else if (!S.adminMapFitted && withCoords.length) {
       S.adminMapFitted = true;
       const bounds = new maplibregl.LngLatBounds();
       withCoords.forEach(l => bounds.extend([l.lng, l.lat]));
@@ -1870,43 +1861,11 @@ async function loadAdminMapMarkers() {
       const el = document.createElement('div');
       el.className = 'admin-store-pin';
       el.innerHTML = `<div class="p-dot" style="background:${esc(loc.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(loc.name)}</div>`;
-      el.addEventListener('click', e => {
-        e.stopPropagation();
-        selectStoreForMapEdit(loc.id, loc.lng, loc.lat, loc.marker_color);
-      });
       S.adminMapMarkers.push(
         new maplibregl.Marker({ element: el }).setLngLat([loc.lng, loc.lat]).addTo(S.adminMap)
       );
     });
-
-    document.getElementById('marker-count').textContent = `(${withCoords.length})`;
-    mlist.innerHTML = locs.length
-      ? locs.map(loc => `
-          <div style="padding:8px 10px;border-bottom:1px solid #eee">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-              <div>
-                <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:5px">
-                  <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${esc(loc.marker_color||'#e8430a')}"></span>
-                  ${esc(loc.name)}
-                </div>
-                <div class="txt-muted">${loc.lng == null ? 'Координаты не заданы' : ''}</div>
-              </div>
-              <button class="btn btn-sm" onclick="selectStoreForMapEdit('${loc.id}',${loc.lng??'null'},${loc.lat??'null'},'${esc(loc.marker_color||'#e8430a')}')">✎</button>
-            </div>
-          </div>`).join('')
-      : '<div class="empty">Нет заведений</div>';
-
-    if (S.mapPendingStore) {
-      const pending = S.mapStoreData.find(l => l.id === S.mapPendingStore);
-      S.mapPendingStore = null;
-      selectStoreForMapEdit(
-        pending?.id ?? '',
-        pending?.lng ?? null,
-        pending?.lat ?? null,
-        pending?.marker_color ?? '#e8430a'
-      );
-    }
-  } catch(e) { mlist.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+  } catch(e) { console.error('loadAdminMapMarkers:', e); }
 }
 
 function onMapStoreChange() {
