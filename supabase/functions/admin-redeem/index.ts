@@ -1,50 +1,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { handleCors, jsonResponse } from '../_shared/cors.ts'
 
-const SB_URL  = Deno.env.get('SUPABASE_URL')!
+const SB_URL   = Deno.env.get('SUPABASE_URL')!
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
-const SVC_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-type PushSub = { id: string; endpoint: string; p256dh: string; auth_key: string }
-
-async function sendPush(svc: ReturnType<typeof createClient>, clientUserId: string, subName: string, redeemed: number, remaining_uses: number) {
-  const pub = Deno.env.get('VAPID_PUBLIC_KEY')
-  const jwkStr = Deno.env.get('VAPID_PRIVATE_JWK')
-  if (!pub || !jwkStr) return
-
-  const { default: webpush } = await import('npm:web-push@3')
-  const jwk = JSON.parse(jwkStr)
-  webpush.setVapidDetails('https://alliby.ru', pub, jwk.d as string)
-
-  const { data: pushSubs } = await svc
-    .from('push_subscriptions')
-    .select('id,endpoint,p256dh,auth_key')
-    .eq('user_id', clientUserId)
-    .eq('app', 'client')
-
-  if (!pushSubs?.length) return
-
-  const payload = JSON.stringify({
-    title: 'Абонемент использован',
-    body: `${subName}: −${redeemed === 1 ? '1 использование' : redeemed + ' исп.'} · осталось ${remaining_uses}`,
-    data: { screen: 'home' },
-  })
-
-  await Promise.all((pushSubs as PushSub[]).map(async ps => {
-    try {
-      await webpush.sendNotification(
-        { endpoint: ps.endpoint, keys: { p256dh: ps.p256dh, auth: ps.auth_key } },
-        payload,
-        { TTL: 86400 },
-      )
-    } catch (e: unknown) {
-      const status = (e as { statusCode?: number }).statusCode
-      if (status === 410 || status === 404 || status === 401) {
-        await svc.from('push_subscriptions').delete().eq('id', ps.id)
-      }
-    }
-  }))
-}
+const SVC_KEY  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 Deno.serve(async (req: Request) => {
   const corsRes = handleCors(req)
@@ -81,7 +40,6 @@ Deno.serve(async (req: Request) => {
 
   const sub = us.subscriptions as { name: string; price: number; total_uses: number } | null
   const discPerUse = (sub && sub.total_uses > 0) ? +(sub.price / sub.total_uses).toFixed(2) : 0
-  const clientUserId = us.user_id as string
 
   let remaining_uses = 0
   let redeemed = 0
@@ -100,12 +58,5 @@ Deno.serve(async (req: Request) => {
     redeemed++
   }
 
-  const response = jsonResponse({ success: true, remaining_uses, redeemed, amount_discounted: discPerUse * redeemed })
-
-  // Dynamic import runs after response — webpush cold-start doesn't block the user
-  if (clientUserId) {
-    sendPush(svc, clientUserId, sub?.name || 'Абонемент', redeemed, remaining_uses).catch(() => {})
-  }
-
-  return response
+  return jsonResponse({ success: true, remaining_uses, redeemed, amount_discounted: discPerUse * redeemed })
 })

@@ -572,6 +572,10 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:160px;height:160px;border:2px solid rgba(255,255,255,.7);border-radius:10px;pointer-events:none"></div>
     </div>
     <div id="qr-status" class="txt-muted" style="margin-bottom:12px"></div>
+    <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
+      <input id="qr-manual-id" type="text" placeholder="Вставьте ID пользователя (UUID)" style="flex:1;padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--s2);color:var(--fg);font-size:13px" onkeydown="if(event.key==='Enter')manualLookup()">
+      <button class="btn btn-p" onclick="manualLookup()">Найти</button>
+    </div>
     <div id="qr-results"></div>
   </div>
 </div>
@@ -865,13 +869,8 @@ tr.row-click:hover td{background:var(--bg-2)}
 <script>
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
-const _VPS   = location.hostname === 'alliby.ru';
-const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321'
-              : _VPS   ? 'https://alliby.ru'
-              :           'https://bucxawpwttvtwdwdtuhh.supabase.co';
-const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
-              : _VPS   ? 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq'
-              :           'sb_publishable_6KJ_2BqjmK5cnZrrlYsojA_L148hBhH';
+const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
+const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
 
 // ─── STATE ───
 const DEFAULT_MAP_CFG = {
@@ -1141,7 +1140,7 @@ document.querySelectorAll('[data-tab-auth]').forEach(b => b.addEventListener('cl
 
 async function doRecover() {
   try {
-    await req('/auth/v1/recover?redirect_to=' + encodeURIComponent('https://yaric141.github.io/Aliby---goods/admin/'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
+    await req('/auth/v1/recover?redirect_to=' + encodeURIComponent('https://alliby.ru/admin'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
     document.getElementById('ok-recover').style.display = 'block';
   } catch(e) { alert(e.message || 'Ошибка'); }
 }
@@ -1337,7 +1336,7 @@ function editCurrentStore() {
 }
 
 function _storeDeepLink() {
-  return `https://yaric141.github.io/Aliby---goods/client/#store=${_detailStore.id}`;
+  return `https://alliby.ru/#store=${_detailStore.id}`;
 }
 
 function showStoreQR() {
@@ -1975,15 +1974,23 @@ setTimeout(hideSplash, 2000);
   goTo('auth');
 })();
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {}));
-}
-
 // ─── QR SCANNER ───
 let _qrStream = null;
 let _qrAnimId = null;
 let _redeemSubId = null;
+let _redeemDisc  = 0;
 let _scannedUserId = null;
+
+function manualLookup() {
+  const input = document.getElementById('qr-manual-id');
+  const uid = input.value.trim();
+  if (!isValidUuid(uid)) {
+    document.getElementById('qr-status').textContent = 'Введите корректный UUID пользователя';
+    return;
+  }
+  stopQrCamera();
+  handleQrResult(uid);
+}
 
 function loadQrScreen() {
   stopQrCamera();
@@ -2031,7 +2038,7 @@ function scanQrFrame() {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0);
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'dontInvert' });
+  const code = jsQR(imgData.data, imgData.width, imgData.height, { inversionAttempts: 'attemptBoth' });
   if (code?.data && isValidUuid(code.data)) {
     stopQrCamera();
     handleQrResult(code.data);
@@ -2071,14 +2078,15 @@ async function handleQrResult(userId) {
       <div class="sec-title" style="margin-bottom:6px">${esc(g.storeName)}</div>
       ${g.items.map(us => {
         const sub = us.subscriptions;
-        const disc = (sub?.total_uses > 0 && sub?.price) ? (sub.price / sub.total_uses).toFixed(0) : '—';
+        const discPerUse = (sub?.total_uses > 0 && sub?.price) ? +(sub.price / sub.total_uses).toFixed(2) : 0;
+        const discLabel  = discPerUse ? discPerUse.toFixed(0) : '—';
         return `<div class="card" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px">
           <div>
             <div style="font:600 14px/1.2 var(--font-sans)">${esc(sub?.name || 'Абонемент')}</div>
-            <div class="txt-muted">Осталось: ${us.remaining_uses ?? '∞'} · −${disc} ₽/исп.</div>
+            <div class="txt-muted">Осталось: ${us.remaining_uses ?? '∞'} · −${discLabel} ₽/исп.</div>
             <div class="txt-muted">До ${us.end_date ? new Date(us.end_date).toLocaleDateString('ru-RU') : '∞'}</div>
           </div>
-          <button class="btn btn-p btn-sm" onclick="openRedeemModal('${us.id}','${esc(sub?.name||'')}',${us.remaining_uses})">Потратить</button>
+          <button class="btn btn-p btn-sm" onclick="openRedeemModal('${us.id}','${esc(sub?.name||'')}',${us.remaining_uses},${discPerUse})">Потратить</button>
         </div>`;
       }).join('')}
     `).join('<hr style="margin:12px 0">');
@@ -2089,8 +2097,9 @@ async function handleQrResult(userId) {
   }
 }
 
-function openRedeemModal(userSubId, subName, remaining) {
+function openRedeemModal(userSubId, subName, remaining, disc = 0) {
   _redeemSubId = userSubId;
+  _redeemDisc  = Number(disc);
   document.getElementById('redeem-info').innerHTML =
     `<strong>${esc(subName)}</strong><br>Осталось использований: <strong>${remaining ?? '∞'}</strong>`;
   document.getElementById('redeem-qty').value = 1;
@@ -2099,21 +2108,30 @@ function openRedeemModal(userSubId, subName, remaining) {
 
 async function confirmRedeem() {
   if (!_redeemSubId) return;
-  const qty = parseInt(document.getElementById('redeem-qty').value, 10) || 1;
+  const qty   = Math.max(1, Math.min(20, parseInt(document.getElementById('redeem-qty').value, 10) || 1));
   closeModal('m-redeem');
   const status = document.getElementById('qr-status');
   status.textContent = 'Списываем…';
   const subId = _redeemSubId;
+  const disc  = _redeemDisc;
   _redeemSubId = null;
+  _redeemDisc  = 0;
   try {
-    const res = await req('/functions/v1/admin-redeem', {
-      method: 'POST',
-      body: JSON.stringify({ user_subscription_id: subId, quantity: qty }),
-    });
-    status.textContent = `✓ Списано ${res.redeemed} исп. · осталось ${res.remaining_uses} · −${(res.amount_discounted||0).toFixed(0)} ₽`;
+    let remaining_uses = 0;
+    let redeemed = 0;
+    for (let i = 0; i < qty; i++) {
+      const rows = await req('/rest/v1/rpc/redeem_subscription', {
+        method: 'POST',
+        body: JSON.stringify({ p_user_subscription_id: subId, p_order_id: null, p_amount_discounted: disc }),
+      });
+      if (!rows?.length) break;
+      remaining_uses = rows[0].remaining_uses;
+      redeemed++;
+    }
+    status.textContent = `✓ Списано ${redeemed} исп. · осталось ${remaining_uses} · −${(disc * redeemed).toFixed(0)} ₽`;
     if (_scannedUserId) await handleQrResult(_scannedUserId);
   } catch(e) {
-    status.textContent = '✕ Ошибка: ' + (e?.error || e?.message || String(e) || 'неизвестная ошибка');
+    status.textContent = '✕ Ошибка: ' + (e?.message || e?.error || String(e) || 'неизвестная ошибка');
   }
 }
 
