@@ -273,6 +273,10 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .ci-info{flex:1;min-width:0}
 .ci-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ci-price{font:400 14px/1.4 var(--font-mono);color:var(--fg-3)}
+.ci-price-strike{text-decoration:line-through;color:var(--fg-4)}
+.ci-sub-price{font:500 14px/1.4 var(--font-mono);color:var(--ok)}
+.ci-sub-note{font:400 11px/1.3 var(--font-sans);color:var(--fg-3);margin-top:2px}
+.cart-sub-banner{padding:9px 18px;font:400 12px/1.4 var(--font-sans);color:var(--ok);background:oklch(from var(--ok) l c h / .08);border-bottom:1px solid var(--line-soft)}
 .cart-foot{border-top:1px solid var(--line-soft);padding:14px 18px;flex-shrink:0;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .cart-sub-block{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:12px;margin-bottom:12px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .cart-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font:400 17px/1 var(--font-sans);color:var(--fg-2)}
@@ -1511,6 +1515,37 @@ function getBestDisc(item) {
   return list.reduce((best, x) => x.disc > best.disc ? x : best);
 }
 
+function getCartSubAllocation() {
+  if (!S.menuUserSubs?.length || !S.cart.length) return null;
+  // Pick the single best subscription across all cart items
+  let globalBest = null;
+  for (const { item } of S.cart) {
+    const b = getBestDisc(item);
+    if (b && (!globalBest || b.disc > globalBest.disc)) globalBest = b;
+  }
+  if (!globalBest) return null;
+
+  let usesLeft = globalBest.us.remaining_uses; // null = unlimited
+  let totalQty = 0, coveredQty = 0;
+  const perItem = new Map();
+
+  for (const { item, qty } of S.cart) {
+    const b = getBestDisc(item);
+    if (!b || b.sub.id !== globalBest.sub.id) {
+      perItem.set(item.id, { covered: 0, uncovered: qty, disc: 0 });
+      totalQty += qty;
+      continue;
+    }
+    const covered = usesLeft === null ? qty : Math.min(qty, Math.max(0, usesLeft));
+    if (usesLeft !== null) usesLeft = Math.max(0, usesLeft - covered);
+    perItem.set(item.id, { covered, uncovered: qty - covered, disc: b.disc });
+    totalQty += qty;
+    coveredQty += covered;
+  }
+  if (!coveredQty) return null;
+  return { sub: globalBest.sub, totalQty, coveredQty, perItem };
+}
+
 async function loadCategories() {
   const bar = document.getElementById('cat-bar');
   try {
@@ -1722,9 +1757,17 @@ function updateCartCount() {
 
 // ─── CART ───
 function updateCartTotals() {
-  const subtotal = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
-  document.getElementById('c-subtotal').textContent = subtotal + ' ₽';
-  document.getElementById('c-total').textContent = subtotal + ' ₽';
+  const full = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+  const alloc = getCartSubAllocation();
+  let discounted = full;
+  if (alloc) {
+    for (const { item } of S.cart) {
+      const info = alloc.perItem.get(item.id);
+      if (info?.covered > 0) discounted -= info.disc * info.covered;
+    }
+  }
+  document.getElementById('c-subtotal').textContent = full + ' ₽';
+  document.getElementById('c-total').textContent = discounted + ' ₽';
 }
 
 async function renderCart() {
@@ -1738,13 +1781,35 @@ async function renderCart() {
     return;
   }
   foot.style.display = 'block';
+  const alloc = getCartSubAllocation();
   body.innerHTML = S.cart.map(({ item, qty }) => {
-    const sum = item.price * qty;
-    return `<div class="cart-item">
-      <div class="ci-info"><div class="ci-name">${esc(item.name)}</div><div class="ci-price">${item.price} ₽ × ${qty} = ${sum} ₽</div></div>
-      <div class="qty-ctrl"><button class="qty-btn" onclick="cartQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button></div>
+    const fullSum = item.price * qty;
+    const info = alloc?.perItem.get(item.id);
+    const { covered = 0, uncovered = qty, disc = 0 } = info || {};
+    let priceHtml, subNoteHtml = '';
+    if (covered > 0) {
+      const subUnitPrice = item.price - disc;
+      const discSum = subUnitPrice * covered + item.price * uncovered;
+      priceHtml = `<div class="ci-price"><span class="ci-price-strike">${item.price} ₽ × ${qty} = ${fullSum} ₽</span></div>
+        <div class="ci-sub-price">${covered < qty
+          ? `${subUnitPrice} ₽ × ${covered} + ${item.price} ₽ × ${uncovered} = ${discSum} ₽`
+          : `${subUnitPrice} ₽ × ${qty} = ${discSum} ₽`
+        }</div>`;
+      subNoteHtml = `<div class="ci-sub-note">По абонементу «${esc(alloc.sub.name)}»${covered < qty ? ` (${covered} из ${qty})` : ''}</div>`;
+    } else {
+      priceHtml = `<div class="ci-price">${item.price} ₽ × ${qty} = ${fullSum} ₽</div>`;
+    }
+    return `<div class="cart-item" style="align-items:flex-start">
+      <div class="ci-info">
+        <div class="ci-name">${esc(item.name)}</div>
+        ${priceHtml}
+        ${subNoteHtml}
+      </div>
+      <div class="qty-ctrl" style="flex-shrink:0"><button class="qty-btn" onclick="cartQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button></div>
     </div>`;
-  }).join('');
+  }).join('') + (alloc
+    ? `<div class="cart-sub-banner">✓ Применён абонемент «${esc(alloc.sub.name)}»${alloc.coveredQty < alloc.totalQty ? ` к ${alloc.coveredQty} из ${alloc.totalQty} товаров` : ''}</div>`
+    : '');
   updateCartTotals();
 }
 
