@@ -466,8 +466,18 @@ tr.row-click:hover td{background:var(--bg-2)}
 
   <div style="display:flex;flex:1;overflow:hidden;flex-direction:column">
 
+    <!-- Coordinate pick mode bar -->
+    <div id="map-pick-bar" style="display:none;flex-shrink:0;padding:12px 16px;border-bottom:2px solid var(--accent);background:var(--bg-2)">
+      <div style="font:500 14px/1.3 var(--font-sans);margin-bottom:10px">📍 Кликните на карту для выбора местоположения заведения</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span id="map-pick-status" class="txt-muted" style="flex:1;font:400 12px/1 var(--font-mono)">Ожидание клика…</span>
+        <button id="map-pick-use-btn" class="btn btn-p btn-sm" style="display:none" onclick="usePickedCoords()">✓ Использовать точку</button>
+        <button class="btn btn-sm" onclick="cancelPickMode()">✕ Отмена</button>
+      </div>
+    </div>
+
     <!-- Map edit toolbar -->
-    <div style="padding:10px 16px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;flex-shrink:0">
+    <div id="map-toolbar" style="padding:10px 16px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;flex-shrink:0">
       <div class="fg" style="min-width:180px;margin:0">
         <label>Заведение</label>
         <select id="marker-store-sel" onchange="onMapStoreChange()">
@@ -631,11 +641,8 @@ tr.row-click:hover td{background:var(--bg-2)}
         <input type="text" id="ms-name">
       </div>
       <div class="fg" style="grid-column:1/-1">
-        <label>Адрес *<span class="hint" data-tip="Введите адрес и нажмите «Геокод» — координаты определятся автоматически. Без координат заведение не появится на карте">?</span></label>
-        <div class="row">
-          <div class="fg"><input type="text" id="ms-address" placeholder="ул. Ленина, 15"></div>
-          <button class="btn btn-sm" onclick="geocodeAddress()">Геокод</button>
-        </div>
+        <label>Адрес<span class="hint" data-tip="Физический адрес заведения для отображения клиентам. Координаты на карте задаются кнопкой «Указать на карте»">?</span></label>
+        <input type="text" id="ms-address" placeholder="ул. Ленина, 15">
       </div>
       <input type="hidden" id="ms-lat">
       <input type="hidden" id="ms-lng">
@@ -652,11 +659,12 @@ tr.row-click:hover td{background:var(--bg-2)}
         <select id="ms-sc"><option value="">— не указан —</option></select>
       </div>
     </div>
+    <div id="ms-coords-status" style="font:400 12px/1.3 var(--font-mono);margin:10px 0 4px;padding:6px 10px;border-radius:var(--r-1);background:var(--bg-2)"></div>
+    <button class="btn" style="width:100%;margin-bottom:12px" onclick="pickOnMap()">🗺 Указать на карте</button>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-store')">Отмена</button>
       <button class="btn btn-p" onclick="saveStore()">Сохранить</button>
     </div>
-    <div class="txt-muted" style="margin-top:6px">POST /rest/v1/stores · PATCH /rest/v1/stores?id=eq.{id}</div>
   </div>
 </div>
 
@@ -901,6 +909,7 @@ const S = {
   pendingConfirm: null,
   adminMap: null, adminMapMarkers: [], adminMapFitted: false,
   mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null, mapPendingStore: null,
+  mapPickMode: false, mapPickDraftMarker: null, mapPickCoords: null, storeFormDraft: null,
   navHistory: [], navIdx: -1,
   uploadedPhotoFilename: null,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
@@ -1277,21 +1286,83 @@ function openStoreModal(store) {
   document.getElementById('ms-phone').value   = store?.phone   || '';
   document.getElementById('ms-hours').value   = store?.working_hours || '';
   document.getElementById('ms-sc').value      = store?.store_category_id || '';
+  updateStoreCoordsStatus();
   openModal('m-store');
 }
 
-async function geocodeAddress() {
-  const address = document.getElementById('ms-address').value;
-  if (!address) { alert('Введите адрес'); return; }
-  try {
-    // POST /functions/v1/geocode
-    const r = await req('/functions/v1/geocode', {
-      method: 'POST',
-      body: JSON.stringify({ address }),
-    });
-    document.getElementById('ms-lat').value = r.latitude;
-    document.getElementById('ms-lng').value = r.longitude;
-  } catch(e) { alert('Ошибка геокодирования: ' + (e.message || '')); }
+function updateStoreCoordsStatus() {
+  const lat = document.getElementById('ms-lat').value;
+  const lng = document.getElementById('ms-lng').value;
+  const el  = document.getElementById('ms-coords-status');
+  if (!el) return;
+  if (lat && lng) {
+    el.textContent = `📍 ${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
+    el.style.color = 'var(--ok)';
+  } else {
+    el.textContent = '📍 Координаты не указаны — нажмите «Указать на карте»';
+    el.style.color = 'var(--fg-3)';
+  }
+}
+
+function pickOnMap() {
+  S.storeFormDraft = {
+    id:      document.getElementById('ms-id').value,
+    name:    document.getElementById('ms-name').value,
+    address: document.getElementById('ms-address').value,
+    phone:   document.getElementById('ms-phone').value,
+    hours:   document.getElementById('ms-hours').value,
+    sc:      document.getElementById('ms-sc').value,
+    lat:     document.getElementById('ms-lat').value,
+    lng:     document.getElementById('ms-lng').value,
+  };
+  S.mapPickMode = true;
+  S.mapPickCoords = null;
+  closeModal('m-store');
+  goTo('map');
+}
+
+function usePickedCoords() {
+  if (!S.storeFormDraft || !S.mapPickCoords) return;
+  const { lat, lng } = S.mapPickCoords;
+  const d = S.storeFormDraft;
+  S.mapPickMode = false;
+  S.mapPickCoords = null;
+  S.storeFormDraft = null;
+  if (S.mapPickDraftMarker) { S.mapPickDraftMarker.remove(); S.mapPickDraftMarker = null; }
+  document.getElementById('map-pick-bar').style.display = 'none';
+  document.getElementById('map-toolbar').style.display = '';
+  document.getElementById('ms-id').value      = d.id;
+  document.getElementById('ms-name').value    = d.name;
+  document.getElementById('ms-address').value = d.address;
+  document.getElementById('ms-phone').value   = d.phone;
+  document.getElementById('ms-hours').value   = d.hours;
+  document.getElementById('ms-sc').value      = d.sc;
+  document.getElementById('ms-lat').value     = lat;
+  document.getElementById('ms-lng').value     = lng;
+  updateStoreCoordsStatus();
+  openModal('m-store');
+}
+
+function cancelPickMode() {
+  S.mapPickMode = false;
+  S.mapPickCoords = null;
+  if (S.mapPickDraftMarker) { S.mapPickDraftMarker.remove(); S.mapPickDraftMarker = null; }
+  document.getElementById('map-pick-bar').style.display = 'none';
+  document.getElementById('map-toolbar').style.display = '';
+  if (S.storeFormDraft) {
+    const d = S.storeFormDraft;
+    S.storeFormDraft = null;
+    document.getElementById('ms-id').value      = d.id;
+    document.getElementById('ms-name').value    = d.name;
+    document.getElementById('ms-address').value = d.address;
+    document.getElementById('ms-phone').value   = d.phone;
+    document.getElementById('ms-hours').value   = d.hours;
+    document.getElementById('ms-sc').value      = d.sc;
+    document.getElementById('ms-lat').value     = d.lat;
+    document.getElementById('ms-lng').value     = d.lng;
+    updateStoreCoordsStatus();
+    openModal('m-store');
+  }
 }
 
 async function saveStore() {
@@ -1745,6 +1816,14 @@ function initOrdDateFilters() {
 
 // ─── MAP & MARKERS ───
 async function loadMapAdmin() {
+  const pickBar = document.getElementById('map-pick-bar');
+  const toolbar = document.getElementById('map-toolbar');
+  if (pickBar) pickBar.style.display = S.mapPickMode ? '' : 'none';
+  if (toolbar) toolbar.style.display = S.mapPickMode ? 'none' : '';
+  if (S.mapPickMode) {
+    document.getElementById('map-pick-status').textContent = 'Ожидание клика…';
+    document.getElementById('map-pick-use-btn').style.display = 'none';
+  }
   if (!S.adminMap) {
     S.adminMap = new maplibregl.Map({
       container: 'map-admin-gl', style: buildMapStyle(S.mapCfg),
@@ -1858,6 +1937,19 @@ function selectStoreForMapEdit(storeId, lng, lat, color) {
 }
 
 function onMapClick(e) {
+  if (S.mapPickMode) {
+    const { lng, lat } = e.lngLat;
+    S.mapPickCoords = { lat, lng };
+    if (S.mapPickDraftMarker) { S.mapPickDraftMarker.remove(); S.mapPickDraftMarker = null; }
+    const el = document.createElement('div');
+    el.className = 'admin-store-pin';
+    el.style.cssText = 'opacity:.85;pointer-events:none';
+    el.innerHTML = '<div class="p-dot" style="background:var(--accent);box-shadow:0 0 0 3px rgba(255,255,255,.9),0 0 0 5px var(--accent)"></div>';
+    S.mapPickDraftMarker = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(S.adminMap);
+    document.getElementById('map-pick-status').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    document.getElementById('map-pick-use-btn').style.display = '';
+    return;
+  }
   if (!S.mapEditing) return;
   const { lng, lat } = e.lngLat;
   document.getElementById('marker-lng').value = lng.toFixed(6);
