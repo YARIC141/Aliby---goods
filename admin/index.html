@@ -626,21 +626,29 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
     <input type="hidden" id="ms-id">
     <div class="grid2">
-      <div class="fg" style="grid-column:1/-1"><label>Название *</label><input type="text" id="ms-name"></div>
       <div class="fg" style="grid-column:1/-1">
-        <label>Адрес *</label>
+        <label>Название *<span class="hint" data-tip="Полное название заведения, которое увидят клиенты в приложении и на карте">?</span></label>
+        <input type="text" id="ms-name">
+      </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Адрес *<span class="hint" data-tip="Введите адрес и нажмите «Геокод» — координаты определятся автоматически. Без координат заведение не появится на карте">?</span></label>
         <div class="row">
           <div class="fg"><input type="text" id="ms-address" placeholder="ул. Ленина, 15"></div>
-          <button class="btn btn-sm" onclick="geocodeAddress()" title="GET координаты из адреса">Геокод</button>
+          <button class="btn btn-sm" onclick="geocodeAddress()">Геокод</button>
         </div>
-        <div class="txt-muted">POST /functions/v1/geocode</div>
       </div>
       <input type="hidden" id="ms-lat">
       <input type="hidden" id="ms-lng">
-      <div class="fg"><label>Телефон</label><input type="tel" id="ms-phone" placeholder="+7(495)…"></div>
-      <div class="fg"><label>Часы работы</label><input type="text" id="ms-hours" placeholder="Пн-Пт 8:00-20:00"></div>
+      <div class="fg">
+        <label>Телефон<span class="hint" data-tip="Номер телефона для связи с заведением. Клиент видит его на странице заведения и может позвонить напрямую">?</span></label>
+        <input type="tel" id="ms-phone" placeholder="+7(495)…">
+      </div>
+      <div class="fg">
+        <label>Часы работы<span class="hint" data-tip="Расписание работы заведения. Пример: «Пн-Пт 9:00–21:00, Сб-Вс 10:00–20:00» или «Ежедневно 8:00–23:00»">?</span></label>
+        <input type="text" id="ms-hours" placeholder="Пн-Пт 8:00-20:00">
+      </div>
       <div class="fg" style="grid-column:1/-1">
-        <label>Тип заведения</label>
+        <label>Тип заведения<span class="hint" data-tip="Категория определяет иконку и фильтр на карте клиентского приложения. Клиент может отфильтровать заведения по типу">?</span></label>
         <select id="ms-sc"><option value="">— не указан —</option></select>
       </div>
     </div>
