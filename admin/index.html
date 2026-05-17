@@ -2214,6 +2214,11 @@ async function confirmRedeem() {
     }
   });
 })();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js', { scope: '/admin/', updateViaCache: 'none' })
+    .catch(() => {});
+}
 </script>
 </body>
 </html>
