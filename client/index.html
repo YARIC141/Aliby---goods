@@ -100,8 +100,8 @@ body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden
 .bn-btn{flex:1;padding:8px 2px 10px;border:none;background:none;cursor:pointer;font:500 12px/1.2 var(--font-sans);color:var(--fg-3);display:flex;flex-direction:column;align-items:center;gap:3px;transition:color var(--t-fast)}
 .bn-btn .ico{font-size:26px;line-height:1;display:block}
 .bn-btn.active{color:var(--accent)}
-#nav-info-popup{position:fixed;bottom:66px;left:50%;transform:translateX(-50%) translateY(8px);max-width:280px;width:calc(100% - 32px);background:var(--bg-1);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:10px 14px;font:400 16px/1.45 var(--font-sans);color:var(--fg);box-shadow:var(--shadow-1);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:800;text-align:center}
-#nav-info-popup.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.screen-tip{font:400 13px/1.5 var(--font-sans);color:var(--fg-3);background:var(--bg-2);border-left:3px solid var(--accent,#e8743b);padding:0 14px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;flex-shrink:0}
+.screen-tip.open{max-height:120px;padding:10px 14px}
 
 @media(max-width:767px){
   #side-nav{display:none}
@@ -113,8 +113,6 @@ body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden
   body.nav-right .bn-btn{flex:0;padding:8px 2px;font-size:11px;width:100%;line-height:1.3;word-break:break-word}
   body.nav-right .bn-btn .ico{font-size:28px}
   body.nav-right #main{padding-right:68px}
-  body.nav-right #nav-info-popup{bottom:auto;top:50%;left:auto;right:72px;transform:translateY(-50%) translateX(8px);max-width:220px;width:calc(100% - 84px)}
-  body.nav-right #nav-info-popup.show{transform:translateY(-50%) translateX(0)}
 }
 
 /* ── PAGE STRUCTURE ── */
@@ -461,6 +459,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <!-- ════════════════ HOME ════════════════ -->
 <div id="screen-home" class="screen">
   <div class="ph"><h2>Алиби<span class="screen-help" data-info="Здесь вы можете узнать о том сколько сэкономили пользуясь Alliby и предъявить QR для списания абонемента">?</span></h2></div>
+  <div class="screen-tip"></div>
   <div class="pb" id="home-content" style="padding:12px 16px">
     <div class="loading">Загрузка…</div>
   </div>
@@ -472,6 +471,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <h2>Заведения<span class="screen-help" data-info="Карта всех заведений поблизости. Нажмите на метку, чтобы посмотреть информацию о заведении.">?</span></h2>
     <button class="btn btn-sm" id="map-panel-btn" onclick="toggleMapPanel()">Скрыть карту</button>
   </div>
+  <div class="screen-tip"></div>
   <div class="map-layout">
 
     <div class="sl-panel">
@@ -506,6 +506,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="btn-back" onclick="goTo('map')">← Карта</button>
     <h2 id="store-ph-name">Заведение<span class="screen-help" data-info="Информация о выбранном заведении: меню, часы работы и контакты.">?</span></h2>
   </div>
+  <div class="screen-tip"></div>
   <div class="pb">
 
     <div class="store-hero">
@@ -550,12 +551,13 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <h2 id="menu-ph-name">Товары и Услуги<span class="screen-help" data-info="Каталог товаров и услуг выбранного заведения. Добавляйте понравившееся в корзину.">?</span></h2>
     <button class="btn btn-sm" onclick="goTo('cart')">Корзина и заказ&nbsp;<span id="menu-cart-cnt">0</span></button>
   </div>
-
+  <div class="screen-tip"></div>
 </div>
 
 <!-- ════════════════ CART ════════════════ -->
 <div id="screen-cart" class="screen">
   <div class="ph"><h2>Корзина и заказ<span class="screen-help" data-info="Здесь хранятся товары и услуги, которые вы хотите заказать, а также абонементы к покупке.">?</span></h2></div>
+  <div class="screen-tip"></div>
   <div class="cart-layout">
     <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
       <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted)">🎫 Абонементы к покупке</div>
@@ -580,6 +582,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <!-- ════════════════ MY SUBSCRIPTIONS ════════════════ -->
 <div id="screen-subscriptions" class="screen">
   <div class="ph"><h2>Абонементы<span class="screen-help" data-info="Ваши абонементы — многоразовые скидки на любимые блюда и услуги.">?</span></h2></div>
+  <div class="screen-tip"></div>
   <div class="pb">
     <div class="tab-nav">
       <button class="tab-btn active" data-tab-sub="store">Заведение</button>
@@ -598,9 +601,11 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
     <div id="sub-gifts" class="tab-pane">
       <h3 style="margin:0 0 10px">Мои подарки<span class="screen-help" data-info="Абонементы которые вы запланировали подарить кому-то">?</span></h3>
+      <div class="screen-tip"></div>
       <div id="usubs-gifts"><div class="loading">Загрузка…</div></div>
       <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
         <h3 style="margin:0 0 6px">Активировать подаренный абонемент<span class="screen-help" data-info="Если вам подарили абонемент — здесь можно ввести его идентификатор чтобы начать им пользоваться">?</span></h3>
+        <div class="screen-tip"></div>
         <p class="txt-sm" style="margin-bottom:10px;color:var(--muted)">Введите ID абонемента, который вам передали</p>
         <div style="display:flex;gap:8px">
           <input id="gift-activate-input" type="text" placeholder="ID абонемента…" style="flex:1;min-width:0">
@@ -614,6 +619,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <!-- ════════════════ PROFILE ════════════════ -->
 <div id="screen-profile" class="screen">
   <div class="ph"><h2>Профиль<span class="screen-help" data-info="Настройки профиля: смена темы оформления и данные аккаунта.">?</span></h2></div>
+  <div class="screen-tip"></div>
   <div class="pb">
 
     <div class="sec">
@@ -694,7 +700,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
-<div id="nav-info-popup"></div>
 
 </div><!-- #main -->
 </div><!-- #app -->
@@ -1011,6 +1016,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 function goTo(id, opts = {}) {
   if (id === 'menu') id = 'store';
   if (id !== 'auth' && !S.session) { goTo('auth'); return; }
+  document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
   if (id !== 'auth') localStorage.setItem('alliby_nav', id);
   const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
   if (!opts.fromSwipe) {
@@ -1044,19 +1050,20 @@ function animateScreenChange(fromId, toId, dir) {
   }, D + 10);
 }
 
-let _navInfoTimer;
 document.addEventListener('click', e => {
   const nh = e.target.closest('.screen-help');
   if (nh) {
     e.stopPropagation();
-    const popup = document.getElementById('nav-info-popup');
-    popup.textContent = nh.getAttribute('data-info');
-    popup.classList.add('show');
-    clearTimeout(_navInfoTimer);
-    _navInfoTimer = setTimeout(() => popup.classList.remove('show'), 3500);
+    const anchor = nh.closest('.ph') || nh.closest('h3');
+    const tip = anchor?.nextElementSibling;
+    if (tip?.classList.contains('screen-tip')) {
+      const wasOpen = tip.classList.contains('open');
+      document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
+      if (!wasOpen) { tip.textContent = nh.getAttribute('data-info'); tip.classList.add('open'); }
+    }
     return;
   }
-  if (!e.target.closest('#nav-info-popup')) document.getElementById('nav-info-popup')?.classList.remove('show');
+  if (!e.target.closest('.screen-tip')) document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
 });
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.nav)));
 
