@@ -1201,10 +1201,13 @@ async function loadStores() {
             ${s.working_hours ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px">🕐 ${esc(s.working_hours)}</div>` : ''}
             ${s.phone ? `<div class="txt-muted" style="font-size:12px">📞 ${esc(s.phone)}</div>` : ''}
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button class="btn btn-sm" onclick="event.stopPropagation();openStoreModal(${sd})">Ред.</button>
-            ${s._loc?.lng != null ? `<button class="btn btn-sm" onclick="event.stopPropagation();showOnMap(${sd})">📍 Карта</button>` : ''}
-            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
+          <div style="display:flex;gap:4px;flex-shrink:0;align-items:stretch">
+            <button class="btn btn-sm" style="display:flex;align-items:center;justify-content:center;padding:0 10px;height:auto" onclick="event.stopPropagation();showStoreQRDirect(${sd})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg></button>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <button class="btn btn-sm" onclick="event.stopPropagation();openStoreModal(${sd})">Ред.</button>
+              ${s._loc?.lng != null ? `<button class="btn btn-sm" onclick="event.stopPropagation();showOnMap(${sd})">📍 Карта</button>` : ''}
+              <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
+            </div>
           </div>
         </div>
       </div>`;
@@ -1377,6 +1380,11 @@ function editCurrentStore() {
 
 function _storeDeepLink() {
   return `https://alliby.ru/#store=${_detailStore.id}`;
+}
+
+function showStoreQRDirect(store) {
+  _detailStore = store;
+  showStoreQR();
 }
 
 function showStoreQR() {
