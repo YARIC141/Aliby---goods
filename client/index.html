@@ -2610,15 +2610,8 @@ if ('serviceWorker' in navigator) {
     tracking = false;
     pill.style.transform = 'translateX(-50%) translateY(-56px)';
     pill.textContent = '↓';
-    if (dy >= THRESH) reloadCurrentScreen();
+    if (dy >= THRESH) window.location.reload();
   });
-
-  function reloadCurrentScreen() {
-    const el = document.querySelector('.screen.active');
-    if (!el) return;
-    const id = el.id.replace('screen-', '');
-    ({home:loadHome,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
-  }
 })();
 </script>
 </div><!-- #zoom-root -->
