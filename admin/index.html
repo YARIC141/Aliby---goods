@@ -1203,7 +1203,7 @@ async function loadStores() {
       const color = esc(s._loc?.marker_color || '#e8430a');
       const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
       const sd = JSON.stringify(s).replace(/"/g, '&quot;');
-      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+      return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openStoreDetail(${sd})">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
@@ -1216,9 +1216,9 @@ async function loadStores() {
             ${s.phone ? `<div class="txt-muted" style="font-size:12px">📞 ${esc(s.phone)}</div>` : ''}
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button class="btn btn-sm" onclick="openStoreModal(${sd})">Ред.</button>
-            ${s._loc?.lng != null ? `<button class="btn btn-sm" onclick="showOnMap(${sd})">📍 Карта</button>` : ''}
-            <button class="btn btn-sm btn-d" onclick="confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
+            <button class="btn btn-sm" onclick="event.stopPropagation();openStoreModal(${sd})">Ред.</button>
+            ${s._loc?.lng != null ? `<button class="btn btn-sm" onclick="event.stopPropagation();showOnMap(${sd})">📍 Карта</button>` : ''}
+            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
           </div>
         </div>
       </div>`;
