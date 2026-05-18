@@ -410,14 +410,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       </select>
       <input type="search" placeholder="Поиск…" id="mi-search" oninput="loadMenuItems()">
     </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>Фото</th><th>Название</th><th>Категория</th><th>Цена</th><th>В наличии</th><th>Действия</th>
-        </tr></thead>
-        <tbody id="mi-tbody"><tr><td colspan="6" class="loading">Загрузка…</td></tr></tbody>
-      </table>
-    </div>
+    <div id="mi-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
     <div class="txt-muted" style="margin-top:8px">GET /rest/v1/menu_items</div>
   </div>
 </div>
@@ -434,14 +427,7 @@ tr.row-click:hover td{background:var(--bg-2)}
         <option value="">Все заведения</option>
       </select>
     </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>Название</th><th>Заведение</th><th>Цена</th><th>Скидка</th><th>Срок (дней)</th><th>Исп.</th><th>Действия</th>
-        </tr></thead>
-        <tbody id="sub-tbody"><tr><td colspan="7" class="loading">Загрузка…</td></tr></tbody>
-      </table>
-    </div>
+    <div id="sub-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
     <div class="txt-muted" style="margin-top:8px">GET /rest/v1/subscriptions</div>
   </div>
 </div>
@@ -1471,8 +1457,8 @@ async function saveCat() {
 
 // ─── MENU ITEMS ───
 async function loadMenuItems() {
-  const tbody = document.getElementById('mi-tbody');
-  tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка…</td></tr>';
+  const el = document.getElementById('mi-list');
+  el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   try {
     // GET /rest/v1/menu_items?select=*,categories(name)
     let url = '/rest/v1/menu_items?select=*,categories(name)&order=name.asc';
@@ -1483,23 +1469,31 @@ async function loadMenuItems() {
     if (catId)   url += `&category_id=eq.${catId}`;
     if (search)  url += `&name=ilike.*${encodeURIComponent(search)}*`;
     const items = await req(url);
-    if (!items.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет позиций</td></tr>'; return; }
-    tbody.innerHTML = items.map(i => `
-      <tr>
-        <td>${i.image_url
-          // GET /storage/v1/object/public/menu-photos/{filename}
-          ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border:1px solid #eee">`
-          : '—'}</td>
-        <td>${esc(i.name)}</td>
-        <td>${esc(i.categories?.name || '—')}</td>
-        <td>${i.price} ₽</td>
-        <td>${i.is_available ? '✓' : '—'}</td>
-        <td class="td-actions">
-          <button class="btn btn-sm" onclick="openMenuItemModal(${JSON.stringify(i).replace(/"/g,'&quot;')})">Ред.</button>
-          <button class="btn btn-sm btn-d" onclick="confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
-        </td>
-      </tr>`).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Ошибка</td></tr>'; }
+    if (!items.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет позиций</div>'; return; }
+    el.innerHTML = items.map(i => {
+      const sd = JSON.stringify(i).replace(/"/g, '&quot;');
+      const thumb = i.image_url
+        ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
+        : `<div style="width:40px;height:40px;border-radius:var(--r-1);background:var(--bg-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-4);font-size:18px">🍽</div>`;
+      const avail = i.is_available
+        ? `<span style="font-size:12px;color:var(--ok)">✓ В наличии</span>`
+        : `<span style="font-size:12px;color:var(--fg-4)">— Нет в наличии</span>`;
+      return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openMenuItemModal(${sd})">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          ${thumb}
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.name)}</div>
+            <div style="font-size:12px;color:var(--fg-3);margin-bottom:3px">${esc(i.categories?.name || '—')} · ${i.price} ₽</div>
+            ${avail}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="event.stopPropagation();openMenuItemModal(${sd})">Ред.</button>
+            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div class="empty" style="padding:16px 0">Ошибка</div>'; }
 }
 
 async function loadMICategories() {
@@ -1618,32 +1612,35 @@ async function saveMenuItem() {
 
 // ─── SUBSCRIPTIONS ───
 async function loadSubscriptions() {
-  const tbody = document.getElementById('sub-tbody');
-  tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка…</td></tr>';
+  const el = document.getElementById('sub-list');
+  el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   try {
     let url = '/rest/v1/subscriptions?select=*,stores(name)&order=name.asc';
     const storeId = document.getElementById('sub-store-filter')?.value;
     if (storeId) url += `&store_id=eq.${storeId}`;
     const subs = await req(url);
-    if (!subs.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Нет абонементов</td></tr>'; return; }
-    tbody.innerHTML = subs.map(s => {
+    if (!subs.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет абонементов</div>'; return; }
+    el.innerHTML = subs.map(s => {
+      const sd = JSON.stringify(s).replace(/"/g, '&quot;');
       const discLabel = s.discount_value
-        ? (s.discount_type === 'percent' ? `${s.discount_value}%` : `${s.discount_value} ₽`)
+        ? (s.discount_type === 'percent' ? `−${s.discount_value}%` : `−${s.discount_value} ₽`)
         : '—';
-      return `<tr>
-        <td>${esc(s.name)}</td>
-        <td>${esc(s.stores?.name || '—')}</td>
-        <td>${s.price} ₽</td>
-        <td>${discLabel}</td>
-        <td>${s.duration_days}</td>
-        <td>${s.total_uses === 0 ? '∞' : s.total_uses}</td>
-        <td class="td-actions">
-          <button class="btn btn-sm" onclick='openSubModal(${JSON.stringify(s)})'>Ред.</button>
-          <button class="btn btn-sm btn-d" onclick="confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
-        </td>
-      </tr>`;
+      const uses = s.total_uses === 0 ? '∞' : s.total_uses;
+      return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openSubModal(${sd})">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</div>
+            <div style="font-size:12px;color:var(--fg-3);margin-bottom:2px">${esc(s.stores?.name || '—')}</div>
+            <div style="font-size:12px;color:var(--fg-3)">${s.price} ₽ · скидка ${discLabel} · ${s.duration_days} дн. · исп. ${uses}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="event.stopPropagation();openSubModal(${sd})">Ред.</button>
+            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
+          </div>
+        </div>
+      </div>`;
     }).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Ошибка</td></tr>'; }
+  } catch(e) { el.innerHTML = '<div class="empty" style="padding:16px 0">Ошибка</div>'; }
 }
 
 function openSubModal(sub) {
