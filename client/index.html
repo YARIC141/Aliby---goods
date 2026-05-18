@@ -2353,9 +2353,9 @@ async function restoreNav() {
     const ok = await navigateDeepLink();
     if (ok) return;
   }
-  const SCREENS = ['map','store','menu','cart','subscriptions','profile'];
+  const SCREENS = ['home','store','menu','cart','subscriptions','profile'];
   const nav = localStorage.getItem('alliby_nav');
-  goTo(nav && SCREENS.includes(nav) ? nav : 'map');
+  goTo(nav && SCREENS.includes(nav) ? nav : 'home');
 }
 
 // ─── SPLASH ───
