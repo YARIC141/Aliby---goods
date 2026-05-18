@@ -20,7 +20,9 @@ jobs:
 
       - name: Deploy frontend
         run: |
-          sed -i "1s/.*/\/\/ v$(date +%s)/" client/sw.js
+          TS=$(date +%s)
+          sed -i "1s/.*/\/\/ v${TS}/" client/sw.js
+          sed -i "1s/.*/\/\/ v${TS}/" admin/sw.js
           rsync -az --delete client/ root@89.169.39.31:/var/www/alliby/client/
           rsync -az --delete admin/  root@89.169.39.31:/var/www/alliby/admin/
 

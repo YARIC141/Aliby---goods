@@ -2237,8 +2237,17 @@ async function confirmRedeem() {
 })();
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js', { scope: '/admin/', updateViaCache: 'none' })
-    .catch(() => {});
+  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js', { scope: '/admin/', updateViaCache: 'none' })
+      .then(reg => {
+        reg.update();
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') reg.update();
+        });
+      })
+      .catch(() => {});
+  });
 }
 </script>
 </body>
