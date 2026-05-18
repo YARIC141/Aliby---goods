@@ -105,14 +105,15 @@ body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden
 
 @media(max-width:767px){
   #side-nav{display:none}
-  #bottom-nav{display:block}
+  #bottom-nav{display:block;position:fixed;bottom:0;left:0;right:0;z-index:50;padding-bottom:env(safe-area-inset-bottom,0px)}
+  #main{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
 }
 @media(max-width:767px){
-  body.nav-right #bottom-nav{position:fixed;right:0;top:0;bottom:0;width:68px;border-top:none;border-left:1px solid var(--border);background:var(--bg);z-index:100;display:flex!important;flex-direction:column;justify-content:flex-end;padding-bottom:env(safe-area-inset-bottom,0px);margin-top:0}
+  body.nav-right #bottom-nav{position:fixed;right:0;top:0;bottom:0;left:auto;width:68px;border-top:none;border-left:1px solid var(--border);background:var(--bg);z-index:100;display:flex!important;flex-direction:column;justify-content:flex-end;padding-bottom:env(safe-area-inset-bottom,0px)}
   body.nav-right .bn-row{flex-direction:column;width:100%;height:auto}
   body.nav-right .bn-btn{flex:0;padding:8px 2px;font-size:11px;width:100%;line-height:1.3;word-break:break-word}
   body.nav-right .bn-btn .ico{font-size:28px}
-  body.nav-right #main{padding-right:68px}
+  body.nav-right #main{padding-right:68px;padding-bottom:0}
 }
 
 /* ── PAGE STRUCTURE ── */
