@@ -1368,6 +1368,7 @@ function renderMapMarkers(stores) {
 
 async function loadMapData() {
   if (S.map) { setTimeout(() => S.map.resize(), 0); applyMapFilter(); return; }
+  await new Promise(r => setTimeout(r, 0));
   S.map = new maplibregl.Map({
     container: 'map-gl', style: buildMapStyle(S.mapCfg),
     center: [0, 0], zoom: 2, attributionControl: false,
