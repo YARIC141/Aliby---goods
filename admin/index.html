@@ -948,7 +948,7 @@ function esc(s) {
 }
 function fmtDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 const statusMap = { pending:'Создан', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const VAPID_PUBLIC_KEY = 'BAqiEa54OoLDA-bJ74rSG-4C_au7IbwXL3ZEybKY-GqlQEcwnRHJrZBIAxiX4pVMuJ1FdvtNSQMOQg8lRv-d2hc';
@@ -2112,6 +2112,21 @@ async function handleQrResult(userId) {
       }).join('')}
     `).join('<hr style="margin:12px 0">');
     status.textContent = `Найдено абонементов: ${subs.length}`;
+
+    const subIds = subs.map(s => s.id).join(',');
+    try {
+      const hist = await req(`/rest/v1/subscription_redemptions?user_subscription_id=in.(${subIds})&select=redeemed_at,amount_discounted,user_subscriptions(subscriptions(name))&order=redeemed_at.desc&limit=20`);
+      if (hist.length) {
+        results.innerHTML += `<hr style="margin:12px 0"><div class="sec-title" style="margin-bottom:6px">История списаний</div>` +
+          hist.map(r => `<div class="card" style="margin-bottom:6px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font:500 13px/1.2 var(--font-sans)">${esc(r.user_subscriptions?.subscriptions?.name || 'Абонемент')}</div>
+              <div class="txt-muted">${fmtDate(r.redeemed_at)}</div>
+            </div>
+            <strong style="color:var(--ok)">−${Number(r.amount_discounted).toFixed(0)} ₽</strong>
+          </div>`).join('');
+      }
+    } catch(e) {}
   } catch(e) {
     results.innerHTML = '<div class="empty">Ошибка загрузки абонементов</div>';
     status.textContent = '';
