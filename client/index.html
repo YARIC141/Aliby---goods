@@ -77,7 +77,7 @@ body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden
 #zoom-root{zoom:var(--fzoom,1);height:calc(100dvh/var(--fzoom,1));overflow:hidden;position:relative;z-index:1;overscroll-behavior-y:none}
 
 /* ── LAYOUT ── */
-#app{display:flex;height:100dvh;overflow:hidden;overscroll-behavior-y:none}
+#app{display:flex;height:100%;overflow:hidden;overscroll-behavior-y:none}
 #side-nav{width:210px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;padding:16px 12px;gap:2px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative;overscroll-behavior-y:none}
 @keyframes navSlideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}
@@ -95,7 +95,7 @@ body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden
 .sn-spacer{flex:1}
 .sn-user{font:400 13px/1.4 var(--font-mono);color:var(--fg-4);padding:8px;border-top:1px solid var(--line-soft);margin-top:8px;word-break:break-all;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-#bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--line-soft);background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);margin-top:auto}
+#bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--line-soft);background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
 .bn-row{display:flex}
 .bn-btn{flex:1;padding:8px 2px 10px;border:none;background:none;cursor:pointer;font:500 12px/1.2 var(--font-sans);color:var(--fg-3);display:flex;flex-direction:column;align-items:center;gap:3px;transition:color var(--t-fast)}
 .bn-btn .ico{font-size:26px;line-height:1;display:block}
@@ -201,9 +201,9 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 
 @media(max-width:600px){
   .map-layout{flex-direction:column}
-  .sl-panel{width:100%;max-height:57%;border-right:none;border-bottom:1px solid var(--border)}
+  .sl-panel{width:100%;flex:0 0 57%;border-right:none;border-bottom:1px solid var(--border)}
   .map-layout.no-map .map-area{flex:0;height:0}
-  .map-layout.no-map .sl-panel{flex:1;max-height:none;border-bottom:none}
+  .map-layout.no-map .sl-panel{flex:1;border-bottom:none}
   .map-gl{bottom:8px}
 }
 
