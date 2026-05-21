@@ -16,17 +16,17 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p 2222 -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy frontend
         run: |
           TS=$(date +%s)
           sed -i "1s/.*/\/\/ v${TS}/" client/sw.js
           sed -i "1s/.*/\/\/ v${TS}/" admin/sw.js
-          rsync -az --delete client/ root@${{ secrets.VPS_HOST }}:/var/www/alliby/client/
-          rsync -az --delete admin/  root@${{ secrets.VPS_HOST }}:/var/www/alliby/admin/
+          rsync -az --delete -e "ssh -p 2222" client/ root@${{ secrets.VPS_HOST }}:/var/www/alliby/client/
+          rsync -az --delete -e "ssh -p 2222" admin/  root@${{ secrets.VPS_HOST }}:/var/www/alliby/admin/
 
       - name: Deploy Edge Functions
         run: |
-          rsync -az --delete supabase/functions/ root@${{ secrets.VPS_HOST }}:/root/supabase/volumes/functions/
-          ssh root@${{ secrets.VPS_HOST }} "cd /root/supabase && docker compose up -d --force-recreate functions"
+          rsync -az --delete -e "ssh -p 2222" supabase/functions/ root@${{ secrets.VPS_HOST }}:/root/supabase/volumes/functions/
+          ssh -p 2222 root@${{ secrets.VPS_HOST }} "cd /root/supabase && docker compose up -d --force-recreate functions"
