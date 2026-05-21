@@ -7,6 +7,20 @@ const CORS = {
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
 
+  // Только авторизованные пользователи
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response('Unauthorized', { status: 401, headers: CORS })
+  }
+  try {
+    const payload = JSON.parse(atob(authHeader.slice(7).split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    if (payload.role !== 'authenticated') {
+      return new Response('Unauthorized', { status: 401, headers: CORS })
+    }
+  } catch {
+    return new Response('Unauthorized', { status: 401, headers: CORS })
+  }
+
   const url = new URL(req.url)
   const parts = url.pathname.split('/').filter(Boolean)
   const [z, x, y] = parts.slice(-3).map(Number)
