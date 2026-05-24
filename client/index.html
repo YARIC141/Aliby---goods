@@ -852,16 +852,11 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <div class="overlay" id="m-sub-warn">
   <div class="modal">
     <div class="modal-hd">
-      <h3>Доступен абонемент</h3>
+      <h3 id="msw-title">Абонемент</h3>
       <button class="modal-x" onclick="closeModal('m-sub-warn')">✕</button>
     </div>
     <p id="msw-text" style="font-size:15px;line-height:1.6;margin-bottom:8px"></p>
-    <p style="font-size:13px;color:var(--fg-3);line-height:1.5">Воспользуйтесь абонементом или оплатите товары картой.</p>
-    <div class="modal-ft" style="flex-direction:column;gap:8px">
-      <button class="btn btn-p btn-full" onclick="closeModal('m-sub-warn');goTo('subscriptions')">Купить абонемент</button>
-      <button class="btn btn-full" onclick="closeModal('m-sub-warn');doCheckout()">Продолжить без абонемента</button>
-      <button class="btn btn-d btn-full" onclick="closeModal('m-sub-warn')">Отмена</button>
-    </div>
+    <div id="msw-actions" class="modal-ft" style="flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
@@ -2857,12 +2852,31 @@ function startCheckout() {
   if (!S.cart.length) return;
   const alloc = getCartSubAllocation();
   if (alloc) {
+    // Есть активный абонемент, покрывающий товары
     const covPct = alloc.coveredQty === alloc.totalQty ? 'все товары' : `${alloc.coveredQty} из ${alloc.totalQty} товаров`;
+    document.getElementById('msw-title').textContent = 'У вас есть абонемент';
     document.getElementById('msw-text').textContent =
-      `У вас есть абонемент «${esc(alloc.sub.name)}», который покрывает ${covPct} в корзине.`;
+      `Абонемент «${alloc.sub.name}» покрывает ${covPct} в корзине.`;
+    document.getElementById('msw-actions').innerHTML =
+      `<button class="btn btn-p btn-full" onclick="closeModal('m-sub-warn');doCheckout()">Использовать абонемент</button>` +
+      `<button class="btn btn-full" onclick="closeModal('m-sub-warn');doCheckout()">Без абонемента</button>` +
+      `<button class="btn btn-d btn-full" onclick="closeModal('m-sub-warn')">Отмена</button>`;
     openModal('m-sub-warn');
   } else {
-    doCheckout();
+    const hasOpportunity = S.cart.some(({ item }) => getBestUnownedDiscForItem(item));
+    if (hasOpportunity) {
+      // Абонемент доступен, но не куплен
+      document.getElementById('msw-title').textContent = 'Доступен абонемент';
+      document.getElementById('msw-text').textContent =
+        'Для части товаров в корзине доступен абонемент — с ним будет дешевле.';
+      document.getElementById('msw-actions').innerHTML =
+        `<button class="btn btn-d btn-full" onclick="closeModal('m-sub-warn')">Отмена</button>` +
+        `<button class="btn btn-full" onclick="closeModal('m-sub-warn');doCheckout()">Без абонемента</button>` +
+        `<button class="btn btn-p btn-full" onclick="closeModal('m-sub-warn');goTo('subscriptions')">Купить абонемент</button>`;
+      openModal('m-sub-warn');
+    } else {
+      doCheckout();
+    }
   }
 }
 
