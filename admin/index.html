@@ -1609,11 +1609,9 @@ async function saveStore() {
     if (id) {
       await req(`/rest/v1/stores?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(body) });
     } else {
-      const created = await req('/rest/v1/stores', {
-        method: 'POST', body: JSON.stringify(body),
-        headers: { 'Prefer': 'return=representation' },
-      });
-      storeId = Array.isArray(created) ? created[0]?.id : created?.id;
+      await req('/rest/v1/stores', { method: 'POST', body: JSON.stringify(body) });
+      const newest = await req('/rest/v1/stores?select=id&order=created_at.desc&limit=1');
+      storeId = newest?.[0]?.id;
     }
     if (storeId && !isNaN(lat) && !isNaN(lng)) {
       await req('/rest/v1/rpc/upsert_store_location', {
