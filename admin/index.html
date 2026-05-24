@@ -342,6 +342,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <h1>Alliby Admin</h1>
     <div class="tab-nav">
       <button class="tab-btn active" data-tab-auth="login">Вход</button>
+      <button class="tab-btn" data-tab-auth="register">Регистрация</button>
     </div>
 
     <div id="auth-login" class="tab-pane active">
@@ -360,6 +361,17 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button class="btn btn-p btn-full" onclick="doRecover()">Отправить ссылку</button>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('login')">← Назад</button>
+    </div>
+
+    <div id="auth-register" class="tab-pane">
+      <div id="err-register" class="alert alert-e" style="display:none"></div>
+      <div id="ok-register" class="alert alert-ok" style="display:none">Аккаунт создан! Входим…</div>
+      <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
+      <div class="fg"><label>Пароль</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
+      <div class="fg"><label>Подтвердите пароль</label><input type="password" id="reg-pwd2" autocomplete="new-password"></div>
+      <button class="btn btn-p btn-full" onclick="doRegister()">Создать аккаунт</button>
+      <hr>
+      <button class="btn btn-full" onclick="showAuthTab('login')">← Войти</button>
     </div>
 
     <div id="auth-reset" class="tab-pane">
@@ -1182,6 +1194,26 @@ async function doLogin() {
     setSession(d);
     goTo('stores');
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
+}
+
+async function doRegister() {
+  const err = document.getElementById('err-register');
+  const ok  = document.getElementById('ok-register');
+  err.style.display = 'none'; ok.style.display = 'none';
+  const email = document.getElementById('reg-email').value.trim();
+  const pwd   = document.getElementById('reg-pwd').value;
+  const pwd2  = document.getElementById('reg-pwd2').value;
+  if (!email || !pwd) { err.textContent = 'Заполните все поля'; err.style.display = 'block'; return; }
+  if (pwd !== pwd2)   { err.textContent = 'Пароли не совпадают'; err.style.display = 'block'; return; }
+  if (pwd.length < 6) { err.textContent = 'Пароль должен быть не менее 6 символов'; err.style.display = 'block'; return; }
+  try {
+    const d = await req('/functions/v1/admin-register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: pwd }),
+    });
+    ok.style.display = 'block';
+    setTimeout(() => { setSession(d); goTo('stores'); }, 800);
+  } catch(e) { err.textContent = e.message || e.error || 'Ошибка регистрации'; err.style.display = 'block'; }
 }
 
 async function doLogout() {
