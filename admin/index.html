@@ -269,6 +269,13 @@ tr.row-click:hover td{background:var(--bg-2)}
 .contract-accept{margin-top:14px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--bg-1)}
 .contract-accept label{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font:400 14px/1.5 var(--font-sans)}
 .contract-accept input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:var(--accent)}
+/* ── PLATFORM SUBSCRIPTION ── */
+.platsub-status-badge{display:inline-block;font:600 11px/1 var(--font-sans);padding:3px 8px;border-radius:var(--r-pill)}
+.platsub-status-badge.active{background:var(--ok);color:#fff}
+.platsub-status-badge.inactive{background:var(--bg-3);color:var(--fg-3)}
+.plan-card{display:flex;justify-content:space-between;align-items:center;padding:16px;border:1px solid var(--line);border-radius:var(--r-3);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
+.plan-card:hover{background:var(--bg-2);border-color:var(--brand-ice-deep)}
+.plan-card.highlight{background:var(--accent);border-color:var(--brand-ice-deep);box-shadow:var(--glow-accent)}
 </style>
 <script>if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
@@ -480,6 +487,13 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
 
     <div class="sec">
+      <div class="sec-title">Подписка на платформу</div>
+      <div class="card" style="padding:14px">
+        <div id="p-platsub-inner"><div style="color:var(--fg-4);font-size:13px">Загрузка…</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
       <div class="sec-title">Сменить пароль</div>
       <div class="row">
         <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
@@ -564,7 +578,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div class="modal-hd">
       <h3>Лицензионный договор</h3>
     </div>
-    <p style="font-size:13px;color:var(--fg-3);margin-bottom:10px">Для доступа к панели управления необходимо принять условия договора.</p>
+    <p style="font-size:13px;color:var(--fg-3);margin-bottom:10px">Для оформления подписки необходимо принять условия договора.</p>
     <div class="contract-scroll" id="mcs-scroll" onscroll="onContractScroll('mcs')">
       <pre id="mcs-text" style="white-space:pre-wrap;font-family:inherit;margin:0"></pre>
     </div>
@@ -578,6 +592,71 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button id="mcs-sign-btn" class="btn btn-p btn-full" onclick="signContract('seller')" disabled>Подписать</button>
       <p style="font-size:11px;color:var(--fg-4);text-align:center;margin:0">Простая электронная подпись · ФЗ-63 · IP-адрес и время фиксируются</p>
     </div>
+  </div>
+</div>
+
+<!-- Platform subscription plan selection -->
+<div class="overlay" id="m-platsub-plans">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd">
+      <h3>Выберите тариф</h3>
+      <button class="modal-x" onclick="closeModal('m-platsub-plans')">✕</button>
+    </div>
+    <p style="font-size:14px;color:var(--fg-3);margin-bottom:16px">Подписка открывает доступ ко всем функциям панели управления.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <button class="plan-card" onclick="selectPlatSubPlan('monthly')">
+        <div>
+          <div style="font:600 15px/1 var(--font-sans)">На месяц</div>
+          <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:4px">30 дней с момента оплаты</div>
+        </div>
+        <div style="font:700 20px/1 var(--font-display);color:var(--brand-ice-deep)">1 000 ₽</div>
+      </button>
+      <button class="plan-card highlight" onclick="selectPlatSubPlan('yearly')">
+        <div>
+          <div style="font:600 15px/1 var(--font-sans)">На год</div>
+          <div style="font:400 12px/1.4 var(--font-sans);margin-top:4px;opacity:.8">365 дней · экономия 2 000 ₽</div>
+        </div>
+        <div style="font:700 20px/1 var(--font-display)">10 000 ₽</div>
+      </button>
+    </div>
+    <button class="btn btn-d btn-full" onclick="closeModal('m-platsub-plans')">Отмена</button>
+  </div>
+</div>
+
+<!-- Platform subscription payment -->
+<div class="overlay" id="m-platsub-pay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd">
+      <h3>Оплата подписки</h3>
+      <button class="modal-x" onclick="cancelPlatSubPay()">✕</button>
+    </div>
+    <div style="margin-bottom:16px;padding:12px 14px;background:var(--bg-2);border-radius:var(--r-2);border:1px solid var(--line-soft)">
+      <div id="platsub-pay-info" style="font:500 14px/1.4 var(--font-sans);color:var(--fg-2)"></div>
+      <div id="platsub-pay-amount" style="font:700 24px/1 var(--font-display);margin-top:6px;color:var(--brand-ice-deep)"></div>
+    </div>
+    <div class="fg">
+      <label>Номер карты</label>
+      <input type="text" id="platsub-card" placeholder="0000 0000 0000 0000" maxlength="19" autocomplete="cc-number" inputmode="numeric"
+        oninput="this.value=this.value.replace(/\D/g,'').replace(/(.{4})/g,'$1 ').trim().slice(0,19)">
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="fg" style="flex:1">
+        <label>Срок</label>
+        <input type="text" id="platsub-exp" placeholder="ММ/ГГ" maxlength="5" autocomplete="cc-exp" inputmode="numeric"
+          oninput="var v=this.value.replace(/\D/g,'');this.value=v.length>2?v.slice(0,2)+'/'+v.slice(2,4):v">
+      </div>
+      <div class="fg" style="flex:1">
+        <label>CVV</label>
+        <input type="text" id="platsub-cvv" placeholder="•••" maxlength="3" autocomplete="cc-csc" inputmode="numeric"
+          oninput="this.value=this.value.replace(/\D/g,'')">
+      </div>
+    </div>
+    <div id="platsub-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
+    <div class="modal-ft" style="flex-direction:column;gap:8px">
+      <button class="btn btn-p btn-full" id="platsub-pay-btn" onclick="submitPlatSubPayment()">Оплатить</button>
+      <button class="btn btn-full" onclick="cancelPlatSubPay()">Отмена</button>
+    </div>
+    <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Демо-режим: данные карты не передаются</p>
   </div>
 </div>
 
@@ -1101,7 +1180,7 @@ async function doLogin() {
     const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
     if (profs[0]?.role !== 'admin') { err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
     setSession(d);
-    await requireContract('seller', () => goTo('stores'));
+    goTo('stores');
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
@@ -1174,6 +1253,153 @@ async function loadProfile() {
     const profs = await req(`/rest/v1/profiles?id=eq.${u.id}`);
     if (profs.length) document.getElementById('p-role').textContent = profs[0].role || '';
   } catch(e) {}
+  await loadPlatformSubscription();
+}
+
+// ─── PLATFORM SUBSCRIPTION ───
+let _activePlatSub = null;
+let _platSubPlan   = null;
+
+async function loadPlatformSubscription() {
+  const el = document.getElementById('p-platsub-inner');
+  if (!el || !S.session) return;
+  try {
+    const subs = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.desc&limit=10`);
+    const now = new Date();
+    const active = subs.find(s => s.status === 'active' && new Date(s.end_date) >= now);
+    _activePlatSub = active || null;
+    if (active) {
+      const endFmt = new Date(active.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+      const planName = active.plan === 'yearly' ? 'Годовая' : 'Месячная';
+      el.innerHTML =
+        `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">` +
+          `<div>` +
+            `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">${planName} подписка</div>` +
+            `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">Активна до ${endFmt}</div>` +
+          `</div>` +
+          `<span class="platsub-status-badge active">Активна</span>` +
+        `</div>` +
+        `<div style="display:flex;gap:8px">` +
+          `<button class="btn btn-p" style="flex:1" onclick="startPlatformSubscription()">Продлить</button>` +
+          `<button class="btn btn-d" style="flex:1" onclick="endPlatformSubscription()">Завершить</button>` +
+        `</div>`;
+    } else {
+      const last = subs.find(s => s.status !== 'active');
+      const hint = last
+        ? `Истекла ${new Date(last.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`
+        : 'Нет активной подписки';
+      el.innerHTML =
+        `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">` +
+          `<div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3)">${hint}</div>` +
+          `<span class="platsub-status-badge inactive">Нет</span>` +
+        `</div>` +
+        `<button class="btn btn-p btn-full" onclick="startPlatformSubscription()">Подписаться</button>`;
+    }
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--fg-4);font-size:13px">Ошибка загрузки подписки</div>`;
+  }
+}
+
+function startPlatformSubscription() {
+  requireContract('seller', () => openModal('m-platsub-plans'));
+}
+
+function selectPlatSubPlan(plan) {
+  _platSubPlan = plan;
+  closeModal('m-platsub-plans');
+  const amount   = plan === 'yearly' ? 10000 : 1000;
+  const planName = plan === 'yearly' ? 'Годовая подписка (365 дней)' : 'Месячная подписка (30 дней)';
+  document.getElementById('platsub-pay-info').textContent   = planName;
+  document.getElementById('platsub-pay-amount').textContent = amount.toLocaleString('ru-RU') + ' ₽';
+  document.getElementById('platsub-card').value = '';
+  document.getElementById('platsub-exp').value  = '';
+  document.getElementById('platsub-cvv').value  = '';
+  const errEl = document.getElementById('platsub-pay-err');
+  errEl.style.display = 'none';
+  const btn = document.getElementById('platsub-pay-btn');
+  btn.disabled    = false;
+  btn.textContent = 'Оплатить';
+  openModal('m-platsub-pay');
+}
+
+async function submitPlatSubPayment() {
+  const card  = document.getElementById('platsub-card').value.replace(/\s/g, '');
+  const exp   = document.getElementById('platsub-exp').value;
+  const cvv   = document.getElementById('platsub-cvv').value;
+  const errEl = document.getElementById('platsub-pay-err');
+  const btn   = document.getElementById('platsub-pay-btn');
+  errEl.style.display = 'none';
+
+  if (!/^\d{16}$/.test(card)) {
+    errEl.textContent = 'Введите корректный номер карты (16 цифр)';
+    errEl.style.display = 'block'; return;
+  }
+  if (!/^\d{2}\/\d{2}$/.test(exp)) {
+    errEl.textContent = 'Введите срок карты в формате ММ/ГГ';
+    errEl.style.display = 'block'; return;
+  }
+  if (cvv.length < 3) {
+    errEl.textContent = 'Введите CVV (3 цифры)';
+    errEl.style.display = 'block'; return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Оплата…';
+  try {
+    const days   = _platSubPlan === 'yearly' ? 365 : 30;
+    const amount = _platSubPlan === 'yearly' ? 10000 : 1000;
+    const now    = new Date();
+    // Продлить: стартуем от конца текущей активной подписки
+    let startFrom = now;
+    if (_activePlatSub && new Date(_activePlatSub.end_date) > now) {
+      startFrom = new Date(_activePlatSub.end_date);
+    }
+    const endDate = new Date(startFrom);
+    endDate.setDate(endDate.getDate() + days);
+
+    await req('/rest/v1/platform_subscriptions', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id:     S.session.user.id,
+        plan:        _platSubPlan,
+        status:      'active',
+        start_date:  startFrom.toISOString().split('T')[0],
+        end_date:    endDate.toISOString().split('T')[0],
+        amount_paid: amount,
+      }),
+    });
+
+    closeModal('m-platsub-pay');
+    _platSubPlan = null;
+    await loadPlatformSubscription();
+    alert('Подписка оформлена!');
+  } catch(e) {
+    errEl.textContent = 'Ошибка оплаты: ' + (e.message || 'Попробуйте ещё раз');
+    errEl.style.display = 'block';
+    btn.disabled    = false;
+    btn.textContent = 'Оплатить';
+  }
+}
+
+function cancelPlatSubPay() {
+  closeModal('m-platsub-pay');
+  _platSubPlan = null;
+}
+
+async function endPlatformSubscription() {
+  if (!_activePlatSub) return;
+  if (!confirm('Завершить подписку? Доступ сохранится до конца оплаченного периода.')) return;
+  try {
+    await req(`/rest/v1/platform_subscriptions?id=eq.${_activePlatSub.id}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ status: 'cancelled' }),
+    });
+    await loadPlatformSubscription();
+  } catch(e) {
+    alert('Ошибка: ' + (e.message || ''));
+  }
 }
 
 async function doDeleteAccount() {
@@ -2001,12 +2227,12 @@ setTimeout(hideSplash, 2000);
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(async ok => {
-            if (ok) { await requireContract('seller', () => goTo('stores')); }
+            if (ok) { goTo('stores'); }
             else { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
           });
         } else {
           setSession(d);
-          await requireContract('seller', () => goTo('stores'));
+          goTo('stores');
         }
         return;
       }
