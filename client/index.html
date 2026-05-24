@@ -2500,23 +2500,6 @@ async function loadHome() {
     const totalSaved = redemptions.reduce((s, r) => s + (Number(r.amount_discounted) || 0), 0);
     const chartHtml = redemptions.length ? renderSavingsChart(redemptions, totalSaved) : '';
 
-    const histHtml = redemptions.length
-      ? '<div class="sec-title" style="margin:16px 0 8px">История списаний</div>' +
-        redemptions.map(r => {
-          const subName = r.user_subscriptions?.subscriptions?.name || 'Абонемент';
-          const storeName = r.user_subscriptions?.subscriptions?.stores?.name || '';
-          const disc = Number(r.amount_discounted) || 0;
-          return `<div class="card" style="margin-bottom:6px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font:500 14px/1.2 var(--font-sans)">${esc(subName)}</div>
-              ${storeName ? `<div class="txt-muted">${esc(storeName)}</div>` : ''}
-              <div class="txt-muted">${fmtDate(r.redeemed_at)}</div>
-            </div>
-            <div style="font:600 16px/1 var(--font-display);color:var(--ok)">−${disc.toFixed(0)} ₽</div>
-          </div>`;
-        }).join('')
-      : '';
-
     _homeOrders = orders;
     const ordersHtml = orders.length
       ? '<div class="sec-title" style="margin:16px 0 8px">История заказов</div>' +
@@ -2546,7 +2529,7 @@ async function loadHome() {
       '<div style="display:flex;justify-content:center;margin:8px 0 4px"><div id="home-qr-box" style="padding:16px;background:#fff;border-radius:12px;display:inline-block"></div></div>' +
       '<div class="txt-muted" style="text-align:center;margin-bottom:10px;font-size:13px">Покажите QR администратору для списания</div>' +
       '<button class="btn" style="width:100%;margin-bottom:16px" onclick="loadHome()">Обновить статус абонементов</button>' +
-      histHtml + ordersHtml;
+      ordersHtml;
 
     const qrBox = document.getElementById('home-qr-box');
     if (qrBox) new QRCode(qrBox, { text: uid, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M, colorDark: '#000000', colorLight: '#ffffff' });
