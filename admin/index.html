@@ -1359,7 +1359,6 @@ async function submitPlatSubPayment() {
 
     await req('/rest/v1/platform_subscriptions', {
       method: 'POST',
-      headers: { Prefer: 'return=minimal' },
       body: JSON.stringify({
         user_id:     S.session.user.id,
         plan:        _platSubPlan,
@@ -1393,7 +1392,6 @@ async function endPlatformSubscription() {
   try {
     await req(`/rest/v1/platform_subscriptions?id=eq.${_activePlatSub.id}`, {
       method: 'PATCH',
-      headers: { Prefer: 'return=minimal' },
       body: JSON.stringify({ status: 'cancelled' }),
     });
     await loadPlatformSubscription();
