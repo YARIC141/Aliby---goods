@@ -1902,9 +1902,8 @@ async function addToCartById(id) {
   if (!item) return;
   if (S.cartStoreId && S.cartStoreId !== S.store?.id) {
     if (!confirm('В корзине товары из другого заведения. Очистить?')) return;
-    S.cart = []; S.appliedSub = null;
-    saveCart(); updateCartCount(); loadMenuItems();
-    return;
+    S.cart = []; S.appliedSub = null; S.cartStoreId = null;
+    saveCart(); updateCartCount();
   }
   S.cartStoreId = S.store?.id;
   const ex = S.cart.find(c => c.item.id === item.id);

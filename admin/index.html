@@ -1849,6 +1849,10 @@ function openMenuItemModal(item) {
     loadMICategories().then(() => { document.getElementById('mmi-cat').value = item.category_id || ''; });
   } else {
     document.getElementById('mmi-cat').innerHTML = '<option value="">— Без категории —</option>';
+    if (!document.getElementById('mmi-store').value && S.stores?.length) {
+      document.getElementById('mmi-store').value = S.stores[0].id;
+    }
+    loadMICategories();
   }
   document.getElementById('mmi-photo').value = '';
   openModal('m-mi');
