@@ -42,11 +42,10 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: createError?.message ?? 'Failed to create user' }, 400)
   }
 
-  // Триггер уже создал профиль с role='user' — обновляем на 'admin'
+  // Upsert профиля с role='admin' — работает независимо от триггера
   const { error: profileError } = await serviceClient
     .from('profiles')
-    .update({ role: 'admin' })
-    .eq('id', newUser.user.id)
+    .upsert({ id: newUser.user.id, role: 'admin' }, { onConflict: 'id' })
 
   if (profileError) {
     await serviceClient.auth.admin.deleteUser(newUser.user.id)
