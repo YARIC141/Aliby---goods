@@ -1467,8 +1467,9 @@ async function loadStores() {
   const el = document.getElementById('stores-list');
   el.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
+    const uid = S.session.user.id;
     const [stores, locs] = await Promise.all([
-      req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)'),
+      req(`/rest/v1/stores?owner_user_id=eq.${uid}&order=name.asc&select=*,store_categories(name,icon)`),
       req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
     ]);
     const locMap = new Map(locs.map(l => [l.id, l]));
@@ -1618,7 +1619,7 @@ function cancelPickMode() {
 async function saveStore() {
   const id    = document.getElementById('ms-id').value;
   if (!id) {
-    const existing = await req('/rest/v1/stores?select=id&limit=1').catch(() => []);
+    const existing = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id&limit=1`).catch(() => []);
     if (existing?.length) {
       alert('На данный момент поддерживается только одно заведение');
       return;
@@ -1718,7 +1719,12 @@ async function loadCategories() {
     // GET /rest/v1/categories?order=name.asc
     let url = '/rest/v1/categories?order=name.asc&select=*,stores(name)';
     const storeId = document.getElementById('cat-store-filter')?.value;
-    if (storeId) url += `&store_id=eq.${storeId}`;
+    if (storeId) {
+      url += `&store_id=eq.${storeId}`;
+    } else if (S.stores?.length) {
+      const ids = S.stores.map(s => s.id).join(',');
+      url += `&or=(store_id.in.(${ids}),store_id.is.null)`;
+    }
     const cats = await req(url);
     if (!cats.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Нет категорий</td></tr>'; return; }
     tbody.innerHTML = cats.map(c => `
@@ -1769,7 +1775,11 @@ async function loadMenuItems() {
     const storeId = document.getElementById('mi-store-filter')?.value;
     const catId   = document.getElementById('mi-cat-filter')?.value;
     const search  = document.getElementById('mi-search')?.value;
-    if (storeId) url += `&store_id=eq.${storeId}`;
+    if (storeId) {
+      url += `&store_id=eq.${storeId}`;
+    } else if (S.stores?.length) {
+      url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
+    }
     if (catId)   url += `&category_id=eq.${catId}`;
     if (search)  url += `&name=ilike.*${encodeURIComponent(search)}*`;
     const items = await req(url);
@@ -1921,7 +1931,11 @@ async function loadSubscriptions() {
   try {
     let url = '/rest/v1/subscriptions?select=*,stores(name)&order=name.asc';
     const storeId = document.getElementById('sub-store-filter')?.value;
-    if (storeId) url += `&store_id=eq.${storeId}`;
+    if (storeId) {
+      url += `&store_id=eq.${storeId}`;
+    } else if (S.stores?.length) {
+      url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
+    }
     const subs = await req(url);
     if (!subs.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет абонементов</div>'; return; }
     el.innerHTML = subs.map(s => {
