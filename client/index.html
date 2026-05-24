@@ -903,6 +903,22 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   </div>
 </div>
 
+<!-- ════════════════ ORDER DETAIL MODAL ════════════════ -->
+<div class="overlay" id="m-order-detail">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3 id="mod-title">Заказ</h3>
+      <button class="modal-x" onclick="closeModal('m-order-detail')">✕</button>
+    </div>
+    <div id="mod-meta" style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"></div>
+    <div id="mod-items"></div>
+    <div id="mod-total" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+      <span style="font:500 14px/1 var(--font-sans)">Итого</span>
+      <span id="mod-total-val" style="font:700 18px/1 var(--font-display)"></span>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════ QR MODAL ════════════════ -->
 <div class="overlay" id="m-qr">
   <div class="modal" style="max-width:320px;text-align:center">
@@ -2476,7 +2492,10 @@ async function loadHome() {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
 
-    const redemptions = await req('/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions(subscriptions(name,stores(name)))&order=redeemed_at.desc&limit=50');
+    const [redemptions, orders] = await Promise.all([
+      req('/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions(subscriptions(name,stores(name)))&order=redeemed_at.desc&limit=50'),
+      req('/rest/v1/orders?select=id,order_time,status,total_amount,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30'),
+    ]);
 
     const totalSaved = redemptions.reduce((s, r) => s + (Number(r.amount_discounted) || 0), 0);
     const chartHtml = redemptions.length ? renderSavingsChart(redemptions, totalSaved) : '';
@@ -2498,15 +2517,74 @@ async function loadHome() {
         }).join('')
       : '';
 
+    _homeOrders = orders;
+    const ordersHtml = orders.length
+      ? '<div class="sec-title" style="margin:16px 0 8px">История заказов</div>' +
+        orders.map((o, idx) => {
+          const storeName = o.stores?.name || '';
+          const amount = Number(o.total_amount) || 0;
+          const statusColor = { paid:'var(--ok)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
+          const statusTxt = statusMap[o.status] || o.status;
+          const itemCount = (o.order_items || []).reduce((s, i) => s + i.quantity, 0);
+          return `<div class="card" style="margin-bottom:6px;padding:10px 12px;cursor:pointer" onclick="openOrderDetail(${idx})">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div style="flex:1;min-width:0">
+                <div style="font:500 14px/1.2 var(--font-sans)">${storeName ? esc(storeName) : 'Заказ'}</div>
+                <div class="txt-muted">${fmtDate(o.order_time)}</div>
+                <div class="txt-muted">${itemCount} поз.</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font:600 16px/1 var(--font-display)">${amount.toFixed(0)} ₽</div>
+                <div style="font-size:12px;margin-top:4px;color:${statusColor}">${statusTxt}</div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')
+      : '';
+
     el.innerHTML = chartHtml +
       '<div style="display:flex;justify-content:center;margin:8px 0 4px"><div id="home-qr-box" style="padding:16px;background:#fff;border-radius:12px;display:inline-block"></div></div>' +
       '<div class="txt-muted" style="text-align:center;margin-bottom:10px;font-size:13px">Покажите QR администратору для списания</div>' +
       '<button class="btn" style="width:100%;margin-bottom:16px" onclick="loadHome()">Обновить статус абонементов</button>' +
-      histHtml;
+      histHtml + ordersHtml;
 
     const qrBox = document.getElementById('home-qr-box');
     if (qrBox) new QRCode(qrBox, { text: uid, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M, colorDark: '#000000', colorLight: '#ffffff' });
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+let _homeOrders = [];
+
+function openOrderDetail(idx) {
+  const order = _homeOrders[idx];
+  if (!order) return;
+  const storeName = order.stores?.name || '';
+  const amount = Number(order.total_amount) || 0;
+  const statusColor = { paid:'var(--ok)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[order.status] || 'var(--fg-sec)';
+
+  document.getElementById('mod-title').textContent = storeName ? `Заказ · ${storeName}` : 'Заказ';
+  document.getElementById('mod-meta').innerHTML =
+    `<span class="txt-muted" style="font-size:13px">${fmtDate(order.order_time)}</span>` +
+    `<span style="font-size:12px;color:${statusColor};border:1px solid currentColor;border-radius:4px;padding:2px 6px">${statusMap[order.status] || order.status}</span>` +
+    `<span class="txt-muted" style="font-size:12px">#${order.id.slice(0,8)}</span>`;
+
+  const items = order.order_items || [];
+  document.getElementById('mod-items').innerHTML = items.length
+    ? items.map(it => {
+        const name = it.menu_items?.name || 'Позиция';
+        const line = Number(it.price_at_time) * it.quantity;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)">
+          <div>
+            <div style="font:400 14px/1.3 var(--font-sans)">${esc(name)}</div>
+            <div class="txt-muted">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</div>
+          </div>
+          <div style="font:500 15px/1 var(--font-display)">${line.toFixed(0)} ₽</div>
+        </div>`;
+      }).join('')
+    : '<div class="txt-muted" style="padding:8px 0">Позиции не найдены</div>';
+
+  document.getElementById('mod-total-val').textContent = `${amount.toFixed(0)} ₽`;
+  openModal('m-order-detail');
 }
 
 function renderSavingsChart(redemptions, totalSaved) {
