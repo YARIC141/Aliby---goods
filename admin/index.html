@@ -264,6 +264,11 @@ tr.row-click:hover td{background:var(--bg-2)}
 .detail-lbl{color:var(--fg-4);min-width:110px;font:400 13px/1.4 var(--font-sans)}
 .detail-val{font:400 13px/1.4 var(--font-sans);word-break:break-word}
 .qr-link-text{word-break:break-all;font:400 12px/1.5 var(--font-mono);color:var(--fg-4);margin:10px 0}
+/* ── CONTRACT MODAL ── */
+.contract-scroll{max-height:46vh;overflow-y:auto;border:1px solid var(--line);border-radius:var(--r-2);padding:14px 16px;background:var(--bg-2);font:400 13px/1.65 var(--font-sans)}
+.contract-accept{margin-top:14px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--bg-1)}
+.contract-accept label{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font:400 14px/1.5 var(--font-sans)}
+.contract-accept input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:var(--accent)}
 </style>
 <script>if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
@@ -552,6 +557,29 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div><!-- #app -->
 
 <!-- ════════════════ MODALS ════════════════ -->
+
+<!-- ════════════════ SELLER CONTRACT MODAL ════════════════ -->
+<div class="overlay" id="m-contract-seller">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-hd">
+      <h3>Лицензионный договор</h3>
+    </div>
+    <p style="font-size:13px;color:var(--fg-3);margin-bottom:10px">Для доступа к панели управления необходимо принять условия договора.</p>
+    <div class="contract-scroll" id="mcs-scroll" onscroll="onContractScroll('mcs')">
+      <pre id="mcs-text" style="white-space:pre-wrap;font-family:inherit;margin:0"></pre>
+    </div>
+    <div class="contract-accept" id="mcs-accept" style="display:none">
+      <label>
+        <input type="checkbox" id="mcs-check" onchange="document.getElementById('mcs-sign-btn').disabled=!this.checked">
+        Я ознакомился(лась) с условиями Лицензионного договора (публичная оферта) и принимаю их в полном объёме
+      </label>
+    </div>
+    <div class="modal-ft" style="flex-direction:column;gap:6px">
+      <button id="mcs-sign-btn" class="btn btn-p btn-full" onclick="signContract('seller')" disabled>Подписать</button>
+      <p style="font-size:11px;color:var(--fg-4);text-align:center;margin:0">Простая электронная подпись · ФЗ-63 · IP-адрес и время фиксируются</p>
+    </div>
+  </div>
+</div>
 
 <!-- Redeem confirm modal -->
 <div class="overlay" id="m-redeem">
@@ -1073,7 +1101,7 @@ async function doLogin() {
     const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
     if (profs[0]?.role !== 'admin') { err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
     setSession(d);
-    goTo('stores');
+    await requireContract('seller', () => goTo('stores'));
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
@@ -1972,13 +2000,13 @@ setTimeout(hideSplash, 2000);
         if (expired) {
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
-          refreshSession().then(ok => {
-            if (ok) { goTo('stores'); }
+          refreshSession().then(async ok => {
+            if (ok) { await requireContract('seller', () => goTo('stores')); }
             else { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
           });
         } else {
           setSession(d);
-          goTo('stores');
+          await requireContract('seller', () => goTo('stores'));
         }
         return;
       }
@@ -1994,6 +2022,144 @@ setTimeout(hideSplash, 2000);
   }
   goTo('auth');
 })();
+
+// ─── CONTRACTS / ПЭП ───
+const SELLER_CONTRACT = {
+  version: '2026-05-24',
+  text: `ЛИЦЕНЗИОННЫЙ ДОГОВОР (ПУБЛИЧНАЯ ОФЕРТА)
+на право использования программного обеспечения
+
+г. [Ваш Город]                                        [Дата публикации]
+
+Настоящий документ является официальным предложением (публичной офертой)
+[Ваше полное название компании / ИП ФИО] (далее — «Лицензиар») заключить
+лицензионный договор на изложенных ниже условиях.
+
+1. ТЕРМИНЫ И ОПРЕДЕЛЕНИЯ
+1.1. Сервис (Платформа) — программно-аппаратный комплекс «[Название вашей платформы]»,
+предназначенный для автоматизации приема заказов Продавца.
+1.2. Продавец — юридическое лицо или индивидуальный предприниматель,
+осуществивший Акцепт Оферты.
+1.3. Покупатель — любое лицо, приобретающее товары (услуги) Продавца
+с использованием Сервиса.
+1.4. Акцепт Оферты — полное и безоговорочное принятие условий Оферты путем
+регистрации на Сайте и нажатия кнопки «Зарегистрироваться».
+1.5. Личный кабинет — защищенный раздел Сайта, доступный Продавцу после
+авторизации с использованием логина и пароля.
+1.6. Тариф — размер лицензионного вознаграждения, опубликованный на Сайте.
+
+2. ПРЕДМЕТ ДОГОВОРА
+2.1. Лицензиар предоставляет Продавцу право использования Сервиса на условиях
+простой (неисключительной) лицензии в рамках функциональных возможностей
+оплаченного Тарифа, а Продавец оплачивает это право.
+2.2. Сервис предоставляется «как есть» (as is). Лицензиар не несет ответственности
+за коммерческую эффективность использования Сервиса Продавцом.
+
+3. АКЦЕПТ ОФЕРТЫ И ЭЛЕКТРОННАЯ ПОДПИСЬ
+3.1. Договор считается заключенным и вступает в силу с момента Акцепта Оферты.
+3.2. Стороны договорились, что регистрация Продавца в Сервисе и нажатие кнопки
+«Зарегистрироваться» признается аналогом собственноручной подписи и влечет
+юридические последствия, равные подписанию бумажного документа.
+3.3. Продавец соглашается, что все действия, совершенные в Личном кабинете
+после ввода логина и пароля, признаются действиями самого Продавца.
+
+4. ПОРЯДОК ОПЛАТЫ И ДОСТУП К СЕРВИСУ
+4.1. Для доступа к платным функциям Продавец выбирает Тариф и оплачивает
+его путем перевода на расчетный счет Лицензиара или с помощью банковской карты.
+4.2. Доступ к функционалу Сервиса активируется в течение 1 рабочего дня
+с момента поступления оплаты.
+4.3. При просрочке оплаты очередного периода Лицензиар вправе заблокировать
+доступ к Сервису до полного погашения задолженности.
+
+5. РОЛЬ ПЛАТФОРМЫ И ОТВЕТСТВЕННОСТЬ
+5.1. Лицензиар является информационным посредником и поставщиком программного
+обеспечения. Лицензиар не является Платежным агентом, Продавцом или лицом,
+уполномоченным принимать требования Покупателей по качеству товара.
+5.2. Стороны признают, что все денежные расчеты за товары ведутся напрямую
+между Покупателем и Продавцом с использованием договора эквайринга,
+заключенного Продавцом.
+5.3. Продавец обязуется предоставить Лицензиару действующие API-ключи от
+своего банка-эквайера для корректной интеграции приема платежей в Сервис.
+5.4. Продавец несет единоличную ответственность за качество товара, доставку,
+возвраты и соблюдение Закона РФ «О защите прав потребителей».
+
+6. КОНФИДЕНЦИАЛЬНОСТЬ
+6.1. Лицензиар принимает меры для защиты персональных данных Продавца и
+Покупателей. Порядок обработки регулируется Политикой конфиденциальности.
+
+7. СРОК ДЕЙСТВИЯ И РАСТОРЖЕНИЕ
+7.1. Договор действует в течение оплаченного Расчетного периода
+и автоматически продлевается при своевременной оплате.
+7.2. Стороны вправе расторгнуть Договор в одностороннем порядке,
+уведомив другую Сторону за 15 календарных дней.
+
+РЕКВИЗИТЫ ЛИЦЕНЗИАРА
+[Ваши полные банковские и юридические реквизиты]`,
+};
+
+async function _sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+let _contractNext = null;
+
+async function requireContract(type, next) {
+  if (!S.session) { next(); return; }
+  try {
+    const contract = type === 'seller' ? SELLER_CONTRACT : null;
+    if (!contract) { next(); return; }
+    const uid = S.session.user.id;
+    const sigs = await req(`/rest/v1/contract_signatures?user_id=eq.${uid}&contract=eq.${type}&version=eq.${contract.version}&select=id&limit=1`);
+    if (sigs.length) { next(); return; }
+  } catch(e) { next(); return; }
+  _contractNext = next;
+  const scroll = document.getElementById('mcs-scroll');
+  const text   = document.getElementById('mcs-text');
+  const accept = document.getElementById('mcs-accept');
+  const check  = document.getElementById('mcs-check');
+  const btn    = document.getElementById('mcs-sign-btn');
+  text.textContent  = SELLER_CONTRACT.text;
+  accept.style.display = 'none';
+  check.checked     = false;
+  btn.disabled      = true;
+  btn.textContent   = 'Подписать';
+  scroll.scrollTop  = 0;
+  openModal('m-contract-seller');
+}
+
+function onContractScroll(prefix) {
+  const el     = document.getElementById(prefix + '-scroll');
+  const accept = document.getElementById(prefix + '-accept');
+  if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) {
+    accept.style.display = 'block';
+  }
+}
+
+async function signContract(type) {
+  const btn = document.getElementById('mcs-sign-btn');
+  const check = document.getElementById('mcs-check');
+  if (!check?.checked) return;
+  btn.disabled = true;
+  btn.textContent = 'Подписание…';
+  try {
+    const contract = SELLER_CONTRACT;
+    const hash = await _sha256(contract.text);
+    const acceptText = 'Я ознакомился(лась) с условиями Лицензионного договора (публичная оферта) и принимаю их в полном объёме';
+    await req('/functions/v1/sign-contract', {
+      method: 'POST',
+      body: JSON.stringify({ contract: type, version: contract.version, doc_hash: hash, accept_text: acceptText, user_agent: navigator.userAgent }),
+    });
+    closeModal('m-contract-seller');
+    const next = _contractNext;
+    _contractNext = null;
+    next?.();
+  } catch(e) {
+    alert('Ошибка подписания: ' + (e.message || 'Попробуйте ещё раз'));
+    btn.disabled = false;
+    btn.textContent = 'Подписать';
+  }
+}
 
 // ─── QR SCANNER ───
 let _qrStream = null;
