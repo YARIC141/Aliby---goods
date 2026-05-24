@@ -2258,66 +2258,32 @@ function renderGiftCartSection() {
 
 async function checkoutSubs() {
   if (!S.subCart.length) return;
-  if (!S.session) { alert('Войдите в аккаунт'); return; }
-  const items = [...S.subCart];
-  try {
-    const today = new Date();
-    for (const { sub } of items) {
-      const end = new Date(today);
-      end.setDate(end.getDate() + sub.duration_days);
-      await req('/rest/v1/user_subscriptions', {
-        method: 'POST',
-        headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({
-          user_id: S.session.user.id,
-          subscription_id: sub.id,
-          status: 'active',
-          start_date: today.toISOString().split('T')[0],
-          end_date: end.toISOString().split('T')[0],
-          remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
-        }),
-      });
-    }
-    S.subCart = [];
-    saveSubCart();
-    renderSubCartSection();
-    refreshSubCardViews();
-    alert(items.length === 1 ? 'Абонемент куплен! Оплата имитирована.' : `${items.length} абонемента куплено! Оплата имитирована.`);
-    goTo('subscriptions');
-  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  const totalAmount = S.subCart.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
+  _pendingPayment = { type: 'sub', items: [...S.subCart] };
+  document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
+  document.getElementById('tbank-order-info').textContent =
+    S.subCart.length === 1 ? `Абонемент «${S.subCart[0].sub.name}»` : `${S.subCart.length} абонемента`;
+  document.getElementById('tbank-card').value = '';
+  document.getElementById('tbank-exp').value = '';
+  document.getElementById('tbank-cvv').value = '';
+  document.getElementById('tbank-error').style.display = 'none';
+  openModal('m-tbank-pay');
 }
 
 async function checkoutGiftSubs() {
   if (!S.giftSubCart.length) return;
-  if (!S.session) { alert('Войдите в аккаунт'); return; }
-  const items = [...S.giftSubCart];
-  try {
-    const today = new Date();
-    for (const { sub } of items) {
-      const end = new Date(today);
-      end.setDate(end.getDate() + sub.duration_days);
-      await req('/rest/v1/user_subscriptions', {
-        method: 'POST',
-        headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({
-          user_id: S.session.user.id,
-          subscription_id: sub.id,
-          status: 'active',
-          start_date: today.toISOString().split('T')[0],
-          end_date: end.toISOString().split('T')[0],
-          remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
-          gift_status: 'pending',
-        }),
-      });
-    }
-    S.giftSubCart = [];
-    saveSubCart();
-    renderGiftCartSection();
-    refreshSubCardViews();
-    alert(items.length === 1 ? 'Подарочный абонемент куплен! ID доступен в разделе «Подарки».' : `${items.length} подарочных абонемента куплено!`);
-    goTo('subscriptions');
-    setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
-  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  const totalAmount = S.giftSubCart.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
+  _pendingPayment = { type: 'gift-sub', items: [...S.giftSubCart] };
+  document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
+  document.getElementById('tbank-order-info').textContent =
+    S.giftSubCart.length === 1 ? `🎁 Абонемент «${S.giftSubCart[0].sub.name}»` : `🎁 ${S.giftSubCart.length} подарочных абонемента`;
+  document.getElementById('tbank-card').value = '';
+  document.getElementById('tbank-exp').value = '';
+  document.getElementById('tbank-cvv').value = '';
+  document.getElementById('tbank-error').style.display = 'none';
+  openModal('m-tbank-pay');
 }
 
 function openSubDetailModal(id) {
@@ -2942,16 +2908,52 @@ async function submitPayment() {
   cancelBtn.disabled = true;
 
   try {
-    await req('/functions/v1/tbank-notify', {
-      method: 'POST',
-      body: JSON.stringify({ payment_token: _pendingPayment.payment_token, status: 'succeeded' }),
-    });
-    closeModal('m-tbank-pay');
-    _pendingPayment = null;
-    S.cart = []; S.cartStoreId = null; S.appliedSub = null;
-    saveCart(); updateCartCount(); renderCart();
-    showGeoToast('Заказ успешно оплачен!');
-    goTo('home');
+    const ptype = _pendingPayment.type || 'goods';
+    if (ptype === 'sub' || ptype === 'gift-sub') {
+      const isGift = ptype === 'gift-sub';
+      const items = _pendingPayment.items;
+      const today = new Date();
+      for (const { sub } of items) {
+        const end = new Date(today);
+        end.setDate(end.getDate() + sub.duration_days);
+        await req('/rest/v1/user_subscriptions', {
+          method: 'POST',
+          headers: { Prefer: 'return=minimal' },
+          body: JSON.stringify({
+            user_id: S.session.user.id,
+            subscription_id: sub.id,
+            status: 'active',
+            start_date: today.toISOString().split('T')[0],
+            end_date: end.toISOString().split('T')[0],
+            remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
+            ...(isGift ? { gift_status: 'pending' } : {}),
+          }),
+        });
+      }
+      closeModal('m-tbank-pay');
+      _pendingPayment = null;
+      if (isGift) {
+        S.giftSubCart = []; saveSubCart(); renderGiftCartSection(); refreshSubCardViews();
+        showGeoToast('Подарочный абонемент куплен!');
+        goTo('subscriptions');
+        setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
+      } else {
+        S.subCart = []; saveSubCart(); renderSubCartSection(); refreshSubCardViews();
+        showGeoToast('Абонемент куплен!');
+        goTo('subscriptions');
+      }
+    } else {
+      await req('/functions/v1/tbank-notify', {
+        method: 'POST',
+        body: JSON.stringify({ payment_token: _pendingPayment.payment_token, status: 'succeeded' }),
+      });
+      closeModal('m-tbank-pay');
+      _pendingPayment = null;
+      S.cart = []; S.cartStoreId = null; S.appliedSub = null;
+      saveCart(); updateCartCount(); renderCart();
+      showGeoToast('Заказ успешно оплачен!');
+      goTo('home');
+    }
   } catch(e) {
     errEl.textContent = 'Ошибка оплаты: ' + (e.message || 'Попробуйте ещё раз');
     errEl.style.display = 'block';
@@ -2964,12 +2966,15 @@ async function cancelPayment() {
   if (!_pendingPayment) { closeModal('m-tbank-pay'); return; }
   const cancelBtn = document.getElementById('tbank-cancel-btn');
   cancelBtn.disabled = true;
-  try {
-    await req('/functions/v1/tbank-notify', {
-      method: 'POST',
-      body: JSON.stringify({ payment_token: _pendingPayment.payment_token, status: 'cancelled' }),
-    });
-  } catch(e) { /* не блокируем закрытие при ошибке отмены */ }
+  const ptype = _pendingPayment.type || 'goods';
+  if (ptype !== 'sub' && ptype !== 'gift-sub') {
+    try {
+      await req('/functions/v1/tbank-notify', {
+        method: 'POST',
+        body: JSON.stringify({ payment_token: _pendingPayment.payment_token, status: 'cancelled' }),
+      });
+    } catch(e) { /* не блокируем закрытие при ошибке отмены */ }
+  }
   closeModal('m-tbank-pay');
   _pendingPayment = null;
   cancelBtn.disabled = false;
