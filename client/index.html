@@ -360,9 +360,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .recent-card-name{font:600 17px/1.3 var(--font-sans);color:var(--fg);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .recent-card-meta{font:400 13px/1 var(--font-sans);color:var(--fg-4)}
 .recent-card-store{font:500 14px/1.3 var(--font-sans);color:var(--accent);cursor:pointer;flex-shrink:0;text-align:right;max-width:110px;white-space:normal;line-height:1.3}
-@media(max-width:767px){
-  .cart-foot{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
-}
+#main{padding-bottom:var(--nav-h,0px)}
 
 /* ── CONTRACT MODAL ── */
 .contract-scroll{max-height:46vh;overflow-y:auto;border:1px solid var(--line);border-radius:var(--r-2);padding:14px 16px;background:var(--bg-2);font:400 13px/1.65 var(--font-sans)}
@@ -1211,7 +1209,16 @@ function applyNavPos() {
   document.body.classList.toggle('nav-right', right);
   const chk = document.getElementById('nav-pos-chk');
   if (chk) chk.checked = right;
+  _updateNavH();
 }
+
+function _updateNavH() {
+  const nav = document.getElementById('bottom-nav');
+  const isSide = document.body.classList.contains('nav-right');
+  const h = (!isSide && nav && getComputedStyle(nav).display !== 'none') ? nav.offsetHeight : 0;
+  document.documentElement.style.setProperty('--nav-h', h + 'px');
+}
+window.addEventListener('resize', _updateNavH);
 
 function toggleNavPos() {
   const pos = document.getElementById('nav-pos-chk').checked ? 'right' : 'bottom';
