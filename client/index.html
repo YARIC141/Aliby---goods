@@ -596,6 +596,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <div class="cart-foot" id="cart-foot" style="display:none">
       <div class="cart-row"><span>Подытог</span><span id="c-subtotal">0 ₽</span></div>
       <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
+      <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
       <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
     </div>
   </div>
@@ -957,7 +958,7 @@ const DEFAULT_FEATURES = {
 
 // ─── STATE ───
 const S = {
-  session: null, profile: null, store: null,
+  session: null, profile: null, store: null, storeSubActive: true,
   cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [],
   menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
   map: null, mapMarkers: [], mapFitted: false, allStores: [], mapCats: new Set(),
@@ -1555,22 +1556,43 @@ async function loadStore() {
   document.getElementById('st-cuisine').textContent = sc ? (sc.icon ? sc.icon + ' ' + sc.name : sc.name) : '';
   document.getElementById('store-subs').innerHTML = SK.subCards(2);
   document.getElementById('menu-items').innerHTML = SK.itemCards(6);
+  // Проверяем подписку заведения (fail-open чтобы не блокировать при ошибке сети)
+  try {
+    const active = await req('/rest/v1/rpc/is_store_subscription_active', {
+      method: 'POST', body: JSON.stringify({ p_store_id: st.id }),
+    });
+    S.storeSubActive = active === true;
+  } catch(e) { S.storeSubActive = true; }
+  applyStoreGate();
   await Promise.all([loadStoreSubs(), loadCategories(), loadMenuUserSubs()]);
   loadMenuItems();
 }
 
+function applyStoreGate() {
+  const active = S.storeSubActive !== false;
+  const payBtn     = document.getElementById('cart-pay-btn');
+  const banner     = document.getElementById('store-inactive-banner');
+  const subPayBtn  = document.querySelector('#sub-cart-sect .btn-p');
+  const giftPayBtn = document.querySelector('#gift-sub-cart-sect .btn-p');
+  if (payBtn)     payBtn.style.display     = active ? '' : 'none';
+  if (banner)     banner.style.display     = active ? 'none' : '';
+  if (subPayBtn)  subPayBtn.style.display  = active ? '' : 'none';
+  if (giftPayBtn) giftPayBtn.style.display = active ? '' : 'none';
+}
+
 function renderSubCard(s) {
-  const inCart = S.subCart.find(c => c.sub.id === s.id);
-  const inGift = S.giftSubCart.find(c => c.sub.id === s.id);
+  const inCart  = S.subCart.find(c => c.sub.id === s.id);
+  const inGift  = S.giftSubCart.find(c => c.sub.id === s.id);
+  const canBuy  = S.storeSubActive !== false;
   return `<div class="sub-card" onclick="openSubDetailModal('${s.id}')">
     <div class="sub-top"><h4>${esc(s.name)}</h4><div class="sub-price">${s.price} ₽</div></div>
     <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
-    ${inCart
+    ${!canBuy ? '' : (inCart
       ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">✓ В корзине</button>`
-      : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`}
-    ${inGift
+      : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`)}
+    ${!canBuy ? '' : (inGift
       ? `<button class="btn btn-sm btn-full" style="margin-top:4px;opacity:.65" onclick="event.stopPropagation();removeFromGiftCart('${s.id}')">🎁 В корзине</button>`
-      : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftConfirm('${s.id}')">Приобрести в подарок</button>`}
+      : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftConfirm('${s.id}')">Приобрести в подарок</button>`)}
   </div>`;
 }
 

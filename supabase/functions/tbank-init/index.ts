@@ -54,6 +54,28 @@ Deno.serve(async (req: Request) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
 
+  // Проверяем активную platform_subscription владельца заведения
+  const { data: storeOwner } = await serviceClient
+    .from('stores')
+    .select('owner_user_id')
+    .eq('id', store_id)
+    .maybeSingle()
+
+  if (storeOwner) {
+    const today = new Date().toISOString().split('T')[0]
+    const { data: activeSub } = await serviceClient
+      .from('platform_subscriptions')
+      .select('id')
+      .eq('user_id', storeOwner.owner_user_id)
+      .eq('status', 'active')
+      .gte('end_date', today)
+      .maybeSingle()
+
+    if (!activeSub) {
+      return jsonResponse({ error: 'Заведение временно приостановило продажи' }, 403)
+    }
+  }
+
   // Создаём заказ через userClient — RLS разрешает INSERT для владельца
   const { data: order, error: orderError } = await userClient
     .from('orders')

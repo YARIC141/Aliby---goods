@@ -1269,18 +1269,25 @@ async function loadPlatformSubscription() {
     const active = subs.find(s => s.status === 'active' && new Date(s.end_date) >= now);
     _activePlatSub = active || null;
     if (active) {
-      const endFmt = new Date(active.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+      const endDate  = new Date(active.end_date);
+      const endFmt   = endDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
       const planName = active.plan === 'yearly' ? 'Годовая' : 'Месячная';
+      const daysLeft = Math.ceil((endDate - new Date()) / 86400000);
+      const canRenew = daysLeft <= 30;
+      const renewOpenDate = new Date(endDate);
+      renewOpenDate.setDate(renewOpenDate.getDate() - 30);
+      const renewOpenFmt = renewOpenDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
       el.innerHTML =
         `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">` +
           `<div>` +
             `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">${planName} подписка</div>` +
             `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">Активна до ${endFmt}</div>` +
+            (!canRenew ? `<div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px">Продление доступно с ${renewOpenFmt}</div>` : '') +
           `</div>` +
           `<span class="platsub-status-badge active">Активна</span>` +
         `</div>` +
         `<div style="display:flex;gap:8px">` +
-          `<button class="btn btn-p" style="flex:1" onclick="startPlatformSubscription()">Продлить</button>` +
+          (canRenew ? `<button class="btn btn-p" style="flex:1" onclick="startPlatformSubscription()">Продлить</button>` : '') +
           `<button class="btn btn-d" style="flex:1" onclick="endPlatformSubscription()">Завершить</button>` +
         `</div>`;
     } else {
@@ -1578,6 +1585,13 @@ function cancelPickMode() {
 
 async function saveStore() {
   const id    = document.getElementById('ms-id').value;
+  if (!id) {
+    const existing = await req('/rest/v1/stores?select=id&limit=1').catch(() => []);
+    if (existing?.length) {
+      alert('На данный момент поддерживается только одно заведение');
+      return;
+    }
+  }
   const lat   = parseFloat(document.getElementById('ms-lat').value);
   const lng   = parseFloat(document.getElementById('ms-lng').value);
   const color = document.getElementById('ms-color').value || '#e8430a';
