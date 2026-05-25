@@ -664,6 +664,14 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
 
     <div class="sec">
+      <div class="sec-title">Телефон</div>
+      <div class="row">
+        <div class="fg"><input type="tel" id="p-phone" placeholder="+7 (999) 000-00-00"></div>
+        <button class="btn" id="p-phone-btn" onclick="updatePhone()">Сохранить</button>
+      </div>
+    </div>
+
+    <div class="sec">
       <div class="sec-title">Сменить пароль</div>
       <div class="row">
         <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
@@ -2417,6 +2425,7 @@ async function loadProfile() {
       S.profile = profs[0];
       document.getElementById('p-role').textContent  = profs[0].role;
       document.getElementById('p-name').value        = profs[0].full_name || '';
+      document.getElementById('p-phone').value       = profs[0].phone || '';
     }
   } catch(e) {}
   // init customization controls
@@ -2442,6 +2451,18 @@ async function updateName() {
     });
     restore();
     alert('Имя сохранено');
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
+}
+
+async function updatePhone() {
+  const restore = btnLoad(document.getElementById('p-phone-btn'));
+  try {
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ phone: document.getElementById('p-phone').value.trim() || null }),
+    });
+    restore();
+    alert('Телефон сохранён');
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
