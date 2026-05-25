@@ -349,7 +349,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div id="err-login" class="alert alert-e" style="display:none"></div>
       <div class="fg"><label>Email</label><input type="email" id="li-email" autocomplete="username"></div>
       <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
-      <button class="btn btn-p btn-full" onclick="doLogin()">Войти</button>
+      <button class="btn btn-p btn-full" id="login-btn" onclick="doLogin()">Войти</button>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
     </div>
@@ -369,7 +369,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
       <div class="fg"><label>Пароль</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
       <div class="fg"><label>Подтвердите пароль</label><input type="password" id="reg-pwd2" autocomplete="new-password"></div>
-      <button class="btn btn-p btn-full" onclick="doRegister()">Создать аккаунт</button>
+      <button class="btn btn-p btn-full" id="register-btn" onclick="doRegister()">Создать аккаунт</button>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('login')">← Войти</button>
     </div>
@@ -515,7 +515,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div class="sec-title">Сменить пароль</div>
       <div class="row">
         <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
-        <button class="btn" onclick="updatePwd()">Обновить</button>
+        <button class="btn" id="p-pwd-btn" onclick="updatePwd()">Обновить</button>
       </div>
     </div>
 
@@ -544,7 +544,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div class="sec">
       <div class="sec-title">Удаление аккаунта</div>
       <p class="txt-sm" style="margin-bottom:10px">Аккаунт и все связанные данные будут удалены безвозвратно.</p>
-      <button class="btn btn-d btn-full" onclick="doDeleteAccount()">Удалить аккаунт</button>
+      <button class="btn btn-d btn-full" id="p-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт</button>
     </div>
 
   </div>
@@ -723,7 +723,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-store')">Отмена</button>
-      <button class="btn btn-p" onclick="saveStore()">Сохранить</button>
+      <button class="btn btn-p" id="ms-save-btn" onclick="saveStore()">Сохранить</button>
     </div>
   </div>
 </div>
@@ -781,7 +781,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-cat')">Отмена</button>
-      <button class="btn btn-p" onclick="saveCat()">Сохранить</button>
+      <button class="btn btn-p" id="mc-save-btn" onclick="saveCat()">Сохранить</button>
     </div>
     <div class="txt-muted" style="margin-top:6px">POST /rest/v1/categories · PATCH /rest/v1/categories?id=eq.{id}</div>
   </div>
@@ -828,7 +828,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div class="img-preview" id="mmi-preview">Нет фото</div>
       <div class="row">
         <div class="fg"><input type="file" id="mmi-photo" accept="image/jpeg,image/png,image/webp" onchange="previewPhoto(this)"></div>
-        <button class="btn btn-sm" onclick="uploadPhoto()">Загрузить</button>
+        <button class="btn btn-sm" id="mmi-upload-btn" onclick="uploadPhoto()">Загрузить</button>
       </div>
       <div class="txt-muted">POST /storage/v1/object/menu-photos/{filename}</div>
       <div id="mmi-img-url" class="txt-muted" style="margin-top:4px;word-break:break-all"></div>
@@ -838,7 +838,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div class="modal-ft">
       <button class="btn btn-d btn-sm" id="mmi-delete-photo-btn" style="display:none" onclick="deletePhoto()">Удалить фото</button>
       <button class="btn" onclick="closeModal('m-mi')">Отмена</button>
-      <button class="btn btn-p" onclick="saveMenuItem()">Сохранить</button>
+      <button class="btn btn-p" id="mmi-save-btn" onclick="saveMenuItem()">Сохранить</button>
     </div>
     <div class="txt-muted" style="margin-top:6px">POST /rest/v1/menu_items · PATCH /rest/v1/menu_items?id=eq.{id}</div>
   </div>
@@ -905,7 +905,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-sub')">Отмена</button>
-      <button class="btn btn-p" onclick="saveSubscription()">Сохранить</button>
+      <button class="btn btn-p" id="msub-save-btn" onclick="saveSubscription()">Сохранить</button>
     </div>
     <div class="txt-muted" style="margin-top:6px">POST /rest/v1/subscriptions · PATCH /rest/v1/subscriptions?id=eq.{id}</div>
   </div>
@@ -1055,6 +1055,13 @@ async function req(path, opts = {}, _retried = false) {
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+function btnLoad(el, label = 'Сохранение…') {
+  if (!el) return () => {};
+  el.disabled = true;
+  const prev = el.textContent;
+  el.textContent = label;
+  return () => { el.disabled = false; el.textContent = prev; };
+}
 function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -1172,18 +1179,17 @@ function applyFeatureToggles() {
 async function doLogin() {
   const err = document.getElementById('err-login');
   err.style.display = 'none';
+  const restore = btnLoad(document.getElementById('login-btn'), 'Вход…');
   try {
-    // POST /auth/v1/token?grant_type=password
     const d = await req('/auth/v1/token?grant_type=password', {
       method: 'POST',
       body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
     });
-    // Check role
     const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
-    if (profs[0]?.role !== 'admin') { err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
+    if (profs[0]?.role !== 'admin') { restore(); err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
     setSession(d);
     goTo('stores');
-  } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
+  } catch(e) { restore(); err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
 async function doRegister() {
@@ -1196,6 +1202,7 @@ async function doRegister() {
   if (!email || !pwd) { err.textContent = 'Заполните все поля'; err.style.display = 'block'; return; }
   if (pwd !== pwd2)   { err.textContent = 'Пароли не совпадают'; err.style.display = 'block'; return; }
   if (pwd.length < 6) { err.textContent = 'Пароль должен быть не менее 6 символов'; err.style.display = 'block'; return; }
+  const restore = btnLoad(document.getElementById('register-btn'), 'Регистрация…');
   try {
     const d = await req('/functions/v1/admin-register', {
       method: 'POST',
@@ -1203,7 +1210,7 @@ async function doRegister() {
     });
     ok.style.display = 'block';
     setTimeout(() => { setSession(d); goTo('stores'); }, 800);
-  } catch(e) { err.textContent = e.message || e.error || 'Ошибка регистрации'; err.style.display = 'block'; }
+  } catch(e) { restore(); err.textContent = e.message || e.error || 'Ошибка регистрации'; err.style.display = 'block'; }
 }
 
 async function doLogout() {
@@ -1261,14 +1268,18 @@ async function refreshSession() {
 async function updatePwd() {
   const val = document.getElementById('p-newpwd').value;
   if (!val || val.length < 6) { alert('Пароль должен быть не менее 6 символов'); return; }
+  const restore = btnLoad(document.getElementById('p-pwd-btn'), 'Обновление…');
   try {
     await req('/auth/v1/user', { method: 'PUT', body: JSON.stringify({ password: val }) });
+    restore();
     alert('Пароль обновлён');
     document.getElementById('p-newpwd').value = '';
-  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
 async function loadProfile() {
+  document.getElementById('p-email').textContent = '…';
+  document.getElementById('p-role').textContent  = '…';
   try {
     const u = await req('/auth/v1/user');
     document.getElementById('p-email').textContent = u.email || '';
@@ -1365,8 +1376,11 @@ async function loadPlatformSubscription() {
   }
 }
 
-function startPlatformSubscription() {
-  requireContract('seller', () => openModal('m-platsub-plans'));
+async function startPlatformSubscription() {
+  const btn = document.querySelector('[onclick="startPlatformSubscription()"]');
+  if (btn) btn.disabled = true;
+  await requireContract('seller', () => openModal('m-platsub-plans'));
+  if (btn) btn.disabled = false;
 }
 
 function selectPlatSubPlan(plan) {
@@ -1412,6 +1426,8 @@ function cancelPlatSubPay() {
 async function endPlatformSubscription() {
   if (!_activePlatSub) return;
   if (!confirm('Завершить подписку? Доступ сохранится до конца оплаченного периода.')) return;
+  const btn = document.querySelector('[onclick="endPlatformSubscription()"]');
+  const restore = btnLoad(btn, 'Завершение…');
   try {
     await req(`/rest/v1/platform_subscriptions?id=eq.${_activePlatSub.id}`, {
       method: 'PATCH',
@@ -1419,18 +1435,20 @@ async function endPlatformSubscription() {
     });
     await loadPlatformSubscription();
   } catch(e) {
+    restore();
     alert('Ошибка: ' + (e.message || ''));
   }
 }
 
 async function doDeleteAccount() {
   if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
+  const restore = btnLoad(document.getElementById('p-delete-btn'), 'Удаление…');
   try {
     await req('/functions/v1/delete-account', { method: 'POST' });
     localStorage.removeItem('alliby_admin_s');
     S.session = null;
     goTo('auth');
-  } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
+  } catch(e) { restore(); alert('Ошибка удаления: ' + (e.message || '')); }
 }
 
 // ─── STORE CATEGORIES ───
@@ -1601,10 +1619,13 @@ function cancelPickMode() {
 }
 
 async function saveStore() {
-  const id    = document.getElementById('ms-id').value;
+  const btn  = document.getElementById('ms-save-btn');
+  const restore = btnLoad(btn);
+  const id   = document.getElementById('ms-id').value;
   if (!id) {
     const existing = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id&limit=1`).catch(() => []);
     if (existing?.length) {
+      restore();
       alert('На данный момент поддерживается только одно заведение');
       return;
     }
@@ -1640,7 +1661,7 @@ async function saveStore() {
       });
     }
     closeModal('m-store'); loadStores();
-  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
 // ─── STORE DETAIL / QR ───
@@ -1735,6 +1756,8 @@ function openCatModal(cat) {
 }
 
 async function saveCat() {
+  const btn = document.getElementById('mc-save-btn');
+  const restore = btnLoad(btn);
   const id = document.getElementById('mc-id').value;
   const body = {
     name:     document.getElementById('mc-name').value,
@@ -1742,14 +1765,12 @@ async function saveCat() {
   };
   try {
     if (id) {
-      // PATCH /rest/v1/categories?id=eq.{id}
       await req(`/rest/v1/categories?id=eq.${id}`, { method:'PATCH', body: JSON.stringify({ name: body.name }) });
     } else {
-      // POST /rest/v1/categories
       await req('/rest/v1/categories', { method:'POST', body: JSON.stringify(body) });
     }
     closeModal('m-cat'); loadCategories();
-  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
 // ─── MENU ITEMS ───
@@ -1856,9 +1877,10 @@ function previewPhoto(input) {
 async function uploadPhoto() {
   const file = document.getElementById('mmi-photo').files[0];
   if (!file) { alert('Выберите файл'); return; }
+  const btn = document.getElementById('mmi-upload-btn');
+  const restore = btnLoad(btn, 'Загрузка…');
   const filename = Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
   try {
-    // POST /storage/v1/object/menu-photos/{filename}
     const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
       method: 'POST',
       headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': file.type },
@@ -1870,8 +1892,9 @@ async function uploadPhoto() {
     document.getElementById('mmi-img-url').textContent = url;
     S.uploadedPhotoFilename = filename;
     document.getElementById('mmi-delete-photo-btn').style.display = 'inline-flex';
+    restore();
     alert('Фото загружено');
-  } catch(e) { alert('Ошибка загрузки фото: ' + (e.message || JSON.stringify(e))); }
+  } catch(e) { restore(); alert('Ошибка загрузки фото: ' + (e.message || JSON.stringify(e))); }
 }
 
 async function deletePhoto() {
@@ -1893,6 +1916,8 @@ async function deletePhoto() {
 }
 
 async function saveMenuItem() {
+  const btn = document.getElementById('mmi-save-btn');
+  const restore = btnLoad(btn);
   const id = document.getElementById('mmi-id').value;
   const body = {
     store_id:    document.getElementById('mmi-store').value,
@@ -1912,7 +1937,7 @@ async function saveMenuItem() {
       await req('/rest/v1/menu_items', { method:'POST', body: JSON.stringify(body) });
     }
     closeModal('m-mi'); loadMenuItems();
-  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
 // ─── SUBSCRIPTIONS ───
@@ -2013,6 +2038,9 @@ async function saveSubscription() {
   if (!discVal  || parseFloat(discVal)<= 0){ alert('Введите размер скидки'); return; }
   if (!days     || parseInt(days)    <= 0) { alert('Введите срок действия в днях'); return; }
 
+  const btn = document.getElementById('msub-save-btn');
+  const restore = btnLoad(btn);
+
   const coverage_rules = { type: 'include_items', item_ids: [itemId] };
 
   const weekdays = [...document.querySelectorAll('.wd:checked')].map(cb => parseInt(cb.value));
@@ -2051,7 +2079,7 @@ async function saveSubscription() {
       await req('/rest/v1/subscriptions', { method:'POST', body: JSON.stringify(body) });
     }
     closeModal('m-sub'); loadSubscriptions();
-  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
 // ─── ORDERS ───
