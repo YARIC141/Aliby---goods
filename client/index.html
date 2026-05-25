@@ -633,7 +633,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <p class="txt-sm" style="margin-bottom:10px;color:var(--muted)">Введите ID абонемента, который вам передали</p>
         <div style="display:flex;gap:8px">
           <input id="gift-activate-input" type="text" placeholder="ID абонемента…" style="flex:1;min-width:0">
-          <button class="btn btn-p" onclick="activateGift()">Активировать</button>
+          <button class="btn btn-p" id="gift-activate-btn" onclick="activateGift()">Активировать</button>
         </div>
       </div>
     </div>
@@ -659,7 +659,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div class="sec-title">Имя</div>
       <div class="row">
         <div class="fg"><input type="text" id="p-name" placeholder="Ваше имя"></div>
-        <button class="btn" onclick="updateName()">Сохранить</button>
+        <button class="btn" id="p-name-btn" onclick="updateName()">Сохранить</button>
       </div>
     </div>
 
@@ -667,7 +667,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div class="sec-title">Сменить пароль</div>
       <div class="row">
         <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
-        <button class="btn" onclick="updatePwd()">Обновить</button>
+        <button class="btn" id="p-pwd-btn" onclick="updatePwd()">Обновить</button>
       </div>
     </div>
 
@@ -819,7 +819,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <p class="txt-sm" style="margin-bottom:14px">Нажмите «Купить» для оформления абонемента.</p>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-buy')">Отмена</button>
-      <button class="btn btn-p" onclick="buySubscription()">Купить →</button>
+      <button class="btn btn-p" id="buy-sub-btn" onclick="buySubscription()">Купить →</button>
     </div>
   </div>
 </div>
@@ -1093,6 +1093,13 @@ async function req(path, opts = {}, _retried = false) {
 }
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function btnLoad(el, label = 'Сохранение…') {
+  if (!el) return () => {};
+  el.disabled = true;
+  const prev = el.textContent;
+  el.textContent = label;
+  return () => { el.disabled = false; el.textContent = prev; };
 }
 function fmtDate(d) {
   if (!d) return '—';
@@ -1705,6 +1712,7 @@ function getCartSubAllocation() {
 
 async function loadCategories() {
   const bar = document.getElementById('cat-bar');
+  bar.innerHTML = Array.from({length:3}, () => '<span class="sk" style="width:60px;height:28px;border-radius:var(--r-pill);flex-shrink:0"></span>').join('');
   try {
     const [cats, subs] = await Promise.all([
       req(`/rest/v1/categories?store_id=eq.${S.store.id}&order=name.asc`),
@@ -2071,6 +2079,7 @@ async function activateGift() {
   const giftId = input?.value.trim();
   if (!giftId) { showGeoToast('Введите ID абонемента'); return; }
   if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  const restore = btnLoad(document.getElementById('gift-activate-btn'), 'Активация…');
   try {
     await req('/rest/v1/rpc/activate_gift_subscription', {
       method: 'POST',
@@ -2081,6 +2090,7 @@ async function activateGift() {
     loadMySubscriptions();
     setTimeout(() => document.querySelector('[data-tab-sub="active"]')?.click(), 300);
   } catch(e) {
+    restore();
     const msg = String(e.message || e);
     if (msg.includes('not_found'))       showGeoToast('Абонемент не найден или уже активирован');
     else if (msg.includes('self_activation')) showGeoToast('Нельзя активировать собственный подарок');
@@ -2353,6 +2363,7 @@ async function buySubscription() {
   if (!S.session) { alert('Войдите в аккаунт'); return; }
   const sub    = S.pendingSub;
   const isGift = !!S.pendingGift;
+  const restore = btnLoad(document.getElementById('buy-sub-btn'), 'Покупка…');
   try {
     const today = new Date();
     const end = new Date(today);
@@ -2389,11 +2400,14 @@ async function buySubscription() {
       // Если в корзине есть товары — показать корзину с пересчитанными ценами
       if (S.cart.length) { goTo('cart'); } else { goTo('subscriptions'); }
     }
-  } catch(e) { alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
 // ─── PROFILE ───
 async function loadProfile() {
+  document.getElementById('p-email').textContent = '…';
+  document.getElementById('p-uid').textContent   = '…';
+  document.getElementById('p-role').textContent  = '…';
   try {
     const u = await req('/auth/v1/user');
     document.getElementById('p-email').textContent = u.email;
@@ -2419,26 +2433,30 @@ async function loadProfile() {
 }
 
 async function updateName() {
+  const restore = btnLoad(document.getElementById('p-name-btn'));
   try {
     // PATCH /rest/v1/profiles?id=eq.{uuid}
     await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ full_name: document.getElementById('p-name').value }),
     });
+    restore();
     alert('Имя сохранено');
-  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
 async function updatePwd() {
+  const restore = btnLoad(document.getElementById('p-pwd-btn'), 'Обновление…');
   try {
     // PUT /auth/v1/user
     await req('/auth/v1/user', {
       method: 'PUT',
       body: JSON.stringify({ password: document.getElementById('p-newpwd').value }),
     });
+    restore();
     alert('Пароль обновлён');
     document.getElementById('p-newpwd').value = '';
-  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
 // ─── NAV / CART RESTORE ───
@@ -2648,6 +2666,7 @@ async function navigateDeepLink() {
   if (!deepStoreId) return false;
   const id = deepStoreId;
   deepStoreId = null;
+  showGeoToast('Загрузка заведения…');
   try {
     const rows = await req(`/rest/v1/stores?id=eq.${id}&select=*,store_categories(name,icon)&limit=1`);
     if (rows?.[0]) {
