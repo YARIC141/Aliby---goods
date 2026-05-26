@@ -712,6 +712,10 @@ tr.row-click:hover td{background:var(--bg-2)}
         <label>Тип заведения<span class="hint" data-tip="Категория определяет иконку и фильтр на карте клиентского приложения. Клиент может отфильтровать заведения по типу">?</span></label>
         <select id="ms-sc"><option value="">— не указан —</option></select>
       </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Средний чек (₽)<span class="hint" data-tip="Отображается на маркере заведения на карте клиентского приложения. Пусто — не показывать.">?</span></label>
+        <input type="number" id="ms-avg" min="0" placeholder="Пусто — не показывать на карте">
+      </div>
     </div>
     <div id="ms-coords-status" style="font:400 12px/1.3 var(--font-mono);margin:10px 0 6px;padding:6px 10px;border-radius:var(--r-1);background:var(--bg-2)"></div>
     <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
@@ -1533,6 +1537,7 @@ function openStoreModal(store) {
   document.getElementById('ms-hours').value   = store?.working_hours || '';
   document.getElementById('ms-sc').value      = store?.store_category_id || '';
   document.getElementById('ms-color').value   = store?._loc?.marker_color || '#e8430a';
+  document.getElementById('ms-avg').value     = store?.avg_order_amount ?? '';
   updateStoreCoordsStatus();
   openModal('m-store');
 }
@@ -1642,6 +1647,7 @@ async function saveStore() {
     phone:              document.getElementById('ms-phone').value || null,
     working_hours:      document.getElementById('ms-hours').value || null,
     store_category_id:  document.getElementById('ms-sc').value || null,
+    avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
   };
   try {
     let storeId = id;

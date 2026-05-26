@@ -192,8 +192,11 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .map-area{flex:1;position:relative;overflow:hidden}
 .map-gl{position:absolute;inset:0;width:100%;height:100%}
 .store-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateX(-50%)}
-.store-pin .p-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);flex-shrink:0}
+.store-pin .p-dot-wrap{position:relative;flex-shrink:0;width:14px;height:14px}
+.store-pin .p-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.store-pin .p-cart{position:absolute;top:-6px;right:-8px;font-size:10px;line-height:1;background:#f5c518;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .store-pin .p-lbl{background:var(--bg-1);border:1px solid var(--line);font:600 13px/1 var(--font-sans);color:var(--fg);padding:3px 8px;border-radius:var(--r-1);white-space:nowrap;margin-top:3px;box-shadow:var(--shadow-1);max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.store-pin .p-avg{font:400 11px/1 var(--font-mono);color:var(--fg-3);margin-top:1px;background:var(--bg-1);border:1px solid var(--line-soft);padding:1px 6px;border-radius:var(--r-1);white-space:nowrap;box-shadow:var(--shadow-1)}
 .geo-toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--bg-1);border:1px solid var(--line);padding:9px 16px;border-radius:var(--r-pill);font:400 14px/1 var(--font-sans);color:var(--fg);z-index:20;white-space:nowrap;box-shadow:var(--shadow-1);pointer-events:none;opacity:0;transition:opacity var(--t-med)}
 .geo-toast.show{opacity:1}
 .map-popup{position:absolute;bottom:14px;left:14px;right:14px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:var(--r-3);padding:14px;max-width:320px;z-index:10;box-shadow:var(--shadow-2)}
@@ -1407,16 +1410,19 @@ async function loadMapStores() {
   const el = document.getElementById('sl-list');
   el.innerHTML = SK.storeList();
   try {
-    const [stores, locs] = await Promise.all([
+    const [stores, locs, subOwners] = await Promise.all([
       req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)'),
       req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
+      req('/rest/v1/rpc/get_active_sub_owner_ids', { method: 'POST', body: '{}' }).catch(() => []),
     ]);
-    const locMap = new Map(locs.map(l => [l.id, l]));
+    const locMap      = new Map(locs.map(l => [l.id, l]));
+    const activeOwners = new Set(subOwners.map(r => r.user_id));
     S.allStores = stores.map(st => ({
       ...st,
       lng: locMap.get(st.id)?.lng ?? null,
       lat: locMap.get(st.id)?.lat ?? null,
       marker_color: locMap.get(st.id)?.marker_color ?? '#e8430a',
+      has_cart: activeOwners.has(st.owner_user_id),
     }));
     renderMapCategoryChips();
     applyMapFilter();
@@ -1491,7 +1497,13 @@ function renderMapMarkers(stores) {
     if (st.lng == null || st.lat == null) return;
     const el = document.createElement('div');
     el.className = 'store-pin';
-    el.innerHTML = `<div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div><div class="p-lbl">${esc(st.name)}</div>`;
+    el.innerHTML = `
+      <div class="p-dot-wrap">
+        <div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div>
+        ${st.has_cart ? '<div class="p-cart">🛒</div>' : ''}
+      </div>
+      <div class="p-lbl">${esc(st.name)}</div>
+      ${st.avg_order_amount ? `<div class="p-avg">~${st.avg_order_amount} ₽</div>` : ''}`;
     el.addEventListener('click', () => showStorePopup(st, null));
     S.mapMarkers.push(new maplibregl.Marker({ element: el }).setLngLat([st.lng, st.lat]).addTo(S.map));
   });
