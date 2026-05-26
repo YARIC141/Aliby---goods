@@ -197,12 +197,12 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .store-pin .p-cart{position:absolute;top:-6px;right:-8px;font-size:10px;line-height:1;background:#f5c518;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .store-pin .p-lbl{background:var(--bg-1);border:1px solid var(--line);font:600 13px/1 var(--font-sans);color:var(--fg);padding:3px 8px;border-radius:var(--r-1);white-space:nowrap;margin-top:3px;box-shadow:var(--shadow-1);max-width:130px;overflow:hidden;text-overflow:ellipsis}
 .store-pin .p-avg{font:400 11px/1 var(--font-mono);color:var(--fg-3);margin-top:1px;background:var(--bg-1);border:1px solid var(--line-soft);padding:1px 6px;border-radius:var(--r-1);white-space:nowrap;box-shadow:var(--shadow-1)}
-.map-legend{padding:8px 10px;border-bottom:1px solid var(--line-soft);display:flex;flex-direction:column;gap:6px;flex-shrink:0}
-.map-legend .leg-row{display:flex;align-items:center;gap:8px}
+.map-legend{position:absolute;top:14px;left:14px;z-index:10;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--r-2);padding:8px 10px;display:flex;flex-direction:column;gap:7px;box-shadow:var(--shadow-1)}
+.map-legend .leg-row{display:flex;align-items:center;gap:10px}
 .map-legend .leg-dot-wrap{position:relative;width:14px;height:14px;flex-shrink:0}
 .map-legend .leg-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);background:#e8430a}
 .map-legend .leg-cart{position:absolute;top:-6px;right:-8px;font-size:10px;background:#f5c518;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.map-legend .leg-lbl{font:400 11px/1.3 var(--font-sans);color:var(--fg-3);white-space:normal;word-break:break-word}
+.map-legend .leg-lbl{font:400 11px/1.3 var(--font-sans);color:var(--fg-2)}
 .geo-toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--bg-1);border:1px solid var(--line);padding:9px 16px;border-radius:var(--r-pill);font:400 14px/1 var(--font-sans);color:var(--fg);z-index:20;white-space:nowrap;box-shadow:var(--shadow-1);pointer-events:none;opacity:0;transition:opacity var(--t-med)}
 .geo-toast.show{opacity:1}
 .map-popup{position:absolute;bottom:14px;left:14px;right:14px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:var(--r-3);padding:14px;max-width:320px;z-index:10;box-shadow:var(--shadow-2)}
@@ -510,22 +510,22 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)">
       </div>
       <div class="sl-cats" id="sl-cats"></div>
-      <div class="map-legend">
-        <div class="leg-row">
-          <div class="leg-dot-wrap"><div class="leg-dot"></div></div>
-          <span class="leg-lbl">Маркер заведения</span>
-        </div>
-        <div class="leg-row">
-          <div class="leg-dot-wrap"><div class="leg-dot"></div><div class="leg-cart">🛒</div></div>
-          <span class="leg-lbl">Доступен онлайн&#8209;заказ</span>
-        </div>
-      </div>
       <div class="sl-list" id="sl-list"><div class="loading">Загрузка…</div></div>
     </div>
 
     <div class="map-area" id="map-area">
       <div id="map-gl" class="map-gl"></div>
       <div id="geo-toast" class="geo-toast"></div>
+      <div class="map-legend">
+        <div class="leg-row">
+          <div class="leg-dot-wrap"><div class="leg-dot"></div></div>
+          <span class="leg-lbl">Маркер<br>заведения</span>
+        </div>
+        <div class="leg-row">
+          <div class="leg-dot-wrap"><div class="leg-dot"></div><div class="leg-cart">🛒</div></div>
+          <span class="leg-lbl">Доступен<br>онлайн&#8209;заказ</span>
+        </div>
+      </div>
       <div class="map-popup hidden" id="map-popup">
         <button class="popup-close" onclick="closePopup()">✕</button>
         <strong id="pp-name"></strong>
