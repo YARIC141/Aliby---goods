@@ -1597,15 +1597,21 @@ function applyStoreGate() {
 
 function renderSubCard(s) {
   const inCart  = S.subCart.find(c => c.sub.id === s.id);
-  const inGift  = S.giftSubCart.find(c => c.sub.id === s.id);
-  const canBuy  = S.storeSubActive !== false;
+  const inGift     = S.giftSubCart.find(c => c.sub.id === s.id);
+  const canBuy     = S.storeSubActive !== false;
+  const outOfStock = s.stock_total !== null && s.stock_total !== undefined && s.stock_sold >= s.stock_total;
+  const stockLabel = s.stock_total !== null && s.stock_total !== undefined
+    ? `<span style="font-size:12px;color:${outOfStock ? 'var(--err)' : 'var(--fg-3)'}"> · ${outOfStock ? 'Распродано' : 'Осталось: ' + (s.stock_total - s.stock_sold)}</span>`
+    : '';
   return `<div class="sub-card" onclick="openSubDetailModal('${s.id}')">
     <div class="sub-top"><h4>${esc(s.name)}</h4><div class="sub-price">${s.price} ₽</div></div>
-    <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}</div>
-    ${!canBuy ? '' : (inCart
-      ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">✓ В корзине</button>`
-      : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`)}
-    ${!canBuy ? '' : (inGift
+    <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}${stockLabel}</div>
+    ${!canBuy ? '' : outOfStock
+      ? `<button class="btn btn-sm btn-full" disabled style="opacity:.4">Нет в наличии</button>`
+      : (inCart
+        ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">✓ В корзине</button>`
+        : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`)}
+    ${!canBuy || outOfStock ? '' : (inGift
       ? `<button class="btn btn-sm btn-full" style="margin-top:4px;opacity:.65" onclick="event.stopPropagation();removeFromGiftCart('${s.id}')">🎁 В корзине</button>`
       : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftConfirm('${s.id}')">Приобрести в подарок</button>`)}
   </div>`;
@@ -2408,7 +2414,12 @@ async function buySubscription() {
       // Если в корзине есть товары — показать корзину с пересчитанными ценами
       if (S.cart.length) { goTo('cart'); } else { goTo('subscriptions'); }
     }
-  } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+  } catch(e) {
+    restore();
+    const msg = String(e.message || e);
+    if (msg.includes('out_of_stock')) alert('Этот абонемент уже распродан');
+    else alert('Ошибка: ' + msg);
+  }
 }
 
 // ─── PROFILE ───
