@@ -761,8 +761,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div id="mbk-day-title" style="font:600 14px/1 var(--font-sans)"></div>
         <button class="btn btn-sm" onclick="closeMyBookingsDay()">✕</button>
       </div>
-      <div id="mbk-day-schedule" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
-      <div id="mbk-day-slots" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
       <div id="mbk-day-bookings"></div>
     </div>
   </div>
@@ -1147,7 +1145,11 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       </table>
     </div>
     <div id="mss-day-view" style="display:none;padding:10px 12px;background:var(--bg-1);border-radius:var(--r-2);border:1px solid var(--border)">
-      <div id="mss-day-title" style="font:600 13px/1 var(--font-sans);margin-bottom:8px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div id="mss-day-title" style="font:600 13px/1 var(--font-sans)"></div>
+        <button class="btn btn-sm" style="padding:3px 8px;font-size:11px" onclick="closeStoreSchedDay()">✕</button>
+      </div>
+      <div id="mss-day-windows" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
       <div id="mss-day-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
   </div>
@@ -1437,7 +1439,7 @@ function setDirection(dir) {
   // update cart nav label
   const isServices = dir === 'services';
   document.querySelectorAll('.nav-cart-lbl').forEach(el => {
-    el.innerHTML = isServices ? 'Записи' : el.classList.contains('bn-lbl') ? 'Корзина<br>и заказ' : 'Корзина и заказ';
+    el.innerHTML = isServices ? (el.classList.contains('bn-lbl') ? 'Мой<br>календарь' : 'Мой календарь') : el.classList.contains('bn-lbl') ? 'Корзина<br>и заказ' : 'Корзина и заказ';
   });
 }
 
@@ -3742,7 +3744,7 @@ function fmtExpiry(input) {
 }
 
 // ─── STORE SCHEDULE ───
-const _stSched = { storeId: null, year: 0, month: 0, dayData: {} };
+const _stSched = { storeId: null, year: 0, month: 0, dayData: {}, openDate: null };
 function _fmtD(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
@@ -3988,7 +3990,7 @@ function renderMyBookingsCalendar() {
   document.getElementById('mbk-calendar').innerHTML = html;
 }
 
-async function openMyBookingsDay(ds) {
+function openMyBookingsDay(ds) {
   if (_myBk.openDate === ds) { closeMyBookingsDay(); return; }
   _myBk.openDate = ds;
   renderMyBookingsCalendar();
@@ -3998,66 +4000,12 @@ async function openMyBookingsDay(ds) {
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('mbk-day-title').textContent = `${DOW[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
 
-  const schedEl = document.getElementById('mbk-day-schedule');
-  const slotsEl = document.getElementById('mbk-day-slots');
   const bkEl    = document.getElementById('mbk-day-bookings');
   const dayView = document.getElementById('mbk-day-view');
-  schedEl.innerHTML = slotsEl.innerHTML = bkEl.innerHTML = '';
+  bkEl.innerHTML = '';
   dayView.style.display = '';
 
   const myBookings = _myBk.byDate[ds] || [];
-
-  // ── Slot timeline (requires store context) ──
-  const storeId = S.store?.id || myBookings[0]?.store_id;
-  if (storeId) {
-    slotsEl.innerHTML = `<span style="font-size:12px;color:var(--fg-3)">Загрузка…</span>`;
-    try {
-      const [schedRows, allBks] = await Promise.all([
-        req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=eq.${ds}&select=slots`),
-        req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=eq.${ds}&status=neq.cancelled&select=user_id,slot_start,slot_end`),
-      ]);
-      const windows = schedRows[0]?.slots || [];
-
-      // Schedule window chips
-      schedEl.innerHTML = windows.length
-        ? windows.map(w => `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--border);font:500 13px/1 var(--font-sans)">${esc(w.start)} — ${esc(w.end)}</span>`).join('')
-        : `<span style="font-size:13px;color:var(--fg-3)">День закрыт</span>`;
-
-      if (windows.length) {
-        const myUid = S.session?.user?.id;
-        const prepMin = Math.max(15, myBookings[0]?.menu_items?.preparation_time ?? 30);
-        const blocked  = allBks.map(b => ({ slot_start: b.slot_start, slot_end: b.slot_end }));
-        const freeSlots = getAvailableSlots(windows, blocked, prepMin);
-
-        const items = [];
-        allBks.forEach(b => items.push({
-          type: b.user_id === myUid ? 'mine' : 'other',
-          s: (b.slot_start||'').slice(0,5), e: (b.slot_end||'').slice(0,5),
-        }));
-        freeSlots.forEach(sl => items.push({ type: 'free', s: sl.start, e: sl.end }));
-        items.sort((a, b) => a.s.localeCompare(b.s));
-
-        // Attach service name to mine slots
-        myBookings.forEach(mb => {
-          const ts = (mb.slot_start||'').slice(0,5);
-          const it = items.find(x => x.type === 'mine' && x.s === ts);
-          if (it) it.name = mb.menu_items?.name || '';
-        });
-
-        slotsEl.innerHTML = items.length
-          ? items.map(it => {
-              if (it.type === 'free')  return `<span class="slot-chip free">${it.s} — ${it.e}</span>`;
-              if (it.type === 'mine')  return `<span class="slot-chip mine">${it.s} — ${it.e}${it.name ? ' · ' + esc(it.name) : ''}</span>`;
-              return `<span class="slot-chip taken">${it.s} — ${it.e}</span>`;
-            }).join('')
-          : `<span style="font-size:13px;color:var(--fg-3)">Нет слотов</span>`;
-      } else {
-        slotsEl.innerHTML = '';
-      }
-    } catch { slotsEl.innerHTML = ''; }
-  }
-
-  // ── Booking action cards ──
   if (!myBookings.length) return;
   const now = nowInCity();
   bkEl.innerHTML = myBookings.map(b => {
@@ -4158,6 +4106,7 @@ function openStoreSchedule(st) {
   _stSched.year  = now.getFullYear();
   _stSched.month = now.getMonth();
   _stSched.dayData = {};
+  _stSched.openDate = null;
   const title = st.direction === 'services' ? 'Календарь записей' : 'График работы';
   document.getElementById('mss-title').textContent = `${title} — ${esc(st.name)}`;
   document.getElementById('mss-day-view').style.display = 'none';
@@ -4176,11 +4125,13 @@ async function loadStoreSchedMonth() {
 }
 function storeSchedPrev() {
   if (_stSched.month === 0) { _stSched.month = 11; _stSched.year--; } else _stSched.month--;
+  _stSched.openDate = null;
   document.getElementById('mss-day-view').style.display = 'none';
   loadStoreSchedMonth();
 }
 function storeSchedNext() {
   if (_stSched.month === 11) { _stSched.month = 0; _stSched.year++; } else _stSched.month++;
+  _stSched.openDate = null;
   document.getElementById('mss-day-view').style.display = 'none';
   loadStoreSchedMonth();
 }
@@ -4199,7 +4150,7 @@ function renderStoreSchedCal() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dd = String(d).padStart(2, '0');
     const ds = `${_stSched.year}-${mm}-${dd}`;
-    let cls = 'sched-day' + (ds === today ? ' today' : '') + (_stSched.dayData[ds]?.length ? ' has-sched' : '');
+    let cls = 'sched-day' + (ds === today ? ' today' : '') + (_stSched.dayData[ds]?.length ? ' has-sched' : '') + (ds === _stSched.openDate ? ' selected' : '');
     cells.push({ d, cls, ds });
   }
   const trailing = (7 - (cells.length % 7)) % 7;
@@ -4214,17 +4165,57 @@ function renderStoreSchedCal() {
   });
   document.getElementById('mss-calendar').innerHTML = html;
 }
-function openStoreSchedDay(ds) {
-  const slots = _stSched.dayData[ds] || [];
+async function openStoreSchedDay(ds) {
+  if (_stSched.openDate === ds) { closeStoreSchedDay(); return; }
+  _stSched.openDate = ds;
+  renderStoreSchedCal();
+
   const [y, m, d] = ds.split('-').map(Number);
-  const dow = new Date(y, m - 1, d).getDay();
   const DAY = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-  document.getElementById('mss-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
-  document.getElementById('mss-day-slots').innerHTML = slots.length
-    ? slots.map(s => `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--border);font:500 13px/1 var(--font-sans)">${esc(s.start)} — ${esc(s.end)}</span>`).join('')
-    : `<span style="color:var(--muted);font-size:13px">Расписание не задано</span>`;
+  document.getElementById('mss-day-title').textContent = `${DAY[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
+
+  const winEl   = document.getElementById('mss-day-windows');
+  const slotsEl = document.getElementById('mss-day-slots');
+  slotsEl.innerHTML = `<span style="font-size:12px;color:var(--fg-3)">Загрузка…</span>`;
   document.getElementById('mss-day-view').style.display = '';
+
+  const windows = _stSched.dayData[ds] || [];
+  winEl.innerHTML = windows.length
+    ? windows.map(w => `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--border);font:500 13px/1 var(--font-sans)">${esc(w.start)} — ${esc(w.end)}</span>`).join('')
+    : `<span style="font-size:13px;color:var(--fg-3)">День закрыт</span>`;
+
+  if (!windows.length) { slotsEl.innerHTML = ''; return; }
+
+  try {
+    const allBks = await req(`/rest/v1/bookings?store_id=eq.${_stSched.storeId}&slot_date=eq.${ds}&status=neq.cancelled&select=id,user_id,slot_start,slot_end,menu_items(name)`);
+    const myUid = S.session?.user?.id;
+    const blocked = allBks.map(b => ({ slot_start: b.slot_start, slot_end: b.slot_end }));
+    const freeSlots = getAvailableSlots(windows, blocked, 30);
+
+    const items = [];
+    allBks.forEach(b => items.push({
+      type: b.user_id === myUid ? 'mine' : 'other',
+      s: (b.slot_start||'').slice(0,5), e: (b.slot_end||'').slice(0,5),
+      name: b.user_id === myUid ? (b.menu_items?.name || '') : '',
+    }));
+    freeSlots.forEach(sl => items.push({ type: 'free', s: sl.start, e: sl.end, name: '' }));
+    items.sort((a, b) => a.s.localeCompare(b.s));
+
+    slotsEl.innerHTML = items.length
+      ? items.map(it => {
+          if (it.type === 'free') return `<span class="slot-chip free">${it.s} — ${it.e}</span>`;
+          if (it.type === 'mine') return `<span class="slot-chip mine">${it.s} — ${it.e}${it.name ? ' · ' + esc(it.name) : ''}</span>`;
+          return `<span class="slot-chip taken">${it.s} — ${it.e}</span>`;
+        }).join('')
+      : `<span style="font-size:13px;color:var(--fg-3)">Нет слотов</span>`;
+  } catch { slotsEl.innerHTML = `<span style="font-size:13px;color:var(--fg-3)">Ошибка загрузки</span>`; }
+}
+
+function closeStoreSchedDay() {
+  _stSched.openDate = null;
+  document.getElementById('mss-day-view').style.display = 'none';
+  renderStoreSchedCal();
 }
 
 // ─── PULL TO REFRESH ───
