@@ -278,17 +278,16 @@ tr.row-click:hover td{background:var(--bg-2)}
 .plan-card.highlight{background:var(--accent);border-color:var(--brand-ice-deep);box-shadow:var(--glow-accent)}
 /* ── SCHEDULE ── */
 .sched-cal-wrap{border-radius:var(--r-3);overflow:hidden;border:1px solid var(--line)}
-.sched-cal-hd{display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg-2);border-bottom:1px solid var(--line)}
-.sched-cal-hd span{text-align:center;padding:9px 0 8px;font:600 11px/1 var(--font-sans);color:var(--fg-3)}
-.sched-cal{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:42px}
-.sched-day{display:flex;align-items:center;justify-content:center;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--line-soft);position:relative;transition:background var(--t-fast);user-select:none}
+.sched-cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.sched-cal-table thead th{text-align:center;padding:9px 0 8px;font:600 11px/1 var(--font-sans);color:var(--fg-3);background:var(--bg-2);border-bottom:1px solid var(--line)}
+.sched-day{height:42px;text-align:center;vertical-align:middle;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--line-soft);position:relative;overflow:hidden;transition:background var(--t-fast);user-select:none}
 .sched-day:not(.empty){cursor:pointer}
 .sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
 .sched-day.has-sched::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
 .sched-day.selected{background:color-mix(in oklch,var(--accent) 18%,var(--bg))}
 .sched-day.selected .sd-n{color:var(--accent);font-weight:700}
-.sched-day.empty{pointer-events:none;color:var(--fg-4)}
-.sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.sched-day.empty{color:var(--fg-4)}
+.sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
 .sched-tpl-card{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:var(--r-2);border:1.5px solid var(--line);background:var(--bg-1);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .sched-tpl-card:hover{border-color:var(--fg-3)}
 .sched-tpl-card.active{border-color:var(--accent);background:var(--bg-2)}
@@ -524,10 +523,10 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
     <div class="sched-cal-wrap">
-      <div class="sched-cal-hd">
-        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-      </div>
-      <div id="sched-calendar" class="sched-cal"></div>
+      <table class="sched-cal-table">
+        <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+        <tbody id="sched-calendar"></tbody>
+      </table>
     </div>
     <div id="sched-day-view" style="display:none;margin-top:14px;padding:12px;border-radius:var(--r-3);border:1px solid var(--line-soft);background:var(--bg-1)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -3205,9 +3204,9 @@ function renderSchedCalendar() {
   const daysInMonth = new Date(_sched.year, _sched.month + 1, 0).getDate();
   const mm = String(_sched.month + 1).padStart(2, '0');
   const prevMonthDays = new Date(_sched.year, _sched.month, 0).getDate();
-  let html = '';
+  const cells = [];
   for (let i = offset - 1; i >= 0; i--)
-    html += `<div class="sched-day empty"><span class="sd-n">${prevMonthDays - i}</span></div>`;
+    cells.push({ d: prevMonthDays - i, cls: 'sched-day empty', ds: null });
   for (let d = 1; d <= daysInMonth; d++) {
     const dd = String(d).padStart(2, '0');
     const dateStr = `${_sched.year}-${mm}-${dd}`;
@@ -3215,11 +3214,18 @@ function renderSchedCalendar() {
     if (dateStr === today) cls += ' today';
     if (_sched.dayData[dateStr]?.length) cls += ' has-sched';
     if (_sched.selectedDays.has(dateStr)) cls += ' selected';
-    html += `<div class="${cls}" onclick="onSchedDayClick('${dateStr}')"><span class="sd-n">${d}</span></div>`;
+    cells.push({ d, cls, ds: dateStr });
   }
-  const trailing = (7 - ((offset + daysInMonth) % 7)) % 7;
+  const trailing = (7 - (cells.length % 7)) % 7;
   for (let i = 1; i <= trailing; i++)
-    html += `<div class="sched-day empty"><span class="sd-n">${i}</span></div>`;
+    cells.push({ d: i, cls: 'sched-day empty', ds: null });
+  let html = '';
+  cells.forEach((c, i) => {
+    if (i % 7 === 0) html += '<tr>';
+    const onclick = c.ds ? ` onclick="onSchedDayClick('${c.ds}')"` : '';
+    html += `<td class="${c.cls}"${onclick}><span class="sd-n">${c.d}</span></td>`;
+    if (i % 7 === 6) html += '</tr>';
+  });
   document.getElementById('sched-calendar').innerHTML = html;
 }
 
