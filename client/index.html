@@ -278,6 +278,10 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .qty-val{min-width:24px;text-align:center;font:600 16px/1 var(--font-mono);color:var(--fg)}
 
 /* ── CART ── */
+.cart-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+.cart-tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast)}
+.cart-tab:hover{color:var(--fg)}
+.cart-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .cart-layout{display:flex;flex-direction:column;flex:1;overflow:hidden}
 .cart-body{flex:1;overflow-y:auto;overscroll-behavior-y:none}
 .cart-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px;flex-wrap:wrap}
@@ -658,26 +662,38 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ CART ════════════════ -->
 <div id="screen-cart" class="screen">
-  <div class="ph"><h2>Корзина и заказ<span class="screen-help" data-info="Здесь хранятся товары и услуги, которые вы хотите заказать, а также абонементы к покупке.">?</span></h2></div>
+  <div class="ph"><h2>Корзина и заказ<span class="screen-help" data-info="Корзина: текущие позиции для оформления. Заказы: статус оплаченных заказов.">?</span></h2></div>
   <div class="screen-tip"></div>
   <div class="cart-layout">
-    <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
-      <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted)">🎫 Абонементы к покупке</div>
-      <div id="sub-cart-list"></div>
-      <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button></div>
+    <div class="cart-tabs">
+      <button class="cart-tab active" id="ctab-cart" onclick="switchCartTab('cart')">🛒 Корзина</button>
+      <button class="cart-tab" id="ctab-order" onclick="switchCartTab('order')">📋 Заказы</button>
     </div>
-    <div id="gift-sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
-      <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted)">🎁 Подарочные абонементы</div>
-      <div style="padding:2px 16px 6px;font-size:13px;color:var(--muted)">Срок начинается с момента покупки</div>
-      <div id="gift-sub-cart-list"></div>
-      <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutGiftSubs()">Купить подарочные абонементы</button></div>
+    <!-- ── Корзина pane ── -->
+    <div id="ctab-cart-pane" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
+        <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted)">🎫 Абонементы к покупке</div>
+        <div id="sub-cart-list"></div>
+        <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button></div>
+      </div>
+      <div id="gift-sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
+        <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted)">🎁 Подарочные абонементы</div>
+        <div style="padding:2px 16px 6px;font-size:13px;color:var(--muted)">Срок начинается с момента покупки</div>
+        <div id="gift-sub-cart-list"></div>
+        <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutGiftSubs()">Купить подарочные абонементы</button></div>
+      </div>
+      <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
+      <div class="cart-foot" id="cart-foot" style="display:none">
+        <div class="cart-row"><span>Подытог</span><span id="c-subtotal">0 ₽</span></div>
+        <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
+        <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
+        <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
+      </div>
     </div>
-    <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
-    <div class="cart-foot" id="cart-foot" style="display:none">
-      <div class="cart-row"><span>Подытог</span><span id="c-subtotal">0 ₽</span></div>
-      <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
-      <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
-      <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
+    <!-- ── Заказы pane ── -->
+    <div id="ctab-order-pane" style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none">
+      <div id="active-orders-content"><div class="empty" style="padding:32px 0">Нет активных заказов</div></div>
+      <div style="padding:4px 16px 16px"><button class="btn btn-full" onclick="loadActiveOrders()">🔄 Обновить статус</button></div>
     </div>
   </div>
 </div>
@@ -1231,6 +1247,13 @@ function setDirection(dir) {
   S.mapCats = new Set();
   renderMapCategoryChips();
   applyMapFilter();
+  updateMenuSearchPlaceholder();
+}
+
+function updateMenuSearchPlaceholder() {
+  const el = document.getElementById('m-search');
+  if (!el) return;
+  el.placeholder = { food: 'Поиск блюда…', goods: 'Поиск товара…', services: 'Поиск услуги…' }[S.direction] || 'Поиск…';
 }
 
 function openDirection(dir) {
@@ -1272,6 +1295,7 @@ function goTo(id, opts = {}) {
     S.navHistory = S.navHistory.slice(0, S.navIdx + 1);
     if (S.navHistory[S.navHistory.length - 1] !== id) { S.navHistory.push(id); S.navIdx++; }
   }
+  if (id !== 'cart') realtimeUnsubscribe();
   applyScreenAccent(id);
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
@@ -1702,6 +1726,7 @@ async function loadStore() {
   if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
   const st = S.store;
   if (st.direction && st.direction !== S.direction) setDirection(st.direction);
+  updateMenuSearchPlaceholder();
   document.getElementById('store-ph-name').textContent = st.name;
   document.getElementById('st-addr').textContent   = st.address || '';
   document.getElementById('st-hours').textContent  = st.working_hours || '';
@@ -2093,6 +2118,112 @@ function updateCartCount() {
   if (mc) mc.textContent = n;
 }
 
+// ─── REALTIME ───
+let _rtWs = null, _rtRef = 0, _rtHb = null;
+
+function realtimeSubscribeOrders(userId) {
+  realtimeUnsubscribe();
+  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
+  try {
+    const ws = new WebSocket(wsUrl);
+    _rtWs = ws;
+    ws.onopen = () => {
+      _rtRef = 0;
+      ws.send(JSON.stringify({
+        topic: 'realtime:orders-watch',
+        event: 'phx_join',
+        payload: {
+          config: { postgres_changes: [{ event: 'UPDATE', schema: 'public', table: 'orders', filter: 'user_id=eq.' + userId }] },
+          access_token: S.session?.access_token
+        },
+        ref: String(++_rtRef)
+      }));
+      _rtHb = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtRef) }));
+      }, 25000);
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === 'postgres_changes') {
+          const record = msg.payload?.data?.record || msg.payload?.record;
+          if (record) _onRealtimeOrder(record);
+        }
+      } catch {}
+    };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtHb); _rtWs = null; };
+  } catch {}
+}
+
+function realtimeUnsubscribe() {
+  clearInterval(_rtHb);
+  if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
+}
+
+function _onRealtimeOrder(record) {
+  if (document.getElementById('ctab-order-pane')?.style.display !== 'none') loadActiveOrders();
+}
+
+// ─── CART TABS ───
+function switchCartTab(tab) {
+  const isCart = tab === 'cart';
+  document.getElementById('ctab-cart')?.classList.toggle('active', isCart);
+  document.getElementById('ctab-order')?.classList.toggle('active', !isCart);
+  const cp = document.getElementById('ctab-cart-pane');
+  const op = document.getElementById('ctab-order-pane');
+  if (cp) cp.style.display = isCart ? 'flex' : 'none';
+  if (op) op.style.display = isCart ? 'none' : '';
+  if (!isCart) loadActiveOrders();
+}
+
+function fmtTime(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadActiveOrders() {
+  const el = document.getElementById('active-orders-content');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    const uid = S.session?.user?.id;
+    if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; return; }
+    const all = await req(`/rest/v1/orders?user_id=eq.${uid}&status=in.(paid,in_progress,ready)&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc`);
+    const orders = all.filter(o => (o.stores?.direction || 'food') === S.direction);
+    if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет активных заказов</div>'; return; }
+    el.innerHTML = orders.map(o => renderActiveOrderCard(o)).join('');
+  } catch(e) { el.innerHTML = '<div class="empty" style="padding:32px 0">Ошибка загрузки</div>'; }
+}
+
+function renderActiveOrderCard(o) {
+  const statusColors = { paid: 'var(--info)', in_progress: 'var(--warn)', ready: 'var(--ok)' };
+  const statusLabels = { paid: 'Оплачен', in_progress: 'В работе', ready: 'Готов!' };
+  const color = statusColors[o.status] || 'var(--fg-3)';
+  const label = statusLabels[o.status] || o.status;
+  const items = o.order_items || [];
+  const isReady = o.status === 'ready';
+  return `<div class="card" style="margin:10px 16px;padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">
+      <div>
+        <div style="font:500 15px/1.2 var(--font-sans)">${esc(o.stores?.name || 'Заведение')}</div>
+        <div style="font-size:12px;color:var(--fg-3);margin-top:2px">${fmtDate(o.order_time)}</div>
+      </div>
+      <span style="padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid ${color};color:${color}">${label}</span>
+    </div>
+    ${o.estimated_ready_at ? `<div style="margin-bottom:10px;padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--warn);font-size:13px;color:var(--warn)">⏰ Готов примерно к ${fmtTime(o.estimated_ready_at)}</div>` : ''}
+    ${isReady ? `<div style="margin-bottom:10px;padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--ok);font-size:13px;color:var(--ok);font-weight:600">✅ Ваш заказ готов! Можно забрать.</div>` : ''}
+    <div style="border-top:1px solid var(--line-soft);padding-top:8px">
+      ${items.map(it => `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;color:var(--fg-2)">
+        <span>${esc(it.menu_items?.name || '—')}</span>
+        <span style="white-space:nowrap">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</span>
+      </div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font:600 14px/1 var(--font-display);margin-top:8px;padding-top:6px;border-top:1px solid var(--line-soft)">
+        <span>Итого</span><span>${Number(o.total_amount).toFixed(0)} ₽</span>
+      </div>
+    </div>
+  </div>`;
+}
+
 // ─── CART ───
 function updateCartTotals() {
   const full = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
@@ -2109,6 +2240,9 @@ function updateCartTotals() {
 }
 
 async function renderCart() {
+  switchCartTab(S.cart.length > 0 ? 'cart' : 'order');
+  const uid = S.session?.user?.id;
+  if (uid) realtimeSubscribeOrders(uid);
   renderSubCartSection();
   renderGiftCartSection();
   // Если данные по абонементам не загружены — подгружаем (например, после обновления страницы)
