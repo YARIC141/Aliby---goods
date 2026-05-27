@@ -176,6 +176,12 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 /* ── TOOLBAR ── */
 .toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
 .toolbar input[type=search],.toolbar select{flex:1;min-width:120px}
+/* ── ORDER STATUS CHIPS ── */
+.ord-chip{position:relative;display:inline-flex;align-items:center;padding:6px 13px;border-radius:99px;border:1.5px solid var(--line);background:var(--bg-1);font:500 13px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.ord-chip:hover:not(.active){border-color:var(--fg-3);background:var(--bg-2)}
+.ord-chip.active{border-color:var(--accent);color:var(--accent);background:var(--bg-2)}
+.ord-notif-dot{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:#e53e3e;border:2px solid var(--bg);display:none;pointer-events:none}
+.ord-notif-dot.on{display:block}
 
 /* ── TABLE ── */
 .tbl-wrap{overflow-x:auto}
@@ -617,13 +623,13 @@ tr.row-click:hover td{background:var(--bg-2)}
       <select id="ord-store-filter" onchange="loadOrders()">
         <option value="">Все заведения</option>
       </select>
-      <select id="ord-status-filter" onchange="loadOrders()">
-        <option value="">Активные</option>
-        <option value="paid">Оплачен</option>
-        <option value="in_progress">В работе</option>
-        <option value="ready">Готов</option>
-        <option value="issued">Выдан</option>
-      </select>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="ord-chip active" data-ord-status="" onclick="setAdminOrderFilter('')">Активные<span class="ord-notif-dot"></span></button>
+      <button class="ord-chip" data-ord-status="paid" onclick="setAdminOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
+      <button class="ord-chip" data-ord-status="in_progress" onclick="setAdminOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
+      <button class="ord-chip" data-ord-status="ready" onclick="setAdminOrderFilter('ready')">Готов<span class="ord-notif-dot"></span></button>
+      <button class="ord-chip" data-ord-status="issued" onclick="setAdminOrderFilter('issued')">Выдан<span class="ord-notif-dot"></span></button>
     </div>
     <div id="ord-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
   </div>
@@ -2220,19 +2226,41 @@ function fmtTime(d) {
   return new Date(d).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
 
+let _adminOrdFilter = '';
+const _adminOrdNotif = new Set();
+
+function _renderAdminOrdDots() {
+  document.querySelectorAll('[data-ord-status]').forEach(btn => {
+    const s = btn.dataset.ordStatus;
+    const ACTIVE = new Set(['paid', 'in_progress', 'ready']);
+    const has = s === '' ? ([...ACTIVE].some(x => _adminOrdNotif.has(x))) : _adminOrdNotif.has(s);
+    btn.querySelector('.ord-notif-dot')?.classList.toggle('on', has);
+  });
+}
+
+function setAdminOrderFilter(status) {
+  _adminOrdFilter = status;
+  if (status === '') _adminOrdNotif.clear(); else _adminOrdNotif.delete(status);
+  document.querySelectorAll('[data-ord-status]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.ordStatus === status);
+  });
+  _renderAdminOrdDots();
+  loadOrders();
+}
+
 async function loadOrders() {
   const el = document.getElementById('ord-list');
   el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   try {
     const storeId = document.getElementById('ord-store-filter')?.value;
-    const statusVal = document.getElementById('ord-status-filter')?.value;
     let url = '/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.asc&limit=100';
     if (storeId) url += `&store_id=eq.${storeId}`;
-    if (statusVal) url += `&status=eq.${statusVal}`;
+    if (_adminOrdFilter === 'issued') url += '&status=eq.issued';
+    else if (_adminOrdFilter) url += `&status=eq.${_adminOrdFilter}`;
     else url += '&status=in.(paid,in_progress,ready)';
     const raw = await req(url);
     const STATUS_RANK = { paid: 0, in_progress: 1, ready: 2 };
-    _orders = statusVal ? raw : raw.sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
+    _orders = _adminOrdFilter ? raw : raw.sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
     if (!_orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
     el.innerHTML = _orders.map(o => renderOrderCard(o)).join('');
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
@@ -2400,10 +2428,19 @@ function adminRealtimeConnect() {
         if (msg.event === 'postgres_changes' || msg.event === '*') {
           const data = msg.payload?.data ?? msg.payload;
           const type = (data?.type || '').toUpperCase();
+          const record = data?.record;
+          const newStatus = record?.status;
+          const ACTIVE = new Set(['paid', 'in_progress', 'ready']);
           if (type === 'INSERT') {
             showAdminToast('🔔 Новый заказ!');
+            if (newStatus && ACTIVE.has(newStatus) && _adminOrdFilter !== '' && _adminOrdFilter !== newStatus) {
+              _adminOrdNotif.add(newStatus); _renderAdminOrdDots();
+            }
             loadOrders();
           } else if (type === 'UPDATE') {
+            if (newStatus && ACTIVE.has(newStatus) && _adminOrdFilter !== '' && _adminOrdFilter !== newStatus) {
+              _adminOrdNotif.add(newStatus); _renderAdminOrdDots();
+            }
             loadOrders();
           }
         }
