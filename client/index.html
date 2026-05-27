@@ -2257,7 +2257,10 @@ function updateCartTotals() {
 }
 
 async function renderCart() {
-  switchCartTab(S.cart.length > 0 ? 'cart' : 'order');
+  const hasCartItems = S.cart.length > 0
+    || S.subCart.some(c => (c.direction || 'food') === S.direction)
+    || S.giftSubCart.some(c => (c.direction || 'food') === S.direction);
+  switchCartTab(hasCartItems ? 'cart' : 'order');
   const uid = S.session?.user?.id;
   if (uid) realtimeSubscribeOrders(uid);
   renderSubCartSection();
