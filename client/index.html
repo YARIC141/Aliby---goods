@@ -2178,7 +2178,7 @@ function itemFallbackImg(item, alt) {
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
   if (S.direction === 'services') {
-    return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openBookingSlotModal(itemCache.get('${item.id}'))">Перейти к оплате</button>`;
+    return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openBookingSlotModal(itemCache.get('${item.id}'))">Записаться</button>`;
   }
   return qty > 0
     ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
@@ -2266,7 +2266,7 @@ function openItemDetail(id) {
   const btn = document.getElementById('mi-cart-btn');
   btn.disabled = !item.is_available;
   if (S.direction === 'services' && item.is_available) {
-    btn.textContent = 'Перейти к оплате';
+    btn.textContent = 'Записаться';
     btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
   } else {
     btn.textContent = item.is_available ? 'В заказ' : 'Недоступно';

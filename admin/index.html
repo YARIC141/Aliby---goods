@@ -530,7 +530,10 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
     <div id="sched-day-view" style="display:none;margin-top:14px;padding:12px;border-radius:var(--r-3);border:1px solid var(--line-soft);background:var(--bg-1)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div id="sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+          <span id="sched-live-dot" style="display:none;font:700 10px/1 var(--font-mono);color:var(--ok);letter-spacing:.04em">● live</span>
+        </div>
         <button class="btn btn-sm" onclick="closeDayView()">✕</button>
       </div>
       <div id="sched-day-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
@@ -1265,6 +1268,7 @@ function goTo(id, opts = {}) {
   if (prevId === 'qr' && id !== 'qr') stopQrCamera();
   if (prevId === 'orders' && id !== 'orders') adminRealtimeDisconnect();
   if (id === 'orders') adminRealtimeConnect();
+  if (prevId === 'schedule' && id !== 'schedule') schedRealtimeDisconnect();
   ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
@@ -2318,6 +2322,7 @@ async function advanceOrder(newStatus) {
 
 // ─── ADMIN REALTIME ───
 let _adminRtWs = null, _adminRtRef = 0, _adminRtHb = null, _adminPollTimer = null;
+let _schedRtWs = null, _schedRtRef = 0, _schedRtHb = null, _schedPollTimer = null;
 
 function showAdminToast(msg) {
   let t = document.getElementById('admin-toast');
@@ -3194,6 +3199,7 @@ const _sched = {
   dayData: {},
   bookingCounts: {},
   templates: [],
+  openDate: null,
 };
 
 function _fmtD(d) {
@@ -3220,6 +3226,7 @@ function openSchedule(store) {
   goTo('schedule');
   loadSchedMonth();
   loadSchedTemplates();
+  schedRealtimeConnect();
 }
 
 function loadScheduleScreen() {
@@ -3309,6 +3316,7 @@ function onSchedDayClick(dateStr) {
 }
 
 async function openDayView(dateStr) {
+  _sched.openDate = dateStr;
   const slots = _sched.dayData[dateStr] || [];
   const [y, m, d] = dateStr.split('-').map(Number);
   const dow = new Date(y, m - 1, d).getDay();
@@ -3316,69 +3324,167 @@ async function openDayView(dateStr) {
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('sched-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
   const slotsEl = document.getElementById('sched-day-slots');
-  if (!slots.length) {
-    slotsEl.innerHTML = '<span class="txt-muted" style="font-size:13px">Расписание не задано</span>';
-  } else {
-    slotsEl.innerHTML = slots.map(s =>
-      `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--line-soft);font:500 13px/1 var(--font-sans)">${esc(s.start)} — ${esc(s.end)}</span>`
-    ).join('');
-  }
+  slotsEl.innerHTML = slots.length
+    ? slots.map(s => `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--line-soft);font:500 13px/1 var(--font-sans)">${esc(s.start)} — ${esc(s.end)}</span>`).join('')
+    : '<span class="txt-muted" style="font-size:13px">Расписание не задано</span>';
   document.getElementById('sched-day-view').style.display = '';
   document.getElementById('sched-close-day-btn').dataset.date = dateStr;
+  await renderDayBookings(dateStr);
+}
 
+async function renderDayBookings(dateStr) {
   const bkEl = document.getElementById('sched-day-bookings');
-  bkEl.innerHTML = '';
+  if (!bkEl) return;
   try {
-    const bks = await req(`/rest/v1/bookings?store_id=eq.${_sched.storeId}&slot_date=eq.${dateStr}&status=neq.cancelled&select=*,menu_items(name,price),profiles(full_name,email,phone)&order=slot_start.asc`);
-    if (!bks.length) return;
-    bkEl.innerHTML = `<div style="font:600 13px/1 var(--font-sans);margin:14px 0 8px;color:var(--fg-2)">Записи клиентов</div>`
-      + bks.map(b => {
-          const s = (b.slot_start||'').slice(0,5), e = (b.slot_end||'').slice(0,5);
-          const paid = b.payment_status === 'paid';
-          const p = b.profiles;
-          return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:6px;background:var(--bg)">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-              <div style="flex:1;min-width:0">
-                <div style="font:600 13px/1 var(--font-sans);margin-bottom:4px">${esc(b.menu_items?.name||'')}</div>
-                <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">${s} — ${e} · ${paid?'✅ Оплачено':'⏳ Не оплачено'}</div>
-                ${p ? `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:2px">${esc(p.full_name||'')}${p.phone?' · '+esc(p.phone):''}${p.email?' · '+esc(p.email):''}</div>` : ''}
-              </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
-                <div style="font:600 13px/1 var(--font-sans);color:var(--accent)">${b.total_price||b.menu_items?.price||0} ₽</div>
-                ${!paid ? `<button class="btn btn-p btn-sm" onclick="markBookingPaid('${b.id}','${dateStr}')">Оплачено</button>` : ''}
-              </div>
+    const bks = await req(`/rest/v1/bookings?store_id=eq.${_sched.storeId}&slot_date=eq.${dateStr}&select=*,menu_items(name,price)&order=slot_start.asc`);
+
+    // Fetch profiles separately (no FK from bookings.user_id to public.profiles)
+    const uids = [...new Set(bks.map(b => b.user_id).filter(Boolean))];
+    const profilesMap = {};
+    if (uids.length) {
+      try {
+        const profs = await req(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,full_name,email,phone`);
+        profs.forEach(p => { profilesMap[p.id] = p; });
+      } catch {}
+    }
+
+    // Update badge count (active only)
+    _sched.bookingCounts[dateStr] = bks.filter(b => b.status !== 'cancelled').length;
+    renderSchedCalendar();
+
+    if (!bks.length) { bkEl.innerHTML = ''; return; }
+
+    const ST = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+    const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, pending:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
+
+    bkEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
+      <span style="font:600 13px/1 var(--font-sans);color:var(--fg-2)">Записи · ${bks.length}</span>
+    </div>`
+    + bks.map(b => {
+      const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
+      const p = profilesMap[b.user_id] || null;
+      const st  = ST[b.status]  || { lbl: b.status,          cls: 'b-pending' };
+      const pay = PAY[b.payment_status] || { lbl: b.payment_status, cls: 'b-pending' };
+      const cancelled = b.status === 'cancelled';
+      const paid      = b.payment_status === 'paid';
+      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--bg);opacity:${cancelled ? '.5' : '1'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
+              <span style="font:700 13px/1 var(--font-sans)">${ts} — ${te}</span>
+              <span class="badge ${st.cls}">${st.lbl}</span>
+              <span class="badge ${pay.cls}">${pay.lbl}</span>
             </div>
-          </div>`;
-        }).join('');
-  } catch(e) {}
+            <div style="font:500 13px/1.3 var(--font-sans);margin-bottom:3px">${esc(b.menu_items?.name || '—')}</div>
+            ${p ? `<div style="font-size:12px;color:var(--fg-3)">${[p.full_name, p.phone, p.email].filter(Boolean).map(esc).join(' · ')}</div>` : ''}
+            ${b.notes ? `<div style="font-size:12px;color:var(--fg-4);margin-top:3px;font-style:italic">${esc(b.notes)}</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+            <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price ?? b.menu_items?.price ?? ''} ₽</div>
+            ${!paid && !cancelled ? `<button class="btn btn-p btn-sm" onclick="markBookingPaid('${b.id}','${dateStr}')">Оплачено</button>` : ''}
+            ${!cancelled ? `<button class="btn btn-sm btn-d" style="font-size:11px" onclick="cancelBooking('${b.id}','${dateStr}')">Отменить</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch { bkEl.innerHTML = '<div style="color:var(--fg-4);font-size:13px;padding:8px 0">Ошибка загрузки</div>'; }
 }
 
 async function markBookingPaid(bookingId, dateStr) {
   try {
-    await req(`/rest/v1/bookings?id=eq.${bookingId}`, {
-      method: 'PATCH', body: JSON.stringify({ payment_status: 'paid' }),
-    });
+    await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ payment_status:'paid' }) });
     showAdminToast('Оплата подтверждена');
-    openDayView(dateStr);
-  } catch(e) { showAdminToast('Ошибка'); }
+    renderDayBookings(dateStr);
+  } catch { showAdminToast('Ошибка'); }
+}
+
+async function cancelBooking(bookingId, dateStr) {
+  if (!confirm('Отменить запись клиента?')) return;
+  try {
+    await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ status:'cancelled' }) });
+    showAdminToast('Запись отменена');
+    renderDayBookings(dateStr);
+  } catch { showAdminToast('Ошибка'); }
 }
 
 async function deleteScheduleDay(dateStr) {
   if (!_sched.storeId || !dateStr) return;
   if (!confirm(`Удалить расписание на ${dateStr}? День будет закрыт.`)) return;
   try {
-    await req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=eq.${dateStr}`, {
-      method: 'DELETE',
-    });
+    await req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=eq.${dateStr}`, { method:'DELETE' });
     delete _sched.dayData[dateStr];
     closeDayView();
     renderSchedCalendar();
     showAdminToast('День закрыт');
-  } catch(e) { showAdminToast('Ошибка удаления'); }
+  } catch { showAdminToast('Ошибка удаления'); }
 }
 
 function closeDayView() {
+  _sched.openDate = null;
   document.getElementById('sched-day-view').style.display = 'none';
+}
+
+// ─── SCHEDULE REALTIME ───
+function setSchedLiveDot(on) {
+  const el = document.getElementById('sched-live-dot');
+  if (el) el.style.display = on ? '' : 'none';
+}
+
+function schedRealtimeConnect() {
+  schedRealtimeDisconnect();
+  if (!_sched.storeId) return;
+
+  _schedPollTimer = setInterval(() => {
+    if (_sched.openDate) renderDayBookings(_sched.openDate);
+  }, 20000);
+
+  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
+  try {
+    const ws = new WebSocket(wsUrl);
+    _schedRtWs = ws;
+    ws.onopen = () => {
+      _schedRtRef = 0;
+      ws.send(JSON.stringify({
+        topic: 'realtime:admin-sched-watch',
+        event: 'phx_join',
+        payload: {
+          config: { postgres_changes: [{ event: '*', schema: 'public', table: 'bookings', filter: `store_id=eq.${_sched.storeId}` }] },
+          access_token: S.session?.access_token
+        },
+        ref: String(++_schedRtRef)
+      }));
+      _schedRtHb = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN)
+          ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_schedRtRef) }));
+      }, 25000);
+      setSchedLiveDot(true);
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === 'postgres_changes' || msg.event === '*') {
+          const data   = msg.payload?.data ?? msg.payload;
+          const type   = (data?.type || '').toUpperCase();
+          const record = data?.record ?? data?.new ?? {};
+          if (type === 'INSERT' || type === 'UPDATE') {
+            const bookDate = record.slot_date;
+            if (bookDate && _sched.openDate === bookDate) {
+              if (type === 'INSERT') showAdminToast('🔔 Новая запись!');
+              renderDayBookings(bookDate);
+            }
+          }
+        }
+      } catch {}
+    };
+    ws.onclose = ws.onerror = () => { clearInterval(_schedRtHb); _schedRtWs = null; setSchedLiveDot(false); };
+  } catch {}
+}
+
+function schedRealtimeDisconnect() {
+  clearInterval(_schedPollTimer);
+  clearInterval(_schedRtHb);
+  if (_schedRtWs) { try { _schedRtWs.close(); } catch {} _schedRtWs = null; }
+  setSchedLiveDot(false);
 }
 
 function toggleSchedEditMode() {
