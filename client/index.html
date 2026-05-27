@@ -2130,7 +2130,10 @@ function saveCart() {
 
 function updateCartCount() {
   const n = S.cart.reduce((s, c) => s + c.qty, 0);
-  document.getElementById('sn-cart-cnt').textContent = n > 0 ? `(${n})` : '';
+  const subN = S.subCart.filter(c => (c.direction || 'food') === S.direction).length
+             + S.giftSubCart.filter(c => (c.direction || 'food') === S.direction).length;
+  const total = n + subN;
+  document.getElementById('sn-cart-cnt').textContent = total > 0 ? `(${total})` : '';
   const mc = document.getElementById('menu-cart-cnt');
   if (mc) mc.textContent = n;
 }
@@ -2577,6 +2580,7 @@ function addSubToCart(id) {
     S.subCart.push({ sub, direction: S.direction });
     saveSubCart();
   }
+  updateCartCount();
   renderSubCartSection();
   refreshSubCardViews();
 }
@@ -2584,6 +2588,7 @@ function addSubToCart(id) {
 function removeFromSubCart(id) {
   S.subCart = S.subCart.filter(c => c.sub.id !== id);
   saveSubCart();
+  updateCartCount();
   renderSubCartSection();
   refreshSubCardViews();
 }
@@ -2603,6 +2608,7 @@ function addGiftToCart(id) {
     S.giftSubCart.push({ sub, direction: S.direction });
     saveSubCart();
   }
+  updateCartCount();
   renderGiftCartSection();
   refreshSubCardViews();
 }
@@ -2610,6 +2616,7 @@ function addGiftToCart(id) {
 function removeFromGiftCart(id) {
   S.giftSubCart = S.giftSubCart.filter(c => c.sub.id !== id);
   saveSubCart();
+  updateCartCount();
   renderGiftCartSection();
   refreshSubCardViews();
 }
@@ -2876,7 +2883,7 @@ async function restoreNav() {
   } catch(e) {}
   try {
     const ssc = localStorage.getItem('alliby_subcart');
-    if (ssc) { const d = JSON.parse(ssc); S.subCart = d.subs || []; S.giftSubCart = d.gifts || []; [...S.subCart, ...S.giftSubCart].forEach(c => { subPlans[c.sub.id] = c.sub; }); }
+    if (ssc) { const d = JSON.parse(ssc); S.subCart = d.subs || []; S.giftSubCart = d.gifts || []; [...S.subCart, ...S.giftSubCart].forEach(c => { subPlans[c.sub.id] = c.sub; }); updateCartCount(); }
   } catch(e) {}
   try {
     const ss = localStorage.getItem('alliby_store');
