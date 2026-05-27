@@ -554,7 +554,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 
 <!-- ════════════════ ORDERS ════════════════ -->
 <div id="screen-orders" class="screen">
-  <div class="ph"><h2>Заказы<span class="screen-help" data-info="Оплаченные заказы покупателей. Переводите статус: Оплачен → В работе → Готов.">?</span></h2></div>
+  <div class="ph"><h2>Заказы<span id="ord-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Оплаченные заказы покупателей. Переводите статус: Оплачен → В работе → Готов.">?</span></h2></div>
   <div class="pb">
     <div class="toolbar">
       <select id="ord-store-filter" onchange="loadOrders()">
@@ -2132,7 +2132,7 @@ async function advanceOrder(newStatus) {
 }
 
 // ─── ADMIN REALTIME ───
-let _adminRtWs = null, _adminRtRef = 0, _adminRtHb = null;
+let _adminRtWs = null, _adminRtRef = 0, _adminRtHb = null, _adminPollTimer = null;
 
 function showAdminToast(msg) {
   let t = document.getElementById('admin-toast');
@@ -2148,8 +2148,17 @@ function showAdminToast(msg) {
   t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
 }
 
+function _setOrdDot(ok) {
+  const dot = document.getElementById('ord-rt-dot');
+  if (dot) dot.style.background = ok ? '#22c55e' : '#ef4444';
+}
+
 function adminRealtimeConnect() {
   adminRealtimeDisconnect();
+
+  // Polling fallback — fires every 12 s regardless of WebSocket state
+  _adminPollTimer = setInterval(loadOrders, 12000);
+
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
     const ws = new WebSocket(wsUrl);
@@ -2162,8 +2171,7 @@ function adminRealtimeConnect() {
         payload: {
           config: {
             postgres_changes: [
-              { event: 'INSERT', schema: 'public', table: 'orders' },
-              { event: 'UPDATE', schema: 'public', table: 'orders' }
+              { event: '*', schema: 'public', table: 'orders' }
             ]
           },
           access_token: S.session?.access_token
@@ -2177,8 +2185,17 @@ function adminRealtimeConnect() {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.event === 'postgres_changes') {
-          const type = msg.payload?.data?.type || msg.payload?.type;
+        // Subscription confirmed
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'ok' && msg.ref === '1') {
+          _setOrdDot(true);
+        }
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          _setOrdDot(false);
+        }
+        // Postgres change event — handle both event name variants
+        if (msg.event === 'postgres_changes' || msg.event === '*') {
+          const data = msg.payload?.data ?? msg.payload;
+          const type = (data?.type || '').toUpperCase();
           if (type === 'INSERT') {
             showAdminToast('🔔 Новый заказ!');
             loadOrders();
@@ -2188,13 +2205,15 @@ function adminRealtimeConnect() {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_adminRtHb); _adminRtWs = null; };
+    ws.onclose = ws.onerror = () => { clearInterval(_adminRtHb); _adminRtWs = null; _setOrdDot(false); };
   } catch {}
 }
 
 function adminRealtimeDisconnect() {
+  clearInterval(_adminPollTimer);
   clearInterval(_adminRtHb);
   if (_adminRtWs) { try { _adminRtWs.close(); } catch {} _adminRtWs = null; }
+  _setOrdDot(false);
 }
 
 // ─── SUBSCRIPTIONS ───
