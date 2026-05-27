@@ -276,6 +276,22 @@ tr.row-click:hover td{background:var(--bg-2)}
 .plan-card{display:flex;justify-content:space-between;align-items:center;padding:16px;border:1px solid var(--line);border-radius:var(--r-3);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .plan-card:hover{background:var(--bg-2);border-color:var(--brand-ice-deep)}
 .plan-card.highlight{background:var(--accent);border-color:var(--brand-ice-deep);box-shadow:var(--glow-accent)}
+/* ── SCHEDULE ── */
+.sched-cal-wrap{border-radius:var(--r-3);overflow:hidden;border:1px solid var(--line-soft)}
+.sched-cal-hd{display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg-2);border-bottom:1px solid var(--line-soft)}
+.sched-cal-hd span{text-align:center;padding:8px 2px;font:600 11px/1 var(--font-sans);color:var(--fg-3)}
+.sched-cal{display:grid;grid-template-columns:repeat(7,1fr)}
+.sched-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;font:500 13px/1 var(--font-sans);border:0.5px solid var(--line-soft);position:relative;transition:background var(--t-fast)}
+.sched-day:hover:not(.empty){background:var(--bg-2)}
+.sched-day.other-month{color:var(--fg-4)}
+.sched-day.today{font-weight:700;color:var(--accent)}
+.sched-day.has-sched::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
+.sched-day.selected{background:color-mix(in oklch,var(--accent) 22%,var(--bg));border-color:var(--accent)}
+.sched-day.selected.today{color:var(--accent)}
+.sched-day.empty{pointer-events:none;color:transparent}
+.sched-tpl-card{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:var(--r-2);border:1.5px solid var(--line);background:var(--bg-1);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
+.sched-tpl-card:hover{border-color:var(--fg-3)}
+.sched-tpl-card.active{border-color:var(--accent);background:var(--bg-2)}
 </style>
 <script>if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
@@ -483,6 +499,43 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div id="map-admin-gl" class="admin-map-gl"></div>
     </div>
 
+  </div>
+</div>
+
+<!-- ════════════════ SCHEDULE ════════════════ -->
+<div id="screen-schedule" class="screen">
+  <div class="ph">
+    <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
+    <h2 id="sched-store-name">Расписание</h2>
+    <button class="btn btn-sm" id="sched-edit-btn" onclick="toggleSchedEditMode()">Редактировать</button>
+  </div>
+  <div class="pb">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:14px">
+      <button class="btn btn-sm" onclick="schedPrevMonth()">←</button>
+      <span id="sched-month-label" style="font:600 15px/1 var(--font-sans);letter-spacing:0.01em"></span>
+      <button class="btn btn-sm" onclick="schedNextMonth()">→</button>
+    </div>
+    <div id="sched-tpl-panel" style="display:none;padding:12px;border-radius:var(--r-3);border:1px solid var(--line-soft);background:var(--bg-1);margin-bottom:14px">
+      <div style="font:600 13px/1 var(--font-sans);margin-bottom:8px;color:var(--fg-2)">Выберите шаблон</div>
+      <div id="sched-tpl-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-sm" onclick="openTemplateModal()">+ Новый шаблон</button>
+        <button class="btn btn-sm btn-p" id="sched-apply-btn" disabled onclick="applySchedTemplate()">Применить к выбранным</button>
+      </div>
+    </div>
+    <div class="sched-cal-wrap">
+      <div class="sched-cal-hd">
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+      </div>
+      <div id="sched-calendar" class="sched-cal"></div>
+    </div>
+    <div id="sched-day-view" style="display:none;margin-top:14px;padding:12px;border-radius:var(--r-3);border:1px solid var(--line-soft);background:var(--bg-1)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div id="sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+        <button class="btn btn-sm" onclick="closeDayView()">✕</button>
+      </div>
+      <div id="sched-day-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
   </div>
 </div>
 
@@ -697,6 +750,31 @@ tr.row-click:hover td{background:var(--bg-2)}
       <input type="datetime-local" id="m-order-ready-time" style="width:100%;padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)">
     </div>
     <div class="modal-ft" id="m-order-ft"></div>
+  </div>
+</div>
+
+<!-- Schedule template modal -->
+<div class="overlay" id="m-schedule-tpl">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h3 id="m-stpl-title">Шаблон расписания</h3>
+      <button class="modal-x" onclick="closeModal('m-schedule-tpl')">✕</button>
+    </div>
+    <div class="fg">
+      <label>Название шаблона</label>
+      <input type="text" id="stpl-name" placeholder="Например: Рабочий день">
+    </div>
+    <div style="margin-top:14px">
+      <div style="font:600 13px/1 var(--font-sans);margin-bottom:8px;color:var(--fg-2)">Временные слоты</div>
+      <div id="stpl-slots-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button class="btn btn-sm" onclick="addTemplateSlot()">+ Добавить слот</button>
+    </div>
+    <input type="hidden" id="stpl-id">
+    <div id="stpl-err" style="display:none;color:var(--err);font-size:13px;margin-top:10px"></div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-schedule-tpl')">Отмена</button>
+      <button class="btn btn-p" onclick="saveTemplate()">Сохранить</button>
+    </div>
   </div>
 </div>
 
@@ -1146,7 +1224,7 @@ function goTo(id, opts = {}) {
   if (prevId === 'qr' && id !== 'qr') stopQrCamera();
   if (prevId === 'orders' && id !== 'orders') adminRealtimeDisconnect();
   if (id === 'orders') adminRealtimeConnect();
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile})[id]?.();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1563,7 +1641,7 @@ async function loadStores() {
             <button class="btn btn-sm" style="display:flex;align-items:center;justify-content:center;padding:0 10px;height:auto" onclick="event.stopPropagation();showStoreQRDirect(${sd})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg></button>
             <div style="display:flex;flex-direction:column;gap:4px">
               <button class="btn btn-sm" onclick="event.stopPropagation();openStoreModal(${sd})">Ред.</button>
-              ${s._loc?.lng != null ? `<button class="btn btn-sm" onclick="event.stopPropagation();showOnMap(${sd})">📍 Карта</button>` : ''}
+              <button class="btn btn-sm" onclick="event.stopPropagation();openSchedule(${sd})">📅 Расписание</button>
               <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
             </div>
           </div>
@@ -3010,6 +3088,278 @@ async function confirmRedeem() {
     }
   });
 })();
+
+// ─── SCHEDULE ───
+const _sched = {
+  storeId: null, storeName: '',
+  year: 0, month: 0,
+  editMode: false,
+  selectedDays: new Set(),
+  selectedTplId: null,
+  dayData: {},
+  templates: [],
+};
+
+function _fmtD(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function openSchedule(store) {
+  _sched.storeId   = store.id;
+  _sched.storeName = store.name;
+  const now = new Date();
+  _sched.year   = now.getFullYear();
+  _sched.month  = now.getMonth();
+  _sched.editMode = false;
+  _sched.selectedDays.clear();
+  _sched.selectedTplId = null;
+  _sched.dayData   = {};
+  _sched.templates = [];
+  document.getElementById('sched-store-name').textContent = store.name;
+  const editBtn = document.getElementById('sched-edit-btn');
+  editBtn.textContent = 'Редактировать';
+  editBtn.classList.remove('btn-p');
+  document.getElementById('sched-tpl-panel').style.display = 'none';
+  document.getElementById('sched-day-view').style.display = 'none';
+  goTo('schedule');
+  loadSchedMonth();
+  loadSchedTemplates();
+}
+
+function loadScheduleScreen() {
+  if (!_sched.storeId) return;
+  loadSchedMonth();
+  loadSchedTemplates();
+}
+
+async function loadSchedMonth() {
+  const firstDay = new Date(_sched.year, _sched.month, 1);
+  const lastDay  = new Date(_sched.year, _sched.month + 1, 0);
+  const from = _fmtD(firstDay), to = _fmtD(lastDay);
+  _sched.dayData = {};
+  try {
+    const rows = await req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`);
+    rows.forEach(r => { _sched.dayData[r.date] = r.slots; });
+  } catch(e) {}
+  renderSchedCalendar();
+}
+
+function schedPrevMonth() {
+  if (_sched.month === 0) { _sched.month = 11; _sched.year--; }
+  else _sched.month--;
+  document.getElementById('sched-day-view').style.display = 'none';
+  loadSchedMonth();
+}
+
+function schedNextMonth() {
+  if (_sched.month === 11) { _sched.month = 0; _sched.year++; }
+  else _sched.month++;
+  document.getElementById('sched-day-view').style.display = 'none';
+  loadSchedMonth();
+}
+
+function renderSchedCalendar() {
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  document.getElementById('sched-month-label').textContent = `${MONTHS[_sched.month]} ${_sched.year}`;
+  const today = _fmtD(new Date());
+  const firstDow = new Date(_sched.year, _sched.month, 1).getDay();
+  const offset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(_sched.year, _sched.month + 1, 0).getDate();
+  const mm = String(_sched.month + 1).padStart(2, '0');
+  let html = '';
+  for (let i = 0; i < offset; i++) html += '<div class="sched-day empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${_sched.year}-${mm}-${dd}`;
+    let cls = 'sched-day';
+    if (dateStr === today) cls += ' today';
+    if (_sched.dayData[dateStr]?.length) cls += ' has-sched';
+    if (_sched.selectedDays.has(dateStr)) cls += ' selected';
+    html += `<div class="${cls}" onclick="onSchedDayClick('${dateStr}')">${d}</div>`;
+  }
+  const trailing = (7 - ((offset + daysInMonth) % 7)) % 7;
+  for (let i = 0; i < trailing; i++) html += '<div class="sched-day empty"></div>';
+  document.getElementById('sched-calendar').innerHTML = html;
+}
+
+function onSchedDayClick(dateStr) {
+  if (_sched.editMode) {
+    if (_sched.selectedDays.has(dateStr)) _sched.selectedDays.delete(dateStr);
+    else _sched.selectedDays.add(dateStr);
+    const applyBtn = document.getElementById('sched-apply-btn');
+    if (applyBtn) applyBtn.disabled = _sched.selectedDays.size === 0 || !_sched.selectedTplId;
+    renderSchedCalendar();
+    return;
+  }
+  openDayView(dateStr);
+}
+
+function openDayView(dateStr) {
+  const slots = _sched.dayData[dateStr] || [];
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  const DAY = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('sched-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
+  const slotsEl = document.getElementById('sched-day-slots');
+  if (!slots.length) {
+    slotsEl.innerHTML = '<span class="txt-muted" style="font-size:13px">Расписание не задано</span>';
+  } else {
+    slotsEl.innerHTML = slots.map(s =>
+      `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--line-soft);font:500 13px/1 var(--font-sans)">${esc(s.start)} — ${esc(s.end)}</span>`
+    ).join('');
+  }
+  document.getElementById('sched-day-view').style.display = '';
+}
+
+function closeDayView() {
+  document.getElementById('sched-day-view').style.display = 'none';
+}
+
+function toggleSchedEditMode() {
+  _sched.editMode = !_sched.editMode;
+  const btn = document.getElementById('sched-edit-btn');
+  const panel = document.getElementById('sched-tpl-panel');
+  if (_sched.editMode) {
+    btn.textContent = 'Готово';
+    btn.classList.add('btn-p');
+    panel.style.display = '';
+    document.getElementById('sched-day-view').style.display = 'none';
+  } else {
+    btn.textContent = 'Редактировать';
+    btn.classList.remove('btn-p');
+    panel.style.display = 'none';
+    _sched.selectedDays.clear();
+    _sched.selectedTplId = null;
+    renderSchedCalendar();
+  }
+}
+
+async function loadSchedTemplates() {
+  if (!_sched.storeId) return;
+  try {
+    _sched.templates = await req(`/rest/v1/schedule_templates?store_id=eq.${_sched.storeId}&order=created_at.asc&select=id,name,slots`);
+  } catch(e) { _sched.templates = []; }
+  renderSchedTemplates();
+}
+
+function renderSchedTemplates() {
+  const list = document.getElementById('sched-tpl-list');
+  if (!list) return;
+  if (!_sched.templates.length) {
+    list.innerHTML = '<div class="txt-muted" style="font-size:13px">Нет шаблонов — создайте первый</div>';
+    return;
+  }
+  list.innerHTML = _sched.templates.map(t => {
+    const active = t.id === _sched.selectedTplId;
+    const slotStr = (t.slots || []).map(s => `${s.start}–${s.end}`).join(', ');
+    const td = JSON.stringify(t).replace(/'/g, '&#39;');
+    return `<div class="sched-tpl-card${active ? ' active' : ''}" onclick="selectSchedTemplate('${t.id}')">
+      <div style="min-width:0;flex:1">
+        <div style="font:600 13px/1 var(--font-sans);margin-bottom:3px">${esc(t.name)}</div>
+        ${slotStr ? `<div class="txt-muted" style="font-size:12px">${esc(slotStr)}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-sm" onclick="event.stopPropagation();openTemplateModal(${td})">Ред.</button>
+        <button class="btn btn-sm btn-d" onclick="event.stopPropagation();deleteTpl('${t.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectSchedTemplate(id) {
+  _sched.selectedTplId = _sched.selectedTplId === id ? null : id;
+  const applyBtn = document.getElementById('sched-apply-btn');
+  if (applyBtn) applyBtn.disabled = _sched.selectedDays.size === 0 || !_sched.selectedTplId;
+  renderSchedTemplates();
+}
+
+function openTemplateModal(tpl) {
+  document.getElementById('m-stpl-title').textContent = tpl ? 'Редактировать шаблон' : 'Новый шаблон';
+  document.getElementById('stpl-id').value   = tpl?.id   || '';
+  document.getElementById('stpl-name').value = tpl?.name || '';
+  document.getElementById('stpl-err').style.display = 'none';
+  const list = document.getElementById('stpl-slots-list');
+  list.innerHTML = '';
+  const slots = tpl?.slots || [];
+  if (slots.length) slots.forEach(s => addTemplateSlot(s.start, s.end));
+  else addTemplateSlot();
+  openModal('m-schedule-tpl');
+}
+
+function addTemplateSlot(start = '', end = '') {
+  const list = document.getElementById('stpl-slots-list');
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;gap:8px';
+  row.innerHTML = `
+    <input type="time" value="${start}" style="flex:1;padding:7px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)">
+    <span style="color:var(--fg-3);font-size:13px;flex-shrink:0">—</span>
+    <input type="time" value="${end}" style="flex:1;padding:7px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)">
+    <button class="btn btn-sm btn-d" onclick="this.closest('div').remove()" style="flex-shrink:0">✕</button>`;
+  list.appendChild(row);
+}
+
+async function saveTemplate() {
+  const id    = document.getElementById('stpl-id').value.trim();
+  const name  = document.getElementById('stpl-name').value.trim();
+  const errEl = document.getElementById('stpl-err');
+  if (!name) { errEl.textContent = 'Введите название шаблона'; errEl.style.display = ''; return; }
+  const rows = document.querySelectorAll('#stpl-slots-list > div');
+  const slots = [];
+  for (const row of rows) {
+    const [inp1, inp2] = row.querySelectorAll('input[type=time]');
+    if (inp1?.value && inp2?.value) slots.push({ start: inp1.value, end: inp2.value });
+  }
+  if (!slots.length) { errEl.textContent = 'Добавьте хотя бы один временной слот'; errEl.style.display = ''; return; }
+  errEl.style.display = 'none';
+  try {
+    if (id) {
+      await req(`/rest/v1/schedule_templates?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ name, slots }) });
+    } else {
+      await req('/rest/v1/schedule_templates', { method: 'POST', body: JSON.stringify({ store_id: _sched.storeId, name, slots }) });
+    }
+    closeModal('m-schedule-tpl');
+    await loadSchedTemplates();
+  } catch(e) { errEl.textContent = 'Ошибка сохранения'; errEl.style.display = ''; }
+}
+
+async function deleteTpl(id) {
+  if (!confirm('Удалить шаблон?')) return;
+  try {
+    await req(`/rest/v1/schedule_templates?id=eq.${id}`, { method: 'DELETE' });
+    if (_sched.selectedTplId === id) {
+      _sched.selectedTplId = null;
+      const applyBtn = document.getElementById('sched-apply-btn');
+      if (applyBtn) applyBtn.disabled = true;
+    }
+    await loadSchedTemplates();
+  } catch(e) { showAdminToast('Ошибка удаления'); }
+}
+
+async function applySchedTemplate() {
+  const tpl = _sched.templates.find(t => t.id === _sched.selectedTplId);
+  if (!tpl || !_sched.selectedDays.size) return;
+  const slots = tpl.slots || [];
+  const days  = Array.from(_sched.selectedDays);
+  const applyBtn = document.getElementById('sched-apply-btn');
+  if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = 'Применяю…'; }
+  try {
+    await req('/rest/v1/store_schedules', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(days.map(date => ({ store_id: _sched.storeId, date, slots }))),
+    });
+    _sched.selectedDays.clear();
+    _sched.selectedTplId = null;
+    if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = 'Применить к выбранным'; }
+    showAdminToast('Расписание обновлено');
+    renderSchedTemplates();
+    await loadSchedMonth();
+  } catch(e) {
+    if (applyBtn) { applyBtn.disabled = false; applyBtn.textContent = 'Применить к выбранным'; }
+    showAdminToast('Ошибка применения шаблона');
+  }
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
