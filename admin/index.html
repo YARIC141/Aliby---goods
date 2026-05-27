@@ -277,18 +277,18 @@ tr.row-click:hover td{background:var(--bg-2)}
 .plan-card:hover{background:var(--bg-2);border-color:var(--brand-ice-deep)}
 .plan-card.highlight{background:var(--accent);border-color:var(--brand-ice-deep);box-shadow:var(--glow-accent)}
 /* ── SCHEDULE ── */
-.sched-cal-wrap{border-radius:var(--r-3);overflow:hidden;border:1px solid var(--line-soft)}
-.sched-cal-hd{display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg-2);border-bottom:1px solid var(--line-soft)}
-.sched-cal-hd span{text-align:center;padding:8px 2px;font:600 11px/1 var(--font-sans);color:var(--fg-3)}
+.sched-cal-wrap{border-radius:var(--r-3);overflow:hidden;border:1px solid var(--line)}
+.sched-cal-hd{display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg-2);border-bottom:1px solid var(--line)}
+.sched-cal-hd span{text-align:center;padding:9px 0 8px;font:600 11px/1 var(--font-sans);color:var(--fg-3)}
 .sched-cal{display:grid;grid-template-columns:repeat(7,1fr)}
-.sched-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:pointer;font:500 13px/1 var(--font-sans);border:0.5px solid var(--line-soft);position:relative;transition:background var(--t-fast)}
-.sched-day:hover:not(.empty){background:var(--bg-2)}
-.sched-day.other-month{color:var(--fg-4)}
-.sched-day.today{font-weight:700;color:var(--accent)}
+.sched-day{height:42px;display:flex;align-items:center;justify-content:center;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--line-soft);position:relative;transition:background var(--t-fast);user-select:none}
+.sched-day:not(.empty){cursor:pointer}
+.sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
 .sched-day.has-sched::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
-.sched-day.selected{background:color-mix(in oklch,var(--accent) 22%,var(--bg));border-color:var(--accent)}
-.sched-day.selected.today{color:var(--accent)}
-.sched-day.empty{pointer-events:none;color:transparent}
+.sched-day.selected{background:color-mix(in oklch,var(--accent) 18%,var(--bg))}
+.sched-day.selected .sd-n{color:var(--accent);font-weight:700}
+.sched-day.empty{pointer-events:none}
+.sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
 .sched-tpl-card{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:var(--r-2);border:1.5px solid var(--line);background:var(--bg-1);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .sched-tpl-card:hover{border-color:var(--fg-3)}
 .sched-tpl-card.active{border-color:var(--accent);background:var(--bg-2)}
@@ -3175,7 +3175,7 @@ function renderSchedCalendar() {
     if (dateStr === today) cls += ' today';
     if (_sched.dayData[dateStr]?.length) cls += ' has-sched';
     if (_sched.selectedDays.has(dateStr)) cls += ' selected';
-    html += `<div class="${cls}" onclick="onSchedDayClick('${dateStr}')">${d}</div>`;
+    html += `<div class="${cls}" onclick="onSchedDayClick('${dateStr}')"><span class="sd-n">${d}</span></div>`;
   }
   const trailing = (7 - ((offset + daysInMonth) % 7)) % 7;
   for (let i = 0; i < trailing; i++) html += '<div class="sched-day empty"></div>';
@@ -3184,10 +3184,11 @@ function renderSchedCalendar() {
 
 function onSchedDayClick(dateStr) {
   if (_sched.editMode) {
+    if (!_sched.selectedTplId) { showAdminToast('Сначала выберите шаблон'); return; }
     if (_sched.selectedDays.has(dateStr)) _sched.selectedDays.delete(dateStr);
     else _sched.selectedDays.add(dateStr);
     const applyBtn = document.getElementById('sched-apply-btn');
-    if (applyBtn) applyBtn.disabled = _sched.selectedDays.size === 0 || !_sched.selectedTplId;
+    if (applyBtn) applyBtn.disabled = _sched.selectedDays.size === 0;
     renderSchedCalendar();
     return;
   }
@@ -3269,6 +3270,7 @@ function renderSchedTemplates() {
 
 function selectSchedTemplate(id) {
   _sched.selectedTplId = _sched.selectedTplId === id ? null : id;
+  if (!_sched.selectedTplId) { _sched.selectedDays.clear(); renderSchedCalendar(); }
   const applyBtn = document.getElementById('sched-apply-btn');
   if (applyBtn) applyBtn.disabled = _sched.selectedDays.size === 0 || !_sched.selectedTplId;
   renderSchedTemplates();
@@ -3339,12 +3341,15 @@ async function deleteTpl(id) {
 async function applySchedTemplate() {
   const tpl = _sched.templates.find(t => t.id === _sched.selectedTplId);
   if (!tpl || !_sched.selectedDays.size) return;
+  const days = Array.from(_sched.selectedDays).sort();
+  const n = days.length;
+  const noun = n === 1 ? 'день' : (n < 5 ? 'дня' : 'дней');
+  if (!confirm(`Применить шаблон «${tpl.name}» к ${n} ${noun}?\nЭто перезапишет текущее расписание выбранных дней.`)) return;
   const slots = tpl.slots || [];
-  const days  = Array.from(_sched.selectedDays);
   const applyBtn = document.getElementById('sched-apply-btn');
-  if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = 'Применяю…'; }
+  if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = 'Сохраняю…'; }
   try {
-    await req('/rest/v1/store_schedules', {
+    await req('/rest/v1/store_schedules?on_conflict=store_id,date', {
       method: 'POST',
       headers: { 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify(days.map(date => ({ store_id: _sched.storeId, date, slots }))),
@@ -3352,7 +3357,7 @@ async function applySchedTemplate() {
     _sched.selectedDays.clear();
     _sched.selectedTplId = null;
     if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = 'Применить к выбранным'; }
-    showAdminToast('Расписание обновлено');
+    showAdminToast('Расписание сохранено');
     renderSchedTemplates();
     await loadSchedMonth();
   } catch(e) {
