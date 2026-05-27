@@ -2226,11 +2226,13 @@ async function loadOrders() {
   try {
     const storeId = document.getElementById('ord-store-filter')?.value;
     const statusVal = document.getElementById('ord-status-filter')?.value;
-    let url = '/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=100';
+    let url = '/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.asc&limit=100';
     if (storeId) url += `&store_id=eq.${storeId}`;
     if (statusVal) url += `&status=eq.${statusVal}`;
     else url += '&status=in.(paid,in_progress,ready)';
-    _orders = await req(url);
+    const raw = await req(url);
+    const STATUS_RANK = { paid: 0, in_progress: 1, ready: 2 };
+    _orders = statusVal ? raw : raw.sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
     if (!_orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
     el.innerHTML = _orders.map(o => renderOrderCard(o)).join('');
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
