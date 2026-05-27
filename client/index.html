@@ -404,7 +404,9 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .dir-tab[data-dir=services].active{color:#2563eb;border-bottom-color:#2563eb}
 
 /* ── SUB STORE CHIPS ── */
-.sub-store-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--bg-1);font:500 13px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--t-fast);white-space:nowrap}
+.sub-store-chip{position:relative;display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--bg-1);font:500 13px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--t-fast);white-space:nowrap}
+.ord-notif-dot{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:#e53e3e;border:2px solid var(--bg);display:none;pointer-events:none}
+.ord-notif-dot.on{display:block}
 .sub-store-chip:hover:not(.active){border-color:var(--fg-3);background:var(--bg-2)}
 .sub-store-chip.active{border-color:var(--accent);color:var(--accent);background:var(--bg-2)}
 /* ── STORE SCHEDULE CALENDAR ── */
@@ -733,6 +735,12 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
     <!-- ── Заказы pane ── -->
     <div id="ctab-order-pane" style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 4px">
+        <button class="sub-store-chip active" data-ord-status="" onclick="setOrderFilter('')">Все<span class="ord-notif-dot"></span></button>
+        <button class="sub-store-chip" data-ord-status="paid" onclick="setOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
+        <button class="sub-store-chip" data-ord-status="in_progress" onclick="setOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
+        <button class="sub-store-chip" data-ord-status="ready" onclick="setOrderFilter('ready')">Готов<span class="ord-notif-dot"></span></button>
+      </div>
       <div id="active-orders-content"><div class="empty" style="padding:32px 0">Нет активных заказов</div></div>
       <div style="padding:4px 16px 16px"><button class="btn btn-full" onclick="loadActiveOrders()">🔄 Обновить статус</button></div>
     </div>
@@ -2388,8 +2396,40 @@ function realtimeUnsubscribe() {
   if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
 }
 
+let _ordFilter = '';
+const _ordNotif = new Set();
+
+function _renderOrdNotifDots() {
+  document.querySelectorAll('[data-ord-status]').forEach(btn => {
+    const s = btn.dataset.ordStatus;
+    const has = s === '' ? _ordNotif.size > 0 : _ordNotif.has(s);
+    btn.querySelector('.ord-notif-dot')?.classList.toggle('on', has);
+  });
+}
+
+function setOrderFilter(status) {
+  _ordFilter = status;
+  if (status === '') _ordNotif.clear(); else _ordNotif.delete(status);
+  document.querySelectorAll('[data-ord-status]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.ordStatus === status);
+  });
+  _renderOrdNotifDots();
+  loadActiveOrders();
+}
+
 function _onRealtimeOrder(record) {
-  if (document.getElementById('ctab-order-pane')?.style.display !== 'none') loadActiveOrders();
+  const status = record?.status;
+  const ACTIVE = new Set(['paid', 'in_progress', 'ready']);
+  const pane = document.getElementById('ctab-order-pane');
+  const isVisible = pane?.style.display !== 'none';
+  if (status && ACTIVE.has(status)) {
+    const viewing = isVisible && (_ordFilter === '' || _ordFilter === status);
+    if (!viewing) {
+      _ordNotif.add(status);
+      _renderOrdNotifDots();
+    }
+  }
+  if (isVisible) loadActiveOrders();
 }
 
 // ─── CART TABS ───
@@ -2416,11 +2456,12 @@ async function loadActiveOrders() {
   try {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; return; }
-    const all = await req(`/rest/v1/orders?user_id=eq.${uid}&status=in.(paid,in_progress,ready)&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.asc`);
+    const statusQ = _ordFilter ? `&status=eq.${_ordFilter}` : `&status=in.(paid,in_progress,ready)`;
+    const all = await req(`/rest/v1/orders?user_id=eq.${uid}${statusQ}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.asc`);
     const STATUS_RANK = { paid: 0, in_progress: 1, ready: 2 };
     const orders = all
       .filter(o => (o.stores?.direction || 'food') === S.direction)
-      .sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
+      .sort((a, b) => _ordFilter ? 0 : (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет активных заказов</div>'; return; }
     el.innerHTML = orders.map(o => renderActiveOrderCard(o)).join('');
   } catch(e) { el.innerHTML = '<div class="empty" style="padding:32px 0">Ошибка загрузки</div>'; }
