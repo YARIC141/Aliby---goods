@@ -2028,6 +2028,7 @@ function renderItemCard(item) {
     <div class="item-body">
       <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
       ${item.description ? `<div class="item-desc">${esc(item.description)}</div>` : ''}
+      ${item.preparation_time > 0 ? `<div class="item-desc" style="color:var(--fg-4)">⏱ ${item.preparation_time} мин</div>` : ''}
       <div class="item-price">${subNoteHtml}<div class="price-wrap">${priceHtml}</div></div>
       <div class="item-actions">${itemActions(item, qty)}</div>
     </div>
@@ -2043,8 +2044,12 @@ function openItemDetail(id) {
   document.getElementById('mi-name').textContent = item.name;
   document.getElementById('mi-img').innerHTML = itemFallbackImg(item);
   const descEl = document.getElementById('mi-desc');
-  descEl.textContent = item.description || '';
-  descEl.style.display = item.description ? '' : 'none';
+  const prepLabel = { food: 'Время приготовления', goods: 'Время подготовки', services: 'Время на услугу' }[S.direction] || 'Время';
+  descEl.innerHTML = [
+    item.description ? `<span>${esc(item.description)}</span>` : '',
+    item.preparation_time > 0 ? `<span style="color:var(--fg-4)">⏱ ${prepLabel}: ${item.preparation_time} мин</span>` : '',
+  ].filter(Boolean).join('<br>');
+  descEl.style.display = (item.description || item.preparation_time > 0) ? '' : 'none';
 
   const best = getBestDisc(item);
   const discPrice = best ? Math.max(0, item.price - best.disc) : null;
