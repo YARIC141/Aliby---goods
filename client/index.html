@@ -376,6 +376,28 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .contract-accept{margin-top:14px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--glass)}
 .contract-accept label{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font:400 14px/1.5 var(--font-sans)}
 .contract-accept input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:var(--accent)}
+
+/* ── HOME TILES ── */
+.home-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;flex:1;overflow-y:auto;overscroll-behavior-y:none;align-content:start}
+.home-tile{border-radius:var(--r-3);border:1px solid var(--line-soft);padding:20px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:background var(--t-fast),transform var(--t-fast);text-align:center;min-height:120px;position:relative;overflow:hidden}
+.home-tile:hover{background:var(--bg-2);transform:translateY(-2px)}
+.home-tile:active{transform:scale(0.97)}
+.ht-icon{font-size:36px;line-height:1}
+.ht-name{font:600 20px/1.2 var(--font-display);color:var(--fg)}
+.ht-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3)}
+.home-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.home-tile-alibi::before{background:var(--brand-ember)}
+.home-tile-food::before{background:#e8430a}
+.home-tile-goods::before{background:#2e9c4e}
+.home-tile-services::before{background:#2563eb}
+
+/* ── DIRECTION TABS ── */
+.dir-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+.dir-tab{flex:1;padding:9px 4px;border:none;background:none;cursor:pointer;font:500 13px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);white-space:nowrap}
+.dir-tab:hover{color:var(--fg)}
+.dir-tab[data-dir=food].active{color:#e8430a;border-bottom-color:#e8430a}
+.dir-tab[data-dir=goods].active{color:#2e9c4e;border-bottom-color:#2e9c4e}
+.dir-tab[data-dir=services].active{color:#2563eb;border-bottom-color:#2563eb}
 </style>
 <script>
 if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
@@ -487,11 +509,41 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   </div>
 </div>
 
-<!-- ════════════════ HOME ════════════════ -->
+<!-- ════════════════ HOME (hub) ════════════════ -->
 <div id="screen-home" class="screen">
-  <div class="ph"><h2>Алиби<span class="screen-help" data-info="Здесь вы можете узнать о том сколько сэкономили пользуясь Alliby и предъявить QR для списания абонемента">?</span></h2></div>
+  <div class="ph"><h2>Alliby</h2></div>
+  <div class="home-tiles">
+    <div class="home-tile home-tile-alibi" onclick="goTo('alibi')">
+      <div class="ht-icon">🎫</div>
+      <div class="ht-name">Алиби</div>
+      <div class="ht-desc">QR‑код и история</div>
+    </div>
+    <div class="home-tile home-tile-food" onclick="openDirection('food')">
+      <div class="ht-icon">🍽️</div>
+      <div class="ht-name">Еда</div>
+      <div class="ht-desc">Кафе и рестораны</div>
+    </div>
+    <div class="home-tile home-tile-services" onclick="openDirection('services')">
+      <div class="ht-icon">🛎️</div>
+      <div class="ht-name">Услуги</div>
+      <div class="ht-desc">Сервис и мастерские</div>
+    </div>
+    <div class="home-tile home-tile-goods" onclick="openDirection('goods')">
+      <div class="ht-icon">🛍️</div>
+      <div class="ht-name">Товары</div>
+      <div class="ht-desc">Магазины и шоурумы</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ ALIBI ════════════════ -->
+<div id="screen-alibi" class="screen">
+  <div class="ph">
+    <button class="btn-back" onclick="goTo('home')">←</button>
+    <h2>Алиби<span class="screen-help" data-info="Здесь вы можете узнать о том сколько сэкономили пользуясь Alliby и предъявить QR для списания абонемента">?</span></h2>
+  </div>
   <div class="screen-tip"></div>
-  <div class="pb" id="home-content" style="padding:12px 16px">
+  <div class="pb" id="alibi-content" style="padding:12px 16px">
     <div class="loading">Загрузка…</div>
   </div>
 </div>
@@ -506,6 +558,11 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="map-layout">
 
     <div class="sl-panel">
+      <div class="dir-tabs" id="dir-tabs">
+        <button class="dir-tab active" data-dir="food" onclick="setDirection('food')">🍽️ Еда</button>
+        <button class="dir-tab" data-dir="goods" onclick="setDirection('goods')">🛍️ Товары</button>
+        <button class="dir-tab" data-dir="services" onclick="setDirection('services')">🛎️ Услуги</button>
+      </div>
       <div class="sl-search">
         <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)">
       </div>
@@ -996,9 +1053,14 @@ const S = {
   navHistory: [], navIdx: -1,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
+  direction: 'food',
+  _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null} },
 };
 
 const subPlans = {}; // cache of subscription plan objects keyed by id
+
+const DIR_COLORS = { food: '#e8430a', goods: '#2e9c4e', services: '#2563eb' };
+const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
 
 const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
 
@@ -1140,6 +1202,41 @@ function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : 
 const statusMap = { pending:'Создан', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const subStMap  = { pending:'Ожидает', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
 
+// ─── DIRECTION ───
+function applyScreenAccent(screenId) {
+  if (DIR_SCREENS.has(screenId)) {
+    document.documentElement.style.setProperty('--accent', DIR_COLORS[S.direction] || DIR_COLORS.food);
+  } else {
+    const custom = localStorage.getItem('alliby_accent');
+    document.documentElement.style.setProperty('--accent', custom || 'var(--brand-ember)');
+  }
+}
+
+function setDirection(dir) {
+  if (!DIR_COLORS[dir]) return;
+  // save current cart
+  S._carts[S.direction] = { items: S.cart, storeId: S.cartStoreId };
+  S.direction = dir;
+  try { localStorage.setItem('alliby_dir', dir); } catch(e) {}
+  // restore direction cart
+  const dc = S._carts[dir];
+  S.cart = dc.items; S.cartStoreId = dc.storeId;
+  updateCartCount();
+  saveCart();
+  applyScreenAccent('map');
+  // update tab active state
+  document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === dir));
+  // rebuild category chips for new direction and re-filter
+  S.mapCats = new Set();
+  renderMapCategoryChips();
+  applyMapFilter();
+}
+
+function openDirection(dir) {
+  setDirection(dir);
+  goTo('map');
+}
+
 // ─── QR CODE ───
 function showQrModal() {
   const uid = S.session?.user?.id;
@@ -1174,9 +1271,10 @@ function goTo(id, opts = {}) {
     S.navHistory = S.navHistory.slice(0, S.navIdx + 1);
     if (S.navHistory[S.navHistory.length - 1] !== id) { S.navHistory.push(id); S.navIdx++; }
   }
+  applyScreenAccent(id);
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  ({home:loadHome,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
+  ({home:loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1465,6 +1563,7 @@ function renderMapCategoryChips() {
   const el = document.getElementById('sl-cats');
   const catsMap = new Map();
   S.allStores.forEach(st => {
+    if (st.direction !== S.direction) return;
     if (st.store_category_id && st.store_categories) {
       catsMap.set(st.store_category_id, st.store_categories);
     }
@@ -1489,6 +1588,7 @@ function applyMapFilter(q) {
   if (q === undefined) q = document.querySelector('#screen-map .sl-search input')?.value || '';
   const ql = q.toLowerCase();
   const filtered = S.allStores.filter(st => {
+    if (st.direction !== S.direction) return false;
     if (S.mapCats.size && !S.mapCats.has(st.store_category_id)) return false;
     if (ql && !st.name.toLowerCase().includes(ql) && !(st.address || '').toLowerCase().includes(ql)) return false;
     return true;
@@ -1600,6 +1700,7 @@ function openStoreFromPopup() { closePopup(); goTo('store'); }
 async function loadStore() {
   if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
   const st = S.store;
+  if (st.direction && st.direction !== S.direction) setDirection(st.direction);
   document.getElementById('store-ph-name').textContent = st.name;
   document.getElementById('st-addr').textContent   = st.address || '';
   document.getElementById('st-hours').textContent  = st.working_hours || '';
@@ -1979,7 +2080,9 @@ function changeQty(id, delta) {
 }
 
 function saveCart() {
-  try { localStorage.setItem('alliby_cart', JSON.stringify({ storeId: S.cartStoreId, items: S.cart })); } catch(e) {}
+  const dir = S.direction || 'food';
+  S._carts[dir] = { items: S.cart, storeId: S.cartStoreId };
+  try { localStorage.setItem(`alliby_cart_${dir}`, JSON.stringify({ storeId: S.cartStoreId, items: S.cart })); } catch(e) {}
 }
 
 function updateCartCount() {
@@ -2530,9 +2633,31 @@ async function updatePwd() {
 
 // ─── NAV / CART RESTORE ───
 async function restoreNav() {
+  // restore direction
   try {
-    const sc = localStorage.getItem('alliby_cart');
-    if (sc) { const d = JSON.parse(sc); S.cart = d.items || []; S.cartStoreId = d.storeId || null; updateCartCount(); }
+    const savedDir = localStorage.getItem('alliby_dir');
+    if (savedDir && DIR_COLORS[savedDir]) {
+      S.direction = savedDir;
+      document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === savedDir));
+    }
+  } catch(e) {}
+  // migrate legacy alliby_cart → alliby_cart_food
+  try {
+    const legacy = localStorage.getItem('alliby_cart');
+    if (legacy && !localStorage.getItem('alliby_cart_food')) {
+      localStorage.setItem('alliby_cart_food', legacy);
+      localStorage.removeItem('alliby_cart');
+    }
+  } catch(e) {}
+  // restore all direction carts
+  try {
+    for (const dir of ['food','goods','services']) {
+      const sc = localStorage.getItem(`alliby_cart_${dir}`);
+      if (sc) { const d = JSON.parse(sc); S._carts[dir] = { items: d.items || [], storeId: d.storeId || null }; }
+    }
+    const dc = S._carts[S.direction];
+    S.cart = dc.items; S.cartStoreId = dc.storeId;
+    updateCartCount();
   } catch(e) {}
   try {
     const ssc = localStorage.getItem('alliby_subcart');
@@ -2546,7 +2671,7 @@ async function restoreNav() {
     const ok = await navigateDeepLink();
     if (ok) return;
   }
-  const SCREENS = ['home','store','menu','cart','subscriptions','profile'];
+  const SCREENS = ['home','alibi','store','menu','cart','subscriptions','profile'];
   const nav = localStorage.getItem('alliby_nav');
   goTo(nav && SCREENS.includes(nav) ? nav : 'home');
 }
@@ -2561,8 +2686,11 @@ function hideSplash() {
 setTimeout(hideSplash, 2000);
 
 // ─── HOME ───
-async function loadHome() {
-  const el = document.getElementById('home-content');
+function loadHome() { /* static tiles — no dynamic load needed */ }
+
+// ─── ALIBI ───
+async function loadAlibi() {
+  const el = document.getElementById('alibi-content');
   el.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
     const uid = S.session?.user?.id;
@@ -2602,12 +2730,12 @@ async function loadHome() {
       : '';
 
     el.innerHTML = chartHtml +
-      '<div style="display:flex;justify-content:center;margin:8px 0 4px"><div id="home-qr-box" style="padding:16px;background:#fff;border-radius:12px;display:inline-block"></div></div>' +
+      '<div style="display:flex;justify-content:center;margin:8px 0 4px"><div id="alibi-qr-box" style="padding:16px;background:#fff;border-radius:12px;display:inline-block"></div></div>' +
       '<div class="txt-muted" style="text-align:center;margin-bottom:10px;font-size:13px">Покажите QR администратору для списания</div>' +
-      '<button class="btn" style="width:100%;margin-bottom:16px" onclick="loadHome()">Обновить статус абонементов</button>' +
+      '<button class="btn" style="width:100%;margin-bottom:16px" onclick="loadAlibi()">Обновить статус абонементов</button>' +
       ordersHtml;
 
-    const qrBox = document.getElementById('home-qr-box');
+    const qrBox = document.getElementById('alibi-qr-box');
     if (qrBox) new QRCode(qrBox, { text: uid, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M, colorDark: '#000000', colorLight: '#ffffff' });
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
@@ -2741,6 +2869,7 @@ async function navigateDeepLink() {
     if (rows?.[0]) {
       S.store = rows[0];
       try { localStorage.setItem('alliby_store', JSON.stringify(S.store)); } catch(e) {}
+      if (S.store.direction && DIR_COLORS[S.store.direction]) setDirection(S.store.direction);
       goTo('menu');
       return true;
     }

@@ -709,6 +709,14 @@ tr.row-click:hover td{background:var(--bg-2)}
         <input type="text" id="ms-hours" placeholder="Пн-Пт 8:00-20:00">
       </div>
       <div class="fg" style="grid-column:1/-1">
+        <label>Направление *<span class="hint" data-tip="Определяет в каком разделе клиентского приложения отображается заведение: Еда, Товары или Услуги">?</span></label>
+        <select id="ms-dir" onchange="loadStoreCategoriesFiltered()">
+          <option value="food">🍽️ Еда</option>
+          <option value="goods">🛍️ Товары</option>
+          <option value="services">🛎️ Услуги</option>
+        </select>
+      </div>
+      <div class="fg" style="grid-column:1/-1">
         <label>Тип заведения<span class="hint" data-tip="Категория определяет иконку и фильтр на карте клиентского приложения. Клиент может отфильтровать заведения по типу">?</span></label>
         <select id="ms-sc"><option value="">— не указан —</option></select>
       </div>
@@ -1458,14 +1466,18 @@ async function doDeleteAccount() {
 
 // ─── STORE CATEGORIES ───
 async function loadStoreCategories() {
+  await loadStoreCategoriesFiltered('food');
+}
+
+async function loadStoreCategoriesFiltered(dir) {
+  const d = dir || document.getElementById('ms-dir')?.value || 'food';
   try {
-    // GET /rest/v1/store_categories?order=name.asc
-    const cats = await req('/rest/v1/store_categories?order=name.asc');
+    const cats = await req(`/rest/v1/store_categories?direction=eq.${d}&order=name.asc`);
     S.storeCategories = cats;
     const sel = document.getElementById('ms-sc');
     const cur = sel.value;
     sel.innerHTML = '<option value="">— не указан —</option>' + cats.map(c => `<option value="${c.id}">${esc(c.icon)} ${esc(c.name)}</option>`).join('');
-    sel.value = cur;
+    if (cats.find(c => c.id === cur)) sel.value = cur; else sel.value = '';
   } catch(e) {}
 }
 
@@ -1484,9 +1496,11 @@ async function loadStores() {
     fillStoreSelects();
     loadStoreCategories();
     if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
+    const _DIR_LABELS = { food: '🍽️ Еда', goods: '🛍️ Товары', services: '🛎️ Услуги' };
     el.innerHTML = S.stores.map(s => {
       const color = esc(s._loc?.marker_color || '#e8430a');
       const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
+      const dirLabel = _DIR_LABELS[s.direction] || '';
       const sd = JSON.stringify(s).replace(/"/g, '&quot;');
       return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openStoreDetail(${sd})">
         <div style="display:flex;gap:10px;align-items:flex-start">
@@ -1494,6 +1508,7 @@ async function loadStores() {
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
               <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></span>
               <strong style="font:600 14px/1.2 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</strong>
+              ${dirLabel ? `<span style="font-size:11px;padding:1px 6px;border-radius:4px;background:var(--bg-2);color:var(--fg-3)">${dirLabel}</span>` : ''}
               ${cat ? `<span class="txt-muted" style="font-size:12px;white-space:nowrap">${cat}</span>` : ''}
             </div>
             ${s.address ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px">📍 ${esc(s.address)}</div>` : ''}
@@ -1526,7 +1541,7 @@ function fillStoreSelects() {
   });
 }
 
-function openStoreModal(store) {
+async function openStoreModal(store) {
   document.getElementById('ms-title').textContent = store ? 'Редактировать заведение' : 'Новое заведение';
   document.getElementById('ms-id').value      = store?.id      || '';
   document.getElementById('ms-name').value    = store?.name    || '';
@@ -1535,9 +1550,11 @@ function openStoreModal(store) {
   document.getElementById('ms-lng').value     = store?.longitude ?? store?._loc?.lng ?? '';
   document.getElementById('ms-phone').value   = store?.phone   || '';
   document.getElementById('ms-hours').value   = store?.working_hours || '';
-  document.getElementById('ms-sc').value      = store?.store_category_id || '';
+  document.getElementById('ms-dir').value     = store?.direction || 'food';
   document.getElementById('ms-color').value   = store?._loc?.marker_color || '#e8430a';
   document.getElementById('ms-avg').value     = store?.avg_order_amount ?? '';
+  await loadStoreCategoriesFiltered();
+  document.getElementById('ms-sc').value = store?.store_category_id || '';
   updateStoreCoordsStatus();
   openModal('m-store');
 }
@@ -1569,6 +1586,7 @@ function pickOnMap() {
     address: document.getElementById('ms-address').value,
     phone:   document.getElementById('ms-phone').value,
     hours:   document.getElementById('ms-hours').value,
+    dir:     document.getElementById('ms-dir').value || 'food',
     sc:      document.getElementById('ms-sc').value,
     lat:     document.getElementById('ms-lat').value,
     lng:     document.getElementById('ms-lng').value,
@@ -1580,7 +1598,7 @@ function pickOnMap() {
   goTo('map');
 }
 
-function usePickedCoords() {
+async function usePickedCoords() {
   if (!S.storeFormDraft || !S.mapPickCoords) return;
   const { lat, lng } = S.mapPickCoords;
   const d = S.storeFormDraft;
@@ -1594,15 +1612,17 @@ function usePickedCoords() {
   document.getElementById('ms-address').value = d.address;
   document.getElementById('ms-phone').value   = d.phone;
   document.getElementById('ms-hours').value   = d.hours;
-  document.getElementById('ms-sc').value      = d.sc;
+  document.getElementById('ms-dir').value     = d.dir || 'food';
   document.getElementById('ms-color').value   = d.color || '#e8430a';
   document.getElementById('ms-lat').value     = lat;
   document.getElementById('ms-lng').value     = lng;
+  await loadStoreCategoriesFiltered();
+  document.getElementById('ms-sc').value      = d.sc;
   updateStoreCoordsStatus();
   openModal('m-store');
 }
 
-function cancelPickMode() {
+async function cancelPickMode() {
   S.mapPickMode = false;
   S.mapPickCoords = null;
   if (S.mapPickDraftMarker) { S.mapPickDraftMarker.remove(); S.mapPickDraftMarker = null; }
@@ -1615,10 +1635,12 @@ function cancelPickMode() {
     document.getElementById('ms-address').value = d.address;
     document.getElementById('ms-phone').value   = d.phone;
     document.getElementById('ms-hours').value   = d.hours;
-    document.getElementById('ms-sc').value      = d.sc;
+    document.getElementById('ms-dir').value     = d.dir || 'food';
     document.getElementById('ms-color').value   = d.color || '#e8430a';
     document.getElementById('ms-lat').value     = d.lat;
     document.getElementById('ms-lng').value     = d.lng;
+    await loadStoreCategoriesFiltered();
+    document.getElementById('ms-sc').value      = d.sc;
     updateStoreCoordsStatus();
     openModal('m-store');
   }
@@ -1646,6 +1668,7 @@ async function saveStore() {
     longitude:          isNaN(lng) ? null : lng,
     phone:              document.getElementById('ms-phone').value || null,
     working_hours:      document.getElementById('ms-hours').value || null,
+    direction:          document.getElementById('ms-dir').value || 'food',
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
   };
