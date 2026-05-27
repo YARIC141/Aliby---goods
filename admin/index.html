@@ -327,6 +327,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
     <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg> Сканер абонементов</button>
+    <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы</button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
   <div class="sn-footer">
@@ -551,6 +552,26 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div>
 
 
+<!-- ════════════════ ORDERS ════════════════ -->
+<div id="screen-orders" class="screen">
+  <div class="ph"><h2>Заказы<span class="screen-help" data-info="Оплаченные заказы покупателей. Переводите статус: Оплачен → В работе → Готов.">?</span></h2></div>
+  <div class="pb">
+    <div class="toolbar">
+      <select id="ord-store-filter" onchange="loadOrders()">
+        <option value="">Все заведения</option>
+      </select>
+      <select id="ord-status-filter" onchange="loadOrders()">
+        <option value="">Активные</option>
+        <option value="paid">Оплачен</option>
+        <option value="in_progress">В работе</option>
+        <option value="ready">Готов</option>
+        <option value="issued">Выдан</option>
+      </select>
+    </div>
+    <div id="ord-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
+  </div>
+</div>
+
 <!-- ════════════════ QR SCANNER ════════════════ -->
 <div id="screen-qr" class="screen">
   <div class="ph"><h2>Сканер QR</h2></div>
@@ -579,7 +600,8 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
-    <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></span>Сканер<br>абонементов</button>
+    <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></span>Сканер</button>
+    <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Заказы</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
@@ -659,6 +681,22 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button class="btn btn-full" onclick="cancelPlatSubPay()">Отмена</button>
     </div>
     <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
+  </div>
+</div>
+
+<!-- Order detail modal -->
+<div class="overlay" id="m-order">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hd">
+      <h3 id="m-order-title">Заказ</h3>
+      <button class="modal-x" onclick="closeModal('m-order')">✕</button>
+    </div>
+    <div id="m-order-body" style="margin-bottom:12px"></div>
+    <div id="m-order-ready-time-sect" style="display:none;margin-bottom:14px">
+      <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Ожидаемое время готовности</label>
+      <input type="datetime-local" id="m-order-ready-time" style="width:100%;padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)">
+    </div>
+    <div class="modal-ft" id="m-order-ft"></div>
   </div>
 </div>
 
@@ -1079,7 +1117,7 @@ function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
-const statusMap = { pending:'Создан', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const VAPID_PUBLIC_KEY = 'BAqiEa54OoLDA-bJ74rSG-4C_au7IbwXL3ZEybKY-GqlQEcwnRHJrZBIAxiX4pVMuJ1FdvtNSQMOQg8lRv-d2hc';
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1102,7 +1140,7 @@ function goTo(id, opts = {}) {
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   if (prevId === 'qr' && id !== 'qr') stopQrCamera();
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile})[id]?.();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1967,6 +2005,127 @@ async function saveMenuItem() {
       await req('/rest/v1/menu_items', { method:'POST', body: JSON.stringify(body) });
     }
     closeModal('m-mi'); loadMenuItems();
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── ORDERS ───
+let _orders = [];
+let _currentOrder = null;
+
+function fmtTime(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadOrders() {
+  const el = document.getElementById('ord-list');
+  el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  try {
+    const storeId = document.getElementById('ord-store-filter')?.value;
+    const statusVal = document.getElementById('ord-status-filter')?.value;
+    let url = '/rest/v1/orders?select=*,profiles(email),order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=100';
+    if (storeId) url += `&store_id=eq.${storeId}`;
+    if (statusVal) url += `&status=eq.${statusVal}`;
+    else url += '&status=in.(paid,in_progress,ready)';
+    _orders = await req(url);
+    if (!_orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
+    el.innerHTML = _orders.map(o => renderOrderCard(o)).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+function renderOrderCard(o) {
+  const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)' };
+  const color = statusColors[o.status] || 'var(--fg-3)';
+  const label = statusMap[o.status] || o.status;
+  const items = o.order_items || [];
+  const itemCount = items.reduce((s, i) => s + i.quantity, 0);
+  const storeName = o.stores?.name || '';
+  const userEmail = o.profiles?.email || '';
+  return `<div class="card" style="margin-bottom:8px;cursor:pointer;padding:12px 14px" onclick="openOrderModal('${esc(o.id)}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="flex:1;min-width:0">
+        ${storeName ? `<div style="font:500 12px/1 var(--font-sans);color:var(--fg-3);margin-bottom:4px">${esc(storeName)}</div>` : ''}
+        <div style="font:500 14px/1.3 var(--font-sans)">${esc(userEmail)}</div>
+        <div style="font-size:12px;color:var(--fg-3);margin-top:2px">${fmtDate(o.order_time)} · ${itemCount} поз.</div>
+        ${o.estimated_ready_at ? `<div style="font-size:12px;color:var(--warn);margin-top:2px">⏰ К ${fmtTime(o.estimated_ready_at)}</div>` : ''}
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font:600 16px/1 var(--font-display)">${Number(o.total_amount).toFixed(0)} ₽</div>
+        <div style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid ${color};color:${color}">${label}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openOrderModal(orderId) {
+  const o = _orders.find(x => x.id === orderId);
+  if (!o) return;
+  _currentOrder = o;
+  const dir = o.stores?.direction || 'food';
+  const needTime = dir !== 'services';
+  const items = o.order_items || [];
+
+  document.getElementById('m-order-title').textContent = `Заказ #${o.id.slice(0,8)}`;
+  document.getElementById('m-order-body').innerHTML = `
+    <div style="font-size:13px;color:var(--fg-3);margin-bottom:8px">${esc(o.profiles?.email || '')} · ${fmtDate(o.order_time)}</div>
+    ${o.stores?.name ? `<div style="font-size:12px;color:var(--fg-4);margin-bottom:10px">${esc(o.stores.name)}</div>` : ''}
+    <div style="margin-bottom:12px">
+      ${items.map(it => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);font-size:14px">
+        <span>${esc(it.menu_items?.name || '—')}</span>
+        <span style="color:var(--fg-3);white-space:nowrap">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</span>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font:600 15px/1 var(--font-display)">
+      <span>Итого</span><span>${Number(o.total_amount).toFixed(0)} ₽</span>
+    </div>
+    ${o.estimated_ready_at ? `<div style="margin-top:8px;font-size:13px;color:var(--warn)">⏰ Готов к ${fmtTime(o.estimated_ready_at)}</div>` : ''}
+  `;
+
+  const rtSect = document.getElementById('m-order-ready-time-sect');
+  const ft = document.getElementById('m-order-ft');
+
+  if (o.status === 'paid') {
+    if (needTime) {
+      rtSect.style.display = '';
+      const def = new Date(Date.now() + 30 * 60000);
+      document.getElementById('m-order-ready-time').value = def.toISOString().slice(0, 16);
+    } else {
+      rtSect.style.display = 'none';
+    }
+    ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
+      <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('in_progress')">Взять в работу</button>`;
+  } else if (o.status === 'in_progress') {
+    rtSect.style.display = 'none';
+    ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
+      <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('ready')">Готов к выдаче</button>`;
+  } else {
+    rtSect.style.display = 'none';
+    ft.innerHTML = `<button class="btn btn-full" onclick="closeModal('m-order')">Закрыть</button>`;
+  }
+
+  openModal('m-order');
+}
+
+async function advanceOrder(newStatus) {
+  if (!_currentOrder) return;
+  const o = _currentOrder;
+  const dir = o.stores?.direction || 'food';
+  const body = { status: newStatus };
+  if (newStatus === 'in_progress' && dir !== 'services') {
+    const rtVal = document.getElementById('m-order-ready-time').value;
+    if (!rtVal) { alert('Укажите ожидаемое время готовности'); return; }
+    body.estimated_ready_at = new Date(rtVal).toISOString();
+  }
+  const btn = document.getElementById('ord-advance-btn');
+  const restore = btnLoad(btn);
+  try {
+    await req(`/rest/v1/orders?id=eq.${o.id}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body),
+    });
+    closeModal('m-order');
+    loadOrders();
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 

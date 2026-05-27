@@ -171,7 +171,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 /* ── AUTH ── */
 #screen-auth{align-items:center;justify-content:center;background:var(--bg)}
 .auth-box{width:100%;max-width:380px;padding:28px 24px;margin:0 16px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line-soft);border-radius:var(--r-3);box-shadow:var(--shadow-1)}
-.auth-box h1{font:400 30px/1 var(--font-display);letter-spacing:-0.01em;margin-bottom:22px}
+.auth-box h1{font:400 30px/1 var(--font-display);letter-spacing:-0.01em;margin-bottom:22px;color:var(--brand-ember)}
 
 /* ── MAP ── */
 .map-layout{display:flex;flex:1;overflow:hidden}
@@ -387,7 +387,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .ht-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3)}
 .home-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .home-tile-alibi::before{background:var(--brand-ember)}
-.home-tile-food::before{background:#e8430a}
+.home-tile-food::before{background:var(--brand-ember)}
 .home-tile-goods::before{background:#2e9c4e}
 .home-tile-services::before{background:#2563eb}
 
@@ -395,7 +395,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .dir-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .dir-tab{flex:1;padding:9px 4px;border:none;background:none;cursor:pointer;font:500 13px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);white-space:nowrap}
 .dir-tab:hover{color:var(--fg)}
-.dir-tab[data-dir=food].active{color:#e8430a;border-bottom-color:#e8430a}
+.dir-tab[data-dir=food].active{color:var(--brand-ember);border-bottom-color:var(--brand-ember)}
 .dir-tab[data-dir=goods].active{color:#2e9c4e;border-bottom-color:#2e9c4e}
 .dir-tab[data-dir=services].active{color:#2563eb;border-bottom-color:#2563eb}
 </style>
@@ -1059,7 +1059,7 @@ const S = {
 
 const subPlans = {}; // cache of subscription plan objects keyed by id
 
-const DIR_COLORS = { food: '#e8430a', goods: '#2e9c4e', services: '#2563eb' };
+const DIR_COLORS = { food: null, goods: '#2e9c4e', services: '#2563eb' };
 const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
 
 const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
@@ -1199,17 +1199,16 @@ function fmtDate(d) {
   return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; }
-const statusMap = { pending:'Создан', paid:'Оплачен', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const subStMap  = { pending:'Ожидает', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
 
 // ─── DIRECTION ───
 function applyScreenAccent(screenId) {
-  if (DIR_SCREENS.has(screenId)) {
-    document.documentElement.style.setProperty('--accent', DIR_COLORS[S.direction] || DIR_COLORS.food);
-  } else {
-    const custom = localStorage.getItem('alliby_accent');
-    document.documentElement.style.setProperty('--accent', custom || 'var(--brand-ember)');
-  }
+  const color = DIR_SCREENS.has(screenId)
+    ? DIR_COLORS[S.direction]
+    : localStorage.getItem('alliby_accent');
+  if (color) document.documentElement.style.setProperty('--accent', color);
+  else document.documentElement.style.removeProperty('--accent');
 }
 
 function setDirection(dir) {
@@ -2710,7 +2709,7 @@ async function loadAlibi() {
         orders.map((o, idx) => {
           const storeName = o.stores?.name || '';
           const amount = Number(o.total_amount) || 0;
-          const statusColor = { paid:'var(--ok)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
+          const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
           const statusTxt = statusMap[o.status] || o.status;
           const itemCount = (o.order_items || []).reduce((s, i) => s + i.quantity, 0);
           return `<div class="card" style="margin-bottom:6px;padding:10px 12px;cursor:pointer" onclick="openOrderDetail(${idx})">
@@ -2747,7 +2746,7 @@ function openOrderDetail(idx) {
   if (!order) return;
   const storeName = order.stores?.name || '';
   const amount = Number(order.total_amount) || 0;
-  const statusColor = { paid:'var(--ok)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[order.status] || 'var(--fg-sec)';
+  const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[order.status] || 'var(--fg-sec)';
 
   document.getElementById('mod-title').textContent = storeName ? `Заказ · ${storeName}` : 'Заказ';
   document.getElementById('mod-meta').innerHTML =
