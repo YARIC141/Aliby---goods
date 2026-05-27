@@ -283,7 +283,9 @@ tr.row-click:hover td{background:var(--bg-2)}
 .sched-day{height:42px;text-align:center;vertical-align:middle;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--line-soft);position:relative;overflow:hidden;transition:background var(--t-fast);user-select:none}
 .sched-day:not(.empty){cursor:pointer}
 .sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
-.sched-day.has-sched::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
+.sched-day.has-sched{background:color-mix(in oklch,var(--accent) 14%,var(--bg))}
+.sched-day.has-sched:hover:not(.selected){background:color-mix(in oklch,var(--accent) 22%,var(--bg))}
+.sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-mono);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.selected{background:color-mix(in oklch,var(--accent) 18%,var(--bg))}
 .sched-day.selected .sd-n{color:var(--accent);font-weight:700}
 .sched-day.empty{color:var(--fg-4)}
@@ -340,13 +342,13 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="stores"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg> Заведения</button>
     <button class="sn-btn" data-nav="categories"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Категории</button>
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
-    <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
     <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg> Сканер абонементов</button>
     <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы</button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
   <div class="sn-footer">
     <div class="sn-user" id="sn-email"></div>
+    <button class="btn btn-sm" style="font-size:11px;width:100%" onclick="openAdminCityModal()">📍 <span class="admin-city-lbl"></span></button>
   </div>
 </nav>
 
@@ -434,41 +436,39 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
-<!-- ════════════════ MENU ITEMS ════════════════ -->
+<!-- ════════════════ MENU ITEMS / SUBSCRIPTIONS ════════════════ -->
 <div id="screen-menu" class="screen">
   <div class="ph">
-    <h2>Товары и Услуги<span class="screen-help" data-info="Каталог товаров и услуг заведения. Добавляйте позиции с ценой, описанием, фото и признаком наличия.">?</span></h2>
-    <button class="btn btn-p btn-sm" onclick="openMenuItemModal()">+ Добавить</button>
+    <h2>Товары и Услуги<span class="screen-help" data-info="Каталог товаров, услуг и абонементов заведения.">?</span></h2>
+    <button class="btn btn-p btn-sm" id="menu-add-btn" onclick="openMenuItemModal()">+ Добавить</button>
   </div>
   <div class="pb">
-    <div class="toolbar">
-      <select id="mi-store-filter" onchange="loadMenuItems()">
-        <option value="">Все заведения</option>
-      </select>
-      <select id="mi-cat-filter" onchange="loadMenuItems()">
-        <option value="">Все категории</option>
-      </select>
-      <input type="search" placeholder="Поиск…" id="mi-search" oninput="loadMenuItems()">
+    <div class="tab-nav">
+      <button class="tab-btn active" data-menu-tab="items" onclick="setAdminMenuTab('items')">Товары и услуги</button>
+      <button class="tab-btn" data-menu-tab="subs" onclick="setAdminMenuTab('subs')">Абонементы</button>
     </div>
-    <div id="mi-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
-    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/menu_items</div>
-  </div>
-</div>
-
-<!-- ════════════════ SUBSCRIPTIONS ════════════════ -->
-<div id="screen-subscriptions" class="screen">
-  <div class="ph">
-    <h2>Абонементы<span class="screen-help" data-info="Абонементы для клиентов. Настраивайте правила скидок, временные ограничения и лимиты использования.">?</span></h2>
-    <button class="btn btn-p btn-sm" onclick="openSubModal()">+ Добавить</button>
-  </div>
-  <div class="pb">
-    <div class="toolbar">
-      <select id="sub-store-filter" onchange="loadSubscriptions()">
-        <option value="">Все заведения</option>
-      </select>
+    <div id="menu-tab-items" class="tab-pane active">
+      <div class="toolbar">
+        <select id="mi-store-filter" onchange="loadMenuItems()">
+          <option value="">Все заведения</option>
+        </select>
+        <select id="mi-cat-filter" onchange="loadMenuItems()">
+          <option value="">Все категории</option>
+        </select>
+        <input type="search" placeholder="Поиск…" id="mi-search" oninput="loadMenuItems()">
+      </div>
+      <div id="mi-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
+      <div class="txt-muted" style="margin-top:8px">GET /rest/v1/menu_items</div>
     </div>
-    <div id="sub-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
-    <div class="txt-muted" style="margin-top:8px">GET /rest/v1/subscriptions</div>
+    <div id="menu-tab-subs" class="tab-pane">
+      <div class="toolbar">
+        <select id="sub-store-filter" onchange="loadSubscriptions()">
+          <option value="">Все заведения</option>
+        </select>
+      </div>
+      <div id="sub-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
+      <div class="txt-muted" style="margin-top:8px">GET /rest/v1/subscriptions</div>
+    </div>
   </div>
 </div>
 
@@ -534,6 +534,7 @@ tr.row-click:hover td{background:var(--bg-2)}
         <button class="btn btn-sm" onclick="closeDayView()">✕</button>
       </div>
       <div id="sched-day-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      <button id="sched-close-day-btn" class="btn btn-d btn-sm" style="margin-top:10px;font-size:12px" onclick="deleteScheduleDay(this.dataset.date)">Закрыть день</button>
       <div id="sched-day-bookings"></div>
     </div>
   </div>
@@ -652,7 +653,6 @@ tr.row-click:hover td{background:var(--bg-2)}
   <div class="bn-row">
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
-    <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
     <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></span>Сканер</button>
     <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Заказы</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
@@ -1053,6 +1053,15 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div>
 
 
+<!-- City selection modal -->
+<div class="overlay" id="m-admin-city" style="z-index:9999">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-hd"><h3>Ваш город</h3></div>
+    <p style="font-size:13px;color:var(--fg-3);margin-bottom:14px">Выберите город для работы с заведениями</p>
+    <div id="m-admin-city-list" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
 <!-- Confirm delete modal -->
 <div class="overlay" id="m-confirm">
   <div class="modal" style="max-width:360px">
@@ -1073,6 +1082,29 @@ tr.row-click:hover td{background:var(--bg-2)}
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
 const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
 const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
+
+// ─── CITIES ───
+const CITIES = [{ name: 'Самара', tz: 'Europe/Samara', lat: 53.195, lng: 50.201, zoom: 12 }];
+function _adminCityInfo() {
+  const saved = localStorage.getItem('alliby_admin_city');
+  return CITIES.find(c => c.name === saved) || CITIES[0];
+}
+function _adminCity() { return localStorage.getItem('alliby_admin_city') || null; }
+function selectAdminCity(name) {
+  localStorage.setItem('alliby_admin_city', name);
+  document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = name);
+  closeModal('m-admin-city');
+  if (window._adminCityNavCb) { const cb = window._adminCityNavCb; window._adminCityNavCb = null; cb(); }
+}
+function openAdminCityModal(deferred) {
+  const list = document.getElementById('m-admin-city-list');
+  const current = _adminCity();
+  list.innerHTML = CITIES.map(c =>
+    `<button class="btn${c.name === current ? ' btn-p' : ''} btn-full" onclick="selectAdminCity('${esc(c.name)}')">${esc(c.name)} <span style="font-size:11px;color:var(--fg-3)">${c.tz}</span></button>`
+  ).join('');
+  if (deferred) window._adminCityNavCb = deferred;
+  openModal('m-admin-city');
+}
 
 // ─── STATE ───
 const DEFAULT_MAP_CFG = {
@@ -1100,6 +1132,7 @@ const S = {
   uploadedPhotoFilename: null,
   mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
+  get city() { return localStorage.getItem('alliby_admin_city'); },
 };
 
 const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
@@ -1232,7 +1265,7 @@ function goTo(id, opts = {}) {
   if (prevId === 'qr' && id !== 'qr') stopQrCamera();
   if (prevId === 'orders' && id !== 'orders') adminRealtimeDisconnect();
   if (id === 'orders') adminRealtimeConnect();
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen})[id]?.();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1331,7 +1364,8 @@ async function doLogin() {
     const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
     if (profs[0]?.role !== 'admin') { restore(); err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
     setSession(d);
-    goTo('stores');
+    if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }); }
+    else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }
   } catch(e) { restore(); err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
@@ -1799,6 +1833,7 @@ async function saveStore() {
     phone:              document.getElementById('ms-phone').value || null,
     working_hours:      document.getElementById('ms-hours').value || null,
     direction:          document.getElementById('ms-dir').value || 'food',
+    city:               S.city || 'Самара',
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
   };
@@ -1934,6 +1969,24 @@ async function saveCat() {
 }
 
 // ─── MENU ITEMS ───
+// ─── MENU SCREEN (items + subscriptions tabs) ───
+let _adminMenuTab = 'items';
+
+function loadMenuScreen() {
+  setAdminMenuTab(_adminMenuTab);
+}
+
+function setAdminMenuTab(tab) {
+  _adminMenuTab = tab;
+  document.querySelectorAll('[data-menu-tab]').forEach(b => b.classList.toggle('active', b.dataset.menuTab === tab));
+  document.getElementById('menu-tab-items')?.classList.toggle('active', tab === 'items');
+  document.getElementById('menu-tab-subs')?.classList.toggle('active', tab === 'subs');
+  const addBtn = document.getElementById('menu-add-btn');
+  if (addBtn) addBtn.onclick = tab === 'items' ? () => openMenuItemModal() : () => openSubModal();
+  if (tab === 'items') loadMenuItems();
+  else loadSubscriptions();
+}
+
 async function loadMenuItems() {
   const el = document.getElementById('mi-list');
   el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
@@ -2714,16 +2767,20 @@ setTimeout(hideSplash, 2000);
         const expired = d.expires_at && (Date.now() / 1000 > d.expires_at);
         const tpay = new URLSearchParams(window.location.search).get('tpay');
         if (tpay) { _tpayMsg = tpay; history.replaceState(null, '', window.location.pathname); }
+        const _proceedAdmin = (dest) => {
+          if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }); }
+          else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }
+        };
         if (expired) {
           S.session = d;
           document.getElementById('sn-email').textContent = d.user?.email || '';
           refreshSession().then(async ok => {
-            if (ok) { goTo(tpay ? 'profile' : 'stores'); }
+            if (ok) { _proceedAdmin(tpay ? 'profile' : 'stores'); }
             else { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
           });
         } else {
           setSession(d);
-          goTo(tpay ? 'profile' : 'stores');
+          _proceedAdmin(tpay ? 'profile' : 'stores');
         }
         return;
       }
@@ -3135,6 +3192,7 @@ const _sched = {
   selectedDays: new Set(),
   selectedTplId: null,
   dayData: {},
+  bookingCounts: {},
   templates: [],
 };
 
@@ -3175,9 +3233,14 @@ async function loadSchedMonth() {
   const lastDay  = new Date(_sched.year, _sched.month + 1, 0);
   const from = _fmtD(firstDay), to = _fmtD(lastDay);
   _sched.dayData = {};
+  _sched.bookingCounts = {};
   try {
-    const rows = await req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`);
-    rows.forEach(r => { _sched.dayData[r.date] = r.slots; });
+    const [schedRows, bkRows] = await Promise.all([
+      req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`),
+      req(`/rest/v1/bookings?store_id=eq.${_sched.storeId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date`),
+    ]);
+    schedRows.forEach(r => { _sched.dayData[r.date] = r.slots; });
+    bkRows.forEach(r => { _sched.bookingCounts[r.slot_date] = (_sched.bookingCounts[r.slot_date] || 0) + 1; });
   } catch(e) {}
   renderSchedCalendar();
 }
@@ -3224,7 +3287,9 @@ function renderSchedCalendar() {
   cells.forEach((c, i) => {
     if (i % 7 === 0) html += '<tr>';
     const onclick = c.ds ? ` onclick="onSchedDayClick('${c.ds}')"` : '';
-    html += `<td class="${c.cls}"${onclick}><span class="sd-n">${c.d}</span></td>`;
+    const cnt = c.ds ? (_sched.bookingCounts[c.ds] || 0) : 0;
+    const badge = cnt > 0 ? `<span class="sched-bk-cnt">${cnt}</span>` : '';
+    html += `<td class="${c.cls}"${onclick}><span class="sd-n">${c.d}</span>${badge}</td>`;
     if (i % 7 === 6) html += '</tr>';
   });
   document.getElementById('sched-calendar').innerHTML = html;
@@ -3259,6 +3324,7 @@ async function openDayView(dateStr) {
     ).join('');
   }
   document.getElementById('sched-day-view').style.display = '';
+  document.getElementById('sched-close-day-btn').dataset.date = dateStr;
 
   const bkEl = document.getElementById('sched-day-bookings');
   bkEl.innerHTML = '';
@@ -3272,16 +3338,43 @@ async function openDayView(dateStr) {
           const p = b.profiles;
           return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:6px;background:var(--bg)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-              <div>
+              <div style="flex:1;min-width:0">
                 <div style="font:600 13px/1 var(--font-sans);margin-bottom:4px">${esc(b.menu_items?.name||'')}</div>
                 <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">${s} — ${e} · ${paid?'✅ Оплачено':'⏳ Не оплачено'}</div>
                 ${p ? `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:2px">${esc(p.full_name||'')}${p.phone?' · '+esc(p.phone):''}${p.email?' · '+esc(p.email):''}</div>` : ''}
               </div>
-              <div style="font:600 13px/1 var(--font-sans);color:var(--accent);flex-shrink:0">${b.total_price||b.menu_items?.price||0} ₽</div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+                <div style="font:600 13px/1 var(--font-sans);color:var(--accent)">${b.total_price||b.menu_items?.price||0} ₽</div>
+                ${!paid ? `<button class="btn btn-p btn-sm" onclick="markBookingPaid('${b.id}','${dateStr}')">Оплачено</button>` : ''}
+              </div>
             </div>
           </div>`;
         }).join('');
   } catch(e) {}
+}
+
+async function markBookingPaid(bookingId, dateStr) {
+  try {
+    await req(`/rest/v1/bookings?id=eq.${bookingId}`, {
+      method: 'PATCH', body: JSON.stringify({ payment_status: 'paid' }),
+    });
+    showAdminToast('Оплата подтверждена');
+    openDayView(dateStr);
+  } catch(e) { showAdminToast('Ошибка'); }
+}
+
+async function deleteScheduleDay(dateStr) {
+  if (!_sched.storeId || !dateStr) return;
+  if (!confirm(`Удалить расписание на ${dateStr}? День будет закрыт.`)) return;
+  try {
+    await req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=eq.${dateStr}`, {
+      method: 'DELETE',
+    });
+    delete _sched.dayData[dateStr];
+    closeDayView();
+    renderSchedCalendar();
+    showAdminToast('День закрыт');
+  } catch(e) { showAdminToast('Ошибка удаления'); }
 }
 
 function closeDayView() {

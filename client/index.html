@@ -487,7 +487,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <button class="sn-btn" data-nav="home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Алиби</button>
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
-  <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
   <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> <span class="nav-cart-lbl">Корзина и заказ</span> <span id="sn-cart-cnt"></span></button>
   <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   <div class="sn-spacer"></div>
@@ -541,7 +540,10 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ HOME (hub) ════════════════ -->
 <div id="screen-home" class="screen">
-  <div class="ph"><h2>Alliby</h2></div>
+  <div class="ph" style="display:flex;align-items:center;justify-content:space-between">
+    <h2>Alliby</h2>
+    <button class="btn btn-sm" style="font-size:12px" onclick="openCityModal()">📍 <span class="city-name-lbl"></span></button>
+  </div>
   <div class="home-tiles">
     <div class="home-tile home-tile-alibi" onclick="goTo('alibi')">
       <div class="ht-icon">🎫</div>
@@ -588,6 +590,10 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="map-layout">
 
     <div class="sl-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px 0">
+        <span style="font-size:12px;color:var(--fg-3)">📍 <span class="city-name-lbl"></span></span>
+        <button class="btn btn-sm" style="font-size:11px;padding:3px 8px" onclick="openCityModal()">Сменить</button>
+      </div>
       <div class="dir-tabs" id="dir-tabs">
         <button class="dir-tab active" data-dir="food" onclick="setDirection('food')">🍽️ Еда</button>
         <button class="dir-tab" data-dir="goods" onclick="setDirection('goods')">🛍️ Товары</button>
@@ -757,33 +763,21 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="ph"><h2>Абонементы<span class="screen-help" data-info="Ваши абонементы — многоразовые скидки на любимые блюда и услуги.">?</span></h2></div>
   <div class="screen-tip"></div>
   <div class="pb">
-    <div class="tab-nav">
-      <button class="tab-btn active" data-tab-sub="store">Заведение</button>
-      <button class="tab-btn" data-tab-sub="active">Активные</button>
-      <button class="tab-btn" data-tab-sub="all">Все</button>
-      <button class="tab-btn" data-tab-sub="gifts">Подарки</button>
+    <input id="sub-search" type="search" placeholder="Поиск…" oninput="filterSubs()" style="margin-bottom:12px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="sub-store-chip active" data-sub-filter="all" onclick="setSubFilter('all')">Все</button>
+      <button class="sub-store-chip" data-sub-filter="active" onclick="setSubFilter('active')">Активные</button>
+      <button class="sub-store-chip" data-sub-filter="gifts" onclick="setSubFilter('gifts')">Подарки</button>
+      <button class="sub-store-chip" data-sub-filter="store" onclick="setSubFilter('store')">Купить</button>
     </div>
-    <div id="sub-store" class="tab-pane active">
-      <div id="sub-store-list" class="items-grid" style="padding-top:8px"></div>
-    </div>
-    <div id="sub-active" class="tab-pane">
-      <div id="usubs-active"><div class="loading">Загрузка…</div></div>
-    </div>
-    <div id="sub-all" class="tab-pane">
-      <div id="usubs-all"><div class="loading">Загрузка…</div></div>
-    </div>
-    <div id="sub-gifts" class="tab-pane">
-      <h3 style="margin:0 0 10px">Мои подарки<span class="screen-help" data-info="Абонементы которые вы запланировали подарить кому-то">?</span></h3>
+    <div id="sub-unified-list"></div>
+    <div id="sub-gift-activate" style="display:none;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <h3 style="margin:0 0 6px">Активировать подаренный абонемент<span class="screen-help" data-info="Если вам подарили абонемент — здесь можно ввести его идентификатор чтобы начать им пользоваться">?</span></h3>
       <div class="screen-tip"></div>
-      <div id="usubs-gifts"><div class="loading">Загрузка…</div></div>
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-        <h3 style="margin:0 0 6px">Активировать подаренный абонемент<span class="screen-help" data-info="Если вам подарили абонемент — здесь можно ввести его идентификатор чтобы начать им пользоваться">?</span></h3>
-        <div class="screen-tip"></div>
-        <p class="txt-sm" style="margin-bottom:10px;color:var(--muted)">Введите ID абонемента, который вам передали</p>
-        <div style="display:flex;gap:8px">
-          <input id="gift-activate-input" type="text" placeholder="ID абонемента…" style="flex:1;min-width:0">
-          <button class="btn btn-p" id="gift-activate-btn" onclick="activateGift()">Активировать</button>
-        </div>
+      <p class="txt-sm" style="margin-bottom:10px;color:var(--muted)">Введите ID абонемента, который вам передали</p>
+      <div style="display:flex;gap:8px">
+        <input id="gift-activate-input" type="text" placeholder="ID абонемента…" style="flex:1;min-width:0">
+        <button class="btn btn-p" id="gift-activate-btn" onclick="activateGift()">Активировать</button>
       </div>
     </div>
   </div>
@@ -858,6 +852,10 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
 
     <div class="sec">
+      <button class="btn btn-full" onclick="goTo('subscriptions')" style="display:flex;align-items:center;gap:8px;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Мои абонементы</button>
+    </div>
+
+    <div class="sec">
       <button class="btn btn-d btn-full" onclick="doLogout()">Выйти из аккаунта</button>
     </div>
 
@@ -876,7 +874,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="bn-btn" data-nav="home"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Алиби</button>
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
-    <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
     <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span><span class="nav-cart-lbl bn-lbl">Корзина<br>и заказ</span></button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
@@ -1146,11 +1143,60 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   </div>
 </div>
 
+<!-- ════ CITY SELECTION MODAL ════ -->
+<div class="overlay" id="m-city" style="z-index:9999">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-hd"><h3>Ваш город</h3></div>
+    <p style="font-size:13px;color:var(--fg-3);margin-bottom:14px">Выберите город, чтобы видеть заведения рядом</p>
+    <div id="m-city-list" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
 <script>
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
 const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
 const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
+
+// ─── CITIES ───
+const CITIES = [{ name: 'Самара', tz: 'Europe/Samara', lat: 53.195, lng: 50.201, zoom: 12 }];
+function _cityInfo() {
+  const saved = localStorage.getItem('alliby_city');
+  return CITIES.find(c => c.name === saved) || CITIES[0];
+}
+function nowInCity() {
+  const tz = _cityInfo().tz;
+  const s = new Intl.DateTimeFormat('sv', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).format(new Date());
+  return new Date(s.replace(' ', 'T'));
+}
+function todayInCity() {
+  return new Intl.DateTimeFormat('sv', {
+    timeZone: _cityInfo().tz, year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+}
+function selectCity(name) {
+  localStorage.setItem('alliby_city', name);
+  document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = name);
+  closeModal('m-city');
+  const ci = _cityInfo();
+  if (S.map) S.map.flyTo({ center: [ci.lng, ci.lat], zoom: ci.zoom });
+  S.allStores = []; S.mapFitted = false;
+  if (document.getElementById('screen-map')?.classList.contains('active')) loadMapStores();
+  // continue deferred navigation if any
+  if (window._cityNavCb) { const cb = window._cityNavCb; window._cityNavCb = null; cb(); }
+}
+function openCityModal(deferred) {
+  const list = document.getElementById('m-city-list');
+  const current = localStorage.getItem('alliby_city');
+  list.innerHTML = CITIES.map(c =>
+    `<button class="btn${c.name === current ? ' btn-p' : ''} btn-full" onclick="selectCity('${esc(c.name)}')">${esc(c.name)} <span style="font-size:11px;color:var(--fg-3)">${c.tz}</span></button>`
+  ).join('');
+  if (deferred) window._cityNavCb = deferred;
+  openModal('m-city');
+}
 
 // ─── DEFAULTS ───
 const DEFAULT_MAP_CFG = {
@@ -1188,6 +1234,7 @@ const S = {
   features: { ...DEFAULT_FEATURES },
   direction: 'food',
   _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null} },
+  get city() { return localStorage.getItem('alliby_city'); },
 };
 
 const subPlans = {}; // cache of subscription plan objects keyed by id
@@ -1484,13 +1531,9 @@ function showAuthTab(name) {
 }
 document.querySelectorAll('[data-tab-auth]').forEach(b => b.addEventListener('click', () => showAuthTab(b.dataset.tabAuth)));
 
-document.querySelectorAll('[data-tab-sub]').forEach(b => {
-  b.addEventListener('click', () => {
-    document.querySelectorAll('[data-tab-sub]').forEach(x => x.classList.toggle('active', x === b));
-    document.querySelectorAll('#screen-subscriptions .tab-pane').forEach(p => p.classList.remove('active'));
-    document.getElementById('sub-' + b.dataset.tabSub)?.classList.add('active');
-  });
-});
+// subscriptions filter state
+let _subFilter = 'all';
+let _subsAllData = { user: [], gifts: [] };
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1596,7 +1639,10 @@ async function doLogin() {
       body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
     });
     setSession(d);
-    await requireContract('buyer', async () => { if (!(await navigateDeepLink())) goTo('map'); });
+    await requireContract('buyer', async () => {
+      const proceed = async () => { if (!(await navigateDeepLink())) goTo('map'); };
+      if (!S.city) { openCityModal(proceed); } else { document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city); await proceed(); }
+    });
   } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
@@ -1614,7 +1660,10 @@ async function doRegister() {
     });
     if (d?.access_token) {
       setSession(d);
-      await requireContract('buyer', async () => { if (!(await navigateDeepLink())) goTo('map'); });
+      await requireContract('buyer', async () => {
+        const proceed = async () => { if (!(await navigateDeepLink())) goTo('map'); };
+        if (!S.city) { openCityModal(proceed); } else { document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city); await proceed(); }
+      });
     } else {
       err.className = 'alert alert-ok';
       err.textContent = 'Аккаунт создан! Войдите с вашим email и паролем.';
@@ -1688,8 +1737,9 @@ async function loadMapStores() {
   const el = document.getElementById('sl-list');
   el.innerHTML = SK.storeList();
   try {
+    const _city = S.city || 'Самара';
     const [stores, locs, subOwners] = await Promise.all([
-      req('/rest/v1/stores?order=name.asc&select=*,store_categories(name,icon)'),
+      req(`/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&order=name.asc&select=*,store_categories(name,icon)`),
       req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
       req('/rest/v1/rpc/get_active_sub_owner_ids', { method: 'POST', body: '{}' }).catch(() => []),
     ]);
@@ -1710,11 +1760,16 @@ async function loadMapStores() {
 
 function fitMapToAllStores() {
   if (S.mapFitted || !S.map) return;
+  S.mapFitted = true;
   const pts = S.allStores.filter(st => st.lng != null && st.lat != null);
-  if (!pts.length) return;
+  const ci = _cityInfo();
+  if (!pts.length) {
+    const fly = () => S.map.flyTo({ center: [ci.lng, ci.lat], zoom: ci.zoom, duration: 600 });
+    if (S.map.loaded()) fly(); else S.map.once('load', fly);
+    return;
+  }
   const bounds = new maplibregl.LngLatBounds();
   pts.forEach(st => bounds.extend([st.lng, st.lat]));
-  S.mapFitted = true;
   const doFit = () => S.map.fitBounds(bounds, { padding: 80, maxZoom: 15, duration: 600 });
   if (S.map.loaded()) doFit(); else S.map.once('load', doFit);
 }
@@ -1799,9 +1854,10 @@ function renderMapMarkers(stores) {
 async function loadMapData() {
   if (S.map) { setTimeout(() => S.map.resize(), 0); applyMapFilter(); return; }
   await new Promise(r => setTimeout(r, 0));
+  const _ci = _cityInfo();
   S.map = new maplibregl.Map({
     container: 'map-gl', style: buildMapStyle(S.mapCfg),
-    center: [0, 0], zoom: 2, attributionControl: false,
+    center: [_ci.lng, _ci.lat], zoom: _ci.zoom, attributionControl: false,
     transformRequest: (url) => {
       if (url.includes('/functions/v1/vector-tiles/')) {
         const headers = { apikey: SB_ANON };
@@ -1916,10 +1972,12 @@ function renderSubCard(s) {
     <div class="sub-meta">${s.duration_days} дн. · ${s.total_uses === 0 ? 'безлимит' : s.total_uses + ' исп.'}${stockLabel}</div>
     ${!canBuy ? '' : outOfStock
       ? `<button class="btn btn-sm btn-full" disabled style="opacity:.4">Нет в наличии</button>`
-      : (inCart
-        ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">✓ В корзине</button>`
-        : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`)}
-    ${!canBuy || outOfStock ? '' : (inGift
+      : S.direction === 'services'
+        ? `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();buySubDirect('${s.id}')">Купить</button>`
+        : (inCart
+          ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">✓ В корзине</button>`
+          : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`)}
+    ${!canBuy || outOfStock || S.direction === 'services' ? '' : (inGift
       ? `<button class="btn btn-sm btn-full" style="margin-top:4px;opacity:.65" onclick="event.stopPropagation();removeFromGiftCart('${s.id}')">🎁 В корзине</button>`
       : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftConfirm('${s.id}')">Приобрести в подарок</button>`)}
   </div>`;
@@ -2120,7 +2178,7 @@ function itemFallbackImg(item, alt) {
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
   if (S.direction === 'services') {
-    return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openBookingSlotModal(itemCache.get('${item.id}'))">Записаться</button>`;
+    return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openBookingSlotModal(itemCache.get('${item.id}'))">Перейти к оплате</button>`;
   }
   return qty > 0
     ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
@@ -2208,7 +2266,7 @@ function openItemDetail(id) {
   const btn = document.getElementById('mi-cart-btn');
   btn.disabled = !item.is_available;
   if (S.direction === 'services' && item.is_available) {
-    btn.textContent = 'Записаться';
+    btn.textContent = 'Перейти к оплате';
     btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
   } else {
     btn.textContent = item.is_available ? 'В заказ' : 'Недоступно';
@@ -2219,11 +2277,9 @@ function openItemDetail(id) {
 
 function goToSubCard(userSubId) {
   closeModal('m-item');
+  _subFilter = 'active';
   goTo('subscriptions');
-  setTimeout(() => {
-    document.querySelector('[data-tab-sub="active"]')?.click();
-    openSubModal(userSubId);
-  }, 250);
+  setTimeout(() => openSubModal(userSubId), 250);
 }
 
 function addToCartFromDetail() {
@@ -2475,24 +2531,65 @@ function cartQty(id, d) {
 
 // ─── MY SUBSCRIPTIONS ───
 async function loadMySubscriptions() {
-  loadSubStore();
-  document.getElementById('usubs-active').innerHTML = SK.usubCards();
-  document.getElementById('usubs-all').innerHTML    = SK.usubCards();
-  document.getElementById('usubs-gifts').innerHTML  = SK.usubCards();
+  _subsAllData = { user: [], gifts: [] };
+  document.getElementById('sub-gift-activate').style.display = _subFilter === 'gifts' ? '' : 'none';
+  document.querySelectorAll('[data-sub-filter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.subFilter === _subFilter);
+  });
+  if (_subFilter === 'store') {
+    const ul = document.getElementById('sub-unified-list');
+    if (ul) ul.innerHTML = '<div id="sub-store-list" class="subs-col"></div>';
+    await loadSubStore();
+    return;
+  }
+  const ul = document.getElementById('sub-unified-list');
+  if (ul) ul.innerHTML = SK.usubCards(2);
   try {
-    // GET /rest/v1/user_subscriptions?select=*,subscriptions(*)
-    const [active, all, gifts] = await Promise.all([
-      req('/rest/v1/user_subscriptions?status=eq.active&gift_status=is.null&select=*,subscriptions(*)'),
+    const [allSubs, gifts] = await Promise.all([
       req('/rest/v1/user_subscriptions?gift_status=is.null&select=*,subscriptions(*)&order=purchase_date.desc'),
       req('/rest/v1/user_subscriptions?gift_status=in.(pending,activated)&select=*,subscriptions(*)&order=purchase_date.desc'),
     ]);
-    document.getElementById('usubs-active').innerHTML = active.length
-      ? active.map(renderUserSub).join('') : '<div class="empty">Нет активных абонементов</div>';
-    document.getElementById('usubs-all').innerHTML = all.length
-      ? all.map(renderUserSub).join('') : '<div class="empty">Нет абонементов</div>';
-    document.getElementById('usubs-gifts').innerHTML = gifts.length
-      ? gifts.map(renderGiftSub).join('') : '<div class="empty">Нет подарочных абонементов</div>';
-  } catch(e) { document.getElementById('usubs-active').innerHTML = '<div class="empty">Ошибка</div>'; }
+    _subsAllData = { user: allSubs, gifts };
+    renderSubUnifiedList();
+  } catch { if (ul) ul.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+}
+
+function setSubFilter(filter) {
+  _subFilter = filter;
+  document.querySelectorAll('[data-sub-filter]').forEach(b => {
+    b.classList.toggle('active', b.dataset.subFilter === filter);
+  });
+  document.getElementById('sub-gift-activate').style.display = filter === 'gifts' ? '' : 'none';
+  if (filter === 'store') {
+    const ul = document.getElementById('sub-unified-list');
+    if (ul) ul.innerHTML = '<div id="sub-store-list" class="subs-col"></div>';
+    loadSubStore();
+    return;
+  }
+  if (_subsAllData.user.length || _subsAllData.gifts.length) {
+    renderSubUnifiedList();
+  } else {
+    loadMySubscriptions();
+  }
+}
+
+function filterSubs() {
+  if (_subFilter !== 'store') renderSubUnifiedList();
+}
+
+function renderSubUnifiedList() {
+  const el = document.getElementById('sub-unified-list');
+  if (!el) return;
+  const query = (document.getElementById('sub-search')?.value || '').trim().toLowerCase();
+  let items = _subFilter === 'gifts' ? _subsAllData.gifts
+    : _subFilter === 'active' ? _subsAllData.user.filter(us => us.status === 'active')
+    : _subsAllData.user;
+  if (query) items = items.filter(us => (us.subscriptions?.name || '').toLowerCase().includes(query));
+  if (!items.length) {
+    el.innerHTML = '<div class="empty">Ничего не найдено</div>';
+    return;
+  }
+  el.innerHTML = (_subFilter === 'gifts' ? items.map(renderGiftSub) : items.map(renderUserSub)).join('');
 }
 
 function renderUserSub(us) {
@@ -2540,8 +2637,8 @@ async function activateGift() {
     });
     if (input) input.value = '';
     showGeoToast('Абонемент успешно активирован!');
+    _subFilter = 'active';
     loadMySubscriptions();
-    setTimeout(() => document.querySelector('[data-tab-sub="active"]')?.click(), 300);
   } catch(e) {
     restore();
     const msg = String(e.message || e);
@@ -2627,7 +2724,7 @@ async function loadSubStore() {
   let stores = S.allStores.filter(st => st.direction === S.direction);
   if (!stores.length) {
     try {
-      stores = await req(`/rest/v1/stores?direction=eq.${S.direction}&order=name.asc&select=*,store_categories(name,icon)`);
+      stores = await req(`/rest/v1/stores?city=eq.${encodeURIComponent(S.city||'Самара')}&direction=eq.${S.direction}&order=name.asc&select=*,store_categories(name,icon)`);
     } catch {}
   }
 
@@ -2834,6 +2931,21 @@ async function checkoutGiftSubs() {
   openModal('m-tbank-pay');
 }
 
+function buySubDirect(id) {
+  const sub = subPlans[id];
+  if (!sub) return;
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  closeModal('m-sub-detail');
+  _pendingPayment = { type: 'sub', items: [{ sub, direction: S.direction }] };
+  document.getElementById('tbank-amount').textContent = sub.price + ' ₽';
+  document.getElementById('tbank-order-info').textContent = `Абонемент «${sub.name}»`;
+  document.getElementById('tbank-card').value = '';
+  document.getElementById('tbank-exp').value = '';
+  document.getElementById('tbank-cvv').value = '';
+  document.getElementById('tbank-error').style.display = 'none';
+  openModal('m-tbank-pay');
+}
+
 function openSubDetailModal(id) {
   const s = subPlans[id];
   if (!s) return;
@@ -2844,8 +2956,14 @@ function openSubDetailModal(id) {
   const descEl = document.getElementById('msd-desc');
   descEl.textContent    = s.description || '';
   descEl.style.display  = s.description ? 'block' : 'none';
-  document.getElementById('msd-buy-btn').onclick  = () => { closeModal('m-sub-detail'); addSubToCart(s.id); showGeoToast('Добавлено в корзину'); };
-  document.getElementById('msd-gift-btn').onclick = () => { closeModal('m-sub-detail'); openGiftConfirm(s.id); };
+  const isServices = S.direction === 'services';
+  document.getElementById('msd-buy-btn').textContent = isServices ? 'Купить' : 'Купить';
+  document.getElementById('msd-buy-btn').onclick = isServices
+    ? () => buySubDirect(s.id)
+    : () => { closeModal('m-sub-detail'); addSubToCart(s.id); showGeoToast('Добавлено в корзину'); };
+  const giftBtn = document.getElementById('msd-gift-btn');
+  giftBtn.style.display = isServices ? 'none' : '';
+  giftBtn.onclick = () => { closeModal('m-sub-detail'); openGiftConfirm(s.id); };
   openModal('m-sub-detail');
 }
 
@@ -2910,8 +3028,8 @@ async function buySubscription() {
     }
     if (isGift) {
       alert('Подарочный абонемент куплен! ID абонемента отображается в разделе «Подарки» — передайте его получателю.');
+      _subFilter = 'gifts';
       goTo('subscriptions');
-      setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
     } else {
       alert('Абонемент куплен! Оплата имитирована.');
       // Если в корзине есть товары — показать корзину с пересчитанными ценами
@@ -3036,7 +3154,11 @@ async function restoreNav() {
   }
   const SCREENS = ['home','alibi','store','menu','cart','subscriptions','profile'];
   const nav = localStorage.getItem('alliby_nav');
-  goTo(nav && SCREENS.includes(nav) ? nav : 'home');
+  const _navTarget = () => goTo(nav && SCREENS.includes(nav) ? nav : 'home');
+  if (!S.city) { openCityModal(_navTarget); return; }
+  // update city labels
+  document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city);
+  _navTarget();
 }
 
 // ─── SPLASH ───
@@ -3510,7 +3632,22 @@ async function submitPayment() {
 
   try {
     const ptype = _pendingPayment.type || 'goods';
-    if (ptype === 'sub' || ptype === 'gift-sub') {
+    if (ptype === 'booking') {
+      const { data, rescheduleId } = _pendingPayment;
+      if (rescheduleId) {
+        await req(`/rest/v1/bookings?id=eq.${rescheduleId}&user_id=eq.${S.session.user.id}`, {
+          method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
+        });
+      }
+      await req('/rest/v1/bookings', {
+        method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ ...data, payment_status: 'paid' }),
+      });
+      closeModal('m-tbank-pay');
+      _pendingPayment = null;
+      showGeoToast('✅ Запись создана и оплачена');
+      if (document.getElementById('screen-bookings')?.classList.contains('active')) loadBookingsScreen();
+    } else if (ptype === 'sub' || ptype === 'gift-sub') {
       const isGift = ptype === 'gift-sub';
       const items = _pendingPayment.items;
       const today = new Date();
@@ -3537,8 +3674,8 @@ async function submitPayment() {
         S.giftSubCart = S.giftSubCart.filter(c => (c.direction || 'food') !== S.direction);
         saveSubCart(); renderGiftCartSection(); refreshSubCardViews();
         showGeoToast('Подарочный абонемент куплен!');
+        _subFilter = 'gifts';
         goTo('subscriptions');
-        setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
       } else {
         S.subCart = S.subCart.filter(c => (c.direction || 'food') !== S.direction);
         saveSubCart(); renderSubCartSection(); refreshSubCardViews();
@@ -3570,7 +3707,7 @@ async function cancelPayment() {
   const cancelBtn = document.getElementById('tbank-cancel-btn');
   cancelBtn.disabled = true;
   const ptype = _pendingPayment.type || 'goods';
-  if (ptype !== 'sub' && ptype !== 'gift-sub') {
+  if (ptype !== 'sub' && ptype !== 'gift-sub' && ptype !== 'booking') {
     try {
       await req('/functions/v1/tbank-notify', {
         method: 'POST',
@@ -3605,7 +3742,7 @@ let _booking = {
   schedData: {}, bookedData: {}, rescheduleId: null,
 };
 let _myBk = {
-  year: new Date().getFullYear(), month: new Date().getMonth(), byDate: {},
+  year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {},
 };
 let _rescheduleTarget = null;
 
@@ -3613,7 +3750,7 @@ function _timeToMin(t) { const [h,m] = t.slice(0,5).split(':').map(Number); retu
 function _minToTime(m) { return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
 
 function getAvailableSlots(windows, booked, prepMin) {
-  if (!prepMin || prepMin <= 0) prepMin = 30;
+  if (!prepMin || prepMin < 5) prepMin = 5;
   const bk = (booked||[]).map(b => ({ s: _timeToMin(b.slot_start||b.start), e: _timeToMin(b.slot_end||b.end) }));
   const res = [];
   for (const w of (windows||[])) {
@@ -3645,12 +3782,13 @@ async function openBookingSlotModal(item, rescheduleId = null) {
   openModal('m-book-slot');
   const storeId = S.store?.id || item.store_id;
   if (!storeId) { document.getElementById('mbs-loading').style.display = 'none'; document.getElementById('mbs-no-sched').style.display = ''; return; }
-  const today = _fmtD(new Date());
-  const endDate = _fmtD(new Date(Date.now() + 60 * 24 * 60 * 60 * 1000));
+  const today = todayInCity();
+  const endDate = _fmtD(new Date(nowInCity().getTime() + 60 * 24 * 60 * 60 * 1000));
+  const rscExclude = rescheduleId ? `&id=neq.${rescheduleId}` : '';
   try {
     const [schedRows, bkRows] = await Promise.all([
       req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${today}&date=lte.${endDate}&select=date,slots`),
-      req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=gte.${today}&slot_date=lte.${endDate}&status=neq.cancelled&select=slot_date,slot_start,slot_end`),
+      req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=gte.${today}&slot_date=lte.${endDate}&status=neq.cancelled${rscExclude}&select=slot_date,slot_start,slot_end`),
     ]);
     schedRows.forEach(r => { _booking.schedData[r.date] = r.slots; });
     bkRows.forEach(r => {
@@ -3659,7 +3797,7 @@ async function openBookingSlotModal(item, rescheduleId = null) {
     });
   } catch(e) {}
   document.getElementById('mbs-loading').style.display = 'none';
-  const prepMin = item.preparation_time || 30;
+  const prepMin = item.preparation_time >= 5 ? item.preparation_time : 5;
   const dates = Object.keys(_booking.schedData).sort();
   const firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin).length > 0);
   if (!firstAvail) { document.getElementById('mbs-no-sched').style.display = ''; return; }
@@ -3707,40 +3845,90 @@ function selectBookingSlot(start, end) {
 
 async function confirmBooking(payNow) {
   if (!S.session || !_booking.item || !_booking.currentDate || !_booking.selectedSlot) return;
-  const btn = document.getElementById(payNow ? 'mbs-pay-btn' : 'mbs-book-btn');
-  const orig = btn.textContent;
-  btn.disabled = true; btn.textContent = '…';
-  try {
-    const storeId = S.store?.id || _booking.item.store_id;
-    if (_booking.rescheduleId) {
-      await req(`/rest/v1/bookings?id=eq.${_booking.rescheduleId}&user_id=eq.${S.session.user.id}`, {
-        method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
+  const storeId = S.store?.id || _booking.item.store_id;
+  const bookingData = {
+    user_id: S.session.user.id, store_id: storeId,
+    menu_item_id: _booking.item.id, slot_date: _booking.currentDate,
+    slot_start: _booking.selectedSlot.start + ':00',
+    slot_end:   _booking.selectedSlot.end   + ':00',
+    status: 'booked', total_price: _booking.item.price,
+  };
+  if (!payNow) {
+    const btn = document.getElementById('mbs-book-btn');
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      if (_booking.rescheduleId) {
+        await req(`/rest/v1/bookings?id=eq.${_booking.rescheduleId}&user_id=eq.${S.session.user.id}`, {
+          method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
+        });
+      }
+      await req('/rest/v1/bookings', {
+        method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({ ...bookingData, payment_status: 'unpaid' }),
       });
+      closeModal('m-book-slot');
+      showGeoToast('📅 Слот забронирован');
+      if (document.getElementById('screen-bookings')?.classList.contains('active')) loadBookingsScreen();
+    } catch(e) {
+      showGeoToast('Ошибка при бронировании');
+      btn.disabled = false; btn.textContent = 'Забронировать';
     }
-    await req('/rest/v1/bookings', {
-      method: 'POST',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id: S.session.user.id, store_id: storeId,
-        menu_item_id: _booking.item.id, slot_date: _booking.currentDate,
-        slot_start: _booking.selectedSlot.start + ':00',
-        slot_end:   _booking.selectedSlot.end   + ':00',
-        status: 'booked', payment_status: payNow ? 'paid' : 'unpaid',
-        total_price: _booking.item.price,
-      }),
-    });
-    closeModal('m-book-slot');
-    showGeoToast(payNow ? '✅ Запись создана и оплачена' : '📅 Слот забронирован');
-    if (document.getElementById('screen-bookings')?.classList.contains('active')) loadBookingsScreen();
-  } catch(e) {
-    showGeoToast('Ошибка при бронировании');
-    btn.disabled = false; btn.textContent = orig;
+    return;
   }
+  // payNow — check for 100% subscription first
+  const fullSubs = getApplicableSubs(_booking.item).filter(x =>
+    x.sub.discount_type === 'percent' && Number(x.sub.discount_value) >= 100 && x.us.remaining_uses !== 0);
+  if (fullSubs.length > 0) {
+    const useSub = confirm(`У вас есть абонемент «${fullSubs[0].sub.name}».\nОК — списать по абонементу (бесплатно)\nОтмена — оплатить картой`);
+    if (useSub) {
+      S.appliedSub = fullSubs[0].us;
+      // book as "paid" via subscription — no card needed
+      const btn2 = document.getElementById('mbs-pay-btn');
+      btn2.disabled = true; btn2.textContent = '…';
+      try {
+        if (_booking.rescheduleId) {
+          await req(`/rest/v1/bookings?id=eq.${_booking.rescheduleId}&user_id=eq.${S.session.user.id}`, {
+            method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
+          });
+        }
+        await req('/rest/v1/bookings', {
+          method: 'POST', headers: { Prefer: 'return=minimal' },
+          body: JSON.stringify({ ...bookingData, payment_status: 'paid' }),
+        });
+        closeModal('m-book-slot');
+        showGeoToast('✅ Запись по абонементу создана');
+        if (document.getElementById('screen-bookings')?.classList.contains('active')) loadBookingsScreen();
+      } catch(e) {
+        showGeoToast('Ошибка при бронировании');
+        btn2.disabled = false; btn2.textContent = 'Оплатить и записаться';
+      }
+      return;
+    }
+  }
+  // open T-Bank modal, booking is created after payment confirmation
+  closeModal('m-book-slot');
+  _pendingPayment = { type: 'booking', data: bookingData, rescheduleId: _booking.rescheduleId };
+  document.getElementById('tbank-amount').textContent = (_booking.item.price || 0) + ' ₽';
+  document.getElementById('tbank-order-info').textContent = `Запись: ${_booking.item.name}, ${_booking.currentDate} ${_booking.selectedSlot.start}`;
+  document.getElementById('tbank-card').value = '';
+  document.getElementById('tbank-exp').value = '';
+  document.getElementById('tbank-cvv').value = '';
+  document.getElementById('tbank-error').style.display = 'none';
+  openModal('m-tbank-pay');
 }
 
 // ── My Bookings Screen ──
 async function loadBookingsScreen() {
-  if (!S.session) return;
+  if (!S.session) {
+    document.getElementById('mbk-calendar').innerHTML = '';
+    document.getElementById('mbk-day-view').style.display = 'none';
+    document.getElementById('mbk-month-label').textContent = '';
+    const tip = document.querySelector('#screen-bookings .screen-tip');
+    if (tip) tip.innerHTML = '<div style="padding:24px 16px;text-align:center;color:var(--fg-3);font-size:14px">Войдите в аккаунт, чтобы видеть свои записи</div>';
+    return;
+  }
+  const tip = document.querySelector('#screen-bookings .screen-tip');
+  if (tip) tip.innerHTML = '';
   const mm = String(_myBk.month + 1).padStart(2, '0');
   const firstDay = `${_myBk.year}-${mm}-01`;
   const lastDay = new Date(_myBk.year, _myBk.month + 1, 0).toISOString().slice(0, 10);
@@ -3758,7 +3946,7 @@ async function loadBookingsScreen() {
 function renderMyBookingsCalendar() {
   const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
   document.getElementById('mbk-month-label').textContent = `${MONTHS[_myBk.month]} ${_myBk.year}`;
-  const today = _fmtD(new Date());
+  const today = todayInCity();
   const firstDow = new Date(_myBk.year, _myBk.month, 1).getDay();
   const offset = firstDow === 0 ? 6 : firstDow - 1;
   const daysInMonth = new Date(_myBk.year, _myBk.month + 1, 0).getDate();
@@ -3796,7 +3984,7 @@ function openMyBookingsDay(ds) {
   const DOW = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('mbk-day-title').textContent = `${DOW[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
-  const now = new Date();
+  const now = nowInCity();
   document.getElementById('mbk-day-bookings').innerHTML = bookings.map(b => {
     const bkTime = new Date(b.created_at);
     const slotDt = new Date(b.slot_date + 'T' + (b.slot_start||'00:00').slice(0,5));
@@ -3838,7 +4026,7 @@ async function cancelBooking(id) {
 function openRescheduleInfo(bookingId, menuItemId) {
   const b = Object.values(_myBk.byDate).flat().find(bk => bk.id === bookingId);
   if (!b) return;
-  const now = new Date();
+  const now = nowInCity();
   const bkTime = new Date(b.created_at);
   const slotDt = new Date(b.slot_date + 'T' + (b.slot_start||'00:00').slice(0,5));
   const canByTime = (now - bkTime) <= 15 * 60 * 1000;
