@@ -668,6 +668,18 @@ tr.row-click:hover td{background:var(--bg-2)}
 
 <!-- ════════════════ MODALS ════════════════ -->
 
+<!-- ════════════════ BOOKING DETAIL ════════════════ -->
+<div class="overlay" id="m-booking-detail">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h3 id="mbd-title">Запись</h3>
+      <button class="modal-x" onclick="closeModal('m-booking-detail')">✕</button>
+    </div>
+    <div id="mbd-body" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div class="modal-ft" id="mbd-actions" style="margin-top:16px;flex-wrap:wrap;gap:8px"></div>
+  </div>
+</div>
+
 <!-- ════════════════ SELLER CONTRACT MODAL ════════════════ -->
 <div class="overlay" id="m-contract-seller">
   <div class="modal" style="max-width:580px">
@@ -3332,6 +3344,56 @@ async function openDayView(dateStr) {
   await renderDayBookings(dateStr);
 }
 
+const _bkCache = {}; // bookingId -> { b, p }
+
+function openBookingDetail(bookingId) {
+  const entry = _bkCache[bookingId];
+  if (!entry) return;
+  const { b, p } = entry;
+  const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+  const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, pending:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
+  const st  = ST[b.status]           || { lbl: b.status,          cls: 'b-pending' };
+  const pay = PAY[b.payment_status]  || { lbl: b.payment_status,  cls: 'b-pending' };
+  const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
+  const [yr, mo, dy] = (b.slot_date||'').split('-').map(Number);
+  const MON = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  document.getElementById('mbd-title').textContent = `Запись — ${dy} ${MON[mo-1]} ${yr}`;
+  document.getElementById('mbd-body').innerHTML = `
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Время</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font:700 15px/1 var(--font-sans)">${ts} — ${te}</span>
+        <span class="badge ${st.cls}">${st.lbl}</span>
+        <span class="badge ${pay.cls}">${pay.lbl}</span>
+      </div>
+    </div>
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Услуга</div>
+      <div style="font:600 14px/1.3 var(--font-sans)">${esc(b.menu_items?.name || '—')}</div>
+      <div style="font:700 17px/1 var(--font-sans);color:var(--accent);margin-top:5px">${b.total_price ?? b.menu_items?.price ?? '—'} ₽</div>
+      ${b.notes ? `<div style="font-size:12px;color:var(--fg-4);margin-top:5px;font-style:italic">${esc(b.notes)}</div>` : ''}
+    </div>
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Клиент</div>
+      ${p ? `
+        ${p.full_name ? `<div style="font:600 14px/1.3 var(--font-sans);margin-bottom:5px">${esc(p.full_name)}</div>` : ''}
+        ${p.phone ? `<div style="font:600 16px/1 var(--font-mono);margin-bottom:4px">${esc(p.phone)}</div>` : ''}
+        ${p.email ? `<div style="font-size:13px;color:var(--fg-3);margin-bottom:4px">${esc(p.email)}</div>` : ''}
+        <div style="font-size:11px;color:var(--fg-4);font-family:var(--font-mono)">${esc(b.user_id||'')}</div>
+      ` : '<div style="color:var(--fg-4);font-size:13px">Нет данных о клиенте</div>'}
+    </div>
+    <div style="padding-top:10px;border-top:1px solid var(--line-soft)">
+      <div class="lbl" style="margin-bottom:3px">ID записи</div>
+      <div style="font:400 11px/1.5 var(--font-mono);color:var(--fg-4);word-break:break-all">${esc(b.id)}</div>
+    </div>`;
+  const cancelled = b.status === 'cancelled', paid = b.payment_status === 'paid';
+  document.getElementById('mbd-actions').innerHTML =
+    `<button class="btn" onclick="closeModal('m-booking-detail')">Закрыть</button>`
+    + (!paid && !cancelled ? `<button class="btn btn-p" onclick="closeModal('m-booking-detail');markBookingPaid('${b.id}','${b.slot_date}')">Подтвердить оплату</button>` : '')
+    + (!cancelled ? `<button class="btn btn-d" onclick="closeModal('m-booking-detail');cancelBooking('${b.id}','${b.slot_date}')">Отменить запись</button>` : '');
+  openModal('m-booking-detail');
+}
+
 async function renderDayBookings(dateStr) {
   const bkEl = document.getElementById('sched-day-bookings');
   if (!bkEl) return;
@@ -3354,7 +3416,7 @@ async function renderDayBookings(dateStr) {
 
     if (!bks.length) { bkEl.innerHTML = ''; return; }
 
-    const ST = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+    const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
     const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, pending:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
 
     bkEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
@@ -3363,11 +3425,12 @@ async function renderDayBookings(dateStr) {
     + bks.map(b => {
       const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
       const p = profilesMap[b.user_id] || null;
-      const st  = ST[b.status]  || { lbl: b.status,          cls: 'b-pending' };
+      _bkCache[b.id] = { b, p };
+      const st  = ST[b.status]          || { lbl: b.status,         cls: 'b-pending' };
       const pay = PAY[b.payment_status] || { lbl: b.payment_status, cls: 'b-pending' };
       const cancelled = b.status === 'cancelled';
       const paid      = b.payment_status === 'paid';
-      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--bg);opacity:${cancelled ? '.5' : '1'}">
+      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--bg);opacity:${cancelled ? '.5' : '1'};cursor:pointer" onclick="openBookingDetail('${b.id}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
@@ -3381,8 +3444,8 @@ async function renderDayBookings(dateStr) {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
             <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price ?? b.menu_items?.price ?? ''} ₽</div>
-            ${!paid && !cancelled ? `<button class="btn btn-p btn-sm" onclick="markBookingPaid('${b.id}','${dateStr}')">Оплачено</button>` : ''}
-            ${!cancelled ? `<button class="btn btn-sm btn-d" style="font-size:11px" onclick="cancelBooking('${b.id}','${dateStr}')">Отменить</button>` : ''}
+            ${!paid && !cancelled ? `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${b.id}','${dateStr}')">Подтвердить оплату</button>` : ''}
+            ${!cancelled ? `<button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${b.id}','${dateStr}')">Отменить</button>` : ''}
           </div>
         </div>
       </div>`;
