@@ -287,7 +287,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 .sched-day.has-sched::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
 .sched-day.selected{background:color-mix(in oklch,var(--accent) 18%,var(--bg))}
 .sched-day.selected .sd-n{color:var(--accent);font-weight:700}
-.sched-day.empty{pointer-events:none}
+.sched-day.empty{pointer-events:none;color:var(--fg-4)}
 .sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
 .sched-tpl-card{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:var(--r-2);border:1.5px solid var(--line);background:var(--bg-1);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .sched-tpl-card:hover{border-color:var(--fg-3)}
@@ -930,7 +930,15 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
       <div class="fg">
         <label>Категория <span class="hint" data-tip="Раздел меню (Кофе, Бургеры и т.д.). Используется для фильтрации и правил абонементов">?</span></label>
-        <select id="mmi-cat"><option value="">— Без категории —</option></select>
+        <div style="display:flex;gap:6px;align-items:center">
+          <select id="mmi-cat" style="flex:1"><option value="">— Без категории —</option></select>
+          <button class="btn btn-sm" type="button" onclick="toggleNewCatRow()" title="Добавить категорию" style="flex-shrink:0;font-size:16px;line-height:1;padding:0 10px;height:36px">+</button>
+        </div>
+        <div id="mmi-new-cat-row" style="display:none;margin-top:6px;gap:6px;align-items:center">
+          <input type="text" id="mmi-new-cat-name" placeholder="Название новой категории" style="flex:1;padding:7px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)">
+          <button class="btn btn-sm btn-p" style="flex-shrink:0" onclick="saveNewCategory()">✓</button>
+          <button class="btn btn-sm" style="flex-shrink:0" onclick="hideNewCatRow()">✕</button>
+        </div>
       </div>
       <div class="fg" style="grid-column:1/-1">
         <label>Название * <span class="hint" data-tip="Полное название товара или услуги, которое увидит клиент">?</span></label>
@@ -1983,6 +1991,35 @@ async function loadMICategories() {
   } catch(e) {}
 }
 
+function toggleNewCatRow() {
+  const row = document.getElementById('mmi-new-cat-row');
+  const show = row.style.display === 'none' || !row.style.display;
+  row.style.display = show ? 'flex' : 'none';
+  if (show) { document.getElementById('mmi-new-cat-name').value = ''; document.getElementById('mmi-new-cat-name').focus(); }
+}
+function hideNewCatRow() {
+  const row = document.getElementById('mmi-new-cat-row');
+  if (row) { row.style.display = 'none'; document.getElementById('mmi-new-cat-name').value = ''; }
+}
+async function saveNewCategory() {
+  const name = document.getElementById('mmi-new-cat-name').value.trim();
+  const storeId = document.getElementById('mmi-store').value;
+  if (!name) { document.getElementById('mmi-new-cat-name').focus(); return; }
+  if (!storeId) { showAdminToast('Сначала выберите заведение'); return; }
+  try {
+    const created = await req('/rest/v1/categories', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ name, store_id: storeId }),
+    });
+    const newId = created?.[0]?.id;
+    hideNewCatRow();
+    await loadMICategories();
+    if (newId) document.getElementById('mmi-cat').value = newId;
+    showAdminToast('Категория добавлена');
+  } catch(e) { showAdminToast('Ошибка создания категории'); }
+}
+
 function updatePrepTimeLabel() {
   const storeId = document.getElementById('mmi-store')?.value;
   const dir = S.stores?.find(s => s.id === storeId)?.direction || 'food';
@@ -2026,6 +2063,7 @@ function openMenuItemModal(item) {
   }
   document.getElementById('mmi-photo').value = '';
   updatePrepTimeLabel();
+  hideNewCatRow();
   openModal('m-mi');
 }
 
@@ -3166,8 +3204,10 @@ function renderSchedCalendar() {
   const offset = firstDow === 0 ? 6 : firstDow - 1;
   const daysInMonth = new Date(_sched.year, _sched.month + 1, 0).getDate();
   const mm = String(_sched.month + 1).padStart(2, '0');
+  const prevMonthDays = new Date(_sched.year, _sched.month, 0).getDate();
   let html = '';
-  for (let i = 0; i < offset; i++) html += '<div class="sched-day empty"></div>';
+  for (let i = offset - 1; i >= 0; i--)
+    html += `<div class="sched-day empty"><span class="sd-n">${prevMonthDays - i}</span></div>`;
   for (let d = 1; d <= daysInMonth; d++) {
     const dd = String(d).padStart(2, '0');
     const dateStr = `${_sched.year}-${mm}-${dd}`;
@@ -3178,7 +3218,8 @@ function renderSchedCalendar() {
     html += `<div class="${cls}" onclick="onSchedDayClick('${dateStr}')"><span class="sd-n">${d}</span></div>`;
   }
   const trailing = (7 - ((offset + daysInMonth) % 7)) % 7;
-  for (let i = 0; i < trailing; i++) html += '<div class="sched-day empty"></div>';
+  for (let i = 1; i <= trailing; i++)
+    html += `<div class="sched-day empty"><span class="sd-n">${i}</span></div>`;
   document.getElementById('sched-calendar').innerHTML = html;
 }
 
