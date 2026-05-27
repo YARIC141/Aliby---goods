@@ -416,6 +416,18 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sched-day.empty{pointer-events:none;color:var(--muted)}
 .sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
 .sched-day.has-sched::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
+.sched-day.bk-full{color:var(--fg-4);cursor:default}
+/* ── BOOKING SLOTS ── */
+.booking-slot{padding:6px 14px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--bg-1);font:500 13px/1 var(--font-sans);cursor:pointer;transition:all var(--t-fast)}
+.booking-slot:hover{border-color:var(--fg-3)}
+.booking-slot.active{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 12%,var(--bg));color:var(--accent);font-weight:600}
+/* ── BOOKING LIST ── */
+.bk-item{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--bg-1)}
+.bk-item-main{flex:1;min-width:0}
+.bk-item-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.reschedule-rule{padding:8px 12px;border-radius:var(--r-2);font:400 13px/1.4 var(--font-sans);margin-bottom:6px}
+.reschedule-rule.ok{background:color-mix(in oklch,var(--ok) 12%,var(--bg))}
+.reschedule-rule.no{background:var(--bg-2);color:var(--fg-3)}
 </style>
 <script>
 if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
@@ -476,7 +488,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
   <button class="sn-btn" data-nav="subscriptions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg> Абонементы</button>
-  <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина и заказ <span id="sn-cart-cnt"></span></button>
+  <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> <span class="nav-cart-lbl">Корзина и заказ</span> <span id="sn-cart-cnt"></span></button>
   <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   <div class="sn-spacer"></div>
   <div class="sn-user" id="sn-email"></div>
@@ -714,6 +726,32 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 </div>
 
 
+<!-- ════════════════ MY BOOKINGS ════════════════ -->
+<div id="screen-bookings" class="screen">
+  <div class="ph"><h2>Записи</h2></div>
+  <div class="screen-tip"></div>
+  <div class="pb">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button class="btn btn-sm" onclick="myBookingsPrevMonth()">←</button>
+      <span id="mbk-month-label" style="font:600 15px/1 var(--font-sans)"></span>
+      <button class="btn btn-sm" onclick="myBookingsNextMonth()">→</button>
+    </div>
+    <div class="sched-cal-wrap" style="margin-bottom:16px">
+      <table class="sched-cal-table">
+        <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+        <tbody id="mbk-calendar"></tbody>
+      </table>
+    </div>
+    <div id="mbk-day-view" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div id="mbk-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+        <button class="btn btn-sm" onclick="document.getElementById('mbk-day-view').style.display='none'">✕</button>
+      </div>
+      <div id="mbk-day-bookings"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════ MY SUBSCRIPTIONS ════════════════ -->
 <div id="screen-subscriptions" class="screen">
   <div class="ph"><h2>Абонементы<span class="screen-help" data-info="Ваши абонементы — многоразовые скидки на любимые блюда и услуги.">?</span></h2></div>
@@ -839,7 +877,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="subscriptions"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg></span>Абонементы</button>
-    <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Корзина<br>и заказ</button>
+    <button class="bn-btn" data-nav="cart"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span><span class="nav-cart-lbl bn-lbl">Корзина<br>и заказ</span></button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
@@ -849,6 +887,50 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ MODALS ════════════════ -->
 
+<!-- Booking slot selection modal -->
+<div class="overlay" id="m-book-slot">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="mbs-title">Выберите время</h3>
+      <button class="modal-x" onclick="closeModal('m-book-slot')">✕</button>
+    </div>
+    <div id="mbs-service-info" style="font:400 13px/1 var(--font-sans);color:var(--muted);margin-bottom:12px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <button class="btn btn-sm" onclick="bookingPrevMonth()">←</button>
+      <span id="mbs-month-label" style="font:600 14px/1 var(--font-sans)"></span>
+      <button class="btn btn-sm" onclick="bookingNextMonth()">→</button>
+    </div>
+    <div class="sched-cal-wrap" style="margin-bottom:12px">
+      <table class="sched-cal-table">
+        <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+        <tbody id="mbs-calendar"></tbody>
+      </table>
+    </div>
+    <div id="mbs-slots-wrap" style="display:none;margin-bottom:14px">
+      <div id="mbs-slots-date" style="font:600 13px/1 var(--font-sans);margin-bottom:8px"></div>
+      <div id="mbs-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" id="mbs-book-btn" disabled onclick="confirmBooking(false)">Забронировать</button>
+      <button class="btn btn-p" id="mbs-pay-btn" disabled onclick="confirmBooking(true)">Оплатить и записаться</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reschedule info modal -->
+<div class="overlay" id="m-reschedule-info">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Перенос записи</h3>
+      <button class="modal-x" onclick="closeModal('m-reschedule-info')">✕</button>
+    </div>
+    <div id="mri-body" style="margin-bottom:16px"></div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-reschedule-info')">Закрыть</button>
+      <button class="btn btn-p" id="mri-ok-btn" style="display:none" onclick="proceedReschedule()">Выбрать новое время</button>
+    </div>
+  </div>
+</div>
 
 <div class="overlay" id="m-usub">
   <div class="modal">
@@ -1300,6 +1382,11 @@ function setDirection(dir) {
   renderMapCategoryChips();
   applyMapFilter();
   updateMenuSearchPlaceholder();
+  // update cart nav label
+  const isServices = dir === 'services';
+  document.querySelectorAll('.nav-cart-lbl').forEach(el => {
+    el.innerHTML = isServices ? 'Записи' : el.classList.contains('bn-lbl') ? 'Корзина<br>и заказ' : 'Корзина и заказ';
+  });
 }
 
 function updateMenuSearchPlaceholder() {
@@ -1351,13 +1438,14 @@ function goTo(id, opts = {}) {
   applyScreenAccent(id);
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  ({home:loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,subscriptions:loadMySubscriptions,profile:loadProfile})[id]?.();
-  if (opts.dir && prevId && prevId !== id) {
-    document.getElementById('screen-' + id)?.classList.add('active');
-    animateScreenChange(prevId, id, opts.dir);
+  const sid = (id === 'cart' && S.direction === 'services') ? 'bookings' : id;
+  ({home:loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,bookings:loadBookingsScreen,subscriptions:loadMySubscriptions,profile:loadProfile})[sid]?.();
+  if (opts.dir && prevId && prevId !== sid) {
+    document.getElementById('screen-' + sid)?.classList.add('active');
+    animateScreenChange(prevId, sid, opts.dir);
   } else {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen-' + id)?.classList.add('active');
+    document.getElementById('screen-' + sid)?.classList.add('active');
   }
 }
 
@@ -2036,6 +2124,9 @@ function itemFallbackImg(item, alt) {
 
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
+  if (S.direction === 'services') {
+    return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openBookingSlotModal(itemCache.get('${item.id}'))">Записаться</button>`;
+  }
   return qty > 0
     ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
     : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В заказ</button>`;
@@ -2121,7 +2212,13 @@ function openItemDetail(id) {
 
   const btn = document.getElementById('mi-cart-btn');
   btn.disabled = !item.is_available;
-  btn.textContent = item.is_available ? 'В заказ' : 'Недоступно';
+  if (S.direction === 'services' && item.is_available) {
+    btn.textContent = 'Записаться';
+    btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
+  } else {
+    btn.textContent = item.is_available ? 'В заказ' : 'Недоступно';
+    btn.onclick = addToCartFromDetail;
+  }
   openModal('m-item');
 }
 
@@ -3507,6 +3604,338 @@ const _stSched = { storeId: null, year: 0, month: 0, dayData: {} };
 function _fmtD(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+// ─── BOOKINGS ───
+let _booking = {
+  item: null, year: new Date().getFullYear(), month: new Date().getMonth(),
+  selectedDate: null, selectedSlot: null,
+  schedData: {}, bookedData: {}, rescheduleId: null,
+};
+let _myBk = {
+  year: new Date().getFullYear(), month: new Date().getMonth(), byDate: {},
+};
+let _rescheduleTarget = null;
+
+function _timeToMin(t) { const [h,m] = t.slice(0,5).split(':').map(Number); return h*60+m; }
+function _minToTime(m) { return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+
+function getAvailableSlots(windows, booked, prepMin) {
+  if (!prepMin || prepMin <= 0) prepMin = 30;
+  const bk = (booked||[]).map(b => ({ s: _timeToMin(b.slot_start||b.start), e: _timeToMin(b.slot_end||b.end) }));
+  const res = [];
+  for (const w of (windows||[])) {
+    const ws = _timeToMin(w.start), we = _timeToMin(w.end);
+    for (let t = ws; t + prepMin <= we; t += prepMin) {
+      const te = t + prepMin;
+      if (!bk.some(b => t < b.e && te > b.s)) res.push({ start: _minToTime(t), end: _minToTime(te) });
+    }
+  }
+  return res;
+}
+
+async function openBookingSlotModal(item, rescheduleId = null) {
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  if (!item) return;
+  _booking.item = item;
+  _booking.rescheduleId = rescheduleId || null;
+  _booking.year = new Date().getFullYear();
+  _booking.month = new Date().getMonth();
+  _booking.selectedDate = null;
+  _booking.selectedSlot = null;
+  _booking.schedData = {};
+  _booking.bookedData = {};
+  document.getElementById('mbs-title').textContent = rescheduleId ? 'Перенос записи' : 'Выберите время';
+  document.getElementById('mbs-service-info').textContent = `${item.name} · ${item.price} ₽ · ${item.preparation_time || '?'} мин`;
+  document.getElementById('mbs-slots-wrap').style.display = 'none';
+  document.getElementById('mbs-book-btn').disabled = true;
+  document.getElementById('mbs-pay-btn').disabled = true;
+  openModal('m-book-slot');
+  await loadBookingMonthData(_booking.year, _booking.month);
+  renderBookingCalendar();
+}
+
+async function loadBookingMonthData(year, month) {
+  if (!_booking.item) return;
+  const storeId = S.store?.id || _booking.item.store_id;
+  if (!storeId) return;
+  const mm = String(month + 1).padStart(2, '0');
+  const firstDay = `${year}-${mm}-01`;
+  const lastDay = new Date(year, month + 1, 0).toISOString().slice(0, 10);
+  try {
+    const schedRows = await req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${firstDay}&date=lte.${lastDay}&select=date,slots`);
+    schedRows.forEach(r => { _booking.schedData[r.date] = r.slots; });
+    const bkRows = await req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&status=neq.cancelled&select=slot_date,slot_start,slot_end`);
+    _booking.bookedData = {};
+    bkRows.forEach(r => {
+      if (!_booking.bookedData[r.slot_date]) _booking.bookedData[r.slot_date] = [];
+      _booking.bookedData[r.slot_date].push({ slot_start: r.slot_start, slot_end: r.slot_end });
+    });
+  } catch(e) {}
+}
+
+function renderBookingCalendar() {
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  document.getElementById('mbs-month-label').textContent = `${MONTHS[_booking.month]} ${_booking.year}`;
+  const today = _fmtD(new Date());
+  const firstDow = new Date(_booking.year, _booking.month, 1).getDay();
+  const offset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(_booking.year, _booking.month + 1, 0).getDate();
+  const prevLast = new Date(_booking.year, _booking.month, 0).getDate();
+  const mm = String(_booking.month + 1).padStart(2, '0');
+  const prepMin = _booking.item?.preparation_time || 30;
+  const cells = [];
+  for (let i = offset - 1; i >= 0; i--)
+    cells.push({ d: prevLast - i, cls: 'sched-day empty', ds: null });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dd = String(d).padStart(2, '0');
+    const ds = `${_booking.year}-${mm}-${dd}`;
+    const windows = _booking.schedData[ds];
+    const isPast = ds < today;
+    let cls = 'sched-day';
+    if (ds === today) cls += ' today';
+    if (isPast || !windows?.length) {
+      cls += ' empty';
+    } else {
+      const avail = getAvailableSlots(windows, _booking.bookedData[ds], prepMin);
+      cls += avail.length ? ' has-sched' : ' bk-full';
+    }
+    if (ds === _booking.selectedDate) cls += ' selected';
+    cells.push({ d, cls, ds });
+  }
+  const trailing = (7 - (cells.length % 7)) % 7;
+  for (let i = 1; i <= trailing; i++)
+    cells.push({ d: i, cls: 'sched-day empty', ds: null });
+  let html = '';
+  cells.forEach((c, i) => {
+    if (i % 7 === 0) html += '<tr>';
+    const clickable = c.ds && !c.cls.includes('empty') && !c.cls.includes('bk-full');
+    html += `<td class="${c.cls}"${clickable ? ` onclick="selectBookingDate('${c.ds}')"` : ''}><span class="sd-n">${c.d}</span></td>`;
+    if (i % 7 === 6) html += '</tr>';
+  });
+  document.getElementById('mbs-calendar').innerHTML = html;
+}
+
+async function bookingPrevMonth() {
+  if (_booking.month === 0) { _booking.month = 11; _booking.year--; } else _booking.month--;
+  _booking.selectedDate = null; _booking.selectedSlot = null;
+  document.getElementById('mbs-slots-wrap').style.display = 'none';
+  document.getElementById('mbs-book-btn').disabled = true;
+  document.getElementById('mbs-pay-btn').disabled = true;
+  await loadBookingMonthData(_booking.year, _booking.month);
+  renderBookingCalendar();
+}
+async function bookingNextMonth() {
+  if (_booking.month === 11) { _booking.month = 0; _booking.year++; } else _booking.month++;
+  _booking.selectedDate = null; _booking.selectedSlot = null;
+  document.getElementById('mbs-slots-wrap').style.display = 'none';
+  document.getElementById('mbs-book-btn').disabled = true;
+  document.getElementById('mbs-pay-btn').disabled = true;
+  await loadBookingMonthData(_booking.year, _booking.month);
+  renderBookingCalendar();
+}
+
+function selectBookingDate(ds) {
+  _booking.selectedDate = ds;
+  _booking.selectedSlot = null;
+  renderBookingCalendar();
+  const windows = _booking.schedData[ds] || [];
+  const prepMin = _booking.item?.preparation_time || 30;
+  const slots = getAvailableSlots(windows, _booking.bookedData[ds], prepMin);
+  const [y, m, d] = ds.split('-').map(Number);
+  const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('mbs-slots-date').textContent = `${d} ${MON[m-1]} ${y}`;
+  document.getElementById('mbs-slots').innerHTML = slots.length
+    ? slots.map(s => `<button class="booking-slot" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start} — ${s.end}</button>`).join('')
+    : '<span style="color:var(--muted);font-size:13px">Нет доступных слотов</span>';
+  document.getElementById('mbs-slots-wrap').style.display = '';
+  document.getElementById('mbs-book-btn').disabled = true;
+  document.getElementById('mbs-pay-btn').disabled = true;
+}
+
+function selectBookingSlot(start, end) {
+  _booking.selectedSlot = { start, end };
+  document.querySelectorAll('.booking-slot').forEach(b =>
+    b.classList.toggle('active', b.dataset.start === start && b.dataset.end === end));
+  document.getElementById('mbs-book-btn').disabled = false;
+  document.getElementById('mbs-pay-btn').disabled = false;
+}
+
+async function confirmBooking(payNow) {
+  if (!S.session || !_booking.item || !_booking.selectedDate || !_booking.selectedSlot) return;
+  const btn = document.getElementById(payNow ? 'mbs-pay-btn' : 'mbs-book-btn');
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const storeId = S.store?.id || _booking.item.store_id;
+    if (_booking.rescheduleId) {
+      await req(`/rest/v1/bookings?id=eq.${_booking.rescheduleId}&user_id=eq.${S.session.user.id}`, {
+        method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
+      });
+    }
+    await req('/rest/v1/bookings', {
+      method: 'POST',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        user_id: S.session.user.id, store_id: storeId,
+        menu_item_id: _booking.item.id, slot_date: _booking.selectedDate,
+        slot_start: _booking.selectedSlot.start + ':00',
+        slot_end:   _booking.selectedSlot.end   + ':00',
+        status: 'booked', payment_status: payNow ? 'paid' : 'unpaid',
+        total_price: _booking.item.price,
+      }),
+    });
+    closeModal('m-book-slot');
+    showGeoToast(payNow ? '✅ Запись создана и оплачена' : '📅 Слот забронирован');
+    if (document.getElementById('screen-bookings')?.classList.contains('active')) loadBookingsScreen();
+  } catch(e) {
+    showGeoToast('Ошибка при бронировании');
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+
+// ── My Bookings Screen ──
+async function loadBookingsScreen() {
+  if (!S.session) return;
+  const mm = String(_myBk.month + 1).padStart(2, '0');
+  const firstDay = `${_myBk.year}-${mm}-01`;
+  const lastDay = new Date(_myBk.year, _myBk.month + 1, 0).toISOString().slice(0, 10);
+  try {
+    const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&status=neq.cancelled&select=*,stores(name,address),menu_items(name,price)&order=slot_date.asc,slot_start.asc`);
+    _myBk.byDate = {};
+    rows.forEach(r => {
+      if (!_myBk.byDate[r.slot_date]) _myBk.byDate[r.slot_date] = [];
+      _myBk.byDate[r.slot_date].push(r);
+    });
+  } catch(e) {}
+  renderMyBookingsCalendar();
+}
+
+function renderMyBookingsCalendar() {
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  document.getElementById('mbk-month-label').textContent = `${MONTHS[_myBk.month]} ${_myBk.year}`;
+  const today = _fmtD(new Date());
+  const firstDow = new Date(_myBk.year, _myBk.month, 1).getDay();
+  const offset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(_myBk.year, _myBk.month + 1, 0).getDate();
+  const prevLast = new Date(_myBk.year, _myBk.month, 0).getDate();
+  const mm = String(_myBk.month + 1).padStart(2, '0');
+  const cells = [];
+  for (let i = offset - 1; i >= 0; i--)
+    cells.push({ d: prevLast - i, cls: 'sched-day empty', ds: null });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dd = String(d).padStart(2, '0');
+    const ds = `${_myBk.year}-${mm}-${dd}`;
+    let cls = 'sched-day';
+    if (ds === today) cls += ' today';
+    if (_myBk.byDate[ds]?.length) cls += ' has-sched';
+    cells.push({ d, cls, ds });
+  }
+  const trailing = (7 - (cells.length % 7)) % 7;
+  for (let i = 1; i <= trailing; i++)
+    cells.push({ d: i, cls: 'sched-day empty', ds: null });
+  let html = '';
+  cells.forEach((c, i) => {
+    if (i % 7 === 0) html += '<tr>';
+    html += `<td class="${c.cls}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}><span class="sd-n">${c.d}</span></td>`;
+    if (i % 7 === 6) html += '</tr>';
+  });
+  document.getElementById('mbk-calendar').innerHTML = html;
+  document.getElementById('mbk-day-view').style.display = 'none';
+}
+
+function openMyBookingsDay(ds) {
+  const bookings = _myBk.byDate[ds] || [];
+  const dayView = document.getElementById('mbk-day-view');
+  if (!bookings.length) { dayView.style.display = 'none'; return; }
+  const [y, m, d] = ds.split('-').map(Number);
+  const DOW = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('mbk-day-title').textContent = `${DOW[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
+  const now = new Date();
+  document.getElementById('mbk-day-bookings').innerHTML = bookings.map(b => {
+    const bkTime = new Date(b.created_at);
+    const slotDt = new Date(b.slot_date + 'T' + (b.slot_start||'00:00').slice(0,5));
+    const canByTime = (now - bkTime) <= 15 * 60 * 1000;
+    const canByDate = (slotDt - now) >= 24 * 60 * 60 * 1000;
+    const sStart = (b.slot_start||'').slice(0,5), sEnd = (b.slot_end||'').slice(0,5);
+    const paid = b.payment_status === 'paid';
+    return `<div class="bk-item">
+      <div class="bk-item-main">
+        <div style="font:600 14px/1.3 var(--font-sans)">${esc(b.menu_items?.name||'')}</div>
+        <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:3px">${esc(b.stores?.name||'')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px;font:400 13px/1 var(--font-sans)">
+          <span>⏰ ${sStart} — ${sEnd}</span>
+          <span style="color:var(--accent)">${b.total_price||b.menu_items?.price||0} ₽</span>
+          <span style="color:${paid?'var(--ok)':'var(--warn)'}">${paid?'Оплачено':'Не оплачено'}</span>
+        </div>
+        ${b.stores?.address ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-4);margin-top:4px">📍 ${esc(b.stores.address)}</div>` : ''}
+      </div>
+      <div class="bk-item-actions">
+        <button class="btn btn-sm" onclick="openRescheduleInfo('${b.id}','${b.menu_item_id}')">Перенести</button>
+        <button class="btn btn-sm btn-d" onclick="cancelBooking('${b.id}')">Отменить</button>
+      </div>
+    </div>`;
+  }).join('');
+  dayView.style.display = '';
+}
+
+async function cancelBooking(id) {
+  if (!confirm('Отменить запись?')) return;
+  try {
+    await req(`/rest/v1/bookings?id=eq.${id}&user_id=eq.${S.session.user.id}`, {
+      method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }),
+    });
+    showGeoToast('Запись отменена');
+    loadBookingsScreen();
+  } catch(e) { showGeoToast('Ошибка при отмене'); }
+}
+
+function openRescheduleInfo(bookingId, menuItemId) {
+  const b = Object.values(_myBk.byDate).flat().find(bk => bk.id === bookingId);
+  if (!b) return;
+  const now = new Date();
+  const bkTime = new Date(b.created_at);
+  const slotDt = new Date(b.slot_date + 'T' + (b.slot_start||'00:00').slice(0,5));
+  const canByTime = (now - bkTime) <= 15 * 60 * 1000;
+  const canByDate = (slotDt - now) >= 24 * 60 * 60 * 1000;
+  const canReschedule = canByTime || canByDate;
+  const timeLeft = Math.max(0, Math.round((15*60*1000 - (now - bkTime)) / 60000));
+  const daysLeft = Math.max(0, Math.round((slotDt - now) / (24*60*60*1000)));
+  document.getElementById('mri-body').innerHTML = `
+    <div style="margin-bottom:10px;font:400 13px/1.5 var(--font-sans);color:var(--fg-2)">Перенос доступен если выполняется одно из условий:</div>
+    <div class="reschedule-rule ${canByTime ? 'ok' : 'no'}">
+      ${canByTime ? '✅' : '❌'} В течение 15 минут после записи
+      ${canByTime ? `<span style="color:var(--fg-3);font-size:12px"> — осталось ~${timeLeft} мин</span>` : ''}
+    </div>
+    <div class="reschedule-rule ${canByDate ? 'ok' : 'no'}">
+      ${canByDate ? '✅' : '❌'} Не позже чем за 1 день до начала
+      ${canByDate ? `<span style="color:var(--fg-3);font-size:12px"> — ${daysLeft} дн. до начала</span>` : ''}
+    </div>
+    ${!canReschedule ? `<div style="margin-top:10px;padding:10px;background:var(--bg-2);border-radius:var(--r-2);font:400 13px/1.4 var(--font-sans);color:var(--fg-3)">Перенос недоступен: прошло более 15 минут после записи и до начала менее 24 часов.</div>` : ''}
+  `;
+  const okBtn = document.getElementById('mri-ok-btn');
+  okBtn.style.display = canReschedule ? '' : 'none';
+  _rescheduleTarget = canReschedule ? { bookingId, menuItemId } : null;
+  openModal('m-reschedule-info');
+}
+
+async function proceedReschedule() {
+  if (!_rescheduleTarget) return;
+  closeModal('m-reschedule-info');
+  try {
+    const items = await req(`/rest/v1/menu_items?id=eq.${_rescheduleTarget.menuItemId}&select=*`);
+    if (items[0]) openBookingSlotModal(items[0], _rescheduleTarget.bookingId);
+  } catch(e) {}
+}
+
+async function myBookingsPrevMonth() {
+  if (_myBk.month === 0) { _myBk.month = 11; _myBk.year--; } else _myBk.month--;
+  await loadBookingsScreen();
+}
+async function myBookingsNextMonth() {
+  if (_myBk.month === 11) { _myBk.month = 0; _myBk.year++; } else _myBk.month++;
+  await loadBookingsScreen();
+}
+
 function openStoreScheduleById(id) {
   const st = S.allStores?.find(s => s.id === id);
   if (st) openStoreSchedule(st);
