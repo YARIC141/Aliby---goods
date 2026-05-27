@@ -2416,8 +2416,11 @@ async function loadActiveOrders() {
   try {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; return; }
-    const all = await req(`/rest/v1/orders?user_id=eq.${uid}&status=in.(paid,in_progress,ready)&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc`);
-    const orders = all.filter(o => (o.stores?.direction || 'food') === S.direction);
+    const all = await req(`/rest/v1/orders?user_id=eq.${uid}&status=in.(paid,in_progress,ready)&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.asc`);
+    const STATUS_RANK = { paid: 0, in_progress: 1, ready: 2 };
+    const orders = all
+      .filter(o => (o.stores?.direction || 'food') === S.direction)
+      .sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет активных заказов</div>'; return; }
     el.innerHTML = orders.map(o => renderActiveOrderCard(o)).join('');
   } catch(e) { el.innerHTML = '<div class="empty" style="padding:32px 0">Ошибка загрузки</div>'; }
