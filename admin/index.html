@@ -1140,6 +1140,8 @@ function goTo(id, opts = {}) {
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   if (prevId === 'qr' && id !== 'qr') stopQrCamera();
+  if (prevId === 'orders' && id !== 'orders') adminRealtimeDisconnect();
+  if (id === 'orders') adminRealtimeConnect();
   ({stores:loadStores,categories:loadCategories,menu:loadMenuItems,subscriptions:loadSubscriptions,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
@@ -2127,6 +2129,72 @@ async function advanceOrder(newStatus) {
     closeModal('m-order');
     loadOrders();
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+// ─── ADMIN REALTIME ───
+let _adminRtWs = null, _adminRtRef = 0, _adminRtHb = null;
+
+function showAdminToast(msg) {
+  let t = document.getElementById('admin-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'admin-toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:var(--r-pill);font-size:13px;font-family:var(--font-sans);z-index:9999;pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3500);
+}
+
+function adminRealtimeConnect() {
+  adminRealtimeDisconnect();
+  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
+  try {
+    const ws = new WebSocket(wsUrl);
+    _adminRtWs = ws;
+    ws.onopen = () => {
+      _adminRtRef = 0;
+      ws.send(JSON.stringify({
+        topic: 'realtime:admin-orders-watch',
+        event: 'phx_join',
+        payload: {
+          config: {
+            postgres_changes: [
+              { event: 'INSERT', schema: 'public', table: 'orders' },
+              { event: 'UPDATE', schema: 'public', table: 'orders' }
+            ]
+          },
+          access_token: S.session?.access_token
+        },
+        ref: String(++_adminRtRef)
+      }));
+      _adminRtHb = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_adminRtRef) }));
+      }, 25000);
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === 'postgres_changes') {
+          const type = msg.payload?.data?.type || msg.payload?.type;
+          if (type === 'INSERT') {
+            showAdminToast('🔔 Новый заказ!');
+            loadOrders();
+          } else if (type === 'UPDATE') {
+            loadOrders();
+          }
+        }
+      } catch {}
+    };
+    ws.onclose = ws.onerror = () => { clearInterval(_adminRtHb); _adminRtWs = null; };
+  } catch {}
+}
+
+function adminRealtimeDisconnect() {
+  clearInterval(_adminRtHb);
+  if (_adminRtWs) { try { _adminRtWs.close(); } catch {} _adminRtWs = null; }
 }
 
 // ─── SUBSCRIPTIONS ───
