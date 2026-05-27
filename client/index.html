@@ -412,11 +412,19 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sched-cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
 .sched-cal-table thead th{text-align:center;padding:8px 0 7px;font:600 11px/1 var(--font-sans);color:var(--fg-sec);background:var(--bg-2);border-bottom:1px solid var(--border)}
 .sched-day{height:40px;text-align:center;vertical-align:middle;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--border-light);position:relative;cursor:pointer;transition:background var(--t-fast);user-select:none}
-.sched-day:hover:not(.empty){background:var(--bg-2)}
+.sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
 .sched-day.empty{pointer-events:none;color:var(--muted)}
 .sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
-.sched-day.has-sched::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
+.sched-day.has-sched{background:color-mix(in oklch,var(--accent) 13%,var(--bg))}
+.sched-day.has-sched:hover:not(.selected){background:color-mix(in oklch,var(--accent) 22%,var(--bg))}
+.sched-day.selected{background:color-mix(in oklch,var(--accent) 20%,var(--bg))}
+.sched-day.selected .sd-n{color:var(--accent);font-weight:700}
+.sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-mono);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.bk-full{color:var(--fg-4);cursor:default}
+.slot-chip{display:inline-flex;align-items:center;padding:5px 11px;border-radius:var(--r-pill);font:500 12px/1 var(--font-sans);border:1px solid var(--border);white-space:nowrap}
+.slot-chip.free{background:var(--bg-1);color:var(--fg-2)}
+.slot-chip.mine{background:oklch(0.92 0.11 85);color:oklch(0.38 0.11 72);border-color:oklch(0.76 0.14 84)}
+.slot-chip.taken{background:var(--bg-2);color:var(--fg-4);opacity:.55}
 /* ── BOOKING SLOTS ── */
 .booking-slot{padding:6px 14px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--bg-1);font:500 13px/1 var(--font-sans);cursor:pointer;transition:all var(--t-fast)}
 .booking-slot:hover{border-color:var(--fg-3)}
@@ -748,11 +756,13 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <tbody id="mbk-calendar"></tbody>
       </table>
     </div>
-    <div id="mbk-day-view" style="display:none">
+    <div id="mbk-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div id="mbk-day-title" style="font:600 14px/1 var(--font-sans)"></div>
-        <button class="btn btn-sm" onclick="document.getElementById('mbk-day-view').style.display='none'">✕</button>
+        <button class="btn btn-sm" onclick="closeMyBookingsDay()">✕</button>
       </div>
+      <div id="mbk-day-schedule" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+      <div id="mbk-day-slots" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
       <div id="mbk-day-bookings"></div>
     </div>
   </div>
@@ -3742,7 +3752,7 @@ let _booking = {
   schedData: {}, bookedData: {}, rescheduleId: null,
 };
 let _myBk = {
-  year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {},
+  year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {}, openDate: null,
 };
 let _rescheduleTarget = null;
 
@@ -3933,7 +3943,7 @@ async function loadBookingsScreen() {
   const firstDay = `${_myBk.year}-${mm}-01`;
   const lastDay = new Date(_myBk.year, _myBk.month + 1, 0).toISOString().slice(0, 10);
   try {
-    const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&status=neq.cancelled&select=*,stores(name,address),menu_items(name,price)&order=slot_date.asc,slot_start.asc`);
+    const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&status=neq.cancelled&select=*,stores(name,address),menu_items(name,price,preparation_time)&order=slot_date.asc,slot_start.asc`);
     _myBk.byDate = {};
     rows.forEach(r => {
       if (!_myBk.byDate[r.slot_date]) _myBk.byDate[r.slot_date] = [];
@@ -3969,27 +3979,90 @@ function renderMyBookingsCalendar() {
   let html = '';
   cells.forEach((c, i) => {
     if (i % 7 === 0) html += '<tr>';
-    html += `<td class="${c.cls}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}><span class="sd-n">${c.d}</span></td>`;
+    const selected = c.ds && c.ds === _myBk.openDate ? ' selected' : '';
+    const cnt = c.ds ? (_myBk.byDate[c.ds]?.length || 0) : 0;
+    const badge = cnt > 0 ? `<span class="sched-bk-cnt">${cnt}</span>` : '';
+    html += `<td class="${c.cls}${selected}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}><span class="sd-n">${c.d}</span>${badge}</td>`;
     if (i % 7 === 6) html += '</tr>';
   });
   document.getElementById('mbk-calendar').innerHTML = html;
-  document.getElementById('mbk-day-view').style.display = 'none';
 }
 
-function openMyBookingsDay(ds) {
-  const bookings = _myBk.byDate[ds] || [];
-  const dayView = document.getElementById('mbk-day-view');
-  if (!bookings.length) { dayView.style.display = 'none'; return; }
+async function openMyBookingsDay(ds) {
+  if (_myBk.openDate === ds) { closeMyBookingsDay(); return; }
+  _myBk.openDate = ds;
+  renderMyBookingsCalendar();
+
   const [y, m, d] = ds.split('-').map(Number);
   const DOW = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('mbk-day-title').textContent = `${DOW[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
+
+  const schedEl = document.getElementById('mbk-day-schedule');
+  const slotsEl = document.getElementById('mbk-day-slots');
+  const bkEl    = document.getElementById('mbk-day-bookings');
+  const dayView = document.getElementById('mbk-day-view');
+  schedEl.innerHTML = slotsEl.innerHTML = bkEl.innerHTML = '';
+  dayView.style.display = '';
+
+  const myBookings = _myBk.byDate[ds] || [];
+
+  // ── Slot timeline (requires store context) ──
+  const storeId = S.store?.id || myBookings[0]?.store_id;
+  if (storeId) {
+    slotsEl.innerHTML = `<span style="font-size:12px;color:var(--fg-3)">Загрузка…</span>`;
+    try {
+      const [schedRows, allBks] = await Promise.all([
+        req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=eq.${ds}&select=slots`),
+        req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=eq.${ds}&status=neq.cancelled&select=user_id,slot_start,slot_end`),
+      ]);
+      const windows = schedRows[0]?.slots || [];
+
+      // Schedule window chips
+      schedEl.innerHTML = windows.length
+        ? windows.map(w => `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--border);font:500 13px/1 var(--font-sans)">${esc(w.start)} — ${esc(w.end)}</span>`).join('')
+        : `<span style="font-size:13px;color:var(--fg-3)">День закрыт</span>`;
+
+      if (windows.length) {
+        const myUid = S.session?.user?.id;
+        const prepMin = Math.max(15, myBookings[0]?.menu_items?.preparation_time ?? 30);
+        const blocked  = allBks.map(b => ({ slot_start: b.slot_start, slot_end: b.slot_end }));
+        const freeSlots = getAvailableSlots(windows, blocked, prepMin);
+
+        const items = [];
+        allBks.forEach(b => items.push({
+          type: b.user_id === myUid ? 'mine' : 'other',
+          s: (b.slot_start||'').slice(0,5), e: (b.slot_end||'').slice(0,5),
+        }));
+        freeSlots.forEach(sl => items.push({ type: 'free', s: sl.start, e: sl.end }));
+        items.sort((a, b) => a.s.localeCompare(b.s));
+
+        // Attach service name to mine slots
+        myBookings.forEach(mb => {
+          const ts = (mb.slot_start||'').slice(0,5);
+          const it = items.find(x => x.type === 'mine' && x.s === ts);
+          if (it) it.name = mb.menu_items?.name || '';
+        });
+
+        slotsEl.innerHTML = items.length
+          ? items.map(it => {
+              if (it.type === 'free')  return `<span class="slot-chip free">${it.s} — ${it.e}</span>`;
+              if (it.type === 'mine')  return `<span class="slot-chip mine">${it.s} — ${it.e}${it.name ? ' · ' + esc(it.name) : ''}</span>`;
+              return `<span class="slot-chip taken">${it.s} — ${it.e}</span>`;
+            }).join('')
+          : `<span style="font-size:13px;color:var(--fg-3)">Нет слотов</span>`;
+      } else {
+        slotsEl.innerHTML = '';
+      }
+    } catch { slotsEl.innerHTML = ''; }
+  }
+
+  // ── Booking action cards ──
+  if (!myBookings.length) return;
   const now = nowInCity();
-  document.getElementById('mbk-day-bookings').innerHTML = bookings.map(b => {
+  bkEl.innerHTML = myBookings.map(b => {
     const bkTime = new Date(b.created_at);
     const slotDt = new Date(b.slot_date + 'T' + (b.slot_start||'00:00').slice(0,5));
-    const canByTime = (now - bkTime) <= 15 * 60 * 1000;
-    const canByDate = (slotDt - now) >= 24 * 60 * 60 * 1000;
     const sStart = (b.slot_start||'').slice(0,5), sEnd = (b.slot_end||'').slice(0,5);
     const paid = b.payment_status === 'paid';
     return `<div class="bk-item">
@@ -4009,7 +4082,12 @@ function openMyBookingsDay(ds) {
       </div>
     </div>`;
   }).join('');
-  dayView.style.display = '';
+}
+
+function closeMyBookingsDay() {
+  _myBk.openDate = null;
+  document.getElementById('mbk-day-view').style.display = 'none';
+  renderMyBookingsCalendar();
 }
 
 async function cancelBooking(id) {
