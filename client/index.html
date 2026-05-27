@@ -402,6 +402,11 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .dir-tab[data-dir=food].active{color:#e8430a;border-bottom-color:#e8430a}
 .dir-tab[data-dir=goods].active{color:#2e9c4e;border-bottom-color:#2e9c4e}
 .dir-tab[data-dir=services].active{color:#2563eb;border-bottom-color:#2563eb}
+
+/* ── SUB STORE CHIPS ── */
+.sub-store-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--bg-1);font:500 13px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--t-fast);white-space:nowrap}
+.sub-store-chip:hover:not(.active){border-color:var(--fg-3);background:var(--bg-2)}
+.sub-store-chip.active{border-color:var(--accent);color:var(--accent);background:var(--bg-2)}
 </style>
 <script>
 if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
@@ -1074,6 +1079,18 @@ const S = {
 };
 
 const subPlans = {}; // cache of subscription plan objects keyed by id
+
+// Last store selected per direction on the Subscriptions screen
+const _subStoreCache = { food: null, goods: null, services: null };
+(function() {
+  for (const d of ['food','goods','services']) {
+    try { _subStoreCache[d] = localStorage.getItem('alliby_sub_store_' + d) || null; } catch {}
+  }
+})();
+function saveSubStoreCache(dir, id) {
+  _subStoreCache[dir] = id;
+  try { localStorage.setItem('alliby_sub_store_' + dir, id); } catch {}
+}
 
 const DIR_COLORS = { food: '#e8430a', goods: '#2e9c4e', services: '#2563eb' };
 const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
@@ -2458,11 +2475,58 @@ async function loadSubStore() {
   const el = document.getElementById('sub-store-list');
   if (!el) return;
   el.className = 'subs-col';
-  if (!S.store) {
-    el.innerHTML = '<div class="empty">Выберите заведение на экране карты</div>';
+
+  // Use cached allStores if available, otherwise fetch for this direction
+  let stores = S.allStores.filter(st => st.direction === S.direction);
+  if (!stores.length) {
+    try {
+      stores = await req(`/rest/v1/stores?direction=eq.${S.direction}&order=name.asc&select=*,store_categories(name,icon)`);
+    } catch {}
+  }
+
+  if (!stores.length) {
+    el.innerHTML = '<div class="empty">Нет заведений в этом направлении</div>';
     return;
   }
-  await loadStoreSubs(el);
+
+  // Resolve selected store: cached → last browsed → first
+  let selId = _subStoreCache[S.direction];
+  if (!selId || !stores.find(s => s.id === selId)) {
+    selId = (S.store?.direction === S.direction ? S.store?.id : null) || stores[0].id;
+    saveSubStoreCache(S.direction, selId);
+  }
+
+  el.innerHTML = `<div id="sub-store-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+    ${stores.map(st => `<button class="sub-store-chip${st.id === selId ? ' active' : ''}" data-sid="${esc(st.id)}" onclick="selectSubStore('${esc(st.id)}')">${st.store_categories?.icon ? st.store_categories.icon + ' ' : ''}${esc(st.name)}</button>`).join('')}
+  </div>
+  <div id="sub-store-subs">${SK.subCards(2)}</div>`;
+
+  await loadSubsForSelectedStore(selId);
+}
+
+async function selectSubStore(storeId) {
+  saveSubStoreCache(S.direction, storeId);
+  document.querySelectorAll('#sub-store-chips .sub-store-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.sid === storeId);
+  });
+  await loadSubsForSelectedStore(storeId);
+}
+
+async function loadSubsForSelectedStore(storeId) {
+  const el = document.getElementById('sub-store-subs');
+  if (!el) return;
+  el.innerHTML = SK.subCards(2);
+  try {
+    try {
+      const active = await req('/rest/v1/rpc/is_store_subscription_active', {
+        method: 'POST', body: JSON.stringify({ p_store_id: storeId }),
+      });
+      S.storeSubActive = active === true;
+    } catch { S.storeSubActive = true; }
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${storeId}`);
+    subs.forEach(s => { subPlans[s.id] = s; });
+    el.innerHTML = subs.length ? subs.map(renderSubCard).join('') : '<span class="txt-sm">Нет абонементов</span>';
+  } catch { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
 }
 
 function renderSubItemCard(sub) {
@@ -2483,15 +2547,24 @@ function renderSubItemCard(sub) {
 }
 
 function refreshSubCardViews() {
+  // Refresh store-detail subscriptions panel
   const storeId = S.store?.id;
-  if (!storeId) return;
-  const subs = Object.values(subPlans).filter(s => s.store_id === storeId);
-  if (!subs.length) return;
-  const html = subs.map(renderSubCard).join('');
-  const storeEl = document.getElementById('store-subs');
-  if (storeEl?.children.length) storeEl.innerHTML = html;
-  const subStoreEl = document.getElementById('sub-store-list');
-  if (subStoreEl?.children.length) subStoreEl.innerHTML = html;
+  if (storeId) {
+    const subs = Object.values(subPlans).filter(s => s.store_id === storeId);
+    if (subs.length) {
+      const storeEl = document.getElementById('store-subs');
+      if (storeEl?.children.length) storeEl.innerHTML = subs.map(renderSubCard).join('');
+    }
+  }
+  // Refresh subscriptions screen panel
+  const subSelId = _subStoreCache[S.direction];
+  if (subSelId) {
+    const subSubs = Object.values(subPlans).filter(s => s.store_id === subSelId);
+    if (subSubs.length) {
+      const subEl = document.getElementById('sub-store-subs');
+      if (subEl?.children.length) subEl.innerHTML = subSubs.map(renderSubCard).join('');
+    }
+  }
 }
 
 function addSubToCart(id) {
