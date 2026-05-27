@@ -386,8 +386,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .ht-name{font:600 20px/1.2 var(--font-display);color:var(--fg)}
 .ht-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3)}
 .home-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.home-tile-alibi::before{background:var(--brand-ember)}
-.home-tile-food::before{background:var(--brand-ember)}
+.home-tile-alibi::before{background:#e8430a}
+.home-tile-food::before{background:#e8430a}
 .home-tile-goods::before{background:#2e9c4e}
 .home-tile-services::before{background:#2563eb}
 
@@ -395,7 +395,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .dir-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .dir-tab{flex:1;padding:9px 4px;border:none;background:none;cursor:pointer;font:500 13px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);white-space:nowrap}
 .dir-tab:hover{color:var(--fg)}
-.dir-tab[data-dir=food].active{color:var(--brand-ember);border-bottom-color:var(--brand-ember)}
+.dir-tab[data-dir=food].active{color:#e8430a;border-bottom-color:#e8430a}
 .dir-tab[data-dir=goods].active{color:#2e9c4e;border-bottom-color:#2e9c4e}
 .dir-tab[data-dir=services].active{color:#2563eb;border-bottom-color:#2563eb}
 </style>
@@ -1059,7 +1059,7 @@ const S = {
 
 const subPlans = {}; // cache of subscription plan objects keyed by id
 
-const DIR_COLORS = { food: null, goods: '#2e9c4e', services: '#2563eb' };
+const DIR_COLORS = { food: '#e8430a', goods: '#2e9c4e', services: '#2563eb' };
 const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
 
 const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
@@ -1204,15 +1204,17 @@ const subStMap  = { pending:'Ожидает', active:'Активен', expired:'
 
 // ─── DIRECTION ───
 function applyScreenAccent(screenId) {
-  const color = DIR_SCREENS.has(screenId)
-    ? DIR_COLORS[S.direction]
-    : localStorage.getItem('alliby_accent');
-  if (color) document.documentElement.style.setProperty('--accent', color);
-  else document.documentElement.style.removeProperty('--accent');
+  if (DIR_SCREENS.has(screenId)) {
+    document.documentElement.style.setProperty('--accent', DIR_COLORS[S.direction] || '#e8430a');
+  } else {
+    const custom = localStorage.getItem('alliby_accent');
+    if (custom) document.documentElement.style.setProperty('--accent', custom);
+    else document.documentElement.style.removeProperty('--accent');
+  }
 }
 
 function setDirection(dir) {
-  if (!DIR_COLORS[dir]) return;
+  if (!(dir in DIR_COLORS)) return;
   // save current cart
   S._carts[S.direction] = { items: S.cart, storeId: S.cartStoreId };
   S.direction = dir;
