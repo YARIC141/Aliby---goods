@@ -2277,7 +2277,7 @@ async function renderCart() {
   const body = document.getElementById('cart-body');
   const foot = document.getElementById('cart-foot');
   if (!S.cart.length) {
-    body.innerHTML = `<div class="empty">${S.subCart.length ? 'Блюда не добавлены' : 'Корзина пуста'}</div>`;
+    body.innerHTML = `<div class="empty">${S.subCart.filter(c=>(c.direction||'food')===S.direction).length ? 'Блюда не добавлены' : 'Корзина пуста'}</div>`;
     foot.style.display = 'none';
     return;
   }
@@ -2571,7 +2571,7 @@ function addSubToCart(id) {
   const sub = subPlans[id];
   if (!sub) return;
   if (!S.subCart.find(c => c.sub.id === id)) {
-    S.subCart.push({ sub });
+    S.subCart.push({ sub, direction: S.direction });
     saveSubCart();
   }
   renderSubCartSection();
@@ -2597,7 +2597,7 @@ function addGiftToCart(id) {
   const sub = subPlans[id];
   if (!sub) return;
   if (!S.giftSubCart.find(c => c.sub.id === id)) {
-    S.giftSubCart.push({ sub });
+    S.giftSubCart.push({ sub, direction: S.direction });
     saveSubCart();
   }
   renderGiftCartSection();
@@ -2619,9 +2619,10 @@ function renderSubCartSection() {
   const sect = document.getElementById('sub-cart-sect');
   const list = document.getElementById('sub-cart-list');
   if (!sect) return;
-  if (!S.subCart.length) { sect.style.display = 'none'; return; }
+  const items = S.subCart.filter(c => (c.direction || 'food') === S.direction);
+  if (!items.length) { sect.style.display = 'none'; return; }
   sect.style.display = 'block';
-  list.innerHTML = S.subCart.map(({ sub }) =>
+  list.innerHTML = items.map(({ sub }) =>
     `<div class="cart-item">
       <div class="ci-info">
         <div class="ci-name">🎫 ${esc(sub.name)}</div>
@@ -2636,9 +2637,10 @@ function renderGiftCartSection() {
   const sect = document.getElementById('gift-sub-cart-sect');
   const list = document.getElementById('gift-sub-cart-list');
   if (!sect) return;
-  if (!S.giftSubCart.length) { sect.style.display = 'none'; return; }
+  const items = S.giftSubCart.filter(c => (c.direction || 'food') === S.direction);
+  if (!items.length) { sect.style.display = 'none'; return; }
   sect.style.display = 'block';
-  list.innerHTML = S.giftSubCart.map(({ sub }) =>
+  list.innerHTML = items.map(({ sub }) =>
     `<div class="cart-item">
       <div class="ci-info">
         <div class="ci-name">🎁 ${esc(sub.name)}</div>
@@ -2650,13 +2652,14 @@ function renderGiftCartSection() {
 }
 
 async function checkoutSubs() {
-  if (!S.subCart.length) return;
+  const dirItems = S.subCart.filter(c => (c.direction || 'food') === S.direction);
+  if (!dirItems.length) return;
   if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
-  const totalAmount = S.subCart.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
-  _pendingPayment = { type: 'sub', items: [...S.subCart] };
+  const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
+  _pendingPayment = { type: 'sub', items: dirItems };
   document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
   document.getElementById('tbank-order-info').textContent =
-    S.subCart.length === 1 ? `Абонемент «${S.subCart[0].sub.name}»` : `${S.subCart.length} абонемента`;
+    dirItems.length === 1 ? `Абонемент «${dirItems[0].sub.name}»` : `${dirItems.length} абонемента`;
   document.getElementById('tbank-card').value = '';
   document.getElementById('tbank-exp').value = '';
   document.getElementById('tbank-cvv').value = '';
@@ -2665,13 +2668,14 @@ async function checkoutSubs() {
 }
 
 async function checkoutGiftSubs() {
-  if (!S.giftSubCart.length) return;
+  const dirItems = S.giftSubCart.filter(c => (c.direction || 'food') === S.direction);
+  if (!dirItems.length) return;
   if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
-  const totalAmount = S.giftSubCart.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
-  _pendingPayment = { type: 'gift-sub', items: [...S.giftSubCart] };
+  const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
+  _pendingPayment = { type: 'gift-sub', items: dirItems };
   document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
   document.getElementById('tbank-order-info').textContent =
-    S.giftSubCart.length === 1 ? `🎁 Абонемент «${S.giftSubCart[0].sub.name}»` : `🎁 ${S.giftSubCart.length} подарочных абонемента`;
+    dirItems.length === 1 ? `🎁 Абонемент «${dirItems[0].sub.name}»` : `🎁 ${dirItems.length} подарочных абонемента`;
   document.getElementById('tbank-card').value = '';
   document.getElementById('tbank-exp').value = '';
   document.getElementById('tbank-cvv').value = '';
@@ -3379,12 +3383,14 @@ async function submitPayment() {
       closeModal('m-tbank-pay');
       _pendingPayment = null;
       if (isGift) {
-        S.giftSubCart = []; saveSubCart(); renderGiftCartSection(); refreshSubCardViews();
+        S.giftSubCart = S.giftSubCart.filter(c => (c.direction || 'food') !== S.direction);
+        saveSubCart(); renderGiftCartSection(); refreshSubCardViews();
         showGeoToast('Подарочный абонемент куплен!');
         goTo('subscriptions');
         setTimeout(() => document.querySelector('[data-tab-sub="gifts"]')?.click(), 300);
       } else {
-        S.subCart = []; saveSubCart(); renderSubCartSection(); refreshSubCardViews();
+        S.subCart = S.subCart.filter(c => (c.direction || 'food') !== S.direction);
+        saveSubCart(); renderSubCartSection(); refreshSubCardViews();
         showGeoToast('Абонемент куплен!');
         goTo('subscriptions');
       }
