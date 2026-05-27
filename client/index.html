@@ -407,6 +407,16 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sub-store-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--bg-1);font:500 13px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--t-fast);white-space:nowrap}
 .sub-store-chip:hover:not(.active){border-color:var(--fg-3);background:var(--bg-2)}
 .sub-store-chip.active{border-color:var(--accent);color:var(--accent);background:var(--bg-2)}
+/* ── STORE SCHEDULE CALENDAR ── */
+.sched-cal-wrap{border-radius:var(--r-2);overflow:hidden;border:1px solid var(--border)}
+.sched-cal-hd{display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg-2);border-bottom:1px solid var(--border)}
+.sched-cal-hd span{text-align:center;padding:8px 0 7px;font:600 11px/1 var(--font-sans);color:var(--fg-sec)}
+.sched-cal{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:40px}
+.sched-day{display:flex;align-items:center;justify-content:center;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--border-light);position:relative;cursor:pointer;transition:background var(--t-fast);user-select:none}
+.sched-day:hover:not(.empty){background:var(--bg-2)}
+.sched-day.empty{pointer-events:none;color:var(--muted)}
+.sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.sched-day.has-sched::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
 </style>
 <script>
 if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
@@ -1034,6 +1044,31 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   </div>
 </div>
 
+<!-- Store schedule modal -->
+<div class="overlay" id="m-store-sched">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd">
+      <h3 id="mss-title">График работы</h3>
+      <button class="modal-x" onclick="closeModal('m-store-sched')">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button class="btn btn-sm" onclick="storeSchedPrev()">←</button>
+      <span id="mss-month-label" style="font:600 14px/1 var(--font-sans)"></span>
+      <button class="btn btn-sm" onclick="storeSchedNext()">→</button>
+    </div>
+    <div class="sched-cal-wrap" style="margin-bottom:12px">
+      <div class="sched-cal-hd">
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+      </div>
+      <div id="mss-calendar" class="sched-cal"></div>
+    </div>
+    <div id="mss-day-view" style="display:none;padding:10px 12px;background:var(--bg-1);border-radius:var(--r-2);border:1px solid var(--border)">
+      <div id="mss-day-title" style="font:600 13px/1 var(--font-sans);margin-bottom:8px"></div>
+      <div id="mss-day-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
@@ -1646,7 +1681,14 @@ function renderStoreList(stores) {
   stores.forEach(st => {
     const d = document.createElement('div');
     d.className = 'sl-item' + (S.store?.id === st.id ? ' sel' : '');
-    d.innerHTML = `<div><div class="sli-name">${esc(st.name)}</div><div class="sli-addr">${esc(st.address)}</div></div><span>→</span>`;
+    const schedLabel = st.direction === 'services' ? '📅 Календарь записей' : '🕐 График работы';
+    d.innerHTML = `
+      <div style="flex:1;min-width:0">
+        <div class="sli-name">${esc(st.name)}</div>
+        <div class="sli-addr">${esc(st.address || '')}</div>
+        <button class="btn btn-sm" style="margin-top:6px;font-size:12px" onclick="event.stopPropagation();openStoreScheduleById('${st.id}')">${schedLabel}</button>
+      </div>
+      <span style="flex-shrink:0">→</span>`;
     d.addEventListener('click', () => { showStorePopup(st, d); goTo('store'); });
     el.appendChild(d);
   });
@@ -3456,6 +3498,83 @@ function fmtExpiry(input) {
   let v = input.value.replace(/\D/g, '').slice(0, 4);
   if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2);
   input.value = v;
+}
+
+// ─── STORE SCHEDULE ───
+const _stSched = { storeId: null, year: 0, month: 0, dayData: {} };
+function _fmtD(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function openStoreScheduleById(id) {
+  const st = S.allStores?.find(s => s.id === id);
+  if (st) openStoreSchedule(st);
+}
+function openStoreSchedule(st) {
+  _stSched.storeId = st.id;
+  const now = new Date();
+  _stSched.year  = now.getFullYear();
+  _stSched.month = now.getMonth();
+  _stSched.dayData = {};
+  const title = st.direction === 'services' ? 'Календарь записей' : 'График работы';
+  document.getElementById('mss-title').textContent = `${title} — ${esc(st.name)}`;
+  document.getElementById('mss-day-view').style.display = 'none';
+  openModal('m-store-sched');
+  loadStoreSchedMonth();
+}
+async function loadStoreSchedMonth() {
+  const from = _fmtD(new Date(_stSched.year, _stSched.month, 1));
+  const to   = _fmtD(new Date(_stSched.year, _stSched.month + 1, 0));
+  _stSched.dayData = {};
+  try {
+    const rows = await req(`/rest/v1/store_schedules?store_id=eq.${_stSched.storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`);
+    rows.forEach(r => { _stSched.dayData[r.date] = r.slots; });
+  } catch(e) {}
+  renderStoreSchedCal();
+}
+function storeSchedPrev() {
+  if (_stSched.month === 0) { _stSched.month = 11; _stSched.year--; } else _stSched.month--;
+  document.getElementById('mss-day-view').style.display = 'none';
+  loadStoreSchedMonth();
+}
+function storeSchedNext() {
+  if (_stSched.month === 11) { _stSched.month = 0; _stSched.year++; } else _stSched.month++;
+  document.getElementById('mss-day-view').style.display = 'none';
+  loadStoreSchedMonth();
+}
+function renderStoreSchedCal() {
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  document.getElementById('mss-month-label').textContent = `${MONTHS[_stSched.month]} ${_stSched.year}`;
+  const today = _fmtD(new Date());
+  const firstDow = new Date(_stSched.year, _stSched.month, 1).getDay();
+  const offset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(_stSched.year, _stSched.month + 1, 0).getDate();
+  const prevLast = new Date(_stSched.year, _stSched.month, 0).getDate();
+  const mm = String(_stSched.month + 1).padStart(2, '0');
+  let html = '';
+  for (let i = offset - 1; i >= 0; i--)
+    html += `<div class="sched-day empty"><span class="sd-n">${prevLast - i}</span></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dd = String(d).padStart(2, '0');
+    const ds = `${_stSched.year}-${mm}-${dd}`;
+    let cls = 'sched-day' + (ds === today ? ' today' : '') + (_stSched.dayData[ds]?.length ? ' has-sched' : '');
+    html += `<div class="${cls}" onclick="openStoreSchedDay('${ds}')"><span class="sd-n">${d}</span></div>`;
+  }
+  const trailing = (7 - ((offset + daysInMonth) % 7)) % 7;
+  for (let i = 1; i <= trailing; i++)
+    html += `<div class="sched-day empty"><span class="sd-n">${i}</span></div>`;
+  document.getElementById('mss-calendar').innerHTML = html;
+}
+function openStoreSchedDay(ds) {
+  const slots = _stSched.dayData[ds] || [];
+  const [y, m, d] = ds.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  const DAY = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('mss-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
+  document.getElementById('mss-day-slots').innerHTML = slots.length
+    ? slots.map(s => `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--border);font:500 13px/1 var(--font-sans)">${esc(s.start)} — ${esc(s.end)}</span>`).join('')
+    : `<span style="color:var(--muted);font-size:13px">Расписание не задано</span>`;
+  document.getElementById('mss-day-view').style.display = '';
 }
 
 // ─── PULL TO REFRESH ───

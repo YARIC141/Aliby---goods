@@ -280,8 +280,8 @@ tr.row-click:hover td{background:var(--bg-2)}
 .sched-cal-wrap{border-radius:var(--r-3);overflow:hidden;border:1px solid var(--line)}
 .sched-cal-hd{display:grid;grid-template-columns:repeat(7,1fr);background:var(--bg-2);border-bottom:1px solid var(--line)}
 .sched-cal-hd span{text-align:center;padding:9px 0 8px;font:600 11px/1 var(--font-sans);color:var(--fg-3)}
-.sched-cal{display:grid;grid-template-columns:repeat(7,1fr)}
-.sched-day{height:42px;display:flex;align-items:center;justify-content:center;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--line-soft);position:relative;transition:background var(--t-fast);user-select:none}
+.sched-cal{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:42px}
+.sched-day{display:flex;align-items:center;justify-content:center;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--line-soft);position:relative;transition:background var(--t-fast);user-select:none}
 .sched-day:not(.empty){cursor:pointer}
 .sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
 .sched-day.has-sched::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--ok)}
