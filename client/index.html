@@ -1149,7 +1149,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div id="mss-day-title" style="font:600 13px/1 var(--font-sans)"></div>
         <button class="btn btn-sm" style="padding:3px 8px;font-size:11px" onclick="closeStoreSchedDay()">✕</button>
       </div>
-      <div id="mss-day-windows" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
       <div id="mss-day-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
   </div>
@@ -1439,7 +1438,7 @@ function setDirection(dir) {
   // update cart nav label
   const isServices = dir === 'services';
   document.querySelectorAll('.nav-cart-lbl').forEach(el => {
-    el.innerHTML = isServices ? (el.classList.contains('bn-lbl') ? 'Мой<br>календарь' : 'Мой календарь') : el.classList.contains('bn-lbl') ? 'Корзина<br>и заказ' : 'Корзина и заказ';
+    el.innerHTML = isServices ? 'Записи' : el.classList.contains('bn-lbl') ? 'Корзина<br>и заказ' : 'Корзина и заказ';
   });
 }
 
@@ -4175,17 +4174,12 @@ async function openStoreSchedDay(ds) {
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('mss-day-title').textContent = `${DAY[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
 
-  const winEl   = document.getElementById('mss-day-windows');
   const slotsEl = document.getElementById('mss-day-slots');
   slotsEl.innerHTML = `<span style="font-size:12px;color:var(--fg-3)">Загрузка…</span>`;
   document.getElementById('mss-day-view').style.display = '';
 
   const windows = _stSched.dayData[ds] || [];
-  winEl.innerHTML = windows.length
-    ? windows.map(w => `<span style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--border);font:500 13px/1 var(--font-sans)">${esc(w.start)} — ${esc(w.end)}</span>`).join('')
-    : `<span style="font-size:13px;color:var(--fg-3)">День закрыт</span>`;
-
-  if (!windows.length) { slotsEl.innerHTML = ''; return; }
+  if (!windows.length) { slotsEl.innerHTML = `<span style="font-size:13px;color:var(--fg-3)">День закрыт</span>`; return; }
 
   try {
     const allBks = await req(`/rest/v1/bookings?store_id=eq.${_stSched.storeId}&slot_date=eq.${ds}&status=neq.cancelled&select=id,user_id,slot_start,slot_end,menu_items(name)`);
