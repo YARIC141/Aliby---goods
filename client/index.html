@@ -550,9 +550,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ HOME (hub) ════════════════ -->
 <div id="screen-home" class="screen">
-  <div class="ph" style="display:flex;align-items:center;justify-content:space-between">
+  <div class="ph">
     <h2>Alliby</h2>
-    <button class="btn btn-sm" style="font-size:12px" onclick="openCityModal()">📍 <span class="city-name-lbl"></span></button>
   </div>
   <div class="home-tiles">
     <div class="home-tile home-tile-alibi" onclick="goTo('alibi')">
@@ -827,6 +826,14 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div class="row">
         <div class="fg"><input type="tel" id="p-phone" placeholder="+7 (999) 000-00-00"></div>
         <button class="btn" id="p-phone-btn" onclick="updatePhone()">Сохранить</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Город</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <span style="font-size:15px">📍 <span class="city-name-lbl" style="font-weight:500"></span></span>
+        <button class="btn btn-sm" onclick="openCityModal()">Сменить</button>
       </div>
     </div>
 
