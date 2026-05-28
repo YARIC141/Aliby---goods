@@ -2253,7 +2253,7 @@ async function loadOrders() {
   el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   try {
     const storeId = document.getElementById('ord-store-filter')?.value;
-    let url = '/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.asc&limit=100';
+    let url = '/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=100';
     if (storeId) url += `&store_id=eq.${storeId}`;
     if (_adminOrdFilter === 'issued') url += '&status=eq.issued';
     else if (_adminOrdFilter) url += `&status=eq.${_adminOrdFilter}`;

@@ -2465,7 +2465,7 @@ async function loadActiveOrders() {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; return; }
     const statusQ = _ordFilter ? `&status=eq.${_ordFilter}` : `&status=in.(paid,in_progress,ready)`;
-    const all = await req(`/rest/v1/orders?user_id=eq.${uid}${statusQ}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.asc`);
+    const all = await req(`/rest/v1/orders?user_id=eq.${uid}${statusQ}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc`);
     const orders = all.filter(o => (o.stores?.direction || 'food') === S.direction);
     if (!orders.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет активных заказов</div>'; return; }
     el.innerHTML = orders.map(o => renderActiveOrderCard(o)).join('');
