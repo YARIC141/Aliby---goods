@@ -2258,9 +2258,7 @@ async function loadOrders() {
     if (_adminOrdFilter === 'issued') url += '&status=eq.issued';
     else if (_adminOrdFilter) url += `&status=eq.${_adminOrdFilter}`;
     else url += '&status=in.(paid,in_progress,ready)';
-    const raw = await req(url);
-    const STATUS_RANK = { paid: 0, in_progress: 1, ready: 2 };
-    _orders = _adminOrdFilter ? raw : raw.sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9));
+    _orders = await req(url);
     if (!_orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
     el.innerHTML = _orders.map(o => renderOrderCard(o)).join('');
   } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
