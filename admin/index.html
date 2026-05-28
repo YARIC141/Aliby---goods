@@ -2339,7 +2339,7 @@ async function confirmStoreCrop() {
       0, 0, 300, 300
     );
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
-    const filename = 'stores/store_' + Date.now() + '.jpg';
+    const filename = 'store_' + Date.now() + '.jpg';
     const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
       method: 'POST',
       headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'image/jpeg' },
