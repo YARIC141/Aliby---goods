@@ -831,14 +831,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
 
     <div class="sec">
-      <div class="sec-title">Сменить пароль</div>
-      <div class="row">
-        <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
-        <button class="btn" id="p-pwd-btn" onclick="updatePwd()">Обновить</button>
-      </div>
-    </div>
-
-    <div class="sec">
       <div class="sec-title">Оформление</div>
       <div class="theme-row">
         <span>Тёмная тема</span>
@@ -854,17 +846,16 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
           <span class="toggle-track"></span>
         </label>
       </div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-title">Цвета оформления</div>
-      <div class="card" style="padding:8px 12px">
-        <div class="color-row"><span>Акцент</span><input type="color" id="cp-accent" oninput="onColorPick('accent',this.value)"></div>
-        <div class="color-row"><span>Карточки</span><input type="color" id="cp-surface" oninput="onColorPick('surface',this.value)"></div>
-        <div class="color-row"><span>Фон</span><input type="color" id="cp-bg" oninput="onColorPick('bg',this.value)"></div>
-        <div class="color-row"><span>Орнамент</span><input type="color" id="cp-pat" oninput="onColorPick('pat',this.value)"></div>
+      <button class="btn btn-full" style="margin-top:12px" onclick="toggleColorPicker()">Цвета оформления</button>
+      <div id="color-picker-panel" style="display:none;margin-top:10px">
+        <div class="card" style="padding:8px 12px">
+          <div class="color-row"><span>Акцент</span><input type="color" id="cp-accent" oninput="onColorPick('accent',this.value)"></div>
+          <div class="color-row"><span>Карточки</span><input type="color" id="cp-surface" oninput="onColorPick('surface',this.value)"></div>
+          <div class="color-row"><span>Фон</span><input type="color" id="cp-bg" oninput="onColorPick('bg',this.value)"></div>
+          <div class="color-row"><span>Орнамент</span><input type="color" id="cp-pat" oninput="onColorPick('pat',this.value)"></div>
+        </div>
+        <button class="btn btn-sm" style="margin-top:8px" onclick="resetColors()">Сбросить цвета</button>
       </div>
-      <button class="btn btn-sm" style="margin-top:8px" onclick="resetColors()">Сбросить цвета</button>
     </div>
 
     <div class="sec">
@@ -872,7 +863,14 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
 
     <div class="sec">
-      <button class="btn btn-d btn-full" onclick="doLogout()">Выйти из аккаунта</button>
+      <button class="btn btn-full" onclick="togglePwdForm()">Сменить пароль</button>
+      <div id="pwd-change-panel" style="display:none;margin-top:10px">
+        <div class="row">
+          <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
+          <button class="btn" id="p-pwd-btn" onclick="updatePwd()">Обновить</button>
+        </div>
+      </div>
+      <button class="btn btn-d btn-full" style="margin-top:10px" onclick="doLogout()">Выйти из аккаунта</button>
     </div>
 
     <div class="sec">
@@ -3156,6 +3154,14 @@ async function updatePhone() {
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
+function toggleColorPicker() {
+  const p = document.getElementById('color-picker-panel');
+  if (p) p.style.display = p.style.display === 'none' ? '' : 'none';
+}
+function togglePwdForm() {
+  const p = document.getElementById('pwd-change-panel');
+  if (p) p.style.display = p.style.display === 'none' ? '' : 'none';
+}
 async function updatePwd() {
   const restore = btnLoad(document.getElementById('p-pwd-btn'), 'Обновление…');
   try {
@@ -3167,6 +3173,7 @@ async function updatePwd() {
     restore();
     alert('Пароль обновлён');
     document.getElementById('p-newpwd').value = '';
+    document.getElementById('pwd-change-panel').style.display = 'none';
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
