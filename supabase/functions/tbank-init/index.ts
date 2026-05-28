@@ -118,6 +118,15 @@ Deno.serve(async (req: Request) => {
   // Если сумма к оплате = 0 (полностью покрыта абонементом) — сразу помечаем заказ оплаченным
   if (total_amount === 0) {
     await serviceClient.from('orders').update({ status: 'paid' }).eq('id', order.id)
+    if (applied_user_subscription_id && Number(subscription_discount) > 0) {
+      await serviceClient
+        .from('subscription_redemptions')
+        .insert({
+          user_subscription_id: applied_user_subscription_id,
+          order_id: order.id,
+          amount_discounted: subscription_discount,
+        })
+    }
     return jsonResponse({ order_id: order.id, free: true, amount: 0 })
   }
 

@@ -67,7 +67,7 @@ Deno.serve(async (req: Request) => {
   // Проверяем, что заказ принадлежит этому пользователю
   const { data: order, error: orderError } = await serviceClient
     .from('orders')
-    .select('id, user_id')
+    .select('id, user_id, applied_user_subscription_id, subscription_discount')
     .eq('id', payment.order_id)
     .single()
 
@@ -92,6 +92,17 @@ Deno.serve(async (req: Request) => {
     .from('orders')
     .update({ status: orderStatus })
     .eq('id', order.id)
+
+  // Создаём запись списания абонемента при успешной оплате
+  if (status === 'succeeded' && order.applied_user_subscription_id && Number(order.subscription_discount) > 0) {
+    await serviceClient
+      .from('subscription_redemptions')
+      .insert({
+        user_subscription_id: order.applied_user_subscription_id,
+        order_id: order.id,
+        amount_discounted: order.subscription_discount,
+      })
+  }
 
   return jsonResponse({ ok: true, order_status: orderStatus })
 })
