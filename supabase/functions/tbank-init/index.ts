@@ -32,6 +32,9 @@ Deno.serve(async (req: Request) => {
     store_id?: string
     items?: { menu_item_id: string; quantity: number; price_at_time: number }[]
     total_amount?: number
+    subscription_discount?: number
+    applied_user_subscription_id?: string
+    payment_method?: string
   }
   try {
     body = await req.json()
@@ -39,14 +42,14 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Invalid JSON body' }, 400)
   }
 
-  const { store_id, items, total_amount } = body
+  const { store_id, items, total_amount, subscription_discount, applied_user_subscription_id, payment_method } = body
 
   if (!store_id || !items?.length || total_amount === undefined) {
     return jsonResponse({ error: 'store_id, items and total_amount are required' }, 400)
   }
 
-  if (typeof total_amount !== 'number' || total_amount <= 0) {
-    return jsonResponse({ error: 'total_amount must be a positive number' }, 400)
+  if (typeof total_amount !== 'number' || total_amount < 0) {
+    return jsonResponse({ error: 'total_amount must be a non-negative number' }, 400)
   }
 
   const serviceClient = createClient(
@@ -84,7 +87,9 @@ Deno.serve(async (req: Request) => {
       store_id,
       total_amount,
       status: 'pending',
-      payment_method: 'card',
+      payment_method: payment_method || 'card',
+      subscription_discount: subscription_discount || 0,
+      applied_user_subscription_id: applied_user_subscription_id || null,
     })
     .select('id')
     .single()
@@ -108,6 +113,12 @@ Deno.serve(async (req: Request) => {
   if (itemsError) {
     await serviceClient.from('orders').delete().eq('id', order.id)
     return jsonResponse({ error: 'Failed to create order items: ' + itemsError.message }, 500)
+  }
+
+  // Если сумма к оплате = 0 (полностью покрыта абонементом) — сразу помечаем заказ оплаченным
+  if (total_amount === 0) {
+    await serviceClient.from('orders').update({ status: 'paid' }).eq('id', order.id)
+    return jsonResponse({ order_id: order.id, free: true, amount: 0 })
   }
 
   // Генерируем токен оплаты (эмуляция T-Bank PaymentId)

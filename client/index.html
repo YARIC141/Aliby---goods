@@ -2114,7 +2114,7 @@ function getCartSubAllocation() {
     coveredQty += covered;
   }
   if (!coveredQty) return null;
-  return { sub: globalBest.sub, totalQty, coveredQty, perItem };
+  return { us: globalBest.us, sub: globalBest.sub, totalQty, coveredQty, perItem };
 }
 
 async function loadCategories() {
@@ -3635,8 +3635,8 @@ function startCheckout() {
     document.getElementById('msw-text').textContent =
       `Абонемент «${alloc.sub.name}» покрывает ${covPct} в корзине.`;
     document.getElementById('msw-actions').innerHTML =
-      `<button class="btn btn-p btn-full" onclick="closeModal('m-sub-warn');doCheckout()">Использовать абонемент</button>` +
-      `<button class="btn btn-full" onclick="closeModal('m-sub-warn');doCheckout()">Без абонемента</button>` +
+      `<button class="btn btn-p btn-full" onclick="closeModal('m-sub-warn');doCheckout(true)">Использовать абонемент</button>` +
+      `<button class="btn btn-full" onclick="closeModal('m-sub-warn');doCheckout(false)">Без абонемента</button>` +
       `<button class="btn btn-d btn-full" onclick="closeModal('m-sub-warn')">Отмена</button>`;
     openModal('m-sub-warn');
   } else {
@@ -3657,18 +3657,34 @@ function startCheckout() {
   }
 }
 
-async function doCheckout() {
+async function doCheckout(useSubscription = false) {
   if (!S.session) { showGeoToast('Войдите в аккаунт для оплаты'); return; }
   if (!S.cart.length) return;
   const storeId = S.cartStoreId || S.store?.id;
   if (!storeId) { showGeoToast('Не удалось определить заведение'); return; }
 
-  const totalAmount = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+  const fullAmount = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
   const items = S.cart.map(({ item, qty }) => ({
     menu_item_id: item.id,
     quantity: qty,
     price_at_time: item.price,
   }));
+
+  let subDiscount = 0;
+  let appliedUsSubId = null;
+  let paymentMethod = 'card';
+  if (useSubscription) {
+    const alloc = getCartSubAllocation();
+    if (alloc) {
+      for (const { item, qty } of S.cart) {
+        const info = alloc.perItem.get(item.id);
+        if (info?.covered > 0) subDiscount += info.disc * info.covered;
+      }
+      appliedUsSubId = alloc.us?.id || null;
+      paymentMethod = subDiscount >= fullAmount ? 'subscription' : 'mixed';
+    }
+  }
+  const totalAmount = Math.max(0, fullAmount - subDiscount);
 
   const payBtn = document.getElementById('cart-pay-btn');
   payBtn.disabled = true;
@@ -3677,8 +3693,19 @@ async function doCheckout() {
   try {
     const result = await req('/functions/v1/tbank-init', {
       method: 'POST',
-      body: JSON.stringify({ store_id: storeId, items, total_amount: totalAmount }),
+      body: JSON.stringify({
+        store_id: storeId, items, total_amount: totalAmount,
+        subscription_discount: subDiscount,
+        applied_user_subscription_id: appliedUsSubId,
+        payment_method: paymentMethod,
+      }),
     });
+    if (result.free) {
+      S.cart = []; S.cartStoreId = null; saveCart(); updateCartCount(); renderCart();
+      showGeoToast('Заказ оплачен абонементом!');
+      switchCartTab('order');
+      return;
+    }
     _pendingPayment = result;
     document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
     document.getElementById('tbank-order-info').textContent = 'Заказ #' + result.order_id.slice(0, 8).toUpperCase();
