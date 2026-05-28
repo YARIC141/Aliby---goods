@@ -200,6 +200,7 @@ tr:hover td{background:var(--bg-1)}
 .modal-x{background:none;border:none;cursor:pointer;font-size:18px;line-height:1;color:var(--fg-3);width:32px;height:32px;border-radius:var(--r-1);display:flex;align-items:center;justify-content:center;transition:background var(--t-fast)}
 .modal-x:hover{background:var(--bg-2);color:var(--fg)}
 .modal-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.scp-dim{position:absolute;background:rgba(0,0,0,.55);pointer-events:none}
 
 /* ── MAP ── */
 .map-admin{flex:1;position:relative;overflow:hidden;cursor:crosshair}
@@ -862,6 +863,18 @@ tr.row-click:hover td{background:var(--bg-2)}
         <input type="number" id="ms-avg" min="0" placeholder="Пусто — не показывать на карте">
       </div>
     </div>
+    <div style="margin-bottom:12px">
+      <label style="display:block;font:600 13px/1 var(--font-sans);color:var(--fg-3);margin-bottom:8px">Фото заведения</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="ms-img-preview" style="width:64px;height:64px;border-radius:var(--r-2);border:1px solid var(--line);background:var(--bg-2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;color:var(--fg-4);font-size:11px">Фото</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="file" id="ms-photo" accept="image/*" style="display:none" onchange="openStoreCrop(this.files[0])">
+          <button class="btn btn-sm" onclick="document.getElementById('ms-photo').click()">Выбрать фото</button>
+          <button class="btn btn-sm" id="ms-img-del-btn" style="display:none;color:var(--err)" onclick="deleteStorePhoto()">Удалить</button>
+        </div>
+      </div>
+      <input type="hidden" id="ms-image-url">
+    </div>
     <div id="ms-coords-status" style="font:400 12px/1.3 var(--font-mono);margin:10px 0 6px;padding:6px 10px;border-radius:var(--r-1);background:var(--bg-2)"></div>
     <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
       <button class="btn" style="flex:1" onclick="pickOnMap()">🗺 Указать на карте</button>
@@ -873,6 +886,29 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-store')">Отмена</button>
       <button class="btn btn-p" id="ms-save-btn" onclick="saveStore()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store photo crop modal -->
+<div class="overlay" id="m-store-crop">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-hd">
+      <h3>Выбрать область</h3>
+      <button class="modal-x" onclick="cancelStoreCrop()">✕</button>
+    </div>
+    <div style="position:relative;overflow:hidden;background:#111;border-radius:var(--r-2);line-height:0;touch-action:none;user-select:none" id="scp-container">
+      <img id="scp-img" style="display:block;max-width:100%;pointer-events:none">
+      <div class="scp-dim" id="scp-dim-t" style="left:0;right:0;top:0"></div>
+      <div class="scp-dim" id="scp-dim-b" style="left:0;right:0"></div>
+      <div class="scp-dim" id="scp-dim-l"></div>
+      <div class="scp-dim" id="scp-dim-r"></div>
+      <div id="scp-overlay" style="position:absolute;border:2px solid #fff;cursor:move;box-sizing:border-box;touch-action:none"></div>
+    </div>
+    <div style="font:400 12px/1.5 var(--font-mono);color:var(--fg-3);margin-top:8px;text-align:center">Перетащите рамку, чтобы выбрать область 1:1</div>
+    <div class="modal-ft">
+      <button class="btn" onclick="cancelStoreCrop()">Отмена</button>
+      <button class="btn btn-p" id="scp-confirm-btn" onclick="confirmStoreCrop()">Загрузить</button>
     </div>
   </div>
 </div>
@@ -1739,6 +1775,8 @@ async function openStoreModal(store) {
   document.getElementById('ms-dir').value     = store?.direction || 'food';
   document.getElementById('ms-color').value   = store?._loc?.marker_color || '#e8430a';
   document.getElementById('ms-avg').value     = store?.avg_order_amount ?? '';
+  document.getElementById('ms-image-url').value = store?.image_url || '';
+  _restoreStoreImgPreview(store?.image_url || '');
   await loadStoreCategoriesFiltered();
   document.getElementById('ms-sc').value = store?.store_category_id || '';
   updateStoreCoordsStatus();
@@ -1777,6 +1815,7 @@ function pickOnMap() {
     lat:     document.getElementById('ms-lat').value,
     lng:     document.getElementById('ms-lng').value,
     color:   document.getElementById('ms-color').value,
+    image_url: document.getElementById('ms-image-url').value,
   };
   S.mapPickMode = true;
   S.mapPickCoords = null;
@@ -1804,6 +1843,8 @@ async function usePickedCoords() {
   document.getElementById('ms-lng').value     = lng;
   await loadStoreCategoriesFiltered();
   document.getElementById('ms-sc').value      = d.sc;
+  document.getElementById('ms-image-url').value = d.image_url || '';
+  _restoreStoreImgPreview(d.image_url || '');
   updateStoreCoordsStatus();
   openModal('m-store');
 }
@@ -1827,6 +1868,8 @@ async function cancelPickMode() {
     document.getElementById('ms-lng').value     = d.lng;
     await loadStoreCategoriesFiltered();
     document.getElementById('ms-sc').value      = d.sc;
+    document.getElementById('ms-image-url').value = d.image_url || '';
+    _restoreStoreImgPreview(d.image_url || '');
     updateStoreCoordsStatus();
     openModal('m-store');
   }
@@ -1858,6 +1901,7 @@ async function saveStore() {
     city:               S.city || 'Самара',
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
+    image_url:          document.getElementById('ms-image-url').value || null,
   };
   try {
     let storeId = id;
@@ -2188,6 +2232,145 @@ async function deletePhoto() {
     document.getElementById('mmi-img-url').textContent = '';
     document.getElementById('mmi-preview').textContent = 'Нет фото';
     document.getElementById('mmi-delete-photo-btn').style.display = 'none';
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+// ─── STORE PHOTO CROP ───
+function _restoreStoreImgPreview(url) {
+  const prev = document.getElementById('ms-img-preview');
+  if (!prev) return;
+  if (url) {
+    prev.innerHTML = `<img src="${esc(url)}" style="width:64px;height:64px;object-fit:cover">`;
+    document.getElementById('ms-img-del-btn').style.display = 'inline-flex';
+  } else {
+    prev.textContent = 'Фото';
+    document.getElementById('ms-img-del-btn').style.display = 'none';
+  }
+}
+
+let _scpCropX = 0, _scpCropY = 0, _scpCropSize = 0;
+let _scpCleanup = null;
+
+function openStoreCrop(file) {
+  if (!file) return;
+  document.getElementById('ms-photo').value = '';
+  const img = document.getElementById('scp-img');
+  const reader = new FileReader();
+  reader.onload = e => {
+    img.onload = () => { requestAnimationFrame(() => initStoreCrop(img)); };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  openModal('m-store-crop');
+}
+
+function initStoreCrop(img) {
+  if (_scpCleanup) { _scpCleanup(); _scpCleanup = null; }
+  const dispW = img.offsetWidth;
+  const dispH = img.offsetHeight;
+  const size = Math.min(dispW, dispH);
+  _scpCropSize = size;
+  _scpCropX = Math.round((dispW - size) / 2);
+  _scpCropY = Math.round((dispH - size) / 2);
+  _scpUpdateOverlay();
+  const overlay = document.getElementById('scp-overlay');
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  function onStart(e) {
+    dragging = true;
+    const pt = e.touches ? e.touches[0] : e;
+    sx = pt.clientX; sy = pt.clientY; ox = _scpCropX; oy = _scpCropY;
+    e.preventDefault();
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    const pt = e.touches ? e.touches[0] : e;
+    _scpCropX = Math.max(0, Math.min(dispW - _scpCropSize, ox + pt.clientX - sx));
+    _scpCropY = Math.max(0, Math.min(dispH - _scpCropSize, oy + pt.clientY - sy));
+    _scpUpdateOverlay();
+    e.preventDefault();
+  }
+  function onEnd() { dragging = false; }
+  overlay.addEventListener('mousedown', onStart);
+  overlay.addEventListener('touchstart', onStart, { passive: false });
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, { passive: false });
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchend', onEnd);
+  _scpCleanup = () => {
+    overlay.removeEventListener('mousedown', onStart);
+    overlay.removeEventListener('touchstart', onStart);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchend', onEnd);
+  };
+}
+
+function _scpUpdateOverlay() {
+  const overlay = document.getElementById('scp-overlay');
+  const container = document.getElementById('scp-container');
+  overlay.style.left = _scpCropX + 'px';
+  overlay.style.top = _scpCropY + 'px';
+  overlay.style.width = _scpCropSize + 'px';
+  overlay.style.height = _scpCropSize + 'px';
+  const W = container.offsetWidth, H = container.offsetHeight;
+  const t = document.getElementById('scp-dim-t'), b = document.getElementById('scp-dim-b');
+  const l = document.getElementById('scp-dim-l'), r = document.getElementById('scp-dim-r');
+  t.style.height = _scpCropY + 'px';
+  b.style.top = (_scpCropY + _scpCropSize) + 'px';
+  b.style.height = (H - _scpCropY - _scpCropSize) + 'px';
+  l.style.top = _scpCropY + 'px'; l.style.left = '0'; l.style.width = _scpCropX + 'px'; l.style.height = _scpCropSize + 'px';
+  r.style.top = _scpCropY + 'px'; r.style.left = (_scpCropX + _scpCropSize) + 'px'; r.style.width = (W - _scpCropX - _scpCropSize) + 'px'; r.style.height = _scpCropSize + 'px';
+}
+
+async function confirmStoreCrop() {
+  const btn = document.getElementById('scp-confirm-btn');
+  const restore = btnLoad(btn, 'Загрузка…');
+  try {
+    const img = document.getElementById('scp-img');
+    const scaleX = img.naturalWidth / img.offsetWidth;
+    const scaleY = img.naturalHeight / img.offsetHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = 300; canvas.height = 300;
+    canvas.getContext('2d').drawImage(
+      img,
+      Math.round(_scpCropX * scaleX), Math.round(_scpCropY * scaleY),
+      Math.round(_scpCropSize * scaleX), Math.round(_scpCropSize * scaleY),
+      0, 0, 300, 300
+    );
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+    const filename = 'stores/store_' + Date.now() + '.jpg';
+    const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
+      method: 'POST',
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'image/jpeg' },
+      body: blob,
+    });
+    if (!r.ok) { const e = await r.json(); throw e; }
+    const url = `${SB_URL}/storage/v1/object/public/menu-photos/${filename}`;
+    document.getElementById('ms-image-url').value = url;
+    _restoreStoreImgPreview(url);
+    if (_scpCleanup) { _scpCleanup(); _scpCleanup = null; }
+    closeModal('m-store-crop');
+    restore();
+  } catch(e) { restore(); alert('Ошибка загрузки: ' + (e.message || JSON.stringify(e))); }
+}
+
+function cancelStoreCrop() {
+  if (_scpCleanup) { _scpCleanup(); _scpCleanup = null; }
+  closeModal('m-store-crop');
+}
+
+async function deleteStorePhoto() {
+  const url = document.getElementById('ms-image-url').value;
+  if (!url || !confirm('Удалить фото?')) return;
+  const filename = url.split('/menu-photos/').pop();
+  try {
+    await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
+      method: 'DELETE',
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token },
+    });
+    document.getElementById('ms-image-url').value = '';
+    _restoreStoreImgPreview('');
   } catch(e) { alert('Ошибка: ' + (e.message || '')); }
 }
 
