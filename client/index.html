@@ -194,6 +194,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .store-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateX(-50%)}
 .store-pin .p-dot-wrap{position:relative;flex-shrink:0;width:14px;height:14px}
 .store-pin .p-dot{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.store-pin .p-img-wrap{position:relative;flex-shrink:0;width:38px;height:38px}
+.store-pin .p-img{width:38px;height:38px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);object-fit:cover;display:block}
 .store-pin .p-cart{position:absolute;top:-6px;right:-8px;font-size:10px;line-height:1;background:#f5c518;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .store-pin .p-lbl{background:var(--bg-1);border:1px solid var(--line);font:600 13px/1 var(--font-sans);color:var(--fg);padding:3px 8px;border-radius:var(--r-1);white-space:nowrap;margin-top:3px;box-shadow:var(--shadow-1);max-width:130px;overflow:hidden;text-overflow:ellipsis}
 .store-pin .p-avg{font:400 11px/1 var(--font-mono);color:var(--fg-3);margin-top:1px;background:var(--bg-1);border:1px solid var(--line-soft);padding:1px 6px;border-radius:var(--r-1);white-space:nowrap;box-shadow:var(--shadow-1)}
@@ -1869,11 +1871,11 @@ function renderMapMarkers(stores) {
     if (st.lng == null || st.lat == null) return;
     const el = document.createElement('div');
     el.className = 'store-pin';
+    const pinHead = st.image_url
+      ? `<div class="p-img-wrap"><img class="p-img" src="${esc(st.image_url)}" alt="">${st.has_cart ? '<div class="p-cart">🛒</div>' : ''}</div>`
+      : `<div class="p-dot-wrap"><div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div>${st.has_cart ? '<div class="p-cart">🛒</div>' : ''}</div>`;
     el.innerHTML = `
-      <div class="p-dot-wrap">
-        <div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div>
-        ${st.has_cart ? '<div class="p-cart">🛒</div>' : ''}
-      </div>
+      ${pinHead}
       <div class="p-lbl">${esc(st.name)}</div>
       ${st.avg_order_amount ? `<div class="p-avg">~${st.avg_order_amount} ₽</div>` : ''}`;
     el.addEventListener('click', () => showStorePopup(st, null));
