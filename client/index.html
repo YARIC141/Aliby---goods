@@ -2465,7 +2465,7 @@ async function loadActiveOrders() {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; return; }
     const statusQ = _ordFilter ? `&status=eq.${_ordFilter}` : `&status=in.(paid,in_progress,ready)`;
-    const all = await req(`/rest/v1/orders?user_id=eq.${uid}${statusQ}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.asc`);
+    const all = await req(`/rest/v1/orders?user_id=eq.${uid}${statusQ}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.asc`);
     const STATUS_RANK = { paid: 0, in_progress: 1, ready: 2 };
     const orders = all
       .filter(o => (o.stores?.direction || 'food') === S.direction)
@@ -2482,6 +2482,9 @@ function renderActiveOrderCard(o) {
   const label = statusLabels[o.status] || o.status;
   const items = o.order_items || [];
   const isReady = o.status === 'ready';
+  const subName = o.user_subscriptions?.subscriptions?.name;
+  const disc = Number(o.subscription_discount || 0);
+  const fullAmount = Number(o.total_amount) + disc;
   return `<div class="card" style="margin:10px 16px;padding:14px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px">
       <div>
@@ -2497,8 +2500,14 @@ function renderActiveOrderCard(o) {
         <span>${esc(it.menu_items?.name || '—')}</span>
         <span style="white-space:nowrap">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</span>
       </div>`).join('')}
+      ${subName && disc > 0 ? `
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;margin-top:2px;color:var(--ok)">
+        <span>🎫 ${esc(subName)}</span>
+        <span style="white-space:nowrap">−${disc.toFixed(0)} ₽</span>
+      </div>` : ''}
       <div style="display:flex;justify-content:space-between;font:600 14px/1 var(--font-display);margin-top:8px;padding-top:6px;border-top:1px solid var(--line-soft)">
-        <span>Итого</span><span>${Number(o.total_amount).toFixed(0)} ₽</span>
+        <span>Итого</span>
+        <span>${subName && disc > 0 ? `<span style="text-decoration:line-through;font-weight:400;color:var(--fg-4);margin-right:6px;font-size:12px">${fullAmount.toFixed(0)} ₽</span>` : ''}${Number(o.total_amount).toFixed(0)} ₽</span>
       </div>
     </div>
   </div>`;
