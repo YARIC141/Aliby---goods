@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="g-orange" cx="22%" cy="0%" r="55%" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#e8743b" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e8743b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g-blue" cx="82%" cy="18%" r="50%" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#78b4e0" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#78b4e0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="icon-grad" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#f09560"/>
+      <stop offset="100%" stop-color="#bf4f1a"/>
+    </linearGradient>
+    <linearGradient id="icon-shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="icon-clip">
+      <rect width="110" height="110" rx="24"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f0e0c"/>
+  <rect width="1200" height="630" fill="url(#g-orange)"/>
+  <rect width="1200" height="630" fill="url(#g-blue)"/>
+
+  <!-- Subtle dot grid (right side) -->
+  <g fill="#ffffff" fill-opacity="0.04">
+    <circle cx="700" cy="80"  r="2"/><circle cx="740" cy="80"  r="2"/><circle cx="780" cy="80"  r="2"/><circle cx="820" cy="80"  r="2"/><circle cx="860" cy="80"  r="2"/><circle cx="900" cy="80"  r="2"/><circle cx="940" cy="80"  r="2"/><circle cx="980" cy="80"  r="2"/><circle cx="1020" cy="80" r="2"/><circle cx="1060" cy="80" r="2"/><circle cx="1100" cy="80" r="2"/>
+    <circle cx="700" cy="120" r="2"/><circle cx="740" cy="120" r="2"/><circle cx="780" cy="120" r="2"/><circle cx="820" cy="120" r="2"/><circle cx="860" cy="120" r="2"/><circle cx="900" cy="120" r="2"/><circle cx="940" cy="120" r="2"/><circle cx="980" cy="120" r="2"/><circle cx="1020" cy="120" r="2"/><circle cx="1060" cy="120" r="2"/><circle cx="1100" cy="120" r="2"/>
+    <circle cx="700" cy="160" r="2"/><circle cx="740" cy="160" r="2"/><circle cx="780" cy="160" r="2"/><circle cx="820" cy="160" r="2"/><circle cx="860" cy="160" r="2"/><circle cx="900" cy="160" r="2"/><circle cx="940" cy="160" r="2"/><circle cx="980" cy="160" r="2"/><circle cx="1020" cy="160" r="2"/><circle cx="1060" cy="160" r="2"/><circle cx="1100" cy="160" r="2"/>
+    <circle cx="700" cy="200" r="2"/><circle cx="740" cy="200" r="2"/><circle cx="780" cy="200" r="2"/><circle cx="820" cy="200" r="2"/><circle cx="860" cy="200" r="2"/><circle cx="900" cy="200" r="2"/><circle cx="940" cy="200" r="2"/><circle cx="980" cy="200" r="2"/><circle cx="1020" cy="200" r="2"/><circle cx="1060" cy="200" r="2"/><circle cx="1100" cy="200" r="2"/>
+    <circle cx="700" cy="240" r="2"/><circle cx="740" cy="240" r="2"/><circle cx="780" cy="240" r="2"/><circle cx="820" cy="240" r="2"/><circle cx="860" cy="240" r="2"/><circle cx="900" cy="240" r="2"/><circle cx="940" cy="240" r="2"/><circle cx="980" cy="240" r="2"/><circle cx="1020" cy="240" r="2"/><circle cx="1060" cy="240" r="2"/><circle cx="1100" cy="240" r="2"/>
+    <circle cx="700" cy="280" r="2"/><circle cx="740" cy="280" r="2"/><circle cx="780" cy="280" r="2"/><circle cx="820" cy="280" r="2"/><circle cx="860" cy="280" r="2"/><circle cx="900" cy="280" r="2"/><circle cx="940" cy="280" r="2"/><circle cx="980" cy="280" r="2"/><circle cx="1020" cy="280" r="2"/><circle cx="1060" cy="280" r="2"/><circle cx="1100" cy="280" r="2"/>
+    <circle cx="700" cy="320" r="2"/><circle cx="740" cy="320" r="2"/><circle cx="780" cy="320" r="2"/><circle cx="820" cy="320" r="2"/><circle cx="860" cy="320" r="2"/><circle cx="900" cy="320" r="2"/><circle cx="940" cy="320" r="2"/><circle cx="980" cy="320" r="2"/><circle cx="1020" cy="320" r="2"/><circle cx="1060" cy="320" r="2"/><circle cx="1100" cy="320" r="2"/>
+    <circle cx="700" cy="360" r="2"/><circle cx="740" cy="360" r="2"/><circle cx="780" cy="360" r="2"/><circle cx="820" cy="360" r="2"/><circle cx="860" cy="360" r="2"/><circle cx="900" cy="360" r="2"/><circle cx="940" cy="360" r="2"/><circle cx="980" cy="360" r="2"/><circle cx="1020" cy="360" r="2"/><circle cx="1060" cy="360" r="2"/><circle cx="1100" cy="360" r="2"/>
+    <circle cx="700" cy="400" r="2"/><circle cx="740" cy="400" r="2"/><circle cx="780" cy="400" r="2"/><circle cx="820" cy="400" r="2"/><circle cx="860" cy="400" r="2"/><circle cx="900" cy="400" r="2"/><circle cx="940" cy="400" r="2"/><circle cx="980" cy="400" r="2"/><circle cx="1020" cy="400" r="2"/><circle cx="1060" cy="400" r="2"/><circle cx="1100" cy="400" r="2"/>
+    <circle cx="700" cy="440" r="2"/><circle cx="740" cy="440" r="2"/><circle cx="780" cy="440" r="2"/><circle cx="820" cy="440" r="2"/><circle cx="860" cy="440" r="2"/><circle cx="900" cy="440" r="2"/><circle cx="940" cy="440" r="2"/><circle cx="980" cy="440" r="2"/><circle cx="1020" cy="440" r="2"/><circle cx="1060" cy="440" r="2"/><circle cx="1100" cy="440" r="2"/>
+    <circle cx="700" cy="480" r="2"/><circle cx="740" cy="480" r="2"/><circle cx="780" cy="480" r="2"/><circle cx="820" cy="480" r="2"/><circle cx="860" cy="480" r="2"/><circle cx="900" cy="480" r="2"/><circle cx="940" cy="480" r="2"/><circle cx="980" cy="480" r="2"/><circle cx="1020" cy="480" r="2"/><circle cx="1060" cy="480" r="2"/><circle cx="1100" cy="480" r="2"/>
+    <circle cx="700" cy="520" r="2"/><circle cx="740" cy="520" r="2"/><circle cx="780" cy="520" r="2"/><circle cx="820" cy="520" r="2"/><circle cx="860" cy="520" r="2"/><circle cx="900" cy="520" r="2"/><circle cx="940" cy="520" r="2"/><circle cx="980" cy="520" r="2"/><circle cx="1020" cy="520" r="2"/><circle cx="1060" cy="520" r="2"/><circle cx="1100" cy="520" r="2"/>
+    <circle cx="700" cy="560" r="2"/><circle cx="740" cy="560" r="2"/><circle cx="780" cy="560" r="2"/><circle cx="820" cy="560" r="2"/><circle cx="860" cy="560" r="2"/><circle cx="900" cy="560" r="2"/><circle cx="940" cy="560" r="2"/><circle cx="980" cy="560" r="2"/><circle cx="1020" cy="560" r="2"/><circle cx="1060" cy="560" r="2"/><circle cx="1100" cy="560" r="2"/>
+  </g>
+
+  <!-- Decorative mock card (right side) -->
+  <g opacity="0.55">
+    <rect x="780" y="165" width="340" height="300" rx="18" fill="#181614" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <!-- Header row -->
+    <rect x="806" y="192" width="80" height="10" rx="5" fill="#e8743b" fill-opacity="0.7"/>
+    <rect x="898" y="192" width="50" height="10" rx="5" fill="#524e48"/>
+    <!-- Divider -->
+    <line x1="806" y1="216" x2="1094" y2="216" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <!-- Row 1 -->
+    <rect x="806" y="232" width="130" height="9" rx="4" fill="#c8c0b4" fill-opacity="0.5"/>
+    <rect x="1020" y="230" width="54" height="14" rx="7" fill="rgba(232,116,59,0.18)" stroke="rgba(232,116,59,0.4)" stroke-width="1"/>
+    <!-- Row 2 -->
+    <rect x="806" y="260" width="100" height="9" rx="4" fill="#524e48"/>
+    <rect x="1020" y="258" width="54" height="14" rx="7" fill="#211f1c" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <!-- Row 3 -->
+    <rect x="806" y="288" width="120" height="9" rx="4" fill="#524e48"/>
+    <rect x="1020" y="286" width="54" height="14" rx="7" fill="#211f1c" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <!-- Divider -->
+    <line x1="806" y1="314" x2="1094" y2="314" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <!-- Total -->
+    <rect x="806" y="330" width="60" height="10" rx="4" fill="#8a8178" fill-opacity="0.6"/>
+    <rect x="1020" y="328" width="54" height="14" rx="7" fill="rgba(232,116,59,0.25)" stroke="rgba(232,116,59,0.5)" stroke-width="1"/>
+    <!-- Button -->
+    <rect x="806" y="358" width="262" height="42" rx="21" fill="url(#icon-grad)"/>
+    <rect x="870" y="372" width="134" height="14" rx="5" fill="white" fill-opacity="0.85"/>
+    <!-- Pin decorations -->
+    <circle cx="856" cy="148" r="18" fill="#e8743b"/>
+    <circle cx="856" cy="148" r="8" fill="white" fill-opacity="0.9"/>
+    <circle cx="960" cy="128" r="13" fill="#22c55e"/>
+    <circle cx="960" cy="128" r="5.5" fill="white" fill-opacity="0.9"/>
+    <circle cx="1050" cy="158" r="15" fill="#a855f7"/>
+    <circle cx="1050" cy="158" r="6.5" fill="white" fill-opacity="0.9"/>
+  </g>
+
+  <!-- Brand icon 110×110 -->
+  <g transform="translate(72, 188)">
+    <rect width="110" height="110" rx="24" fill="url(#icon-grad)"/>
+    <rect width="110" height="55" rx="24" fill="url(#icon-shine)"/>
+    <text x="55" y="84"
+          font-family="serif"
+          font-size="90"
+          font-style="italic"
+          fill="white"
+          fill-opacity="0.93"
+          text-anchor="middle">A</text>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="204" y="264"
+        font-family="serif"
+        font-size="72"
+        font-weight="400"
+        fill="#f4f0eb"
+        letter-spacing="-1">Alli<tspan fill="#e8743b">by</tspan></text>
+
+  <!-- Tagline -->
+  <text x="72" y="318"
+        font-family="sans-serif"
+        font-size="22"
+        fill="#8a8178">Одна платформа</text>
+  <text x="72" y="350"
+        font-family="sans-serif"
+        font-size="22"
+        fill="#c8c0b4">для клиентов и для бизнеса</text>
+
+  <!-- Divider line -->
+  <line x1="72" y1="378" x2="320" y2="378" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Feature pills -->
+  <rect x="72"  y="394" width="150" height="36" rx="18" fill="rgba(232,116,59,0.12)" stroke="rgba(232,116,59,0.35)" stroke-width="1"/>
+  <text x="147" y="417" font-family="sans-serif" font-size="13" font-weight="bold" fill="#e8743b" text-anchor="middle" letter-spacing="0.06em">КЛИЕНТАМ</text>
+
+  <rect x="234" y="394" width="140" height="36" rx="18" fill="rgba(120,180,224,0.12)" stroke="rgba(120,180,224,0.35)" stroke-width="1"/>
+  <text x="304" y="417" font-family="sans-serif" font-size="13" font-weight="bold" fill="#78b4e0" text-anchor="middle" letter-spacing="0.06em">БИЗНЕСУ</text>
+
+  <!-- Vertical separator left -->
+  <line x1="72" y1="468" x2="72" y2="560" stroke="rgba(232,116,59,0.3)" stroke-width="2"/>
+
+  <!-- Features list left -->
+  <circle cx="84" cy="482" r="4" fill="#e8743b"/>
+  <text x="96" y="487" font-family="sans-serif" font-size="15" fill="#c8c0b4">Карта заведений · Меню онлайн</text>
+  <circle cx="84" cy="510" r="4" fill="#e8743b" fill-opacity="0.6"/>
+  <text x="96" y="515" font-family="sans-serif" font-size="15" fill="#c8c0b4">Корзина · Оплата · Доставка</text>
+  <circle cx="84" cy="538" r="4" fill="#78b4e0"/>
+  <text x="96" y="543" font-family="sans-serif" font-size="15" fill="#c8c0b4">Записи · Абонементы · QR</text>
+
+  <!-- URL -->
+  <text x="72" y="603" font-family="sans-serif" font-size="15" fill="#524e48">site.alliby.ru</text>
+  <circle cx="245" cy="598" r="2" fill="#524e48"/>
+  <text x="258" y="603" font-family="sans-serif" font-size="15" fill="#524e48">alliby.ru</text>
+</svg>
