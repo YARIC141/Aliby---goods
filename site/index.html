@@ -43,7 +43,7 @@
   --fg-4:#524e48;
   --line:rgba(255,255,255,.08);
   --r-2:10px;--r-3:14px;--r-4:20px;--r-pill:999px;
-  --pat:rgba(255,255,255,.07);
+  --pat:rgba(255,255,255,.16);
   --glass:rgba(18,16,14,.78);
   --glass-card:rgba(14,12,10,.32);
   --dv-bg:#14120f;--dv-bg1:#1c1a16;--dv-bg2:#241f1b;
@@ -452,7 +452,7 @@ html[data-theme="light"]{
   --fg-3:#8a8178;
   --fg-4:#b5b0a8;
   --line:rgba(0,0,0,.08);
-  --pat:rgba(0,0,0,.06);
+  --pat:rgba(0,0,0,.12);
   --glass:rgba(250,249,247,.80);
   --glass-card:rgba(255,255,255,.48);
   --dv-bg:#ede9e2;--dv-bg1:#e4ded6;--dv-bg2:#d9d2c8;
@@ -588,10 +588,8 @@ html[data-theme="light"] .mk-ga{background-color:#f5f3ef;background-image:radial
   78% {transform:scale(1.18) translate(-5%,-3%)}
   100%{transform:scale(1)    translate(0,0)}
 }
-/* counter-scale: pins/UI stay same visual size, only positions shift */
-.ms-map-anim .ms-sc,
-.ms-map-anim .ms-srch,
-.ms-map-anim .ms-popup{animation:mapFlyFix 10s cubic-bezier(.45,.05,.55,.95) infinite;animation-play-state:paused}
+/* counter-scale: pins stay same visual size, only positions shift with zoom */
+.ms-map-anim .ms-sc{animation:mapFlyFix 10s cubic-bezier(.45,.05,.55,.95) infinite;animation-play-state:paused}
 @keyframes mapFlyFix{
   0%  {transform:scale(1)}
   18% {transform:scale(1.389)}
@@ -603,8 +601,8 @@ html[data-theme="light"] .mk-ga{background-color:#f5f3ef;background-image:radial
 /* admin orders list scroll */
 .ms-rows-scrl{animation:rowScroll 7s ease-in-out infinite;animation-play-state:paused}
 @keyframes rowScroll{
-  0%,18% {transform:translateY(0)}
-  48%,62%{transform:translateY(-23px)}
+  0%,15% {transform:translateY(0)}
+  45%,60%{transform:translateY(-69px)}
   85%,100%{transform:translateY(0)}
 }
 html[data-theme="light"] .ms-map{background:linear-gradient(145deg,#d4dde8 0%,#c8d5cc 55%,#d0d8e4 100%)}
@@ -875,9 +873,9 @@ html[data-theme="light"] .icon-moon{display:flex}
                     <div class="ms-sc" style="position:absolute;top:24%;left:20%"><div class="ms-sa"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></svg></div><div class="ms-plbl">Кофе Арка</div></div>
                     <div class="ms-sc" style="position:absolute;top:42%;left:63%"><div style="width:17px;height:17px;background:#22c55e;border-radius:50%;border:2px solid #fff;box-shadow:0 3px 6px rgba(0,0,0,.4)"></div><div class="ms-plbl">Рынок</div></div>
                     <div class="ms-sc" style="position:absolute;top:64%;left:38%"><div style="width:17px;height:17px;background:#a855f7;border-radius:50%;border:2px solid #fff;box-shadow:0 3px 6px rgba(0,0,0,.4)"></div><div class="ms-plbl">Барбершоп</div></div>
+                    </div>
                     <div class="ms-srch"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="ms-srcht">Найти заведения рядом…</span></div>
                     <div class="ms-popup"><div class="ms-th-s" style="background:linear-gradient(135deg,#8b5e3c,#c07840)"></div><div class="ms-ib"><div class="ms-pn">Кофе Арка</div><div class="ms-ps">Кофейня · 0.3 км · от 150 ₽</div></div><div onclick="mkGo(this,'mdsk')" style="background:#e8743b;border-radius:4px;padding:3px 6px;font:600 7.5px/1 var(--font-sans);color:#fff;flex-shrink:0;cursor:pointer">Меню</div></div>
-                    </div>
                   </div>
                 </div>
 
@@ -1055,6 +1053,9 @@ html[data-theme="light"] .icon-moon{display:flex}
                       <div class="ms-lrow ms-lrw"><span class="ms-lnum">#1283</span><span class="ms-lcomp">Латте · Чизкейк</span><span class="ms-lamt">640 ₽</span><span class="ms-bw">В работе</span><span class="ms-ltime">14:18</span></div>
                       <div class="ms-lrow ms-lrr"><span class="ms-lnum">#1282</span><span class="ms-lcomp">Эспрессо × 3</span><span class="ms-lamt">270 ₽</span><span class="ms-br">Готов</span><span class="ms-ltime">14:11</span></div>
                       <div class="ms-lrow ms-lrd"><span class="ms-lnum">#1281</span><span class="ms-lcomp">Авокадо тост</span><span class="ms-lamt">380 ₽</span><span class="ms-bd">Выдан</span><span class="ms-ltime">13:55</span></div>
+                      <div class="ms-lrow ms-lrd"><span class="ms-lnum">#1280</span><span class="ms-lcomp">Капучино · Тирамису</span><span class="ms-lamt">600 ₽</span><span class="ms-bd">Выдан</span><span class="ms-ltime">13:40</span></div>
+                      <div class="ms-lrow ms-lrd"><span class="ms-lnum">#1279</span><span class="ms-lcomp">Авокадо тост × 2</span><span class="ms-lamt">760 ₽</span><span class="ms-bd">Выдан</span><span class="ms-ltime">13:22</span></div>
+                      <div class="ms-lrow ms-lrd"><span class="ms-lnum">#1278</span><span class="ms-lcomp">Круассан · Латте</span><span class="ms-lamt">500 ₽</span><span class="ms-bd">Выдан</span><span class="ms-ltime">13:05</span></div>
                       </div>
                     </div>
                   </div>
@@ -1298,7 +1299,7 @@ function orderTake(btn){
     // all animated elements in this section (map anim + counter-scale pins + list scroll)
     function anims(sv){
       return Array.from(sv.querySelectorAll(
-        '.ms-map-anim,.ms-map-anim .ms-sc,.ms-map-anim .ms-srch,.ms-map-anim .ms-popup,.ms-rows-scrl'
+        '.ms-map-anim,.ms-map-anim .ms-sc,.ms-rows-scrl'
       ));
     }
     // trigger when section reaches ~1/3 from top of viewport
