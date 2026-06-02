@@ -1337,10 +1337,18 @@ function stripEmoji(s) {
 // ─── CITIES ───
 let _dbCities = null;
 async function _loadDbCities() {
-  if (_dbCities) return _dbCities;
-  const rows = await req('/rest/v1/stores?select=city,latitude,longitude&order=city.asc');
+  if (_dbCities?.length) return _dbCities;
+  try {
+    const rows = await req('/rest/v1/cities?order=name.asc');
+    if (rows.length) {
+      _dbCities = rows.map(r => ({ name: r.name, lat: r.lat, lng: r.lng, zoom: r.zoom || 12, tz: r.tz || '' }));
+      return _dbCities;
+    }
+  } catch {}
+  // fallback: derive unique cities from stores
+  const stores = await req('/rest/v1/stores?select=city,latitude,longitude&order=city.asc');
   const map = {};
-  rows.forEach(r => {
+  stores.forEach(r => {
     if (!r.city) return;
     if (!map[r.city]) map[r.city] = { name: r.city, lats: [], lngs: [] };
     if (r.latitude)  map[r.city].lats.push(r.latitude);
@@ -1350,7 +1358,7 @@ async function _loadDbCities() {
     name: c.name,
     lat:  c.lats.length ? c.lats.reduce((a,b)=>a+b,0)/c.lats.length : null,
     lng:  c.lngs.length ? c.lngs.reduce((a,b)=>a+b,0)/c.lngs.length : null,
-    zoom: 12,
+    zoom: 12, tz: '',
   })).filter(c => c.lat != null);
   return _dbCities;
 }
