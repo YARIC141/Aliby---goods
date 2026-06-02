@@ -607,6 +607,9 @@ html[data-theme="light"] .ms-plbl{background:rgba(250,249,247,.92);border-color:
 .ms-dft{font:700 9px/1 var(--font-sans);color:var(--mk-fg)}
 .ms-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .ms-tamt{font:400 13px/1 var(--font-display);color:var(--mk-fg)}
+.ms-bi-r{position:relative}
+.ms-cbadge{position:absolute;top:-1px;right:0;background:#e8743b;color:#fff;border-radius:50%;min-width:9px;height:9px;font:700 6px/9px var(--font-sans);text-align:center;display:none;padding:0 1px;pointer-events:none}
+.ms-bi[onclick]{cursor:pointer}.ms-ord[onclick]{cursor:pointer}.ms-lrow[onclick]{cursor:pointer}
 /* ── THEME TOGGLE ── */
 .theme-toggle{
   background:none;border:1px solid var(--line);border-radius:var(--r-pill);
@@ -760,22 +763,22 @@ html[data-theme="light"] .icon-moon{display:flex}
           <div class="dv-phone">
             <div class="dv-phone-shell">
               <div class="dv-phone-notch"></div>
-              <div class="mk-wrap mk-gc" onclick="mkN(this)" style="height:100%">
+              <div class="mk-wrap mk-gc" style="height:100%">
                 <!-- 1: Меню -->
-                <div class="mk-slide on">
+                <div class="mk-slide on" data-s="menu">
                   <div class="ms-sb"><span>9:41</span><div class="ms-sb-r"><svg width="12" height="8" viewBox="0 0 12 8"><rect x="0" y="3" width="2" height="5" rx="1" fill="currentColor" opacity=".75"/><rect x="3" y="2" width="2" height="6" rx="1" fill="currentColor" opacity=".75"/><rect x="6" y="1" width="2" height="7" rx="1" fill="currentColor" opacity=".75"/><rect x="9" y="0" width="3" height="8" rx="1" fill="currentColor"/></svg><svg width="17" height="8" viewBox="0 0 17 8"><rect x=".5" y=".5" width="14" height="7" rx="2" stroke="currentColor" stroke-opacity=".45" fill="none"/><rect x="1.5" y="1.5" width="11" height="5" rx="1" fill="currentColor" opacity=".7"/><rect x="15.5" y="2" width="1" height="4" rx=".5" fill="currentColor" opacity=".4"/></svg></div></div>
                   <div class="ms-shdr"><div class="ms-shn">Кофе Арка</div><div class="ms-shs">0.3 км · Доставка от 150 ₽</div><div style="position:absolute;top:6px;right:8px;z-index:1" class="ms-open">Открыто</div></div>
                   <div class="ms-chips"><span class="ms-ch-o">Все</span><span class="ms-ch">Кофе</span><span class="ms-ch">Еда</span><span class="ms-ch">Десерты</span></div>
                   <div class="ms-list">
-                    <div class="ms-row"><div class="ms-th" style="background:linear-gradient(135deg,#8b5e3c,#c07840)"></div><div class="ms-ib"><div class="ms-n">Капучино</div><div class="ms-sub">⏱ 5 мин</div></div><div class="ms-ir"><div class="ms-pr">280 ₽</div><div class="ms-add">+</div></div></div>
+                    <div class="ms-row"><div class="ms-th" style="background:linear-gradient(135deg,#8b5e3c,#c07840)"></div><div class="ms-ib"><div class="ms-n">Капучино</div><div class="ms-sub">⏱ 5 мин</div></div><div class="ms-ir"><div class="ms-pr">280 ₽</div><div class="ms-add" onclick="cartAdd(this)">+</div></div></div>
                     <div class="ms-row"><div class="ms-th" style="background:linear-gradient(135deg,#4a7c59,#2d5e3e)"></div><div class="ms-ib"><div class="ms-n">Авокадо тост</div><div class="ms-sub">⏱ 8 мин</div></div><div class="ms-ir"><div class="ms-pr">380 ₽</div><div class="ms-add-g">+</div></div></div>
                     <div class="ms-row"><div class="ms-th" style="background:linear-gradient(135deg,#c8945a,#8b5e30)"></div><div class="ms-ib"><div class="ms-n">Круассан</div><div class="ms-sub">⏱ 3 мин</div></div><div class="ms-ir"><div class="ms-pr">220 ₽</div><div class="ms-add-g">+</div></div></div>
                     <div class="ms-row"><div class="ms-th" style="background:linear-gradient(135deg,#6b4c8a,#3d2a5c)"></div><div class="ms-ib"><div class="ms-n">Тирамису</div><div class="ms-sub">⏱ 2 мин</div></div><div class="ms-ir"><div class="ms-pr">320 ₽</div><div class="ms-add-g">+</div></div></div>
                   </div>
-                  <div class="ms-bnav"><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="ms-bt">Алиби</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg><span class="ms-bt">Карта</span></div><div class="ms-bi" style="color:#e8743b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span class="ms-bt-o">Меню</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span class="ms-bt">Корзина</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ms-bt">Профиль</span></div></div>
+                  <div class="ms-bnav"><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="ms-bt">Алиби</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg><span class="ms-bt">Карта</span></div><div class="ms-bi" style="color:#e8743b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span class="ms-bt-o">Меню</span></div><div class="ms-bi ms-bi-r" onclick="mkGo(this,'cart')" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span class="ms-cbadge"></span><span class="ms-bt">Корзина</span></div><div class="ms-bi" onclick="mkGo(this,'track')" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ms-bt">Профиль</span></div></div>
                 </div>
                 <!-- 2: Корзина -->
-                <div class="mk-slide">
+                <div class="mk-slide" data-s="cart">
                   <div class="ms-sb"><span>9:41</span><div class="ms-sb-r"><svg width="12" height="8" viewBox="0 0 12 8"><rect x="0" y="3" width="2" height="5" rx="1" fill="currentColor" opacity=".75"/><rect x="3" y="2" width="2" height="6" rx="1" fill="currentColor" opacity=".75"/><rect x="6" y="1" width="2" height="7" rx="1" fill="currentColor" opacity=".75"/><rect x="9" y="0" width="3" height="8" rx="1" fill="currentColor"/></svg><svg width="17" height="8" viewBox="0 0 17 8"><rect x=".5" y=".5" width="14" height="7" rx="2" stroke="currentColor" stroke-opacity=".45" fill="none"/><rect x="1.5" y="1.5" width="11" height="5" rx="1" fill="currentColor" opacity=".7"/><rect x="15.5" y="2" width="1" height="4" rx=".5" fill="currentColor" opacity=".4"/></svg></div></div>
                   <div class="ms-hdr"><div class="ms-h">Корзина</div><div class="ms-s">Кофе Арка</div></div>
                   <div class="ms-list">
@@ -784,11 +787,11 @@ html[data-theme="light"] .icon-moon{display:flex}
                     <div class="ms-dlv"><div class="ms-dlv-n"><div class="ms-dlv-h">Самовывоз</div><div class="ms-dlv-s">Бесплатно</div></div><div class="ms-dlv-a"><div class="ms-dlv-ha">Доставка</div><div class="ms-dlv-s">от 150 ₽</div></div></div>
                     <div class="ms-total"><span class="ms-dfn">Итого</span><span class="ms-tamt">780 ₽</span></div>
                   </div>
-                  <div class="ms-btw"><div class="ms-btn-o">Оформить заказ</div></div>
-                  <div class="ms-bnav"><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="ms-bt">Алиби</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg><span class="ms-bt">Карта</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span class="ms-bt">Меню</span></div><div class="ms-bi" style="color:#e8743b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span class="ms-bt-o">Корзина</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ms-bt">Профиль</span></div></div>
+                  <div class="ms-btw"><div class="ms-btn-o" onclick="mkGo(this,'track')">Оформить заказ</div></div>
+                  <div class="ms-bnav"><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="ms-bt">Алиби</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg><span class="ms-bt">Карта</span></div><div class="ms-bi" onclick="mkGo(this,'menu')" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span class="ms-bt">Меню</span></div><div class="ms-bi ms-bi-r" style="color:#e8743b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span class="ms-cbadge"></span><span class="ms-bt-o">Корзина</span></div><div class="ms-bi" onclick="mkGo(this,'track')" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ms-bt">Профиль</span></div></div>
                 </div>
                 <!-- 3: Трекинг заказа -->
-                <div class="mk-slide">
+                <div class="mk-slide" data-s="track">
                   <div class="ms-sb"><span>9:41</span><div class="ms-sb-r"><svg width="12" height="8" viewBox="0 0 12 8"><rect x="0" y="3" width="2" height="5" rx="1" fill="currentColor" opacity=".75"/><rect x="3" y="2" width="2" height="6" rx="1" fill="currentColor" opacity=".75"/><rect x="6" y="1" width="2" height="7" rx="1" fill="currentColor" opacity=".75"/><rect x="9" y="0" width="3" height="8" rx="1" fill="currentColor"/></svg><svg width="17" height="8" viewBox="0 0 17 8"><rect x=".5" y=".5" width="14" height="7" rx="2" stroke="currentColor" stroke-opacity=".45" fill="none"/><rect x="1.5" y="1.5" width="11" height="5" rx="1" fill="currentColor" opacity=".7"/><rect x="15.5" y="2" width="1" height="4" rx=".5" fill="currentColor" opacity=".4"/></svg></div></div>
                   <div class="ms-hdr"><div class="ms-h">Заказ #1284</div><div class="ms-s">Кофе Арка · Самовывоз</div></div>
                   <div class="ms-track">
@@ -804,7 +807,7 @@ html[data-theme="light"] .icon-moon{display:flex}
                     <div class="ms-totrow"><span class="ms-dft">Итого</span><span class="ms-pr">780 ₽</span></div>
                   </div>
                   <div style="flex:1"></div>
-                  <div class="ms-bnav"><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="ms-bt">Алиби</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg><span class="ms-bt">Карта</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span class="ms-bt">Меню</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span class="ms-bt">Корзина</span></div><div class="ms-bi" style="color:#e8743b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ms-bt-o">Профиль</span></div></div>
+                  <div class="ms-bnav"><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="ms-bt">Алиби</span></div><div class="ms-bi" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg><span class="ms-bt">Карта</span></div><div class="ms-bi" onclick="mkGo(this,'menu')" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span class="ms-bt">Меню</span></div><div class="ms-bi ms-bi-r" onclick="mkGo(this,'cart')" style="color:var(--mk-fg3)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span class="ms-cbadge"></span><span class="ms-bt">Корзина</span></div><div class="ms-bi" style="color:#e8743b"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="ms-bt-o">Профиль</span></div></div>
                 </div>
                 <div class="mk-dots"><div class="mk-dot on"></div><div class="mk-dot"></div><div class="mk-dot"></div></div>
               </div>
@@ -815,14 +818,14 @@ html[data-theme="light"] .icon-moon{display:flex}
           <!-- LAPTOP: Client app — 2 screens (tap to advance) -->
           <div class="dv-laptop">
             <div class="dv-laptop-lid">
-              <div class="mk-wrap mk-gc" onclick="mkN(this)" style="height:100%">
+              <div class="mk-wrap mk-gc" style="height:100%">
 
                 <!-- Screen 1: Map view -->
-                <div class="mk-slide on" style="flex-direction:row">
+                <div class="mk-slide on" data-s="map" style="flex-direction:row">
                   <div class="ms-side">
                     <div class="ms-logo-o"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg></div>
                     <div class="ms-sbtn-o"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e8743b" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg></div>
-                    <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div>
+                    <div class="ms-sbtn" onclick="mkGo(this,'mdsk')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div>
                     <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg></div>
                   </div>
                   <div class="ms-map">
@@ -836,15 +839,15 @@ html[data-theme="light"] .icon-moon{display:flex}
                     <div class="ms-sc" style="position:absolute;top:42%;left:63%"><div style="width:17px;height:17px;background:#22c55e;border-radius:50%;border:2px solid #fff;box-shadow:0 3px 6px rgba(0,0,0,.4)"></div><div class="ms-plbl">Рынок</div></div>
                     <div class="ms-sc" style="position:absolute;top:64%;left:38%"><div style="width:17px;height:17px;background:#a855f7;border-radius:50%;border:2px solid #fff;box-shadow:0 3px 6px rgba(0,0,0,.4)"></div><div class="ms-plbl">Барбершоп</div></div>
                     <div class="ms-srch"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span class="ms-srcht">Найти заведения рядом…</span></div>
-                    <div class="ms-popup"><div class="ms-th-s" style="background:linear-gradient(135deg,#8b5e3c,#c07840)"></div><div class="ms-ib"><div class="ms-pn">Кофе Арка</div><div class="ms-ps">Кофейня · 0.3 км · от 150 ₽</div></div><div style="background:#e8743b;border-radius:4px;padding:3px 6px;font:600 7.5px/1 var(--font-sans);color:#fff;flex-shrink:0">Меню</div></div>
+                    <div class="ms-popup"><div class="ms-th-s" style="background:linear-gradient(135deg,#8b5e3c,#c07840)"></div><div class="ms-ib"><div class="ms-pn">Кофе Арка</div><div class="ms-ps">Кофейня · 0.3 км · от 150 ₽</div></div><div onclick="mkGo(this,'mdsk')" style="background:#e8743b;border-radius:4px;padding:3px 6px;font:600 7.5px/1 var(--font-sans);color:#fff;flex-shrink:0;cursor:pointer">Меню</div></div>
                   </div>
                 </div>
 
                 <!-- Screen 2: Menu desktop -->
-                <div class="mk-slide" style="flex-direction:row">
+                <div class="mk-slide" data-s="mdsk" style="flex-direction:row">
                   <div class="ms-side">
                     <div class="ms-logo-o"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg></div>
-                    <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg></div>
+                    <div class="ms-sbtn" onclick="mkGo(this,'map')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/></svg></div>
                     <div class="ms-sbtn-o"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e8743b" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div>
                     <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg></div>
                   </div>
@@ -949,15 +952,15 @@ html[data-theme="light"] .icon-moon{display:flex}
           <div class="dv-phone">
             <div class="dv-phone-shell">
               <div class="dv-phone-notch"></div>
-              <div class="mk-wrap mk-ga" onclick="mkN(this)" style="height:100%">
+              <div class="mk-wrap mk-ga" style="height:100%">
 
                 <!-- Screen 1: Orders list -->
-                <div class="mk-slide on">
+                <div class="mk-slide on" data-s="orders">
                   <div class="ms-sb"><span>9:41</span><div class="ms-sb-r"><svg width="12" height="8" viewBox="0 0 12 8"><rect x="0" y="3" width="2" height="5" rx="1" fill="currentColor" opacity=".75"/><rect x="3" y="2" width="2" height="6" rx="1" fill="currentColor" opacity=".75"/><rect x="6" y="1" width="2" height="7" rx="1" fill="currentColor" opacity=".75"/><rect x="9" y="0" width="3" height="8" rx="1" fill="currentColor"/></svg><svg width="17" height="8" viewBox="0 0 17 8"><rect x=".5" y=".5" width="14" height="7" rx="2" stroke="currentColor" stroke-opacity=".45" fill="none"/><rect x="1.5" y="1.5" width="11" height="5" rx="1" fill="currentColor" opacity=".7"/><rect x="15.5" y="2" width="1" height="4" rx=".5" fill="currentColor" opacity=".4"/></svg></div></div>
                   <div class="ms-hdr" style="display:flex;align-items:center;justify-content:space-between"><div><div class="ms-h">Заказы</div><div class="ms-s">Кофе Арка</div></div><div class="ms-ch-b">2 новых</div></div>
                   <div class="ms-chips"><div class="ms-ch-b">Все</div><div class="ms-ch">Новые</div><div class="ms-ch">В работе</div></div>
                   <div class="ms-list">
-                    <div class="ms-ord ms-on"><div class="ms-ohd"><span class="ms-onum">#1284</span><span class="ms-bn">Новый</span></div><div class="ms-ocomp">Капучино × 2 · Круассан</div><div class="ms-ofoot">780 ₽ · 14:23</div></div>
+                    <div class="ms-ord ms-on" onclick="mkGo(this,'detail')"><div class="ms-ohd"><span class="ms-onum">#1284</span><span class="ms-bn">Новый</span></div><div class="ms-ocomp">Капучино × 2 · Круассан</div><div class="ms-ofoot">780 ₽ · 14:23</div></div>
                     <div class="ms-ord ms-ow"><div class="ms-ohd"><span class="ms-onum">#1283</span><span class="ms-bw">В работе</span></div><div class="ms-ocomp">Латте · Чизкейк</div><div class="ms-ofoot">640 ₽ · 14:18</div></div>
                     <div class="ms-ord ms-or"><div class="ms-ohd"><span class="ms-onum">#1282</span><span class="ms-br">Готов</span></div><div class="ms-ocomp">Эспрессо × 3</div><div class="ms-ofoot">270 ₽ · 14:11</div></div>
                     <div class="ms-ord ms-od"><div class="ms-ohd"><span class="ms-onum">#1281</span><span class="ms-bd">Выдан</span></div><div class="ms-ocomp">Авокадо тост</div><div class="ms-ofoot">380 ₽ · 13:55</div></div>
@@ -971,13 +974,13 @@ html[data-theme="light"] .icon-moon{display:flex}
                 </div>
 
                 <!-- Screen 2: Order detail -->
-                <div class="mk-slide">
+                <div class="mk-slide" data-s="detail">
                   <div class="ms-sb"><span>9:41</span><div class="ms-sb-r"><svg width="12" height="8" viewBox="0 0 12 8"><rect x="0" y="3" width="2" height="5" rx="1" fill="currentColor" opacity=".75"/><rect x="3" y="2" width="2" height="6" rx="1" fill="currentColor" opacity=".75"/><rect x="6" y="1" width="2" height="7" rx="1" fill="currentColor" opacity=".75"/><rect x="9" y="0" width="3" height="8" rx="1" fill="currentColor"/></svg><svg width="17" height="8" viewBox="0 0 17 8"><rect x=".5" y=".5" width="14" height="7" rx="2" stroke="currentColor" stroke-opacity=".45" fill="none"/><rect x="1.5" y="1.5" width="11" height="5" rx="1" fill="currentColor" opacity=".7"/><rect x="15.5" y="2" width="1" height="4" rx=".5" fill="currentColor" opacity=".4"/></svg></div></div>
-                  <div class="ms-hdr" style="display:flex;align-items:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg2)" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg><div class="ms-h">Заказ #1284</div><div class="ms-bn" style="margin-left:auto">Новый</div></div>
+                  <div class="ms-hdr" style="display:flex;align-items:center;gap:7px"><div onclick="mkGo(this,'orders')" style="cursor:pointer;display:flex;padding:2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg2)" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></div><div class="ms-h">Заказ #1284</div><div class="ms-bn" style="margin-left:auto">Новый</div></div>
                   <div style="margin:2px 9px 0;flex-shrink:0"><div class="ms-card"><div class="ms-dtlbl">Клиент</div><div style="display:flex;align-items:center;gap:7px"><div class="ms-av" style="background:linear-gradient(135deg,#4a90c2,#2d6a94)"><span class="ms-dft">А</span></div><div><div class="ms-n" style="font-size:9px">Алексей</div><div class="ms-sub">Самовывоз · 14:23</div></div></div></div></div>
                   <div style="margin:5px 9px 0;flex-shrink:0"><div class="ms-card"><div class="ms-dtlbl">Состав</div><div class="ms-dline"><span class="ms-dfn">Капучино × 2</span><span class="ms-dfa">560 ₽</span></div><div class="ms-dline"><span class="ms-dfn">Круассан</span><span class="ms-dfa">220 ₽</span></div><div class="ms-totrow"><span class="ms-dft">Итого</span><span class="ms-pr-b">780 ₽</span></div></div></div>
                   <div style="flex:1"></div>
-                  <div class="ms-btw" style="padding-bottom:6px"><div class="ms-btn-b">Взять в работу</div></div>
+                  <div class="ms-btw" style="padding-bottom:6px"><div class="ms-btn-b" onclick="orderTake(this)">Взять в работу</div></div>
                   <div class="ms-bnav">
                     <div class="ms-bi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg><span class="ms-bt">Заведение</span></div>
                     <div class="ms-bi"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/></svg><span class="ms-bt">Меню</span></div>
@@ -995,14 +998,14 @@ html[data-theme="light"] .icon-moon{display:flex}
           <!-- LAPTOP: Admin app — 2 screens -->
           <div class="dv-laptop">
             <div class="dv-laptop-lid">
-              <div class="mk-wrap mk-ga" onclick="mkN(this)" style="height:100%">
+              <div class="mk-wrap mk-ga" style="height:100%">
 
                 <!-- Screen 1: Orders table -->
-                <div class="mk-slide on" style="flex-direction:row">
+                <div class="mk-slide on" data-s="otbl" style="flex-direction:row">
                   <div class="ms-side">
                     <div class="ms-logo-b"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg></div>
                     <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg></div>
-                    <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div>
+                    <div class="ms-sbtn" onclick="mkGo(this,'mmgmt')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div>
                     <div class="ms-sbtn-b"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#78b4e0" stroke-width="1.8"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg></div>
                     <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
                   </div>
@@ -1018,10 +1021,10 @@ html[data-theme="light"] .icon-moon{display:flex}
                 </div>
 
                 <!-- Screen 2: Menu management -->
-                <div class="mk-slide" style="flex-direction:row">
+                <div class="mk-slide" data-s="mmgmt" style="flex-direction:row">
                   <div class="ms-side">
                     <div class="ms-logo-b"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg></div>
-                    <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg></div>
+                    <div class="ms-sbtn" onclick="mkGo(this,'otbl')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg></div>
                     <div class="ms-sbtn-b"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#78b4e0" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div>
                     <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg></div>
                     <div class="ms-sbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--mk-fg3)" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
@@ -1174,16 +1177,34 @@ html[data-theme="light"] .icon-moon{display:flex}
 </div><!-- #page-wrap -->
 
 <script>
-function mkN(w){
+function mkGo(el,s){
+  var w=el.closest('.mk-wrap');
   var ss=w.querySelectorAll('.mk-slide'),ds=w.querySelectorAll('.mk-dot');
-  var cur=0;
-  ss.forEach(function(s,i){if(s.classList.contains('on'))cur=i});
-  ss[cur].classList.replace('on','out');
-  ds[cur]&&ds[cur].classList.remove('on');
-  var nx=(cur+1)%ss.length;
-  ss[nx].classList.remove('out');ss[nx].classList.add('on');
-  ds[nx]&&ds[nx].classList.add('on');
-  setTimeout(function(){ss[cur].classList.remove('out')},300);
+  var c=-1,n=-1;
+  for(var i=0;i<ss.length;i++){if(ss[i].classList.contains('on'))c=i;if(ss[i].dataset.s===s)n=i;}
+  if(n<0||n===c)return;
+  ss[c].classList.replace('on','out');
+  if(ds[c])ds[c].classList.remove('on');
+  ss[n].classList.add('on');
+  if(ds[n])ds[n].classList.add('on');
+  setTimeout(function(){ss[c].classList.remove('out');},300);
+}
+function cartAdd(btn){
+  var n=(parseInt(btn.dataset.n||0)+1);
+  btn.dataset.n=n;
+  if(n===1){btn.style.cssText='width:16px;height:16px;background:rgba(232,116,59,.22);border:1px solid rgba(232,116,59,.55);border-radius:50%;color:#e8743b;font:700 8px/15px var(--font-sans);text-align:center;flex-shrink:0';}
+  btn.textContent=n;
+  var w=btn.closest('.mk-wrap'),total=0;
+  w.querySelectorAll('[data-n]').forEach(function(b){total+=parseInt(b.dataset.n||0);});
+  w.querySelectorAll('.ms-cbadge').forEach(function(b){b.textContent=total;b.style.display=total>0?'block':'none';});
+}
+function orderTake(btn){
+  var slide=btn.closest('.mk-slide');
+  var badge=slide.querySelector('.ms-bn');
+  if(badge){badge.className='ms-bw';badge.textContent='В работе';}
+  btn.style.cssText='background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,rgba(255,255,255,0) 50%),#22c55e;box-shadow:0 4px 14px rgba(34,197,94,.35);border-radius:10px;padding:9px;text-align:center;font:700 10px/1 var(--font-sans);color:#fff';
+  btn.textContent='Готовится ✓';
+  btn.onclick=null;
 }
 (function(){
   var el=document.documentElement,btn=document.getElementById('theme-toggle');
