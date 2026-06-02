@@ -6,8 +6,9 @@
 <meta name="theme-color" content="#78b4e0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <title>Alliby — Admin</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -72,10 +73,12 @@ html.dark{
   --glass:oklch(0.26 0.011 60 / .76);
   --glass-sm:oklch(0.26 0.011 60 / .84);
 }
-html,body{background:var(--bg)}
+html,body{background-color:var(--bg);background-image:radial-gradient(circle 840px at 0% 0%,rgba(120,180,224,.46) 0%,transparent 80%),radial-gradient(circle 740px at 100% 100%,rgba(232,116,59,.36) 0%,transparent 80%),linear-gradient(135deg,rgba(120,180,224,.1) 0%,rgba(232,116,59,.1) 100%);background-attachment:fixed}
+html.dark,html.dark body{background-image:radial-gradient(circle 700px at 0% 0%,rgba(120,180,224,.54) 0%,transparent 68%),radial-gradient(circle 600px at 100% 100%,rgba(232,116,59,.44) 0%,transparent 68%)}
 html{zoom:var(--fzoom,1)}
 body{font-family:var(--font-sans);font-size:14px;color:var(--fg);height:100dvh;overflow:hidden}
 #bg-ornament{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
 #bg-ornament .op{fill:var(--pat)}
 
 /* ── LAYOUT ── */
@@ -93,16 +96,16 @@ body{font-family:var(--font-sans);font-size:14px;color:var(--fg);height:100dvh;o
 /* Side nav */
 .sn-header{padding:16px 14px 12px;border-bottom:1px solid var(--line-soft)}
 .sn-logo{font:400 22px/1 var(--font-display);letter-spacing:-0.01em;margin-bottom:3px;color:var(--fg)}
-.sn-role{font:400 11px/1 var(--font-mono);color:var(--fg-4)}
+.sn-role{font:400 11px/1 var(--font-sans);color:var(--fg-4)}
 .sn-items{flex:1;overflow-y:auto;padding:10px 10px}
 .sn-btn{padding:9px 10px;border:none;background:none;cursor:pointer;text-align:left;font:500 13px/1.2 var(--font-sans);width:100%;border-radius:var(--r-2);display:flex;align-items:center;gap:8px;color:var(--fg-2);transition:background var(--t-fast),color var(--t-fast)}
 .sn-btn:hover{background:var(--bg-2);color:var(--fg)}
-.sn-btn.active{background:var(--accent);color:var(--accent-fg);box-shadow:var(--glow-accent)}
+.sn-btn.active{background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,0) 42%),var(--accent);color:var(--accent-fg);box-shadow:var(--glow-accent),inset 0 1.5px 0 rgba(255,255,255,.26),inset 0 -1.5px 0 rgba(0,0,0,.2)}
 .sn-footer{padding:10px 12px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:6px}
-.sn-user{font:400 11px/1.4 var(--font-mono);color:var(--fg-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sn-user{font:400 11px/1.4 var(--font-sans);color:var(--fg-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* Bottom nav (mobile) */
-#bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--line-soft);background:var(--bg-1);margin-top:auto}
+#bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--line-soft);background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);margin-top:auto}
 .bn-row{display:flex}
 .bn-btn{flex:1;padding:8px 2px 10px;border:none;background:none;cursor:pointer;font:500 10px/1.2 var(--font-sans);color:var(--fg-3);display:flex;flex-direction:column;align-items:center;gap:3px;transition:color var(--t-fast)}
 .bn-btn .ico{font-size:22px;line-height:1;display:block}
@@ -126,7 +129,7 @@ body{font-family:var(--font-sans);font-size:14px;color:var(--fg);height:100dvh;o
 
 /* ── ANALYTICS ── */
 .analytics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
-.a-card{background:var(--bg-1);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px 12px;text-align:center}
+.a-card{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px 12px;text-align:center}
 .a-val{font:400 22px/1 var(--font-display);color:var(--fg)}
 .a-lbl{font:400 11px/1 var(--font-sans);color:var(--fg-3);margin-top:4px}
 .a-item{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line-soft);font:400 13px/1 var(--font-sans)}
@@ -136,7 +139,7 @@ body{font-family:var(--font-sans);font-size:14px;color:var(--fg);height:100dvh;o
 .ph h2{font:400 26px/1.1 var(--font-display);letter-spacing:-0.01em;color:var(--fg);flex:1;margin:0}
 .pb{flex:1;overflow-y:auto;padding:20px}
 .sec{margin-bottom:24px}
-.sec-title{font:400 10px/1 var(--font-mono);text-transform:uppercase;letter-spacing:.12em;color:var(--fg-4);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)}
+.sec-title{font:400 10px/1 var(--font-sans);text-transform:uppercase;letter-spacing:.12em;color:var(--fg-4);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)}
 
 input,select,textarea{width:100%;border:1px solid var(--line);padding:8px 10px;font-size:14px;font-family:var(--font-sans);outline:none;background:var(--bg-1);color:var(--fg);border-radius:var(--r-2);transition:border-color var(--t-fast),box-shadow var(--t-fast)}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px oklch(from var(--accent) l c h / 0.14)}
@@ -150,7 +153,7 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .btn{padding:7px 16px;border:1px solid var(--line);background:var(--bg-1);cursor:pointer;font:500 14px/1 var(--font-sans);font-family:var(--font-sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:var(--fg);border-radius:var(--r-2);transition:background var(--t-fast),border-color var(--t-fast),transform var(--t-fast)}
 .btn:hover{background:var(--bg-2)}
 .btn:active{transform:scale(0.98)}
-.btn-p{background:var(--accent);color:var(--accent-fg);border-color:transparent;box-shadow:var(--glow-accent)}
+.btn-p{background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 42%),linear-gradient(145deg,var(--brand-ice-deep),var(--brand-ice));color:#fff;border-color:transparent;box-shadow:0 10px 28px rgba(120,180,224,.45),inset 0 1.5px 0 rgba(255,255,255,.32),inset 0 -2px 0 rgba(0,0,0,.22)}
 .btn-p:hover{filter:brightness(1.08)}
 .btn-d{border-color:oklch(from var(--err) l c h / .5);color:var(--err)}
 .btn-d:hover{background:oklch(from var(--err) l c h / .1)}
@@ -161,14 +164,14 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .b-pending{color:var(--fg-4)}.b-paid{color:var(--ok)}.b-ready{color:var(--info)}
 .b-issued{color:var(--fg-2)}.b-cancelled{color:var(--err)}
 .empty{text-align:center;padding:48px 20px;color:var(--fg-4);font:400 13px/1.5 var(--font-sans)}
-.loading{text-align:center;padding:28px;color:var(--fg-4);font:400 12px/1.5 var(--font-mono)}
+.loading{text-align:center;padding:28px;color:var(--fg-4);font:400 12px/1.5 var(--font-sans)}
 .alert{padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);margin-bottom:10px;font:400 13px/1.4 var(--font-sans)}
 .alert-e{background:oklch(from var(--err) l c h / .1);border-color:oklch(from var(--err) l c h / .35);color:var(--err)}
 .alert-ok{background:oklch(from var(--ok) l c h / .1);border-color:oklch(from var(--ok) l c h / .35);color:var(--ok)}
 .lbl{font:500 11px/1 var(--font-sans);text-transform:uppercase;letter-spacing:.07em;color:var(--fg-4)}
 hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .txt-sm{font:400 12px/1.4 var(--font-sans);color:var(--fg-3)}
-.txt-muted{font:400 10.5px/1.4 var(--font-mono);color:var(--fg-4)}
+.txt-muted{font:400 10.5px/1.4 var(--font-sans);color:var(--fg-4)}
 .card{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:600px){.grid2{grid-template-columns:1fr}}
@@ -210,8 +213,8 @@ tr:hover td{background:var(--bg-1)}
 .admin-store-pin .p-lbl{background:rgba(0,0,0,.72);color:#fff;font:500 10px/1 var(--font-sans);padding:3px 7px;border-radius:var(--r-1);white-space:nowrap;margin-top:2px}
 
 /* ── AUTH ── */
-#screen-auth{align-items:center;justify-content:center;background:var(--bg)}
-.auth-box{width:100%;max-width:380px;padding:28px 24px;margin:0 16px;background:var(--bg-1);border:1px solid var(--line-soft);border-radius:var(--r-3);box-shadow:var(--shadow-1)}
+#screen-auth{align-items:center;justify-content:center;background:transparent}
+.auth-box{width:100%;max-width:380px;padding:28px 24px;margin:0 16px;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--line-soft);border-radius:var(--r-3);box-shadow:var(--shadow-2)}
 .auth-box h1{font:400 30px/1 var(--font-display);letter-spacing:-0.01em;margin-bottom:22px}
 
 /* ── TABS ── */
@@ -270,7 +273,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 .detail-row:last-child{border-bottom:none}
 .detail-lbl{color:var(--fg-4);min-width:110px;font:400 13px/1.4 var(--font-sans)}
 .detail-val{font:400 13px/1.4 var(--font-sans);word-break:break-word}
-.qr-link-text{word-break:break-all;font:400 12px/1.5 var(--font-mono);color:var(--fg-4);margin:10px 0}
+.qr-link-text{word-break:break-all;font:400 12px/1.5 var(--font-sans);color:var(--fg-4);margin:10px 0}
 /* ── CONTRACT MODAL ── */
 .contract-scroll{max-height:46vh;overflow-y:auto;border:1px solid var(--line);border-radius:var(--r-2);padding:14px 16px;background:var(--bg-2);font:400 13px/1.65 var(--font-sans)}
 .contract-accept{margin-top:14px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--bg-1)}
@@ -283,6 +286,18 @@ tr.row-click:hover td{background:var(--bg-2)}
 .plan-card{display:flex;justify-content:space-between;align-items:center;padding:16px;border:1px solid var(--line);border-radius:var(--r-3);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .plan-card:hover{background:var(--bg-2);border-color:var(--brand-ice-deep)}
 .plan-card.highlight{background:var(--accent);border-color:var(--brand-ice-deep);box-shadow:var(--glow-accent)}
+/* ── ORDERS+BOOKINGS TABS ── */
+.obt-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0;background:var(--bg-1)}
+.obt-tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font:600 13px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);display:flex;align-items:center;justify-content:center;gap:6px}
+.obt-tab:hover{color:var(--fg)}
+.obt-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.obt-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:var(--r-pill);background:var(--err);color:#fff;font:700 10px/1 var(--font-sans)}
+/* Nav badge on orders button */
+.bn-btn.ord-has-badge{position:relative}
+.bn-nav-badge{position:absolute;top:4px;right:calc(50% - 20px);min-width:16px;height:16px;padding:0 4px;border-radius:var(--r-pill);background:var(--err);color:#fff;font:700 10px/16px var(--font-sans);display:none;align-items:center;justify-content:center;line-height:16px}
+.bn-nav-badge.show{display:flex}
+/* Side nav badge */
+.sn-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:var(--r-pill);background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);margin-left:auto}
 /* ── SCHEDULE ── */
 .sched-cal-wrap{border-radius:var(--r-3);overflow:hidden;border:1px solid var(--line)}
 .sched-cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
@@ -292,7 +307,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 .sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
 .sched-day.has-sched{background:color-mix(in oklch,var(--accent) 14%,var(--bg))}
 .sched-day.has-sched:hover:not(.selected){background:color-mix(in oklch,var(--accent) 22%,var(--bg))}
-.sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-mono);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
+.sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-sans);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.selected{background:color-mix(in oklch,var(--accent) 18%,var(--bg))}
 .sched-day.selected .sd-n{color:var(--accent);font-weight:700}
 .sched-day.empty{color:var(--fg-4)}
@@ -329,6 +344,30 @@ tr.row-click:hover td{background:var(--bg-2)}
   </defs>
   <rect width="100%" height="100%" fill="url(#bgpat)"/>
 </svg>
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+<defs>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0116 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+<symbol id="i-food" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></symbol>
+<symbol id="i-goods" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></symbol>
+<symbol id="i-services" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+<symbol id="i-bicycle" viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></symbol>
+<symbol id="i-store" viewBox="0 0 24 24"><path d="M2 3h20v4a2 2 0 01-2 2H4a2 2 0 01-2-2V3z"/><path d="M4 9h16v12H4z"/><path d="M10 13h4v8h-4z"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
+<symbol id="i-pkg" viewBox="0 0 24 24"><path d="M16.5 9.4l-9-5.19"/><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+<symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+</defs>
+</svg>
 
 <div id="splash">
   <p class="sp1">Если возникнут подозрения,</p>
@@ -350,12 +389,13 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="categories"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> Категории</button>
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg> Сканер абонементов</button>
-    <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы</button>
+    <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы и записи<span class="sn-badge" id="sn-orders-badge" style="display:none">0</span></button>
+    <button class="sn-btn" data-nav="cities"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Города</button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
   <div class="sn-footer">
     <div class="sn-user" id="sn-email"></div>
-    <button class="btn btn-sm" style="font-size:11px;width:100%" onclick="openAdminCityModal()">📍 <span class="admin-city-lbl"></span></button>
+    <button class="btn btn-sm" style="font-size:11px;width:100%;display:flex;align-items:center;gap:4px;justify-content:center" onclick="openAdminCityModal()"><svg class="ico" width="11" height="11"><use href="#i-pin"/></svg><span class="admin-city-lbl"></span></button>
   </div>
 </nav>
 
@@ -391,6 +431,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div id="auth-register" class="tab-pane">
       <div id="err-register" class="alert alert-e" style="display:none"></div>
       <div id="ok-register" class="alert alert-ok" style="display:none">Аккаунт создан! Входим…</div>
+      <div class="fg"><label>Имя и фамилия</label><input type="text" id="reg-name" placeholder="Иван Иванов" autocomplete="name"></div>
       <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
       <div class="fg"><label>Пароль</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
       <div class="fg"><label>Подтвердите пароль</label><input type="password" id="reg-pwd2" autocomplete="new-password"></div>
@@ -486,16 +527,17 @@ tr.row-click:hover td{background:var(--bg-2)}
   <div class="ph">
     <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
     <h2 id="map-screen-title">Карта</h2>
+    <button class="btn btn-sm" id="map-mode-btn" onclick="setMapMode(S.mapMode==='osm'?'tiles':'osm')" title="Переключить вид карты"><svg class="ico" width="13" height="13" style="margin-right:4px"><use href="#i-map"/></svg>Тайлы</button>
   </div>
 
   <div style="display:flex;flex:1;overflow:hidden;flex-direction:column">
 
     <!-- Coordinate pick mode bar -->
     <div id="map-pick-bar" style="display:none;flex-shrink:0;padding:12px 16px;border-bottom:2px solid var(--accent);background:var(--bg-2)">
-      <div style="font:500 14px/1.3 var(--font-sans);margin-bottom:10px">📍 Кликните на карту для выбора местоположения заведения</div>
+      <div style="font:500 14px/1.3 var(--font-sans);margin-bottom:10px;display:flex;align-items:center;gap:5px"><svg class="ico" width="14" height="14"><use href="#i-pin"/></svg>Кликните на карту для выбора местоположения заведения</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <span id="map-pick-status" class="txt-muted" style="flex:1;font:400 12px/1 var(--font-mono)">Ожидание клика…</span>
-        <button id="map-pick-use-btn" class="btn btn-p btn-sm" style="display:none" onclick="usePickedCoords()">✓ Использовать точку</button>
+        <span id="map-pick-status" class="txt-muted" style="flex:1;font:400 12px/1 var(--font-sans)">Ожидание клика…</span>
+        <button id="map-pick-use-btn" class="btn btn-p btn-sm" style="display:none" onclick="usePickedCoords()"><svg class="ico" width="12" height="12" style="margin-right:4px"><use href="#i-check"/></svg>Использовать точку</button>
         <button class="btn btn-sm" onclick="cancelPickMode()">✕ Отмена</button>
       </div>
     </div>
@@ -539,7 +581,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:8px">
           <div id="sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
-          <span id="sched-live-dot" style="display:none;font:700 10px/1 var(--font-mono);color:var(--ok);letter-spacing:.04em">● live</span>
+          <span id="sched-live-dot" style="display:none;font:700 10px/1 var(--font-sans);color:var(--ok);letter-spacing:.04em">● live</span>
         </div>
         <button class="btn btn-sm" onclick="closeDayView()">✕</button>
       </div>
@@ -566,6 +608,14 @@ tr.row-click:hover td{background:var(--bg-2)}
           <button class="btn" onclick="savePhone()">Сохранить</button>
         </div>
         <div id="p-phone-msg" style="display:none;font-size:12px;margin-top:6px"></div>
+        <div class="lbl" style="margin-top:14px">Адрес</div>
+        <div class="row" style="gap:8px;margin-top:4px;margin-bottom:6px">
+          <div class="fg" style="margin:0"><input type="text" id="p-address" placeholder="Ваш адрес" oninput="this._manualEdit=true"></div>
+          <button class="btn" id="p-addr-btn" onclick="saveAddress()">Сохранить</button>
+        </div>
+        <input type="hidden" id="p-addr-lat">
+        <input type="hidden" id="p-addr-lng">
+        <button class="btn btn-sm" onclick="openAddrPicker()"><svg class="ico" width="13" height="13" style="margin-right:4px"><use href="#i-pin"/></svg>Указать на карте</button>
       </div>
     </div>
 
@@ -573,6 +623,39 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div class="sec-title">Подписка на платформу</div>
       <div class="card" style="padding:14px">
         <div id="p-platsub-inner"><div style="color:var(--fg-4);font-size:13px">Загрузка…</div></div>
+      </div>
+    </div>
+
+    <div class="sec" id="p-pay-sec" style="display:none">
+      <div class="sec-title">Интернет-эквайринг<span class="hint" data-tip="Клиенты будут перенаправляться на страницу оплаты выбранного провайдера. Ключи хранятся только у вас.">?</span></div>
+      <div class="card">
+        <div class="fg" style="margin-bottom:8px">
+          <label>Провайдер</label>
+          <select id="pp-provider" onchange="onPpProviderChange()">
+            <option value="none">— Не настроено —</option>
+            <option value="tinkoff">Тинькофф T-Касса</option>
+            <option value="yokassa">ЮKassa (Яндекс)</option>
+            <option value="cloudpayments">CloudPayments</option>
+            <option value="sberbank">СберБанк Ecom</option>
+          </select>
+        </div>
+        <div id="pp-fields" style="display:none">
+          <div class="fg" style="margin-bottom:8px">
+            <label id="pp-key-label">Terminal Key</label>
+            <input type="text" id="pp-terminal-key" placeholder="Введите ключ" autocomplete="off">
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label id="pp-secret-label">Секретный ключ</label>
+            <input type="password" id="pp-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font:500 13px/1 var(--font-sans);margin-bottom:10px">
+            <input type="checkbox" id="pp-test-mode" checked>
+            Тестовый режим (sandbox)
+          </label>
+          <div id="pp-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3);margin-bottom:10px"></div>
+        </div>
+        <button class="btn btn-p" id="pp-save-btn" onclick="savePaymentProfile()">Сохранить</button>
+        <div id="pp-msg" style="display:none;font-size:12px;margin-top:6px"></div>
       </div>
     </div>
 
@@ -616,23 +699,92 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div>
 
 
+<!-- ════════════════ CITIES ════════════════ -->
+<div id="screen-cities" class="screen">
+  <div class="ph">
+    <h2>Города<span class="screen-help" data-info="Справочник городов. Добавляйте новые города, чтобы они стали доступны при выборе города.">?</span></h2>
+    <button class="btn btn-p" onclick="openAddCityModal()">+ Добавить город</button>
+  </div>
+  <div id="cities-list" style="display:flex;flex-direction:column;gap:6px;max-width:600px"></div>
+</div>
+
+<!-- Add city modal -->
+<div class="overlay" id="m-add-city">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd"><h3>Новый город</h3><button class="modal-x" onclick="closeModal('m-add-city')">✕</button></div>
+    <div class="fg"><label>Название города</label><input type="text" id="add-city-name" placeholder="Напр. Тобольск"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>Широта (lat)</label><input type="number" id="add-city-lat" step="0.001" placeholder="56.123"></div>
+      <div class="fg"><label>Долгота (lng)</label><input type="number" id="add-city-lng" step="0.001" placeholder="68.456"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="fg"><label>Зум карты</label><input type="number" id="add-city-zoom" value="12" min="8" max="16"></div>
+      <div class="fg"><label>Часовой пояс</label><input type="text" id="add-city-tz" placeholder="Europe/Moscow" value="Europe/Moscow"></div>
+    </div>
+    <p style="font-size:12px;color:var(--fg-3);margin-bottom:14px">Координаты можно найти на maps.yandex.ru или google.com/maps — правой кнопкой по точке на карте.</p>
+    <div id="err-add-city" class="alert alert-e" style="display:none"></div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-add-city')">Отмена</button>
+      <button class="btn btn-p" id="add-city-btn" onclick="doAddCity()">Добавить</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════ ORDERS ════════════════ -->
 <div id="screen-orders" class="screen">
-  <div class="ph"><h2>Заказы<span id="ord-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Оплаченные заказы покупателей. Переводите статус: Оплачен → В работе → Готов.">?</span></h2></div>
-  <div class="pb">
-    <div class="toolbar">
-      <select id="ord-store-filter" onchange="loadOrders()">
-        <option value="">Все заведения</option>
-      </select>
+  <div class="ph"><h2>Заказы и записи<span id="ord-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Заказы: оплаченные заказы покупателей. Записи: входящие бронирования по услугам.">?</span></h2></div>
+  <div class="obt-tabs">
+    <button class="obt-tab active" id="obt-orders" onclick="switchAdminTab('orders')">Заказы<span class="obt-badge" id="ord-tab-badge" style="display:none">0</span></button>
+    <button class="obt-tab" id="obt-bookings" onclick="switchAdminTab('bookings')">Записи<span class="obt-badge" id="bk-tab-badge" style="display:none">0</span></button>
+  </div>
+  <div id="obt-orders-pane" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+    <div class="pb">
+      <div class="toolbar">
+        <select id="ord-store-filter" onchange="loadOrders()">
+          <option value="">Все заведения</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="ord-chip active" data-ord-status="" onclick="setAdminOrderFilter('')">Активные<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="all" onclick="setAdminOrderFilter('all')">Все</button>
+        <button class="ord-chip" data-ord-status="pending" onclick="setAdminOrderFilter('pending')">Создан<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="paid" onclick="setAdminOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="in_progress" onclick="setAdminOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="looking_for_courier" onclick="setAdminOrderFilter('looking_for_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-search"/></svg>Курьер<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="on_the_way" onclick="setAdminOrderFilter('on_the_way')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-bicycle"/></svg>Едет<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="ready" onclick="setAdminOrderFilter('ready')">Готов<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="issued" onclick="setAdminOrderFilter('issued')">Выдан<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="cancelled" onclick="setAdminOrderFilter('cancelled')">Отменён</button>
+      </div>
+      <div id="ord-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <button class="ord-chip active" data-ord-status="" onclick="setAdminOrderFilter('')">Активные<span class="ord-notif-dot"></span></button>
-      <button class="ord-chip" data-ord-status="paid" onclick="setAdminOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
-      <button class="ord-chip" data-ord-status="in_progress" onclick="setAdminOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
-      <button class="ord-chip" data-ord-status="ready" onclick="setAdminOrderFilter('ready')">Готов<span class="ord-notif-dot"></span></button>
-      <button class="ord-chip" data-ord-status="issued" onclick="setAdminOrderFilter('issued')">Выдан<span class="ord-notif-dot"></span></button>
+  </div>
+  <div id="obt-bookings-pane" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+    <div class="pb">
+      <div class="toolbar" style="margin-bottom:12px">
+        <select id="bk-store-filter" onchange="onBkTabStoreChange()">
+          <option value="">Выберите заведение</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:14px">
+        <button class="btn btn-sm" onclick="bkTabPrevMonth()">←</button>
+        <span id="bk-month-label" style="font:600 15px/1 var(--font-sans);letter-spacing:0.01em"></span>
+        <button class="btn btn-sm" onclick="bkTabNextMonth()">→</button>
+      </div>
+      <div class="sched-cal-wrap">
+        <table class="sched-cal-table">
+          <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+          <tbody id="bk-calendar"></tbody>
+        </table>
+      </div>
+      <div id="bk-day-view" style="display:none;margin-top:14px;padding:12px;border-radius:var(--r-3);border:1px solid var(--line-soft);background:var(--bg-1)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div id="bk-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+          <button class="btn btn-sm" onclick="document.getElementById('bk-day-view').style.display='none'">✕</button>
+        </div>
+        <div id="bk-day-bks"></div>
+      </div>
     </div>
-    <div id="ord-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
   </div>
 </div>
 
@@ -641,7 +793,7 @@ tr.row-click:hover td{background:var(--bg-2)}
   <div class="ph"><h2>Сканер QR</h2></div>
   <div class="pb">
     <div style="margin-bottom:12px;display:flex;gap:8px">
-      <button class="btn btn-p" id="qr-start-btn" onclick="startQrCamera()">📷 Сканировать QR</button>
+      <button class="btn btn-p" id="qr-start-btn" onclick="startQrCamera()" style="display:inline-flex;align-items:center;gap:5px"><svg class="ico" width="14" height="14"><use href="#i-camera"/></svg> Сканировать QR</button>
       <button class="btn" id="qr-stop-btn" style="display:none" onclick="stopQrCamera()">✕ Остановить</button>
     </div>
     <div id="qr-video-wrap" style="display:none;position:relative;margin-bottom:14px">
@@ -664,7 +816,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></span>Сканер</button>
-    <button class="bn-btn" data-nav="orders"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></span>Заказы</button>
+    <button class="bn-btn ord-has-badge" data-nav="orders"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="bn-nav-badge" id="bn-orders-badge">0</span></span>Заказы и<br>записи</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
 </div>
@@ -820,6 +972,24 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div>
 
 <!-- Store modal -->
+<div class="overlay" id="m-addr-pick">
+  <div class="modal" style="max-width:560px;padding:0;overflow:hidden">
+    <div class="modal-hd" style="padding:14px 18px">
+      <h3>Указать адрес на карте</h3>
+      <button class="modal-x" onclick="closeAddrPicker()">✕</button>
+    </div>
+    <div style="position:relative;height:320px">
+      <div id="addr-pick-gl" style="width:100%;height:100%"></div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));color:var(--accent)"><svg class="ico" width="32" height="32"><use href="#i-pin"/></svg></div>
+      <div id="addr-pick-lbl" style="position:absolute;bottom:8px;left:8px;right:8px;background:rgba(10,8,6,.72);backdrop-filter:blur(8px);color:#fff;border-radius:var(--r-2);padding:8px 12px;font:400 12px/1.5 var(--font-sans);text-align:center;pointer-events:none">Переместите карту, чтобы выбрать точку</div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeAddrPicker()">Отмена</button>
+      <button class="btn btn-p" onclick="confirmAddrPick()">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="m-store">
   <div class="modal">
     <div class="modal-hd">
@@ -833,8 +1003,11 @@ tr.row-click:hover td{background:var(--bg-2)}
         <input type="text" id="ms-name">
       </div>
       <div class="fg" style="grid-column:1/-1">
-        <label>Адрес<span class="hint" data-tip="Физический адрес заведения для отображения клиентам. Координаты на карте задаются кнопкой «Указать на карте»">?</span></label>
-        <input type="text" id="ms-address" placeholder="ул. Ленина, 15">
+        <label>Адрес<span class="hint" data-tip="Введите адрес и нажмите 🔍, чтобы автоматически найти координаты. Или укажите точку вручную кнопкой «Указать на карте»">?</span></label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="ms-address" placeholder="ул. Ленина, 15" style="flex:1">
+          <button class="btn btn-sm" onclick="geocodeStoreAddress()" title="Найти координаты по адресу" style="flex-shrink:0"><svg class="ico" width="14" height="14"><use href="#i-search"/></svg></button>
+        </div>
       </div>
       <input type="hidden" id="ms-lat">
       <input type="hidden" id="ms-lng">
@@ -848,10 +1021,10 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
       <div class="fg" style="grid-column:1/-1">
         <label>Направление *<span class="hint" data-tip="Определяет в каком разделе клиентского приложения отображается заведение: Еда, Товары или Услуги">?</span></label>
-        <select id="ms-dir" onchange="loadStoreCategoriesFiltered()">
-          <option value="food">🍽️ Еда</option>
-          <option value="goods">🛍️ Товары</option>
-          <option value="services">🛎️ Услуги</option>
+        <select id="ms-dir" onchange="loadStoreCategoriesFiltered();onMsDirChange()">
+          <option value="food">Еда</option>
+          <option value="goods">Товары</option>
+          <option value="services">Услуги</option>
         </select>
       </div>
       <div class="fg" style="grid-column:1/-1">
@@ -875,12 +1048,65 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
       <input type="hidden" id="ms-image-url">
     </div>
-    <div id="ms-coords-status" style="font:400 12px/1.3 var(--font-mono);margin:10px 0 6px;padding:6px 10px;border-radius:var(--r-1);background:var(--bg-2)"></div>
+    <div id="ms-coords-status" style="font:400 12px/1.3 var(--font-sans);margin:10px 0 6px;padding:6px 10px;border-radius:var(--r-1);background:var(--bg-2)"></div>
     <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
-      <button class="btn" style="flex:1" onclick="pickOnMap()">🗺 Указать на карте</button>
+      <button class="btn" style="flex:1" onclick="pickOnMap()"><svg class="ico" width="13" height="13" style="margin-right:4px"><use href="#i-map"/></svg>Указать на карте</button>
       <div style="flex-shrink:0;text-align:center">
         <div style="font:400 11px/1 var(--font-sans);color:var(--fg-4);margin-bottom:4px">Цвет метки</div>
         <input type="color" id="ms-color" value="#e8430a" style="padding:2px 4px;height:33px;width:52px;cursor:pointer">
+      </div>
+    </div>
+    <div id="ms-delivery-section" style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <span style="font:600 13px/1 var(--font-sans)">Доставка</span>
+          <span class="hint" data-tip="Клиенты смогут заказывать доставку. Требует активной подписки.">?</span>
+        </div>
+        <label class="toggle-sw">
+          <input type="checkbox" id="ms-delivery-enabled" onchange="onMsDeliveryChange()">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="ms-dz-wrap">
+        <div style="font:600 12px/1 var(--font-sans);color:var(--fg-3);margin-bottom:6px">Зоны доставки</div>
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <span style="font:600 11px/1 var(--font-sans);color:var(--fg-4);flex:1;text-align:center">Радиус, м</span>
+          <span style="font:600 11px/1 var(--font-sans);color:var(--fg-4);flex:1;text-align:center">Цена, ₽</span>
+          <div style="width:32px"></div>
+        </div>
+        <div id="ms-dz-list"></div>
+        <button class="btn btn-sm" style="margin-top:8px" onclick="addMsDeliveryZone()">+ Добавить зону</button>
+      </div>
+    </div>
+    <div style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px">
+      <div style="font:600 13px/1 var(--font-sans);margin-bottom:10px">
+        Интернет-эквайринг
+        <span class="hint" data-tip="Клиенты будут перенаправляться на страницу оплаты выбранного провайдера. Ключи хранятся отдельно с ограниченным доступом.">?</span>
+      </div>
+      <div class="fg" style="margin-bottom:8px">
+        <label>Провайдер</label>
+        <select id="ms-pay-provider" onchange="onMsPayProviderChange()">
+          <option value="none">— Не настроено —</option>
+          <option value="tinkoff">Тинькофф T-Касса</option>
+          <option value="yokassa">ЮKassa (Яндекс)</option>
+          <option value="cloudpayments">CloudPayments</option>
+          <option value="sberbank">СберБанк Ecom</option>
+        </select>
+      </div>
+      <div id="ms-pay-fields" style="display:none">
+        <div class="fg" style="margin-bottom:8px">
+          <label id="ms-pay-key-label">Terminal Key</label>
+          <input type="text" id="ms-pay-terminal-key" placeholder="Введите ключ" autocomplete="off">
+        </div>
+        <div class="fg" style="margin-bottom:8px">
+          <label id="ms-pay-secret-label">Секретный ключ</label>
+          <input type="password" id="ms-pay-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font:500 13px/1 var(--font-sans);margin-bottom:8px">
+          <input type="checkbox" id="ms-pay-test-mode" checked>
+          Тестовый режим (sandbox)
+        </label>
+        <div id="ms-pay-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3)"></div>
       </div>
     </div>
     <div class="modal-ft">
@@ -905,7 +1131,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div class="scp-dim" id="scp-dim-r"></div>
       <div id="scp-overlay" style="position:absolute;border:2px solid #fff;cursor:move;box-sizing:border-box;touch-action:none"></div>
     </div>
-    <div style="font:400 12px/1.5 var(--font-mono);color:var(--fg-3);margin-top:8px;text-align:center">Перетащите рамку, чтобы выбрать область 1:1</div>
+    <div style="font:400 12px/1.5 var(--font-sans);color:var(--fg-3);margin-top:8px;text-align:center">Перетащите рамку, чтобы выбрать область 1:1</div>
     <div class="modal-ft">
       <button class="btn" onclick="cancelStoreCrop()">Отмена</button>
       <button class="btn btn-p" id="scp-confirm-btn" onclick="confirmStoreCrop()">Загрузить</button>
@@ -1112,10 +1338,15 @@ tr.row-click:hover td{background:var(--bg-2)}
 
 <!-- City selection modal -->
 <div class="overlay" id="m-admin-city" style="z-index:9999">
-  <div class="modal" style="max-width:340px">
-    <div class="modal-hd"><h3>Ваш город</h3></div>
-    <p style="font-size:13px;color:var(--fg-3);margin-bottom:14px">Выберите город для работы с заведениями</p>
-    <div id="m-admin-city-list" style="display:flex;flex-direction:column;gap:8px"></div>
+  <div class="modal" style="max-width:360px">
+    <div class="modal-hd">
+      <h3>Ваш город</h3>
+      <button class="modal-x" id="m-admin-city-close" onclick="closeModal('m-admin-city')" style="display:none">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--fg-3);margin-bottom:10px">Выберите город для работы с заведениями</p>
+    <input type="search" id="m-admin-city-search" placeholder="Введите название города…" oninput="_renderAdminCityList(this.value)" style="margin-bottom:12px">
+    <div id="m-admin-city-geo" style="display:none;margin-bottom:8px"></div>
+    <div id="m-admin-city-list" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto"></div>
   </div>
 </div>
 
@@ -1140,27 +1371,80 @@ const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'local
 const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
 const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
 
+function svgIco(key, sz) {
+  sz = sz || 16;
+  return `<svg class="ico" width="${sz}" height="${sz}"><use href="#i-${key}"/></svg>`;
+}
+
 // ─── CITIES ───
-const CITIES = [{ name: 'Самара', tz: 'Europe/Samara', lat: 53.195, lng: 50.201, zoom: 12 }];
+let _adminCitiesCache = null;
+async function _loadAdminCities() {
+  if (_adminCitiesCache) return _adminCitiesCache;
+  try {
+    const rows = await req('/rest/v1/cities?order=name.asc');
+    _adminCitiesCache = rows;
+  } catch {
+    _adminCitiesCache = [{ id: 0, name: 'Самара', lat: 53.195, lng: 50.201, zoom: 12, tz: 'Europe/Samara' }];
+  }
+  return _adminCitiesCache;
+}
 function _adminCityInfo() {
   const saved = localStorage.getItem('alliby_admin_city');
-  return CITIES.find(c => c.name === saved) || CITIES[0];
+  const cities = _adminCitiesCache || [];
+  return cities.find(c => c.name === saved) || cities[0] || { name: 'Самара', lat: 53.195, lng: 50.201, zoom: 12, tz: 'Europe/Samara' };
 }
 function _adminCity() { return localStorage.getItem('alliby_admin_city') || null; }
 function selectAdminCity(name) {
+  _adminCitiesCache = null; // invalidate cache so fresh load gets new data
   localStorage.setItem('alliby_admin_city', name);
   document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = name);
   closeModal('m-admin-city');
   if (window._adminCityNavCb) { const cb = window._adminCityNavCb; window._adminCityNavCb = null; cb(); }
 }
-function openAdminCityModal(deferred) {
+function _renderAdminCityList(q) {
   const list = document.getElementById('m-admin-city-list');
-  const current = _adminCity();
-  list.innerHTML = CITIES.map(c =>
-    `<button class="btn${c.name === current ? ' btn-p' : ''} btn-full" onclick="selectAdminCity('${esc(c.name)}')">${esc(c.name)} <span style="font-size:11px;color:var(--fg-3)">${c.tz}</span></button>`
+  const cities = _adminCitiesCache || [];
+  const cur = _adminCity();
+  const ql = (q || '').toLowerCase();
+  const filtered = ql ? cities.filter(c => c.name.toLowerCase().includes(ql)) : cities;
+  if (!filtered.length) { list.innerHTML = '<div style="color:var(--fg-3);font-size:13px;padding:8px">Не найдено</div>'; return; }
+  list.innerHTML = filtered.map(c =>
+    `<button class="btn${c.name === cur ? ' btn-p' : ''} btn-full" onclick="selectAdminCity('${esc(c.name)}')">${esc(c.name)}<span style="font-size:11px;color:var(--fg-3);margin-left:6px">${c.tz || ''}</span></button>`
   ).join('');
+}
+async function _geoSuggestAdminCity(cities) {
+  if (!navigator.geolocation) return null;
+  return new Promise(resolve => {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      let best = null, bestD = Infinity;
+      cities.forEach(c => {
+        const d = (c.lat - lat) ** 2 + (c.lng - lng) ** 2;
+        if (d < bestD) { bestD = d; best = c; }
+      });
+      resolve(bestD < 20 ? best?.name : null);
+    }, () => resolve(null), { timeout: 5000, maximumAge: 300000 });
+  });
+}
+async function openAdminCityModal(deferred) {
+  const hasCity = !!localStorage.getItem('alliby_admin_city');
+  const closeBtn = document.getElementById('m-admin-city-close');
+  if (closeBtn) closeBtn.style.display = hasCity ? '' : 'none';
+  const searchEl = document.getElementById('m-admin-city-search');
+  if (searchEl) searchEl.value = '';
+  const geoEl = document.getElementById('m-admin-city-geo');
+  const list = document.getElementById('m-admin-city-list');
+  list.innerHTML = '<div style="color:var(--fg-3);font-size:13px;padding:8px">Загрузка…</div>';
+  if (geoEl) geoEl.style.display = 'none';
   if (deferred) window._adminCityNavCb = deferred;
   openModal('m-admin-city');
+  const cities = await _loadAdminCities();
+  _renderAdminCityList('');
+  const suggested = await _geoSuggestAdminCity(cities);
+  if (suggested && suggested !== _adminCity() && geoEl) {
+    geoEl.style.display = 'block';
+    geoEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-2);border:1px solid var(--blue);border-radius:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span style="flex:1;font-size:13px">Вы в <strong>${esc(suggested)}</strong>?</span><button class="btn btn-p" style="padding:4px 12px;font-size:12px" onclick="selectAdminCity('${esc(suggested)}')">Да</button></div>`;
+  }
 }
 
 // ─── STATE ───
@@ -1183,6 +1467,7 @@ const S = {
   currentOrderId: null,
   pendingConfirm: null,
   adminMap: null, adminMapMarkers: [], adminMapFitted: false,
+  mapMode: localStorage.getItem('alliby_map_mode') || 'osm',
   mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null, mapPendingStore: null,
   mapPickMode: false, mapPickDraftMarker: null, mapPickCoords: null, storeFormDraft: null, mapViewStore: null,
   navHistory: [], navIdx: -1,
@@ -1263,6 +1548,14 @@ function buildMapStyle(cfg) {
   };
 }
 
+function buildOsmStyle() {
+  return {
+    version: 8,
+    sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } },
+    layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 }],
+  };
+}
+
 // ─── HELPERS ───
 async function req(path, opts = {}, _retried = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
@@ -1297,7 +1590,7 @@ function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
-const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const VAPID_PUBLIC_KEY = 'BAqiEa54OoLDA-bJ74rSG-4C_au7IbwXL3ZEybKY-GqlQEcwnRHJrZBIAxiX4pVMuJ1FdvtNSQMOQg8lRv-d2hc';
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1320,10 +1613,10 @@ function goTo(id, opts = {}) {
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   if (prevId === 'qr' && id !== 'qr') stopQrCamera();
-  if (prevId === 'orders' && id !== 'orders') adminRealtimeDisconnect();
-  if (id === 'orders') adminRealtimeConnect();
+  if (prevId === 'orders' && id !== 'orders') clearInterval(_adminPollTimer);
+  if (id === 'orders') { clearInterval(_adminPollTimer); _adminPollTimer = setInterval(loadOrders, 12000); }
   if (prevId === 'schedule' && id !== 'schedule') schedRealtimeDisconnect();
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen})[id]?.();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen,cities:loadCitiesScreen})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -1422,6 +1715,7 @@ async function doLogin() {
     const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
     if (profs[0]?.role !== 'admin') { restore(); err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
     setSession(d);
+    onAdminReady();
     if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }); }
     else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }
   } catch(e) { restore(); err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
@@ -1431,9 +1725,11 @@ async function doRegister() {
   const err = document.getElementById('err-register');
   const ok  = document.getElementById('ok-register');
   err.style.display = 'none'; ok.style.display = 'none';
+  const fullName = (document.getElementById('reg-name')?.value || '').trim();
   const email = document.getElementById('reg-email').value.trim();
   const pwd   = document.getElementById('reg-pwd').value;
   const pwd2  = document.getElementById('reg-pwd2').value;
+  if (!fullName) { err.textContent = 'Введите имя и фамилию'; err.style.display = 'block'; return; }
   if (!email || !pwd) { err.textContent = 'Заполните все поля'; err.style.display = 'block'; return; }
   if (pwd !== pwd2)   { err.textContent = 'Пароли не совпадают'; err.style.display = 'block'; return; }
   if (pwd.length < 6) { err.textContent = 'Пароль должен быть не менее 6 символов'; err.style.display = 'block'; return; }
@@ -1441,10 +1737,13 @@ async function doRegister() {
   try {
     const d = await req('/functions/v1/admin-register', {
       method: 'POST',
-      body: JSON.stringify({ email, password: pwd }),
+      body: JSON.stringify({ email, password: pwd, full_name: fullName }),
     });
     ok.style.display = 'block';
-    setTimeout(() => { setSession(d); goTo('stores'); }, 800);
+    setTimeout(() => {
+      setSession(d); onAdminReady();
+      if (!S.city) { openAdminCityModal(() => goTo('stores')); } else { goTo('stores'); }
+    }, 800);
   } catch(e) { restore(); err.textContent = e.message || e.error || 'Ошибка регистрации'; err.style.display = 'block'; }
 }
 
@@ -1512,6 +1811,54 @@ async function updatePwd() {
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
+// ─── CITIES MANAGEMENT ───
+async function loadCitiesScreen() {
+  const el = document.getElementById('cities-list');
+  el.innerHTML = '<div style="color:var(--fg-3);font-size:13px">Загрузка…</div>';
+  _adminCitiesCache = null;
+  const cities = await _loadAdminCities();
+  if (!cities.length) { el.innerHTML = '<div style="color:var(--fg-3);font-size:13px">Нет городов</div>'; return; }
+  el.innerHTML = cities.map(c => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-1);border:1px solid var(--line);border-radius:8px">
+      <div style="flex:1"><div style="font-weight:600">${esc(c.name)}</div><div style="font-size:12px;color:var(--fg-3)">${c.tz} · ${c.lat}, ${c.lng}</div></div>
+      <button class="btn btn-sm btn-d" onclick="deleteCity(${c.id},'${esc(c.name)}')">Удалить</button>
+    </div>`).join('');
+}
+function openAddCityModal() {
+  ['add-city-name','add-city-lat','add-city-lng'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('add-city-zoom').value = '12';
+  document.getElementById('add-city-tz').value = 'Europe/Moscow';
+  document.getElementById('err-add-city').style.display = 'none';
+  openModal('m-add-city');
+}
+async function doAddCity() {
+  const err = document.getElementById('err-add-city');
+  err.style.display = 'none';
+  const name = document.getElementById('add-city-name').value.trim();
+  const lat  = parseFloat(document.getElementById('add-city-lat').value);
+  const lng  = parseFloat(document.getElementById('add-city-lng').value);
+  const zoom = parseInt(document.getElementById('add-city-zoom').value) || 12;
+  const tz   = document.getElementById('add-city-tz').value.trim() || 'Europe/Moscow';
+  if (!name) { err.textContent = 'Введите название города'; err.style.display = 'block'; return; }
+  if (isNaN(lat) || isNaN(lng)) { err.textContent = 'Введите корректные координаты'; err.style.display = 'block'; return; }
+  const btn = document.getElementById('add-city-btn');
+  const restore = btnLoad(btn, 'Сохранение…');
+  try {
+    await req('/rest/v1/cities', { method: 'POST', body: JSON.stringify({ name, lat, lng, zoom, tz }) });
+    _adminCitiesCache = null;
+    closeModal('m-add-city');
+    loadCitiesScreen();
+  } catch(e) { err.textContent = e.message || 'Ошибка сохранения'; err.style.display = 'block'; restore(); }
+}
+async function deleteCity(id, name) {
+  if (!confirm(`Удалить город «${name}»?`)) return;
+  try {
+    await req(`/rest/v1/cities?id=eq.${id}`, { method: 'DELETE' });
+    _adminCitiesCache = null;
+    loadCitiesScreen();
+  } catch(e) { alert('Ошибка: ' + (e.message || e)); }
+}
+
 async function loadProfile() {
   document.getElementById('p-email').textContent = '…';
   document.getElementById('p-role').textContent  = '…';
@@ -1522,9 +1869,145 @@ async function loadProfile() {
     if (profs.length) {
       document.getElementById('p-role').textContent  = profs[0].role  || '';
       document.getElementById('p-phone').value       = profs[0].phone || '';
+      document.getElementById('p-address').value     = profs[0].address || '';
+      document.getElementById('p-addr-lat').value    = profs[0].address_lat ?? '';
+      document.getElementById('p-addr-lng').value    = profs[0].address_lng ?? '';
     }
   } catch(e) {}
   await loadPlatformSubscription();
+  await loadPaymentProfile();
+}
+
+let _ppStoreId = null;
+
+async function loadPaymentProfile() {
+  try {
+    const stores = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id,payment_provider,payment_test_mode&limit=1`);
+    if (!stores?.length) return;
+    const store = stores[0];
+    _ppStoreId = store.id;
+    document.getElementById('pp-provider').value = store.payment_provider || 'none';
+    document.getElementById('pp-test-mode').checked = store.payment_test_mode ?? true;
+    document.getElementById('pp-terminal-key').value = '';
+    document.getElementById('pp-secret-key').value = '';
+    onPpProviderChange();
+    const sps = await req(`/rest/v1/store_payment_settings?store_id=eq.${store.id}&select=terminal_key`).catch(() => null);
+    if (sps?.[0]?.terminal_key) document.getElementById('pp-terminal-key').value = sps[0].terminal_key;
+    document.getElementById('p-pay-sec').style.display = '';
+  } catch(e) {}
+}
+
+function onPpProviderChange() {
+  const p = document.getElementById('pp-provider').value;
+  const f = document.getElementById('pp-fields');
+  if (p === 'none') { f.style.display = 'none'; return; }
+  f.style.display = '';
+  const m = _PAY_META[p] || {};
+  document.getElementById('pp-key-label').textContent    = m.keyLabel    || 'Ключ';
+  document.getElementById('pp-secret-label').textContent = m.secretLabel || 'Секретный ключ';
+  document.getElementById('pp-hint').textContent         = m.hint        || '';
+}
+
+async function savePaymentProfile() {
+  if (!_ppStoreId) return;
+  const btn = document.getElementById('pp-save-btn');
+  const msg = document.getElementById('pp-msg');
+  const restore = btnLoad(btn);
+  msg.style.display = 'none';
+  try {
+    await req(`/rest/v1/stores?id=eq.${_ppStoreId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        payment_provider: document.getElementById('pp-provider').value,
+        payment_test_mode: document.getElementById('pp-test-mode').checked,
+      }),
+    });
+    const termKey   = document.getElementById('pp-terminal-key').value.trim();
+    const secretKey = document.getElementById('pp-secret-key').value.trim();
+    if (document.getElementById('pp-provider').value !== 'none' && (termKey || secretKey)) {
+      const spsBody = { store_id: _ppStoreId, updated_at: new Date().toISOString() };
+      if (termKey)   spsBody.terminal_key = termKey;
+      if (secretKey) spsBody.secret_key   = secretKey;
+      await req('/rest/v1/store_payment_settings', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(spsBody),
+      });
+    }
+    restore();
+    msg.textContent = 'Настройки сохранены';
+    msg.style.color = 'var(--ok)';
+    msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+  } catch(e) {
+    restore();
+    msg.textContent = 'Ошибка: ' + (e.message || '');
+    msg.style.color = 'var(--err)';
+    msg.style.display = 'block';
+  }
+}
+
+async function saveAddress() {
+  const restore = btnLoad(document.getElementById('p-addr-btn'));
+  const address = document.getElementById('p-address').value.trim() || null;
+  const lat = parseFloat(document.getElementById('p-addr-lat').value) || null;
+  const lng = parseFloat(document.getElementById('p-addr-lng').value) || null;
+  try {
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ address, address_lat: lat, address_lng: lng }),
+    });
+    restore(); alert('Адрес сохранён');
+  } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
+}
+
+let _addrPickMap = null, _addrPickResult = { lat: null, lng: null, text: '' }, _addrPickTimer = null;
+
+function openAddrPicker() {
+  openModal('m-addr-pick');
+  const lat = parseFloat(document.getElementById('p-addr-lat').value) || 53.19;
+  const lng = parseFloat(document.getElementById('p-addr-lng').value) || 50.15;
+  requestAnimationFrame(() => {
+    if (_addrPickMap) { _addrPickMap.setCenter([lng, lat]); _addrPickMap.resize(); return; }
+    _addrPickMap = new maplibregl.Map({
+      container: 'addr-pick-gl',
+      style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
+      center: [lng, lat], zoom: 15, attributionControl: false,
+    });
+    _addrPickMap.on('moveend', _addrPickGeocode);
+    _addrPickGeocode();
+  });
+}
+
+function closeAddrPicker() { closeModal('m-addr-pick'); }
+
+function _addrPickGeocode() {
+  clearTimeout(_addrPickTimer);
+  const lbl = document.getElementById('addr-pick-lbl');
+  if (lbl) lbl.textContent = 'Определяем адрес…';
+  _addrPickTimer = setTimeout(async () => {
+    if (!_addrPickMap) return;
+    const { lat, lng } = _addrPickMap.getCenter();
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`);
+      const d = await r.json();
+      const text = d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      if (lbl) lbl.textContent = text;
+      _addrPickResult = { lat, lng, text };
+    } catch {
+      const text = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      if (lbl) lbl.textContent = text;
+      _addrPickResult = { lat, lng, text };
+    }
+  }, 700);
+}
+
+function confirmAddrPick() {
+  if (_addrPickResult.lat == null) return;
+  document.getElementById('p-address').value = _addrPickResult.text;
+  document.getElementById('p-addr-lat').value = _addrPickResult.lat;
+  document.getElementById('p-addr-lng').value = _addrPickResult.lng;
+  closeAddrPicker();
 }
 
 async function savePhone() {
@@ -1553,6 +2036,15 @@ async function savePhone() {
 let _activePlatSub = null;
 let _platSubPlan   = null;
 let _tpayMsg       = null; // 'success' | 'fail' | null — set when returning from T-Bank redirect
+
+async function _refreshActivePlatSub() {
+  if (!S.session?.user?.id) return;
+  try {
+    const subs = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.desc&limit=10`);
+    const now = new Date();
+    _activePlatSub = subs.find(s => s.status === 'active' && new Date(s.end_date) >= now) || null;
+  } catch {}
+}
 
 async function loadPlatformSubscription() {
   const el = document.getElementById('p-platsub-inner');
@@ -1604,7 +2096,7 @@ async function loadPlatformSubscription() {
     const note = document.createElement('div');
     note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;${ok ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b'}`;
     note.textContent = ok
-      ? '✓ Оплата прошла успешно! Подписка активируется в течение нескольких секунд.'
+      ? 'Оплата прошла успешно! Подписка активируется в течение нескольких секунд.'
       : '✕ Оплата не завершена — банк отклонил платёж.';
     el.prepend(note);
     _tpayMsg = null;
@@ -1718,7 +2210,7 @@ async function loadStores() {
     fillStoreSelects();
     loadStoreCategories();
     if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
-    const _DIR_LABELS = { food: '🍽️ Еда', goods: '🛍️ Товары', services: '🛎️ Услуги' };
+    const _DIR_LABELS = { food: 'Еда', goods: 'Товары', services: 'Услуги' };
     el.innerHTML = S.stores.map(s => {
       const color = esc(s._loc?.marker_color || '#e8430a');
       const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
@@ -1733,15 +2225,15 @@ async function loadStores() {
               ${dirLabel ? `<span style="font-size:11px;padding:1px 6px;border-radius:4px;background:var(--bg-2);color:var(--fg-3)">${dirLabel}</span>` : ''}
               ${cat ? `<span class="txt-muted" style="font-size:12px;white-space:nowrap">${cat}</span>` : ''}
             </div>
-            ${s.address ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px">📍 ${esc(s.address)}</div>` : ''}
-            ${s.working_hours ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px">🕐 ${esc(s.working_hours)}</div>` : ''}
-            ${s.phone ? `<div class="txt-muted" style="font-size:12px">📞 ${esc(s.phone)}</div>` : ''}
+            ${s.address ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px;display:flex;align-items:center;gap:3px">${svgIco('pin',11)}${esc(s.address)}</div>` : ''}
+            ${s.working_hours ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px;display:flex;align-items:center;gap:3px">${svgIco('clock',11)}${esc(s.working_hours)}</div>` : ''}
+            ${s.phone ? `<div class="txt-muted" style="font-size:12px;display:flex;align-items:center;gap:3px">${svgIco('phone',11)}${esc(s.phone)}</div>` : ''}
           </div>
           <div style="display:flex;gap:4px;flex-shrink:0;align-items:stretch">
             <button class="btn btn-sm" style="display:flex;align-items:center;justify-content:center;padding:0 10px;height:auto" onclick="event.stopPropagation();showStoreQRDirect(${sd})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg></button>
             <div style="display:flex;flex-direction:column;gap:4px">
               <button class="btn btn-sm" onclick="event.stopPropagation();openStoreModal(${sd})">Ред.</button>
-              <button class="btn btn-sm" onclick="event.stopPropagation();openSchedule(${sd})">📅 Расписание</button>
+              <button class="btn btn-sm" onclick="event.stopPropagation();openSchedule(${sd})" style="display:inline-flex;align-items:center;gap:4px">${svgIco('calendar',12)} Расписание</button>
               <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
             </div>
           </div>
@@ -1753,7 +2245,7 @@ async function loadStores() {
 
 function fillStoreSelects() {
   const opts = S.stores.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
-  ['cat-store-filter','mi-store-filter','ord-store-filter','sub-store-filter','mc-store','mmi-store','msub-store'].forEach(id => {
+  ['cat-store-filter','mi-store-filter','ord-store-filter','bk-store-filter','sub-store-filter','mc-store','mmi-store','msub-store'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const current = el.value;
@@ -1780,7 +2272,63 @@ async function openStoreModal(store) {
   await loadStoreCategoriesFiltered();
   document.getElementById('ms-sc').value = store?.store_category_id || '';
   updateStoreCoordsStatus();
+  onMsDirChange();
+  await _refreshActivePlatSub();
+  const delivEl = document.getElementById('ms-delivery-enabled');
+  if (delivEl) {
+    delivEl.disabled = !_activePlatSub;
+    delivEl.checked = !!_activePlatSub && (store?.delivery_enabled ?? false);
+  }
+  renderMsDeliveryZones(store?.delivery_zones?.length ? store.delivery_zones : [{ radius: 1000, price: 0 }]);
+  document.getElementById('ms-pay-provider').value = store?.payment_provider || 'none';
+  document.getElementById('ms-pay-terminal-key').value = '';
+  document.getElementById('ms-pay-secret-key').value = '';
+  document.getElementById('ms-pay-test-mode').checked = store?.payment_test_mode ?? true;
+  if (store?.id) {
+    req(`/rest/v1/store_payment_settings?store_id=eq.${store.id}&select=terminal_key`).then(r => {
+      if (r?.[0]?.terminal_key) document.getElementById('ms-pay-terminal-key').value = r[0].terminal_key;
+    }).catch(() => {});
+  }
+  onMsPayProviderChange();
   openModal('m-store');
+}
+
+function _updateMapModeBtn() {
+  const btn = document.getElementById('map-mode-btn');
+  if (btn) btn.innerHTML = `${svgIco('map',13)} ${S.mapMode === 'osm' ? 'Тайлы' : 'OSM'}`;
+}
+
+function setMapMode(mode) {
+  S.mapMode = mode;
+  localStorage.setItem('alliby_map_mode', mode);
+  _updateMapModeBtn();
+  if (!S.adminMap) return;
+  S.adminMap.setStyle(mode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg), { diff: false });
+  S.adminMap.once('style.load', () => loadAdminMapMarkers());
+}
+
+async function geocodeStoreAddress() {
+  const address = document.getElementById('ms-address').value.trim();
+  if (!address) { alert('Введите адрес для поиска'); return; }
+  const btn = document.querySelector('[onclick="geocodeStoreAddress()"]');
+  const origText = btn?.textContent;
+  if (btn) btn.textContent = '…';
+  try {
+    const city = S.city || '';
+    const q = encodeURIComponent(city ? `${address}, ${city}` : address);
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&accept-language=ru`);
+    const d = await r.json();
+    if (!d.length) { alert('Адрес не найден. Попробуйте уточнить запрос.'); return; }
+    const lat = parseFloat(d[0].lat), lng = parseFloat(d[0].lon);
+    document.getElementById('ms-lat').value = lat;
+    document.getElementById('ms-lng').value = lng;
+    updateStoreCoordsStatus();
+    if (S.adminMap) {
+      S.adminMap.flyTo({ center: [lng, lat], zoom: 17 });
+      if (S.mapDraftMarker) { S.mapDraftMarker.setLngLat([lng, lat]); }
+    }
+  } catch(e) { alert('Ошибка поиска: ' + (e.message || '')); }
+  finally { if (btn) btn.textContent = origText; }
 }
 
 function updateStoreCoordsStatus() {
@@ -1789,10 +2337,10 @@ function updateStoreCoordsStatus() {
   const el  = document.getElementById('ms-coords-status');
   if (!el) return;
   if (lat && lng) {
-    el.textContent = `📍 ${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
+    el.innerHTML = `${svgIco('pin',12)} ${parseFloat(lat).toFixed(5)}, ${parseFloat(lng).toFixed(5)}`;
     el.style.color = 'var(--ok)';
   } else {
-    el.textContent = '📍 Координаты не указаны — нажмите «Указать на карте»';
+    el.innerHTML = `${svgIco('pin',12)} Координаты не указаны — нажмите «Указать на карте»`;
     el.style.color = 'var(--fg-3)';
   }
 }
@@ -1816,6 +2364,11 @@ function pickOnMap() {
     lng:     document.getElementById('ms-lng').value,
     color:   document.getElementById('ms-color').value,
     image_url: document.getElementById('ms-image-url').value,
+    delivery_enabled: document.getElementById('ms-delivery-enabled')?.checked ?? false,
+    delivery_zones: getMsDeliveryZones(),
+    pay_provider:    document.getElementById('ms-pay-provider').value,
+    pay_terminal_key: document.getElementById('ms-pay-terminal-key').value,
+    pay_test_mode:   document.getElementById('ms-pay-test-mode').checked,
   };
   S.mapPickMode = true;
   S.mapPickCoords = null;
@@ -1846,6 +2399,14 @@ async function usePickedCoords() {
   document.getElementById('ms-image-url').value = d.image_url || '';
   _restoreStoreImgPreview(d.image_url || '');
   updateStoreCoordsStatus();
+  const _de = document.getElementById('ms-delivery-enabled');
+  if (_de) { _de.disabled = !_activePlatSub; _de.checked = !!_activePlatSub && (d.delivery_enabled || false); }
+  renderMsDeliveryZones(d.delivery_zones || [{ radius: 1000, price: 0 }]);
+  document.getElementById('ms-pay-provider').value = d.pay_provider || 'none';
+  document.getElementById('ms-pay-terminal-key').value = d.pay_terminal_key || '';
+  document.getElementById('ms-pay-secret-key').value = '';
+  document.getElementById('ms-pay-test-mode').checked = d.pay_test_mode ?? true;
+  onMsPayProviderChange();
   openModal('m-store');
 }
 
@@ -1871,8 +2432,71 @@ async function cancelPickMode() {
     document.getElementById('ms-image-url').value = d.image_url || '';
     _restoreStoreImgPreview(d.image_url || '');
     updateStoreCoordsStatus();
+    document.getElementById('ms-pay-provider').value = d.pay_provider || 'none';
+    document.getElementById('ms-pay-terminal-key').value = d.pay_terminal_key || '';
+    document.getElementById('ms-pay-secret-key').value = '';
+    document.getElementById('ms-pay-test-mode').checked = d.pay_test_mode ?? true;
+    onMsPayProviderChange();
     openModal('m-store');
   }
+}
+
+function onMsDeliveryChange() {}
+
+const _PAY_META = {
+  tinkoff:       { keyLabel:'TerminalKey', secretLabel:'Password', hint:'TerminalKey и Password — в личном кабинете Тинькофф → Магазин → Интеграция. Тест: TerminalKey с суффиксом DEMO, Password = TestPassword.' },
+  yokassa:       { keyLabel:'shopId', secretLabel:'Секретный ключ', hint:'shopId и секретный ключ — в ЮKassa → Интеграция → HTTP API. Тест: shopId = 100500, ключ = test_...' },
+  cloudpayments: { keyLabel:'Public ID', secretLabel:'API Secret', hint:'Public ID и API Secret — в CloudPayments → Настройки → Сайты и API.' },
+  sberbank:      { keyLabel:'userName', secretLabel:'password', hint:'Реквизиты выдаёт банк при подключении. Тестовая среда — UAT: securepayments.sberbank.ru.' },
+};
+
+function onMsPayProviderChange() {
+  const p = document.getElementById('ms-pay-provider').value;
+  const f = document.getElementById('ms-pay-fields');
+  if (p === 'none') { f.style.display = 'none'; return; }
+  f.style.display = '';
+  const m = _PAY_META[p] || {};
+  document.getElementById('ms-pay-key-label').textContent    = m.keyLabel    || 'Ключ';
+  document.getElementById('ms-pay-secret-label').textContent = m.secretLabel || 'Секретный ключ';
+  document.getElementById('ms-pay-hint').textContent         = m.hint        || '';
+}
+
+function onMsDirChange() {
+  const isServices = document.getElementById('ms-dir')?.value === 'services';
+  const sec = document.getElementById('ms-delivery-section');
+  if (sec) sec.style.display = isServices ? 'none' : '';
+}
+
+function renderMsDeliveryZones(zones) {
+  const el = document.getElementById('ms-dz-list');
+  if (!el) return;
+  const list = zones?.length ? zones : [{ radius: 1000, price: 0 }];
+  el.innerHTML = list.map((z, i) =>
+    `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <input type="number" class="ms-dz-r" value="${z.radius}" min="100" step="100" style="flex:1;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-1);background:var(--bg-input);font-size:13px;color:var(--fg)">
+      <input type="number" class="ms-dz-p" value="${z.price}" min="0" step="10" style="flex:1;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-1);background:var(--bg-input);font-size:13px;color:var(--fg)">
+      ${i > 0 ? `<button class="btn btn-sm btn-d" style="padding:5px 8px;flex-shrink:0" onclick="removeMsDeliveryZone(${i})">✕</button>` : '<div style="width:30px;flex-shrink:0"></div>'}
+    </div>`
+  ).join('');
+}
+
+function getMsDeliveryZones() {
+  const rs = [...document.querySelectorAll('#ms-dz-list .ms-dz-r')];
+  const ps = [...document.querySelectorAll('#ms-dz-list .ms-dz-p')];
+  return rs.map((r, i) => ({ radius: Math.max(100, parseInt(r.value) || 1000), price: Math.max(0, parseInt(ps[i]?.value) || 0) }));
+}
+
+function addMsDeliveryZone() {
+  const zones = getMsDeliveryZones();
+  const lastR = zones[zones.length - 1]?.radius || 1000;
+  zones.push({ radius: lastR + 1000, price: 0 });
+  renderMsDeliveryZones(zones);
+}
+
+function removeMsDeliveryZone(idx) {
+  const zones = getMsDeliveryZones();
+  zones.splice(idx, 1);
+  renderMsDeliveryZones(zones.length ? zones : [{ radius: 1000, price: 0 }]);
 }
 
 async function saveStore() {
@@ -1886,6 +2510,12 @@ async function saveStore() {
       alert('На данный момент поддерживается только одно заведение');
       return;
     }
+  }
+  const zones = getMsDeliveryZones();
+  if (zones.some(z => z.radius < 100)) {
+    restore();
+    alert('Минимальный радиус зоны доставки — 100 м');
+    return;
   }
   const lat   = parseFloat(document.getElementById('ms-lat').value);
   const lng   = parseFloat(document.getElementById('ms-lng').value);
@@ -1902,6 +2532,10 @@ async function saveStore() {
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
     image_url:          document.getElementById('ms-image-url').value || null,
+    delivery_enabled:   document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
+    delivery_zones:     zones,
+    payment_provider:   document.getElementById('ms-pay-provider').value,
+    payment_test_mode:  document.getElementById('ms-pay-test-mode').checked,
   };
   try {
     let storeId = id;
@@ -1921,7 +2555,20 @@ async function saveStore() {
         body: JSON.stringify({ p_store_id: storeId, p_lng: lng, p_lat: lat, p_color: color }),
       });
     }
-    closeModal('m-store'); loadStores();
+    // Save payment credentials separately (non-blocking)
+    const termKey   = document.getElementById('ms-pay-terminal-key').value.trim();
+    const secretKey = document.getElementById('ms-pay-secret-key').value.trim();
+    if (storeId && body.payment_provider !== 'none' && (termKey || secretKey)) {
+      const spsBody = { store_id: storeId, updated_at: new Date().toISOString() };
+      if (termKey)   spsBody.terminal_key = termKey;
+      if (secretKey) spsBody.secret_key   = secretKey;
+      req('/rest/v1/store_payment_settings', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(spsBody),
+      }).catch(() => {});
+    }
+    restore(); closeModal('m-store'); loadStores();
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
@@ -2075,9 +2722,9 @@ async function loadMenuItems() {
       const sd = JSON.stringify(i).replace(/"/g, '&quot;');
       const thumb = i.image_url
         ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
-        : `<div style="width:40px;height:40px;border-radius:var(--r-1);background:var(--bg-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-4);font-size:18px">🍽</div>`;
+        : `<div style="width:40px;height:40px;border-radius:var(--r-1);background:var(--bg-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-4)">${svgIco('food',20)}</div>`;
       const avail = i.is_available
-        ? `<span style="font-size:12px;color:var(--ok)">✓ В наличии</span>`
+        ? `<span style="font-size:12px;color:var(--ok);display:inline-flex;align-items:center;gap:3px">${svgIco('check',11)} В наличии</span>`
         : `<span style="font-size:12px;color:var(--fg-4)">— Нет в наличии</span>`;
       return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openMenuItemModal(${sd})">
         <div style="display:flex;gap:10px;align-items:flex-start">
@@ -2339,13 +2986,20 @@ async function confirmStoreCrop() {
       0, 0, 300, 300
     );
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+    if (!blob || blob.size === 0) throw new Error('Canvas не вернул изображение');
+    console.log('Store photo blob:', blob.type, blob.size, 'bytes');
     const filename = 'store_' + Date.now() + '.jpg';
     const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
       method: 'POST',
-      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'image/jpeg' },
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': blob.type || 'image/jpeg' },
       body: blob,
     });
-    if (!r.ok) { const e = await r.json(); throw e; }
+    if (!r.ok) {
+      const text = await r.text();
+      console.error('Storage error body:', text);
+      let parsed; try { parsed = JSON.parse(text); } catch { parsed = { message: text }; }
+      throw parsed;
+    }
     const url = `${SB_URL}/storage/v1/object/public/menu-photos/${filename}`;
     document.getElementById('ms-image-url').value = url;
     _restoreStoreImgPreview(url);
@@ -2411,11 +3065,12 @@ function fmtTime(d) {
 
 let _adminOrdFilter = '';
 const _adminOrdNotif = new Set();
+let _ordPage = 0, _ordHasMore = false, _ordLoading = false, _ordObserver = null;
 
 function _renderAdminOrdDots() {
   document.querySelectorAll('[data-ord-status]').forEach(btn => {
     const s = btn.dataset.ordStatus;
-    const ACTIVE = new Set(['paid', 'in_progress', 'ready']);
+    const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready']);
     const has = s === '' ? ([...ACTIVE].some(x => _adminOrdNotif.has(x))) : _adminOrdNotif.has(s);
     btn.querySelector('.ord-notif-dot')?.classList.toggle('on', has);
   });
@@ -2431,50 +3086,113 @@ function setAdminOrderFilter(status) {
   loadOrders();
 }
 
-async function loadOrders() {
+async function loadOrders(append = false) {
+  if (_ordLoading) return;
+  _ordLoading = true;
   const el = document.getElementById('ord-list');
-  el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  if (!append) {
+    _ordPage = 0; _orders = [];
+    el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  }
   try {
     const storeId = document.getElementById('ord-store-filter')?.value;
-    let url = '/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=100';
+    let url = `/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     if (storeId) url += `&store_id=eq.${storeId}`;
-    if (_adminOrdFilter === 'issued') url += '&status=eq.issued';
+    if (_adminOrdFilter === 'all') { /* no status filter */ }
     else if (_adminOrdFilter) url += `&status=eq.${_adminOrdFilter}`;
-    else url += '&status=in.(paid,in_progress,ready)';
-    _orders = await req(url);
-    if (!_orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; return; }
-    el.innerHTML = _orders.map(o => renderOrderCard(o)).join('');
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+    else url += '&status=in.(paid,in_progress,looking_for_courier,on_the_way,ready)';
+    const page = await req(url);
+    _ordHasMore = page.length === 20;
+    _ordPage++;
+    if (append) {
+      _orders = [..._orders, ...page];
+      el.querySelector('.ord-sentinel')?.remove();
+      el.insertAdjacentHTML('beforeend', page.map(o => renderOrderCard(o)).join(''));
+    } else {
+      _orders = page;
+      if (!_orders.length) { el.innerHTML = '<div class="empty">Заказов нет</div>'; _ordLoading = false; return; }
+      el.innerHTML = _orders.map(o => renderOrderCard(o)).join('');
+    }
+    _setupAdminOrdSentinel();
+  } catch(e) { if (!append) el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+  _ordLoading = false;
+}
+
+function _setupAdminOrdSentinel() {
+  if (_ordObserver) { _ordObserver.disconnect(); _ordObserver = null; }
+  if (!_ordHasMore) return;
+  const el = document.getElementById('ord-list');
+  const root = document.querySelector('#obt-orders-pane .pb');
+  const sentinel = document.createElement('div');
+  sentinel.className = 'ord-sentinel';
+  sentinel.style.height = '1px';
+  el.appendChild(sentinel);
+  _ordObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) loadOrders(true);
+  }, { root, rootMargin: '100px' });
+  _ordObserver.observe(sentinel);
 }
 
 function renderOrderCard(o) {
-  const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)' };
+  const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)' };
   const color = statusColors[o.status] || 'var(--fg-3)';
   const label = statusMap[o.status] || o.status;
   const items = o.order_items || [];
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
   const storeName = o.stores?.name || '';
   const userEmail = o.user_email || '';
-  return `<div class="card" style="margin-bottom:8px;cursor:pointer;padding:12px 14px" onclick="openOrderModal('${esc(o.id)}')">
+  const delivBorder = o.is_delivery ? 'border:2px solid #f5c518;' : '';
+  const delivBadge = o.is_delivery
+    ? `<span style="font-size:11px;background:#f5c51822;color:#b8860b;border:1px solid #f5c518;border-radius:99px;padding:1px 7px;margin-right:6px;display:inline-flex;align-items:center;gap:3px">${svgIco('bicycle',11)} Доставка</span>`
+    : `<span style="font-size:11px;background:var(--bg-2);color:var(--fg-3);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-right:6px;display:inline-flex;align-items:center;gap:3px">${svgIco('store',11)} Самовывоз</span>`;
+  let delivBtns = '';
+  if (o.is_delivery) {
+    if (o.status === 'in_progress')
+      delivBtns = `<div style="margin-top:8px;display:flex;gap:6px"><button class="btn btn-sm btn-p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px" onclick="event.stopPropagation();setDeliveryStatus('${o.id}','looking_for_courier')">${svgIco('search',12)} Ищем курьера</button></div>`;
+    else if (o.status === 'looking_for_courier')
+      delivBtns = `<div style="margin-top:8px;display:flex;gap:6px"><button class="btn btn-sm btn-p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px" onclick="event.stopPropagation();setDeliveryStatus('${o.id}','on_the_way')">${svgIco('bicycle',12)} Едет к вам</button></div>`;
+    else if (o.status === 'on_the_way')
+      delivBtns = `<div style="margin-top:8px;display:flex;gap:6px"><button class="btn btn-sm btn-p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px" onclick="event.stopPropagation();setDeliveryStatus('${o.id}','issued')">${svgIco('check-circle',12)} Выдан</button></div>`;
+  }
+  return `<div class="card" style="margin-bottom:8px;cursor:pointer;padding:12px 14px;${delivBorder}" onclick="openOrderModal('${esc(o.id)}')">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
       <div style="flex:1;min-width:0">
         ${storeName ? `<div style="font:500 12px/1 var(--font-sans);color:var(--fg-3);margin-bottom:4px">${esc(storeName)}</div>` : ''}
         <div style="font:500 14px/1.3 var(--font-sans)">${esc(userEmail)}</div>
         <div style="font-size:12px;color:var(--fg-3);margin-top:2px">${fmtDate(o.order_time)} · ${itemCount} поз.</div>
-        ${o.estimated_ready_at ? `<div style="font-size:12px;color:var(--warn);margin-top:2px">⏰ К ${fmtTime(o.estimated_ready_at)}</div>` : ''}
+        ${o.estimated_ready_at ? `<div style="font-size:12px;color:var(--warn);margin-top:2px;display:flex;align-items:center;gap:3px">${svgIco('clock',11)} К ${fmtTime(o.estimated_ready_at)}</div>` : ''}
+        <div style="margin-top:5px">${delivBadge}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font:600 16px/1 var(--font-display)">${Number(o.total_amount).toFixed(0)} ₽</div>
         <div style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid ${color};color:${color}">${label}</div>
       </div>
     </div>
+    ${delivBtns}
   </div>`;
+}
+
+async function setDeliveryStatus(orderId, newStatus) {
+  const body = { status: newStatus };
+  if (newStatus === 'on_the_way') {
+    const raw = prompt('Телефон курьера (необязательно):');
+    body.courier_phone = raw?.trim() || null;
+  }
+  try {
+    await req(`/rest/v1/orders?id=eq.${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body),
+    });
+    loadOrders();
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
 }
 
 function openOrderModal(orderId) {
   const o = _orders.find(x => x.id === orderId);
   if (!o) return;
   _currentOrder = o;
+  _newOrderIds.delete(orderId); updateNavBadge();
   const dir = o.stores?.direction || 'food';
   const needTime = dir !== 'services';
   const items = o.order_items || [];
@@ -2488,32 +3206,43 @@ function openOrderModal(orderId) {
         <span>${esc(it.menu_items?.name || '—')}</span>
         <span style="color:var(--fg-3);white-space:nowrap">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</span>
       </div>`).join('')}
+      ${o.is_delivery && o.delivery_fee ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);font-size:14px">
+        <span style="display:flex;align-items:center;gap:4px">${svgIco('bicycle',13)} Доставка</span>
+        <span style="color:var(--fg-3);white-space:nowrap">${Number(o.delivery_fee).toFixed(0)} ₽</span>
+      </div>` : ''}
     </div>
     <div style="display:flex;justify-content:space-between;font:600 15px/1 var(--font-display)">
       <span>Итого</span><span>${Number(o.total_amount).toFixed(0)} ₽</span>
     </div>
-    ${o.estimated_ready_at ? `<div style="margin-top:8px;font-size:13px;color:var(--warn)">⏰ Готов к ${fmtTime(o.estimated_ready_at)}</div>` : ''}
+    ${o.estimated_ready_at ? `<div style="margin-top:8px;font-size:13px;color:var(--warn);display:flex;align-items:center;gap:4px">${svgIco('clock',13)} Готов к ${fmtTime(o.estimated_ready_at)}</div>` : ''}
+    ${o.is_delivery ? `<div style="margin-top:10px;padding:8px 10px;border-radius:var(--r-2);border:2px solid #f5c518;font-size:13px"><span style="font-weight:600;display:inline-flex;align-items:center;gap:4px">${svgIco('bicycle',13)} Доставка</span>${o.delivery_address ? `<div style="color:var(--fg-3);margin-top:3px">${esc(o.delivery_address)}</div>` : ''}${o.courier_phone ? `<div style="margin-top:5px;display:flex;align-items:center;gap:4px">${svgIco('phone',12)} Курьер: <a href="tel:${esc(o.courier_phone)}" style="color:var(--accent);font-weight:600">${esc(o.courier_phone)}</a></div>` : ''}</div>` : ''}
   `;
 
   const rtSect = document.getElementById('m-order-ready-time-sect');
   const ft = document.getElementById('m-order-ft');
 
+  rtSect.style.display = 'none';
   if (o.status === 'paid') {
     if (needTime) {
       rtSect.style.display = '';
       const def = new Date(Date.now() + 30 * 60000);
       document.getElementById('m-order-ready-time').value = def.toISOString().slice(0, 16);
-    } else {
-      rtSect.style.display = 'none';
     }
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
       <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('in_progress')">Взять в работу</button>`;
   } else if (o.status === 'in_progress') {
-    rtSect.style.display = 'none';
+    ft.innerHTML = o.is_delivery
+      ? `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
+         <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('looking_for_courier')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('search',13)} Ищем курьера</button>`
+      : `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
+         <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('ready')">Готов к выдаче</button>`;
+  } else if (o.status === 'looking_for_courier') {
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
-      <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('ready')">Готов к выдаче</button>`;
+      <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('on_the_way')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('bicycle',13)} Едет к вам</button>`;
+  } else if (o.status === 'on_the_way') {
+    ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
+      <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('issued')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('check-circle',13)} Выдан</button>`;
   } else {
-    rtSect.style.display = 'none';
     ft.innerHTML = `<button class="btn btn-full" onclick="closeModal('m-order')">Закрыть</button>`;
   }
 
@@ -2529,6 +3258,10 @@ async function advanceOrder(newStatus) {
     const rtVal = document.getElementById('m-order-ready-time').value;
     if (!rtVal) { alert('Укажите ожидаемое время готовности'); return; }
     body.estimated_ready_at = new Date(rtVal).toISOString();
+  }
+  if (newStatus === 'on_the_way') {
+    const raw = prompt('Телефон курьера (необязательно):');
+    body.courier_phone = raw?.trim() || null;
   }
   const btn = document.getElementById('ord-advance-btn');
   const restore = btnLoad(btn);
@@ -2567,10 +3300,9 @@ function _setOrdDot(ok) {
 }
 
 function adminRealtimeConnect() {
-  adminRealtimeDisconnect();
-
-  // Polling fallback — fires every 12 s regardless of WebSocket state
-  _adminPollTimer = setInterval(loadOrders, 12000);
+  if (_adminRtWs && _adminRtWs.readyState < 2) return; // already connected/connecting
+  if (_adminRtWs) { try { _adminRtWs.close(); } catch {} _adminRtWs = null; }
+  clearInterval(_adminRtHb);
 
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
@@ -2611,9 +3343,10 @@ function adminRealtimeConnect() {
           const type = (data?.type || '').toUpperCase();
           const record = data?.record;
           const newStatus = record?.status;
-          const ACTIVE = new Set(['paid', 'in_progress', 'ready']);
+          const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready']);
           if (type === 'INSERT') {
-            showAdminToast('🔔 Новый заказ!');
+            showAdminToast('Новый заказ!');
+            if (record?.id) { _newOrderIds.add(record.id); updateNavBadge(); }
             if (newStatus && ACTIVE.has(newStatus) && _adminOrdFilter !== '' && _adminOrdFilter !== newStatus) {
               _adminOrdNotif.add(newStatus); _renderAdminOrdDots();
             }
@@ -2632,10 +3365,232 @@ function adminRealtimeConnect() {
 }
 
 function adminRealtimeDisconnect() {
-  clearInterval(_adminPollTimer);
-  clearInterval(_adminRtHb);
+  clearInterval(_adminPollTimer); clearInterval(_adminRtHb);
   if (_adminRtWs) { try { _adminRtWs.close(); } catch {} _adminRtWs = null; }
+  globalBookingsRealtimeDisconnect();
   _setOrdDot(false);
+}
+
+// ─── NAV BADGES ───
+const _newOrderIds   = new Set();
+const _newBookingIds = new Set();
+let _globalBkWs = null, _globalBkRef = 0, _globalBkHb = null;
+
+function updateNavBadge() {
+  const total = _newOrderIds.size + _newBookingIds.size;
+  const bn = document.getElementById('bn-orders-badge');
+  const sn = document.getElementById('sn-orders-badge');
+  if (bn) { bn.textContent = total; bn.classList.toggle('show', total > 0); }
+  if (sn) { sn.textContent = total; sn.style.display = total > 0 ? '' : 'none'; }
+  const ot = document.getElementById('ord-tab-badge');
+  const bt = document.getElementById('bk-tab-badge');
+  if (ot) { ot.textContent = _newOrderIds.size; ot.style.display = _newOrderIds.size > 0 ? '' : 'none'; }
+  if (bt) { bt.textContent = _newBookingIds.size; bt.style.display = _newBookingIds.size > 0 ? '' : 'none'; }
+}
+
+function switchAdminTab(tab) {
+  const isOrders = tab === 'orders';
+  document.getElementById('obt-orders')?.classList.toggle('active', isOrders);
+  document.getElementById('obt-bookings')?.classList.toggle('active', !isOrders);
+  const op = document.getElementById('obt-orders-pane');
+  const bp = document.getElementById('obt-bookings-pane');
+  if (op) op.style.display = isOrders ? 'flex' : 'none';
+  if (bp) bp.style.display = !isOrders ? 'flex' : 'none';
+  if (!isOrders) {
+    _bkTab.storeId = document.getElementById('bk-store-filter')?.value || null;
+    loadBkTabMonth();
+  }
+}
+
+const _bkTab = {
+  storeId: null,
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+  bookingCounts: {},
+  openDate: null,
+};
+
+function onBkTabStoreChange() {
+  _bkTab.storeId = document.getElementById('bk-store-filter')?.value || null;
+  document.getElementById('bk-day-view').style.display = 'none';
+  _bkTab.openDate = null;
+  loadBkTabMonth();
+}
+
+function bkTabPrevMonth() {
+  if (_bkTab.month === 0) { _bkTab.month = 11; _bkTab.year--; }
+  else _bkTab.month--;
+  document.getElementById('bk-day-view').style.display = 'none';
+  _bkTab.openDate = null;
+  loadBkTabMonth();
+}
+
+function bkTabNextMonth() {
+  if (_bkTab.month === 11) { _bkTab.month = 0; _bkTab.year++; }
+  else _bkTab.month++;
+  document.getElementById('bk-day-view').style.display = 'none';
+  _bkTab.openDate = null;
+  loadBkTabMonth();
+}
+
+async function loadBkTabMonth() {
+  const firstDay = new Date(_bkTab.year, _bkTab.month, 1);
+  const lastDay  = new Date(_bkTab.year, _bkTab.month + 1, 0);
+  const from = _fmtD(firstDay), to = _fmtD(lastDay);
+  _bkTab.bookingCounts = {};
+  if (_bkTab.storeId) {
+    try {
+      const rows = await req(`/rest/v1/bookings?store_id=eq.${_bkTab.storeId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date`);
+      rows.forEach(r => { _bkTab.bookingCounts[r.slot_date] = (_bkTab.bookingCounts[r.slot_date] || 0) + 1; });
+    } catch {}
+  }
+  renderBkTabCalendar();
+}
+
+function renderBkTabCalendar() {
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const lbl = document.getElementById('bk-month-label');
+  if (lbl) lbl.textContent = `${MONTHS[_bkTab.month]} ${_bkTab.year}`;
+  const calEl = document.getElementById('bk-calendar');
+  if (!calEl) return;
+  const today = _fmtD(new Date());
+  const firstDow = new Date(_bkTab.year, _bkTab.month, 1).getDay();
+  const offset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(_bkTab.year, _bkTab.month + 1, 0).getDate();
+  const mm = String(_bkTab.month + 1).padStart(2, '0');
+  const prevMonthDays = new Date(_bkTab.year, _bkTab.month, 0).getDate();
+  const cells = [];
+  for (let i = offset - 1; i >= 0; i--)
+    cells.push({ d: prevMonthDays - i, cls: 'sched-day empty', ds: null });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${_bkTab.year}-${mm}-${dd}`;
+    let cls = 'sched-day';
+    if (dateStr === today) cls += ' today';
+    cells.push({ d, cls, ds: dateStr });
+  }
+  const trailing = (7 - (cells.length % 7)) % 7;
+  for (let i = 1; i <= trailing; i++)
+    cells.push({ d: i, cls: 'sched-day empty', ds: null });
+  let html = '';
+  cells.forEach((c, i) => {
+    if (i % 7 === 0) html += '<tr>';
+    const clickable = c.ds && _bkTab.storeId;
+    const onclick = clickable ? ` onclick="onBkTabDayClick('${c.ds}')"` : '';
+    const cnt = c.ds ? (_bkTab.bookingCounts[c.ds] || 0) : 0;
+    const badge = cnt > 0 ? `<span class="sched-bk-cnt">${cnt}</span>` : '';
+    html += `<td class="${c.cls}"${onclick}${clickable ? ' style="cursor:pointer"' : ''}><span class="sd-n">${c.d}</span>${badge}</td>`;
+    if (i % 7 === 6) html += '</tr>';
+  });
+  calEl.innerHTML = html;
+}
+
+function onBkTabDayClick(dateStr) {
+  if (!_bkTab.storeId) return;
+  _bkTab.openDate = dateStr;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  const DAY = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('bk-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
+  document.getElementById('bk-day-view').style.display = '';
+  renderBkTabDayView(dateStr);
+}
+
+async function renderBkTabDayView(dateStr) {
+  const el = document.getElementById('bk-day-bks');
+  if (!el || !_bkTab.storeId) return;
+  el.innerHTML = '<div class="txt-muted" style="font-size:13px">Загрузка…</div>';
+  try {
+    const bks = await req(`/rest/v1/bookings?store_id=eq.${_bkTab.storeId}&slot_date=eq.${dateStr}&select=*,menu_items(name,price)&order=slot_start.asc`);
+    const uids = [...new Set(bks.map(b => b.user_id).filter(Boolean))];
+    const pm = {};
+    if (uids.length) {
+      try { (await req(`/rest/v1/profiles?id=in.(${uids.join(',')})&select=id,full_name,phone`)).forEach(p => { pm[p.id] = p; }); } catch {}
+    }
+    _bkTab.bookingCounts[dateStr] = bks.filter(b => b.status !== 'cancelled').length;
+    renderBkTabCalendar();
+    if (!bks.length) { el.innerHTML = '<div class="txt-muted" style="font-size:13px;padding:8px 0">Записей нет</div>'; return; }
+    const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+    const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, pending:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
+    el.innerHTML = bks.map(b => {
+      const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
+      const p = pm[b.user_id] || null;
+      _bkCache[b.id] = { b, p };
+      const st  = ST[b.status]          || { lbl:b.status,         cls:'b-pending' };
+      const pay = PAY[b.payment_status] || { lbl:b.payment_status, cls:'b-pending' };
+      const cancelled = b.status === 'cancelled';
+      const paid      = b.payment_status === 'paid';
+      const isNew = _newBookingIds.has(b.id);
+      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid ${isNew?'var(--accent)':'var(--line-soft)'};margin-bottom:8px;background:var(--bg);opacity:${cancelled?'.5':'1'};cursor:pointer${isNew?';box-shadow:0 0 0 1px var(--accent)':''}" onclick="openBookingDetail('${esc(b.id)}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
+              <span style="font:700 13px/1 var(--font-sans)">${ts} — ${te}</span>
+              <span class="badge ${st.cls}">${st.lbl}</span>
+              <span class="badge ${pay.cls}">${pay.lbl}</span>
+            </div>
+            <div style="font:500 13px/1.3 var(--font-sans);margin-bottom:3px">${esc(b.menu_items?.name||'—')}</div>
+            ${p?`<div style="font-size:12px;color:var(--fg-3)">${[p.full_name,p.phone].filter(Boolean).map(esc).join(' · ')}</div>`:''}
+            ${b.notes?`<div style="font-size:12px;color:var(--fg-4);margin-top:3px;font-style:italic">${esc(b.notes)}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+            <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price??b.menu_items?.price??''} ₽</div>
+            ${!paid&&!cancelled?`<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${esc(b.id)}','${dateStr}')">Подтвердить оплату</button>`:''}
+            ${!cancelled?`<button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${esc(b.id)}','${dateStr}')">Отменить</button>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch { el.innerHTML = '<div style="color:var(--fg-4);font-size:13px;padding:8px 0">Ошибка загрузки</div>'; }
+}
+
+function globalBookingsRealtimeConnect() {
+  if (_globalBkWs && _globalBkWs.readyState < 2) return;
+  if (_globalBkWs) { try { _globalBkWs.close(); } catch {} _globalBkWs = null; }
+  clearInterval(_globalBkHb);
+  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
+  try {
+    const ws = new WebSocket(wsUrl);
+    _globalBkWs = ws;
+    ws.onopen = () => {
+      _globalBkRef = 0;
+      ws.send(JSON.stringify({ topic:'realtime:admin-bk-global', event:'phx_join', payload:{ config:{ postgres_changes:[{ event:'INSERT', schema:'public', table:'bookings' }] }, access_token:S.session?.access_token }, ref:String(++_globalBkRef) }));
+      _globalBkHb = setInterval(() => { if (ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(++_globalBkRef)})); }, 25000);
+    };
+    ws.onmessage = e => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === 'postgres_changes' || msg.event === '*') {
+          const data = msg.payload?.data ?? msg.payload;
+          const type = (data?.type||'').toUpperCase();
+          const record = data?.record;
+          if (type === 'INSERT' && record?.id) {
+            _newBookingIds.add(record.id);
+            updateNavBadge();
+            showAdminToast('Новая запись!');
+            if (document.getElementById('obt-bookings')?.classList.contains('active')) loadBkTabMonth();
+          }
+        }
+      } catch {}
+    };
+    ws.onclose = ws.onerror = () => { clearInterval(_globalBkHb); _globalBkWs = null; };
+  } catch {}
+}
+
+function globalBookingsRealtimeDisconnect() {
+  clearInterval(_globalBkHb);
+  if (_globalBkWs) { try { _globalBkWs.close(); } catch {} _globalBkWs = null; }
+}
+
+async function onAdminReady() {
+  adminRealtimeConnect();
+  globalBookingsRealtimeConnect();
+  _refreshActivePlatSub();
+  try {
+    const profs = await req(`/rest/v1/profiles?id=eq.${S.session.user.id}&select=*&limit=1`);
+    if (profs[0]) S.profile = profs[0];
+  } catch {}
 }
 
 // ─── SUBSCRIPTIONS ───
@@ -2804,8 +3759,9 @@ async function loadMapAdmin() {
     document.getElementById('map-pick-use-btn').style.display = 'none';
   }
   if (!S.adminMap) {
+    _updateMapModeBtn();
     S.adminMap = new maplibregl.Map({
-      container: 'map-admin-gl', style: buildMapStyle(S.mapCfg),
+      container: 'map-admin-gl', style: S.mapMode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg),
       center: [0, 0], zoom: 2, attributionControl: false,
       transformRequest: (url) => {
         if (url.includes('/functions/v1/vector-tiles/')) {
@@ -3005,6 +3961,7 @@ setTimeout(hideSplash, 2000);
         const tpay = new URLSearchParams(window.location.search).get('tpay');
         if (tpay) { _tpayMsg = tpay; history.replaceState(null, '', window.location.pathname); }
         const _proceedAdmin = (dest) => {
+          onAdminReady();
           if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }); }
           else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }
         };
@@ -3035,6 +3992,18 @@ setTimeout(hideSplash, 2000);
 })();
 
 // ─── CONTRACTS / ПЭП ───
+function _renderContractText(tpl) {
+  const city = S.city || localStorage.getItem('alliby_admin_city') || 'Самара';
+  const name = S.profile?.full_name || '';
+  const d = new Date();
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const dateStr = `«${d.getDate()}» ${months[d.getMonth()]} ${d.getFullYear()} г.`;
+  let text = tpl
+    .replace(/г\. Самара/g, `г. ${city}`)
+    .replace(/\[Название вашей платформы\]/g, 'Alliby');
+  if (name) text += `\n\n──────────────────────────────────────\nАкцептант: ${name}\nМесто акцепта: г. ${city}\nДата: ${dateStr}`;
+  return text;
+}
 const SELLER_CONTRACT = {
   version: '2026-05-24',
   text: `ЛИЦЕНЗИОННЫЙ ДОГОВОР (ПУБЛИЧНАЯ ОФЕРТА)
@@ -3130,7 +4099,7 @@ async function requireContract(type, next) {
   const accept = document.getElementById('mcs-accept');
   const check  = document.getElementById('mcs-check');
   const btn    = document.getElementById('mcs-sign-btn');
-  text.textContent  = SELLER_CONTRACT.text;
+  text.textContent  = _renderContractText(SELLER_CONTRACT.text);
   accept.style.display = 'none';
   check.checked     = false;
   btn.disabled      = true;
@@ -3341,7 +4310,7 @@ async function confirmRedeem() {
       remaining_uses = rows[0].remaining_uses;
       redeemed++;
     }
-    status.textContent = `✓ Списано ${redeemed} исп. · осталось ${remaining_uses} · −${(disc * redeemed).toFixed(0)} ₽`;
+    status.textContent = `Списано ${redeemed} исп. · осталось ${remaining_uses} · −${(disc * redeemed).toFixed(0)} ₽`;
     if (_scannedUserId) await handleQrResult(_scannedUserId);
   } catch(e) {
     status.textContent = '✕ Ошибка: ' + (e?.message || e?.error || String(e) || 'неизвестная ошибка');
@@ -3569,6 +4538,7 @@ const _bkCache = {}; // bookingId -> { b, p }
 function openBookingDetail(bookingId) {
   const entry = _bkCache[bookingId];
   if (!entry) return;
+  _newBookingIds.delete(bookingId); updateNavBadge();
   const { b, p } = entry;
   const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
   const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, pending:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
@@ -3597,13 +4567,13 @@ function openBookingDetail(bookingId) {
       <div class="lbl" style="margin-bottom:6px">Клиент</div>
       ${p ? `
         ${p.full_name ? `<div style="font:600 14px/1.3 var(--font-sans);margin-bottom:5px">${esc(p.full_name)}</div>` : ''}
-        ${p.phone ? `<div style="font:600 16px/1 var(--font-mono);margin-bottom:4px">${esc(p.phone)}</div>` : ''}
-        <div style="font-size:11px;color:var(--fg-4);font-family:var(--font-mono)">${esc(b.user_id||'')}</div>
+        ${p.phone ? `<div style="font:600 16px/1 var(--font-sans);margin-bottom:4px">${esc(p.phone)}</div>` : ''}
+        <div style="font-size:11px;color:var(--fg-4);font-family:var(--font-sans)">${esc(b.user_id||'')}</div>
       ` : '<div style="color:var(--fg-4);font-size:13px">Нет данных о клиенте</div>'}
     </div>
     <div style="padding-top:10px;border-top:1px solid var(--line-soft)">
       <div class="lbl" style="margin-bottom:3px">ID записи</div>
-      <div style="font:400 11px/1.5 var(--font-mono);color:var(--fg-4);word-break:break-all">${esc(b.id)}</div>
+      <div style="font:400 11px/1.5 var(--font-sans);color:var(--fg-4);word-break:break-all">${esc(b.id)}</div>
     </div>`;
   const cancelled = b.status === 'cancelled', paid = b.payment_status === 'paid';
   document.getElementById('mbd-actions').innerHTML =
@@ -3676,7 +4646,8 @@ async function markBookingPaid(bookingId, dateStr) {
   try {
     await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ payment_status:'paid' }) });
     showAdminToast('Оплата подтверждена');
-    renderDayBookings(dateStr);
+    if (_sched.openDate === dateStr) renderDayBookings(dateStr);
+    if (_bkTab.openDate === dateStr) renderBkTabDayView(dateStr);
   } catch { showAdminToast('Ошибка'); }
 }
 
@@ -3685,7 +4656,8 @@ async function cancelBooking(bookingId, dateStr) {
   try {
     await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ status:'cancelled' }) });
     showAdminToast('Запись отменена');
-    renderDayBookings(dateStr);
+    if (_sched.openDate === dateStr) renderDayBookings(dateStr);
+    if (_bkTab.openDate === dateStr) renderBkTabDayView(dateStr);
   } catch { showAdminToast('Ошибка'); }
 }
 
@@ -3751,7 +4723,7 @@ function schedRealtimeConnect() {
           if (type === 'INSERT' || type === 'UPDATE') {
             const bookDate = record.slot_date;
             if (bookDate && _sched.openDate === bookDate) {
-              if (type === 'INSERT') showAdminToast('🔔 Новая запись!');
+              if (type === 'INSERT') showAdminToast('Новая запись!');
               renderDayBookings(bookDate);
             }
           }
