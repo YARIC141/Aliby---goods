@@ -45,7 +45,7 @@
   --r-2:10px;--r-3:14px;--r-4:20px;--r-pill:999px;
   --pat:rgba(255,255,255,.07);
   --glass:rgba(18,16,14,.78);
-  --glass-card:rgba(24,22,20,.62);
+  --glass-card:rgba(14,12,10,.32);
   --dv-bg:#14120f;--dv-bg1:#1c1a16;--dv-bg2:#241f1b;
   --dv-fg:rgba(244,240,235,.9);--dv-fg2:rgba(244,240,235,.62);--dv-fg3:rgba(244,240,235,.36);
   --dv-line:rgba(255,255,255,.08);--dv-card:rgba(255,255,255,.042);--dv-card-b:rgba(255,255,255,.07);
@@ -446,7 +446,7 @@ html[data-theme="light"]{
   --line:rgba(0,0,0,.08);
   --pat:rgba(0,0,0,.06);
   --glass:rgba(250,249,247,.80);
-  --glass-card:rgba(255,255,255,.68);
+  --glass-card:rgba(255,255,255,.48);
   --dv-bg:#ede9e2;--dv-bg1:#e4ded6;--dv-bg2:#d9d2c8;
   --dv-fg:rgba(22,15,8,.88);--dv-fg2:rgba(22,15,8,.58);--dv-fg3:rgba(22,15,8,.36);
   --dv-line:rgba(0,0,0,.09);--dv-card:rgba(255,255,255,.54);--dv-card-b:rgba(0,0,0,.07);
@@ -579,6 +579,25 @@ html[data-theme="light"] .mk-ga{background-color:#f5f3ef;background-image:radial
   60% {transform:scale(1.18) translate(-5%,-3%)}
   78% {transform:scale(1.18) translate(-5%,-3%)}
   100%{transform:scale(1)    translate(0,0)}
+}
+/* counter-scale: pins/UI stay same visual size, only positions shift */
+.ms-map-anim .ms-sc,
+.ms-map-anim .ms-srch,
+.ms-map-anim .ms-popup{animation:mapFlyFix 10s cubic-bezier(.45,.05,.55,.95) infinite;animation-play-state:paused}
+@keyframes mapFlyFix{
+  0%  {transform:scale(1)}
+  18% {transform:scale(1.389)}
+  42% {transform:scale(1.389)}
+  60% {transform:scale(.847)}
+  78% {transform:scale(.847)}
+  100%{transform:scale(1)}
+}
+/* admin orders list scroll */
+.ms-rows-scrl{animation:rowScroll 7s ease-in-out infinite;animation-play-state:paused}
+@keyframes rowScroll{
+  0%,18% {transform:translateY(0)}
+  48%,62%{transform:translateY(-23px)}
+  85%,100%{transform:translateY(0)}
 }
 html[data-theme="light"] .ms-map{background:linear-gradient(145deg,#d4dde8 0%,#c8d5cc 55%,#d0d8e4 100%)}
 .ms-road{position:absolute;background:rgba(255,255,255,.06)}
@@ -1023,10 +1042,12 @@ html[data-theme="light"] .icon-moon{display:flex}
                   <div class="ms-main">
                     <div class="ms-mtb"><div style="display:flex;align-items:center;gap:7px"><span class="ms-mt">Заказы</span><span class="ms-bn">4</span></div><span class="ms-ms">Кофе Арка · сегодня</span></div>
                     <div class="ms-rows">
+                      <div class="ms-rows-scrl">
                       <div class="ms-lrow ms-lrn"><span class="ms-lnum">#1284</span><span class="ms-lcomp">Капучино × 2 · Круассан</span><span class="ms-lamt">780 ₽</span><span class="ms-bn">Новый</span><span class="ms-ltime">14:23</span></div>
                       <div class="ms-lrow ms-lrw"><span class="ms-lnum">#1283</span><span class="ms-lcomp">Латте · Чизкейк</span><span class="ms-lamt">640 ₽</span><span class="ms-bw">В работе</span><span class="ms-ltime">14:18</span></div>
                       <div class="ms-lrow ms-lrr"><span class="ms-lnum">#1282</span><span class="ms-lcomp">Эспрессо × 3</span><span class="ms-lamt">270 ₽</span><span class="ms-br">Готов</span><span class="ms-ltime">14:11</span></div>
                       <div class="ms-lrow ms-lrd"><span class="ms-lnum">#1281</span><span class="ms-lcomp">Авокадо тост</span><span class="ms-lamt">380 ₽</span><span class="ms-bd">Выдан</span><span class="ms-ltime">13:55</span></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1266,13 +1287,18 @@ function orderTake(btn){
       paused=true;clearTimeout(pauseT);
       pauseT=setTimeout(function(){paused=false;},PAUSE);
     },true);
+    // all animated elements in this section (map anim + counter-scale pins + list scroll)
+    function anims(sv){
+      return Array.from(sv.querySelectorAll(
+        '.ms-map-anim,.ms-map-anim .ms-sc,.ms-map-anim .ms-srch,.ms-map-anim .ms-popup,.ms-rows-scrl'
+      ));
+    }
     // trigger when section reaches ~1/3 from top of viewport
-    var maps=Array.from(sv.querySelectorAll('.ms-map-anim'));
     var obs=new IntersectionObserver(function(es){
       es.forEach(function(e){
         var state=e.isIntersecting?'running':'paused';
         if(e.isIntersecting)start();else stop();
-        maps.forEach(function(m){m.style.animationPlayState=state;});
+        anims(sv).forEach(function(m){m.style.animationPlayState=state;});
       });
     },{rootMargin:'-33% 0px 0px 0px',threshold:0});
     obs.observe(sv);
