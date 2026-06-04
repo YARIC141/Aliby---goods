@@ -60,8 +60,10 @@
 }
 
 html{scroll-behavior:smooth}
-body{font-family:var(--font-sans);font-size:16px;color:var(--fg);background-color:var(--bg);background-image:radial-gradient(circle 600px at 0% 0%,rgba(232,116,59,.44) 0%,transparent 68%),radial-gradient(circle 700px at 100% 100%,rgba(120,180,224,.54) 0%,transparent 68%);background-attachment:fixed;line-height:1.6;-webkit-font-smoothing:antialiased}
+body{font-family:var(--font-sans);font-size:16px;color:var(--fg);background-color:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
 html[data-theme="light"] body{background-image:radial-gradient(circle 740px at 0% 0%,rgba(232,116,59,.52) 0%,transparent 80%),radial-gradient(circle 840px at 100% 100%,rgba(120,180,224,.58) 0%,transparent 80%),linear-gradient(135deg,rgba(232,116,59,.18) 0%,rgba(120,180,224,.18) 100%)}
+#shader-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+html[data-theme="light"] #shader-bg{display:none}
 #bg-ornament{position:fixed;inset:-200px 0;width:100%;height:calc(100% + 400px);pointer-events:none;z-index:0;will-change:transform}
 #bg-ornament .op{stroke:var(--pat);fill:none;stroke-width:1.1}
 #bg-ornament .op-x{stroke-opacity:.45}
@@ -95,12 +97,7 @@ nav{
   padding:140px clamp(20px,5vw,80px) 80px;text-align:center;
   position:relative;overflow:hidden;
 }
-#page-hero::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 55% 50% at 30% -10%, oklch(0.62 0.19 38 / .20) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 50% at 75% 10%, oklch(0.72 0.13 240 / .16) 0%, transparent 60%);
-}
+#page-hero::before{content:none}
 .ph-tag{
   display:inline-block;position:relative;
   font:600 11px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;
@@ -703,6 +700,7 @@ html[data-theme="light"] .icon-moon{display:flex}
 </head>
 <body>
 
+<div id="shader-bg" aria-hidden="true"></div>
 <svg id="bg-ornament" aria-hidden="true">
   <defs>
     <pattern id="bgpat" x="0" y="0" width="72" height="72" patternUnits="userSpaceOnUse">
@@ -1311,6 +1309,29 @@ function orderTake(btn){
     obs.observe(sv);
   });
 })();
+</script>
+<script type="module">
+import{createElement as h}from'https://esm.sh/react@18';
+import{createRoot}from'https://esm.sh/react-dom@18/client';
+import{ShaderGradient,ShaderGradientCanvas}from'https://esm.sh/@shadergradient/react';
+var el=document.getElementById('shader-bg');
+if(el)createRoot(el).render(
+  h(ShaderGradientCanvas,{style:{width:'100%',height:'100%'}},
+    h(ShaderGradient,{
+      animate:'on',type:'waterPlane',
+      color1:'#e8743b',color2:'#78b4e0',color3:'#0f0e0c',
+      bgColor1:'#0f0e0c',bgColor2:'#0f0e0c',
+      brightness:1.1,cAzimuthAngle:180,cDistance:3.9,
+      cPolarAngle:115,cameraZoom:1,destination:'onCanvas',
+      envPreset:'city',fov:45,frameRate:10,grain:'off',
+      lightType:'3d',pixelDensity:1,
+      positionX:-0.5,positionY:0.1,positionZ:0,
+      reflection:0.1,rotationX:0,rotationY:0,rotationZ:235,
+      shader:'defaults',uAmplitude:0,uDensity:1.1,
+      uFrequency:5.5,uSpeed:0.1,uStrength:2.4,uTime:0.2,wireframe:false
+    })
+  )
+);
 </script>
 </body>
 </html>
