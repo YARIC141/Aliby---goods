@@ -62,7 +62,7 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--font-sans);font-size:16px;color:var(--fg);background-color:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
 html[data-theme="light"] body{background-image:radial-gradient(circle 740px at 0% 0%,rgba(232,116,59,.52) 0%,transparent 80%),radial-gradient(circle 840px at 100% 100%,rgba(120,180,224,.58) 0%,transparent 80%),linear-gradient(135deg,rgba(232,116,59,.18) 0%,rgba(120,180,224,.18) 100%)}
-#shader-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+#shader-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
 html[data-theme="light"] #shader-bg{display:none}
 #bg-ornament{position:fixed;inset:-200px 0;width:100%;height:calc(100% + 400px);pointer-events:none;z-index:0;will-change:transform}
 #bg-ornament .op{stroke:var(--pat);fill:none;stroke-width:1.1}
@@ -1316,7 +1316,7 @@ import{createRoot}from'https://esm.sh/react-dom@18/client';
 import{ShaderGradient,ShaderGradientCanvas}from'https://esm.sh/@shadergradient/react';
 var el=document.getElementById('shader-bg');
 if(el)createRoot(el).render(
-  h(ShaderGradientCanvas,{style:{width:'100%',height:'100%'}},
+  h(ShaderGradientCanvas,{style:{width:'100vw',height:'100vh'}},
     h(ShaderGradient,{
       animate:'on',type:'waterPlane',
       color1:'#e8743b',color2:'#78b4e0',color3:'#0f0e0c',
