@@ -15,7 +15,6 @@ import { handleCors, jsonResponse } from '../_shared/cors.ts'
 import { trackEvent } from '../_shared/analytics.ts'
 
 const TBANK_INIT_URL   = 'https://securepay.tinkoff.ru/v2/Init'
-const TBANK_CHARGE_URL = 'https://securepay.tinkoff.ru/v2/Charge'
 const NOTIFY_URL       = 'https://alliby.ru/functions/v1/tbank-platform-notify'
 const SUCCESS_URL      = 'https://admin.alliby.ru/?tpay=success'
 const FAIL_URL         = 'https://admin.alliby.ru/?tpay=fail'
@@ -171,84 +170,110 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: sub.id })
   }
 
-  // ── ADD STORE: immediate 500 ₽ Charge via RebillId ───────────────────────
+  // ── ADD STORE: T-Bank Init → redirect (same flow as main subscription) ─────
   if (type === 'add_store') {
-    const { data: activeSub } = await serviceClient
+    // Must have active main (platform) subscription
+    const { data: mainSub } = await serviceClient
       .from('platform_subscriptions')
-      .select('id, rebill_id, extra_stores, monthly_amount_kopecks, end_date')
+      .select('id')
       .eq('user_id', user.id)
+      .eq('plan_type', 'platform')
       .in('status', ['active', 'grace'])
       .gte('end_date', new Date().toISOString().split('T')[0])
-      .order('end_date', { ascending: false })
       .limit(1)
       .single()
 
-    if (!activeSub) return jsonResponse({ error: 'No active subscription' }, 404)
-    if (!activeSub.rebill_id) return jsonResponse({ error: 'No saved payment method. Contact support.' }, 400)
+    if (!mainSub) return jsonResponse({ error: 'No active platform subscription' }, 404)
 
-    // 1. Init to get PaymentId for the Charge call
-    const isYearly_pre     = addStorePlan === 'yearly'
-    const chargeAmount_pre = isYearly_pre ? ADD_STORE_YEARLY_KOPECKS : ADD_STORE_MONTHLY_KOPECKS
+    const isYearly  = addStorePlan === 'yearly'
+    const amount    = isYearly ? ADD_STORE_YEARLY_KOPECKS : ADD_STORE_MONTHLY_KOPECKS
+    const amountRub = isYearly ? 5000 : 500
+    const days      = isYearly ? 365 : 30
+    const descLabel = isYearly
+      ? 'Доп. заведение Aliby (1 год)'
+      : 'Доп. заведение Aliby (1 мес)'
 
-    const orderId = `addstore_${user.id.slice(0, 8)}_${Date.now()}`
-    const initScalar: Record<string, string | number> = {
-      TerminalKey: terminalKey,
-      Amount:      chargeAmount_pre,
-      OrderId:     orderId,
-      Description: 'Дополнительное заведение Aliby (+500 ₽/мес)',
-      CustomerKey: user.id,
-    }
-    const initResp = await fetch(TBANK_INIT_URL, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...initScalar, Token: await calcToken(initScalar, password) }),
-    })
-    const initData = await initResp.json()
-    if (!initData.Success || !initData.PaymentId) {
-      return jsonResponse({ error: 'Charge init failed: ' + (initData.Message || '') }, 502)
-    }
+    // Cancel stale pending store-slot subscriptions
+    await serviceClient
+      .from('platform_subscriptions')
+      .update({ status: 'failed' })
+      .eq('user_id', user.id)
+      .eq('plan_type', 'store')
+      .eq('status', 'pending')
 
-    // 2. Charge
-    const chargeScalar: Record<string, string | number> = {
-      TerminalKey: terminalKey,
-      PaymentId:   initData.PaymentId,
-      RebillId:    activeSub.rebill_id,
-    }
-    const chargeResp = await fetch(TBANK_CHARGE_URL, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...chargeScalar, Token: await calcToken(chargeScalar, password) }),
-    })
-    const chargeData = await chargeResp.json()
-
-    if (!chargeData.Success || chargeData.Status !== 'CONFIRMED') {
-      return jsonResponse({ error: 'Payment failed: ' + (chargeData.Message || chargeData.Status || 'unknown') }, 402)
-    }
-
-    // Determine plan details
-    const isYearly     = addStorePlan === 'yearly'
-    const chargeAmount = isYearly ? ADD_STORE_YEARLY_KOPECKS : ADD_STORE_MONTHLY_KOPECKS
-    const amountRub    = isYearly ? 5000 : 500
-    const days         = isYearly ? 365 : 30
-
-    // Create a per-store subscription record
+    // Create pending per-store subscription record
     const now   = new Date()
     const endDt = new Date(now); endDt.setDate(endDt.getDate() + days)
-    await serviceClient.from('platform_subscriptions').insert({
-      user_id:                user.id,
-      store_id:               bodyStoreId || null,
-      plan:                   isYearly ? 'yearly' : 'monthly',
-      plan_type:              'store',
-      status:                 'active',
-      start_date:             now.toISOString().split('T')[0],
-      end_date:               endDt.toISOString().split('T')[0],
-      amount_paid:            amountRub,
-      monthly_amount_kopecks: chargeAmount,
-      rebill_id:              activeSub.rebill_id,
-      auto_renew:             true,
+    const orderId = `store_${user.id.slice(0, 8)}_${Date.now()}`
+
+    const { data: storeSub, error: storeSubErr } = await serviceClient
+      .from('platform_subscriptions')
+      .insert({
+        user_id:                user.id,
+        store_id:               bodyStoreId || null,
+        plan:                   isYearly ? 'yearly' : 'monthly',
+        plan_type:              'store',
+        status:                 'pending',
+        start_date:             now.toISOString().split('T')[0],
+        end_date:               endDt.toISOString().split('T')[0],
+        amount_paid:            amountRub,
+        monthly_amount_kopecks: amount,
+        auto_renew:             true,
+      })
+      .select().single()
+
+    if (storeSubErr || !storeSub) {
+      return jsonResponse({ error: 'DB error: ' + storeSubErr?.message }, 500)
+    }
+
+    // T-Bank Init → return PaymentURL for redirect
+    const scalarParams: Record<string, string | number> = {
+      TerminalKey:     terminalKey,
+      Amount:          amount,
+      OrderId:         orderId,
+      Description:     descLabel,
+      Recurrent:       'Y',
+      CustomerKey:     user.id,
+      NotificationURL: NOTIFY_URL,
+      SuccessURL:      SUCCESS_URL,
+      FailURL:         FAIL_URL,
+    }
+
+    const receipt = {
+      Email:    user.email,
+      Taxation: 'usn_income',
+      Items: [{
+        Name:          descLabel,
+        Price:         amount,
+        Quantity:      1,
+        Amount:        amount,
+        Tax:           'none',
+        PaymentMethod: 'full_prepayment',
+        PaymentObject: 'service',
+      }],
+    }
+
+    const tResp = await fetch(TBANK_INIT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password), Receipt: receipt }),
     })
+    const tData = await tResp.json()
 
-    await trackEvent(serviceClient, 'store_slot_purchased', user.id, { subscription_id: activeSub.id, store_id: bodyStoreId }, `addstore_${orderId}`)
+    if (!tData.Success || !tData.PaymentURL) {
+      await serviceClient.from('platform_subscriptions').delete().eq('id', storeSub.id)
+      return jsonResponse({ error: tData.Message || 'T-Bank init failed' }, 400)
+    }
 
-    return jsonResponse({ success: true })
+    await serviceClient
+      .from('platform_subscriptions')
+      .update({ tbank_payment_id: String(tData.PaymentId) })
+      .eq('id', storeSub.id)
+
+    await trackEvent(serviceClient, 'store_sub_started', user.id, {
+      subscription_id: storeSub.id, plan: isYearly ? 'yearly' : 'monthly', amount: amountRub,
+    }, `storesub_${storeSub.id}`)
+
+    return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: storeSub.id })
   }
 
   return jsonResponse({ error: 'Unknown type' }, 400)

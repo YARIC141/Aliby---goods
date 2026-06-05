@@ -2532,18 +2532,15 @@ async function confirmAddStorePay() {
   const errEl = document.getElementById('add-store-pay-err');
   const btn   = document.getElementById('add-store-pay-btn');
   if (errEl) errEl.style.display = 'none';
-  btn.disabled = true; btn.textContent = 'Обработка платежа…';
+  btn.disabled = true; btn.textContent = 'Подготовка платежа…';
   try {
-    await req('/functions/v1/tbank-platform-init', {
+    const data = await req('/functions/v1/tbank-platform-init', {
       method: 'POST',
       body: JSON.stringify({ type: 'add_store', plan: _addStorePlan || 'monthly' }),
     });
-    closeModal('m-add-store-pay');
-    _addStorePlan = null;
-    await loadStoreSubscriptions();
-    showToast('Слот для заведения добавлен — теперь можно создать заведение');
+    window.location.href = data.payment_url;
   } catch(e) {
-    if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Не удалось списать средства'); errEl.style.display = 'block'; }
+    if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
     btn.disabled = false; btn.textContent = 'Оплатить и добавить заведение';
   }
 }
