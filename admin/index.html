@@ -621,7 +621,10 @@ tr.row-click:hover td{background:var(--bg-2)}
 
     <div class="sec">
       <div class="sec-title">Заведения и подписки</div>
-      <div id="p-stores-subs"><div style="color:var(--fg-4);font-size:13px;padding:8px 0">Загрузка…</div></div>
+      <button class="btn btn-full" id="p-stores-subs-btn" onclick="openStoresSubsModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
+        <span id="p-stores-subs-summary" style="font-size:13px;color:var(--fg-2)">Загрузка…</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
       <!-- legacy anchor for loadPlatformSubscription compat -->
       <div id="p-platsub-inner" style="display:none"></div>
     </div>
@@ -895,6 +898,19 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div class="modal-ft" style="flex-direction:column;gap:6px">
       <button id="mcs-sign-btn" class="btn btn-p btn-full" onclick="signContract('seller')" disabled>Подписать</button>
       <p style="font-size:11px;color:var(--fg-4);text-align:center;margin:0">Простая электронная подпись · ФЗ-63 · IP-адрес и время фиксируются</p>
+    </div>
+  </div>
+</div>
+
+<!-- Stores & subscriptions management modal -->
+<div class="overlay" id="m-stores-subs">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hd">
+      <h3>Заведения и подписки</h3>
+      <button class="modal-x" onclick="closeModal('m-stores-subs')">✕</button>
+    </div>
+    <div id="p-stores-subs" style="max-height:70vh;overflow-y:auto">
+      <div style="color:var(--fg-4);font-size:13px;padding:8px 0">Загрузка…</div>
     </div>
   </div>
 </div>
@@ -2160,6 +2176,11 @@ async function _refreshActivePlatSub() {
   } catch {}
 }
 
+function openStoresSubsModal() {
+  openModal('m-stores-subs');
+  loadStoreSubscriptions();
+}
+
 async function loadStoreSubscriptions() {
   const el = document.getElementById('p-stores-subs');
   if (!el || !S.session) return;
@@ -2210,6 +2231,20 @@ async function loadStoreSubscriptions() {
       : '✕ Оплата не завершена.';
     el.prepend(note);
     _tpayMsg = null;
+  }
+
+  // Update profile button summary
+  const summaryEl = document.getElementById('p-stores-subs-summary');
+  if (summaryEl) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const storeCount = S.stores?.length ?? 0;
+    if (_activePlatSub) {
+      const status = _activePlatSub.is_trial ? 'Пробный период' : _activePlatSub.status === 'grace' ? 'Ошибка оплаты' : 'Активна';
+      const amount = 1000 + (_activePlatSub.extra_stores || 0) * 500;
+      summaryEl.textContent = `${storeCount} ${storeCount === 1 ? 'заведение' : 'заведений'} · ${status} · ${amount.toLocaleString('ru-RU')} ₽/мес`;
+    } else {
+      summaryEl.textContent = storeCount > 0 ? `${storeCount} заведение · Без подписки` : 'Нет заведений · Без подписки';
+    }
   }
 }
 
