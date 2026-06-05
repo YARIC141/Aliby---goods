@@ -2227,9 +2227,11 @@ let _tpayMsg       = null; // 'success' | 'fail' | null — set when returning f
 async function _refreshActivePlatSub() {
   if (!S.session?.user?.id) return;
   try {
-    const subs = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.desc&limit=10`);
-    const now = new Date();
-    _activePlatSub = subs.find(s => s.status === 'active' && new Date(s.end_date) >= now) || null;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const subs = await req(
+      `/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.platform&status=in.(active,grace)&end_date=gte.${todayStr}&order=end_date.desc&limit=1`
+    );
+    _activePlatSub = subs?.[0] || null;
   } catch {}
 }
 
