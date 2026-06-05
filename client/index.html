@@ -208,7 +208,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-search input{padding:7px 10px;border-radius:var(--r-2)}
 .sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-cats:empty{display:none}
-.sl-cats .chip{padding:3px 10px;font-size:13px}
+.sl-cats .chip{padding:3.5px 11.5px;font-size:15px}
 .sl-list{flex:1;overflow-y:auto;overscroll-behavior-y:none}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
@@ -286,7 +286,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .menu-toolbar label input{width:auto}
 .cat-bar{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .cat-bar::-webkit-scrollbar{height:3px}.cat-bar::-webkit-scrollbar-thumb{background:var(--line-soft)}
-.chip{padding:5px 13px;border:1px solid var(--line);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:var(--r-pill);cursor:pointer;font:500 14px/1 var(--font-sans);white-space:nowrap;font-family:var(--font-sans);color:var(--fg-2);transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast)}
+.chip{padding:6px 15px;border:1px solid var(--line);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:var(--r-pill);cursor:pointer;font:500 16px/1 var(--font-sans);white-space:nowrap;font-family:var(--font-sans);color:var(--fg-2);transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast)}
 .chip:hover{background:var(--bg-2)}
 .chip.active{background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,0) 42%),var(--accent);color:#fff;border-color:transparent;box-shadow:0 4px 14px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.26),inset 0 -1px 0 rgba(0,0,0,.18)}
 .items-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
@@ -942,10 +942,10 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
 
     <div class="sec">
-      <div class="sec-title">Город</div>
+      <div class="sec-title">Адрес</div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
         <span style="font-size:15px;display:flex;align-items:center;gap:4px"><svg class="ico" width="14" height="14"><use href="#i-pin"/></svg><span class="city-name-lbl" style="font-weight:500"></span></span>
-        <button class="btn btn-sm" onclick="openCityModal()">Сменить</button>
+        <button class="btn btn-sm" onclick="openAddressPicker()">Изменить</button>
       </div>
     </div>
 
@@ -1277,7 +1277,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <h3>Указать адрес на карте</h3>
       <button class="modal-x" onclick="closeAddrPicker()">✕</button>
     </div>
-    <div style="position:relative;height:320px">
+    <div style="position:relative;height:min(60vh,500px)">
       <div id="addr-pick-gl" style="width:100%;height:100%"></div>
       <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));color:var(--accent)"><svg class="ico" width="32" height="32"><use href="#i-pin"/></svg></div>
       <button onclick="addrPickGeolocate()" title="Моё местоположение" style="position:absolute;top:8px;right:8px;width:38px;height:38px;border-radius:50%;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--line-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-1);color:var(--fg);padding:0"><svg class="ico" width="18" height="18"><use href="#i-locate"/></svg></button>
@@ -1933,7 +1933,7 @@ async function doLogin() {
     setSession(d);
     const proceed = async () => { if (!(await navigateDeepLink())) goTo('map'); };
     if (!S.city) {
-      openCityModal(async () => { await requireContract('buyer', proceed); });
+      openAddressPicker(async () => { await requireContract('buyer', proceed); });
     } else {
       document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city);
       await requireContract('buyer', proceed);
@@ -1966,7 +1966,7 @@ async function doRegister() {
       } catch {}
       const proceed = async () => { if (!(await navigateDeepLink())) goTo('map'); };
       if (!S.city) {
-        openCityModal(async () => { await requireContract('buyer', proceed); });
+        openAddressPicker(async () => { await requireContract('buyer', proceed); });
       } else {
         document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city);
         await requireContract('buyer', proceed);
@@ -3323,6 +3323,7 @@ async function activateGift() {
       method: 'POST',
       body: JSON.stringify({ p_gift_sub_id: giftId }),
     });
+    restore();
     if (input) input.value = '';
     showGeoToast('Абонемент успешно активирован!');
     _subFilter = 'active';
@@ -3705,6 +3706,7 @@ async function buySubscription() {
       headers: { Prefer: 'return=minimal' },
       body: JSON.stringify(body),
     });
+    restore();
     closeModal('m-buy');
     S.pendingSub  = null;
     S.pendingGift = false;
@@ -3751,6 +3753,10 @@ async function loadProfile() {
       document.getElementById('p-address').value     = profs[0].address || '';
       document.getElementById('p-addr-lat').value    = profs[0].address_lat ?? '';
       document.getElementById('p-addr-lng').value    = profs[0].address_lng ?? '';
+      if (profs[0].city && !S.city) {
+        localStorage.setItem('alliby_city', profs[0].city);
+        document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = profs[0].city);
+      }
       updateMapAddrBtn();
       _renderHomeMarker();
     }
@@ -3791,14 +3797,15 @@ async function updateAddress() {
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
 }
 
-let _addrPickMap = null, _addrPickResult = { lat: null, lng: null, text: '' }, _addrPickTimer = null;
+let _addrPickMap = null, _addrPickResult = { lat: null, lng: null, text: '', city: '' }, _addrPickTimer = null, _addrPickNavCb = null;
 
-function openAddressPicker() {
+function openAddressPicker(cb) {
+  if (cb) _addrPickNavCb = cb;
   openModal('m-addr-pick');
-  const lat = parseFloat(document.getElementById('p-addr-lat').value) || (S.cityData?.lat ?? 53.19);
-  const lng = parseFloat(document.getElementById('p-addr-lng').value) || (S.cityData?.lng ?? 50.15);
-  requestAnimationFrame(() => {
-    if (_addrPickMap) { _addrPickMap.setCenter([lng, lat]); _addrPickMap.resize(); return; }
+  const lat = (S.userAddrLat ?? parseFloat(document.getElementById('p-addr-lat')?.value)) || (S.cityData?.lat ?? 53.19);
+  const lng = (S.userAddrLng ?? parseFloat(document.getElementById('p-addr-lng')?.value)) || (S.cityData?.lng ?? 50.15);
+  setTimeout(() => {
+    if (_addrPickMap) { _addrPickMap.resize(); _addrPickMap.setCenter([lng, lat]); return; }
     _addrPickMap = new maplibregl.Map({
       container: 'addr-pick-gl',
       style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
@@ -3806,7 +3813,7 @@ function openAddressPicker() {
     });
     _addrPickMap.on('moveend', _addrPickGeocode);
     _addrPickGeocode();
-  });
+  }, 50);
 }
 
 function closeAddrPicker() {
@@ -3837,33 +3844,47 @@ function _addrPickGeocode() {
       const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`, { headers: { 'Accept-Language': 'ru' } });
       const d = await r.json();
       const text = d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      const city = await _resolveCity(lat, lng);
       if (lbl) lbl.textContent = text;
-      _addrPickResult = { lat, lng, text };
+      _addrPickResult = { lat, lng, text, city };
     } catch {
       const text = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       if (lbl) lbl.textContent = text;
-      _addrPickResult = { lat, lng, text };
+      _addrPickResult = { lat, lng, text, city: '' };
     }
   }, 700);
 }
 
 function confirmAddrPick() {
   if (_addrPickResult.lat == null) return;
-  document.getElementById('p-address').value = _addrPickResult.text;
-  document.getElementById('p-addr-lat').value = _addrPickResult.lat;
-  document.getElementById('p-addr-lng').value = _addrPickResult.lng;
+  const el = document.getElementById('p-address');
+  if (el) el.value = _addrPickResult.text;
+  const elLat = document.getElementById('p-addr-lat');
+  if (elLat) elLat.value = _addrPickResult.lat;
+  const elLng = document.getElementById('p-addr-lng');
+  if (elLng) elLng.value = _addrPickResult.lng;
   S.userAddrLat = _addrPickResult.lat;
   S.userAddrLng = _addrPickResult.lng;
   if (S.profile) S.profile.address = _addrPickResult.text;
+  // update city from map geocoding
+  const detectedCity = _addrPickResult.city || '';
+  if (detectedCity && detectedCity !== S.city) {
+    localStorage.setItem('alliby_city', detectedCity);
+    document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = detectedCity);
+    S.allStores = []; S.mapFitted = false;
+    if (document.getElementById('screen-map')?.classList.contains('active')) loadMapStores();
+  }
   updateMapAddrBtn();
   _renderHomeMarker();
+  if (S.map && S.allStores.length) applyMapFilter();
   closeAddrPicker();
   if (S.session?.user?.id) {
     req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ address: _addrPickResult.text, address_lat: _addrPickResult.lat, address_lng: _addrPickResult.lng }),
+      body: JSON.stringify({ address: _addrPickResult.text, address_lat: _addrPickResult.lat, address_lng: _addrPickResult.lng, city: detectedCity || null }),
     }).catch(() => {});
   }
+  if (_addrPickNavCb) { const cb = _addrPickNavCb; _addrPickNavCb = null; cb(); }
   if (_pendingDelivery) {
     _pendingDelivery = false;
     setTimeout(() => setDeliveryMode('delivery'), 100);
@@ -3899,6 +3920,46 @@ async function updatePwd() {
     document.getElementById('p-newpwd').value = '';
     document.getElementById('pwd-change-panel').style.display = 'none';
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
+}
+
+async function _resolveCity(lat, lng) {
+  try {
+    await _loadDbCities();
+    if (_dbCities?.length) {
+      let best = null, bestD = Infinity;
+      _dbCities.forEach(c => {
+        if (c.lat == null || c.lng == null) return;
+        const d = (c.lat - lat) ** 2 + (c.lng - lng) ** 2;
+        if (d < bestD) { bestD = d; best = c; }
+      });
+      // ~1.5° ≈ 100 km
+      if (best && bestD < 2.25) return best.name;
+    }
+  } catch {}
+  return '';
+}
+
+// ─── CITY AUTO-DETECT ───
+function _autoDetectCityThenNav(cb) {
+  if (!navigator.geolocation) { openAddressPicker(cb); return; }
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      try {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const city = await _resolveCity(lat, lng);
+        if (city) {
+          localStorage.setItem('alliby_city', city);
+          document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = city);
+          S.userAddrLat = lat; S.userAddrLng = lng;
+          cb();
+          return;
+        }
+      } catch {}
+      openAddressPicker(cb);
+    },
+    () => openAddressPicker(cb),
+    { timeout: 6000, maximumAge: 300000 }
+  );
 }
 
 // ─── NAV / CART RESTORE ───
@@ -3946,8 +4007,10 @@ async function restoreNav() {
   const SCREENS = ['home','alibi','store','menu','cart','subscriptions','profile'];
   const nav = localStorage.getItem('alliby_nav');
   const _navTarget = () => goTo(nav && SCREENS.includes(nav) ? nav : 'home');
-  if (!S.city) { openCityModal(_navTarget); return; }
-  // update city labels
+  if (!S.city) {
+    _autoDetectCityThenNav(_navTarget);
+    return;
+  }
   document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city);
   _navTarget();
 }
