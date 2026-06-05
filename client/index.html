@@ -3058,7 +3058,7 @@ function updateMapAddrBtn() {
 }
 
 function getDeliveryInfo(store) {
-  if (!store?.delivery_enabled) return null;
+  if (!store?.delivery_enabled || !store?.has_cart) return null; // has_cart = subscription active
   const zones = [...(store.delivery_zones || [])].sort((a, b) => a.radius - b.radius);
   if (!zones.length) return { inZone: false, price: 0 };
   if (S.userAddrLat == null) return { inZone: false, price: 0 };
