@@ -22,11 +22,11 @@ BEGIN
       'daily_revenue', (
         SELECT COALESCE(jsonb_agg(jsonb_build_object('day', d.day, 'rev', d.rev) ORDER BY d.day), '[]')
         FROM (
-          SELECT EXTRACT(DAY FROM o2.created_at)::INT AS day,
+          SELECT EXTRACT(DAY FROM o2.order_time)::INT AS day,
                  SUM(o2.total_amount)                  AS rev
           FROM orders o2
           WHERE o2.store_id = p_store_id
-            AND o2.created_at >= v_start AND o2.created_at < v_end
+            AND o2.order_time >= v_start AND o2.order_time < v_end
             AND o2.status <> 'cancelled'
           GROUP BY 1
         ) d
@@ -38,7 +38,7 @@ BEGIN
           FROM order_items oi
           JOIN orders o3 ON o3.id = oi.order_id
           WHERE o3.store_id = p_store_id
-            AND o3.created_at >= v_start AND o3.created_at < v_end
+            AND o3.order_time >= v_start AND o3.order_time < v_end
             AND o3.status <> 'cancelled'
           GROUP BY oi.menu_item_id
           ORDER BY qty DESC
@@ -97,7 +97,7 @@ BEGIN
     )
     FROM orders o
     WHERE o.store_id = p_store_id
-      AND o.created_at >= v_start AND o.created_at < v_end
+      AND o.order_time >= v_start AND o.order_time < v_end
   );
 END;
 $$;
