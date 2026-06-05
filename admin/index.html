@@ -899,52 +899,49 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
-<!-- Platform subscription plan selection -->
+<!-- Platform subscription — trial activation -->
 <div class="overlay" id="m-platsub-plans">
   <div class="modal" style="max-width:400px">
     <div class="modal-hd">
-      <h3>Выберите тариф</h3>
+      <h3>Подписка Aliby</h3>
       <button class="modal-x" onclick="closeModal('m-platsub-plans')">✕</button>
     </div>
-    <p style="font-size:14px;color:var(--fg-3);margin-bottom:16px">Подписка открывает доступ ко всем функциям панели управления.</p>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-      <button class="plan-card" onclick="selectPlatSubPlan('monthly')">
-        <div>
-          <div style="font:600 15px/1 var(--font-sans)">На месяц</div>
-          <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:4px">30 дней с момента оплаты</div>
-        </div>
-        <div style="font:700 20px/1 var(--font-display);color:var(--brand-ice-deep)">1 000 ₽</div>
-      </button>
-      <button class="plan-card highlight" onclick="selectPlatSubPlan('yearly')">
-        <div>
-          <div style="font:600 15px/1 var(--font-sans)">На год</div>
-          <div style="font:400 12px/1.4 var(--font-sans);margin-top:4px;opacity:.8">365 дней · экономия 2 000 ₽</div>
-        </div>
-        <div style="font:700 20px/1 var(--font-display)">10 000 ₽</div>
-      </button>
+    <div style="background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:16px;margin-bottom:16px">
+      <div style="font:700 28px/1 var(--font-display);color:var(--brand-ice-deep);margin-bottom:4px">1 000 ₽<span style="font:400 14px/1 var(--font-sans);color:var(--fg-3)">/мес</span></div>
+      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-3);margin-top:6px">Первый месяц — бесплатно. Далее автоматическое списание 1 000 ₽/мес.</div>
     </div>
-    <button class="btn btn-d btn-full" onclick="closeModal('m-platsub-plans')">Отмена</button>
+    <ul style="list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--fg-2)">
+      <li>✓ Полный доступ к панели управления</li>
+      <li>✓ 1 заведение в базовой подписке</li>
+      <li>✓ Доставка, абонементы, аналитика</li>
+      <li>✓ Отмена в любой момент</li>
+    </ul>
+    <p style="font-size:12px;color:var(--fg-4);margin-bottom:14px">При активации спишем 1 ₽ для проверки карты — сумма будет возвращена автоматически.</p>
+    <div id="platsub-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-p btn-full" id="platsub-pay-btn" onclick="initTrialPayment()">Начать бесплатный месяц →</button>
+      <button class="btn btn-full" onclick="closeModal('m-platsub-plans')">Отмена</button>
+    </div>
+    <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
   </div>
 </div>
 
-<!-- Platform subscription payment — redirect to T-Bank -->
-<div class="overlay" id="m-platsub-pay">
+<!-- Add extra store — payment modal -->
+<div class="overlay" id="m-add-store-pay">
   <div class="modal" style="max-width:380px">
     <div class="modal-hd">
-      <h3>Оплата подписки</h3>
-      <button class="modal-x" onclick="cancelPlatSubPay()">✕</button>
+      <h3>Добавить заведение</h3>
+      <button class="modal-x" onclick="closeModal('m-add-store-pay')">✕</button>
     </div>
-    <div style="margin-bottom:16px;padding:12px 14px;background:var(--bg-2);border-radius:var(--r-2);border:1px solid var(--line-soft)">
-      <div id="platsub-pay-info" style="font:500 14px/1.4 var(--font-sans);color:var(--fg-2)"></div>
-      <div id="platsub-pay-amount" style="font:700 24px/1 var(--font-display);margin-top:6px;color:var(--brand-ice-deep)"></div>
+    <div style="background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;margin-bottom:14px">
+      <div style="font:700 24px/1 var(--font-display);color:var(--brand-ice-deep)">+500 ₽<span style="font:400 13px/1 var(--font-sans);color:var(--fg-3)">/мес</span></div>
+      <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:5px">Списывается немедленно с привязанной карты. Сумма добавляется к ежемесячному платежу.</div>
     </div>
-    <p style="font-size:13px;color:var(--fg-3);margin-bottom:16px">Вы будете перенаправлены на защищённую платёжную страницу Т-Банка.</p>
-    <div id="platsub-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
+    <div id="add-store-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
     <div class="modal-ft" style="flex-direction:column;gap:8px">
-      <button class="btn btn-p btn-full" id="platsub-pay-btn" onclick="initTBankPayment()">Перейти к оплате →</button>
-      <button class="btn btn-full" onclick="cancelPlatSubPay()">Отмена</button>
+      <button class="btn btn-p btn-full" id="add-store-pay-btn" onclick="confirmAddStorePay()">Оплатить и добавить заведение</button>
+      <button class="btn btn-full" onclick="closeModal('m-add-store-pay')">Отмена</button>
     </div>
-    <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
   </div>
 </div>
 
@@ -2164,33 +2161,49 @@ async function loadPlatformSubscription() {
   if (!el || !S.session) return;
   try {
     const subs = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.desc&limit=10`);
-    const now = new Date();
-    const active = subs.find(s => s.status === 'active' && new Date(s.end_date) >= now);
+    const now  = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const active = subs.find(s => ['active','grace'].includes(s.status) && s.end_date >= todayStr);
     _activePlatSub = active || null;
+
     if (active) {
-      const endDate  = new Date(active.end_date);
-      const endFmt   = endDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-      const planName = active.plan === 'yearly' ? 'Годовая' : 'Месячная';
-      const daysLeft = Math.ceil((endDate - new Date()) / 86400000);
-      const canRenew = daysLeft <= 30;
-      const renewOpenDate = new Date(endDate);
-      renewOpenDate.setDate(renewOpenDate.getDate() - 30);
-      const renewOpenFmt = renewOpenDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+      const endDate   = new Date(active.end_date);
+      const endFmt    = endDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+      const daysLeft  = Math.ceil((endDate - now) / 86400000);
+      const nextAmt   = 1000 + (active.extra_stores || 0) * 500;
+      const isTrial   = active.is_trial;
+      const isGrace   = active.status === 'grace';
+      const storesAllowed = 1 + (active.extra_stores || 0);
+      const storeCount    = S.stores?.length ?? 0;
+
+      let statusBadge = `<span class="platsub-status-badge active">Активна</span>`;
+      if (isTrial)  statusBadge = `<span class="platsub-status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0">Пробный период</span>`;
+      if (isGrace)  statusBadge = `<span class="platsub-status-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a">Ошибка оплаты</span>`;
+
+      const trialNote  = isTrial  ? `<div style="font:400 11px/1.4 var(--font-sans);color:#16a34a;margin-top:3px">Первый месяц бесплатно — карта привязана</div>` : '';
+      const graceNote  = isGrace  ? `<div style="font:400 11px/1.4 var(--font-sans);color:#b45309;margin-top:3px">Не удалось списать — повторная попытка через ${active.retry_count ? (3 - active.retry_count) : 3} д.</div>` : '';
+      const renewNote  = !isTrial && !isGrace ? `<div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px">Следующее списание: ${endFmt} — ${nextAmt.toLocaleString('ru-RU')} ₽</div>` : '';
+
       el.innerHTML =
-        `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">` +
+        `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">` +
           `<div>` +
-            `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">${planName} подписка</div>` +
+            `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">Подписка Aliby · ${nextAmt.toLocaleString('ru-RU')} ₽/мес</div>` +
             `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">Активна до ${endFmt}</div>` +
-            (!canRenew ? `<div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px">Продление доступно с ${renewOpenFmt}</div>` : '') +
+            trialNote + graceNote + renewNote +
           `</div>` +
-          `<span class="platsub-status-badge active">Активна</span>` +
+          statusBadge +
+        `</div>` +
+        `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:10px;font-size:13px">` +
+          `<span style="color:var(--fg-3)">Заведений:</span>` +
+          `<span style="font-weight:600">${storeCount} / ${storesAllowed}` +
+          (storeCount < storesAllowed ? `` : ` <button class="btn btn-sm btn-p" style="margin-left:8px;padding:3px 10px;font-size:12px" onclick="openAddStorePayModal()">+ Добавить</button>`) +
+          `</span>` +
         `</div>` +
         `<div style="display:flex;gap:8px">` +
-          (canRenew ? `<button class="btn btn-p" style="flex:1" onclick="startPlatformSubscription()">Продлить</button>` : '') +
           `<button class="btn btn-d" style="flex:1" onclick="endPlatformSubscription()">Завершить</button>` +
         `</div>`;
     } else {
-      const last = subs.find(s => s.status !== 'active');
+      const last = subs.find(s => !['active','grace','pending'].includes(s.status));
       const hint = last
         ? `Истекла ${new Date(last.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`
         : 'Нет активной подписки';
@@ -2199,17 +2212,17 @@ async function loadPlatformSubscription() {
           `<div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3)">${hint}</div>` +
           `<span class="platsub-status-badge inactive">Нет</span>` +
         `</div>` +
-        `<button class="btn btn-p btn-full" onclick="startPlatformSubscription()">Подписаться</button>`;
+        `<button class="btn btn-p btn-full" onclick="startPlatformSubscription()">Начать бесплатный месяц →</button>`;
     }
   } catch(e) {
     el.innerHTML = `<div style="color:var(--fg-4);font-size:13px">Ошибка загрузки подписки</div>`;
   }
   if (_tpayMsg) {
-    const ok   = _tpayMsg === 'success';
+    const isOk = _tpayMsg === 'success';
     const note = document.createElement('div');
-    note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;${ok ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b'}`;
-    note.textContent = ok
-      ? 'Оплата прошла успешно! Подписка активируется в течение нескольких секунд.'
+    note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;${isOk ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b'}`;
+    note.textContent = isOk
+      ? 'Карта привязана! Первый месяц бесплатно — подписка активируется через несколько секунд.'
       : '✕ Оплата не завершена — банк отклонил платёж.';
     el.prepend(note);
     _tpayMsg = null;
@@ -2219,48 +2232,60 @@ async function loadPlatformSubscription() {
 async function startPlatformSubscription() {
   const btn = document.querySelector('[onclick="startPlatformSubscription()"]');
   if (btn) btn.disabled = true;
-  await requireContract('seller', () => openModal('m-platsub-plans'));
+  await requireContract('seller', () => {
+    const errEl = document.getElementById('platsub-pay-err');
+    if (errEl) { errEl.style.display = 'none'; }
+    const payBtn = document.getElementById('platsub-pay-btn');
+    if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Начать бесплатный месяц →'; }
+    openModal('m-platsub-plans');
+  });
   if (btn) btn.disabled = false;
 }
 
-function selectPlatSubPlan(plan) {
-  _platSubPlan = plan;
-  closeModal('m-platsub-plans');
-  const amount   = plan === 'yearly' ? 10000 : 1000;
-  const planName = plan === 'yearly' ? 'Годовая подписка (365 дней)' : 'Месячная подписка (30 дней)';
-  document.getElementById('platsub-pay-info').textContent   = planName;
-  document.getElementById('platsub-pay-amount').textContent = amount.toLocaleString('ru-RU') + ' ₽';
-  const errEl = document.getElementById('platsub-pay-err');
-  errEl.style.display = 'none';
-  const btn = document.getElementById('platsub-pay-btn');
-  btn.disabled    = false;
-  btn.textContent = 'Перейти к оплате →';
-  openModal('m-platsub-pay');
-}
-
-async function initTBankPayment() {
+async function initTrialPayment() {
   const errEl = document.getElementById('platsub-pay-err');
   const btn   = document.getElementById('platsub-pay-btn');
-  errEl.style.display = 'none';
+  if (errEl) errEl.style.display = 'none';
   btn.disabled    = true;
   btn.textContent = 'Подготовка платежа…';
   try {
     const data = await req('/functions/v1/tbank-platform-init', {
       method: 'POST',
-      body: JSON.stringify({ plan: _platSubPlan }),
+      body: JSON.stringify({ type: 'trial' }),
     });
     window.location.href = data.payment_url;
   } catch(e) {
-    errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз');
-    errEl.style.display = 'block';
+    if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
     btn.disabled    = false;
-    btn.textContent = 'Перейти к оплате →';
+    btn.textContent = 'Начать бесплатный месяц →';
   }
 }
 
-function cancelPlatSubPay() {
-  closeModal('m-platsub-pay');
-  _platSubPlan = null;
+function openAddStorePayModal() {
+  const errEl = document.getElementById('add-store-pay-err');
+  if (errEl) errEl.style.display = 'none';
+  const btn = document.getElementById('add-store-pay-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Оплатить и добавить заведение'; }
+  openModal('m-add-store-pay');
+}
+
+async function confirmAddStorePay() {
+  const errEl = document.getElementById('add-store-pay-err');
+  const btn   = document.getElementById('add-store-pay-btn');
+  if (errEl) errEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Обработка платежа…';
+  try {
+    await req('/functions/v1/tbank-platform-init', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'add_store' }),
+    });
+    closeModal('m-add-store-pay');
+    await loadPlatformSubscription();
+    showToast('Заведение добавлено в подписку');
+  } catch(e) {
+    if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Не удалось списать средства'); errEl.style.display = 'block'; }
+    btn.disabled = false; btn.textContent = 'Оплатить и добавить заведение';
+  }
 }
 
 async function endPlatformSubscription() {
@@ -2576,10 +2601,19 @@ async function saveStore() {
   const restore = btnLoad(btn);
   const id   = document.getElementById('ms-id').value;
   if (!id) {
-    const existing = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id&limit=1`).catch(() => []);
-    if (existing?.length) {
+    // DB trigger enforces limit — catch the specific error and show UX
+    // Pre-check to give user actionable feedback before the DB call
+    if (_activePlatSub) {
+      const allowed = 1 + (_activePlatSub.extra_stores || 0);
+      const current = S.stores?.length ?? 0;
+      if (current >= allowed) {
+        restore();
+        openAddStorePayModal();
+        return;
+      }
+    } else {
       restore();
-      alert('На данный момент поддерживается только одно заведение');
+      alert('Для добавления заведения оформите подписку');
       return;
     }
   }
