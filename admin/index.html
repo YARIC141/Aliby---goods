@@ -2307,55 +2307,54 @@ async function loadStoreSubscriptions() {
     }
 
     el.innerHTML = html;
+
+    // tpay redirect result
+    if (_tpayMsg) {
+      const isOk = _tpayMsg === 'success';
+      _tpayMsg = null;
+      if (isOk) {
+        if (!mainSub) { _pollForActiveSub(8); return; }
+      } else {
+        const note = document.createElement('div');
+        note.style.cssText = 'padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;background:#fee2e2;color:#991b1b';
+        note.textContent = '✕ Оплата не завершена.';
+        el.prepend(note);
+      }
+    }
+
+    // "Add store" button state
+    const addBtn = document.getElementById('btn-add-store');
+    if (addBtn) {
+      if (_activePlatSub) {
+        addBtn.className = 'btn btn-p btn-full';
+        addBtn.style.opacity = '';
+        addBtn.title = '';
+      } else {
+        addBtn.className = 'btn btn-full';
+        addBtn.style.opacity = '0.5';
+        addBtn.title = 'Требуется основная подписка';
+      }
+    }
+
+    // Profile button summary
+    const summaryEl = document.getElementById('p-stores-subs-summary');
+    if (summaryEl) {
+      const storeCount = stores.length;
+      if (_activePlatSub) {
+        const statusLabel = _activePlatSub.is_trial ? 'Пробный период'
+          : _activePlatSub.status === 'grace' ? 'Ошибка оплаты' : 'Активна';
+        const storePart = storeCount === 0 ? 'Заведений нет'
+          : storeCount === 1 ? '1 заведение' : `${storeCount} заведения`;
+        const amount = 1000 + (_activePlatSub.extra_stores || 0) * 500;
+        summaryEl.textContent = `${storePart} · ${statusLabel} · ${amount.toLocaleString('ru-RU')} ₽/мес`;
+      } else {
+        summaryEl.textContent = storeCount > 0 ? `${storeCount} заведение · Без подписки` : 'Без подписки';
+      }
+    }
+
   } catch(e) {
     el.innerHTML = `<div style="color:var(--fg-4);font-size:13px">Ошибка загрузки</div>`;
-  }
-
-  if (_tpayMsg) {
-    const isOk = _tpayMsg === 'success';
-    _tpayMsg = null;
-    if (isOk) {
-      // If payment succeeded but subscription still pending — poll until webhook activates it
-      if (!mainSub) {
-        _pollForActiveSub(8);
-        return; // _pollForActiveSub will re-render when ready
-      }
-    } else {
-      const note = document.createElement('div');
-      note.style.cssText = 'padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;background:#fee2e2;color:#991b1b';
-      note.textContent = '✕ Оплата не завершена.';
-      el.prepend(note);
-    }
-  }
-
-  // Update "Add store" button appearance (always clickable, visual state reflects subscription)
-  const addBtn = document.getElementById('btn-add-store');
-  if (addBtn) {
-    if (_activePlatSub) {
-      addBtn.className = 'btn btn-p btn-full';
-      addBtn.style.opacity = '';
-      addBtn.title = '';
-    } else {
-      addBtn.className = 'btn btn-full';
-      addBtn.style.opacity = '0.5';
-      addBtn.title = 'Требуется основная подписка';
-    }
-  }
-
-  // Update profile button summary (use locally fetched stores, not global S.stores)
-  const summaryEl = document.getElementById('p-stores-subs-summary');
-  if (summaryEl) {
-    const storeCount = stores.length;
-    if (_activePlatSub) {
-      const statusLabel = _activePlatSub.is_trial ? 'Пробный период'
-        : _activePlatSub.status === 'grace' ? 'Ошибка оплаты' : 'Активна';
-      const storePart = storeCount === 0 ? 'Заведений нет'
-        : storeCount === 1 ? '1 заведение' : `${storeCount} заведения`;
-      const amount = 1000 + (_activePlatSub.extra_stores || 0) * 500;
-      summaryEl.textContent = `${storePart} · ${statusLabel} · ${amount.toLocaleString('ru-RU')} ₽/мес`;
-    } else {
-      summaryEl.textContent = storeCount > 0 ? `${storeCount} заведение · Без подписки` : 'Без подписки';
-    }
+    console.error('[loadStoreSubscriptions]', e);
   }
 }
 
