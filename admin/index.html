@@ -2618,7 +2618,7 @@ async function endPlatformSubscription() {
       body: JSON.stringify({ status: 'cancelled' }),
     });
     restore();
-    await loadPlatformSubscription();
+    await loadStoreSubscriptions();
   } catch(e) {
     restore();
     alert('Ошибка: ' + (e.message || ''));
@@ -2929,9 +2929,7 @@ async function saveStore() {
         startPlatformSubscription();
         return;
       }
-      // Check if user has an active per-store sub slot without store_id assigned yet
-      const subs = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&store_id=is.null&not=status.in.(cancelled,expired,failed,pending)`).catch(() => []);
-      const freeSlotsCount = subs.filter(s => s.id !== _activePlatSub?.id && ['active','grace'].includes(s.status)).length;
+      // Allowed stores = 1 (free) + active store-slots. If we've used them all, require payment.
       const limit = await req(`/rest/v1/rpc/user_store_limit`, { method:'POST', body: JSON.stringify({ p_user_id: S.session.user.id }) }).catch(() => 1);
       if (current >= (typeof limit === 'number' ? limit : 1)) {
         restore();
@@ -2977,12 +2975,14 @@ async function saveStore() {
         body: JSON.stringify(body),
       });
       storeId = created?.[0]?.id;
-      // Link a pending per-store subscription slot to this new store (if it exists)
-      if (storeId && S.stores?.length >= 1) {
-        req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&store_id=is.null&status=in.(active,grace)&id=neq.${_activePlatSub?.id || ''}`, {}).then(slots => {
-          const slot = (slots || []).find(s => s.id !== _activePlatSub?.id);
-          if (slot) req(`/rest/v1/platform_subscriptions?id=eq.${slot.id}`, { method:'PATCH', body: JSON.stringify({ store_id: storeId }) }).catch(() => {});
-        }).catch(() => {});
+      // Link an unused per-store subscription slot (plan_type=store, store_id=null) to this new store.
+      // Never touches platform subscriptions (which also have store_id=null).
+      if (storeId && (S.stores?.length ?? 0) >= 1) {
+        req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.store&store_id=is.null&status=in.(active,grace)&order=created_at.asc&limit=1`)
+          .then(slots => {
+            const slot = (slots || [])[0];
+            if (slot) req(`/rest/v1/platform_subscriptions?id=eq.${slot.id}`, { method:'PATCH', body: JSON.stringify({ store_id: storeId }) }).catch(() => {});
+          }).catch(() => {});
       }
     }
     if (storeId && !isNaN(lat) && !isNaN(lng)) {
