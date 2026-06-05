@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0%" stop-color="#90c8f0"/>
+      <stop offset="100%" stop-color="#3a80be"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <!-- Top shine -->
+  <rect x="0" y="0" width="1024" height="512" rx="224" fill="url(#shine)"/>
+  <!-- Letter A -->
+  <text x="512" y="750"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="800"
+        font-style="italic"
+        font-weight="400"
+        fill="white"
+        fill-opacity="0.93"
+        text-anchor="middle">A</text>
+</svg>

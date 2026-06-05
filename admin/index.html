@@ -620,10 +620,10 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
 
     <div class="sec">
-      <div class="sec-title">Подписка на платформу</div>
-      <div class="card" style="padding:14px">
-        <div id="p-platsub-inner"><div style="color:var(--fg-4);font-size:13px">Загрузка…</div></div>
-      </div>
+      <div class="sec-title">Заведения и подписки</div>
+      <div id="p-stores-subs"><div style="color:var(--fg-4);font-size:13px;padding:8px 0">Загрузка…</div></div>
+      <!-- legacy anchor for loadPlatformSubscription compat -->
+      <div id="p-platsub-inner" style="display:none"></div>
     </div>
 
     <div class="sec" id="p-pay-sec" style="display:none">
@@ -917,9 +917,13 @@ tr.row-click:hover td{background:var(--bg-2)}
       <li>✓ Отмена в любой момент</li>
     </ul>
     <p style="font-size:12px;color:var(--fg-4);margin-bottom:14px">При активации спишем 1 ₽ для проверки карты — сумма будет возвращена автоматически.</p>
+    <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12px;color:var(--fg-3);line-height:1.4;cursor:pointer">
+      <input type="checkbox" id="platsub-consent-cb" onchange="document.getElementById('platsub-pay-btn').disabled=!this.checked" style="margin-top:2px;width:auto;flex-shrink:0">
+      Я подтверждаю согласие на автоматические ежемесячные списания в соответствии с <a href="#" onclick="return false" style="color:var(--accent)">Лицензионным договором</a> (раздел 8). Могу отключить в любой момент.
+    </label>
     <div id="platsub-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn btn-p btn-full" id="platsub-pay-btn" onclick="initTrialPayment()">Начать бесплатный месяц →</button>
+      <button class="btn btn-p btn-full" id="platsub-pay-btn" onclick="initTrialPayment()" disabled>Начать бесплатный месяц →</button>
       <button class="btn btn-full" onclick="closeModal('m-platsub-plans')">Отмена</button>
     </div>
     <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
@@ -1912,7 +1916,7 @@ async function loadProfile() {
       document.getElementById('p-phone').value       = profs[0].phone || '';
     }
   } catch(e) {}
-  await loadPlatformSubscription();
+  await loadStoreSubscriptions();
   await loadPaymentProfile();
 }
 
@@ -2156,6 +2160,131 @@ async function _refreshActivePlatSub() {
   } catch {}
 }
 
+async function loadStoreSubscriptions() {
+  const el = document.getElementById('p-stores-subs');
+  if (!el || !S.session) return;
+
+  try {
+    const [subs, stores] = await Promise.all([
+      req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.asc`),
+      req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&order=name.asc&select=id,name,is_visible`),
+    ]);
+
+    const now      = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const mainSub  = subs.find(s => !s.store_id && ['active','grace'].includes(s.status) && s.end_date >= todayStr);
+    _activePlatSub = mainSub || null;
+
+    let html = '';
+
+    // ── Store 1 (always free, tied to main subscription) ──────────────────
+    const store1 = stores[0] || null;
+    html += _renderStoreSubCard(store1, mainSub, true);
+
+    // ── Additional stores ─────────────────────────────────────────────────
+    stores.slice(1).forEach(store => {
+      const storeSub = subs.find(s => s.store_id === store.id && ['active','grace','cancelled','expired'].includes(s.status));
+      html += _renderStoreSubCard(store, storeSub, false);
+    });
+
+    // ── No-subscription banner if needed ──────────────────────────────────
+    if (!mainSub) {
+      html += `<div class="card" style="padding:14px;margin-top:10px;border:1px dashed var(--line-soft)">` +
+        `<div style="font:600 13px/1 var(--font-sans);margin-bottom:6px">Расширьте возможности</div>` +
+        `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:10px">Подписка открывает доставку, аналитику, абонементы и возможность добавлять заведения.</div>` +
+        `<button class="btn btn-p btn-full" onclick="startPlatformSubscription()">Начать бесплатный месяц →</button>` +
+        `</div>`;
+    }
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--fg-4);font-size:13px">Ошибка загрузки</div>`;
+  }
+
+  if (_tpayMsg) {
+    const isOk = _tpayMsg === 'success';
+    const note = document.createElement('div');
+    note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;${isOk ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b'}`;
+    note.textContent = isOk
+      ? 'Карта привязана! Первый месяц бесплатно — подписка активируется через несколько секунд.'
+      : '✕ Оплата не завершена.';
+    el.prepend(note);
+    _tpayMsg = null;
+  }
+}
+
+function _renderStoreSubCard(store, sub, isFirst) {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isActive = sub && ['active','grace'].includes(sub.status) && sub.end_date >= todayStr;
+  const isGrace  = sub?.status === 'grace';
+  const isTrial  = sub?.is_trial;
+  const isCancel = sub?.status === 'cancelled';
+  const isExpired= sub?.status === 'expired' || (!isActive && sub);
+
+  let badge = '';
+  if (isFirst && !sub)      badge = `<span class="platsub-status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:10px">Бесплатно</span>`;
+  else if (isTrial && isActive) badge = `<span class="platsub-status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:10px">Пробный</span>`;
+  else if (isGrace)         badge = `<span class="platsub-status-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;font-size:10px">Ошибка оплаты</span>`;
+  else if (isActive)        badge = `<span class="platsub-status-badge active" style="font-size:10px">Активна</span>`;
+  else if (isCancel)        badge = `<span class="platsub-status-badge inactive" style="font-size:10px">Отменена</span>`;
+  else if (isExpired)       badge = `<span class="platsub-status-badge inactive" style="font-size:10px">Истекла</span>`;
+
+  const storeName = store ? esc(store.name) : (isFirst ? 'Заведение 1' : 'Новое заведение');
+  const storeId   = store?.id || '';
+  const isVisible = store ? store.is_visible !== false : true;
+
+  let subInfo = '';
+  if (isActive && sub) {
+    const endFmt  = new Date(sub.end_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
+    const amount  = Math.round((sub.monthly_amount_kopecks || 100000) / 100);
+    const autoTxt = sub.auto_renew ? `Автопродление · ${amount.toLocaleString('ru-RU')} ₽/мес` : `До ${endFmt}, без автопродления`;
+    subInfo = `<div style="font-size:11px;color:var(--fg-4);margin-top:3px">${autoTxt}</div>`;
+  }
+
+  const visToggle = store ? `
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-3);cursor:pointer;margin-top:8px">
+      <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleStoreVisibility('${storeId}',this.checked)" style="width:auto">
+      Показывать на карте
+    </label>` : '';
+
+  const autoRenewToggle = (isActive && sub && !isTrial) ? `
+    <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:${sub.auto_renew ? 'var(--err)' : 'var(--accent)'}"
+      onclick="toggleAutoRenew('${sub.id}',${!sub.auto_renew})">
+      ${sub.auto_renew ? 'Отключить автоплатёж' : 'Включить автоплатёж'}
+    </button>` : '';
+
+  const addStoreBtn = !store && isFirst === false ? '' : ''; // handled below
+
+  return `<div class="card" style="padding:12px 14px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font:600 13px/1 var(--font-sans)">${storeName}</div>
+      <div style="display:flex;align-items:center;gap:6px">${badge}</div>
+    </div>
+    ${subInfo}
+    ${visToggle}
+    ${autoRenewToggle}
+  </div>`;
+}
+
+async function toggleStoreVisibility(storeId, visible) {
+  try {
+    await req(`/rest/v1/stores?id=eq.${storeId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_visible: visible }),
+    });
+  } catch(e) { showToast('Ошибка: ' + (e.message || '')); }
+}
+
+async function toggleAutoRenew(subId, newValue) {
+  try {
+    await req(`/rest/v1/platform_subscriptions?id=eq.${subId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ auto_renew: newValue }),
+    });
+    await loadStoreSubscriptions();
+  } catch(e) { showToast('Ошибка: ' + (e.message || '')); }
+}
+
 async function loadPlatformSubscription() {
   const el = document.getElementById('p-platsub-inner');
   if (!el || !S.session) return;
@@ -2249,9 +2378,10 @@ async function initTrialPayment() {
   btn.disabled    = true;
   btn.textContent = 'Подготовка платежа…';
   try {
+    const consentGiven = document.getElementById('platsub-consent-cb')?.checked ?? false;
     const data = await req('/functions/v1/tbank-platform-init', {
       method: 'POST',
-      body: JSON.stringify({ type: 'trial' }),
+      body: JSON.stringify({ type: 'trial', consent_given: consentGiven }),
     });
     window.location.href = data.payment_url;
   } catch(e) {
@@ -2601,20 +2731,24 @@ async function saveStore() {
   const restore = btnLoad(btn);
   const id   = document.getElementById('ms-id').value;
   if (!id) {
-    // DB trigger enforces limit — catch the specific error and show UX
-    // Pre-check to give user actionable feedback before the DB call
-    if (_activePlatSub) {
-      const allowed = 1 + (_activePlatSub.extra_stores || 0);
-      const current = S.stores?.length ?? 0;
-      if (current >= allowed) {
+    const current = S.stores?.length ?? 0;
+    if (current >= 1) {
+      // 2nd+ store requires main subscription + per-store subscription slot
+      if (!_activePlatSub) {
+        restore();
+        alert('Для добавления второго заведения оформите подписку Aliby');
+        startPlatformSubscription();
+        return;
+      }
+      // Check if user has an active per-store sub slot without store_id assigned yet
+      const subs = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&store_id=is.null&not=status.in.(cancelled,expired,failed,pending)`).catch(() => []);
+      const freeSlotsCount = subs.filter(s => s.id !== _activePlatSub?.id && ['active','grace'].includes(s.status)).length;
+      const limit = await req(`/rest/v1/rpc/user_store_limit`, { method:'POST', body: JSON.stringify({ p_user_id: S.session.user.id }) }).catch(() => 1);
+      if (current >= (typeof limit === 'number' ? limit : 1)) {
         restore();
         openAddStorePayModal();
         return;
       }
-    } else {
-      restore();
-      alert('Для добавления заведения оформите подписку');
-      return;
     }
   }
   const zones = getMsDeliveryZones();
@@ -2654,6 +2788,13 @@ async function saveStore() {
         body: JSON.stringify(body),
       });
       storeId = created?.[0]?.id;
+      // Link a pending per-store subscription slot to this new store (if it exists)
+      if (storeId && S.stores?.length >= 1) {
+        req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&store_id=is.null&status=in.(active,grace)&id=neq.${_activePlatSub?.id || ''}`, {}).then(slots => {
+          const slot = (slots || []).find(s => s.id !== _activePlatSub?.id);
+          if (slot) req(`/rest/v1/platform_subscriptions?id=eq.${slot.id}`, { method:'PATCH', body: JSON.stringify({ store_id: storeId }) }).catch(() => {});
+        }).catch(() => {});
+      }
     }
     if (storeId && !isNaN(lat) && !isNaN(lng)) {
       await req('/rest/v1/rpc/upsert_store_location', {

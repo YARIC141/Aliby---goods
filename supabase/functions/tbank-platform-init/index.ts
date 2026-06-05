@@ -38,10 +38,10 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) return jsonResponse({ error: 'Unauthorized' }, 401)
 
-  let body: { type?: string }
+  let body: { type?: string; store_id?: string; consent_given?: boolean }
   try { body = await req.json() } catch { return jsonResponse({ error: 'Invalid JSON' }, 400) }
 
-  const { type } = body
+  const { type, store_id: bodyStoreId, consent_given } = body
   if (!type || !['trial', 'add_store'].includes(type)) {
     return jsonResponse({ error: 'type must be trial or add_store' }, 400)
   }
@@ -152,6 +152,19 @@ Deno.serve(async (req: Request) => {
       .update({ tbank_payment_id: String(tData.PaymentId) })
       .eq('id', sub.id)
 
+    // Log consent if given (§3.4 of the seller agreement)
+    if (consent_given) {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+        || req.headers.get('x-real-ip') || 'unknown'
+      const ua = req.headers.get('user-agent') || ''
+      await serviceClient.from('subscription_consents').insert({
+        user_id:      user.id,
+        ip_address:   ip,
+        user_agent:   ua,
+        consent_text: 'Пользователь подтвердил согласие на автоматические рекуррентные списания в рамках Лицензионного договора-оферты (раздел 8). Согласие зафиксировано при активации пробного периода.',
+      })
+    }
+
     await trackEvent(serviceClient, 'trial_started', user.id, { subscription_id: sub.id, order_id: orderId }, `trial_${sub.id}`)
 
     return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: sub.id })
@@ -206,17 +219,25 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'Payment failed: ' + (chargeData.Message || chargeData.Status || 'unknown') }, 402)
     }
 
-    // Update subscription
-    const newExtra  = (activeSub.extra_stores ?? 0) + 1
-    const newAmount = (activeSub.monthly_amount_kopecks ?? 100000) + ADD_STORE_AMOUNT_KOPECKS
-    await serviceClient
-      .from('platform_subscriptions')
-      .update({ extra_stores: newExtra, monthly_amount_kopecks: newAmount })
-      .eq('id', activeSub.id)
+    // Create a per-store subscription record linked to this store
+    const now    = new Date()
+    const endDt  = new Date(now); endDt.setDate(endDt.getDate() + 30)
+    await serviceClient.from('platform_subscriptions').insert({
+      user_id:                user.id,
+      store_id:               bodyStoreId || null,
+      plan:                   'monthly',
+      status:                 'active',
+      start_date:             now.toISOString().split('T')[0],
+      end_date:               endDt.toISOString().split('T')[0],
+      amount_paid:            500,
+      monthly_amount_kopecks: ADD_STORE_AMOUNT_KOPECKS,
+      rebill_id:              activeSub.rebill_id,  // share rebill_id from main sub
+      auto_renew:             true,
+    })
 
-    await trackEvent(serviceClient, 'store_slot_purchased', user.id, { subscription_id: activeSub.id, extra_stores: newExtra }, `addstore_${orderId}`)
+    await trackEvent(serviceClient, 'store_slot_purchased', user.id, { subscription_id: activeSub.id, store_id: bodyStoreId }, `addstore_${orderId}`)
 
-    return jsonResponse({ success: true, extra_stores: newExtra })
+    return jsonResponse({ success: true })
   }
 
   return jsonResponse({ error: 'Unknown type' }, 400)

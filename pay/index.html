@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Оплата заказа</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--bg);color:var(--fg);padding:0 0 40px}
+
+/* Provider themes */
+body.tinkoff  {--accent:#FFDD2D;--accent-fg:#1a1a1a;--header-bg:#1a1a1a;--btn-bg:#FFDD2D;--btn-fg:#1a1a1a;--bg:#f5f5f5;--fg:#1a1a1a;--card-bg:#fff}
+body.yokassa  {--accent:#fc3f1d;--accent-fg:#fff;--header-bg:#fc3f1d;--btn-bg:#fc3f1d;--btn-fg:#fff;--bg:#f2f3f5;--fg:#21201f;--card-bg:#fff}
+body.cloudpayments{--accent:#5C5CF6;--accent-fg:#fff;--header-bg:#5C5CF6;--btn-bg:#5C5CF6;--btn-fg:#fff;--bg:#f2f4ff;--fg:#1e1e2e;--card-bg:#fff}
+body.sberbank {--accent:#21A038;--accent-fg:#fff;--header-bg:#21A038;--btn-bg:#21A038;--btn-fg:#fff;--bg:#f0f7f0;--fg:#1a2a1a;--card-bg:#fff}
+body.unknown  {--accent:#6366f1;--accent-fg:#fff;--header-bg:#6366f1;--btn-bg:#6366f1;--btn-fg:#fff;--bg:#f5f5f5;--fg:#1a1a1a;--card-bg:#fff}
+
+.header{width:100%;padding:14px 20px;background:var(--header-bg);display:flex;align-items:center;gap:12px;color:var(--accent-fg)}
+.header-logo{width:32px;height:32px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--accent-fg);flex-shrink:0}
+body.tinkoff  .header-logo{background:#FFDD2D;color:#1a1a1a}
+body.yokassa  .header-logo{background:#fff;color:#fc3f1d}
+body.cloudpayments .header-logo{background:#fff;color:#5C5CF6}
+body.sberbank .header-logo{background:#fff;color:#21A038}
+.header-name{font:600 15px/1.2 inherit}
+.header-sub{font:400 11px/1.2 inherit;opacity:.7}
+.header-secure{margin-left:auto;font-size:11px;opacity:.7;display:flex;align-items:center;gap:4px}
+
+.card{background:var(--card-bg);border-radius:16px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08);width:100%;max-width:400px;margin:24px 16px 0}
+
+.order-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.06)}
+.order-row:last-child{border-bottom:none}
+.order-lbl{font:400 13px/1.3 inherit;color:#666}
+.order-val{font:600 14px/1.3 inherit}
+
+.total-row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:16px;border-top:2px solid rgba(0,0,0,.08)}
+.total-lbl{font:600 15px/1 inherit}
+.total-val{font:700 22px/1 inherit;color:var(--accent-fg)}
+body.tinkoff .total-val,body.sberbank .total-val,body.cloudpayments .total-val,body.yokassa .total-val{color:var(--accent)}
+body.tinkoff .total-val{color:#1a1a1a}
+
+.test-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,200,0,.15);border:1px solid rgba(255,165,0,.4);border-radius:6px;padding:4px 10px;font:600 11px/1 inherit;color:#b45309;margin-bottom:12px}
+
+.card-form{margin-top:16px}
+.field-lbl{font:600 12px/1 inherit;color:#666;margin-bottom:5px}
+.field-input{width:100%;border:1.5px solid #d1d5db;border-radius:10px;padding:12px 14px;font:500 15px/1 inherit;color:var(--fg);background:#fff;outline:none;transition:border-color .15s}
+.field-input:focus{border-color:var(--accent)}
+.field-row{display:flex;gap:10px}
+
+.btn-pay{width:100%;padding:15px;border:none;border-radius:12px;background:var(--btn-bg);color:var(--btn-fg);font:700 16px/1 inherit;cursor:pointer;margin-top:16px;transition:opacity .15s;position:relative}
+.btn-pay:hover{opacity:.9}
+.btn-pay:active{opacity:.8}
+.btn-pay:disabled{opacity:.5;cursor:not-allowed}
+.btn-cancel{width:100%;padding:12px;border:1.5px solid #d1d5db;border-radius:12px;background:transparent;color:#666;font:600 14px/1 inherit;cursor:pointer;margin-top:8px;transition:opacity .15s}
+.btn-cancel:hover{opacity:.7}
+
+.secure-footer{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;font:400 12px/1 inherit;color:#9ca3af}
+.secure-footer svg{opacity:.5}
+
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,0,0,.2);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.redirect-screen{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:40px 20px;text-align:center}
+.redirect-screen.active{display:flex}
+.redir-icon{font-size:48px;margin-bottom:16px}
+.redir-title{font:700 20px/1.3 inherit;margin-bottom:8px}
+.redir-sub{font:400 14px/1.5 inherit;color:#666}
+</style>
+</head>
+<body class="unknown">
+<div class="header">
+  <div class="header-logo" id="logo-el">P</div>
+  <div>
+    <div class="header-name" id="provider-name">Страница оплаты</div>
+    <div class="header-sub" id="provider-domain">pay.example.ru</div>
+  </div>
+  <div class="header-secure">🔒 Защищённое соединение</div>
+</div>
+
+<div class="card" id="pay-card">
+  <div id="test-badge-wrap"></div>
+
+  <div class="order-row">
+    <span class="order-lbl">Заказ</span>
+    <span class="order-val" id="order-num">—</span>
+  </div>
+  <div class="order-row">
+    <span class="order-lbl">Получатель</span>
+    <span class="order-val" id="merchant-name">Alliby</span>
+  </div>
+
+  <div class="total-row">
+    <span class="total-lbl">Итого</span>
+    <span class="total-val" id="amount-val">0 ₽</span>
+  </div>
+
+  <div class="card-form">
+    <div style="margin-bottom:12px">
+      <div class="field-lbl">Номер карты</div>
+      <input class="field-input" id="card-num" type="text" maxlength="19" placeholder="0000 0000 0000 0000" oninput="fmtCard(this)" autocomplete="cc-number" inputmode="numeric">
+    </div>
+    <div class="field-row">
+      <div style="flex:1">
+        <div class="field-lbl">Срок действия</div>
+        <input class="field-input" id="card-exp" type="text" maxlength="5" placeholder="ММ/ГГ" oninput="fmtExp(this)" inputmode="numeric">
+      </div>
+      <div style="flex:1">
+        <div class="field-lbl">CVV / CVC</div>
+        <input class="field-input" id="card-cvv" type="password" maxlength="3" placeholder="•••" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-pay" id="btn-pay" onclick="doPay()">Оплатить</button>
+  <button class="btn-cancel" onclick="doCancel()">Отменить оплату</button>
+
+  <div class="secure-footer">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Данные передаются в зашифрованном виде
+  </div>
+</div>
+
+<div class="redirect-screen" id="redirect-screen">
+  <div class="redir-icon">✅</div>
+  <div class="redir-title">Оплата прошла успешно</div>
+  <div class="redir-sub">Возвращаемся в приложение…</div>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const amount    = params.get('amount') || '0';
+const orderNum  = params.get('order')  || '—';
+const provider  = params.get('provider') || 'unknown';
+const isTest    = params.get('test') === '1';
+const returnUrl = params.get('return_url') || 'https://alliby.ru/';
+
+const META = {
+  tinkoff:       { name:'T-Касса',    domain:'securepay.tinkoff.ru',   logo:'Т' },
+  yokassa:       { name:'ЮKassa',     domain:'yookassa.ru',            logo:'Ю' },
+  cloudpayments: { name:'CloudPayments', domain:'checkout.cloudpayments.ru', logo:'CP' },
+  sberbank:      { name:'СберПэй',    domain:'securepayments.sberbank.ru', logo:'С' },
+};
+const meta = META[provider] || { name:'Платёжная система', domain:'pay.example.ru', logo:'P' };
+
+document.body.className = META[provider] ? provider : 'unknown';
+document.getElementById('logo-el').textContent    = meta.logo;
+document.getElementById('provider-name').textContent = meta.name;
+document.getElementById('provider-domain').textContent = meta.domain;
+document.getElementById('order-num').textContent  = '#' + orderNum;
+document.getElementById('amount-val').textContent = Number(amount).toLocaleString('ru-RU') + ' ₽';
+
+if (isTest) {
+  document.getElementById('test-badge-wrap').innerHTML =
+    '<div class="test-badge">🧪 Тестовый режим — деньги не списываются</div>';
+  document.getElementById('card-num').value = '4300 0000 0000 0777';
+  document.getElementById('card-exp').value = '12/26';
+  document.getElementById('card-cvv').value = '123';
+}
+
+function fmtCard(el) {
+  const v = el.value.replace(/\D/g, '').slice(0, 16);
+  el.value = v.replace(/(.{4})/g, '$1 ').trim();
+}
+function fmtExp(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 4);
+  if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2);
+  el.value = v;
+}
+
+async function doPay() {
+  const num = document.getElementById('card-num').value.replace(/\s/g, '');
+  const exp = document.getElementById('card-exp').value;
+  const cvv = document.getElementById('card-cvv').value;
+  if (num.length < 16) { document.getElementById('card-num').focus(); return; }
+  if (exp.length < 5)  { document.getElementById('card-exp').focus(); return; }
+  if (cvv.length < 3)  { document.getElementById('card-cvv').focus(); return; }
+
+  const btn = document.getElementById('btn-pay');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Обработка…';
+
+  // Simulate processing delay
+  await new Promise(r => setTimeout(r, 1800));
+
+  document.getElementById('pay-card').style.display = 'none';
+  const rs = document.getElementById('redirect-screen');
+  rs.classList.add('active');
+
+  await new Promise(r => setTimeout(r, 900));
+  const url = new URL(returnUrl);
+  url.searchParams.set('payment_ok', '1');
+  window.location.href = url.toString();
+}
+
+async function doCancel() {
+  const url = new URL(returnUrl);
+  url.searchParams.set('payment_cancel', '1');
+  window.location.href = url.toString();
+}
+</script>
+</body>
+</html>

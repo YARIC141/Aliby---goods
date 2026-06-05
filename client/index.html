@@ -2052,7 +2052,7 @@ async function loadMapStores() {
   try {
     const _city = S.city || 'Самара';
     const [stores, locs, subOwners] = await Promise.all([
-      req(`/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&order=name.asc&select=*,store_categories(name,icon)`),
+      req(`/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&order=name.asc&select=*,store_categories(name,icon)`),
       req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
       req('/rest/v1/rpc/get_active_sub_owner_ids', { method: 'POST', body: '{}' }).catch(() => []),
     ]);
@@ -3426,7 +3426,7 @@ async function loadSubStore() {
   let stores = S.allStores.filter(st => st.direction === S.direction);
   if (!stores.length) {
     try {
-      stores = await req(`/rest/v1/stores?city=eq.${encodeURIComponent(S.city||'Самара')}&direction=eq.${S.direction}&order=name.asc&select=*,store_categories(name,icon)`);
+      stores = await req(`/rest/v1/stores?city=eq.${encodeURIComponent(S.city||'Самара')}&direction=eq.${S.direction}&is_visible=eq.true&order=name.asc&select=*,store_categories(name,icon)`);
     } catch {}
   }
 

@@ -50,9 +50,10 @@ Deno.serve(async (req: Request) => {
   // Find subscriptions due for renewal (end_date <= today, has rebill_id, not yet expired)
   const { data: subs, error } = await db
     .from('platform_subscriptions')
-    .select('id, user_id, status, end_date, rebill_id, monthly_amount_kopecks, extra_stores, retry_count, is_trial')
+    .select('id, user_id, store_id, status, end_date, rebill_id, monthly_amount_kopecks, retry_count, is_trial, auto_renew')
     .lte('end_date', today)
     .in('status', ['active', 'grace'])
+    .eq('auto_renew', true)
     .not('rebill_id', 'is', null)
 
   if (error) {
