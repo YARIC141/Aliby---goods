@@ -2288,6 +2288,7 @@ function showStorePopup(st, listItem) {
     }
   }
   document.getElementById('map-popup').classList.remove('hidden');
+  trackEvent('store_open', st.id);
 }
 function closePopup() { document.getElementById('map-popup').classList.add('hidden'); }
 function showGeoToast(msg) {
@@ -2303,6 +2304,7 @@ function openStoreFromPopup() { closePopup(); goTo('store'); }
 async function loadStore() {
   if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
   const st = S.store;
+  trackEvent('menu_open', st.id);
   if (st.direction && st.direction !== S.direction) {
     const dirLabel = {food:'Еда',goods:'Товары',services:'Услуги'}[S.direction] || S.direction;
     document.getElementById('store-ph-name').textContent = dirLabel;
@@ -2632,6 +2634,7 @@ function openItemDetail(id) {
   const item = itemCache.get(id);
   if (!item) return;
   _detailItem = item;
+  trackEvent('item_click', S.store?.id, { item_id: item.id, item_name: item.name });
   document.getElementById('mi-name').textContent = item.name;
   document.getElementById('mi-img').innerHTML = itemFallbackImg(item);
   const descEl = document.getElementById('mi-desc');
@@ -2975,6 +2978,16 @@ function haversineM(lat1, lng1, lat2, lng2) {
   const dLat = (lat2 - lat1) * toR, dLng = (lng2 - lng1) * toR;
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLng/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function trackEvent(event, storeId, extra) {
+  try {
+    const props = Object.assign({ store_id: storeId }, extra || {});
+    req('/rest/v1/analytics_events', {
+      method: 'POST',
+      body: JSON.stringify({ event, properties: props }),
+    }).catch(() => {});
+  } catch(e) {}
 }
 
 function openNearbyModal() {
