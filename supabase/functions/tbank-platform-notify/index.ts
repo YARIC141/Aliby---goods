@@ -2,9 +2,7 @@
  * Edge Function: tbank-platform-notify
  * Receives T-Bank payment notifications for platform subscriptions.
  * Must respond with "OK" within 10 seconds.
- *
- * POST /functions/v1/tbank-platform-notify
- * No auth — called by T-Bank servers directly.
+ * Critical: DB update happens BEFORE returning OK so webhook doesn't retry.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -47,63 +45,82 @@ Deno.serve(async (req: Request) => {
 
   if (!paymentId || !status) return ok()
 
-  const serviceClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  )
+  const supabaseUrl    = Deno.env.get('SUPABASE_URL')!
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-  const { data: sub } = await serviceClient
-    .from('platform_subscriptions')
-    .select('id, user_id, plan, amount_paid, is_trial, tbank_payment_id')
-    .eq('tbank_payment_id', String(paymentId))
-    .eq('status', 'pending')
-    .single()
+  // Use direct REST fetch for the critical path — avoids supabase-js init latency
+  const headers = {
+    apikey:          serviceRoleKey,
+    Authorization:   `Bearer ${serviceRoleKey}`,
+    'Content-Type':  'application/json',
+    Prefer:          'return=representation',
+  }
+  const baseUrl = `${supabaseUrl}/rest/v1/platform_subscriptions`
+  const filter  = `tbank_payment_id=eq.${paymentId}&status=eq.pending`
+
+  // Fetch the pending subscription first
+  const subResp = await fetch(`${baseUrl}?${filter}&select=id,user_id,plan,plan_type,amount_paid,is_trial`, { headers })
+  const subArr  = await subResp.json().catch(() => [])
+  const sub     = Array.isArray(subArr) ? subArr[0] : null
 
   if (status === 'CONFIRMED' && success) {
+    // ── CRITICAL: activate the subscription immediately ──────────────────────
     const updates: Record<string, unknown> = { status: 'active' }
     if (rebillId) updates.rebill_id = rebillId
 
-    await serviceClient
-      .from('platform_subscriptions')
-      .update(updates)
-      .eq('tbank_payment_id', String(paymentId))
-      .eq('status', 'pending')
+    await fetch(`${baseUrl}?${filter}`, {
+      method:  'PATCH',
+      headers: { ...headers, Prefer: 'return=minimal' },
+      body:    JSON.stringify(updates),
+    })
 
-    if (sub) {
-      // If this was a trial payment (1 ₽), refund it immediately
-      if (sub.is_trial) {
-        const terminalKey = Deno.env.get('TBANK_TERMINAL_KEY')!
-        const cancelScalar: Record<string, string | number> = {
-          TerminalKey: terminalKey,
-          PaymentId:   String(paymentId),
-          Amount:      100,  // 1 ₽ in kopecks
+    // ── NON-CRITICAL: refund + analytics — fire-and-forget ───────────────────
+    ;(async () => {
+      try {
+        if (sub?.is_trial) {
+          const terminalKey = Deno.env.get('TBANK_TERMINAL_KEY')!
+          const cancelScalar: Record<string, string | number> = {
+            TerminalKey: terminalKey,
+            PaymentId:   String(paymentId),
+            Amount:      100,
+          }
+          await fetch(TBANK_CANCEL_URL, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...cancelScalar, Token: await calcToken(cancelScalar, password) }),
+          }).catch(() => {})
         }
-        await fetch(TBANK_CANCEL_URL, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...cancelScalar, Token: await calcToken(cancelScalar, password) }),
-        }).catch(() => {})
-      }
+        if (sub) {
+          const sc = createClient(supabaseUrl, serviceRoleKey)
+          await trackEvent(sc, 'payment_success', sub.user_id, {
+            plan: sub.plan, amount: sub.amount_paid, payment_id: paymentId,
+            subscription_id: sub.id, is_trial: sub.is_trial, rebill_id: rebillId,
+          }, `payment_${paymentId}_CONFIRMED`)
+          await trackEvent(sc, 'subscription_activated', sub.user_id, {
+            plan: sub.plan, plan_type: sub.plan_type, subscription_id: sub.id,
+          }, `subscription_activated_${sub.id}`)
+        }
+      } catch(e) { console.error('[notify] post-activate error:', e) }
+    })()
 
-      await trackEvent(serviceClient, 'payment_success', sub.user_id, {
-        plan: sub.plan, amount: sub.amount_paid, payment_id: paymentId,
-        subscription_id: sub.id, is_trial: sub.is_trial, rebill_id: rebillId,
-      }, `payment_${paymentId}_CONFIRMED`)
-      await trackEvent(serviceClient, 'subscription_activated', sub.user_id, {
-        plan: sub.plan, subscription_id: sub.id, is_trial: sub.is_trial,
-      }, `subscription_activated_${sub.id}`)
-    }
   } else if (['REJECTED', 'CANCELLED', 'DEADLINE_EXPIRED'].includes(status)) {
-    await serviceClient
-      .from('platform_subscriptions')
-      .update({ status: 'failed' })
-      .eq('tbank_payment_id', String(paymentId))
-      .eq('status', 'pending')
+    // ── CRITICAL: mark as failed ─────────────────────────────────────────────
+    await fetch(`${baseUrl}?${filter}`, {
+      method:  'PATCH',
+      headers: { ...headers, Prefer: 'return=minimal' },
+      body:    JSON.stringify({ status: 'failed' }),
+    })
 
+    // ── NON-CRITICAL: analytics ───────────────────────────────────────────────
     if (sub) {
-      await trackEvent(serviceClient, 'payment_failed', sub.user_id, {
-        plan: sub.plan, amount: sub.amount_paid, payment_id: paymentId,
-        tbank_status: status, subscription_id: sub.id,
-      }, `payment_${paymentId}_${status}`)
+      ;(async () => {
+        try {
+          const sc = createClient(supabaseUrl, serviceRoleKey)
+          await trackEvent(sc, 'payment_failed', sub.user_id, {
+            plan: sub.plan, amount: sub.amount_paid, payment_id: paymentId,
+            tbank_status: status, subscription_id: sub.id,
+          }, `payment_${paymentId}_${status}`)
+        } catch(e) { console.error('[notify] analytics error:', e) }
+      })()
     }
   }
 

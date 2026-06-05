@@ -133,6 +133,7 @@ svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stro
 .a-val{font:400 22px/1 var(--font-display);color:var(--fg)}
 .a-lbl{font:400 11px/1 var(--font-sans);color:var(--fg-3);margin-top:4px}
 .a-item{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line-soft);font:400 13px/1 var(--font-sans)}
+@keyframes spin{to{transform:rotate(360deg)}}
 .an-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
 .an-card{background:var(--bg-1);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:12px 14px}
 .an-card-val{font:700 20px/1 var(--font-sans);color:var(--fg);margin-bottom:3px}
@@ -2232,6 +2233,33 @@ async function _refreshActivePlatSub() {
   } catch {}
 }
 
+let _pollSubTimer = null;
+function _pollForActiveSub(attemptsLeft) {
+  const el = document.getElementById('p-stores-subs');
+  if (el) {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:16px 0;color:var(--fg-3);font-size:13px">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>' +
+      'Оплата прошла — ожидаем активации подписки…</div>';
+  }
+  clearTimeout(_pollSubTimer);
+  _pollSubTimer = setTimeout(async () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    try {
+      const subs = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.platform&status=in.(active,grace)&end_date=gte.${todayStr}&limit=1`);
+      if (subs?.length) {
+        await loadStoreSubscriptions();
+      } else if (attemptsLeft > 1) {
+        _pollForActiveSub(attemptsLeft - 1);
+      } else {
+        // Timeout — show manual refresh prompt
+        if (el) el.innerHTML = '<div style="padding:14px;background:#fef9c3;border-radius:8px;font-size:13px;color:#854d0e">Оплата прошла успешно. Если подписка не отображается — обновите страницу.</div>';
+      }
+    } catch(e) {
+      if (attemptsLeft > 1) _pollForActiveSub(attemptsLeft - 1);
+    }
+  }, 2000);
+}
+
 function openStoresSubsModal() {
   openModal('m-stores-subs');
   loadStoreSubscriptions();
@@ -2249,7 +2277,10 @@ async function loadStoreSubscriptions() {
 
     const now      = new Date();
     const todayStr = now.toISOString().split('T')[0];
-    const mainSub  = subs.find(s => !s.store_id && ['active','grace'].includes(s.status) && s.end_date >= todayStr);
+    // Pick the platform subscription with the latest end_date (newest renewal)
+    const mainSub  = subs
+      .filter(s => s.plan_type === 'platform' && ['active','grace'].includes(s.status) && s.end_date >= todayStr)
+      .sort((a, b) => (a.end_date < b.end_date ? 1 : -1))[0] || null;
     _activePlatSub = mainSub || null;
 
     let html = '';
@@ -2280,13 +2311,19 @@ async function loadStoreSubscriptions() {
 
   if (_tpayMsg) {
     const isOk = _tpayMsg === 'success';
-    const note = document.createElement('div');
-    note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;${isOk ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b'}`;
-    note.textContent = isOk
-      ? 'Карта привязана! Первый месяц бесплатно — подписка активируется через несколько секунд.'
-      : '✕ Оплата не завершена.';
-    el.prepend(note);
     _tpayMsg = null;
+    if (isOk) {
+      // If payment succeeded but subscription still pending — poll until webhook activates it
+      if (!mainSub) {
+        _pollForActiveSub(8);
+        return; // _pollForActiveSub will re-render when ready
+      }
+    } else {
+      const note = document.createElement('div');
+      note.style.cssText = 'padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;background:#fee2e2;color:#991b1b';
+      note.textContent = '✕ Оплата не завершена.';
+      el.prepend(note);
+    }
   }
 
   // Update "Add store" button appearance (always clickable, visual state reflects subscription)
