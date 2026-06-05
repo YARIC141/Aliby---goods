@@ -21,7 +21,8 @@ const SUCCESS_URL      = 'https://admin.alliby.ru/?tpay=success'
 const FAIL_URL         = 'https://admin.alliby.ru/?tpay=fail'
 
 const TRIAL_AMOUNT_KOPECKS    = 100     // 1 ₽ — refunded after card binding
-const ADD_STORE_AMOUNT_KOPECKS = 50000  // 500 ₽ per extra store
+const ADD_STORE_MONTHLY_KOPECKS = 50000   // 500 ₽/мес
+const ADD_STORE_YEARLY_KOPECKS  = 500000  // 5 000 ₽/год
 
 async function calcToken(params: Record<string, string | number>, password: string): Promise<string> {
   const all    = { ...params, Password: password }
@@ -38,10 +39,10 @@ Deno.serve(async (req: Request) => {
   const authHeader = req.headers.get('Authorization')
   if (!authHeader) return jsonResponse({ error: 'Unauthorized' }, 401)
 
-  let body: { type?: string; store_id?: string; consent_given?: boolean }
+  let body: { type?: string; store_id?: string; consent_given?: boolean; plan?: string }
   try { body = await req.json() } catch { return jsonResponse({ error: 'Invalid JSON' }, 400) }
 
-  const { type, store_id: bodyStoreId, consent_given } = body
+  const { type, store_id: bodyStoreId, consent_given, plan: addStorePlan } = body
   if (!type || !['trial', 'add_store'].includes(type)) {
     return jsonResponse({ error: 'type must be trial or add_store' }, 400)
   }
@@ -186,10 +187,13 @@ Deno.serve(async (req: Request) => {
     if (!activeSub.rebill_id) return jsonResponse({ error: 'No saved payment method. Contact support.' }, 400)
 
     // 1. Init to get PaymentId for the Charge call
+    const isYearly_pre     = addStorePlan === 'yearly'
+    const chargeAmount_pre = isYearly_pre ? ADD_STORE_YEARLY_KOPECKS : ADD_STORE_MONTHLY_KOPECKS
+
     const orderId = `addstore_${user.id.slice(0, 8)}_${Date.now()}`
     const initScalar: Record<string, string | number> = {
       TerminalKey: terminalKey,
-      Amount:      ADD_STORE_AMOUNT_KOPECKS,
+      Amount:      chargeAmount_pre,
       OrderId:     orderId,
       Description: 'Дополнительное заведение Aliby (+500 ₽/мес)',
       CustomerKey: user.id,
@@ -219,19 +223,26 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'Payment failed: ' + (chargeData.Message || chargeData.Status || 'unknown') }, 402)
     }
 
-    // Create a per-store subscription record linked to this store
-    const now    = new Date()
-    const endDt  = new Date(now); endDt.setDate(endDt.getDate() + 30)
+    // Determine plan details
+    const isYearly     = addStorePlan === 'yearly'
+    const chargeAmount = isYearly ? ADD_STORE_YEARLY_KOPECKS : ADD_STORE_MONTHLY_KOPECKS
+    const amountRub    = isYearly ? 5000 : 500
+    const days         = isYearly ? 365 : 30
+
+    // Create a per-store subscription record
+    const now   = new Date()
+    const endDt = new Date(now); endDt.setDate(endDt.getDate() + days)
     await serviceClient.from('platform_subscriptions').insert({
       user_id:                user.id,
       store_id:               bodyStoreId || null,
-      plan:                   'monthly',
+      plan:                   isYearly ? 'yearly' : 'monthly',
+      plan_type:              'store',
       status:                 'active',
       start_date:             now.toISOString().split('T')[0],
       end_date:               endDt.toISOString().split('T')[0],
-      amount_paid:            500,
-      monthly_amount_kopecks: ADD_STORE_AMOUNT_KOPECKS,
-      rebill_id:              activeSub.rebill_id,  // share rebill_id from main sub
+      amount_paid:            amountRub,
+      monthly_amount_kopecks: chargeAmount,
+      rebill_id:              activeSub.rebill_id,
       auto_renew:             true,
     })
 
