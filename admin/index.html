@@ -2342,17 +2342,19 @@ async function loadStoreSubscriptions() {
     }
   }
 
-  // Update profile button summary
+  // Update profile button summary (use locally fetched stores, not global S.stores)
   const summaryEl = document.getElementById('p-stores-subs-summary');
   if (summaryEl) {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const storeCount = S.stores?.length ?? 0;
+    const storeCount = stores.length;
     if (_activePlatSub) {
-      const status = _activePlatSub.is_trial ? 'Пробный период' : _activePlatSub.status === 'grace' ? 'Ошибка оплаты' : 'Активна';
+      const statusLabel = _activePlatSub.is_trial ? 'Пробный период'
+        : _activePlatSub.status === 'grace' ? 'Ошибка оплаты' : 'Активна';
+      const storePart = storeCount === 0 ? 'Заведений нет'
+        : storeCount === 1 ? '1 заведение' : `${storeCount} заведения`;
       const amount = 1000 + (_activePlatSub.extra_stores || 0) * 500;
-      summaryEl.textContent = `${storeCount} ${storeCount === 1 ? 'заведение' : 'заведений'} · ${status} · ${amount.toLocaleString('ru-RU')} ₽/мес`;
+      summaryEl.textContent = `${storePart} · ${statusLabel} · ${amount.toLocaleString('ru-RU')} ₽/мес`;
     } else {
-      summaryEl.textContent = storeCount > 0 ? `${storeCount} заведение · Без подписки` : 'Нет заведений · Без подписки';
+      summaryEl.textContent = storeCount > 0 ? `${storeCount} заведение · Без подписки` : 'Без подписки';
     }
   }
 }
