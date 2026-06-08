@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#78b4e0">
+<meta name="theme-color" content="#2E9DC4">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -378,6 +378,8 @@ tr.row-click:hover td{background:var(--bg-2)}
 <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></symbol>
 <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4h6v2"/></symbol>
 </defs>
 </svg>
 
@@ -405,6 +407,10 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
   <div class="sn-footer">
     <div class="sn-user" id="sn-email"></div>
+    <div style="display:flex;gap:10px;padding-top:4px">
+      <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="font-size:11px;color:var(--fg-4);text-decoration:none">Лицензионный договор</a>
+      <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="font-size:11px;color:var(--fg-4);text-decoration:none">Конфиденциальность</a>
+    </div>
   </div>
 </nav>
 
@@ -445,6 +451,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div class="fg"><label>Пароль</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
       <div class="fg"><label>Подтвердите пароль</label><input type="password" id="reg-pwd2" autocomplete="new-password"></div>
       <button class="btn btn-p btn-full" id="register-btn" onclick="doRegister()">Создать аккаунт</button>
+      <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px;line-height:1.5">Нажимая кнопку, вы соглашаетесь с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой конфиденциальности</a></p>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('login')">← Войти</button>
     </div>
@@ -641,21 +648,31 @@ tr.row-click:hover td{background:var(--bg-2)}
             <option value="yokassa">ЮKassa (Яндекс)</option>
             <option value="cloudpayments">CloudPayments</option>
             <option value="sberbank">СберБанк Ecom</option>
+            <option value="alfabank">Альфа-Банк Эквайринг</option>
+            <option value="vtb">ВТБ Эквайринг</option>
+            <option value="robokassa">Robokassa</option>
+            <option value="paykeeper">PayKeeper</option>
           </select>
         </div>
         <div id="pp-fields" style="display:none">
+          <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:2px">Тестовые ключи</div>
           <div class="fg" style="margin-bottom:8px">
-            <label id="pp-key-label">Terminal Key</label>
+            <label><span id="pp-key-test-label">Terminal Key</span> <span id="pp-key-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+            <input type="text" id="pp-terminal-key-test" placeholder="Введите тестовый ключ" autocomplete="off">
+          </div>
+          <div class="fg" style="margin-bottom:12px">
+            <label><span id="pp-secret-test-label">Секретный ключ</span> <span id="pp-secret-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+            <input type="password" id="pp-secret-key-test" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
+          </div>
+          <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:10px;border-top:1px solid var(--line-soft)">Боевые ключи</div>
+          <div class="fg" style="margin-bottom:8px">
+            <label><span id="pp-key-label">Terminal Key</span> <span id="pp-key-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
             <input type="text" id="pp-terminal-key" placeholder="Введите ключ" autocomplete="off">
           </div>
           <div class="fg" style="margin-bottom:8px">
-            <label id="pp-secret-label">Секретный ключ</label>
+            <label><span id="pp-secret-label">Секретный ключ</span> <span id="pp-secret-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
             <input type="password" id="pp-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
           </div>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font:500 13px/1 var(--font-sans);margin-bottom:10px">
-            <input type="checkbox" id="pp-test-mode" checked>
-            Тестовый режим (sandbox)
-          </label>
           <div id="pp-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3);margin-bottom:10px"></div>
         </div>
         <button class="btn btn-p" id="pp-save-btn" onclick="savePaymentProfile()">Сохранить</button>
@@ -691,6 +708,18 @@ tr.row-click:hover td{background:var(--bg-2)}
 
     <div class="sec">
       <button class="btn btn-d btn-full" onclick="doLogout()">Выйти из аккаунта</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Документы</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none">
+          Лицензионный договор <span style="color:var(--fg-4);font-size:12px">↗</span>
+        </a>
+        <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none">
+          Политика конфиденциальности <span style="color:var(--fg-4);font-size:12px">↗</span>
+        </a>
+      </div>
     </div>
 
     <div class="sec">
@@ -949,7 +978,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <h3>Добавить заведение</h3>
       <button class="modal-x" onclick="closeModal('m-add-store-plan')">✕</button>
     </div>
-    <p style="font-size:14px;color:var(--fg-3);margin-bottom:14px">Выберите тариф для дополнительного заведения.</p>
+    <p style="font-size:14px;color:var(--fg-3);margin-bottom:14px">Чтобы добавить новое заведение, необходимо приобрести подписку на дополнительное заведение. Выберите тариф:</p>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
       <button class="plan-card" onclick="selectAddStorePlan('monthly')">
         <div>
@@ -990,7 +1019,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <p style="font-size:12px;color:var(--fg-4);margin-bottom:14px">При активации спишем 1 ₽ для проверки карты — сумма будет возвращена автоматически.</p>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12px;color:var(--fg-3);line-height:1.4;cursor:pointer">
       <input type="checkbox" id="platsub-consent-cb" onchange="document.getElementById('platsub-pay-btn').disabled=!this.checked" style="margin-top:2px;width:auto;flex-shrink:0">
-      Я подтверждаю согласие на автоматические ежемесячные списания в соответствии с <a href="#" onclick="return false" style="color:var(--accent)">Лицензионным договором</a> (раздел 8). Могу отключить в любой момент.
+      Я подтверждаю согласие на автоматические ежемесячные списания в соответствии с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a>. Могу отключить в любой момент.
     </label>
     <div id="platsub-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -1013,10 +1042,14 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div id="add-store-pay-desc" style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:5px">Дополнительное заведение · 30 дней</div>
       <div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:4px">Списывается немедленно с привязанной карты.</div>
     </div>
+    <div style="background:#fefce8;border:1px solid #fde047;border-radius:var(--r-2);padding:10px 12px;margin-bottom:12px;font-size:12px;color:#854d0e">
+      При возникновении проблем с оплатой на десктопе попробуйте оплатить со смартфона
+    </div>
     <div id="add-store-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
     <div class="modal-ft" style="flex-direction:column;gap:8px">
       <button class="btn btn-p btn-full" id="add-store-pay-btn" onclick="confirmAddStorePay()">Оплатить и добавить заведение</button>
       <button class="btn btn-full" onclick="closeModal('m-add-store-pay')">Отмена</button>
+      <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px;line-height:1.5">Нажимая «Оплатить», вы соглашаетесь с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a></p>
     </div>
     <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
   </div>
@@ -1206,21 +1239,31 @@ tr.row-click:hover td{background:var(--bg-2)}
           <option value="yokassa">ЮKassa (Яндекс)</option>
           <option value="cloudpayments">CloudPayments</option>
           <option value="sberbank">СберБанк Ecom</option>
+          <option value="alfabank">Альфа-Банк Эквайринг</option>
+          <option value="vtb">ВТБ Эквайринг</option>
+          <option value="robokassa">Robokassa</option>
+          <option value="paykeeper">PayKeeper</option>
         </select>
       </div>
       <div id="ms-pay-fields" style="display:none">
+        <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:2px">Тестовые ключи</div>
         <div class="fg" style="margin-bottom:8px">
-          <label id="ms-pay-key-label">Terminal Key</label>
+          <label><span id="ms-pay-key-test-label">Terminal Key</span> <span id="ms-key-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+          <input type="text" id="ms-pay-terminal-key-test" placeholder="Введите тестовый ключ" autocomplete="off">
+        </div>
+        <div class="fg" style="margin-bottom:12px">
+          <label><span id="ms-pay-secret-test-label">Секретный ключ</span> <span id="ms-secret-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+          <input type="password" id="ms-pay-secret-key-test" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
+        </div>
+        <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:10px;border-top:1px solid var(--line-soft)">Боевые ключи</div>
+        <div class="fg" style="margin-bottom:8px">
+          <label><span id="ms-pay-key-label">Terminal Key</span> <span id="ms-key-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
           <input type="text" id="ms-pay-terminal-key" placeholder="Введите ключ" autocomplete="off">
         </div>
         <div class="fg" style="margin-bottom:8px">
-          <label id="ms-pay-secret-label">Секретный ключ</label>
+          <label><span id="ms-pay-secret-label">Секретный ключ</span> <span id="ms-secret-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
           <input type="password" id="ms-pay-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
         </div>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font:500 13px/1 var(--font-sans);margin-bottom:8px">
-          <input type="checkbox" id="ms-pay-test-mode" checked>
-          Тестовый режим (sandbox)
-        </label>
         <div id="ms-pay-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3)"></div>
       </div>
     </div>
@@ -1446,7 +1489,8 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button class="btn" onclick="closeModal('m-sub')">Отмена</button>
       <button class="btn btn-p" id="msub-save-btn" onclick="saveSubscription()">Сохранить</button>
     </div>
-    <div class="txt-muted" style="margin-top:6px">POST /rest/v1/subscriptions · PATCH /rest/v1/subscriptions?id=eq.{id}</div>
+    <p style="font-size:11px;color:var(--fg-4);margin-top:10px;line-height:1.5">Публикуя абонемент, вы обязуетесь принимать его в течение всего срока действия — в соответствии с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a>, п. 2.4.</p>
+    <div class="txt-muted" style="margin-top:4px">POST /rest/v1/subscriptions · PATCH /rest/v1/subscriptions?id=eq.{id}</div>
   </div>
 </div>
 
@@ -1997,17 +2041,26 @@ let _ppStoreId = null;
 
 async function loadPaymentProfile() {
   try {
-    const stores = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id,payment_provider,payment_test_mode&limit=1`);
+    const stores = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id,payment_provider&limit=1`);
     if (!stores?.length) return;
     const store = stores[0];
     _ppStoreId = store.id;
     document.getElementById('pp-provider').value = store.payment_provider || 'none';
-    document.getElementById('pp-test-mode').checked = store.payment_test_mode ?? true;
+    document.getElementById('pp-terminal-key-test').value = '';
+    document.getElementById('pp-secret-key-test').value = '';
     document.getElementById('pp-terminal-key').value = '';
     document.getElementById('pp-secret-key').value = '';
     onPpProviderChange();
-    const sps = await req(`/rest/v1/store_payment_settings?store_id=eq.${store.id}&select=terminal_key`).catch(() => null);
-    if (sps?.[0]?.terminal_key) document.getElementById('pp-terminal-key').value = sps[0].terminal_key;
+    const meta = await req('/functions/v1/payment-settings-meta', {
+      method: 'POST',
+      body: JSON.stringify({ store_id: store.id }),
+    }).catch(() => null);
+    document.getElementById('pp-key-test-set-badge').style.display    = meta?.has_terminal_key_test ? '' : 'none';
+    document.getElementById('pp-secret-test-set-badge').style.display = meta?.has_secret_key_test    ? '' : 'none';
+    document.getElementById('pp-key-set-badge').style.display         = meta?.has_terminal_key ? '' : 'none';
+    document.getElementById('pp-secret-set-badge').style.display      = meta?.has_secret_key    ? '' : 'none';
+    document.getElementById('pp-terminal-key-test').placeholder = meta?.has_terminal_key_test ? 'Оставьте пустым чтобы не менять' : 'Введите тестовый ключ';
+    document.getElementById('pp-terminal-key').placeholder      = meta?.has_terminal_key ? 'Оставьте пустым чтобы не менять' : 'Введите ключ';
     document.getElementById('p-pay-sec').style.display = '';
   } catch(e) {}
 }
@@ -2018,9 +2071,13 @@ function onPpProviderChange() {
   if (p === 'none') { f.style.display = 'none'; return; }
   f.style.display = '';
   const m = _PAY_META[p] || {};
-  document.getElementById('pp-key-label').textContent    = m.keyLabel    || 'Ключ';
-  document.getElementById('pp-secret-label').textContent = m.secretLabel || 'Секретный ключ';
-  document.getElementById('pp-hint').textContent         = m.hint        || '';
+  const kl = m.keyLabel    || 'Ключ';
+  const sl = m.secretLabel || 'Секретный ключ';
+  document.getElementById('pp-key-test-label').textContent    = kl;
+  document.getElementById('pp-secret-test-label').textContent = sl;
+  document.getElementById('pp-key-label').textContent         = kl;
+  document.getElementById('pp-secret-label').textContent      = sl;
+  document.getElementById('pp-hint').textContent              = m.hint || '';
 }
 
 async function savePaymentProfile() {
@@ -2032,22 +2089,27 @@ async function savePaymentProfile() {
   try {
     await req(`/rest/v1/stores?id=eq.${_ppStoreId}`, {
       method: 'PATCH',
-      body: JSON.stringify({
-        payment_provider: document.getElementById('pp-provider').value,
-        payment_test_mode: document.getElementById('pp-test-mode').checked,
-      }),
+      body: JSON.stringify({ payment_provider: document.getElementById('pp-provider').value }),
     });
-    const termKey   = document.getElementById('pp-terminal-key').value.trim();
-    const secretKey = document.getElementById('pp-secret-key').value.trim();
-    if (document.getElementById('pp-provider').value !== 'none' && (termKey || secretKey)) {
-      const spsBody = { store_id: _ppStoreId, updated_at: new Date().toISOString() };
-      if (termKey)   spsBody.terminal_key = termKey;
-      if (secretKey) spsBody.secret_key   = secretKey;
-      await req('/rest/v1/store_payment_settings', {
+    const termKey       = document.getElementById('pp-terminal-key').value.trim();
+    const secretKey     = document.getElementById('pp-secret-key').value.trim();
+    const termKeyTest   = document.getElementById('pp-terminal-key-test').value.trim();
+    const secretKeyTest = document.getElementById('pp-secret-key-test').value.trim();
+    if (document.getElementById('pp-provider').value !== 'none' && (termKey || secretKey || termKeyTest || secretKeyTest)) {
+      await req('/functions/v1/payment-settings-set', {
         method: 'POST',
-        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify(spsBody),
+        body: JSON.stringify({
+          store_id: _ppStoreId,
+          ...(termKey && { terminal_key: termKey }),
+          ...(secretKey && { secret_key: secretKey }),
+          ...(termKeyTest && { terminal_key_test: termKeyTest }),
+          ...(secretKeyTest && { secret_key_test: secretKeyTest }),
+        }),
       });
+      if (termKeyTest)   { document.getElementById('pp-key-test-set-badge').style.display = ''; document.getElementById('pp-terminal-key-test').value = ''; document.getElementById('pp-terminal-key-test').placeholder = 'Оставьте пустым чтобы не менять'; }
+      if (secretKeyTest)   document.getElementById('pp-secret-test-set-badge').style.display = '';
+      if (termKey)       { document.getElementById('pp-key-set-badge').style.display = ''; document.getElementById('pp-terminal-key').value = ''; document.getElementById('pp-terminal-key').placeholder = 'Оставьте пустым чтобы не менять'; }
+      if (secretKey)       document.getElementById('pp-secret-set-badge').style.display = '';
     }
     restore();
     msg.textContent = 'Настройки сохранены';
@@ -2274,7 +2336,7 @@ async function loadStoreSubscriptions() {
   try {
     const [subs, stores] = await Promise.all([
       req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.asc`),
-      req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&order=name.asc&select=id,name,is_visible`),
+      req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&order=name.asc&select=id,name,is_visible,payment_provider,payment_test_mode`),
     ]);
 
     const now      = new Date();
@@ -2297,27 +2359,6 @@ async function loadStoreSubscriptions() {
       html += _renderStoreSubCard(store, storeSub, false);
     });
 
-    // ── Purchased store slots not yet linked to a store ───────────────────
-    const unlinkedSlots = subs.filter(s =>
-      s.plan_type === 'store' &&
-      s.store_id == null &&
-      ['active','grace','pending'].includes(s.status)
-    );
-    unlinkedSlots.forEach(slot => {
-      const endDate  = new Date(slot.end_date);
-      const endFmt   = endDate.toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
-      const amount   = Math.round((slot.monthly_amount_kopecks || 50000) / 100);
-      const isYearly = slot.plan === 'yearly';
-      const isPending = slot.status === 'pending';
-      html += `<div class="card" style="padding:12px 14px;margin-bottom:8px;border:1px dashed var(--accent)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div style="font:600 13px/1 var(--font-sans)">Слот для заведения</div>
-          <span style="font-size:10px;padding:2px 8px;border-radius:10px;${isPending ? 'background:#fef9c3;color:#854d0e' : 'background:#f0fdf4;color:#16a34a'}">${isPending ? 'Ожидание оплаты' : 'Оплачен'}</span>
-        </div>
-        <div style="font-size:12px;color:var(--fg-3);margin-bottom:8px">${isYearly ? 'Годовая' : 'Месячная'} · ${amount.toLocaleString('ru-RU')} ₽ · до ${endFmt}</div>
-        ${!isPending ? `<button class="btn btn-p btn-sm" onclick="closeModal('m-stores-subs');openStoreModal(null)" style="width:100%">Создать заведение →</button>` : ''}
-      </div>`;
-    });
 
     // ── No-subscription banner if needed ──────────────────────────────────
     if (!mainSub) {
@@ -2401,11 +2442,27 @@ function _renderStoreSubCard(store, sub, isFirst) {
   const isVisible = store ? store.is_visible !== false : true;
 
   let subInfo = '';
-  if (isActive && sub) {
+  if (sub) {
     const endFmt  = new Date(sub.end_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
     const amount  = Math.round((sub.monthly_amount_kopecks || 100000) / 100);
-    const autoTxt = sub.auto_renew ? `Автопродление · ${amount.toLocaleString('ru-RU')} ₽/мес` : `До ${endFmt}, без автопродления`;
-    subInfo = `<div style="font-size:11px;color:var(--fg-4);margin-top:3px">${autoTxt}</div>`;
+    const periodTxt = sub.plan === 'yearly' ? '/год' : '/мес';
+    let costLine = '';
+    if (isActive) {
+      if (isTrial) {
+        costLine = sub.auto_renew
+          ? `После пробного — <b>${amount.toLocaleString('ru-RU')} ₽${periodTxt}</b>`
+          : `До ${endFmt} · подписка отменена`;
+      } else {
+        costLine = sub.auto_renew
+          ? `<b>${amount.toLocaleString('ru-RU')} ₽${periodTxt}</b> · автоплатёж до ${endFmt}`
+          : `До ${endFmt} · без автоплатежа`;
+      }
+    } else if (isGrace) {
+      costLine = `Ошибка оплаты · ${amount.toLocaleString('ru-RU')} ₽${periodTxt}`;
+    } else if (isCancel) {
+      costLine = `Отменена · до ${endFmt}`;
+    }
+    if (costLine) subInfo = `<div style="font-size:12px;color:var(--fg-3);margin-top:4px">${costLine}</div>`;
   }
 
   const visToggle = store ? `
@@ -2414,13 +2471,34 @@ function _renderStoreSubCard(store, sub, isFirst) {
       Показывать на карте
     </label>` : '';
 
-  const autoRenewToggle = (isActive && sub && !isTrial) ? `
+  const autoRenewToggle = (isActive && sub) ? `
     <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:${sub.auto_renew ? 'var(--err)' : 'var(--accent)'}"
-      onclick="toggleAutoRenew('${sub.id}',${!sub.auto_renew})">
-      ${sub.auto_renew ? 'Отключить автоплатёж' : 'Включить автоплатёж'}
+      onclick="toggleAutoRenew('${sub.id}',${!sub.auto_renew},${isTrial})">
+      ${sub.auto_renew ? (isTrial ? 'Отменить подписку' : 'Отключить автоплатёж') : 'Включить автоплатёж'}
     </button>` : '';
 
-  const addStoreBtn = !store && isFirst === false ? '' : ''; // handled below
+  const payBtn = (!isFirst && store && (!sub || isExpired)) ? `
+    <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
+      onclick="openStoreSubPayModal('${storeId}')">
+      ${!sub ? 'Активировать подписку' : 'Продлить подписку'}
+    </button>` : '';
+
+  const provider   = store?.payment_provider || 'none';
+  const isTestMode = store?.payment_test_mode !== false;
+  const payModeRow = store ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--line-soft)">
+      <div style="font-size:12px;color:var(--fg-3)">
+        Оплата заказов:&nbsp;<span style="font-weight:600;color:${isTestMode ? 'var(--warn)' : 'var(--ok)'}">
+          ${isTestMode ? 'Тестовая' : '✓ Реальная'}
+        </span>
+        ${provider !== 'none' ? `<span style="color:var(--fg-4)"> · ${provider}</span>` : ''}
+      </div>
+      <label class="toggle-sw" style="margin:0" title="${isTestMode ? 'Включить реальный эквайринг' : 'Переключить в тестовый режим'}">
+        <input type="checkbox" ${!isTestMode ? 'checked' : ''}
+          onchange="toggleStorePaymentMode('${storeId}',this.checked,this)">
+        <span class="toggle-track"></span>
+      </label>
+    </div>` : '';
 
   return `<div class="card" style="padding:12px 14px;margin-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -2430,6 +2508,8 @@ function _renderStoreSubCard(store, sub, isFirst) {
     ${subInfo}
     ${visToggle}
     ${autoRenewToggle}
+    ${payBtn}
+    ${payModeRow}
   </div>`;
 }
 
@@ -2442,13 +2522,61 @@ async function toggleStoreVisibility(storeId, visible) {
   } catch(e) { showToast('Ошибка: ' + (e.message || '')); }
 }
 
-async function toggleAutoRenew(subId, newValue) {
+async function toggleStorePaymentMode(storeId, enableReal, el) {
+  if (enableReal) {
+    // Проверяем провайдера и ключи перед включением реального режима
+    const stores = await req(`/rest/v1/stores?id=eq.${storeId}&select=payment_provider`).catch(() => null);
+    const provider = stores?.[0]?.payment_provider;
+    if (!provider || provider === 'none') {
+      el.checked = false;
+      showToast('Сначала выберите провайдера эквайринга в настройках заведения');
+      return;
+    }
+    const meta = await req('/functions/v1/payment-settings-meta', {
+      method: 'POST',
+      body: JSON.stringify({ store_id: storeId }),
+    }).catch(() => null);
+    if (!meta?.has_terminal_key) {
+      el.checked = false;
+      showToast('Сначала введите Terminal Key в настройках заведения (раздел Интернет-эквайринг)');
+      return;
+    }
+    if (!meta?.has_secret_key) {
+      el.checked = false;
+      showToast('Сначала введите Секретный ключ в настройках заведения');
+      return;
+    }
+    if (provider !== 'tinkoff') {
+      el.checked = false;
+      showToast(`Реальный эквайринг для "${provider}" в разработке. Используйте Тинькофф T-Касса.`);
+      return;
+    }
+  }
+  try {
+    await req(`/rest/v1/stores?id=eq.${storeId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ payment_test_mode: !enableReal }),
+    });
+    loadStoreSubscriptions();
+  } catch(e) {
+    el.checked = !enableReal;
+    showToast('Ошибка: ' + (e.message || ''));
+  }
+}
+
+async function toggleAutoRenew(subId, newValue, isTrial) {
+  if (!newValue) {
+    const msg = isTrial
+      ? 'Отменить подписку? После пробного периода списания не будет, подписка завершится.'
+      : 'Отключить автоплатёж? Подписка продолжит действовать до конца оплаченного периода, затем отключится.';
+    if (!confirm(msg)) return;
+  }
   try {
     await req(`/rest/v1/platform_subscriptions?id=eq.${subId}`, {
       method: 'PATCH',
       body: JSON.stringify({ auto_renew: newValue }),
     });
-    await loadStoreSubscriptions();
+    await Promise.all([loadStoreSubscriptions(), loadStores()]);
   } catch(e) { showToast('Ошибка: ' + (e.message || '')); }
 }
 
@@ -2559,6 +2687,7 @@ async function initTrialPayment() {
 }
 
 let _addStorePlan = null;
+let _payingForStoreId = null;
 
 function onAddStoreBtnClick() {
   if (!_activePlatSub) {
@@ -2581,12 +2710,19 @@ function selectAddStorePlan(plan) {
   if (amtEl)  amtEl.textContent  = amount.toLocaleString('ru-RU') + ' ₽';
   if (descEl) descEl.textContent = desc;
   if (errEl)  errEl.style.display = 'none';
-  if (btn)    { btn.disabled = false; btn.textContent = 'Оплатить и добавить заведение'; }
+  if (btn)    { btn.disabled = false; btn.textContent = _payingForStoreId ? 'Оплатить подписку' : 'Оплатить и добавить заведение'; }
   openModal('m-add-store-pay');
 }
 
 function openAddStorePayModal() {
   // Called from saveStore when store limit reached — default monthly plan
+  _payingForStoreId = null;
+  selectAddStorePlan('monthly');
+}
+
+function openStoreSubPayModal(storeId) {
+  if (!_activePlatSub) { openModal('m-no-main-sub'); return; }
+  _payingForStoreId = storeId;
   selectAddStorePlan('monthly');
 }
 
@@ -2598,7 +2734,7 @@ async function confirmAddStorePay() {
   try {
     const data = await req('/functions/v1/tbank-platform-init', {
       method: 'POST',
-      body: JSON.stringify({ type: 'add_store', plan: _addStorePlan || 'monthly' }),
+      body: JSON.stringify({ type: 'add_store', plan: _addStorePlan || 'monthly', ...(_payingForStoreId ? { store_id: _payingForStoreId } : {}) }),
     });
     window.location.href = data.payment_url;
   } catch(e) {
@@ -2690,9 +2826,9 @@ async function loadStores() {
           <div style="display:flex;gap:4px;flex-shrink:0;align-items:stretch">
             <button class="btn btn-sm" style="display:flex;align-items:center;justify-content:center;padding:0 10px;height:auto" onclick="event.stopPropagation();showStoreQRDirect(${sd})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg></button>
             <div style="display:flex;flex-direction:column;gap:4px">
-              <button class="btn btn-sm" onclick="event.stopPropagation();openStoreModal(${sd})">Ред.</button>
-              <button class="btn btn-sm" onclick="event.stopPropagation();openSchedule(${sd})" style="display:inline-flex;align-items:center;gap:4px">${svgIco('calendar',12)} Расписание</button>
-              <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">Удал.</button>
+              <button class="btn btn-sm" title="Редактировать" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();openStoreModal(${sd})">${svgIco('edit',14)}</button>
+              <button class="btn btn-sm" title="Расписание" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();openSchedule(${sd})">${svgIco('calendar',14)}</button>
+              <button class="btn btn-sm btn-d" title="Удалить" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">${svgIco('trash',14)}</button>
             </div>
           </div>
         </div>
@@ -2740,12 +2876,18 @@ async function openStoreModal(store) {
   }
   renderMsDeliveryZones(store?.delivery_zones?.length ? store.delivery_zones : [{ radius: 1000, price: 0 }]);
   document.getElementById('ms-pay-provider').value = store?.payment_provider || 'none';
+  document.getElementById('ms-pay-terminal-key-test').value = '';
+  document.getElementById('ms-pay-secret-key-test').value = '';
   document.getElementById('ms-pay-terminal-key').value = '';
   document.getElementById('ms-pay-secret-key').value = '';
-  document.getElementById('ms-pay-test-mode').checked = store?.payment_test_mode ?? true;
   if (store?.id) {
-    req(`/rest/v1/store_payment_settings?store_id=eq.${store.id}&select=terminal_key`).then(r => {
-      if (r?.[0]?.terminal_key) document.getElementById('ms-pay-terminal-key').value = r[0].terminal_key;
+    req('/functions/v1/payment-settings-meta', { method: 'POST', body: JSON.stringify({ store_id: store.id }) }).then(meta => {
+      document.getElementById('ms-key-test-set-badge').style.display    = meta?.has_terminal_key_test ? '' : 'none';
+      document.getElementById('ms-secret-test-set-badge').style.display = meta?.has_secret_key_test    ? '' : 'none';
+      document.getElementById('ms-key-set-badge').style.display         = meta?.has_terminal_key ? '' : 'none';
+      document.getElementById('ms-secret-set-badge').style.display      = meta?.has_secret_key    ? '' : 'none';
+      document.getElementById('ms-pay-terminal-key-test').placeholder   = meta?.has_terminal_key_test ? 'Оставьте пустым чтобы не менять' : 'Введите тестовый ключ';
+      document.getElementById('ms-pay-terminal-key').placeholder        = meta?.has_terminal_key ? 'Оставьте пустым чтобы не менять' : 'Введите ключ';
     }).catch(() => {});
   }
   onMsPayProviderChange();
@@ -2819,9 +2961,10 @@ async function usePickedCoords() {
   if (_de) { _de.disabled = !_activePlatSub; _de.checked = !!_activePlatSub && (d.delivery_enabled || false); }
   renderMsDeliveryZones(d.delivery_zones || [{ radius: 1000, price: 0 }]);
   document.getElementById('ms-pay-provider').value = d.pay_provider || 'none';
-  document.getElementById('ms-pay-terminal-key').value = d.pay_terminal_key || '';
+  document.getElementById('ms-pay-terminal-key-test').value = '';
+  document.getElementById('ms-pay-secret-key-test').value = '';
+  document.getElementById('ms-pay-terminal-key').value = '';
   document.getElementById('ms-pay-secret-key').value = '';
-  document.getElementById('ms-pay-test-mode').checked = d.pay_test_mode ?? true;
   onMsPayProviderChange();
   openModal('m-store');
 }
@@ -2849,9 +2992,10 @@ async function cancelPickMode() {
     _restoreStoreImgPreview(d.image_url || '');
     updateStoreCoordsStatus();
     document.getElementById('ms-pay-provider').value = d.pay_provider || 'none';
-    document.getElementById('ms-pay-terminal-key').value = d.pay_terminal_key || '';
+    document.getElementById('ms-pay-terminal-key-test').value = '';
+    document.getElementById('ms-pay-secret-key-test').value = '';
+    document.getElementById('ms-pay-terminal-key').value = '';
     document.getElementById('ms-pay-secret-key').value = '';
-    document.getElementById('ms-pay-test-mode').checked = d.pay_test_mode ?? true;
     onMsPayProviderChange();
     openModal('m-store');
   }
@@ -2864,6 +3008,10 @@ const _PAY_META = {
   yokassa:       { keyLabel:'shopId', secretLabel:'Секретный ключ', hint:'shopId и секретный ключ — в ЮKassa → Интеграция → HTTP API. Тест: shopId = 100500, ключ = test_...' },
   cloudpayments: { keyLabel:'Public ID', secretLabel:'API Secret', hint:'Public ID и API Secret — в CloudPayments → Настройки → Сайты и API.' },
   sberbank:      { keyLabel:'userName', secretLabel:'password', hint:'Реквизиты выдаёт банк при подключении. Тестовая среда — UAT: securepayments.sberbank.ru.' },
+  alfabank:      { keyLabel:'userName', secretLabel:'password', hint:'Логин и пароль выдаёт Альфа-Банк при подключении эквайринга. Тестовая среда: web.rbsuat.com/payment (отдельный кластер от Сбера).' },
+  vtb:           { keyLabel:'userName', secretLabel:'password', hint:'Логин и пароль выдаёт ВТБ при подключении. Тестовая среда: 3dsec.vtb.ru/payment.' },
+  robokassa:     { keyLabel:'Логин магазина', secretLabel:'Пароль #1', hint:'Логин магазина и Пароль #1 — в личном кабинете Robokassa → Технические настройки. Тест: создать магазин в тестовом режиме.' },
+  paykeeper:     { keyLabel:'Логин API', secretLabel:'Пароль API', hint:'Логин и пароль API — в личном кабинете PayKeeper → Настройки → Интеграция. Тестовый сервер: demo.paykeeper.ru.' },
 };
 
 function onMsPayProviderChange() {
@@ -2872,9 +3020,13 @@ function onMsPayProviderChange() {
   if (p === 'none') { f.style.display = 'none'; return; }
   f.style.display = '';
   const m = _PAY_META[p] || {};
-  document.getElementById('ms-pay-key-label').textContent    = m.keyLabel    || 'Ключ';
-  document.getElementById('ms-pay-secret-label').textContent = m.secretLabel || 'Секретный ключ';
-  document.getElementById('ms-pay-hint').textContent         = m.hint        || '';
+  const kl = m.keyLabel    || 'Ключ';
+  const sl = m.secretLabel || 'Секретный ключ';
+  document.getElementById('ms-pay-key-test-label').textContent    = kl;
+  document.getElementById('ms-pay-secret-test-label').textContent = sl;
+  document.getElementById('ms-pay-key-label').textContent         = kl;
+  document.getElementById('ms-pay-secret-label').textContent      = sl;
+  document.getElementById('ms-pay-hint').textContent              = m.hint || '';
 }
 
 function onMsDirChange() {
@@ -2919,8 +3071,17 @@ async function saveStore() {
   const btn  = document.getElementById('ms-save-btn');
   const restore = btnLoad(btn);
   const id   = document.getElementById('ms-id').value;
+
+  // Fetch actual store count — S.stores may not be loaded if user came via profile/subscription modal
+  let current = S.stores?.length;
+  if (current == null) {
+    try {
+      const arr = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id`);
+      current = arr?.length ?? 0;
+    } catch { current = 0; }
+  }
+
   if (!id) {
-    const current = S.stores?.length ?? 0;
     if (current >= 1) {
       // 2nd+ store requires main subscription + per-store subscription slot
       if (!_activePlatSub) {
@@ -2930,10 +3091,17 @@ async function saveStore() {
         return;
       }
       // Allowed stores = 1 (free) + active store-slots. If we've used them all, require payment.
-      const limit = await req(`/rest/v1/rpc/user_store_limit`, { method:'POST', body: JSON.stringify({ p_user_id: S.session.user.id }) }).catch(() => 1);
-      if (current >= (typeof limit === 'number' ? limit : 1)) {
+      let limit;
+      try {
+        const raw = await req(`/rest/v1/rpc/user_store_limit`, { method:'POST', body: JSON.stringify({ p_user_id: S.session.user.id }) });
+        limit = typeof raw === 'number' ? raw : Array.isArray(raw) ? (raw[0] ?? 1) : 1;
+      } catch {
+        limit = current + 1; // RPC failed — allow save attempt, DB will enforce via policies
+      }
+      if (current >= limit) {
         restore();
-        openAddStorePayModal();
+        closeModal('m-store');
+        openModal('m-add-store-plan');
         return;
       }
     }
@@ -2962,7 +3130,6 @@ async function saveStore() {
     delivery_enabled:   document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
     delivery_zones:     zones,
     payment_provider:   document.getElementById('ms-pay-provider').value,
-    payment_test_mode:  document.getElementById('ms-pay-test-mode').checked,
   };
   try {
     let storeId = id;
@@ -2977,7 +3144,7 @@ async function saveStore() {
       storeId = created?.[0]?.id;
       // Link an unused per-store subscription slot (plan_type=store, store_id=null) to this new store.
       // Never touches platform subscriptions (which also have store_id=null).
-      if (storeId && (S.stores?.length ?? 0) >= 1) {
+      if (storeId && current >= 1) {
         req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.store&store_id=is.null&status=in.(active,grace)&order=created_at.asc&limit=1`)
           .then(slots => {
             const slot = (slots || [])[0];
@@ -2991,17 +3158,21 @@ async function saveStore() {
         body: JSON.stringify({ p_store_id: storeId, p_lng: lng, p_lat: lat, p_color: color }),
       });
     }
-    // Save payment credentials separately (non-blocking)
-    const termKey   = document.getElementById('ms-pay-terminal-key').value.trim();
-    const secretKey = document.getElementById('ms-pay-secret-key').value.trim();
-    if (storeId && body.payment_provider !== 'none' && (termKey || secretKey)) {
-      const spsBody = { store_id: storeId, updated_at: new Date().toISOString() };
-      if (termKey)   spsBody.terminal_key = termKey;
-      if (secretKey) spsBody.secret_key   = secretKey;
-      req('/rest/v1/store_payment_settings', {
+    // Save payment credentials (encrypted via Edge Function)
+    const termKey       = document.getElementById('ms-pay-terminal-key').value.trim();
+    const secretKey     = document.getElementById('ms-pay-secret-key').value.trim();
+    const termKeyTest   = document.getElementById('ms-pay-terminal-key-test').value.trim();
+    const secretKeyTest = document.getElementById('ms-pay-secret-key-test').value.trim();
+    if (storeId && body.payment_provider !== 'none' && (termKey || secretKey || termKeyTest || secretKeyTest)) {
+      req('/functions/v1/payment-settings-set', {
         method: 'POST',
-        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-        body: JSON.stringify(spsBody),
+        body: JSON.stringify({
+          store_id: storeId,
+          ...(termKey && { terminal_key: termKey }),
+          ...(secretKey && { secret_key: secretKey }),
+          ...(termKeyTest && { terminal_key_test: termKeyTest }),
+          ...(secretKeyTest && { secret_key_test: secretKeyTest }),
+        }),
       }).catch(() => {});
     }
     restore(); closeModal('m-store'); loadStores();
@@ -4166,7 +4337,7 @@ async function loadSubscriptions() {
   const el = document.getElementById('sub-list');
   el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   try {
-    let url = '/rest/v1/subscriptions?select=*,stores(name)&order=name.asc';
+    let url = '/rest/v1/subscriptions?deleted_at=is.null&select=*,stores(name)&order=name.asc';
     const storeId = document.getElementById('sub-store-filter')?.value;
     if (storeId) {
       url += `&store_id=eq.${storeId}`;
@@ -4488,17 +4659,19 @@ async function confirmAction() {
   if (!S.pendingConfirm) return;
   const { type, id } = S.pendingConfirm;
   try {
-    const paths = {
-      // DELETE /rest/v1/stores?id=eq.{id}
-      store: `/rest/v1/stores?id=eq.${id}`,
-      // DELETE /rest/v1/categories?id=eq.{id}
-      cat:   `/rest/v1/categories?id=eq.${id}`,
-      // DELETE /rest/v1/menu_items?id=eq.{id}
-      mi:    `/rest/v1/menu_items?id=eq.${id}`,
-      // DELETE /rest/v1/subscriptions?id=eq.{id}
-      sub:   `/rest/v1/subscriptions?id=eq.${id}`,
-    };
-    await req(paths[type], { method:'DELETE' });
+    if (type === 'sub') {
+      await req(`/rest/v1/subscriptions?id=eq.${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ deleted_at: new Date().toISOString() }),
+      });
+    } else {
+      const paths = {
+        store: `/rest/v1/stores?id=eq.${id}`,
+        cat:   `/rest/v1/categories?id=eq.${id}`,
+        mi:    `/rest/v1/menu_items?id=eq.${id}`,
+      };
+      await req(paths[type], { method:'DELETE' });
+    }
     closeModal('m-confirm');
     S.pendingConfirm = null;
     const reloaders = { store: loadStores, cat: loadCategories, mi: loadMenuItems, sub: loadSubscriptions };
@@ -4573,76 +4746,110 @@ function _renderContractText(tpl) {
   return text;
 }
 const SELLER_CONTRACT = {
-  version: '2026-05-24',
+  version: '2026-06-09',
   text: `ЛИЦЕНЗИОННЫЙ ДОГОВОР (ПУБЛИЧНАЯ ОФЕРТА)
 на право использования программного обеспечения
 
-г. Самара                                        «24» мая 2026 г.
+г. Самара                                        «08» июня 2026 г.
 
 Настоящий документ является официальным предложением (публичной офертой)
-[Ваше полное название компании / ИП ФИО] (далее — «Лицензиар») заключить
-лицензионный договор на изложенных ниже условиях.
+ИП Копылов Ярослав Денисович (далее — «Лицензиар») заключить лицензионный
+договор на изложенных ниже условиях.
+
+ЛИЦЕНЗИАР
+ИП Копылов Ярослав Денисович
+ОГРНИП: 326632700087070
+Email: yarich92@gmail.com
 
 1. ТЕРМИНЫ И ОПРЕДЕЛЕНИЯ
-1.1. Сервис (Платформа) — программно-аппаратный комплекс «[Название вашей платформы]»,
-предназначенный для автоматизации приема заказов Продавца.
+1.1. Сервис (Платформа) — программно-аппаратный комплекс «Alliby»,
+предназначенный для автоматизации приёма заказов Продавца.
 1.2. Продавец — юридическое лицо или индивидуальный предприниматель,
-осуществивший Акцепт Оферты.
+осуществивший Акцепт настоящей Оферты.
 1.3. Покупатель — любое лицо, приобретающее товары (услуги) Продавца
 с использованием Сервиса.
-1.4. Акцепт Оферты — полное и безоговорочное принятие условий Оферты путем
-регистрации на Сайте и нажатия кнопки «Зарегистрироваться».
-1.5. Личный кабинет — защищенный раздел Сайта, доступный Продавцу после
+1.4. Акцепт Оферты — полное и безоговорочное принятие условий Оферты путём
+регистрации в Сервисе и нажатия кнопки «Создать аккаунт».
+1.5. Личный кабинет — защищённый раздел Сервиса, доступный Продавцу после
 авторизации с использованием логина и пароля.
-1.6. Тариф — размер лицензионного вознаграждения, опубликованный на Сайте.
+1.6. Тариф — размер лицензионного вознаграждения, опубликованный в Сервисе.
+1.7. Базовые функции — возможности Сервиса, доступные Продавцу бесплатно:
+регистрация, ведение личного кабинета, управление меню и заведением,
+приём заявок и бронирований без онлайн-оплаты, просмотр аналитики.
+1.8. Платные функции — возможности Сервиса, доступные только при наличии
+активной оплаченной подписки: инициация онлайн-оплаты через платёжный шлюз
+(формирование платёжной ссылки для Покупателя), а также все функции Сервиса,
+работа которых непосредственно зависит от проведения онлайн-платежа
+(оплачиваемые абонементы и иные аналогичные возможности).
 
 2. ПРЕДМЕТ ДОГОВОРА
-2.1. Лицензиар предоставляет Продавцу право использования Сервиса на условиях
-простой (неисключительной) лицензии в рамках функциональных возможностей
-оплаченного Тарифа, а Продавец оплачивает это право.
-2.2. Сервис предоставляется «как есть» (as is). Лицензиар не несет ответственности
+2.1. Базовые функции Сервиса предоставляются Продавцу бесплатно без ограничения
+срока. Лицензиар предоставляет Продавцу право использования Платных функций
+на условиях простой (неисключительной) лицензии в рамках оплаченного Тарифа,
+а Продавец обязуется оплачивать это право.
+2.2. Сервис предоставляется «как есть» (as is). Лицензиар не несёт ответственности
 за коммерческую эффективность использования Сервиса Продавцом.
+2.3. Лицензиар вправе изменять перечень функций, относимых к Платным, уведомив
+Продавца не менее чем за 30 (тридцать) календарных дней до вступления изменений
+в силу. Изменения не применяются к уже оплаченному расчётному периоду.
+Продолжение использования Сервиса по истечении срока уведомления означает
+согласие Продавца с изменениями. При несогласии Продавец вправе расторгнуть
+Договор в порядке, предусмотренном разделом 7 настоящего Договора.
+2.4. Создавая и публикуя абонемент в Сервисе, Продавец принимает публичное
+обязательство принимать его к оплате на условиях, заявленных при создании,
+в течение всего срока действия каждого проданного абонемента. Прекращение
+подписки Продавца на Сервис, удаление плана абонемента или прекращение
+деятельности Продавца на Платформе не освобождают Продавца от исполнения
+обязательств перед покупателями ранее выпущенных абонементов.
 
 3. АКЦЕПТ ОФЕРТЫ И ЭЛЕКТРОННАЯ ПОДПИСЬ
-3.1. Договор считается заключенным и вступает в силу с момента Акцепта Оферты.
-3.2. Стороны договорились, что регистрация Продавца в Сервисе и нажатие кнопки
-«Зарегистрироваться» признается аналогом собственноручной подписи и влечет
+3.1. Договор считается заключённым и вступает в силу с момента Акцепта Оферты.
+3.2. Регистрация Продавца в Сервисе и нажатие кнопки «Создать аккаунт»
+признаётся аналогом собственноручной подписи (ФЗ-63, простая ЭП) и влечёт
 юридические последствия, равные подписанию бумажного документа.
-3.3. Продавец соглашается, что все действия, совершенные в Личном кабинете
+3.3. Продавец соглашается, что все действия, совершённые в Личном кабинете
 после ввода логина и пароля, признаются действиями самого Продавца.
 
 4. ПОРЯДОК ОПЛАТЫ И ДОСТУП К СЕРВИСУ
-4.1. Для доступа к платным функциям Продавец выбирает Тариф и оплачивает
-его путем перевода на расчетный счет Лицензиара или с помощью банковской карты.
-4.2. Доступ к функционалу Сервиса активируется в течение 1 рабочего дня
-с момента поступления оплаты.
-4.3. При просрочке оплаты очередного периода Лицензиар вправе заблокировать
+4.1. Для доступа к платным функциям Продавец выбирает Тариф и оплачивает его
+с помощью банковской карты через платёжный шлюз Т-Банка.
+4.2. Доступ к функционалу Сервиса активируется незамедлительно после
+подтверждения оплаты платёжной системой.
+4.3. При просрочке оплаты очередного периода Лицензиар вправе приостановить
 доступ к Сервису до полного погашения задолженности.
+4.4. При подключении автоплатежа Продавец даёт согласие на автоматическое
+ежемесячное списание суммы Тарифа с привязанной банковской карты.
+Автоплатёж может быть отключён в Личном кабинете в любой момент.
 
 5. РОЛЬ ПЛАТФОРМЫ И ОТВЕТСТВЕННОСТЬ
 5.1. Лицензиар является информационным посредником и поставщиком программного
-обеспечения. Лицензиар не является Платежным агентом, Продавцом или лицом,
+обеспечения. Лицензиар не является Платёжным агентом, Продавцом или лицом,
 уполномоченным принимать требования Покупателей по качеству товара.
-5.2. Стороны признают, что все денежные расчеты за товары ведутся напрямую
-между Покупателем и Продавцом с использованием договора эквайринга,
-заключенного Продавцом.
+5.2. Все денежные расчёты за товары ведутся напрямую между Покупателем и
+Продавцом с использованием договора эквайринга, заключённого Продавцом.
 5.3. Продавец обязуется предоставить Лицензиару действующие API-ключи от
-своего банка-эквайера для корректной интеграции приема платежей в Сервис.
-5.4. Продавец несет единоличную ответственность за качество товара, доставку,
+своего банка-эквайера для корректной интеграции приёма платежей в Сервис.
+5.4. Продавец несёт единоличную ответственность за качество товара, доставку,
 возвраты и соблюдение Закона РФ «О защите прав потребителей».
 
-6. КОНФИДЕНЦИАЛЬНОСТЬ
-6.1. Лицензиар принимает меры для защиты персональных данных Продавца и
-Покупателей. Порядок обработки регулируется Политикой конфиденциальности.
+6. КОНФИДЕНЦИАЛЬНОСТЬ И ПЕРСОНАЛЬНЫЕ ДАННЫЕ
+6.1. Лицензиар принимает технические и организационные меры защиты персональных
+данных Продавца и Покупателей в соответствии с ФЗ-152.
+6.2. Порядок обработки персональных данных регулируется Политикой
+конфиденциальности: https://site.alliby.ru/privacy
 
 7. СРОК ДЕЙСТВИЯ И РАСТОРЖЕНИЕ
-7.1. Договор действует в течение оплаченного Расчетного периода
-и автоматически продлевается при своевременной оплате.
-7.2. Стороны вправе расторгнуть Договор в одностороннем порядке,
+7.1. Договор действует в течение оплаченного расчётного периода и
+автоматически продлевается при своевременной оплате.
+7.2. Каждая из Сторон вправе расторгнуть Договор в одностороннем порядке,
 уведомив другую Сторону за 15 календарных дней.
+7.3. При расторжении Договора по инициативе Продавца оплаченный период
+не возвращается.
 
 РЕКВИЗИТЫ ЛИЦЕНЗИАРА
-[Ваши полные банковские и юридические реквизиты]`,
+ИП Копылов Ярослав Денисович
+ОГРНИП: 326632700087070
+Контакт: yarich92@gmail.com`,
 };
 
 async function _sha256(text) {

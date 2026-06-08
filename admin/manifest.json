@@ -6,10 +6,10 @@
   "scope": "/admin/",
   "display": "standalone",
   "background_color": "#f5f5f5",
-  "theme_color": "#1a73e8",
+  "theme_color": "#2E9DC4",
   "lang": "ru",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/admin/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/admin/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

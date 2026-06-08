@@ -590,6 +590,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div class="fg"><label>Имя и фамилия</label><input type="text" id="reg-name" placeholder="Иван Иванов" autocomplete="name"></div>
       <div class="fg"><label>Пароль (мин. 6 символов)</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
       <button class="btn btn-p btn-full" onclick="doRegister()">Зарегистрироваться</button>
+      <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px;line-height:1.5">Нажимая кнопку, вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой конфиденциальности</a></p>
     </div>
 
     <div id="auth-recover" class="tab-pane">
@@ -827,6 +828,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
+        <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Оплатить», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a></p>
       </div>
     </div>
     <!-- ── Заказы pane ── -->
@@ -980,6 +982,18 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         </div>
       </div>
       <button class="btn btn-d btn-full" style="margin-top:10px" onclick="doLogout()">Выйти из аккаунта</button>
+    </div>
+
+    <div class="sec">
+      <div class="sec-title">Документы</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none">
+          Пользовательское соглашение <span style="color:var(--fg-4);font-size:12px">↗</span>
+        </a>
+        <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none">
+          Политика конфиденциальности <span style="color:var(--fg-4);font-size:12px">↗</span>
+        </a>
+      </div>
     </div>
 
     <div class="sec">
@@ -1138,6 +1152,12 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <button class="btn btn-p" id="buy-sub-btn" onclick="buySubscription()">Купить →</button>
     </div>
   </div>
+</div>
+
+<!-- ════════════════ COOKIE BANNER ════════════════ -->
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--bg);border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <span style="flex:1;min-width:200px;font-size:13px;color:var(--fg-2)">Мы используем cookie для аутентификации и работы сервиса. <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Подробнее</a></span>
+  <button class="btn btn-sm btn-p" onclick="acceptCookies()" style="flex-shrink:0">Понятно</button>
 </div>
 
 <!-- ════════════════ BUYER CONTRACT MODAL ════════════════ -->
@@ -1938,7 +1958,11 @@ async function doLogin() {
       document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city);
       await requireContract('buyer', proceed);
     }
-  } catch(e) { err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
+  } catch(e) {
+    const raw = e.error_description || e.message || 'Ошибка входа';
+    err.textContent = raw === 'Email not confirmed' ? 'Email не подтверждён — проверьте почту и нажмите ссылку в письме' : raw;
+    err.style.display = 'block';
+  }
 }
 
 async function doRegister() {
@@ -1973,7 +1997,7 @@ async function doRegister() {
       }
     } else {
       err.className = 'alert alert-ok';
-      err.textContent = 'Аккаунт создан! Войдите с вашим email и паролем.';
+      err.textContent = 'Аккаунт создан! Проверьте почту и нажмите ссылку для подтверждения.';
       err.style.display = 'block';
       showAuthTab('login');
     }
@@ -2395,7 +2419,7 @@ async function loadStoreSubs(targetEl) {
   if (!S.store) { el.innerHTML = '<span class="txt-sm">Выберите заведение</span>'; return; }
   el.innerHTML = SK.subCards(2);
   try {
-    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`);
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}&deleted_at=is.null`);
     if (!subs.length) { if (sec) sec.style.display = 'none'; return; }
     subs.forEach(s => { subPlans[s.id] = s; });
     el.innerHTML = subs.map(renderSubCard).join('');
@@ -3469,7 +3493,7 @@ async function loadSubsForSelectedStore(storeId) {
       });
       S.storeSubActive = active === true;
     } catch { S.storeSubActive = true; }
-    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${storeId}`);
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${storeId}&deleted_at=is.null`);
     subs.forEach(s => { subPlans[s.id] = s; });
     el.innerHTML = subs.length ? subs.map(renderSubCard).join('') : '<span class="txt-sm">Нет абонементов</span>';
   } catch { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
@@ -4361,6 +4385,14 @@ window.addEventListener('hashchange', () => {
   goTo('auth');
 })();
 
+function acceptCookies() {
+  localStorage.setItem('alliby_cookie_ok', '1');
+  document.getElementById('cookie-banner').style.display = 'none';
+}
+if (!localStorage.getItem('alliby_cookie_ok')) {
+  document.getElementById('cookie-banner').style.display = 'flex';
+}
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
   window.addEventListener('load', () => {
@@ -4389,16 +4421,21 @@ function _renderContractText(tpl) {
   return text;
 }
 const BUYER_CONTRACT = {
-  version: '2026-05-24',
+  version: '2026-06-08',
   text: `ПОЛЬЗОВАТЕЛЬСКОЕ СОГЛАШЕНИЕ (ПУБЛИЧНАЯ ОФЕРТА)
 
-г. Самара                                        «24» мая 2026 г.
+г. Самара                                        «08» июня 2026 г.
 
 Настоящее Пользовательское соглашение определяет условия использования
-информационного сервиса «[Название вашей платформы]» (далее — Платформа).
+информационного сервиса «Aliby» (далее — Платформа).
+
+ОПЕРАТОР ПЛАТФОРМЫ
+ИП Копылов Ярослав Денисович
+ОГРНИП: 326632700087070
+Email: yarich92@gmail.com
 
 1. ОБЩИЕ ПОЛОЖЕНИЯ
-1.1. Платформа — это информационный посредник, предоставляющий Покупателю
+1.1. Платформа — информационный посредник, предоставляющий Покупателю
 информацию о товарах и услугах, а также техническую возможность оформить заказ.
 1.2. Продавец — самостоятельное юридическое лицо или ИП, размещающее
 информацию о своих товарах на Платформе.
@@ -4429,10 +4466,12 @@ const BUYER_CONTRACT = {
 5. ПЕРСОНАЛЬНЫЕ ДАННЫЕ
 5.1. Оформляя заказ, Покупатель дает согласие на обработку персональных
 данных Платформе и Продавцу с целью исполнения заказа.
-Политика обработки данных размещена на Сайте Платформы.
+Политика обработки персональных данных: https://site.alliby.ru/privacy
 
-РЕКВИЗИТЫ ВЛАДЕЛЬЦА ПЛАТФОРМЫ
-[Ваши полные контактные и юридические данные]`,
+РЕКВИЗИТЫ ОПЕРАТОРА ПЛАТФОРМЫ
+ИП Копылов Ярослав Денисович
+ОГРНИП: 326632700087070
+Контакт: yarich92@gmail.com`,
 };
 
 async function _sha256(text) {
