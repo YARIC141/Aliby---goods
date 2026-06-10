@@ -109,7 +109,7 @@ nav{
 .ph-h1 .em-blue{font-style:italic;color:var(--blue)}
 .ph-sub{
   font:400 clamp(16px,2vw,19px)/1.65 var(--font-sans);
-  color:var(--fg-2);max-width:600px;margin:0 auto 44px;position:relative;
+  color:var(--fg-2);max-width:720px;margin:0 auto 44px;position:relative;
 }
 .side-jump{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;position:relative}
 .side-card{
@@ -186,7 +186,7 @@ html[data-theme="light"] #business{background:rgba(255,255,255,.22)}
 .feat-desc{font:400 14px/1.65 var(--font-sans);color:var(--fg-3)}
 
 .spotlight{
-  display:grid;grid-template-columns:.9fr 1.1fr;gap:0;
+  display:grid;grid-template-columns:.9fr 1.1fr;gap:0;align-items:center;
   border:1px solid var(--line);border-radius:var(--r-4);overflow:hidden;
   margin-bottom:18px;background:var(--glass-card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
@@ -199,16 +199,16 @@ html[data-theme="light"] #business{background:rgba(255,255,255,.22)}
 .spotlight-list li{display:flex;align-items:flex-start;gap:10px;font:400 14px/1.5 var(--font-sans);color:var(--fg-2)}
 .spotlight-list li::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:7px;flex-shrink:0}
 .spotlight-visual{
-  position:relative;min-height:510px;
+  position:relative;min-height:380px;margin:22px;border-radius:var(--r-3);
   background:
     linear-gradient(180deg, transparent 0%, rgba(0,0,0,.25) 100%),
     repeating-linear-gradient(0deg, transparent, transparent 31px, rgba(255,255,255,.03) 32px),
     repeating-linear-gradient(90deg, transparent, transparent 31px, rgba(255,255,255,.03) 32px);
   background-color:var(--bg-3);
-  border-left:1px solid var(--line);
+  border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
-@media(max-width:760px){.spotlight{grid-template-columns:1fr}.spotlight-visual{border-left:none;border-top:1px solid var(--line);min-height:340px}.dv-scene{transform:scale(.65);transform-origin:bottom center}}
+@media(max-width:760px){.spotlight{grid-template-columns:1fr}.spotlight-visual{margin:0 18px 18px;min-height:340px}.dv-scene{transform:scale(.65);transform-origin:bottom center}}
 
 .mk-pin{position:absolute;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
 .mk-pin-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid #fff;color:#fff}
@@ -332,6 +332,67 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
 .bridge-h .b{color:var(--blue);font-style:italic}
 .bridge-p{font:400 16px/1.65 var(--font-sans);color:var(--fg-2)}
 
+/* ── INVEST (абонементы как инвестиции) ── */
+.inv-deal{
+  display:grid;grid-template-columns:.92fr 1.08fr;gap:0;
+  border:1px solid var(--line);border-radius:var(--r-4);overflow:hidden;
+  background:var(--glass-card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  margin-bottom:22px;
+}
+.inv-hook{padding:clamp(28px,3vw,44px);display:flex;flex-direction:column;justify-content:center;
+  background:radial-gradient(ellipse 90% 70% at 0% 0%, rgba(var(--accent-rgb),.10), transparent 70%)}
+.inv-kicker{font:600 11px/1 var(--font-sans);letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:16px}
+.inv-q{font:400 clamp(24px,3vw,32px)/1.18 var(--font-display);letter-spacing:-.01em;color:var(--fg);margin-bottom:14px;text-wrap:balance}
+.inv-q b{font-style:italic;color:var(--accent);font-weight:400}
+.inv-vs{font:400 15px/1.6 var(--font-sans);color:var(--fg-2);margin-bottom:22px}
+.inv-prod{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r-3);
+  border:1px solid rgba(var(--accent-rgb),.32);background:rgba(var(--accent-rgb),.07)}
+.inv-prod-ic{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(var(--accent-rgb),.14);color:var(--accent)}
+.inv-prod-n{font:700 15px/1.25 var(--font-sans);color:var(--fg)}
+.inv-prod-m{font:400 12.5px/1.4 var(--font-sans);color:var(--fg-3);margin-top:2px}
+
+.inv-math{padding:clamp(24px,2.6vw,34px);border-left:1px solid var(--line);display:flex;flex-direction:column;gap:0}
+.inv-math-h{font:600 11px/1 var(--font-sans);letter-spacing:.09em;text-transform:uppercase;color:var(--fg-3);margin-bottom:18px}
+.inv-step{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0}
+.inv-step+.inv-step{border-top:1px solid var(--line)}
+.inv-step-l{font:400 14.5px/1.45 var(--font-sans);color:var(--fg-2);flex:1}
+.inv-step-l span{color:var(--fg-3);font-size:12.5px;display:block;margin-top:2px}
+.inv-step-v{font:400 19px/1 var(--font-display);color:var(--fg);white-space:nowrap;flex-shrink:0}
+.inv-step-v.cut{color:var(--accent)}
+.inv-step-n{width:23px;height:23px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-sans);color:var(--accent);background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.32)}
+.team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.team-card{background:var(--glass-card);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--r-4);padding:32px 26px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.team-photo{width:108px;height:108px;margin-bottom:18px;box-shadow:0 0 0 1px var(--line),0 10px 30px rgba(0,0,0,.3)}
+.team-name{font:400 21px/1.22 var(--font-display);color:var(--fg)}
+.team-role{margin-top:9px;font:700 10.5px/1 var(--font-sans);letter-spacing:.07em;text-transform:uppercase;color:var(--accent);background:rgba(var(--accent-rgb),.1);border:1px solid rgba(var(--accent-rgb),.3);border-radius:var(--r-pill);padding:6px 13px}
+.team-bio{margin-top:15px;font:400 14px/1.62 var(--font-sans);color:var(--fg-3);text-wrap:pretty}
+.inv-result{margin-top:18px;padding:18px 20px;border-radius:var(--r-3);
+  background:linear-gradient(135deg,rgba(var(--accent-rgb),.16),rgba(var(--accent-rgb),.06));
+  border:1px solid rgba(var(--accent-rgb),.3);display:flex;align-items:center;justify-content:space-between;gap:16px}
+.inv-result-l{font:600 13px/1.4 var(--font-sans);color:var(--fg-2)}
+.inv-result-v{font:400 clamp(30px,4vw,40px)/1 var(--font-display);color:var(--accent);white-space:nowrap}
+
+.inv-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.inv-rcard{border:1px solid var(--line);border-radius:var(--r-4);padding:clamp(24px,2.6vw,32px);
+  background:var(--glass-card);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.inv-rhead{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.inv-rhead .feat-icon{margin-bottom:0;width:42px;height:42px}
+.inv-rtitle{font:400 22px/1.1 var(--font-display);color:var(--fg)}
+.inv-checks{list-style:none;display:flex;flex-direction:column;gap:12px}
+.inv-checks li{display:flex;align-items:flex-start;gap:11px;font:400 15px/1.5 var(--font-sans);color:var(--fg-2)}
+.inv-checks li svg{flex-shrink:0;margin-top:2px;color:var(--accent)}
+.inv-note{margin-top:18px;padding:15px 17px;border-radius:var(--r-3);
+  border:1px solid rgba(var(--accent-rgb),.28);background:rgba(var(--accent-rgb),.06)}
+.inv-note-k{display:flex;align-items:center;gap:8px;font:700 12px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;color:var(--accent);margin-bottom:9px}
+.inv-note-t{font:400 14px/1.6 var(--font-sans);color:var(--fg-2)}
+.inv-note-t b{color:var(--fg);font-weight:700}
+.inv-final{border:1px solid rgba(var(--accent-rgb),.3);border-radius:var(--r-4);padding:clamp(28px,3.4vw,42px);text-align:center;
+  background:radial-gradient(ellipse 80% 120% at 50% 0%, rgba(var(--accent-rgb),.12), transparent 70%)}
+.inv-final-h{font:400 clamp(24px,3.2vw,34px)/1.22 var(--font-display);letter-spacing:-.01em;color:var(--fg);text-wrap:balance}
+.inv-final-h b{font-style:italic;color:var(--accent);font-weight:400}
+@media(max-width:820px){.inv-deal{grid-template-columns:1fr}.inv-math{border-left:none;border-top:1px solid var(--line)}.inv-cols{grid-template-columns:1fr}}
+
 /* ── CTA ── */
 #cta{
   padding:100px clamp(20px,5vw,80px);text-align:center;
@@ -423,10 +484,10 @@ footer{
 }
 .footer-logo{font:400 20px/1 var(--font-display);color:var(--fg-2);text-decoration:none}
 .footer-logo span{color:var(--brand)}
-.footer-copy{font:400 13px/1 var(--font-sans);color:var(--fg-4)}
+.footer-copy{font:400 13px/1 var(--font-sans);color:var(--fg-3)}
 .footer-nav{display:flex;gap:24px;flex-wrap:wrap}
-.footer-nav a{font:400 13px/1 var(--font-sans);color:var(--fg-4);text-decoration:none;transition:color .16s}
-.footer-nav a:hover{color:var(--fg-2)}
+.footer-nav a{font:400 13px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s}
+.footer-nav a:hover{color:var(--fg)}
 
 @media(max-width:640px){
   footer{flex-direction:column;align-items:flex-start;gap:12px}
@@ -722,6 +783,7 @@ html[data-theme="light"] .icon-moon{display:flex}
   <div class="nav-links">
     <a class="nav-link" href="#guests">Для клиентов</a>
     <a class="nav-link" href="#business">Для бизнеса</a>
+    <a class="nav-link" href="#invest" data-comment-anchor="0ced1bab57-a">Абонементы</a>
     <a class="nav-link" href="#pricing">Тарифы</a>
   </div>
   <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
@@ -736,19 +798,20 @@ html[data-theme="light"] .icon-moon{display:flex}
 
 <!-- PAGE HERO -->
 <header id="page-hero">
-  <h1 class="ph-h1">Одна платформа — <span class="em-orange">для клиентов</span> и <span class="em-blue">для бизнеса</span></h1>
-  <p class="ph-sub">Alliby соединяет посетителей и заведения в одном сервисе. Клиенты находят места рядом и заказывают онлайн, а заведения принимают заказы, ведут расписание и управляют меню — без отдельных программ и установки.</p>
-  <div class="side-jump">
-    <a class="side-card orange" href="#guests">
+  <h1 class="ph-h1" data-comment-anchor="d425043386-h1">Площадка для товаров и услуг без комиссий и сервисных сборов</h1>
+  <p class="ph-sub" data-comment-anchor="a45b823ee0-p">Клиенты находят заведения рядом, заказывают онлайн и радуются выгодным покупкам 
+Заведения публикуют ассортимент, принимают заказы и ведут онлайн-запись</p>
+  <div class="side-jump" data-comment-anchor="df7c4fe6ed-div">
+    <a class="side-card orange" href="#guests" style="order:2">
       <span class="sc-eyebrow"><span class="sc-dot"></span>Клиентам</span>
-      <span class="sc-title">Alliby для клиентов</span>
-      <span class="sc-desc">Карта заведений, меню, онлайн-заказ, записи и абонементы в браузере.</span>
+      <span class="sc-title" data-comment-anchor="da57d199f9-span">Alliby глазами клиентов</span>
+      <span class="sc-desc" data-comment-anchor="526362a0f6-span">Удобный поиск. Онлайн запись. Указание времени для приготовления блюд или товаров. Экономия с использованием абонементов.</span>
       <span class="sc-arrow">Смотреть возможности →</span>
     </a>
-    <a class="side-card blue" href="#business">
+    <a class="side-card blue" href="#business" style="order:1">
       <span class="sc-eyebrow"><span class="sc-dot"></span>Бизнесу</span>
       <span class="sc-title">Alliby для бизнеса</span>
-      <span class="sc-desc">Заведения, меню, заказы в реальном времени, расписание и QR-сканер.</span>
+      <span class="sc-desc" data-comment-anchor="2571e37feb-span">Онлайн меню. Интеграция с эквайрингом. Календарь записей. Выбор зон и стоимости доставки. Выпуск абонементов. Отображение скидок.</span>
       <span class="sc-arrow">Смотреть возможности →</span>
     </a>
   </div>
@@ -759,35 +822,38 @@ html[data-theme="light"] .icon-moon{display:flex}
   <div class="seg-inner">
     <div class="seg-head">
       <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для клиентов</span>
-      <h2 class="seg-h2">Найти место рядом и заказать — <em>за минуту</em></h2>
-      <p class="seg-sub">Всё заведение в кармане: от живой карты и меню до оплаты, записи и личных абонементов. Без установки приложения — прямо в браузере.</p>
+      <h2 class="seg-h2" data-comment-anchor="b0bc7135dc-h2">Alliby ценит своего клиента!</h2>
+      <p class="seg-sub" data-comment-anchor="5ce00d3f53-p">Поможем найти то что вы ищите и дадим ключевую информацию для принятия решения. Мы ценим своих клиентов и не интегрируем в сервис рекламу</p>
       <div class="nav-preview">
-        <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Заведения</span>
-        <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Меню</span>
+        <span class="np-pill" data-comment-anchor="3a15e3009d-span"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Заведения</span>
+        <span class="np-pill" data-comment-anchor="cd3b022562-span"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Меню</span>
         <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg>Корзина</span>
-        <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Записи</span>
-        <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg>Абонементы</span>
-        <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Алиби · QR</span>
+        <span class="np-pill" data-comment-anchor="a6364cfa9e-span"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>Запись на услуги</span>
+        <span class="np-pill" data-comment-anchor="773a191ab1-span"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg>Абонементы по QR</span>
+        <span class="np-pill" data-comment-anchor="3c62ced0b0-span"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Статистика экономии</span>
       </div>
     </div>
 
     <div class="spotlight">
-      <div class="spotlight-text">
+      <div class="spotlight-text" data-comment-anchor="d263b725a1-div">
         <div class="feat-icon">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><line x1="9" y1="4" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="20"/></svg>
         </div>
-        <h3 class="spotlight-title">Живая карта заведений рядом</h3>
-        <p class="spotlight-desc">Кафе, рестораны, услуги и магазины города на одной карте. Выбирайте направление, открывайте карточку заведения и переходите к меню в один тап.</p>
+        <h3 class="spotlight-title" data-comment-anchor="78b6218a6b-h3" style="color: rgb(232, 116, 59)">Alliby для клиента</h3>
+        <p class="spotlight-desc">
+</p>
         <ul class="spotlight-list">
           <li>Три направления: Еда, Услуги и Товары</li>
           <li>Поиск рядом — укажите радиус и увидите только заведения в нужной зоне</li>
-          <li>Фильтр доставки — показывает только те, кто довезёт до вас</li>
-          <li>Карточка с адресом, часами работы и контактами</li>
+          <li>Фильтр доставки — показывает только тех кто осуществит доставку до вашего адреса, </li>
+          <li>Карточка заведения с адресом, часами работы и контактами</li>
           <li>Смена города и быстрый возврат к недавним местам</li>
+          <li>Покупай абонементы и экономь на регулярных покупках</li>
+          <li>Отсутствие комиссий для бизнеса = лучшие цены для вас</li>
         </ul>
       </div>
       <div class="spotlight-visual">
-        <div class="dv-scene">
+        <div class="dv-scene" data-comment-anchor="052aed62fa-div">
           <div class="dv-phone">
             <div class="dv-phone-shell">
               <div class="dv-phone-notch"></div>
@@ -913,7 +979,7 @@ html[data-theme="light"] .icon-moon{display:flex}
       <div class="feat-card">
         <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg></div>
         <div class="feat-title">Корзина, оплата и доставка</div>
-        <div class="feat-desc">Соберите заказ, выберите самовывоз или доставку и оплатите картой. Приложение покажет ориентировочное время с учётом приготовления. Статус отслеживается в реальном времени — от «принят» до «курьер едет».</div>
+        <div class="feat-desc" data-comment-anchor="572f4ee8ae-div">Соберите заказ, выберите самовывоз или доставку и оплатите картой. Приложение покажет ориентировочное время доставки с учётом приготовления. Статус отслеживается в реальном времени.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M9 14l2 2 4-4"/></svg></div>
@@ -927,13 +993,13 @@ html[data-theme="light"] .icon-moon{display:flex}
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="18" x2="18" y2="18"/><line x1="14" y1="21" x2="21" y2="21"/></svg></div>
-        <div class="feat-title">«Алиби»: QR и история</div>
+        <div class="feat-title" data-comment-anchor="fb503a4943-div">QR и история</div>
         <div class="feat-desc">Личный QR-код для списания абонемента и история того, сколько вы сэкономили с Alliby.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
-        <div class="feat-title">Без установки</div>
-        <div class="feat-desc">Открывается мгновенно в любом браузере, а регистрация занимает секунды.</div>
+        <div class="feat-title" data-comment-anchor="d1c1326700-div">PWA архитектура</div>
+        <div class="feat-desc">Сохрани приложение на главный экран, открывай на смартфоне или десктопе. Не нужно обновлять — каждый раз открывается последняя версия приложения.</div>
       </div>
     </div>
   </div>
@@ -942,20 +1008,24 @@ html[data-theme="light"] .icon-moon{display:flex}
 <!-- ════════════════ BRIDGE ════════════════ -->
 <section class="seg" style="padding-top:80px;padding-bottom:80px">
   <div class="bridge">
-    <span class="bridge-tag">Две стороны одного сервиса</span>
-    <h2 class="bridge-h">То, что клиент видит как <span class="o">удобство</span>, бизнес получает как <span class="b">инструмент</span></h2>
-    <p class="bridge-p">Заказы, записи и абонементы, которые оформляют клиенты, в реальном времени попадают в рабочую панель заведения. Одна платформа — обе стороны работают синхронно.</p>
+    <span class="bridge-tag">
+</span>
+    <h2 class="bridge-h">
+</h2>
+    <p class="bridge-p">
+</p>
   </div>
 </section>
 
 <!-- ════════════════ ДЛЯ БИЗНЕСА ════════════════ -->
-<section class="seg" id="business">
+<section class="seg" id="business" data-comment-anchor="627e3ba5cc-section">
   <div class="seg-inner">
     <div class="seg-head">
       <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса</span>
-      <h2 class="seg-h2">Принимайте заказы и ведите заведение <em>в одном окне</em></h2>
-      <p class="seg-lead">Alliby для бизнеса создан для <span class="mark">малого бизнеса</span> — чтобы у небольшого кафе, мастерской или магазина были те же возможности, что и у крупных сетей: онлайн-витрина, заказы и оплаты без дорогих систем и команды разработчиков.</p>
-      <p class="seg-sub">Рабочее пространство для кафе, ресторанов, сервисов и магазинов: меню, заказы в реальном времени, расписание, абонементы и приём оплат — без отдельных программ.</p>
+      <h2 class="seg-h2" data-comment-anchor="f693e65f67-h2">Управляй ассортиментом, заказами и <em style="color: rgb(120, 180, 224)"><span style="color:#c4541e">жизнью своего бизнеса</span></em></h2>
+      <p class="seg-lead">Alliby создан для малого бизнеса — чтобы у небольшого кафе, мастерской или магазина были те же возможности, что и у крупных сетей: онлайн-витрина, заказы и оплаты без дорогих систем и команды разработчиков.</p>
+      <p class="seg-sub">
+</p>
       <div class="nav-preview">
         <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg>Заведения</span>
         <span class="np-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Меню</span>
@@ -968,16 +1038,22 @@ html[data-theme="light"] .icon-moon{display:flex}
     <div class="spotlight">
       <div class="spotlight-text">
         <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg></div>
-        <h3 class="spotlight-title">Заказы в реальном времени</h3>
-        <p class="spotlight-desc">Новые заказы появляются в панели мгновенно — со звуковым индикатором и статусами. Подтверждайте, готовьте и закрывайте заказы, ничего не упуская.</p>
+        <h3 class="spotlight-title" style="color: rgb(120, 180, 224)">Alliby для бизнеса</h3>
+        <p class="spotlight-desc">
+</p>
         <ul class="spotlight-list">
-          <li>Live-обновление без перезагрузки страницы</li>
-          <li>Статусы заказа от оплаты до выдачи</li>
-          <li>Оплаченные онлайн заказы сразу в работе</li>
+          <li>Моментальная синхронизация товаров, услуг и меню с приложением клиента</li>
+          <li>Указывайте цену со скидкой, чтобы привлечь клиента к конкретной позиции</li>
+          <li>Управляй статусами заказа от оплаты до выдачи</li>
+          <li>Своя доставка или курьерские службы — стоимость доставки определяешь ты</li>
+          <li>Смотри статистику просмотров заведения клиентами и влияй на конверсию</li>
+          <li>Заполняй информацию о заведении и добавляй иконку бренда для узнаваемости</li>
+          <li>Интерфейс адаптируется под направление бизнеса: еда, товары, услуги</li>
+          <li>Создавай несколько заведений и управляй ими из единого окна</li>
         </ul>
       </div>
       <div class="spotlight-visual">
-        <div class="dv-scene">
+        <div class="dv-scene" data-comment-anchor="c470654ee2-div">
           <!-- PHONE: Admin app — 2 screens -->
           <div class="dv-phone">
             <div class="dv-phone-shell">
@@ -1086,11 +1162,11 @@ html[data-theme="light"] .icon-moon{display:flex}
       </div>
     </div>
 
-    <div class="feat-grid">
+    <div class="feat-grid" data-comment-anchor="21fd8c3135-div">
       <div class="feat-card">
         <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg></div>
-        <div class="feat-title">Заведения и условия доставки</div>
-        <div class="feat-desc">Задавайте адрес, часы работы и зоны доставки с ценами для каждой зоны. Клиент видит стоимость доставки сразу при выборе заведения.</div>
+        <div class="feat-title" data-comment-anchor="ef735d2356-div">Заведения на карте</div>
+        <div class="feat-desc" data-comment-anchor="f5924c77ed-div">Заведение на карте с логотипом бренда. Указана средняя цена товаров и услуг, расписание, возможность онлайн-оплаты и доставки.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></div>
@@ -1117,13 +1193,266 @@ html[data-theme="light"] .icon-moon{display:flex}
         <div class="feat-title">Абонементы для удержания</div>
         <div class="feat-desc">Создавайте абонементы и правила скидок, чтобы клиенты возвращались чаще. Сильный инструмент лояльности из коробки.</div>
       </div>
+      <div class="feat-card">
+        <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <div class="feat-title">Управляй сотрудниками</div>
+        <div class="feat-desc">Добавляйте сотрудников, чтобы у них была возможность осуществлять операции в Alliby — принимать заказы, вести записи и обслуживать клиентов.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <div class="feat-title">Аналитика</div>
+        <div class="feat-desc">Просматривайте аналитику по заказам, понимайте, какие блюда заказывают чаще, и узнавайте, сколько просмотров заведения принёс вам Alliby.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg></div>
+        <div class="feat-title">Доставка</div>
+        <div class="feat-desc">Управляйте зоной доставки, задавая максимальное расстояние от заведения. Указывайте несколько радиусов вокруг заведения и свою цену для каждого. Используйте собственную службу доставки или наёмного курьера.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ ЭЛЕКТРОННАЯ ВИТРИНА ════════════════ -->
+<section class="seg" id="showcase" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Витрина</span>
+      <h2 class="seg-h2">Электронная витрина заведения <em>по QR или ссылке</em></h2>
+      <p class="seg-lead">При создании заведения Alliby генерирует цифровую витрину — <span class="mark">ссылку и QR, которые всегда ведут на актуальный список</span> ваших товаров и услуг.</p>
+    </div>
+
+    <div class="inv-deal">
+      <div class="inv-hook" data-comment-anchor="782c82c3fa-div">
+        <div class="inv-kicker">Сценарий</div>
+        <h3 class="inv-q">Откажитесь от <b>бумажных меню</b> навсегда</h3>
+        <p class="inv-vs">Меняйте позиции и цены под нужды бизнеса — ссылка и QR остаются прежними, а клиент всегда видит свежую витрину.</p>
+        <div class="inv-prod">
+          <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+          <div>
+            <div class="inv-prod-n">Ссылка + QR заведения</div>
+            <div class="inv-prod-m">Создаётся один раз — меню всегда актуальное</div>
+          </div>
+        </div>
+        <p class="inv-vs" style="margin:14px 0 0">Тестируйте новые продукты и цены, собирая по ним статистику с помощью инструмента «Аналитика».</p>
+      </div>
+      <div class="inv-math" data-comment-anchor="d97af12741-div">
+        <div class="inv-math-h">Как это работает</div>
+        <div class="inv-step">
+          <div class="inv-step-n">1</div>
+          <div class="inv-step-l">Добавляйте позиции и меняйте цены<span>в личном кабинете Alliby</span></div>
+          <div class="inv-step-v">
+</div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">2</div>
+          <div class="inv-step-l">Alliby создаёт ссылку и QR<span>автоматически для заведения</span></div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">3</div>
+          <div class="inv-step-l">Размещайте ссылку в маркетинге<span>соцсети, сайт, рассылки</span></div>
+          <div class="inv-step-v">
+</div>
+        </div>
+        <div class="inv-result">
+          <div class="inv-result-l">Распечатайте QR — и получите<br>всегда актуальное меню</div>
+          <div class="inv-result-v" style="font-size:clamp(20px,2.4vw,26px)">0 ₽ на перепечатку</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-cols">
+      <div class="inv-rcard">
+        <div class="inv-rhead">
+          <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg></div>
+          <div class="inv-rtitle">Удобно бизнесу</div>
+        </div>
+        <ul class="inv-checks" data-comment-anchor="24d912d4b7-ul">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Меняйте цены и ассортимент в любой момент</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Одна ссылка и QR — на весь срок жизни заведения</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Ноль затрат на перепечатку бумажных меню</li>
+        </ul>
+        <div class="inv-note">
+          <div class="inv-note-k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Важно</div>
+          <div class="inv-note-t">Обновили цену в кабинете — <b>она моментально появляется</b> в витрине по той же ссылке и QR.</div>
+        </div>
+      </div>
+      <div class="inv-rcard">
+        <div class="inv-rhead">
+          <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="10" y1="18" x2="14" y2="18"/></svg></div>
+          <div class="inv-rtitle">Удобно клиенту</div>
+        </div>
+        <ul class="inv-checks">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Сканирует QR — сразу видит актуальное меню</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Не нужно устанавливать приложение</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Всегда свежие цены, фото и наличие</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Открывается по ссылке в один тап</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ ИНВЕСТИЦИИ ЧЕРЕЗ АБОНЕМЕНТЫ ════════════════ -->
+<section class="seg" id="invest" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59" data-comment-anchor="ca0c45b1d1-section">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Инвестиции</span>
+      <h2 class="seg-h2" data-comment-anchor="be6d722920-em">Привлекайте инвестиции <em data-comment-anchor="c7c13a789e-em">с помощью абонементов</em></h2>
+      <p class="seg-lead">Alliby превращает абонементы в инструмент привлечения денег — <span class="mark">без банков и процентов</span>.</p>
+    </div>
+
+    <div class="inv-deal">
+      <div class="inv-hook">
+        <div class="inv-kicker">Сценарий</div>
+        <h3 class="inv-q">Нужно <b>300 000 ₽</b> на ремонт торгового зала?</h3>
+        <p class="inv-vs">Вместо кредита — выпустите абонемент и соберите сумму со своих же клиентов.</p>
+        <div class="inv-prod">
+          <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+          <div>
+            <div class="inv-prod-n">«Каждый день — 1 бесплатный кофе»</div>
+            <div class="inv-prod-m">30 чашек · ограниченный тираж и срок действия</div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-math" data-comment-anchor="868b866d63-div">
+        <div class="inv-math-h">Как это работает</div>
+        <div class="inv-step">
+          <div class="inv-step-n">1</div>
+          <div class="inv-step-l">Реальная стоимость 30 чашек<span data-comment-anchor="fb12fd0ecc-span">обычная цена в кафе</span></div>
+          <div class="inv-step-v">15 000 ₽</div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">2</div>
+          <div class="inv-step-l">Скидка 20% — цена абонемента<span>клиент экономит 3 000 ₽ и покупает</span></div>
+          <div class="inv-step-v cut">12 000 ₽</div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">3</div>
+          <div class="inv-step-l">Продаёте 25 абонементов<span>25 × 12 000 ₽</span></div>
+          <div class="inv-step-v">× 25</div>
+        </div>
+        <div class="inv-result">
+          <div class="inv-result-l">Собрано без процентов<br>и переплат</div>
+          <div class="inv-result-v">300 000 ₽</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-cols">
+      <div class="inv-rcard">
+        <div class="inv-rhead">
+          <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"/></svg></div>
+          <div class="inv-rtitle">Почему клиенту выгодно</div>
+        </div>
+        <ul class="inv-checks">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Он и так пьёт кофе каждый день</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Получает скидку 20% на привычную покупку</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Может купить абонемент в подарок</li>
+        </ul>
+        <div class="inv-note">
+          <div class="inv-note-k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Важная механика</div>
+          <div class="inv-note-t">Сам клиент приходит с абонементом, но <b>приводит друга, который платит полную стоимость</b> за свой заказ — вы получаете дополнительную продажу без скидки.</div>
+        </div>
+      </div>
+      <div class="inv-rcard" data-comment-anchor="324c672d13-div">
+        <div class="inv-rhead">
+          <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+          <div class="inv-rtitle">Почему вы в плюсе</div>
+        </div>
+        <ul class="inv-checks">
+          <li data-comment-anchor="b1bd2bcf29-li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Единоразово получаете существенную сумму</li>
+          <li data-comment-anchor="0e018e2e8f-li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Привлекаете новую аудиторию, интересующуюся скидками</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Привлекаете ровно столько денег, сколько нужно</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Если клиент пропустит слот по абонементу — вы получаете гарантированную прибыль без сопутствующих издержек</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Прогнозируете потребность в сырье и продукции по количеству абонементов</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Работаете без лишних обязательств и потери прибыли</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ ДОСТАВКА ════════════════ -->
+<section class="seg" id="delivery" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Доставка</span>
+      <h2 class="seg-h2">Доставляй <em>на своих условиях</em></h2>
+      <p class="seg-lead">Назначайте радиусы вокруг заведения и свою цену доставки — <span class="mark">разница со стоимостью курьера остаётся вам</span>.</p>
+    </div>
+
+    <div class="inv-deal">
+      <div class="inv-hook">
+        <div class="inv-kicker">Сценарий</div>
+        <h3 class="inv-q">Организуйте доставку <b>и заработайте</b> на этом</h3>
+        <p class="inv-vs">Вы сами определяете максимальное расстояние, цену для каждой зоны и кто везёт — свой сотрудник или наёмный курьер.</p>
+        <div class="inv-prod">
+          <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></div>
+          <div>
+            <div class="inv-prod-n">Зоны доставки · 1–3 км</div>
+            <div class="inv-prod-m">Своя цена для каждого радиуса</div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-math" data-comment-anchor="f24b7d3624-div">
+        <div class="inv-math-h">Как это работает</div>
+        <div class="inv-step">
+          <div class="inv-step-n">1</div>
+          <div class="inv-step-l">Цена доставки в зоне 2 км<span>назначаете сами</span></div>
+          <div class="inv-step-v">500₽</div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">2</div>
+          <div class="inv-step-l">Реальная стоимость курьера<span>свой сотрудник или наёмный</span></div>
+          <div class="inv-step-v cut">250 ₽</div>
+        </div>
+        <div class="inv-step">
+          <div class="inv-step-n">3</div>
+          <div class="inv-step-l">30 заказов с доставкой в день<span>250₽ прибыли с каждого</span></div>
+          <div class="inv-step-v">× 30</div>
+        </div>
+        <div class="inv-result">
+          <div class="inv-result-l">Заработок на доставке<br>сверх затрат</div>
+          <div class="inv-result-v">6 000 ₽/день</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-cols">
+      <div class="inv-rcard">
+        <div class="inv-rhead">
+          <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
+          <div class="inv-rtitle">Гибкие условия</div>
+        </div>
+        <ul class="inv-checks">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Несколько радиусов вокруг заведения — своя цена для каждого</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Максимальное расстояние доставки определяете вы</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Свои сотрудники или наёмные курьеры — на ваш выбор</li>
+        </ul>
+        <div class="inv-note">
+          <div class="inv-note-k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Пример</div>
+          <div class="inv-note-t">Зона 1 км — <b>150 ₽</b>, зона 3 км — <b>300 ₽</b>. Подберите цену под спрос и зарабатывайте на разнице со стоимостью курьера.</div>
+        </div>
+      </div>
+      <div class="inv-rcard">
+        <div class="inv-rhead">
+          <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-4z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+          <div class="inv-rtitle">Почему вы в плюсе</div>
+        </div>
+        <ul class="inv-checks">
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Зарабатываете на разнице между ценой и реальной стоимостью доставки</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Клиент видит стоимость доставки заранее — без сюрпризов</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Не зависите от агрегаторов и их комиссий</li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Масштабируете зоны под реальный спрос</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ════════════════ ТАРИФЫ ════════════════ -->
 <section class="seg" id="pricing">
-  <div class="seg-inner">
+  <div class="seg-inner" data-comment-anchor="c5cd839b4b-div">
     <div class="seg-head">
       <span class="seg-eyebrow"><span class="sc-dot"></span>Тарифы для бизнеса</span>
       <h2 class="seg-h2">Почти всё — <em>бесплатно</em></h2>
@@ -1131,13 +1460,19 @@ html[data-theme="light"] .icon-moon{display:flex}
     </div>
 
     <div class="tiers">
-      <div class="tier free">
-        <div class="tier-label">Бесплатно <span class="pill">всегда</span></div>
-        <ul>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Заведения и точки на карте</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Меню, товары, услуги и категории</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Расписание и записи клиентов</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Абонементы и QR-сканер</li>
+      <div class="tier free" data-comment-anchor="da2410eb8f-div">
+        <div class="tier-label" data-comment-anchor="a06f9d2624-div"><span style="color:#1f9d57">Бесплатно</span> <span class="pill">всегда</span></div>
+        <ul data-comment-anchor="103fcaae32-ul">
+          <li data-comment-anchor="b5096e0137-li" style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Отображение заведения на карте</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Меню, цены, описание товаров и услуг</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>QR меню или списка услуг для офлайн использования</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>График работы и расписание мастеров</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Заказы и записи онлайн</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Создание абонементов и акций</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>QR для списания абонементов</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доступ к клиентской базе для уведомлений</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Добавление сотрудников</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Аналитика по заведению</li>
         </ul>
       </div>
       <div class="tier paid">
@@ -1150,23 +1485,42 @@ html[data-theme="light"] .icon-moon{display:flex}
     </div>
 
     <div class="plans">
-      <div class="plan">
-        <div class="plan-name">Месячная</div>
-        <div class="plan-price"><span class="amt" style="font-size:30px;font-style:italic">Пока бесплатно</span></div>
-        <div class="plan-save">Цена появится позже</div>
+      <div class="plan featured" data-comment-anchor="6edbf0bb2b-div">
+        <div class="plan-badge">Попробуй сейчас</div>
+        <div class="plan-name" data-comment-anchor="c88708fcbb-div">Первый месяц</div>
+        <div class="plan-price"><span class="amt" style="font-size:30px;font-style:italic">Бесплатно</span></div>
+        <div class="plan-save">Одно заведение</div>
         <ul class="plan-incl">
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Интернет-заказ и онлайн-оплата</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доставка</li>
         </ul>
       </div>
-      <div class="plan featured">
-        <div class="plan-badge">Попробуй сейчас</div>
-        <div class="plan-name">Годовая</div>
-        <div class="plan-price"><span class="amt" style="font-size:30px;font-style:italic">Пока бесплатно</span></div>
-        <div class="plan-save">Цена появится позже</div>
+      <div class="plan" data-comment-anchor="9b9a33797d-div">
+        <div class="plan-name">Месячная</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic" data-comment-anchor="191960d596-span">1000 ₽</span><span class="per">/мес</span></div>
+        <div class="plan-save">Одно заведение</div>
         <ul class="plan-incl">
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Интернет-заказ и онлайн-оплата</li>
           <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доставка</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Годовая</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">10 000 ₽</span><span class="per">/год</span></div>
+        <div class="plan-save">Экономия 2 000 ₽ против помесячной</div>
+        <ul class="plan-incl">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Интернет-заказ и онлайн-оплата</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доставка</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Одно заведение</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <div class="plan-name">Дополнительное заведение</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">300 ₽</span><span class="per">/мес</span></div>
+        <div class="plan-save">за каждое доп. заведение</div>
+        <ul class="plan-incl">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Добавьте к учётной записи ещё одно заведение</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Управляйте всеми заведениями в едином окне</li>
         </ul>
       </div>
     </div>
@@ -1182,7 +1536,7 @@ html[data-theme="light"] .icon-moon{display:flex}
 </section>
 
 <!-- CTA -->
-<section id="cta">
+<section id="cta" data-comment-anchor="1ec500a78a-section">
   <h2 class="cta-h2">Начните пользоваться Alliby</h2>
   <p class="cta-sub">Клиентам — найти место и заказать за минуту. Бизнесу — подключить заведение и принимать заказы онлайн.</p>
   <div class="cta-btns">
@@ -1197,19 +1551,71 @@ html[data-theme="light"] .icon-moon{display:flex}
   </div>
 </section>
 
+<!-- ════════════════ КОМАНДА ════════════════ -->
+<section class="seg" id="team" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby Team</span>
+      <h2 class="seg-h2">Наша <em>команда</em></h2>
+      <p class="seg-sub">Люди, которые делают Alliby — от исследования клиентов до кода, тестирования и права.</p>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <image-slot id="team-yaroslav" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Копылов Ярослав Денисович</div>
+        <div class="team-role">Основатель</div>
+        <p class="team-bio">Сформулировал идею Alliby и ведёт продукт: стратегия, партнёрства и развитие платформы для клиентов и бизнеса.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-marketing" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Анна Соколова</div>
+        <div class="team-role">Маркетинг и исследование клиентов</div>
+        <p class="team-bio">Изучает потребности заведений и клиентов, выстраивает позиционирование и проверяет продуктовые гипотезы на реальной аудитории.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-frontend" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Дмитрий Орлов</div>
+        <div class="team-role">Frontend-разработчик</div>
+        <p class="team-bio">Отвечает за интерфейсы клиентского приложения и админ-панели — быстрые, отзывчивые и удобные на любом устройстве.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-backend" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Игорь Лебедев</div>
+        <div class="team-role">Backend-разработчик</div>
+        <p class="team-bio">Проектирует серверную часть, API и интеграции с эквайрингом, обеспечивает надёжность и скорость платформы.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-qa" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Мария Кузнецова</div>
+        <div class="team-role">Тестировщик</div>
+        <p class="team-bio">Проверяет каждую функцию до релиза, следит за качеством и стабильностью продукта во всех сценариях.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-legal" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Елена Васильева</div>
+        <div class="team-role">Юрист</div>
+        <p class="team-bio">Сопровождает договоры, обработку данных и комплаенс, чтобы сервис работал прозрачно и в рамках закона.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <a class="footer-logo" href="/">Alli<span>by</span></a>
   <div class="footer-nav">
     <a href="#guests">Для клиентов</a>
-    <a href="#business">Для бизнеса</a>
+    <a href="#business" data-comment-anchor="d3d1804aa7-a">Для бизнеса</a>
     <a href="#pricing">Тарифы</a>
+    <a href="#team">Команда</a>
     <a href="https://alliby.ru/">Приложение</a>
   </div>
   <span class="footer-copy">© 2026 Alliby</span>
 </footer>
 
 </div><!-- #page-wrap -->
+
+<script src="image-slot.js"></script>
 
 <script>
 (function(){
@@ -1287,7 +1693,7 @@ function orderTake(btn){
     if(ticking)return;
     ticking=true;
     requestAnimationFrame(function(){
-      orn.style.transform='translateY('+Math.round(window.scrollY*0.13)+'px)';
+      orn.style.transform='translateY('+(Math.round(window.scrollY*0.13)%72)+'px)';
       ticking=false;
     });
   },{passive:true});
@@ -1336,14 +1742,5 @@ function orderTake(btn){
   });
 })();
 </script>
-<footer style="border-top:1px solid #eee;padding:32px 24px;text-align:center">
-  <div style="max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px">
-    <span style="font-size:13px;color:#888">© 2026 Aliby · ИП Копылов Ярослав Денисович · ОГРНИП 326632700087070</span>
-    <div style="display:flex;gap:20px">
-      <a href="https://site.alliby.ru/terms" style="font-size:13px;color:#888;text-decoration:none">Пользовательское соглашение</a>
-      <a href="https://site.alliby.ru/privacy" style="font-size:13px;color:#888;text-decoration:none">Политика конфиденциальности</a>
-    </div>
-  </div>
-</footer>
 </body>
 </html>
