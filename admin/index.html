@@ -4902,7 +4902,7 @@ async function saveEmployee() {
       document.getElementById('emp-store').previousElementSibling?.style.removeProperty('display');
       closeModal('m-add-employee');
       await loadEmployees();
-    } catch(e) { err.textContent = e.message || 'Ошибка'; err.style.display = 'block'; }
+    } catch(e) { err.textContent = e.error || e.message || 'Ошибка'; err.style.display = 'block'; }
     return;
   }
 
@@ -4912,11 +4912,12 @@ async function saveEmployee() {
   const storeId = document.getElementById('emp-store').value;
   const storeName = (S.stores||[]).find(s => s.id === storeId)?.name || '';
   if (!name || !phone || !storeId || !password) { err.textContent = 'Заполните все поля'; err.style.display = 'block'; return; }
+  if (password.length < 6) { err.textContent = 'Пароль должен быть не менее 6 символов'; err.style.display = 'block'; return; }
   try {
     await req('/functions/v1/manage-employee', { method: 'POST', body: JSON.stringify({ full_name: name, phone, store_id: storeId, store_name: storeName, password }) });
     closeModal('m-add-employee');
     await loadEmployees();
-  } catch(e) { err.textContent = e.message || 'Ошибка'; err.style.display = 'block'; }
+  } catch(e) { err.textContent = e.error || e.message || 'Ошибка'; err.style.display = 'block'; }
 }
 
 async function deleteEmployee(empId, empName) {
