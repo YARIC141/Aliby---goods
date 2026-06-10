@@ -381,6 +381,8 @@ tr.row-click:hover td{background:var(--bg-2)}
 <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></symbol>
 <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/><path d="M9 6V4h6v2"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></symbol>
 </defs>
 </svg>
 
@@ -428,7 +430,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 
     <div id="auth-login" class="tab-pane active">
       <div id="err-login" class="alert alert-e" style="display:none"></div>
-      <div class="fg"><label>Email</label><input type="email" id="li-email" autocomplete="username"></div>
+      <div class="fg"><label>Email или логин сотрудника</label><input type="text" id="li-email" autocomplete="username"></div>
       <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
       <button class="btn btn-p btn-full" id="login-btn" onclick="doLogin()">Войти</button>
       <hr>
@@ -628,7 +630,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
 
-    <div class="sec">
+    <div class="sec" id="p-sec-stores-subs">
       <div class="sec-title">Заведения и подписки</div>
       <button class="btn btn-full" id="p-stores-subs-btn" onclick="openStoresSubsModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
         <span id="p-stores-subs-summary" style="font-size:13px;color:var(--fg-2)">Загрузка…</span>
@@ -636,6 +638,14 @@ tr.row-click:hover td{background:var(--bg-2)}
       </button>
       <!-- legacy anchor for loadPlatformSubscription compat -->
       <div id="p-platsub-inner" style="display:none"></div>
+    </div>
+
+    <div class="sec" id="p-sec-employees">
+      <div class="sec-title">Сотрудники</div>
+      <button class="btn btn-full" onclick="openEmployeesModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
+        <span style="font-size:13px;color:var(--fg-2)">Управление сотрудниками</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
 
     <div class="sec" id="p-pay-sec" style="display:none">
@@ -681,7 +691,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
 
-    <div class="sec">
+    <div class="sec" id="p-sec-pwd">
       <div class="sec-title">Сменить пароль</div>
       <div class="row">
         <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
@@ -723,7 +733,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
 
-    <div class="sec">
+    <div class="sec" id="p-sec-delete">
       <div class="sec-title">Удаление аккаунта</div>
       <p class="txt-sm" style="margin-bottom:10px">Аккаунт и все связанные данные будут удалены безвозвратно.</p>
       <button class="btn btn-d btn-full" id="p-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт</button>
@@ -897,6 +907,56 @@ tr.row-click:hover td{background:var(--bg-2)}
 </div><!-- #app -->
 
 <!-- ════════════════ MODALS ════════════════ -->
+
+<!-- ════════════════ EMPLOYEES ════════════════ -->
+<div class="overlay" id="m-employees">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <h3>Сотрудники</h3>
+      <button class="modal-close" onclick="closeModal('m-employees')">×</button>
+    </div>
+    <div style="padding:14px 16px 4px;display:flex;justify-content:flex-end">
+      <button class="btn btn-p btn-sm" onclick="openAddEmployeeModal()">+ Добавить</button>
+    </div>
+    <div id="emp-list" style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">
+      <div class="txt-muted">Загрузка…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ ADD EMPLOYEE ════════════════ -->
+<div class="overlay" id="m-add-employee">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h3 id="emp-modal-title">Новый сотрудник</h3>
+      <button class="modal-close" onclick="closeModal('m-add-employee')">×</button>
+    </div>
+    <div style="padding:16px">
+      <input type="hidden" id="emp-edit-id">
+      <div class="fg">
+        <label>ФИО</label>
+        <input type="text" id="emp-name" placeholder="Иван Петров">
+      </div>
+      <div class="fg">
+        <label>Телефон</label>
+        <input type="tel" id="emp-phone" placeholder="+79001234567">
+      </div>
+      <div class="fg">
+        <label>Заведение</label>
+        <select id="emp-store"></select>
+      </div>
+      <div class="fg">
+        <label id="emp-pwd-label">Пароль</label>
+        <input type="text" id="emp-password" placeholder="Минимум 6 символов" autocomplete="new-password">
+      </div>
+      <div id="emp-login-preview" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font-size:12px;color:var(--fg-3)">
+        Логин: <strong id="emp-login-value" style="color:var(--fg);font-family:monospace"></strong>
+      </div>
+      <div id="emp-err" class="alert alert-e" style="display:none"></div>
+      <button class="btn btn-p btn-full" onclick="saveEmployee()">Сохранить</button>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════ BOOKING DETAIL ════════════════ -->
 <div class="overlay" id="m-booking-detail">
@@ -1868,17 +1928,27 @@ async function doLogin() {
   err.style.display = 'none';
   const restore = btnLoad(document.getElementById('login-btn'), 'Вход…');
   try {
+    let emailInput = document.getElementById('li-email').value.trim();
+    // Сотрудник вводит короткий логин без домена
+    if (!emailInput.includes('@')) emailInput = emailInput + '@alliby.internal';
     const d = await req('/auth/v1/token?grant_type=password', {
       method: 'POST',
-      body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
+      body: JSON.stringify({ email: emailInput, password: document.getElementById('li-pwd').value }),
     });
     const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
-    if (profs[0]?.role !== 'admin') { restore(); err.textContent = 'Нет прав администратора'; err.style.display = 'block'; return; }
+    const role = profs[0]?.role;
+    if (!['admin', 'employee'].includes(role)) { restore(); err.textContent = 'Нет прав доступа'; err.style.display = 'block'; return; }
     restore();
+    S.profile = profs[0];
     setSession(d);
+    applyRoleRestrictions();
     onAdminReady();
-    if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }); }
-    else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }
+    if (role === 'employee') {
+      goTo('orders');
+    } else {
+      if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }); }
+      else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }
+    }
   } catch(e) { restore(); err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
 }
 
@@ -2027,15 +2097,22 @@ async function loadProfile() {
   document.getElementById('p-role').textContent  = '…';
   try {
     const u = await req('/auth/v1/user');
-    document.getElementById('p-email').textContent = u.email || '';
+    const isEmployee = S.profile?.role === 'employee';
+    document.getElementById('p-email').textContent = isEmployee
+      ? (S.profile?.employee_login || u.email || '')
+      : (u.email || '');
     const profs = await req(`/rest/v1/profiles?id=eq.${u.id}`);
     if (profs.length) {
-      document.getElementById('p-role').textContent  = profs[0].role  || '';
-      document.getElementById('p-phone').value       = profs[0].phone || '';
+      const roleLabels = { admin: 'Администратор', employee: 'Сотрудник', user: 'Пользователь' };
+      document.getElementById('p-role').textContent = roleLabels[profs[0].role] || profs[0].role || '';
+      document.getElementById('p-phone').value = profs[0].phone || '';
     }
   } catch(e) {}
-  await loadStoreSubscriptions();
-  await loadPaymentProfile();
+  applyRoleRestrictions();
+  if (S.profile?.role !== 'employee') {
+    await loadStoreSubscriptions();
+    await loadPaymentProfile();
+  }
 }
 
 let _ppStoreId = null;
@@ -3708,7 +3785,9 @@ async function loadOrders(append = false) {
     el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   }
   try {
-    const storeId = document.getElementById('ord-store-filter')?.value;
+    const storeId = S.profile?.role === 'employee'
+      ? S.profile.employee_store_id
+      : document.getElementById('ord-store-filter')?.value;
     let url = `/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     if (storeId) url += `&store_id=eq.${storeId}`;
     if (_adminOrdFilter === 'all') { /* no status filter */ }
@@ -4329,8 +4408,27 @@ async function onAdminReady() {
   _refreshActivePlatSub();
   try {
     const profs = await req(`/rest/v1/profiles?id=eq.${S.session.user.id}&select=*&limit=1`);
-    if (profs[0]) S.profile = profs[0];
+    if (profs[0]) { S.profile = profs[0]; applyRoleRestrictions(); }
   } catch {}
+}
+
+function applyRoleRestrictions() {
+  if (S.profile?.role !== 'employee') return;
+  // Скрыть навигацию недоступных разделов
+  ['stores','menu'].forEach(nav => {
+    document.querySelector(`[data-nav="${nav}"]`)?.style.setProperty('display','none','important');
+  });
+  // Скрыть секции профиля
+  ['p-sec-stores-subs','p-sec-employees','p-sec-pwd','p-sec-delete','p-pay-sec'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Обновить подпись роли в сайд-нав
+  const roleEl = document.querySelector('.sn-role');
+  if (roleEl) roleEl.textContent = 'Сотрудник';
+  // Скрыть фильтр заведений в заказах (сотрудник видит только своё)
+  const ordStoreFilter = document.getElementById('ord-store-filter');
+  if (ordStoreFilter) ordStoreFilter.closest('.toolbar')?.style.setProperty('display','none');
 }
 
 // ─── SUBSCRIPTIONS ───
@@ -4689,6 +4787,146 @@ function hideSplash() {
 }
 setTimeout(hideSplash, 2000);
 
+// ─── EMPLOYEES ───
+function _transliterate(str) {
+  const map = {'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'yo','ж':'zh','з':'z','и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r','с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch','ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya'};
+  return str.toLowerCase().split('').map(c => map[c] ?? (/[a-z0-9]/.test(c) ? c : '_')).join('').replace(/_+/g,'_').replace(/^_+|_+$/g,'');
+}
+function _buildEmpLogin(storeName, fullName, phone) {
+  return _transliterate(storeName).slice(0,20) + '_' + _transliterate(fullName).slice(0,20) + '_' + phone.replace(/\D/g,'').slice(-10);
+}
+
+async function openEmployeesModal() {
+  openModal('m-employees');
+  await loadEmployees();
+}
+
+async function loadEmployees() {
+  const el = document.getElementById('emp-list');
+  el.innerHTML = '<div class="txt-muted">Загрузка…</div>';
+  try {
+    const emps = await req(
+      `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc`
+    );
+    if (!emps.length) { el.innerHTML = '<div class="txt-muted">Сотрудников нет</div>'; return; }
+    const storeMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.name]));
+    el.innerHTML = emps.map(e => {
+      const storeName = storeMap[e.employee_store_id] || '—';
+      return `<div class="card" style="padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px/1.3 var(--font-sans);margin-bottom:3px">${esc(e.full_name||'')}</div>
+            <div style="font-size:12px;color:var(--fg-3)">${esc(storeName)}</div>
+            ${e.phone ? `<div style="font-size:12px;color:var(--fg-3)">${esc(e.phone)}</div>` : ''}
+            <div style="margin-top:6px;padding:5px 8px;border-radius:var(--r-2);background:var(--bg-2);font-size:11px;font-family:monospace">
+              Логин: <strong>${esc(e.employee_login||'')}</strong>
+            </div>
+            <div style="padding:3px 8px;border-radius:var(--r-2);background:var(--bg-2);font-size:11px;font-family:monospace;margin-top:3px">
+              Пароль: <strong>${esc(e.employee_password||'')}</strong>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" title="Сбросить пароль" onclick="openResetEmpPwd('${e.id}','${esc(e.full_name||'')}')">${svgIco('key',13)}</button>
+            <button class="btn btn-sm btn-d" title="Удалить" onclick="deleteEmployee('${e.id}','${esc(e.full_name||'')}')">${svgIco('trash',13)}</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<div class="txt-muted">Ошибка загрузки</div>'; }
+}
+
+function openAddEmployeeModal() {
+  document.getElementById('emp-modal-title').textContent = 'Новый сотрудник';
+  document.getElementById('emp-edit-id').value = '';
+  document.getElementById('emp-name').value = '';
+  document.getElementById('emp-phone').value = '';
+  document.getElementById('emp-password').value = '';
+  document.getElementById('emp-pwd-label').textContent = 'Пароль';
+  document.getElementById('emp-login-preview').style.display = 'none';
+  document.getElementById('emp-err').style.display = 'none';
+  // Заполнить select заведений
+  const sel = document.getElementById('emp-store');
+  sel.innerHTML = (S.stores||[]).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  // Превью логина при вводе
+  ['emp-name','emp-phone','emp-store'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', _updateEmpLoginPreview);
+    document.getElementById(id)?.addEventListener('change', _updateEmpLoginPreview);
+  });
+  openModal('m-add-employee');
+}
+
+function _updateEmpLoginPreview() {
+  const name = document.getElementById('emp-name').value.trim();
+  const phone = document.getElementById('emp-phone').value.trim();
+  const storeId = document.getElementById('emp-store').value;
+  const storeName = (S.stores||[]).find(s => s.id === storeId)?.name || '';
+  const prev = document.getElementById('emp-login-preview');
+  if (name && phone && storeName) {
+    document.getElementById('emp-login-value').textContent = _buildEmpLogin(storeName, name, phone);
+    prev.style.display = 'block';
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
+function openResetEmpPwd(empId, empName) {
+  document.getElementById('emp-modal-title').textContent = 'Сбросить пароль: ' + empName;
+  document.getElementById('emp-edit-id').value = empId;
+  document.getElementById('emp-name').value = empName;
+  document.getElementById('emp-phone').value = '';
+  document.getElementById('emp-password').value = '';
+  document.getElementById('emp-pwd-label').textContent = 'Новый пароль';
+  document.getElementById('emp-login-preview').style.display = 'none';
+  document.getElementById('emp-err').style.display = 'none';
+  const sel = document.getElementById('emp-store');
+  sel.innerHTML = '';
+  sel.style.display = 'none';
+  sel.previousElementSibling?.style.setProperty('display','none');
+  document.getElementById('emp-name').disabled = true;
+  openModal('m-add-employee');
+}
+
+async function saveEmployee() {
+  const err = document.getElementById('emp-err');
+  err.style.display = 'none';
+  const empId = document.getElementById('emp-edit-id').value;
+  const password = document.getElementById('emp-password').value.trim();
+
+  if (empId) {
+    // Сброс пароля
+    if (!password) { err.textContent = 'Введите новый пароль'; err.style.display = 'block'; return; }
+    try {
+      await req('/functions/v1/manage-employee', { method: 'PUT', body: JSON.stringify({ employee_id: empId, new_password: password }) });
+      document.getElementById('emp-name').disabled = false;
+      document.getElementById('emp-store').style.display = '';
+      document.getElementById('emp-store').previousElementSibling?.style.removeProperty('display');
+      closeModal('m-add-employee');
+      await loadEmployees();
+    } catch(e) { err.textContent = e.message || 'Ошибка'; err.style.display = 'block'; }
+    return;
+  }
+
+  // Создание сотрудника
+  const name = document.getElementById('emp-name').value.trim();
+  const phone = document.getElementById('emp-phone').value.trim();
+  const storeId = document.getElementById('emp-store').value;
+  const storeName = (S.stores||[]).find(s => s.id === storeId)?.name || '';
+  if (!name || !phone || !storeId || !password) { err.textContent = 'Заполните все поля'; err.style.display = 'block'; return; }
+  try {
+    await req('/functions/v1/manage-employee', { method: 'POST', body: JSON.stringify({ full_name: name, phone, store_id: storeId, store_name: storeName, password }) });
+    closeModal('m-add-employee');
+    await loadEmployees();
+  } catch(e) { err.textContent = e.message || 'Ошибка'; err.style.display = 'block'; }
+}
+
+async function deleteEmployee(empId, empName) {
+  if (!confirm(`Удалить сотрудника «${empName}»? Это действие нельзя отменить.`)) return;
+  try {
+    await req('/functions/v1/manage-employee', { method: 'DELETE', body: JSON.stringify({ employee_id: empId }) });
+    await loadEmployees();
+  } catch(e) { alert('Ошибка удаления: ' + (e.message || e)); }
+}
+
 // ─── INIT ───
 (async function init() {
   document.getElementById('theme-chk').checked = document.documentElement.classList.contains('dark');
@@ -4953,10 +5191,14 @@ function switchQrTab(tab) {
   if (qp) qp.style.display = isQr ? 'flex' : 'none';
   if (ap) ap.style.display = !isQr ? 'flex' : 'none';
   if (isQr) { stopQrCamera(); return; }
-  // Авто-выбор первого заведения если ничего не выбрано
   const anFilter = document.getElementById('an-store-filter');
-  if (anFilter && !anFilter.value && S.stores?.length) {
-    anFilter.value = S.stores[0].id;
+  if (anFilter) {
+    if (S.profile?.role === 'employee') {
+      anFilter.value = S.profile.employee_store_id;
+      anFilter.disabled = true;
+    } else if (!anFilter.value && S.stores?.length) {
+      anFilter.value = S.stores[0].id;
+    }
   }
   loadAnalyticsTab();
 }
