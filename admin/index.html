@@ -4025,9 +4025,9 @@ function _initAnPeriod() {
   if (!ySel.innerHTML.trim()) {
     const cy = now.getFullYear();
     ySel.innerHTML = [cy - 1, cy, cy + 1].map(y => `<option value="${y}">${y}</option>`).join('');
+    if (mSel) mSel.value = now.getMonth() + 1;
+    ySel.value = cy;
   }
-  if (mSel && !mSel.value) mSel.value = now.getMonth() + 1;
-  if (ySel && !ySel.value) ySel.value = now.getFullYear();
 }
 
 async function loadAnalyticsTab() {
@@ -4952,8 +4952,13 @@ function switchQrTab(tab) {
   const ap = document.getElementById('qr-pane-an');
   if (qp) qp.style.display = isQr ? 'flex' : 'none';
   if (ap) ap.style.display = !isQr ? 'flex' : 'none';
-  if (isQr) stopQrCamera();
-  else loadAnalyticsTab();
+  if (isQr) { stopQrCamera(); return; }
+  // Авто-выбор первого заведения если ничего не выбрано
+  const anFilter = document.getElementById('an-store-filter');
+  if (anFilter && !anFilter.value && S.stores?.length) {
+    anFilter.value = S.stores[0].id;
+  }
+  loadAnalyticsTab();
 }
 
 async function startQrCamera() {
