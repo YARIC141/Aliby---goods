@@ -4693,44 +4693,47 @@ setTimeout(hideSplash, 2000);
 (async function init() {
   document.getElementById('theme-chk').checked = document.documentElement.classList.contains('dark');
   applyNavPos();
-  await loadAppConfig();
+
+  // Синхронная проверка сессии — показать auth без ожидания сетевого запроса
+  let savedSession = null;
   try {
-    const saved = localStorage.getItem('alliby_admin_s');
-    if (saved) {
-      const d = JSON.parse(saved);
-      if (d?.access_token) {
-        const expired = d.expires_at && (Date.now() / 1000 > d.expires_at);
-        const tpay = new URLSearchParams(window.location.search).get('tpay');
-        if (tpay) { _tpayMsg = tpay; history.replaceState(null, '', window.location.pathname); }
-        const _proceedAdmin = (dest) => {
-          onAdminReady();
-          if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }); }
-          else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }
-        };
-        if (expired) {
-          S.session = d;
-          document.getElementById('sn-email').textContent = d.user?.email || '';
-          refreshSession().then(async ok => {
-            if (ok) { _proceedAdmin(tpay ? 'profile' : 'stores'); }
-            else { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
-          });
-        } else {
-          setSession(d);
-          _proceedAdmin(tpay ? 'profile' : 'stores');
-        }
-        return;
-      }
-    }
+    const raw = localStorage.getItem('alliby_admin_s');
+    if (raw) { const d = JSON.parse(raw); if (d?.access_token) savedSession = d; }
   } catch(e) {}
-  // Recovery link hash: #type=recovery&access_token=...
-  const hash = new URLSearchParams((window.location.hash || '').replace('#', ''));
-  if (hash.get('type') === 'recovery') {
-    S.session = { access_token: hash.get('access_token') };
-    showAuthTab('reset');
-    document.getElementById('screen-auth').classList.add('active');
+
+  if (!savedSession) {
+    const hash = new URLSearchParams((window.location.hash || '').replace('#', ''));
+    if (hash.get('type') === 'recovery') {
+      S.session = { access_token: hash.get('access_token') };
+      showAuthTab('reset');
+      document.getElementById('screen-auth').classList.add('active');
+    } else {
+      document.getElementById('screen-auth').classList.add('active');
+    }
+    await loadAppConfig();
     return;
   }
-  goTo('auth');
+
+  await loadAppConfig();
+  const tpay = new URLSearchParams(window.location.search).get('tpay');
+  if (tpay) { _tpayMsg = tpay; history.replaceState(null, '', window.location.pathname); }
+  const _proceedAdmin = (dest) => {
+    onAdminReady();
+    if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }); }
+    else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo(dest); }
+  };
+  const expired = savedSession.expires_at && (Date.now() / 1000 > savedSession.expires_at);
+  if (expired) {
+    S.session = savedSession;
+    document.getElementById('sn-email').textContent = savedSession.user?.email || '';
+    refreshSession().then(async ok => {
+      if (ok) { _proceedAdmin(tpay ? 'profile' : 'stores'); }
+      else { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
+    });
+  } else {
+    setSession(savedSession);
+    _proceedAdmin(tpay ? 'profile' : 'stores');
+  }
 })();
 
 // ─── CONTRACTS / ПЭП ───
