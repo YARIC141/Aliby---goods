@@ -25,6 +25,7 @@ jobs:
           sed -i "1s/.*/\/\/ v${TS}/" admin/sw.js
           rsync -az --delete -e "ssh -p 2222" client/ root@${{ secrets.VPS_HOST }}:/var/www/alliby/client/
           rsync -az --delete -e "ssh -p 2222" admin/  root@${{ secrets.VPS_HOST }}:/var/www/alliby/admin/
+          rsync -az --delete -e "ssh -p 2222" site/   root@${{ secrets.VPS_HOST }}:/var/www/alliby/site/
 
       - name: Deploy Edge Functions
         run: |
