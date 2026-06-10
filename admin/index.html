@@ -606,7 +606,7 @@ tr.row-click:hover td{background:var(--bg-2)}
         <button class="btn btn-sm" onclick="closeDayView()">✕</button>
       </div>
       <div id="sched-day-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-      <button id="sched-close-day-btn" class="btn btn-d btn-sm" style="margin-top:10px;font-size:12px" onclick="deleteScheduleDay(this.dataset.date)">Закрыть день</button>
+      <button id="sched-close-day-btn" class="btn btn-d btn-sm" style="margin-top:10px;font-size:12px" onclick="deleteScheduleDay(this.dataset.date)">Сделать выходным</button>
       <div id="sched-day-bookings"></div>
     </div>
   </div>
@@ -5488,7 +5488,10 @@ function openSchedule(store) {
   const editBtn = document.getElementById('sched-edit-btn');
   editBtn.textContent = 'Редактировать';
   editBtn.classList.remove('btn-p');
-  editBtn.style.display = S.profile?.role === 'employee' ? 'none' : '';
+  const isEmpSched = S.profile?.role === 'employee';
+  editBtn.style.display = isEmpSched ? 'none' : '';
+  const closeDayBtn = document.getElementById('sched-close-day-btn');
+  if (closeDayBtn) closeDayBtn.style.display = isEmpSched ? 'none' : '';
   document.getElementById('sched-tpl-panel').style.display = 'none';
   document.getElementById('sched-day-view').style.display = 'none';
   goTo('schedule');
