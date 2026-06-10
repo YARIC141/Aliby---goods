@@ -4436,6 +4436,9 @@ function applyRoleRestrictions() {
   if (schedEditBtn) schedEditBtn.style.display = 'none';
   const schedNavBtn = document.getElementById('sn-btn-schedule');
   if (schedNavBtn) schedNavBtn.style.display = '';
+  // Аналитика — скрыть таб
+  const anTab = document.getElementById('qr-tab-an');
+  if (anTab) anTab.style.display = 'none';
 }
 
 async function openEmployeeSchedule() {
@@ -5203,6 +5206,7 @@ function loadQrScreen() {
 }
 
 function switchQrTab(tab) {
+  if (tab === 'an' && S.profile?.role === 'employee') tab = 'qr';
   const isQr = tab === 'qr';
   document.getElementById('qr-tab-qr')?.classList.toggle('active', isQr);
   document.getElementById('qr-tab-an')?.classList.toggle('active', !isQr);
