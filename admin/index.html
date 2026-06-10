@@ -4436,9 +4436,13 @@ function applyRoleRestrictions() {
   if (schedEditBtn) schedEditBtn.style.display = 'none';
   const schedNavBtn = document.getElementById('sn-btn-schedule');
   if (schedNavBtn) schedNavBtn.style.display = '';
-  // Аналитика — скрыть таб
+  // Аналитика — скрыть таб и переименовать кнопки навигации
   const anTab = document.getElementById('qr-tab-an');
   if (anTab) anTab.style.display = 'none';
+  document.querySelectorAll('[data-nav="qr"]').forEach(btn => {
+    const svg = btn.querySelector('svg,span');
+    if (svg) btn.innerHTML = svg.outerHTML + (btn.classList.contains('bn-btn') ? 'QR сканер' : ' QR сканер');
+  });
 }
 
 async function openEmployeeSchedule() {
