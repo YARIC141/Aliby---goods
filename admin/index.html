@@ -912,15 +912,13 @@ tr.row-click:hover td{background:var(--bg-2)}
 <!-- ════════════════ EMPLOYEES ════════════════ -->
 <div class="overlay" id="m-employees">
   <div class="modal" style="max-width:500px">
-    <div class="modal-head">
+    <div class="modal-hd">
       <h3>Сотрудники</h3>
-      <button class="modal-close" onclick="closeModal('m-employees')">×</button>
+      <button class="modal-x" onclick="closeModal('m-employees')">✕</button>
     </div>
-    <div style="padding:14px 16px 4px;display:flex;justify-content:flex-end">
-      <button class="btn btn-p btn-sm" onclick="openAddEmployeeModal()">+ Добавить</button>
-    </div>
-    <div id="emp-list" style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">
-      <div class="txt-muted">Загрузка…</div>
+    <div id="emp-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="modal-ft">
+      <button class="btn btn-p" onclick="openAddEmployeeModal()">+ Добавить сотрудника</button>
     </div>
   </div>
 </div>
@@ -928,33 +926,25 @@ tr.row-click:hover td{background:var(--bg-2)}
 <!-- ════════════════ ADD EMPLOYEE ════════════════ -->
 <div class="overlay" id="m-add-employee">
   <div class="modal" style="max-width:420px">
-    <div class="modal-head">
+    <div class="modal-hd">
       <h3 id="emp-modal-title">Новый сотрудник</h3>
-      <button class="modal-close" onclick="closeModal('m-add-employee')">×</button>
+      <button class="modal-x" onclick="closeModal('m-add-employee')">✕</button>
     </div>
-    <div style="padding:16px">
-      <input type="hidden" id="emp-edit-id">
-      <div class="fg">
-        <label>ФИО</label>
-        <input type="text" id="emp-name" placeholder="Иван Петров">
-      </div>
-      <div class="fg">
-        <label>Телефон</label>
-        <input type="tel" id="emp-phone" placeholder="+79001234567">
-      </div>
-      <div class="fg">
-        <label>Заведение</label>
-        <select id="emp-store"></select>
-      </div>
-      <div class="fg">
-        <label id="emp-pwd-label">Пароль</label>
-        <input type="text" id="emp-password" placeholder="Минимум 6 символов" autocomplete="new-password">
-      </div>
-      <div id="emp-login-preview" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font-size:12px;color:var(--fg-3)">
-        Логин: <strong id="emp-login-value" style="color:var(--fg);font-family:monospace"></strong>
-      </div>
-      <div id="emp-err" class="alert alert-e" style="display:none"></div>
-      <button class="btn btn-p btn-full" onclick="saveEmployee()">Сохранить</button>
+    <input type="hidden" id="emp-edit-id">
+    <div class="fg"><label>ФИО</label><input type="text" id="emp-name" placeholder="Иван Петров"></div>
+    <div class="fg"><label>Телефон</label><input type="tel" id="emp-phone" placeholder="+79001234567"></div>
+    <div class="fg"><label>Заведение</label><select id="emp-store"></select></div>
+    <div class="fg">
+      <label id="emp-pwd-label">Пароль</label>
+      <input type="text" id="emp-password" placeholder="Минимум 6 символов" autocomplete="new-password">
+    </div>
+    <div id="emp-login-preview" style="display:none;margin-bottom:10px;padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font-size:12px;color:var(--fg-3)">
+      Логин: <strong id="emp-login-value" style="color:var(--fg);font-family:monospace"></strong>
+    </div>
+    <div id="emp-err" class="alert alert-e" style="display:none"></div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-add-employee')">Отмена</button>
+      <button class="btn btn-p" onclick="saveEmployee()">Сохранить</button>
     </div>
   </div>
 </div>
@@ -4838,27 +4828,21 @@ async function openEmployeesModal() {
 
 async function loadEmployees() {
   const el = document.getElementById('emp-list');
-  el.innerHTML = '<div class="txt-muted">Загрузка…</div>';
+  el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>';
   try {
     const emps = await req(
       `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc`
     );
-    if (!emps.length) { el.innerHTML = '<div class="txt-muted">Сотрудников нет</div>'; return; }
+    if (!emps.length) { el.innerHTML = '<div class="empty" style="padding:12px 0">Сотрудников нет</div>'; return; }
     const storeMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.name]));
     el.innerHTML = emps.map(e => {
       const storeName = storeMap[e.employee_store_id] || '—';
-      return `<div class="card" style="padding:10px 12px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="font:600 14px/1.3 var(--font-sans);margin-bottom:3px">${esc(e.full_name||'')}</div>
-            <div style="font-size:12px;color:var(--fg-3)">${esc(storeName)}</div>
-            ${e.phone ? `<div style="font-size:12px;color:var(--fg-3)">${esc(e.phone)}</div>` : ''}
-            <div style="margin-top:6px;padding:5px 8px;border-radius:var(--r-2);background:var(--bg-2);font-size:11px;font-family:monospace">
-              Логин: <strong>${esc(e.employee_login||'')}</strong>
-            </div>
-            <div style="padding:3px 8px;border-radius:var(--r-2);background:var(--bg-2);font-size:11px;font-family:monospace;margin-top:3px">
-              Пароль: <strong>${esc(e.employee_password||'')}</strong>
-            </div>
+            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.full_name||'')}</div>
+            <div style="font-size:12px;color:var(--fg-3);margin-bottom:2px">${esc(storeName)}${e.phone ? ' · ' + esc(e.phone) : ''}</div>
+            <div style="font-size:12px;color:var(--fg-3);font-family:monospace">login: ${esc(e.employee_login||'—')} · pwd: ${esc(e.employee_password||'—')}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button class="btn btn-sm" title="Сбросить пароль" onclick="openResetEmpPwd('${e.id}','${esc(e.full_name||'')}')">${svgIco('key',13)}</button>
@@ -4867,7 +4851,7 @@ async function loadEmployees() {
         </div>
       </div>`;
     }).join('');
-  } catch(e) { el.innerHTML = '<div class="txt-muted">Ошибка загрузки</div>'; }
+  } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Ошибка загрузки</div>'; }
 }
 
 function openAddEmployeeModal() {
