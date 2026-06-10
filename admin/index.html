@@ -404,6 +404,7 @@ tr.row-click:hover td{background:var(--bg-2)}
   <div class="sn-items">
     <button class="sn-btn" data-nav="stores"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg> Заведения</button>
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
+    <button class="sn-btn" id="sn-btn-schedule" style="display:none" onclick="openEmployeeSchedule()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Расписание</button>
     <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg> Аналитика и QR сканер</button>
     <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы и записи<span class="sn-badge" id="sn-orders-badge" style="display:none">0</span></button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
@@ -3388,16 +3389,22 @@ function setAdminMenuTab(tab) {
 async function loadMenuItems() {
   const el = document.getElementById('mi-list');
   el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  const isEmp = S.profile?.role === 'employee';
   try {
-    // GET /rest/v1/menu_items?select=*,categories(name)
     let url = '/rest/v1/menu_items?select=*,categories(name)&order=name.asc';
-    const storeId = document.getElementById('mi-store-filter')?.value;
-    const catId   = document.getElementById('mi-cat-filter')?.value;
-    const search  = document.getElementById('mi-search')?.value;
-    if (storeId) {
-      url += `&store_id=eq.${storeId}`;
-    } else if (S.stores?.length) {
-      url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
+    const storeFilter = document.getElementById('mi-store-filter');
+    const catId  = document.getElementById('mi-cat-filter')?.value;
+    const search = document.getElementById('mi-search')?.value;
+    if (isEmp) {
+      url += `&store_id=eq.${S.profile.employee_store_id}`;
+      if (storeFilter) { storeFilter.value = S.profile.employee_store_id; storeFilter.disabled = true; }
+    } else {
+      const storeId = storeFilter?.value;
+      if (storeId) {
+        url += `&store_id=eq.${storeId}`;
+      } else if (S.stores?.length) {
+        url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
+      }
     }
     if (catId)   url += `&category_id=eq.${catId}`;
     if (search)  url += `&name=ilike.*${encodeURIComponent(search)}*`;
@@ -3411,7 +3418,12 @@ async function loadMenuItems() {
       const avail = i.is_available
         ? `<span style="font-size:12px;color:var(--ok);display:inline-flex;align-items:center;gap:3px">${svgIco('check',11)} В наличии</span>`
         : `<span style="font-size:12px;color:var(--fg-4)">— Нет в наличии</span>`;
-      return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openMenuItemModal(${sd})">
+      const editBtns = isEmp ? '' : `
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="event.stopPropagation();openMenuItemModal(${sd})">Ред.</button>
+            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
+          </div>`;
+      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
         <div style="display:flex;gap:10px;align-items:flex-start">
           ${thumb}
           <div style="flex:1;min-width:0">
@@ -3419,10 +3431,7 @@ async function loadMenuItems() {
             <div style="font-size:12px;color:var(--fg-3);margin-bottom:3px">${esc(i.categories?.name || '—')} · ${i.price} ₽</div>
             ${avail}
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button class="btn btn-sm" onclick="event.stopPropagation();openMenuItemModal(${sd})">Ред.</button>
-            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
-          </div>
+          ${editBtns}
         </div>
       </div>`;
     }).join('');
@@ -4415,7 +4424,7 @@ async function onAdminReady() {
 function applyRoleRestrictions() {
   if (S.profile?.role !== 'employee') return;
   // Скрыть навигацию недоступных разделов
-  ['stores','menu'].forEach(nav => {
+  ['stores'].forEach(nav => {
     document.querySelector(`[data-nav="${nav}"]`)?.style.setProperty('display','none','important');
   });
   // Скрыть секции профиля
@@ -4429,19 +4438,43 @@ function applyRoleRestrictions() {
   // Скрыть фильтр заведений в заказах (сотрудник видит только своё)
   const ordStoreFilter = document.getElementById('ord-store-filter');
   if (ordStoreFilter) ordStoreFilter.closest('.toolbar')?.style.setProperty('display','none');
+  // Меню — только просмотр: скрыть кнопку добавления
+  const menuAddBtn = document.getElementById('menu-add-btn');
+  if (menuAddBtn) menuAddBtn.style.display = 'none';
+  // Расписание — скрыть кнопку редактирования, показать nav-кнопку
+  const schedEditBtn = document.getElementById('sched-edit-btn');
+  if (schedEditBtn) schedEditBtn.style.display = 'none';
+  const schedNavBtn = document.getElementById('sn-btn-schedule');
+  if (schedNavBtn) schedNavBtn.style.display = '';
+}
+
+async function openEmployeeSchedule() {
+  const storeId = S.profile?.employee_store_id;
+  if (!storeId) return;
+  try {
+    const rows = await req(`/rest/v1/stores?id=eq.${storeId}&select=id,name&limit=1`);
+    if (rows?.[0]) openSchedule(rows[0]);
+  } catch(e) { alert('Не удалось загрузить расписание'); }
 }
 
 // ─── SUBSCRIPTIONS ───
 async function loadSubscriptions() {
   const el = document.getElementById('sub-list');
   el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  const isEmp = S.profile?.role === 'employee';
   try {
     let url = '/rest/v1/subscriptions?deleted_at=is.null&select=*,stores(name)&order=name.asc';
-    const storeId = document.getElementById('sub-store-filter')?.value;
-    if (storeId) {
-      url += `&store_id=eq.${storeId}`;
-    } else if (S.stores?.length) {
-      url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
+    const storeFilter = document.getElementById('sub-store-filter');
+    if (isEmp) {
+      url += `&store_id=eq.${S.profile.employee_store_id}`;
+      if (storeFilter) { storeFilter.value = S.profile.employee_store_id; storeFilter.disabled = true; }
+    } else {
+      const storeId = storeFilter?.value;
+      if (storeId) {
+        url += `&store_id=eq.${storeId}`;
+      } else if (S.stores?.length) {
+        url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
+      }
     }
     const subs = await req(url);
     if (!subs.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет абонементов</div>'; return; }
@@ -4451,17 +4484,19 @@ async function loadSubscriptions() {
         ? (s.discount_type === 'percent' ? `−${s.discount_value}%` : `−${s.discount_value} ₽`)
         : '—';
       const uses = s.total_uses === 0 ? '∞' : s.total_uses;
-      return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openSubModal(${sd})">
+      const editBtns = isEmp ? '' : `
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="event.stopPropagation();openSubModal(${sd})">Ред.</button>
+            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
+          </div>`;
+      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</div>
             <div style="font-size:12px;color:var(--fg-3);margin-bottom:2px">${esc(s.stores?.name || '—')}</div>
             <div style="font-size:12px;color:var(--fg-3)">${s.price} ₽ · скидка ${discLabel} · ${s.duration_days} дн. · исп. ${uses} · тираж ${s.stock_total !== null && s.stock_total !== undefined ? s.stock_sold + '/' + s.stock_total : '∞'}</div>
           </div>
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button class="btn btn-sm" onclick="event.stopPropagation();openSubModal(${sd})">Ред.</button>
-            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
-          </div>
+          ${editBtns}
         </div>
       </div>`;
     }).join('');
@@ -5461,6 +5496,7 @@ function openSchedule(store) {
   const editBtn = document.getElementById('sched-edit-btn');
   editBtn.textContent = 'Редактировать';
   editBtn.classList.remove('btn-p');
+  editBtn.style.display = S.profile?.role === 'employee' ? 'none' : '';
   document.getElementById('sched-tpl-panel').style.display = 'none';
   document.getElementById('sched-day-view').style.display = 'none';
   goTo('schedule');
