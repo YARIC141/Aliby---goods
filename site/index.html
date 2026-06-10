@@ -489,6 +489,25 @@ footer{
 .footer-nav a{font:400 13px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s}
 .footer-nav a:hover{color:var(--fg)}
 
+/* ── COOKIE BANNER ── */
+#cookie-banner{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  z-index:9999;width:calc(100% - 40px);max-width:640px;
+  background:rgba(24,22,20,.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,.10);border-radius:var(--r-3);
+  padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+}
+#cookie-banner p{flex:1;font:400 13px/1.5 var(--font-sans);color:var(--fg-2);min-width:200px}
+#cookie-banner p a{color:var(--brand);text-decoration:none}
+#cookie-banner p a:hover{text-decoration:underline}
+#cookie-accept{
+  padding:8px 20px;border-radius:var(--r-pill);border:none;cursor:pointer;
+  background:var(--brand);color:#fff;font:600 13px/1 var(--font-sans);
+  transition:background .18s;white-space:nowrap;flex-shrink:0;
+}
+#cookie-accept:hover{background:var(--brand-deep)}
+
 @media(max-width:640px){
   footer{flex-direction:column;align-items:flex-start;gap:12px}
   .cta-btns{flex-direction:column;align-items:stretch}
@@ -1609,9 +1628,21 @@ html[data-theme="light"] .icon-moon{display:flex}
     <a href="#pricing">Тарифы</a>
     <a href="#team">Команда</a>
     <a href="https://alliby.ru/">Приложение</a>
+    <a href="/privacy">Конфиденциальность</a>
+    <a href="/terms">Условия использования</a>
+    <a href="/license">Лицензионный договор</a>
   </div>
-  <span class="footer-copy">© 2026 Alliby</span>
+  <div style="width:100%;display:flex;flex-direction:column;gap:4px">
+    <span class="footer-copy">© 2026 Alliby. Сайт использует файлы cookie для улучшения работы сервиса.</span>
+    <span class="footer-copy">ИП Копылов Ярослав Денисович. Оператор персональных данных, реестр РКН.</span>
+  </div>
 </footer>
+
+<!-- COOKIE BANNER -->
+<div id="cookie-banner" style="display:none">
+  <p>Мы используем файлы cookie для улучшения работы сайта и аналитики. Продолжая использовать сайт, вы соглашаетесь с нашей <a href="/privacy">политикой конфиденциальности</a>.</p>
+  <button id="cookie-accept" onclick="acceptCookies()">Принять</button>
+</div>
 
 </div><!-- #page-wrap -->
 
@@ -1741,6 +1772,20 @@ function orderTake(btn){
     obs.observe(sv);
   });
 })();
+</script>
+<script>
+(function(){
+  var b=document.getElementById('cookie-banner');
+  if(!b)return;
+  if(!localStorage.getItem('cookie_ok')){
+    setTimeout(function(){b.style.display='flex';},800);
+  }
+})();
+function acceptCookies(){
+  localStorage.setItem('cookie_ok','1');
+  var b=document.getElementById('cookie-banner');
+  if(b){b.style.opacity='0';b.style.transition='opacity .3s';setTimeout(function(){b.style.display='none';},300);}
+}
 </script>
 </body>
 </html>
