@@ -2231,6 +2231,11 @@ async function doLogin() {
       body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
     });
     setSession(d);
+    if (await blockIfEmployee()) {
+      err.textContent = 'Доступ для сотрудников закрыт — используйте приложение для сотрудников';
+      err.style.display = 'block';
+      return;
+    }
     const proceed = async () => { if (!(await navigateDeepLink())) goTo('map'); };
     if (!S.city) {
       openAddressPicker(async () => { await requireContract('buyer', proceed); });
@@ -2326,6 +2331,21 @@ function setSession(d) {
     realtimeSubscribeOrders(uid);
     req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) S.profile = p[0]; }).catch(() => {});
   }
+}
+
+async function blockIfEmployee() {
+  const uid = S.session?.user?.id;
+  if (!uid) return false;
+  try {
+    const profs = await req(`/rest/v1/profiles?id=eq.${uid}&select=role&limit=1`);
+    if (profs[0]?.role === 'employee') {
+      await req('/auth/v1/logout', { method: 'POST' }).catch(() => {});
+      localStorage.removeItem('alliby_s');
+      S.session = null; S.profile = null;
+      return true;
+    }
+  } catch(e) {}
+  return false;
 }
 
 async function refreshSession() {
@@ -2719,7 +2739,7 @@ async function loadMenuUserSubs(storeId) {
   if (!S.session) { S.menuUserSubs = []; return; }
   const sid = storeId || S.store?.id;
   try {
-    const all = await req('/rest/v1/user_subscriptions?status=eq.active&select=*,subscriptions(*)');
+    const all = await req(`/rest/v1/user_subscriptions?status=eq.active&user_id=eq.${S.session.user.id}&select=*,subscriptions(*)`);
     S.menuUserSubs = all.filter(us => !sid || us.subscriptions?.store_id === sid);
   } catch(e) { S.menuUserSubs = []; }
 }
@@ -3553,9 +3573,10 @@ async function loadMySubscriptions() {
   const ul = document.getElementById('sub-unified-list');
   if (ul) ul.innerHTML = SK.usubCards(2);
   try {
+    const _uid = S.session?.user?.id;
     const [allSubs, gifts] = await Promise.all([
-      req('/rest/v1/user_subscriptions?gift_status=is.null&select=*,subscriptions(*)&order=purchase_date.desc'),
-      req('/rest/v1/user_subscriptions?gift_status=in.(pending,activated)&select=*,subscriptions(*)&order=purchase_date.desc'),
+      req(`/rest/v1/user_subscriptions?gift_status=is.null&user_id=eq.${_uid}&select=*,subscriptions(*)&order=purchase_date.desc`),
+      req(`/rest/v1/user_subscriptions?gift_status=in.(pending,activated)&user_id=eq.${_uid}&select=*,subscriptions(*)&order=purchase_date.desc`),
     ]);
     _subsAllData = { user: allSubs, gifts };
     renderSubUnifiedList();
@@ -4435,8 +4456,8 @@ async function loadAlibi() {
     if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
 
     const [redemptions, orders] = await Promise.all([
-      req('/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions(subscriptions(name,stores(name)))&order=redeemed_at.desc&limit=50'),
-      req('/rest/v1/orders?select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30'),
+      req(`/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions!inner(subscriptions(name,stores(name)))&user_subscriptions.user_id=eq.${uid}&order=redeemed_at.desc&limit=50`),
+      req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30`),
     ]);
 
     const totalSaved = redemptions.reduce((s, r) => s + (Number(r.amount_discounted) || 0), 0);
@@ -4666,11 +4687,15 @@ window.addEventListener('hashchange', () => {
     S.session = savedSession;
     document.getElementById('sn-email').textContent = savedSession.user?.email || '';
     refreshSession().then(async ok => {
-      if (ok) { await requireContract('buyer', restoreNav); }
-      else { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
+      if (ok) {
+        if (await blockIfEmployee()) { goTo('auth'); return; }
+        await requireContract('buyer', restoreNav);
+      } else { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
     });
   } else {
-    setSession(savedSession); await requireContract('buyer', restoreNav);
+    setSession(savedSession);
+    if (await blockIfEmployee()) { goTo('auth'); return; }
+    await requireContract('buyer', restoreNav);
   }
 })();
 
