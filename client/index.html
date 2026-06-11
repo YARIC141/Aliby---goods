@@ -564,7 +564,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> <span class="nav-store-lbl">Меню</span></button>
   <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> <span class="nav-cart-lbl">Корзина и заказ</span> <span id="sn-cart-cnt"></span></button>
-  <button class="sn-btn" data-nav="calenabs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Расписание</button>
+  <button class="sn-btn" data-nav="sched"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg> Записи</button>
+  <button class="sn-btn" data-nav="calenabs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Расписание и абонементы</button>
   <div class="sn-spacer"></div>
   <div class="sn-user" id="sn-email"></div>
 </nav>
@@ -867,38 +868,32 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ CALENDAR & SUBSCRIPTIONS ════════════════ -->
 <div id="screen-calenabs" class="screen">
-  <div class="ph"><h2>Записи и абонементы</h2></div>
+  <div class="ph"><h2>Расписание и абонементы</h2></div>
   <div class="screen-tip"></div>
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
     <button class="cart-tab active" id="ca-tab-bk" onclick="switchCalenabsTab('bk')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Расписание</button>
     <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-ticket"/></svg>Абонементы</button>
   </div>
-  <!-- Bookings pane -->
+  <!-- My bookings pane -->
   <div id="ca-pane-bk" style="flex:1;overflow-y:auto;overscroll-behavior-y:none">
-    <div id="ca-sched-no-store" style="text-align:center;padding:48px 16px 32px;color:var(--muted);font-size:14px">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.35;margin-bottom:12px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <div style="line-height:1.5">Откройте заведение с направлением «Услуги»,<br>чтобы просмотреть расписание</div>
-      <button class="btn btn-p" style="margin-top:16px" onclick="goTo('map')">Выбрать заведение →</button>
-    </div>
-    <div id="ca-sched-wrap" class="pb" style="display:none">
-      <div id="ca-sched-store-lbl" style="font:600 12px/1 var(--font-sans);color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px"></div>
+    <div class="pb">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <button class="btn btn-sm" onclick="caSchedPrevMonth()">←</button>
-        <span id="ca-sched-month-label" style="font:600 15px/1 var(--font-sans)"></span>
-        <button class="btn btn-sm" onclick="caSchedNextMonth()">→</button>
+        <button class="btn btn-sm" onclick="myBookingsPrevMonth()">←</button>
+        <span id="mbk-month-label" style="font:600 15px/1 var(--font-sans)"></span>
+        <button class="btn btn-sm" onclick="myBookingsNextMonth()">→</button>
       </div>
-      <div class="sched-cal-wrap" style="margin-bottom:14px">
+      <div class="sched-cal-wrap" style="margin-bottom:16px">
         <table class="sched-cal-table">
           <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
-          <tbody id="ca-sched-cal"></tbody>
+          <tbody id="mbk-calendar"></tbody>
         </table>
       </div>
-      <div id="ca-sched-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
+      <div id="mbk-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div id="ca-sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
-          <button class="btn btn-sm" onclick="closeCaSchedDay()">✕</button>
+          <div id="mbk-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+          <button class="btn btn-sm" onclick="closeMyBookingsDay()">✕</button>
         </div>
-        <div id="ca-sched-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div id="mbk-day-bookings"></div>
       </div>
     </div>
   </div>
@@ -922,6 +917,38 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
           <button class="btn btn-p" id="gift-activate-btn" onclick="activateGift()">Активировать</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ STORE SCHEDULE ════════════════ -->
+<div id="screen-sched" class="screen">
+  <div class="ph"><h2>Записи<span class="screen-help" data-info="Расписание заведения — выберите дату и свободный слот для записи.">?</span></h2></div>
+  <div class="screen-tip"></div>
+  <div id="ca-sched-no-store" style="text-align:center;padding:48px 16px 32px;color:var(--muted);font-size:14px">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.35;margin-bottom:12px"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <div style="line-height:1.5">Откройте заведение с направлением «Услуги»,<br>чтобы просмотреть расписание</div>
+    <button class="btn btn-p" style="margin-top:16px" onclick="goTo('map')">Выбрать заведение →</button>
+  </div>
+  <div id="ca-sched-wrap" class="pb" style="display:none">
+    <div id="ca-sched-store-lbl" style="font:600 12px/1 var(--font-sans);color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button class="btn btn-sm" onclick="caSchedPrevMonth()">←</button>
+      <span id="ca-sched-month-label" style="font:600 15px/1 var(--font-sans)"></span>
+      <button class="btn btn-sm" onclick="caSchedNextMonth()">→</button>
+    </div>
+    <div class="sched-cal-wrap" style="margin-bottom:14px">
+      <table class="sched-cal-table">
+        <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+        <tbody id="ca-sched-cal"></tbody>
+      </table>
+    </div>
+    <div id="ca-sched-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div id="ca-sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+        <button class="btn btn-sm" onclick="closeCaSchedDay()">✕</button>
+      </div>
+      <div id="ca-sched-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
     </div>
   </div>
 </div>
@@ -1037,7 +1064,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span><span class="nav-store-lbl bn-lbl">Меню</span></button>
     <button class="bn-btn" data-nav="cart" style="position:relative"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="ord-notif-dot" id="nav-ord-dot"></span></span><span class="nav-cart-lbl bn-lbl">Корзина</span></button>
-    <button class="bn-btn" data-nav="calenabs"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Расписание</button>
+    <button class="bn-btn" data-nav="sched"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg></span>Записи</button>
+    <button class="bn-btn" data-nav="calenabs"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Мои записи</button>
   </div>
 </div>
 
@@ -1842,7 +1870,7 @@ function switchCalenabsTab(tab) {
   document.getElementById('ca-pane-sub').style.display = tab === 'sub' ? '' : 'none';
   document.getElementById('ca-tab-bk').classList.toggle('active',  tab === 'bk');
   document.getElementById('ca-tab-sub').classList.toggle('active', tab === 'sub');
-  if (tab === 'bk') loadCaScheduleScreen(); else loadMySubscriptions();
+  if (tab === 'bk') loadBookingsScreen(); else loadMySubscriptions();
 }
 function loadCalenabsScreen() { switchCalenabsTab(_calenabsTab); }
 function _calenabsIsActive() { return document.getElementById('screen-calenabs')?.classList.contains('active'); }
@@ -2072,7 +2100,7 @@ function goTo(id, opts = {}) {
   document.getElementById('ph-actions').style.display = id === 'auth' ? 'none' : '';
   const sid = (id === 'cart' && S.direction === 'services') ? 'calenabs' : id;
   if (sid === 'calenabs' && id !== 'calenabs') _calenabsTab = 'bk';
-  ({home:loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,calenabs:loadCalenabsScreen,profile:loadProfile})[sid]?.();
+  ({home:loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,calenabs:loadCalenabsScreen,sched:loadCaScheduleScreen,profile:loadProfile})[sid]?.();
   if (opts.dir && prevId && prevId !== sid) {
     document.getElementById('screen-' + sid)?.classList.add('active');
     animateScreenChange(prevId, sid, opts.dir);
@@ -4296,7 +4324,7 @@ async function restoreNav() {
     const ok = await navigateDeepLink();
     if (ok) return;
   }
-  const SCREENS = ['home','alibi','store','menu','cart','calenabs','profile'];
+  const SCREENS = ['home','alibi','store','menu','cart','calenabs','sched','profile'];
   const nav = localStorage.getItem('alliby_nav');
   const _navTarget = () => goTo(nav && SCREENS.includes(nav) ? nav : 'home');
   if (!S.city) {
@@ -4956,7 +4984,7 @@ async function submitPayment() {
       closeModal('m-tbank-pay');
       _pendingPayment = null;
       showGeoToast('Запись создана и оплачена');
-      if (_calenabsIsActive() && _calenabsTab === 'bk') loadCaScheduleScreen();
+      if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
     } else if (ptype === 'sub' || ptype === 'gift-sub') {
       const isGift = ptype === 'gift-sub';
       const items = _pendingPayment.items;
@@ -5225,7 +5253,7 @@ async function confirmBooking(payNow) {
       });
       closeModal('m-book-slot');
       showGeoToast('Слот забронирован');
-      if (_calenabsIsActive() && _calenabsTab === 'bk') loadCaScheduleScreen();
+      if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
     } catch(e) {
       showGeoToast('Ошибка при бронировании');
     } finally {
@@ -5255,7 +5283,7 @@ async function confirmBooking(payNow) {
         });
         closeModal('m-book-slot');
         showGeoToast('Запись по абонементу создана');
-        if (_calenabsIsActive() && _calenabsTab === 'bk') loadCaScheduleScreen();
+        if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
       } catch(e) {
         showGeoToast('Ошибка при бронировании');
         btn2.disabled = false; btn2.textContent = 'Оплатить и записаться';
@@ -5281,11 +5309,11 @@ async function loadBookingsScreen() {
     document.getElementById('mbk-calendar').innerHTML = '';
     document.getElementById('mbk-day-view').style.display = 'none';
     document.getElementById('mbk-month-label').textContent = '';
-    const tip = document.querySelector('#screen-bookings .screen-tip');
+    const tip = document.querySelector('#screen-calenabs .screen-tip');
     if (tip) tip.innerHTML = '<div style="padding:24px 16px;text-align:center;color:var(--fg-3);font-size:14px">Войдите в аккаунт, чтобы видеть свои записи</div>';
     return;
   }
-  const tip = document.querySelector('#screen-bookings .screen-tip');
+  const tip = document.querySelector('#screen-calenabs .screen-tip');
   if (tip) tip.innerHTML = '';
   const mm = String(_myBk.month + 1).padStart(2, '0');
   const firstDay = `${_myBk.year}-${mm}-01`;
