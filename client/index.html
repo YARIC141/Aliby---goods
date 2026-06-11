@@ -785,7 +785,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="ph">
     <button class="btn-back" onclick="goTo('store')">← Заведение</button>
     <h2 id="menu-ph-name">Товары и Услуги<span class="screen-help" data-info="Каталог товаров и услуг выбранного заведения. Добавляйте понравившееся в корзину.">?</span></h2>
-    <button class="btn btn-sm" onclick="goTo('cart')">Корзина и заказ&nbsp;<span id="menu-cart-cnt">0</span></button>
+    <button class="btn btn-sm" onclick="goTo('cart')"><span class="nav-cart-lbl">Корзина и заказ</span>&nbsp;<span id="menu-cart-cnt">0</span></button>
   </div>
   <div class="screen-tip"></div>
 </div>
@@ -1742,10 +1742,12 @@ function setDirection(dir) {
   renderMapCategoryChips();
   applyMapFilter();
   updateMenuSearchPlaceholder();
-  // update store nav label
+  updateDirectionLabels(dir);
+}
+
+function updateDirectionLabels(dir) {
   const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги' }[dir] || 'Меню';
   document.querySelectorAll('.nav-store-lbl').forEach(el => { el.textContent = storeLbl; });
-  // update cart nav label
   const isServices = dir === 'services';
   document.querySelectorAll('.nav-cart-lbl').forEach(el => {
     el.textContent = isServices ? 'Записи' : el.classList.contains('bn-lbl') ? 'Корзина' : 'Корзина и заказ';
@@ -4009,6 +4011,7 @@ async function restoreNav() {
       S.direction = savedDir;
       document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === savedDir));
       applyDirectionAccents(savedDir);
+      updateDirectionLabels(savedDir);
     }
   } catch(e) {}
   // migrate legacy alliby_cart → alliby_cart_food
