@@ -4972,6 +4972,7 @@ async function confirmBooking(payNow) {
       if (document.getElementById('screen-bookings')?.classList.contains('active')) loadBookingsScreen();
     } catch(e) {
       showGeoToast('Ошибка при бронировании');
+    } finally {
       btn.disabled = false; btn.textContent = 'Забронировать';
     }
     return;
