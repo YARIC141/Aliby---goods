@@ -84,25 +84,25 @@ html.dark{
 }
 html,body{background-color:var(--bg);background-image:radial-gradient(circle 740px at 0% 0%,rgba(232,116,59,.52) 0%,transparent 80%),radial-gradient(circle 840px at 100% 100%,rgba(120,180,224,.58) 0%,transparent 80%),linear-gradient(135deg,rgba(232,116,59,.18) 0%,rgba(120,180,224,.18) 100%);background-attachment:fixed;overscroll-behavior-y:none}
 html.dark,html.dark body{background-image:radial-gradient(circle 600px at 0% 0%,rgba(232,116,59,.44) 0%,transparent 68%),radial-gradient(circle 700px at 100% 100%,rgba(120,180,224,.54) 0%,transparent 68%)}
-body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden;height:100dvh}
+body{font-family:var(--font-sans);font-size:17px;color:var(--fg)}
 #bg-ornament{position:fixed;inset:-200px 0;width:100%;height:calc(100% + 400px);pointer-events:none;z-index:0;will-change:transform}
 svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
 #bg-ornament .op{stroke:var(--pat);fill:none;stroke-width:1.1}
 #bg-ornament .op-x{stroke-opacity:.45}
 #bg-ornament .op-f{fill:var(--pat);stroke:none}
-#zoom-root{height:100dvh;overflow:clip;position:relative;z-index:1}
-html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
+#zoom-root{position:fixed;inset:0;overflow:hidden;z-index:1}
+html.has-fzoom #zoom-root{zoom:var(--fzoom);width:calc(100%/var(--fzoom));height:calc(100%/var(--fzoom))}
 
 /* ── LAYOUT ── */
-#app{display:flex;height:100%;overflow:clip}
+#app{display:flex;height:100%;overflow:hidden}
 #side-nav{width:210px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;padding:16px 12px;gap:2px;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
-#main{flex:1;display:flex;flex-direction:column;overflow:clip;min-width:0;position:relative}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
 @keyframes navSlideInLeft{from{transform:translateX(-100%)}to{transform:translateX(0)}}
 @keyframes navSlideInRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
 @keyframes navSlideOutLeft{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @keyframes navSlideOutRight{from{transform:translateX(0)}to{transform:translateX(100%)}}
 .screen-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--fg-4);color:var(--fg-4);font-size:12px;cursor:pointer;margin-left:6px;vertical-align:middle;line-height:1;opacity:.7;flex-shrink:0;user-select:none}
-.screen{display:none;flex:1;min-height:0;flex-direction:column;overflow:clip}
+.screen{display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden}
 .screen.active{display:flex}
 
 .sn-logo{font:400 22px/1 var(--font-display);letter-spacing:-0.01em;padding:4px 8px 16px;border-bottom:1px solid var(--line-soft);margin-bottom:8px;color:var(--fg)}
@@ -140,7 +140,7 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 .ph-icon-btn{width:36px;height:36px;border-radius:var(--r-pill);border:1px solid var(--line-soft);background:var(--glass-sm);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-3);transition:background var(--t-fast),color var(--t-fast);flex-shrink:0}
 .ph-icon-btn:hover{background:var(--bg-2);color:var(--fg)}
 #screen-home .ph h2{letter-spacing:0.06em}
-.pb{flex:1;min-height:0;overflow-y:auto;padding:20px;overscroll-behavior-y:none;touch-action:pan-y}
+.pb{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:20px;overscroll-behavior-y:none;touch-action:pan-y}
 
 /* ── COMMON ── */
 .sec{margin-bottom:24px}
@@ -198,7 +198,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .auth-box h1{font:400 30px/1 var(--font-display);letter-spacing:-0.01em;margin-bottom:22px;color:var(--brand-ember)}
 
 /* ── MAP ── */
-.map-layout{display:flex;flex:1;min-height:0;overflow:clip;position:relative}
+.map-layout{display:flex;flex:1;min-height:0;overflow:hidden;position:relative}
 .map-addr-wrap{padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .map-addr-bar{display:flex;align-items:center;gap:8px;padding:7px 10px;width:100%;text-align:left;font-size:17px;font-family:var(--font-sans);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--r-2);cursor:pointer;color:var(--fg);transition:border-color var(--t-fast),box-shadow var(--t-fast);box-sizing:border-box}
 .map-addr-bar:hover,.map-addr-bar:focus{border-color:var(--accent);box-shadow:0 0 0 3px oklch(from var(--accent) l c h / .18)}
@@ -217,7 +217,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats:empty{display:none}
 .sl-cats::-webkit-scrollbar{height:3px}.sl-cats::-webkit-scrollbar-thumb{background:var(--line-soft)}
 .sl-cats .chip{padding:3.5px 11.5px;font-size:15px;flex-shrink:0}
-.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
+.sl-list{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:none;touch-action:pan-y}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
 .sl-item.sel{background:oklch(from var(--bg-2) l c h / .65)}
@@ -335,7 +335,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .cart-tab:hover{color:var(--fg)}
 .cart-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .cart-layout{display:flex;flex-direction:column;flex:1;min-height:0}
-.cart-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
+.cart-body{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:none;touch-action:pan-y}
 .cart-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px;flex-wrap:wrap}
 .ci-info{flex:1;min-width:0}
 .ci-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
