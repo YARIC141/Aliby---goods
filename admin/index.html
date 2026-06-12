@@ -178,6 +178,8 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .b-issued{color:var(--fg-2)}.b-cancelled{color:var(--err)}
 .empty{text-align:center;padding:48px 20px;color:var(--fg-4);font:400 13px/1.5 var(--font-sans)}
 .loading{text-align:center;padding:28px;color:var(--fg-4);font:400 12px/1.5 var(--font-sans)}
+@keyframes _spin{to{transform:rotate(360deg)}}
+.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:_spin .6s linear infinite;vertical-align:-2px;margin-right:5px;flex-shrink:0}
 .alert{padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);margin-bottom:10px;font:400 13px/1.4 var(--font-sans)}
 .alert-e{background:oklch(from var(--err) l c h / .1);border-color:oklch(from var(--err) l c h / .35);color:var(--err)}
 .alert-ok{background:oklch(from var(--ok) l c h / .1);border-color:oklch(from var(--ok) l c h / .35);color:var(--ok)}
@@ -1806,9 +1808,9 @@ function esc(s) {
 function btnLoad(el, label = 'Сохранение…') {
   if (!el) return () => {};
   el.disabled = true;
-  const prev = el.textContent;
-  el.textContent = label;
-  return () => { el.disabled = false; el.textContent = prev; };
+  const prev = el.innerHTML;
+  el.innerHTML = '<span class="btn-spinner"></span>' + label;
+  return () => { el.disabled = false; el.innerHTML = prev; };
 }
 function fmtDate(d) {
   if (!d) return '—';
@@ -2856,7 +2858,7 @@ async function confirmAddStorePay() {
   const errEl = document.getElementById('add-store-pay-err');
   const btn   = document.getElementById('add-store-pay-btn');
   if (errEl) errEl.style.display = 'none';
-  btn.disabled = true; btn.textContent = 'Подготовка платежа…';
+  const restoreAddStore = btnLoad(btn, 'Подготовка платежа…');
   try {
     const data = await req('/functions/v1/tbank-platform-init', {
       method: 'POST',
@@ -2865,7 +2867,7 @@ async function confirmAddStorePay() {
     window.location.href = data.payment_url;
   } catch(e) {
     if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
-    btn.disabled = false; btn.textContent = 'Оплатить и добавить заведение';
+    restoreAddStore();
   }
 }
 
@@ -5999,7 +6001,7 @@ async function applySchedTemplate() {
   if (!confirm(`Применить шаблон «${tpl.name}» к ${n} ${noun}?\nЭто перезапишет текущее расписание выбранных дней.`)) return;
   const slots = tpl.slots || [];
   const applyBtn = document.getElementById('sched-apply-btn');
-  if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = 'Сохраняю…'; }
+  const restoreApply = applyBtn ? btnLoad(applyBtn, 'Сохраняю…') : () => {};
   try {
     await req('/rest/v1/store_schedules?on_conflict=store_id,date', {
       method: 'POST',
@@ -6008,12 +6010,12 @@ async function applySchedTemplate() {
     });
     _sched.selectedDays.clear();
     _sched.selectedTplId = null;
-    if (applyBtn) { applyBtn.disabled = true; applyBtn.textContent = 'Применить к выбранным'; }
+    restoreApply();
     showAdminToast('Расписание сохранено');
     renderSchedTemplates();
     await loadSchedMonth();
   } catch(e) {
-    if (applyBtn) { applyBtn.disabled = false; applyBtn.textContent = 'Применить к выбранным'; }
+    restoreApply();
     showAdminToast('Ошибка применения шаблона');
   }
 }

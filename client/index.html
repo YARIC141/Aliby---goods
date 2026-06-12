@@ -171,6 +171,8 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .b-active{color:var(--ok)}.b-expired{color:var(--err)}.b-sub-pending{color:var(--warn)}
 .empty{text-align:center;padding:48px 20px;color:var(--fg-4);font:400 16px/1.5 var(--font-sans)}
 .loading{text-align:center;padding:28px;color:var(--fg-4);font:400 14px/1.5 var(--font-sans)}
+@keyframes _spin{to{transform:rotate(360deg)}}
+.btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:_spin .6s linear infinite;vertical-align:-2px;margin-right:5px;flex-shrink:0}
 @keyframes skshimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .sk{background:linear-gradient(90deg,var(--bg-1) 0,var(--bg-2) 50%,var(--bg-1) 100%);background-size:200% 100%;animation:skshimmer 1.4s infinite linear;border-radius:var(--r-1);display:block;margin-bottom:5px}
 .alert{padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);margin-bottom:10px;font:400 16px/1.4 var(--font-sans)}
@@ -1758,9 +1760,9 @@ function esc(s) {
 function btnLoad(el, label = 'Сохранение…') {
   if (!el) return () => {};
   el.disabled = true;
-  const prev = el.textContent;
-  el.textContent = label;
-  return () => { el.disabled = false; el.textContent = prev; };
+  const prev = el.innerHTML;
+  el.innerHTML = '<span class="btn-spinner"></span>' + label;
+  return () => { el.disabled = false; el.innerHTML = prev; };
 }
 function fmtDate(d) {
   if (!d) return '—';
@@ -2065,8 +2067,7 @@ async function bookWithPreselect(btn, item) {
   const { date, start } = _schedulePreselect;
   const prepMin = (item.preparation_time >= 5) ? item.preparation_time : 30;
   const end = _minToTime(_timeToMin(start) + prepMin);
-  const origText = btn.textContent;
-  btn.disabled = true; btn.textContent = '…';
+  const restore = btnLoad(btn, '…');
   try {
     await req('/rest/v1/bookings', {
       method: 'POST',
@@ -2088,7 +2089,7 @@ async function bookWithPreselect(btn, item) {
     showGeoToast(`Записано на ${date} в ${start}`);
     loadMenuItems();
   } catch (e) {
-    btn.disabled = false; btn.textContent = origText;
+    restore();
     showGeoToast('Ошибка при записи');
   }
 }
@@ -4886,8 +4887,7 @@ async function signContract(type) {
   const check    = document.getElementById(prefix + '-check');
   const btn      = document.getElementById(prefix + '-sign-btn');
   if (!check?.checked) return;
-  btn.disabled  = true;
-  btn.textContent = 'Подписание…';
+  const restoreSign = btnLoad(btn, 'Подписание…');
   try {
     const contract = type === 'buyer' ? BUYER_CONTRACT : null;
     const hash     = await _sha256(contract.text);
@@ -4904,8 +4904,7 @@ async function signContract(type) {
     next?.();
   } catch(e) {
     alert('Ошибка подписания: ' + (e.message || 'Попробуйте ещё раз'));
-    btn.disabled  = false;
-    btn.textContent = 'Подписать';
+    restoreSign();
   }
 }
 
@@ -5036,7 +5035,7 @@ async function submitPayment() {
 
   const payBtn = document.getElementById('tbank-pay-btn');
   const cancelBtn = document.getElementById('tbank-cancel-btn');
-  payBtn.disabled = true; payBtn.textContent = 'Обработка…';
+  const restorePay = btnLoad(payBtn, 'Обработка…');
   cancelBtn.disabled = true;
 
   try {
@@ -5353,7 +5352,7 @@ async function confirmBooking(payNow) {
   };
   if (!payNow) {
     const btn = document.getElementById('mbs-book-btn');
-    btn.disabled = true; btn.textContent = '…';
+    const restoreBook = btnLoad(btn, '…');
     try {
       if (_booking.rescheduleId) {
         await req(`/rest/v1/bookings?id=eq.${_booking.rescheduleId}&user_id=eq.${S.session.user.id}`, {
@@ -5371,7 +5370,7 @@ async function confirmBooking(payNow) {
     } catch(e) {
       showGeoToast('Ошибка при бронировании');
     } finally {
-      btn.disabled = false; btn.textContent = 'Забронировать';
+      restoreBook();
     }
     return;
   }
@@ -5384,7 +5383,7 @@ async function confirmBooking(payNow) {
       S.appliedSub = fullSubs[0].us;
       // book as "paid" via subscription — no card needed
       const btn2 = document.getElementById('mbs-pay-btn');
-      btn2.disabled = true; btn2.textContent = '…';
+      const restorePayBook = btnLoad(btn2, '…');
       try {
         if (_booking.rescheduleId) {
           await req(`/rest/v1/bookings?id=eq.${_booking.rescheduleId}&user_id=eq.${S.session.user.id}`, {
@@ -5398,10 +5397,10 @@ async function confirmBooking(payNow) {
         closeModal('m-book-slot');
         showGeoToast('Запись по абонементу создана');
         if (_storeSchedIsActive()) loadCaScheduleScreen();
-      if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
+        if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
       } catch(e) {
         showGeoToast('Ошибка при бронировании');
-        btn2.disabled = false; btn2.textContent = 'Оплатить и записаться';
+        restorePayBook();
       }
       return;
     }
