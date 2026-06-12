@@ -2748,16 +2748,21 @@ async function loadStore() {
   if (schedBtn) schedBtn.innerHTML = st.direction === 'services' ? `${svgIco('calendar',13)} Календарь записей` : `${svgIco('clock',13)} График работы`;
   document.getElementById('store-subs').innerHTML = SK.subCards(2);
   document.getElementById('menu-items').innerHTML = SK.itemCards(6);
-  // Проверяем подписку заведения (fail-open чтобы не блокировать при ошибке сети)
-  try {
-    const active = await req('/rest/v1/rpc/is_store_subscription_active', {
-      method: 'POST', body: JSON.stringify({ p_store_id: st.id }),
-    });
-    S.storeSubActive = active === true;
-  } catch(e) { S.storeSubActive = true; }
-  applyStoreGate();
-  await Promise.all([loadStoreSubs(), loadCategories(), loadMenuUserSubs()]);
-  loadMenuItems();
+  // Всё в фоне — UI рисуется из кэша немедленно, сеть не блокирует
+  loadCategories();   // показывает кэш сразу, фоном обновляет
+  loadMenuItems();    // показывает кэш сразу, фоном обновляет
+  // Сетевые запросы без await — не блокируют рендер
+  (async () => {
+    try {
+      const active = await req('/rest/v1/rpc/is_store_subscription_active', {
+        method: 'POST', body: JSON.stringify({ p_store_id: st.id }),
+      });
+      S.storeSubActive = active === true;
+    } catch(e) { S.storeSubActive = true; }
+    applyStoreGate();
+  })();
+  loadStoreSubs();
+  loadMenuUserSubs().then(() => loadMenuItems());
 }
 
 function applyStoreGate() {
@@ -2814,8 +2819,9 @@ async function loadStoreSubs(targetEl) {
 async function loadMenu() {
   if (!S.store) return;
   document.getElementById('menu-ph-name').textContent = S.store.name;
-  await Promise.all([loadCategories(), loadMenuUserSubs()]);
+  loadCategories();
   loadMenuItems();
+  loadMenuUserSubs().then(() => loadMenuItems());
 }
 
 async function loadMenuUserSubs(storeId) {
@@ -4844,6 +4850,8 @@ window.addEventListener('hashchange', () => {
     if (raw) { const d = JSON.parse(raw); if (d?.access_token) savedSession = d; }
   } catch(e) {}
 
+  loadAppConfig(); // fire-and-forget — не блокирует навигацию
+
   if (!savedSession) {
     if (hash.get('type') === 'recovery') {
       S.session = { access_token: hash.get('access_token') };
@@ -4853,11 +4861,9 @@ window.addEventListener('hashchange', () => {
       document.getElementById('screen-auth').classList.add('active');
     }
     hideSplash();
-    await loadAppConfig();
     return;
   }
 
-  await loadAppConfig();
   const expired = savedSession.expires_at && (Date.now() / 1000 > savedSession.expires_at);
   if (expired) {
     S.session = savedSession;
