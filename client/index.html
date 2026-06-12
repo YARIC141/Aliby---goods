@@ -441,6 +441,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .home-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .home-tile-alibi::before{background:var(--brand-ember)}
 .home-tile-food::before{background:var(--brand-ember)}
+.home-tile-install::before{background:var(--brand-ice)}
 .home-tile-goods::before{background:#35a862}
 .home-tile-services::before{background:#78b4e0}
 .recent-dir-block{margin-bottom:20px}
@@ -657,6 +658,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div class="ht-name">Товары</div>
       <div class="ht-desc">Магазины и шоурумы</div>
     </div>
+    <div id="home-install-tile" class="home-tile home-tile-install" style="display:none" onclick="triggerPwaInstall()"><div class="ht-icon">📲</div><div class="ht-name">Установить</div><div class="ht-desc">На главный экран</div></div>
     <div id="home-recent" style="grid-column:1/-1"></div>
   </div>
 </div>
@@ -4892,41 +4894,78 @@ if (!localStorage.getItem('alliby_cookie_ok')) {
 }
 
 // ─── PWA INSTALL ───
-(function initPwaInstall() {
-  // Already installed or dismissed
-  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
-  if (localStorage.getItem('alliby_pwa_dismissed')) return;
+window._pwaDeferred = null;
 
+function _pwaIsDismissed() {
+  const ts = parseInt(localStorage.getItem('alliby_pwa_dismissed') || '0', 10);
+  return ts > 0 && (Date.now() - ts) < 7 * 24 * 3600 * 1000;
+}
+
+function triggerPwaInstall() {
+  if (window._pwaDeferred) {
+    window._pwaDeferred.prompt();
+    window._pwaDeferred.userChoice.then(function(r) {
+      window._pwaDeferred = null;
+      const tile = document.getElementById('home-install-tile');
+      if (tile) tile.style.display = 'none';
+      if (r.outcome === 'accepted') {
+        try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch(ex) {}
+      }
+    });
+  } else {
+    const sheet = document.getElementById('ios-install-sheet');
+    if (sheet) sheet.style.display = 'flex';
+  }
+}
+
+(function initPwaInstall() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (standalone) return;
+
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const installTile = document.getElementById('home-install-tile');
   const banner = document.getElementById('pwa-banner');
   const installBtn = document.getElementById('pwa-install-btn');
-  let _deferredPrompt = null;
 
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    _deferredPrompt = e;
-    banner.style.display = 'block';
-  });
+  if (isIos && installTile) {
+    installTile.style.display = '';
+  }
 
-  installBtn.addEventListener('click', async () => {
-    if (!_deferredPrompt) return;
-    _deferredPrompt.prompt();
-    const { outcome } = await _deferredPrompt.userChoice;
-    _deferredPrompt = null;
-    banner.style.display = 'none';
-    if (outcome === 'accepted') {
-      try { localStorage.setItem('alliby_pwa_dismissed', '1'); } catch(e) {}
-    }
-  });
+  if (!isIos && !_pwaIsDismissed()) {
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window._pwaDeferred = e;
+      if (banner) banner.style.display = 'block';
+      if (installTile) installTile.style.display = '';
+    });
+  }
 
-  window.addEventListener('appinstalled', () => {
-    banner.style.display = 'none';
-    try { localStorage.setItem('alliby_pwa_dismissed', '1'); } catch(e) {}
+  if (installBtn) {
+    installBtn.addEventListener('click', async function() {
+      if (!window._pwaDeferred) return;
+      window._pwaDeferred.prompt();
+      const r = await window._pwaDeferred.userChoice;
+      window._pwaDeferred = null;
+      if (banner) banner.style.display = 'none';
+      const tile = document.getElementById('home-install-tile');
+      if (tile) tile.style.display = 'none';
+      if (r.outcome === 'accepted') {
+        try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch(ex) {}
+      }
+    });
+  }
+
+  window.addEventListener('appinstalled', function() {
+    if (banner) banner.style.display = 'none';
+    const tile = document.getElementById('home-install-tile');
+    if (tile) tile.style.display = 'none';
+    try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch(ex) {}
   });
 })();
 
 function dismissPwaBanner() {
   document.getElementById('pwa-banner').style.display = 'none';
-  try { localStorage.setItem('alliby_pwa_dismissed', '1'); } catch(e) {}
+  try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch(e) {}
 }
 
 if ('serviceWorker' in navigator) {
@@ -5928,6 +5967,21 @@ function closeStoreSchedDay() {
   <span style="font-size:13px">Доступна новая версия приложения</span>
   <button onclick="window.location.reload()" style="background:rgba(255,255,255,.25);border:none;color:#fff;font-size:13px;font-weight:500;padding:4px 14px;border-radius:6px;cursor:pointer">Обновить</button>
   <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+</div>
+
+<!-- iOS / manual install sheet -->
+<div id="ios-install-sheet" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg-1);border-radius:20px 20px 0 0;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 28px);width:100%;max-width:480px">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font:700 17px/1.3 var(--font-sans);color:var(--fg);margin-bottom:8px">Добавить на главный экран</div>
+      <div style="font:400 14px/1.6 var(--font-sans);color:var(--fg-3)">Откройте меню браузера и выберите опцию добавления на главный экран</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;background:var(--bg-2);border-radius:12px;padding:12px 14px;margin-bottom:16px">
+      <div style="font-size:28px;flex-shrink:0">⬆️</div>
+      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-2)"><b>Safari:</b> кнопка «Поделиться» → «На экран "Домой"»<br><b>Chrome:</b> меню ⋮ → «Добавить на главный экран»</div>
+    </div>
+    <button onclick="document.getElementById('ios-install-sheet').style.display='none'" style="width:100%;padding:13px;border-radius:12px;background:var(--brand-ember);border:none;font:700 15px/1 var(--font-sans);color:#fff;cursor:pointer">Понятно</button>
+  </div>
 </div>
 
 <!-- PWA install banner -->
