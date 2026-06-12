@@ -2401,7 +2401,21 @@ async function refreshSession() {
 }
 
 // ─── MAP ───
+function _initMapLayout() {
+  const layout = document.querySelector('.map-layout');
+  if (!layout) return;
+  const isMobile = window.innerWidth <= 600;
+  const noMap = isMobile;
+  layout.classList.toggle('no-map', noMap);
+  const ico = document.getElementById('map-tog-ico');
+  if (ico) ico.innerHTML = noMap
+    ? `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center"><svg class="ico" width="22" height="22" style="opacity:.45"><use href="#i-map"/></svg><svg width="22" height="22" style="position:absolute;inset:0" viewBox="0 0 22 22"><line x1="5" y1="5" x2="17" y2="17" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="5" x2="5" y2="17" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/></svg></span>`
+    : `<svg class="ico" width="22" height="22"><use href="#i-map"/></svg>`;
+  if (!noMap && S.map) setTimeout(() => S.map.resize(), 50);
+}
+
 async function loadMap() {
+  _initMapLayout();
   loadMapStores();
   loadMapData();
 }
