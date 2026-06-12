@@ -1906,15 +1906,24 @@ function toggleNavPos() {
 // ─── APP CONFIG ───
 async function loadAppConfig() {
   try {
+    const cached = JSON.parse(localStorage.getItem('admin_app_config') || 'null');
+    if (cached?.vectorMap) S.mapCfg = cached.vectorMap;
+    if (cached?.features) S.features = { ...DEFAULT_FEATURES, ...cached.features };
+    if (cached) applyFeatureToggles();
+  } catch(e) {}
+  try {
     const r = await fetch(`${SB_URL}/rest/v1/app_config?scope=eq.admin&select=config`, {
       headers: { apikey: SB_ANON, 'Accept': 'application/json' }
     });
-    if (!r.ok) return;
-    const rows = await r.json();
-    if (!rows?.length) return;
-    const cfg = rows[0].config;
-    if (cfg?.vectorMap) S.mapCfg = cfg.vectorMap;
-    if (cfg?.ui?.features) S.features = { ...DEFAULT_FEATURES, ...cfg.ui.features };
+    if (r.ok) {
+      const rows = await r.json();
+      if (rows?.length) {
+        const cfg = rows[0].config;
+        if (cfg?.vectorMap) S.mapCfg = cfg.vectorMap;
+        if (cfg?.ui?.features) S.features = { ...DEFAULT_FEATURES, ...cfg.ui.features };
+        try { localStorage.setItem('admin_app_config', JSON.stringify({ vectorMap: cfg?.vectorMap, features: cfg?.ui?.features })); } catch(ex) {}
+      }
+    }
   } catch(e) {}
   applyFeatureToggles();
 }
@@ -3366,11 +3375,31 @@ function shareStoreLink() {
 }
 
 // ─── CATEGORIES ───
+function _renderCatsTable(cats) {
+  const tbody = document.getElementById('cats-tbody');
+  if (!tbody) return;
+  if (!cats.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Нет категорий</td></tr>'; return; }
+  tbody.innerHTML = cats.map(c => `
+      <tr>
+        <td>${esc(c.name)}</td>
+        <td>${esc(c.stores?.name || '— Глобальная —')}</td>
+        <td class="td-actions">
+          <button class="btn btn-sm" onclick="openCatModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Ред.</button>
+          <button class="btn btn-sm btn-d" onclick="confirmDelete('cat','${c.id}','${esc(c.name)}')">Удал.</button>
+        </td>
+      </tr>`).join('');
+}
+
 async function loadCategories() {
   const tbody = document.getElementById('cats-tbody');
-  tbody.innerHTML = '<tr><td colspan="3" class="loading">Загрузка…</td></tr>';
+  const uid = S.session?.user?.id;
+  const cacheKey = `admin_cats_${uid}`;
   try {
-    // GET /rest/v1/categories?order=name.asc
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached) _renderCatsTable(cached);
+    else tbody.innerHTML = '<tr><td colspan="3" class="loading">Загрузка…</td></tr>';
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="3" class="loading">Загрузка…</td></tr>'; }
+  try {
     let url = '/rest/v1/categories?order=name.asc&select=*,stores(name)';
     const storeId = document.getElementById('cat-store-filter')?.value;
     if (storeId) {
@@ -3380,17 +3409,9 @@ async function loadCategories() {
       url += `&or=(store_id.in.(${ids}),store_id.is.null)`;
     }
     const cats = await req(url);
-    if (!cats.length) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Нет категорий</td></tr>'; return; }
-    tbody.innerHTML = cats.map(c => `
-      <tr>
-        <td>${esc(c.name)}</td>
-        <td>${esc(c.stores?.name || '— Глобальная —')}</td>
-        <td class="td-actions">
-          <button class="btn btn-sm" onclick="openCatModal(${JSON.stringify(c).replace(/"/g,'&quot;')})">Ред.</button>
-          <button class="btn btn-sm btn-d" onclick="confirmDelete('cat','${c.id}','${esc(c.name)}')">Удал.</button>
-        </td>
-      </tr>`).join('');
-  } catch(e) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Ошибка</td></tr>'; }
+    if (!storeId) try { localStorage.setItem(cacheKey, JSON.stringify(cats)); } catch(ex) {}
+    _renderCatsTable(cats);
+  } catch(e) { if (!document.querySelector('#cats-tbody td:not(.loading)')) tbody.innerHTML = '<tr><td colspan="3" class="empty">Ошибка</td></tr>'; }
 }
 
 function openCatModal(cat) {
@@ -4517,13 +4538,48 @@ async function openEmployeeSchedule() {
 }
 
 // ─── SUBSCRIPTIONS ───
+function _renderSubsList(subs) {
+  const el = document.getElementById('sub-list');
+  if (!el) return;
+  const isEmp = S.profile?.role === 'employee';
+  if (!subs.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет абонементов</div>'; return; }
+  el.innerHTML = subs.map(s => {
+    const sd = JSON.stringify(s).replace(/"/g, '&quot;');
+    const discLabel = s.discount_value
+      ? (s.discount_type === 'percent' ? `−${s.discount_value}%` : `−${s.discount_value} ₽`)
+      : '—';
+    const uses = s.total_uses === 0 ? '∞' : s.total_uses;
+    const editBtns = isEmp ? '' : `
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="event.stopPropagation();openSubModal(${sd})">Ред.</button>
+            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
+          </div>`;
+    return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</div>
+            <div style="font-size:12px;color:var(--fg-3);margin-bottom:2px">${esc(s.stores?.name || '—')}</div>
+            <div style="font-size:12px;color:var(--fg-3)">${s.price} ₽ · скидка ${discLabel} · ${s.duration_days} дн. · исп. ${uses} · тираж ${s.stock_total !== null && s.stock_total !== undefined ? s.stock_sold + '/' + s.stock_total : '∞'}</div>
+          </div>
+          ${editBtns}
+        </div>
+      </div>`;
+  }).join('');
+}
+
 async function loadSubscriptions() {
   const el = document.getElementById('sub-list');
-  el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  const uid = S.session?.user?.id;
+  const cacheKey = `admin_subs_${uid}`;
   const isEmp = S.profile?.role === 'employee';
+  const storeFilter = document.getElementById('sub-store-filter');
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached) _renderSubsList(cached);
+    else el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>'; }
   try {
     let url = '/rest/v1/subscriptions?deleted_at=is.null&select=*,stores(name)&order=name.asc';
-    const storeFilter = document.getElementById('sub-store-filter');
     if (isEmp) {
       url += `&store_id=eq.${S.profile.employee_store_id}`;
       if (storeFilter) { storeFilter.value = S.profile.employee_store_id; storeFilter.disabled = true; }
@@ -4536,30 +4592,9 @@ async function loadSubscriptions() {
       }
     }
     const subs = await req(url);
-    if (!subs.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет абонементов</div>'; return; }
-    el.innerHTML = subs.map(s => {
-      const sd = JSON.stringify(s).replace(/"/g, '&quot;');
-      const discLabel = s.discount_value
-        ? (s.discount_type === 'percent' ? `−${s.discount_value}%` : `−${s.discount_value} ₽`)
-        : '—';
-      const uses = s.total_uses === 0 ? '∞' : s.total_uses;
-      const editBtns = isEmp ? '' : `
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button class="btn btn-sm" onclick="event.stopPropagation();openSubModal(${sd})">Ред.</button>
-            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
-          </div>`;
-      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          <div style="flex:1;min-width:0">
-            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</div>
-            <div style="font-size:12px;color:var(--fg-3);margin-bottom:2px">${esc(s.stores?.name || '—')}</div>
-            <div style="font-size:12px;color:var(--fg-3)">${s.price} ₽ · скидка ${discLabel} · ${s.duration_days} дн. · исп. ${uses} · тираж ${s.stock_total !== null && s.stock_total !== undefined ? s.stock_sold + '/' + s.stock_total : '∞'}</div>
-          </div>
-          ${editBtns}
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { el.innerHTML = '<div class="empty" style="padding:16px 0">Ошибка</div>'; }
+    if (!storeFilter?.value) try { localStorage.setItem(cacheKey, JSON.stringify(subs)); } catch(ex) {}
+    _renderSubsList(subs);
+  } catch(e) { if (!el.querySelector('.card')) el.innerHTML = '<div class="empty" style="padding:16px 0">Ошибка</div>'; }
 }
 
 function openSubModal(sub) {
@@ -4895,18 +4930,14 @@ async function openEmployeesModal() {
   await loadEmployees();
 }
 
-async function loadEmployees() {
+function _renderEmpList(emps) {
   const el = document.getElementById('emp-list');
-  el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>';
-  try {
-    const emps = await req(
-      `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc`
-    );
-    if (!emps.length) { el.innerHTML = '<div class="empty" style="padding:12px 0">Сотрудников нет</div>'; return; }
-    const storeMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.name]));
-    el.innerHTML = emps.map(e => {
-      const storeName = storeMap[e.employee_store_id] || '—';
-      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+  if (!el) return;
+  if (!emps.length) { el.innerHTML = '<div class="empty" style="padding:12px 0">Сотрудников нет</div>'; return; }
+  const storeMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.name]));
+  el.innerHTML = emps.map(e => {
+    const storeName = storeMap[e.employee_store_id] || '—';
+    return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.full_name||'')}</div>
@@ -4919,8 +4950,25 @@ async function loadEmployees() {
           </div>
         </div>
       </div>`;
-    }).join('');
-  } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Ошибка загрузки</div>'; }
+  }).join('');
+}
+
+async function loadEmployees() {
+  const el = document.getElementById('emp-list');
+  const uid = S.session?.user?.id;
+  const cacheKey = `admin_emps_${uid}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached) _renderEmpList(cached);
+    else el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>';
+  } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>'; }
+  try {
+    const emps = await req(
+      `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc`
+    );
+    try { localStorage.setItem(cacheKey, JSON.stringify(emps)); } catch(ex) {}
+    _renderEmpList(emps);
+  } catch(e) { if (!el.querySelector('.card')) el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Ошибка загрузки</div>'; }
 }
 
 function openAddEmployeeModal() {
@@ -5894,9 +5942,15 @@ function toggleSchedEditMode() {
 
 async function loadSchedTemplates() {
   if (!_sched.storeId) return;
+  const cacheKey = `admin_sched_tpls_${_sched.storeId}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached) { _sched.templates = cached; renderSchedTemplates(); }
+  } catch(e) {}
   try {
     _sched.templates = await req(`/rest/v1/schedule_templates?store_id=eq.${_sched.storeId}&order=created_at.asc&select=id,name,slots`);
-  } catch(e) { _sched.templates = []; }
+    try { localStorage.setItem(cacheKey, JSON.stringify(_sched.templates)); } catch(ex) {}
+  } catch(e) { _sched.templates = _sched.templates?.length ? _sched.templates : []; }
   renderSchedTemplates();
 }
 
