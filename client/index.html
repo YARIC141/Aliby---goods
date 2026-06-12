@@ -4974,7 +4974,7 @@ async function doCheckout(useSubscription = false) {
     document.getElementById('tbank-error').style.display = 'none';
     openModal('m-tbank-pay');
   } catch(e) {
-    showGeoToast('Ошибка: ' + (e.message || 'Попробуйте ещё раз'));
+    showGeoToast('Ошибка: ' + (e.error || e.message || 'Попробуйте ещё раз'));
   } finally {
     payBtn.disabled = false;
     payBtn.textContent = 'Оплатить';

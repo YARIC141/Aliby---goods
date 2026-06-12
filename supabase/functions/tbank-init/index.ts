@@ -102,20 +102,32 @@ Deno.serve(async (req: Request) => {
   const isRealMode = storeData?.payment_test_mode === false
   const provider   = storeData?.payment_provider || "none"
 
+  // Lookup payment credentials: try this store first, fall back to any store of the same owner
+  async function getStoreCreds(fields: string, checkFn: (r: any) => boolean) {
+    const { data: direct } = await serviceClient
+      .from("store_payment_settings").select(fields).eq("store_id", store_id).maybeSingle()
+    if (direct && checkFn(direct)) return direct
+    // Fallback: find keys from any store of the same owner
+    const { data: ownerStores } = await serviceClient
+      .from("stores").select("id").eq("owner_user_id", storeData.owner_user_id).neq("id", store_id)
+    if (!ownerStores?.length) return null
+    const ids = ownerStores.map((s: any) => s.id)
+    const { data: rows } = await serviceClient
+      .from("store_payment_settings").select(fields).in("store_id", ids)
+    return rows?.find(checkFn) ?? null
+  }
+
   // Реальный режим — боевые ключи
   if (isRealMode && provider !== "none") {
     if (provider !== "tinkoff") {
       await serviceClient.from("orders").delete().eq("id", order.id)
       return jsonResponse({ error: "Provider not yet supported. Use Tinkoff or enable test mode." }, 400)
     }
-    const { data: sps } = await serviceClient
-      .from("store_payment_settings")
-      .select("terminal_key, secret_key, key_version")
-      .eq("store_id", store_id).maybeSingle()
-    if (!sps?.terminal_key || !sps?.secret_key) {
+    const sps = await getStoreCreds("terminal_key,secret_key,key_version", r => !!(r.terminal_key && r.secret_key))
+    if (!sps) {
       await serviceClient.from("orders").delete().eq("id", order.id)
       await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_prod", edge_fn: "tbank-init", ip, success: false, detail: "keys_not_configured" })
-      return jsonResponse({ error: "Production credentials not configured." }, 400)
+      return jsonResponse({ error: "Production credentials not configured. Go to admin → Интернет-эквайринг." }, 400)
     }
     await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_prod", edge_fn: "tbank-init", ip, success: true })
     const kv          = sps.key_version ?? 1
@@ -148,13 +160,10 @@ Deno.serve(async (req: Request) => {
 
   // Тестовый режим с ключами T-Bank
   if (!isRealMode && provider === "tinkoff") {
-    const { data: sps, error: spsError } = await serviceClient
-      .from("store_payment_settings")
-      .select("terminal_key_test, secret_key_test, key_version")
-      .eq("store_id", store_id).maybeSingle()
-    if (!sps?.terminal_key_test || !sps?.secret_key_test) {
+    const sps = await getStoreCreds("terminal_key_test,secret_key_test,key_version", r => !!(r.terminal_key_test && r.secret_key_test))
+    if (!sps) {
       await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: "Test payment keys not configured. Set them in admin → Интернет-эквайринг." }, 400)
+      return jsonResponse({ error: "Test payment keys not configured. Go to admin → Интернет-эквайринг." }, 400)
     }
     await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_test", edge_fn: "tbank-init", ip, success: true })
     const kv          = sps.key_version ?? 1
