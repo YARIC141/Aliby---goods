@@ -3929,20 +3929,45 @@ function renderGiftCartSection() {
   ).join('');
 }
 
-async function checkoutSubs() {
-  const dirItems = S.subCart.filter(c => (c.direction || 'food') === S.direction);
-  if (!dirItems.length) return;
-  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
-  const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
-  _pendingPayment = { type: 'sub', items: dirItems };
-  document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
-  document.getElementById('tbank-order-info').textContent =
-    dirItems.length === 1 ? `Абонемент «${dirItems[0].sub.name}»` : `${dirItems.length} абонемента`;
+async function _initSubPayment(subIds, isGift, pendingPayment, amountText, orderText) {
+  try {
+    const result = await req('/functions/v1/tbank-init-sub', {
+      method: 'POST',
+      body: JSON.stringify({ subscription_ids: subIds, is_gift: isGift }),
+    });
+    if (result.payment_url) {
+      window.location.href = result.payment_url;
+      return;
+    }
+  } catch(e) {
+    const msg = e?.error || e?.message || '';
+    if (!msg.includes('does not support') && !msg.includes('not configured') && !msg.includes('not found')) {
+      showGeoToast('Ошибка оплаты: ' + (msg || 'Попробуйте позже'));
+      return;
+    }
+  }
+  // Demo fallback — store has no card payment configured
+  _pendingPayment = pendingPayment;
+  document.getElementById('tbank-amount').textContent = amountText;
+  document.getElementById('tbank-order-info').textContent = orderText;
   document.getElementById('tbank-card').value = '';
   document.getElementById('tbank-exp').value = '';
   document.getElementById('tbank-cvv').value = '';
   document.getElementById('tbank-error').style.display = 'none';
   openModal('m-tbank-pay');
+}
+
+async function checkoutSubs() {
+  const dirItems = S.subCart.filter(c => (c.direction || 'food') === S.direction);
+  if (!dirItems.length) return;
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
+  const label = dirItems.length === 1 ? `Абонемент «${dirItems[0].sub.name}»` : `${dirItems.length} абонемента`;
+  await _initSubPayment(
+    dirItems.map(c => c.sub.id), false,
+    { type: 'sub', items: dirItems },
+    totalAmount + ' ₽', label
+  );
 }
 
 async function checkoutGiftSubs() {
@@ -3950,30 +3975,26 @@ async function checkoutGiftSubs() {
   if (!dirItems.length) return;
   if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
   const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
-  _pendingPayment = { type: 'gift-sub', items: dirItems };
-  document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
-  document.getElementById('tbank-order-info').textContent =
-    dirItems.length === 1 ? `${svgIco('gift',13)} Абонемент «${dirItems[0].sub.name}»` : `${svgIco('gift',13)} ${dirItems.length} подарочных абонемента`;
-  document.getElementById('tbank-card').value = '';
-  document.getElementById('tbank-exp').value = '';
-  document.getElementById('tbank-cvv').value = '';
-  document.getElementById('tbank-error').style.display = 'none';
-  openModal('m-tbank-pay');
+  const label = dirItems.length === 1
+    ? `${svgIco('gift',13)} Абонемент «${dirItems[0].sub.name}»`
+    : `${svgIco('gift',13)} ${dirItems.length} подарочных абонемента`;
+  await _initSubPayment(
+    dirItems.map(c => c.sub.id), true,
+    { type: 'gift-sub', items: dirItems },
+    totalAmount + ' ₽', label
+  );
 }
 
-function buySubDirect(id) {
+async function buySubDirect(id) {
   const sub = subPlans[id];
   if (!sub) return;
   if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
   closeModal('m-sub-detail');
-  _pendingPayment = { type: 'sub', items: [{ sub, direction: S.direction }] };
-  document.getElementById('tbank-amount').textContent = sub.price + ' ₽';
-  document.getElementById('tbank-order-info').textContent = `Абонемент «${sub.name}»`;
-  document.getElementById('tbank-card').value = '';
-  document.getElementById('tbank-exp').value = '';
-  document.getElementById('tbank-cvv').value = '';
-  document.getElementById('tbank-error').style.display = 'none';
-  openModal('m-tbank-pay');
+  await _initSubPayment(
+    [sub.id], false,
+    { type: 'sub', items: [{ sub, direction: S.direction }] },
+    sub.price + ' ₽', `Абонемент «${sub.name}»`
+  );
 }
 
 function openSubDetailModal(id) {
@@ -5098,6 +5119,48 @@ function fmtExpiry(input) {
 // ─── ACQUIRING RETURN HANDLER ───
 async function handlePaymentReturn() {
   const params = new URLSearchParams(window.location.search);
+  const tpay   = params.get('tpay');
+
+  // T-Bank real payment return (food orders)
+  if (tpay === 'store_success') {
+    history.replaceState({}, '', window.location.pathname);
+    const pending = JSON.parse(localStorage.getItem('alliby_pending_acq') || 'null');
+    localStorage.removeItem('alliby_pending_acq');
+    if (pending?.is_delivery && pending?.order_id) {
+      req(`/rest/v1/orders?id=eq.${pending.order_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ is_delivery: true, delivery_fee: pending.delivery_fee, delivery_address: pending.delivery_address }),
+      }).catch(() => {});
+    }
+    S.deliveryMode = null; S.deliveryFee = 0;
+    S.cart = []; S.cartStoreId = null; S.appliedSub = null;
+    saveCart(); updateCartCount(); renderCart?.();
+    showGeoToast('Заказ успешно оплачен!');
+    goTo('cart'); switchCartTab?.('order');
+    return;
+  }
+  if (tpay === 'store_fail') {
+    history.replaceState({}, '', window.location.pathname);
+    showGeoToast('Оплата не прошла. Попробуйте ещё раз.');
+    return;
+  }
+
+  // T-Bank real payment return (subscriptions)
+  if (tpay === 'sub_success') {
+    history.replaceState({}, '', window.location.pathname);
+    S.subCart = []; S.giftSubCart = [];
+    saveSubCart?.(); renderSubCartSection?.(); refreshSubCardViews?.();
+    showGeoToast('Абонемент успешно куплен!');
+    goTo('subscriptions');
+    return;
+  }
+  if (tpay === 'sub_fail') {
+    history.replaceState({}, '', window.location.pathname);
+    showGeoToast('Оплата не прошла. Попробуйте ещё раз.');
+    return;
+  }
+
+  // Legacy emulation flow (payment_ok / payment_cancel)
   const payOk = params.has('payment_ok');
   const payCan = params.has('payment_cancel');
   if (!payOk && !payCan) return;
