@@ -1751,7 +1751,8 @@ async function req(path, opts = {}, _retried = false) {
   const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
   if (r.status === 401 && !_retried) {
     const ok = await refreshSession();
-    if (ok) return req(path, opts, true);
+    if (ok === true) return req(path, opts, true);
+    if (ok === null) throw { message: 'Нет соединения' }; // network error — keep session
     localStorage.removeItem('alliby_s');
     S.session = null; S.profile = null;
     goTo('auth');
@@ -2392,18 +2393,22 @@ async function blockIfEmployee() {
 
 async function refreshSession() {
   if (!S.session?.refresh_token) return false;
+  let r;
   try {
-    const r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+    r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
       body: JSON.stringify({ refresh_token: S.session.refresh_token }),
     });
-    if (!r.ok) return false;
-    const d = await r.json();
-    if (!d.access_token) return false;
-    setSession(d);
-    return true;
-  } catch(e) { return false; }
+  } catch(e) {
+    // Network error — token may still be valid; return null so callers don't logout
+    return null;
+  }
+  if (!r.ok) return false; // HTTP 4xx: token definitively invalid/revoked
+  const d = await r.json();
+  if (!d.access_token) return false;
+  setSession(d);
+  return true;
 }
 
 // ─── MAP ───
@@ -4888,9 +4893,18 @@ window.addEventListener('hashchange', () => {
     document.getElementById('sn-email').textContent = savedSession.user?.email || '';
     hideSplash();
     refreshSession().then(async ok => {
-      if (ok) {
+      if (ok === true) {
         if (await blockIfEmployee()) { goTo('auth'); return; }
         await requireContract('buyer', restoreNav);
+      } else if (ok === null) {
+        // Network error — let user in with stale session, retry when online
+        if (await blockIfEmployee()) { goTo('auth'); return; }
+        await requireContract('buyer', restoreNav);
+        window.addEventListener('online', () => {
+          refreshSession().then(r => {
+            if (r === false) { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
+          });
+        }, { once: true });
       } else { localStorage.removeItem('alliby_s'); S.session = null; goTo('auth'); }
     });
   } else {
