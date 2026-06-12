@@ -2930,27 +2930,18 @@ async function loadStoreCategoriesFiltered(dir) {
 }
 
 // ─── STORES SECTION ───
-async function loadStores() {
+const _DIR_LABELS = { food: 'Еда', goods: 'Товары', services: 'Услуги' };
+
+function _renderStoresList(stores) {
   const el = document.getElementById('stores-list');
-  el.innerHTML = '<div class="loading">Загрузка…</div>';
-  try {
-    const uid = S.session.user.id;
-    const [stores, locs] = await Promise.all([
-      req(`/rest/v1/stores?owner_user_id=eq.${uid}&order=name.asc&select=*,store_categories(name,icon)`),
-      req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
-    ]);
-    const locMap = new Map(locs.map(l => [l.id, l]));
-    S.stores = stores.map(s => ({ ...s, _loc: locMap.get(s.id) || null }));
-    fillStoreSelects();
-    loadStoreCategories();
-    if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
-    const _DIR_LABELS = { food: 'Еда', goods: 'Товары', services: 'Услуги' };
-    el.innerHTML = S.stores.map(s => {
-      const color = esc(s._loc?.marker_color || '#e8430a');
-      const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
-      const dirLabel = _DIR_LABELS[s.direction] || '';
-      const sd = JSON.stringify(s).replace(/"/g, '&quot;');
-      return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openStoreDetail(${sd})">
+  if (!el) return;
+  if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
+  el.innerHTML = stores.map(s => {
+    const color = esc(s._loc?.marker_color || '#e8430a');
+    const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
+    const dirLabel = _DIR_LABELS[s.direction] || '';
+    const sd = JSON.stringify(s).replace(/"/g, '&quot;');
+    return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openStoreDetail(${sd})">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
@@ -2973,8 +2964,36 @@ async function loadStores() {
           </div>
         </div>
       </div>`;
-    }).join('');
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+  }).join('');
+}
+
+async function loadStores() {
+  const el = document.getElementById('stores-list');
+  const uid = S.session.user.id;
+  const cacheKey = `admin_stores_${uid}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached) {
+      S.stores = cached;
+      fillStoreSelects();
+      loadStoreCategories();
+      _renderStoresList(cached);
+    } else {
+      el.innerHTML = '<div class="loading">Загрузка…</div>';
+    }
+  } catch(e) { el.innerHTML = '<div class="loading">Загрузка…</div>'; }
+  try {
+    const [stores, locs] = await Promise.all([
+      req(`/rest/v1/stores?owner_user_id=eq.${uid}&order=name.asc&select=*,store_categories(name,icon)`),
+      req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
+    ]);
+    const locMap = new Map(locs.map(l => [l.id, l]));
+    S.stores = stores.map(s => ({ ...s, _loc: locMap.get(s.id) || null }));
+    try { localStorage.setItem(cacheKey, JSON.stringify(S.stores)); } catch(ex) {}
+    fillStoreSelects();
+    loadStoreCategories();
+    _renderStoresList(S.stores);
+  } catch(e) { if (!el.querySelector('.card')) el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
 function fillStoreSelects() {
@@ -3459,15 +3478,58 @@ function setAdminMenuTab(tab) {
   else loadSubscriptions();
 }
 
+function _renderMenuItems(items) {
+  const el = document.getElementById('mi-list');
+  if (!el) return;
+  const isEmp = S.profile?.role === 'employee';
+  if (!items.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет позиций</div>'; return; }
+  el.innerHTML = items.map(i => {
+    const sd = JSON.stringify(i).replace(/"/g, '&quot;');
+    const thumb = i.image_url
+      ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
+      : `<div style="width:40px;height:40px;border-radius:var(--r-1);background:var(--bg-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-4)">${svgIco('food',20)}</div>`;
+    const avail = i.is_available
+      ? `<span style="font-size:12px;color:var(--ok);display:inline-flex;align-items:center;gap:3px">${svgIco('check',11)} В наличии</span>`
+      : `<span style="font-size:12px;color:var(--fg-4)">— Нет в наличии</span>`;
+    const editBtns = isEmp ? '' : `
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            <button class="btn btn-sm" onclick="event.stopPropagation();openMenuItemModal(${sd})">Ред.</button>
+            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
+          </div>`;
+    return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          ${thumb}
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.name)}</div>
+            <div style="font-size:12px;color:var(--fg-3);margin-bottom:3px">${esc(i.categories?.name || '—')} · ${i.price} ₽</div>
+            ${avail}
+          </div>
+          ${editBtns}
+        </div>
+      </div>`;
+  }).join('');
+}
+
 async function loadMenuItems() {
   const el = document.getElementById('mi-list');
-  el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  const uid = S.session?.user?.id;
   const isEmp = S.profile?.role === 'employee';
+  const storeFilter = document.getElementById('mi-store-filter');
+  const catId  = document.getElementById('mi-cat-filter')?.value;
+  const search = document.getElementById('mi-search')?.value;
+  const noFilters = !catId && !search;
+  const cacheKey = `admin_menu_items_${uid}`;
+  if (noFilters) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+      if (cached) _renderMenuItems(cached);
+      else el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+    } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>'; }
+  } else {
+    el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+  }
   try {
     let url = '/rest/v1/menu_items?select=*,categories(name)&order=name.asc';
-    const storeFilter = document.getElementById('mi-store-filter');
-    const catId  = document.getElementById('mi-cat-filter')?.value;
-    const search = document.getElementById('mi-search')?.value;
     if (isEmp) {
       url += `&store_id=eq.${S.profile.employee_store_id}`;
       if (storeFilter) { storeFilter.value = S.profile.employee_store_id; storeFilter.disabled = true; }
@@ -3482,33 +3544,9 @@ async function loadMenuItems() {
     if (catId)   url += `&category_id=eq.${catId}`;
     if (search)  url += `&name=ilike.*${encodeURIComponent(search)}*`;
     const items = await req(url);
-    if (!items.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет позиций</div>'; return; }
-    el.innerHTML = items.map(i => {
-      const sd = JSON.stringify(i).replace(/"/g, '&quot;');
-      const thumb = i.image_url
-        ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
-        : `<div style="width:40px;height:40px;border-radius:var(--r-1);background:var(--bg-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-4)">${svgIco('food',20)}</div>`;
-      const avail = i.is_available
-        ? `<span style="font-size:12px;color:var(--ok);display:inline-flex;align-items:center;gap:3px">${svgIco('check',11)} В наличии</span>`
-        : `<span style="font-size:12px;color:var(--fg-4)">— Нет в наличии</span>`;
-      const editBtns = isEmp ? '' : `
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-            <button class="btn btn-sm" onclick="event.stopPropagation();openMenuItemModal(${sd})">Ред.</button>
-            <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
-          </div>`;
-      return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          ${thumb}
-          <div style="flex:1;min-width:0">
-            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.name)}</div>
-            <div style="font-size:12px;color:var(--fg-3);margin-bottom:3px">${esc(i.categories?.name || '—')} · ${i.price} ₽</div>
-            ${avail}
-          </div>
-          ${editBtns}
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) { el.innerHTML = '<div class="empty" style="padding:16px 0">Ошибка</div>'; }
+    if (noFilters) try { localStorage.setItem(cacheKey, JSON.stringify(items)); } catch(ex) {}
+    _renderMenuItems(items);
+  } catch(e) { if (!el.querySelector('.card')) el.innerHTML = '<div class="empty" style="padding:16px 0">Ошибка</div>'; }
 }
 
 async function loadMICategories() {
