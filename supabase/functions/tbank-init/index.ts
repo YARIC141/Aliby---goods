@@ -66,15 +66,15 @@ Deno.serve(async (req: Request) => {
 
   if (storeOwner) {
     const today = new Date().toISOString().split('T')[0]
-    const { data: activeSub } = await serviceClient
+    const { data: activeSubs } = await serviceClient
       .from('platform_subscriptions')
       .select('id')
       .eq('user_id', storeOwner.owner_user_id)
       .eq('status', 'active')
       .gte('end_date', today)
-      .maybeSingle()
+      .limit(1)
 
-    if (!activeSub) {
+    if (!activeSubs?.length) {
       return jsonResponse({ error: 'Заведение временно приостановило продажи' }, 403)
     }
   }
