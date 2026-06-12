@@ -2977,11 +2977,9 @@ async function loadStores() {
   const cacheKey = `admin_stores_${uid}`;
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached) {
+    if (Array.isArray(cached)) {
       S.stores = cached;
-      fillStoreSelects();
-      loadStoreCategories();
-      _renderStoresList(cached);
+      try { fillStoreSelects(); loadStoreCategories(); _renderStoresList(cached); } catch {}
     } else {
       el.innerHTML = '<div class="loading">Загрузка…</div>';
     }
@@ -3419,7 +3417,7 @@ async function loadCategories() {
   const cacheKey = `admin_cats_${uid}`;
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached) _renderCatsTable(cached);
+    if (Array.isArray(cached)) { try { _renderCatsTable(cached); } catch {} }
     else tbody.innerHTML = '<tr><td colspan="3" class="loading">Загрузка…</td></tr>';
   } catch(e) { tbody.innerHTML = '<tr><td colspan="3" class="loading">Загрузка…</td></tr>'; }
   try {
@@ -3526,7 +3524,7 @@ async function loadMenuItems() {
   if (noFilters) {
     try {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-      if (cached) _renderMenuItems(cached);
+      if (Array.isArray(cached)) { try { _renderMenuItems(cached); } catch {} }
       else el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
     } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>'; }
   } else {
@@ -4617,7 +4615,7 @@ async function loadSubscriptions() {
   const storeFilter = document.getElementById('sub-store-filter');
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached) _renderSubsList(cached);
+    if (Array.isArray(cached)) { try { _renderSubsList(cached); } catch {} }
     else el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>'; }
   try {
@@ -5001,7 +4999,7 @@ async function loadEmployees() {
   const cacheKey = `admin_emps_${uid}`;
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached) _renderEmpList(cached);
+    if (Array.isArray(cached)) { try { _renderEmpList(cached); } catch {} }
     else el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>';
   } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>'; }
   try {
@@ -5995,7 +5993,7 @@ async function loadSchedTemplates() {
   const cacheKey = `admin_sched_tpls_${_sched.storeId}`;
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached) { _sched.templates = cached; renderSchedTemplates(); }
+    if (Array.isArray(cached)) { _sched.templates = cached; try { renderSchedTemplates(); } catch {} }
   } catch(e) {}
   try {
     _sched.templates = await req(`/rest/v1/schedule_templates?store_id=eq.${_sched.storeId}&order=created_at.asc&select=id,name,slots`);
