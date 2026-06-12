@@ -3735,16 +3735,22 @@ async function loadMySubscriptions() {
     return;
   }
   const ul = document.getElementById('sub-unified-list');
-  if (ul) ul.innerHTML = SK.usubCards(2);
+  const _uid = S.session?.user?.id;
+  const _subsCacheKey = `alliby_subs_${_uid}`;
   try {
-    const _uid = S.session?.user?.id;
+    const cached = JSON.parse(localStorage.getItem(_subsCacheKey) || 'null');
+    if (cached) { _subsAllData = cached; renderSubUnifiedList(); }
+    else if (ul) ul.innerHTML = SK.usubCards(2);
+  } catch { if (ul) ul.innerHTML = SK.usubCards(2); }
+  try {
     const [allSubs, gifts] = await Promise.all([
       req(`/rest/v1/user_subscriptions?gift_status=is.null&user_id=eq.${_uid}&select=*,subscriptions(*)&order=purchase_date.desc`),
       req(`/rest/v1/user_subscriptions?gift_status=in.(pending,activated)&user_id=eq.${_uid}&select=*,subscriptions(*)&order=purchase_date.desc`),
     ]);
     _subsAllData = { user: allSubs, gifts };
+    try { localStorage.setItem(_subsCacheKey, JSON.stringify(_subsAllData)); } catch(ex) {}
     renderSubUnifiedList();
-  } catch { if (ul) ul.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+  } catch { if (!_subsAllData.user.length && !_subsAllData.gifts.length && ul) ul.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
 }
 
 function setSubFilter(filter) {
@@ -4632,31 +4638,19 @@ async function openRecentStore(storeId) {
 }
 
 // ─── ALIBI ───
-async function loadAlibi() {
-  const el = document.getElementById('alibi-content');
-  el.innerHTML = '<div class="loading">Загрузка…</div>';
-  try {
-    const uid = S.session?.user?.id;
-    if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
-
-    const [redemptions, orders] = await Promise.all([
-      req(`/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions!inner(subscriptions(name,stores(name)))&user_subscriptions.user_id=eq.${uid}&order=redeemed_at.desc&limit=50`),
-      req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30`),
-    ]);
-
-    const totalSaved = redemptions.reduce((s, r) => s + (Number(r.amount_discounted) || 0), 0);
-    const chartHtml = redemptions.length ? renderSavingsChart(redemptions, totalSaved) : '';
-
-    _homeOrders = orders;
-    const ordersHtml = orders.length
-      ? '<div class="sec-title" style="margin:16px 0 8px">История заказов</div>' +
-        orders.map((o, idx) => {
-          const storeName = o.stores?.name || '';
-          const amount = Number(o.total_amount) || 0;
-          const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
-          const statusTxt = statusMap[o.status] || o.status;
-          const itemCount = (o.order_items || []).reduce((s, i) => s + i.quantity, 0);
-          return `<div class="card" style="margin-bottom:6px;padding:10px 12px;cursor:pointer" onclick="openOrderDetail(${idx})">
+function _renderAlibi(el, uid, redemptions, orders) {
+  const totalSaved = redemptions.reduce((s, r) => s + (Number(r.amount_discounted) || 0), 0);
+  const chartHtml = redemptions.length ? renderSavingsChart(redemptions, totalSaved) : '';
+  _homeOrders = orders;
+  const ordersHtml = orders.length
+    ? '<div class="sec-title" style="margin:16px 0 8px">История заказов</div>' +
+      orders.map((o, idx) => {
+        const storeName = o.stores?.name || '';
+        const amount = Number(o.total_amount) || 0;
+        const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
+        const statusTxt = statusMap[o.status] || o.status;
+        const itemCount = (o.order_items || []).reduce((s, i) => s + i.quantity, 0);
+        return `<div class="card" style="margin-bottom:6px;padding:10px 12px;cursor:pointer" onclick="openOrderDetail(${idx})">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
               <div style="flex:1;min-width:0">
                 <div style="font:500 14px/1.2 var(--font-sans)">${storeName ? esc(storeName) : 'Заказ'}</div>
@@ -4669,18 +4663,39 @@ async function loadAlibi() {
               </div>
             </div>
           </div>`;
-        }).join('')
-      : '';
+      }).join('')
+    : '';
+  el.innerHTML = chartHtml +
+    '<div style="display:flex;justify-content:center;margin:8px 0 4px"><div id="alibi-qr-box" style="padding:16px;background:#fff;border-radius:12px;display:inline-block"></div></div>' +
+    '<div class="txt-muted" style="text-align:center;margin-bottom:10px;font-size:13px">Покажите QR администратору для списания</div>' +
+    '<button class="btn" style="width:100%;margin-bottom:16px" onclick="loadAlibi()">Обновить статус абонементов</button>' +
+    ordersHtml;
+  const qrBox = document.getElementById('alibi-qr-box');
+  if (qrBox) new QRCode(qrBox, { text: uid, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M, colorDark: '#000000', colorLight: '#ffffff' });
+}
 
-    el.innerHTML = chartHtml +
-      '<div style="display:flex;justify-content:center;margin:8px 0 4px"><div id="alibi-qr-box" style="padding:16px;background:#fff;border-radius:12px;display:inline-block"></div></div>' +
-      '<div class="txt-muted" style="text-align:center;margin-bottom:10px;font-size:13px">Покажите QR администратору для списания</div>' +
-      '<button class="btn" style="width:100%;margin-bottom:16px" onclick="loadAlibi()">Обновить статус абонементов</button>' +
-      ordersHtml;
+async function loadAlibi() {
+  const el = document.getElementById('alibi-content');
+  const uid = S.session?.user?.id;
+  if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
 
-    const qrBox = document.getElementById('alibi-qr-box');
-    if (qrBox) new QRCode(qrBox, { text: uid, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M, colorDark: '#000000', colorLight: '#ffffff' });
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+  const cacheKey = `alliby_alibi_${uid}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached) _renderAlibi(el, uid, cached.redemptions, cached.orders);
+    else el.innerHTML = '<div class="loading">Загрузка…</div>';
+  } catch { el.innerHTML = '<div class="loading">Загрузка…</div>'; }
+
+  try {
+    const [redemptions, orders] = await Promise.all([
+      req(`/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions!inner(subscriptions(name,stores(name)))&user_subscriptions.user_id=eq.${uid}&order=redeemed_at.desc&limit=50`),
+      req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30`),
+    ]);
+    try { localStorage.setItem(cacheKey, JSON.stringify({ redemptions, orders })); } catch(ex) {}
+    _renderAlibi(el, uid, redemptions, orders);
+  } catch(e) {
+    if (!document.getElementById('alibi-qr-box')) el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+  }
 }
 
 let _homeOrders = [];
