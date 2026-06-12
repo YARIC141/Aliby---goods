@@ -293,8 +293,8 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .menu-toolbar input[type=search]{flex:1;min-width:120px}
 .menu-toolbar label{display:flex;align-items:center;gap:4px;font:400 14px/1 var(--font-sans);color:var(--fg-2);white-space:nowrap;cursor:pointer}
 .menu-toolbar label input{width:auto}
-.cat-bar{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid var(--line-soft);flex-shrink:0;touch-action:pan-x}
-.cat-bar::-webkit-scrollbar{height:3px}.cat-bar::-webkit-scrollbar-thumb{background:var(--line-soft)}
+.cat-bar{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+.cat-bar .chip{padding:5px 12px;font-size:14px}
 .chip{padding:6px 15px;border:1px solid var(--line);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:var(--r-pill);cursor:pointer;font:500 16px/1 var(--font-sans);white-space:nowrap;font-family:var(--font-sans);color:var(--fg-2);transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast)}
 .chip:hover{background:var(--bg-2)}
 .chip.active{background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,0) 42%),var(--accent);color:#fff;border-color:transparent;box-shadow:0 4px 14px var(--accent-glow),inset 0 1px 0 rgba(255,255,255,.26),inset 0 -1px 0 rgba(0,0,0,.18)}
