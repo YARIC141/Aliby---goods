@@ -4472,6 +4472,7 @@ function _autoDetectCityThenNav(cb) {
 
 // ─── NAV / CART RESTORE ───
 async function restoreNav() {
+  hideSplash();
   // restore direction
   try {
     const savedDir = localStorage.getItem('alliby_dir');
@@ -4538,7 +4539,7 @@ function hideSplash() {
   el.classList.add('hide');
   setTimeout(() => el.remove(), 500);
 }
-setTimeout(hideSplash, 2000);
+setTimeout(hideSplash, 500);
 
 // ─── HOME ───
 async function loadHome() {
@@ -4851,6 +4852,7 @@ window.addEventListener('hashchange', () => {
     } else {
       document.getElementById('screen-auth').classList.add('active');
     }
+    hideSplash();
     await loadAppConfig();
     return;
   }
@@ -4860,6 +4862,7 @@ window.addEventListener('hashchange', () => {
   if (expired) {
     S.session = savedSession;
     document.getElementById('sn-email').textContent = savedSession.user?.email || '';
+    hideSplash();
     refreshSession().then(async ok => {
       if (ok) {
         if (await blockIfEmployee()) { goTo('auth'); return; }
