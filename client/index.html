@@ -3370,6 +3370,10 @@ function trackEvent(event, storeId, extra) {
 }
 
 function openNearbyModal() {
+  if (S.userAddrLat == null) {
+    openAddressPicker(() => openNearbyModal());
+    return;
+  }
   const warn = document.getElementById('nearby-geo-warn');
   warn.style.display = 'none';
   if (!navigator.geolocation) {
