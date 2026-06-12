@@ -1,5 +1,5 @@
-// v8
-const APP_CACHE  = 'aliby-admin-app-v1';
+// v9
+const APP_CACHE  = 'aliby-admin-app-v2';
 const TILE_CACHE = 'aliby-admin-tiles-v2';
 const TILE_PATH  = '/functions/v1/vector-tiles/';
 const MAX_TILES  = 300;
