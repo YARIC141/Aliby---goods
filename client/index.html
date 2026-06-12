@@ -1569,7 +1569,7 @@ const S = {
   session: null, profile: null, store: null, storeSubActive: true,
   cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [],
   menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
-  map: null, mapMarkers: [], homeMarker: null, mapFitted: false, allStores: [], mapCats: new Set(),
+  map: null, mapMarkers: [], homeMarker: null, mapFitted: false, allStores: [], mapCat: null,
   mapMode: 'osm',
   nearbyMeters: null, geoLat: null, geoLng: null, deliveryFilter: false,
   navHistory: [], navIdx: -1,
@@ -1801,7 +1801,7 @@ function setDirection(dir) {
   // update tab active state
   document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === dir));
   // rebuild category chips for new direction and re-filter
-  S.mapCats = new Set();
+  S.mapCat = localStorage.getItem('alliby_cat_' + dir) || null;
   renderMapCategoryChips();
   applyMapFilter();
   updateMenuSearchPlaceholder();
@@ -1878,6 +1878,7 @@ const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(),
 
 function switchCalenabsTab(tab) {
   _calenabsTab = tab;
+  try { localStorage.setItem('alliby_calenabs_tab', tab); } catch(e) {}
   document.getElementById('ca-pane-ord').style.display = tab === 'ord' ? 'flex' : 'none';
   document.getElementById('ca-pane-bk').style.display  = tab === 'bk'  ? '' : 'none';
   document.getElementById('ca-pane-sub').style.display = tab === 'sub' ? '' : 'none';
@@ -2445,23 +2446,37 @@ function renderMapCategoryChips() {
   const catsMap = new Map();
   S.allStores.forEach(st => {
     if (st.direction !== S.direction) return;
-    if (st.store_category_id && st.store_categories) {
+    if (st.store_category_id && st.store_categories)
       catsMap.set(st.store_category_id, st.store_categories);
-    }
   });
   if (!catsMap.size) { el.innerHTML = ''; return; }
+  // if cached category no longer exists in current direction — reset
+  if (S.mapCat && !catsMap.has(S.mapCat)) {
+    S.mapCat = null;
+    try { localStorage.removeItem('alliby_cat_' + S.direction); } catch(e) {}
+  }
   const sorted = [...catsMap.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
   el.innerHTML = '';
-  sorted.forEach(([id, cat]) => {
+  const mkChip = (label, active, onClick) => {
     const btn = document.createElement('button');
-    btn.className = 'chip' + (S.mapCats.has(id) ? ' active' : '');
-    btn.innerHTML = svgIco('tag',11) + ' ' + esc(stripEmoji(cat.name));
-    btn.addEventListener('click', () => {
-      S.mapCats.has(id) ? S.mapCats.delete(id) : S.mapCats.add(id);
-      btn.classList.toggle('active', S.mapCats.has(id));
+    btn.className = 'chip' + (active ? ' active' : '');
+    btn.innerHTML = label;
+    btn.addEventListener('click', onClick);
+    el.appendChild(btn);
+  };
+  mkChip('Все', !S.mapCat, () => {
+    S.mapCat = null;
+    try { localStorage.removeItem('alliby_cat_' + S.direction); } catch(e) {}
+    renderMapCategoryChips();
+    applyMapFilter();
+  });
+  sorted.forEach(([id, cat]) => {
+    mkChip(svgIco('tag', 11) + ' ' + esc(stripEmoji(cat.name)), S.mapCat === id, () => {
+      S.mapCat = id;
+      try { localStorage.setItem('alliby_cat_' + S.direction, id); } catch(e) {}
+      renderMapCategoryChips();
       applyMapFilter();
     });
-    el.appendChild(btn);
   });
 }
 
@@ -2470,7 +2485,7 @@ function applyMapFilter(q) {
   const ql = q.toLowerCase();
   const filtered = S.allStores.filter(st => {
     if (st.direction !== S.direction) return false;
-    if (S.mapCats.size && !S.mapCats.has(st.store_category_id)) return false;
+    if (S.mapCat && st.store_category_id !== S.mapCat) return false;
     if (ql && !st.name.toLowerCase().includes(ql) && !(st.address || '').toLowerCase().includes(ql)) return false;
     if (S.nearbyMeters && S.geoLat != null) {
       const sLat = st.lat ?? st.latitude, sLng = st.lng ?? st.longitude;
@@ -2483,7 +2498,7 @@ function applyMapFilter(q) {
     return true;
   });
   renderStoreList(filtered);
-  const noCat = S.mapCats.size === 0 && !S.store;
+  const noCat = !S.mapCat && !S.store;
   document.getElementById('map-no-cat')?.classList.toggle('hidden', !noCat);
   if (S.map) { renderMapMarkers(noCat ? [] : filtered); _renderHomeMarker(); }
 }
@@ -4388,6 +4403,13 @@ async function restoreNav() {
   try {
     const ss = localStorage.getItem('alliby_store');
     if (ss) S.store = JSON.parse(ss);
+  } catch(e) {}
+  try {
+    S.mapCat = localStorage.getItem('alliby_cat_' + S.direction) || null;
+  } catch(e) {}
+  try {
+    const t = localStorage.getItem('alliby_calenabs_tab');
+    if (t === 'bk' || t === 'sub' || t === 'ord') _calenabsTab = t;
   } catch(e) {}
   await handlePaymentReturn();
   if (deepStoreId) {
