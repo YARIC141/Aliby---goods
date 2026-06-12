@@ -3744,8 +3744,10 @@ async function loadMySubscriptions() {
   const _subsCacheKey = `alliby_subs_${_uid}`;
   try {
     const cached = JSON.parse(localStorage.getItem(_subsCacheKey) || 'null');
-    if (cached) { _subsAllData = cached; renderSubUnifiedList(); }
-    else if (ul) ul.innerHTML = SK.usubCards(2);
+    if (cached && Array.isArray(cached.user) && Array.isArray(cached.gifts)) {
+      _subsAllData = cached;
+      try { renderSubUnifiedList(); } catch {}
+    } else if (ul) ul.innerHTML = SK.usubCards(2);
   } catch { if (ul) ul.innerHTML = SK.usubCards(2); }
   try {
     const [allSubs, gifts] = await Promise.all([
@@ -4562,20 +4564,56 @@ function hideSplash() {
 setTimeout(hideSplash, 500);
 
 // ─── HOME ───
+const DIR_META = {
+  food:     { label: 'Еда',    color: '#e8743b' },
+  goods:    { label: 'Товары', color: '#35a862' },
+  services: { label: 'Услуги', color: '#78b4e0' },
+};
+
+function _renderRecentStores(el, unique) {
+  const byDir = { food: [], goods: [], services: [] };
+  for (const e of unique) { const d = e.store?.direction; if (d && byDir[d] && byDir[d].length < 4) byDir[d].push(e); }
+  const hasAny = Object.values(byDir).some(a => a.length > 0);
+  if (!hasAny) { el.innerHTML = ''; return; }
+  let html = '<div style="font:600 13px/1 var(--font-sans);color:var(--fg-3);margin-bottom:14px;padding-top:4px">Недавние заведения</div>';
+  for (const [dir, items] of Object.entries(byDir)) {
+    if (!items.length) continue;
+    const { label, color } = DIR_META[dir];
+    html += `<div class="recent-dir-block"><div class="recent-dir-label" style="color:${color};border-color:${color}40">${label}</div>`;
+    for (const { store_id, store: st } of items) {
+      const thumb = st.image_url
+        ? `<img src="${esc(st.image_url)}" alt="">`
+        : `<span>${st.store_categories?.icon || svgIco('store',20)}</span>`;
+      const cat = st.store_categories
+        ? ((st.store_categories.icon || '') + ' ' + st.store_categories.name).trim() : '';
+      html += `<div class="recent-store-row" onclick="openRecentStore('${store_id}')">
+          <div class="recent-store-thumb">${thumb}</div>
+          <div style="flex:1;min-width:0">
+            <div class="recent-store-name">${esc(st.name)}</div>
+            ${cat ? `<div class="recent-store-cat">${esc(cat)}</div>` : ''}
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg-4)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>`;
+    }
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
 async function loadHome() {
   const uid = S.session?.user?.id;
   const el = document.getElementById('home-recent');
   if (!el) return;
   if (!uid) { el.innerHTML = ''; return; }
 
-  el.innerHTML = '<div class="loading" style="padding:4px 0 8px">Загрузка…</div>';
-
-  const DIR_META = {
-    food:     { label: 'Еда',    color: '#e8743b' },
-    goods:    { label: 'Товары', color: '#35a862' },
-    services: { label: 'Услуги', color: '#78b4e0' },
-  };
+  const cacheKey = `alliby_home_${uid}`;
   const STORE_SEL = 'name,direction,image_url,store_categories(name,icon)';
+
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (Array.isArray(cached) && cached.length) _renderRecentStores(el, cached);
+    else el.innerHTML = '<div class="loading" style="padding:4px 0 8px">Загрузка…</div>';
+  } catch { el.innerHTML = '<div class="loading" style="padding:4px 0 8px">Загрузка…</div>'; }
 
   try {
     const [orders, bookings, subs] = await Promise.all([
@@ -4593,39 +4631,10 @@ async function loadHome() {
     const seen = new Set(), unique = [];
     for (const e of entries) if (!seen.has(e.store_id)) { seen.add(e.store_id); unique.push(e); }
 
-    const byDir = { food: [], goods: [], services: [] };
-    for (const e of unique) { const d = e.store?.direction; if (d && byDir[d] && byDir[d].length < 4) byDir[d].push(e); }
-
-    const hasAny = Object.values(byDir).some(a => a.length > 0);
-    if (!hasAny) { el.innerHTML = ''; return; }
-
-    let html = '<div style="font:600 13px/1 var(--font-sans);color:var(--fg-3);margin-bottom:14px;padding-top:4px">Недавние заведения</div>';
-    for (const [dir, items] of Object.entries(byDir)) {
-      if (!items.length) continue;
-      const { label, color } = DIR_META[dir];
-      html += `<div class="recent-dir-block">
-        <div class="recent-dir-label" style="color:${color};border-color:${color}40">${label}</div>`;
-      for (const { store_id, store: st } of items) {
-        const thumb = st.image_url
-          ? `<img src="${esc(st.image_url)}" alt="">`
-          : `<span>${st.store_categories?.icon || svgIco('store',20)}</span>`;
-        const cat = st.store_categories
-          ? ((st.store_categories.icon || '') + ' ' + st.store_categories.name).trim() : '';
-        html += `<div class="recent-store-row" onclick="openRecentStore('${store_id}')">
-          <div class="recent-store-thumb">${thumb}</div>
-          <div style="flex:1;min-width:0">
-            <div class="recent-store-name">${esc(st.name)}</div>
-            ${cat ? `<div class="recent-store-cat">${esc(cat)}</div>` : ''}
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--fg-4)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>`;
-      }
-      html += '</div>';
-    }
-    el.innerHTML = html;
+    try { localStorage.setItem(cacheKey, JSON.stringify(unique)); } catch {}
+    _renderRecentStores(el, unique);
   } catch(e) {
-    el.innerHTML = '';
-    console.error('[loadHome]', e);
+    if (!el.querySelector('.recent-store-row')) el.innerHTML = '';
   }
 }
 
