@@ -2937,9 +2937,9 @@ async function loadCategories() {
   const bar = document.getElementById('cat-bar');
   const storeId = S.store.id;
   const cached = _readCatsCache(storeId);
-  if (cached) {
-    S.menuStoreSubs = cached.subs;
-    _renderCatBar(bar, cached.cats);
+  if (cached && Array.isArray(cached.cats)) {
+    S.menuStoreSubs = cached.subs || [];
+    try { _renderCatBar(bar, cached.cats); } catch {}
     if ((Date.now() - (cached.ts || 0)) < _CATS_FRESH) return;
     // Background refresh only when cache is stale
     (async () => {
@@ -3008,15 +3008,20 @@ async function loadMenuItems() {
   const storeId = S.store.id;
 
   const cached = _readMenuCache(storeId);
-  if (cached) {
-    cached.forEach(it => cacheItem(it));
-    const filtered = _applyMenuFilters(cached);
-    el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
-    updateCartCount();
+  let _cacheOk = false;
+  if (Array.isArray(cached)) {
+    try {
+      cached.forEach(it => cacheItem(it));
+      const filtered = _applyMenuFilters(cached);
+      el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
+      updateCartCount();
+      _cacheOk = true;
+    } catch {}
+  }
+  if (!_cacheOk) el.innerHTML = SK.itemCards(6);
+  if (_cacheOk) {
     if ((Date.now() - _menuCacheTs(storeId)) < _MENU_FRESH) return;
     if (_menuFetchStoreId === storeId && (Date.now() - _menuFetchTs) < _MENU_THROTTLE) return;
-  } else {
-    el.innerHTML = SK.itemCards(6);
   }
 
   try {
