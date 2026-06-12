@@ -2400,17 +2400,37 @@ async function loadMap() {
   loadMapData();
 }
 
+function _storesCacheKey(city) { return 'alliby_stores_' + city; }
+function _readStoresCache(city) {
+  try { const r = localStorage.getItem(_storesCacheKey(city)); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+}
+function _writeStoresCache(city, stores) {
+  try { localStorage.setItem(_storesCacheKey(city), JSON.stringify(stores)); } catch(e) {}
+}
+
 async function loadMapStores() {
   const el = document.getElementById('sl-list');
-  el.innerHTML = SK.storeList();
+  const _city = S.city || 'Самара';
+
+  // Show cached stores immediately (stale-while-revalidate)
+  const cached = _readStoresCache(_city);
+  if (cached?.length) {
+    S.allStores = cached;
+    renderMapCategoryChips();
+    applyMapFilter();
+    fitMapToAllStores();
+  } else {
+    el.innerHTML = SK.storeList();
+  }
+
+  // Always fetch fresh data in background
   try {
-    const _city = S.city || 'Самара';
     const [stores, locs, subOwners] = await Promise.all([
       req(`/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&order=name.asc&select=*,store_categories(name,icon)`),
       req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
       req('/rest/v1/rpc/get_active_sub_owner_ids', { method: 'POST', body: '{}' }).catch(() => []),
     ]);
-    const locMap      = new Map(locs.map(l => [l.id, l]));
+    const locMap       = new Map(locs.map(l => [l.id, l]));
     const activeOwners = new Set(subOwners.map(r => r.user_id));
     S.allStores = stores.map(st => ({
       ...st,
@@ -2419,10 +2439,13 @@ async function loadMapStores() {
       marker_color: locMap.get(st.id)?.marker_color ?? '#e8430a',
       has_cart: activeOwners.has(st.owner_user_id),
     }));
+    _writeStoresCache(_city, S.allStores);
     renderMapCategoryChips();
     applyMapFilter();
-    fitMapToAllStores();
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+    if (!cached?.length) fitMapToAllStores();
+  } catch(e) {
+    if (!cached?.length) el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+  }
 }
 
 function fitMapToAllStores() {
