@@ -4874,9 +4874,6 @@ if (!localStorage.getItem('alliby_cookie_ok')) {
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    document.getElementById('update-banner').style.display = 'flex';
-  });
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data?.type === 'APP_UPDATED')
       document.getElementById('update-banner').style.display = 'flex';
