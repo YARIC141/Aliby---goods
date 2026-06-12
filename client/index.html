@@ -3050,10 +3050,10 @@ const _FOOD_IMGS = {
 const _FOOD_DEFAULT = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=240&fit=crop&auto=format';
 
 function itemFallbackImg(item, alt) {
-  if (item.image_url) return `<img src="${esc(item.image_url)}" alt="${esc(alt||item.name)}" loading="lazy">`;
+  if (item.image_url) return `<img src="${esc(item.image_url)}" alt="${esc(alt||item.name)}">`;
   const n = (item.name || '').toLowerCase();
   const url = Object.entries(_FOOD_IMGS).find(([k]) => n.includes(k))?.[1] || _FOOD_DEFAULT;
-  return `<img src="${url}" alt="${esc(alt||item.name)}" loading="lazy">`;
+  return `<img src="${url}" alt="${esc(alt||item.name)}">`;
 }
 
 function itemActions(item, qty) {
