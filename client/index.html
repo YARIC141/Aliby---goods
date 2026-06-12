@@ -3939,22 +3939,12 @@ async function _initSubPayment(subIds, isGift, pendingPayment, amountText, order
       window.location.href = result.payment_url;
       return;
     }
+    // Unexpected 200 without payment_url
+    showGeoToast('Ошибка оплаты: неожиданный ответ сервера');
   } catch(e) {
-    const msg = e?.error || e?.message || '';
-    if (!msg.includes('does not support') && !msg.includes('not configured') && !msg.includes('not found')) {
-      showGeoToast('Ошибка оплаты: ' + (msg || 'Попробуйте позже'));
-      return;
-    }
+    const msg = e?.error || e?.message || JSON.stringify(e) || 'неизвестная ошибка';
+    showGeoToast('Ошибка оплаты: ' + msg);
   }
-  // Demo fallback — store has no card payment configured
-  _pendingPayment = pendingPayment;
-  document.getElementById('tbank-amount').textContent = amountText;
-  document.getElementById('tbank-order-info').textContent = orderText;
-  document.getElementById('tbank-card').value = '';
-  document.getElementById('tbank-exp').value = '';
-  document.getElementById('tbank-cvv').value = '';
-  document.getElementById('tbank-error').style.display = 'none';
-  openModal('m-tbank-pay');
 }
 
 async function checkoutSubs() {
