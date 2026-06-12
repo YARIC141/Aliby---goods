@@ -63,12 +63,13 @@ Deno.serve(async (req: Request) => {
 
   const { data: storeData } = await serviceClient
     .from("stores")
-    .select("owner_user_id, payment_test_mode, payment_provider")
+    .select("owner_user_id")
     .eq("id", store_id).maybeSingle()
 
   if (!storeData)
     return jsonResponse({ error: "Store not found" }, 404)
 
+  // Check owner's platform subscription
   const today = new Date().toISOString().split("T")[0]
   const { data: activePlatformSubs } = await serviceClient
     .from("platform_subscriptions").select("id")
@@ -76,17 +77,17 @@ Deno.serve(async (req: Request) => {
   if (!activePlatformSubs?.length)
     return jsonResponse({ error: "Store is temporarily unavailable" }, 403)
 
-  // Find payment config from this store or any other store of the same owner with tinkoff
-  const { data: ownerStores } = await serviceClient
-    .from("stores").select("id, payment_test_mode, payment_provider")
-    .eq("owner_user_id", storeData.owner_user_id)
+  // Get owner's payment settings from profiles
+  const { data: ownerProfile } = await serviceClient
+    .from("profiles")
+    .select("payment_provider, payment_test_mode")
+    .eq("id", storeData.owner_user_id).maybeSingle()
 
-  const tinkoffStore = ownerStores?.find((s: any) => s.payment_provider === "tinkoff")
-  if (!tinkoffStore)
-    return jsonResponse({ error: "Store does not support card payment. Configure Tinkoff in admin → Интернет-эквайринг." }, 400)
+  const provider   = ownerProfile?.payment_provider || "none"
+  const isRealMode = ownerProfile?.payment_test_mode === false
 
-  const isRealMode       = tinkoffStore.payment_test_mode === false
-  const ownerStoreIds    = (ownerStores ?? []).map((s: any) => s.id)
+  if (provider !== "tinkoff")
+    return jsonResponse({ error: "Карточная оплата не настроена. Перейдите в admin → Интернет-эквайринг." }, 400)
 
   // Create user_subscriptions with pending status
   const now = new Date()
@@ -112,44 +113,37 @@ Deno.serve(async (req: Request) => {
   if (userSubsError || !createdUserSubs?.length)
     return jsonResponse({ error: "Failed to create subscription records: " + userSubsError?.message }, 500)
 
-  const primaryUserSubId   = createdUserSubs[0].id
-  const additionalSubIds   = createdUserSubs.slice(1).map((us: any) => us.id)
-  const allUserSubIds      = createdUserSubs.map((us: any) => us.id)
+  const primaryUserSubId = createdUserSubs[0].id
+  const additionalSubIds = createdUserSubs.slice(1).map((us: any) => us.id)
+  const allUserSubIds    = createdUserSubs.map((us: any) => us.id)
 
-  // Find keys: search all owner stores, not just the subscription's store
-  const keyField = isRealMode ? "store_id,terminal_key,secret_key,key_version" : "store_id,terminal_key_test,secret_key_test,key_version"
-  const { data: spsRows } = await serviceClient
-    .from("store_payment_settings").select(keyField).in("store_id", ownerStoreIds)
-  const sps = isRealMode
-    ? spsRows?.find((r: any) => r.terminal_key && r.secret_key)
-    : spsRows?.find((r: any) => r.terminal_key_test && r.secret_key_test)
+  // Get keys from user_payment_settings
+  const { data: ups } = await serviceClient
+    .from("user_payment_settings")
+    .select("terminal_key, secret_key, terminal_key_test, secret_key_test, key_version")
+    .eq("user_id", storeData.owner_user_id).maybeSingle()
 
-  const termKeyEnc = isRealMode ? (sps as any)?.terminal_key : (sps as any)?.terminal_key_test
-  const secretEnc  = isRealMode ? (sps as any)?.secret_key   : (sps as any)?.secret_key_test
+  const termKeyEnc = isRealMode ? ups?.terminal_key      : ups?.terminal_key_test
+  const secretEnc  = isRealMode ? ups?.secret_key        : ups?.secret_key_test
 
   if (!termKeyEnc || !secretEnc) {
     await serviceClient.from("user_subscriptions").delete().in("id", allUserSubIds)
+    const mode = isRealMode ? "боевые" : "тестовые"
     await logKeyAccess({ store_id, user_id: user.id, action: isRealMode ? "decrypt_prod" : "decrypt_test", edge_fn: "tbank-init-sub", ip, success: false, detail: "keys_not_configured" })
-    return jsonResponse({ error: "Payment credentials not configured. Go to admin → Интернет-эквайринг." }, 400)
+    return jsonResponse({ error: `Введите ${mode} ключи в admin → Интернет-эквайринг.` }, 400)
   }
 
   await logKeyAccess({ store_id, user_id: user.id, action: isRealMode ? "decrypt_prod" : "decrypt_test", edge_fn: "tbank-init-sub", ip, success: true })
-  const kv          = (sps as any)?.key_version ?? 1
+  const kv          = ups?.key_version ?? 1
   const terminalKey = await decryptPaymentKey(termKeyEnc, kv)
   const password    = await decryptPaymentKey(secretEnc, kv)
 
-  // Create payment record
   const metadata: Record<string, unknown> = { is_gift, store_id }
   if (additionalSubIds.length) metadata.additional_user_sub_ids = additionalSubIds
 
   const { data: payment, error: paymentError } = await serviceClient
     .from("payments")
-    .insert({
-      user_subscription_id: primaryUserSubId,
-      amount: totalAmount,
-      status: "pending",
-      metadata,
-    })
+    .insert({ user_subscription_id: primaryUserSubId, amount: totalAmount, status: "pending", metadata })
     .select("id").single()
 
   if (paymentError || !payment) {
@@ -176,7 +170,7 @@ Deno.serve(async (req: Request) => {
   if (!tData.Success || !tData.PaymentURL) {
     await serviceClient.from("payments").delete().eq("id", payment.id)
     await serviceClient.from("user_subscriptions").delete().in("id", allUserSubIds)
-    return jsonResponse({ error: "T-Bank error: " + (tData.Message || JSON.stringify(tData)) }, 400)
+    return jsonResponse({ error: "T-Bank: " + (tData.Message || JSON.stringify(tData)) }, 400)
   }
 
   await serviceClient.from("payments")

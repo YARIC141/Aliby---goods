@@ -56,19 +56,31 @@ Deno.serve(async (req: Request) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   )
 
+  // Get store owner
   const { data: storeData } = await serviceClient
     .from("stores")
-    .select("owner_user_id, payment_test_mode, payment_provider")
+    .select("owner_user_id")
     .eq("id", store_id).maybeSingle()
 
-  if (storeData) {
-    const today = new Date().toISOString().split("T")[0]
-    const { data: activeSubs } = await serviceClient
-      .from("platform_subscriptions").select("id")
-      .eq("user_id", storeData.owner_user_id).eq("status", "active").gte("end_date", today).limit(1)
-    if (!activeSubs?.length) return jsonResponse({ error: "Store is temporarily unavailable" }, 403)
-  }
+  if (!storeData) return jsonResponse({ error: "Store not found" }, 404)
 
+  // Check owner's platform subscription
+  const today = new Date().toISOString().split("T")[0]
+  const { data: activeSubs } = await serviceClient
+    .from("platform_subscriptions").select("id")
+    .eq("user_id", storeData.owner_user_id).eq("status", "active").gte("end_date", today).limit(1)
+  if (!activeSubs?.length) return jsonResponse({ error: "Store is temporarily unavailable" }, 403)
+
+  // Get owner's payment settings from profiles
+  const { data: ownerProfile } = await serviceClient
+    .from("profiles")
+    .select("payment_provider, payment_test_mode")
+    .eq("id", storeData.owner_user_id).maybeSingle()
+
+  const isRealMode = ownerProfile?.payment_test_mode === false
+  const provider   = ownerProfile?.payment_provider || "none"
+
+  // Create order
   const { data: order, error: orderError } = await userClient
     .from("orders")
     .insert({
@@ -99,113 +111,65 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ order_id: order.id, free: true, amount: 0 })
   }
 
-  const isRealMode = storeData?.payment_test_mode === false
-  const provider   = storeData?.payment_provider || "none"
-
-  // Lookup payment credentials: try this store first, fall back to any store of the same owner
-  async function getStoreCreds(fields: string, checkFn: (r: any) => boolean) {
-    const { data: direct } = await serviceClient
-      .from("store_payment_settings").select(fields).eq("store_id", store_id).maybeSingle()
-    if (direct && checkFn(direct)) return direct
-    // Fallback: find keys from any store of the same owner
-    const { data: ownerStores } = await serviceClient
-      .from("stores").select("id").eq("owner_user_id", storeData.owner_user_id).neq("id", store_id)
-    if (!ownerStores?.length) return null
-    const ids = ownerStores.map((s: any) => s.id)
-    const { data: rows } = await serviceClient
-      .from("store_payment_settings").select(fields).in("store_id", ids)
-    return rows?.find(checkFn) ?? null
-  }
-
-  // Реальный режим — боевые ключи
-  if (isRealMode && provider !== "none") {
-    if (provider !== "tinkoff") {
-      await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: "Provider not yet supported. Use Tinkoff or enable test mode." }, 400)
-    }
-    const sps = await getStoreCreds("terminal_key,secret_key,key_version", r => !!(r.terminal_key && r.secret_key))
-    if (!sps) {
-      await serviceClient.from("orders").delete().eq("id", order.id)
-      await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_prod", edge_fn: "tbank-init", ip, success: false, detail: "keys_not_configured" })
-      return jsonResponse({ error: "Production credentials not configured. Go to admin → Интернет-эквайринг." }, 400)
-    }
-    await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_prod", edge_fn: "tbank-init", ip, success: true })
-    const kv          = sps.key_version ?? 1
-    const terminalKey = await decryptPaymentKey(sps.terminal_key, kv)
-    const password    = await decryptPaymentKey(sps.secret_key, kv)
-    const amountKop   = Math.round(total_amount * 100)
-    const scalarParams: Record<string, string | number> = {
-      TerminalKey: terminalKey, Amount: amountKop, OrderId: order.id,
-      Description: "Order #" + order.id.slice(0, 8).toUpperCase(),
-      NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE + order.id, FailURL: FAIL_BASE + order.id,
-    }
-    const tResp = await fetch(TBANK_INIT_URL, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password) }),
-    })
-    const tData = await tResp.json()
-    if (!tData.Success || !tData.PaymentURL) {
-      await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: tData.Message || "T-Bank Init failed" }, 400)
-    }
+  // provider = none → emulation
+  if (provider === "none") {
+    const paymentToken = crypto.randomUUID()
     const { data: payment, error: paymentError } = await serviceClient
-      .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: String(tData.PaymentId) })
+      .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: paymentToken })
       .select("id").single()
     if (paymentError || !payment) {
       await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: "Failed to create payment record" }, 500)
+      return jsonResponse({ error: "Failed to create payment: " + (paymentError?.message ?? "unknown") }, 500)
     }
-    return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_url: tData.PaymentURL, amount: total_amount })
+    return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_token: paymentToken, amount: total_amount })
   }
 
-  // Тестовый режим с ключами T-Bank
-  if (!isRealMode && provider === "tinkoff") {
-    const sps = await getStoreCreds("terminal_key_test,secret_key_test,key_version", r => !!(r.terminal_key_test && r.secret_key_test))
-    if (!sps) {
-      await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: "Test payment keys not configured. Go to admin → Интернет-эквайринг." }, 400)
-    }
-    await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_test", edge_fn: "tbank-init", ip, success: true })
-    const kv          = sps.key_version ?? 1
-    const terminalKey = await decryptPaymentKey(sps.terminal_key_test, kv)
-    const password    = await decryptPaymentKey(sps.secret_key_test, kv)
-    const amountKop   = Math.round(total_amount * 100)
-    const scalarParams: Record<string, string | number> = {
-      TerminalKey: terminalKey, Amount: amountKop, OrderId: order.id,
-      Description: "Order #" + order.id.slice(0, 8).toUpperCase(),
-      NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE + order.id, FailURL: FAIL_BASE + order.id,
-    }
-    const tResp = await fetch(TBANK_INIT_URL, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password) }),
-    })
-    const tData = await tResp.json()
-    if (!tData.Success || !tData.PaymentURL) {
-      await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: "T-Bank: " + (tData.Message || tData.Details || JSON.stringify(tData)) }, 400)
-    }
-    const { data: payment, error: paymentError } = await serviceClient
-      .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: String(tData.PaymentId) })
-      .select("id").single()
-    if (paymentError || !payment) {
-      await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: "Failed to create payment record" }, 500)
-    }
-    return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_url: tData.PaymentURL, amount: total_amount })
-  }
-
-  // provider = none или не tinkoff — эмуляция только когда нет провайдера
-  if (provider !== "none") {
+  if (provider !== "tinkoff") {
     await serviceClient.from("orders").delete().eq("id", order.id)
-    return jsonResponse({ error: "Provider '" + provider + "' not yet supported for payment." }, 400)
+    return jsonResponse({ error: "Provider '" + provider + "' not yet supported." }, 400)
   }
-  const paymentToken = crypto.randomUUID()
+
+  // Get keys from user_payment_settings
+  const { data: ups } = await serviceClient
+    .from("user_payment_settings")
+    .select("terminal_key, secret_key, terminal_key_test, secret_key_test, key_version")
+    .eq("user_id", storeData.owner_user_id).maybeSingle()
+
+  const termKeyEnc = isRealMode ? ups?.terminal_key      : ups?.terminal_key_test
+  const secretEnc  = isRealMode ? ups?.secret_key        : ups?.secret_key_test
+
+  if (!termKeyEnc || !secretEnc) {
+    await serviceClient.from("orders").delete().eq("id", order.id)
+    const mode = isRealMode ? "боевые" : "тестовые"
+    await logKeyAccess({ store_id, user_id: user.id, action: isRealMode ? "decrypt_prod" : "decrypt_test", edge_fn: "tbank-init", ip, success: false, detail: "keys_not_configured" })
+    return jsonResponse({ error: `Введите ${mode} ключи в admin → Интернет-эквайринг.` }, 400)
+  }
+
+  await logKeyAccess({ store_id, user_id: user.id, action: isRealMode ? "decrypt_prod" : "decrypt_test", edge_fn: "tbank-init", ip, success: true })
+  const kv          = ups?.key_version ?? 1
+  const terminalKey = await decryptPaymentKey(termKeyEnc, kv)
+  const password    = await decryptPaymentKey(secretEnc, kv)
+  const amountKop   = Math.round(total_amount * 100)
+  const scalarParams: Record<string, string | number> = {
+    TerminalKey: terminalKey, Amount: amountKop, OrderId: order.id,
+    Description: "Order #" + order.id.slice(0, 8).toUpperCase(),
+    NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE + order.id, FailURL: FAIL_BASE + order.id,
+  }
+  const tResp = await fetch(TBANK_INIT_URL, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password) }),
+  })
+  const tData = await tResp.json()
+  if (!tData.Success || !tData.PaymentURL) {
+    await serviceClient.from("orders").delete().eq("id", order.id)
+    return jsonResponse({ error: "T-Bank: " + (tData.Message || tData.Details || JSON.stringify(tData)) }, 400)
+  }
   const { data: payment, error: paymentError } = await serviceClient
-    .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: paymentToken })
+    .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: String(tData.PaymentId) })
     .select("id").single()
   if (paymentError || !payment) {
     await serviceClient.from("orders").delete().eq("id", order.id)
-    return jsonResponse({ error: "Failed to create payment: " + (paymentError?.message ?? "unknown") }, 500)
+    return jsonResponse({ error: "Failed to create payment record" }, 500)
   }
-  return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_token: paymentToken, amount: total_amount })
+  return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_url: tData.PaymentURL, amount: total_amount })
 })

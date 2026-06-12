@@ -2116,16 +2116,13 @@ async function loadProfile() {
   }
 }
 
-let _ppStoreId = null;
-
 async function loadPaymentProfile() {
   try {
-    const stores = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id,payment_provider,payment_test_mode&limit=1`);
-    if (!stores?.length) return;
-    const store = stores[0];
-    _ppStoreId = store.id;
-    document.getElementById('pp-provider').value = store.payment_provider || 'none';
-    const isReal = store.payment_test_mode === false;
+    const profs = await req(`/rest/v1/profiles?id=eq.${S.session.user.id}&select=payment_provider,payment_test_mode`);
+    if (!profs?.length) return;
+    const prof = profs[0];
+    document.getElementById('pp-provider').value = prof.payment_provider || 'none';
+    const isReal = prof.payment_test_mode === false;
     document.getElementById('pp-test-mode-toggle').checked = isReal;
     const modeLabel = document.getElementById('pp-mode-label');
     modeLabel.textContent = isReal ? '✓ Реальная' : 'Тестовый';
@@ -2137,7 +2134,7 @@ async function loadPaymentProfile() {
     onPpProviderChange();
     const meta = await req('/functions/v1/payment-settings-meta', {
       method: 'POST',
-      body: JSON.stringify({ store_id: store.id }),
+      body: JSON.stringify({}),
     }).catch(() => null);
     document.getElementById('pp-key-test-set-badge').style.display    = meta?.has_terminal_key_test ? '' : 'none';
     document.getElementById('pp-secret-test-set-badge').style.display = meta?.has_secret_key_test    ? '' : 'none';
@@ -2150,7 +2147,6 @@ async function loadPaymentProfile() {
 }
 
 async function togglePpPaymentMode(el) {
-  if (!_ppStoreId) { el.checked = !el.checked; return; }
   const enableReal = el.checked;
   if (enableReal) {
     const provider = document.getElementById('pp-provider').value;
@@ -2161,7 +2157,7 @@ async function togglePpPaymentMode(el) {
     }
     const meta = await req('/functions/v1/payment-settings-meta', {
       method: 'POST',
-      body: JSON.stringify({ store_id: _ppStoreId }),
+      body: JSON.stringify({}),
     }).catch(() => null);
     if (!meta?.has_terminal_key) {
       el.checked = false;
@@ -2180,7 +2176,7 @@ async function togglePpPaymentMode(el) {
     }
   }
   try {
-    await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}`, {
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ payment_test_mode: !enableReal }),
     });
@@ -2210,13 +2206,12 @@ function onPpProviderChange() {
 }
 
 async function savePaymentProfile() {
-  if (!_ppStoreId) return;
   const btn = document.getElementById('pp-save-btn');
   const msg = document.getElementById('pp-msg');
   const restore = btnLoad(btn);
   msg.style.display = 'none';
   try {
-    await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}`, {
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ payment_provider: document.getElementById('pp-provider').value }),
     });
@@ -2246,7 +2241,7 @@ async function savePaymentProfile() {
     setTimeout(() => { msg.style.display = 'none'; }, 3000);
   } catch(e) {
     restore();
-    msg.textContent = 'Ошибка: ' + (e.message || '');
+    msg.textContent = 'Ошибка: ' + (e.error || e.message || '');
     msg.style.color = 'var(--err)';
     msg.style.display = 'block';
   }
