@@ -207,7 +207,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .map-tog-btn:hover{background:var(--bg-2)}
 .btn-nearby-p{background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 42%),linear-gradient(145deg,#4a90c2,#78b4e0)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 28px rgba(120,180,224,.45)!important}
 .btn-green-p{background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 42%),linear-gradient(145deg,#16a34a,#22c55e)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 28px rgba(22,163,74,.4)!important}
-.sl-panel{width:280px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;overflow:hidden;background:transparent;transition:width .25s ease,max-height .25s ease}
+.sl-panel{width:280px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;background:transparent;transition:width .25s ease,max-height .25s ease}
 .map-layout.no-map .map-area{flex:0;min-width:0;width:0;overflow:hidden}
 .map-layout.no-map .sl-panel{flex:1;width:auto;border-right:none}
 .sl-search{padding:10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
@@ -333,8 +333,8 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .cart-tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast)}
 .cart-tab:hover{color:var(--fg)}
 .cart-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.cart-layout{display:flex;flex-direction:column;flex:1;overflow:hidden}
-.cart-body{flex:1;overflow-y:auto;overscroll-behavior-y:none}
+.cart-layout{display:flex;flex-direction:column;flex:1;min-height:0}
+.cart-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none}
 .cart-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px;flex-wrap:wrap}
 .ci-info{flex:1;min-width:0}
 .ci-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -763,7 +763,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="cart-tab" id="svc-tab-sched" onclick="switchSvcTab('sched')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
   </div>
   <!-- Услуги pane -->
-  <div id="svc-pane-services" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+  <div id="svc-pane-services" style="display:flex;flex-direction:column;flex:1;min-height:0">
   <div id="preselect-banner" style="display:none;flex-shrink:0;padding:10px 16px;background:color-mix(in oklch,var(--accent) 10%,var(--bg));border-bottom:1px solid color-mix(in oklch,var(--accent) 28%,var(--bg));align-items:center;justify-content:space-between;gap:8px">
     <span id="preselect-label" style="font:500 13px/1.4 var(--font-sans);color:var(--fg)"></span>
     <button class="btn btn-sm btn-d" onclick="clearPreselect()" style="flex-shrink:0;font-size:12px">✕ Отменить</button>
@@ -1760,10 +1760,10 @@ function esc(s) {
 }
 function btnLoad(el, label = 'Сохранение…') {
   if (!el) return () => {};
-  el.disabled = true;
   const prev = el.innerHTML;
   el.innerHTML = '<span class="btn-spinner"></span>' + label;
-  return () => { el.disabled = false; el.innerHTML = prev; };
+  el.style.pointerEvents = 'none';
+  return () => { el.style.pointerEvents = ''; el.innerHTML = prev; };
 }
 function fmtDate(d) {
   if (!d) return '—';

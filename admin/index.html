@@ -1807,10 +1807,10 @@ function esc(s) {
 }
 function btnLoad(el, label = 'Сохранение…') {
   if (!el) return () => {};
-  el.disabled = true;
   const prev = el.innerHTML;
   el.innerHTML = '<span class="btn-spinner"></span>' + label;
-  return () => { el.disabled = false; el.innerHTML = prev; };
+  el.style.pointerEvents = 'none';
+  return () => { el.style.pointerEvents = ''; el.innerHTML = prev; };
 }
 function fmtDate(d) {
   if (!d) return '—';
