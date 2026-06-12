@@ -2526,9 +2526,8 @@ function applyMapFilter(q) {
     return true;
   });
   renderStoreList(filtered);
-  const noCat = !S.mapCat && !S.store;
-  document.getElementById('map-no-cat')?.classList.toggle('hidden', !noCat);
-  if (S.map) { renderMapMarkers(noCat ? [] : filtered); _renderHomeMarker(); }
+  document.getElementById('map-no-cat')?.classList.add('hidden');
+  if (S.map) { renderMapMarkers(filtered); _renderHomeMarker(); }
 }
 
 function _renderHomeMarker() {
