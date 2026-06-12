@@ -851,13 +851,19 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
         <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted);display:flex;align-items:center;gap:6px"><svg class="ico" width="16" height="16"><use href="#i-ticket"/></svg>Абонементы к покупке</div>
         <div id="sub-cart-list"></div>
-        <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button></div>
+        <div style="padding:8px 16px 12px">
+          <button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button>
+          <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Купить абонементы», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
+        </div>
       </div>
       <div id="gift-sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
         <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted);display:flex;align-items:center;gap:6px"><svg class="ico" width="16" height="16"><use href="#i-gift"/></svg>Подарочные абонементы</div>
         <div style="padding:2px 16px 6px;font-size:13px;color:var(--muted)">Срок начинается с момента покупки</div>
         <div id="gift-sub-cart-list"></div>
-        <div style="padding:10px 16px"><button class="btn btn-p btn-full" onclick="checkoutGiftSubs()">Купить подарочные абонементы</button></div>
+        <div style="padding:8px 16px 12px">
+          <button class="btn btn-p btn-full" onclick="checkoutGiftSubs()">Купить подарочные абонементы</button>
+          <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Купить», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
+        </div>
       </div>
       <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
       <div class="cart-foot" id="cart-foot" style="display:none">
@@ -876,7 +882,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
-        <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Оплатить», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a></p>
+        <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Оплатить», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
       </div>
     </div>
   </div>
