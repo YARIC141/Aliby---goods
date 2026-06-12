@@ -2180,7 +2180,7 @@ async function togglePpPaymentMode(el) {
     }
   }
   try {
-    await req(`/rest/v1/stores?id=eq.${_ppStoreId}`, {
+    await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ payment_test_mode: !enableReal }),
     });
@@ -2216,7 +2216,7 @@ async function savePaymentProfile() {
   const restore = btnLoad(btn);
   msg.style.display = 'none';
   try {
-    await req(`/rest/v1/stores?id=eq.${_ppStoreId}`, {
+    await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ payment_provider: document.getElementById('pp-provider').value }),
     });
@@ -2228,7 +2228,6 @@ async function savePaymentProfile() {
       await req('/functions/v1/payment-settings-set', {
         method: 'POST',
         body: JSON.stringify({
-          store_id: _ppStoreId,
           ...(termKey && { terminal_key: termKey }),
           ...(secretKey && { secret_key: secretKey }),
           ...(termKeyTest && { terminal_key_test: termKeyTest }),
