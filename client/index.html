@@ -1843,10 +1843,7 @@ function showQrModal() {
 // ─── SW MESSAGES ───
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data?.type === 'NAVIGATE') {
-      const scr = e.data.screen || 'home';
-      goTo(scr);
-    }
+    if (e.data?.type === 'NAVIGATE') goTo(e.data.screen || 'home');
   });
 }
 const payMap    = { card:'Карта', subscription:'Абонемент', mixed:'Смешанный' };
@@ -4758,7 +4755,13 @@ if (!localStorage.getItem('alliby_cookie_ok')) {
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    document.getElementById('update-banner').style.display = 'flex';
+  });
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'APP_UPDATED')
+      document.getElementById('update-banner').style.display = 'flex';
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
       .then(reg => {
@@ -5744,5 +5747,11 @@ function closeStoreSchedDay() {
 })();
 </script>
 </div><!-- #zoom-root -->
+
+<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--accent);color:#fff;padding:10px 16px;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center">
+  <span style="font-size:13px">Доступна новая версия приложения</span>
+  <button onclick="window.location.reload()" style="background:rgba(255,255,255,.25);border:none;color:#fff;font-size:13px;font-weight:500;padding:4px 14px;border-radius:6px;cursor:pointer">Обновить</button>
+  <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+</div>
 </body>
 </html>

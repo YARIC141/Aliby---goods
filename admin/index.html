@@ -6019,7 +6019,13 @@ async function applySchedTemplate() {
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    document.getElementById('update-banner').style.display = 'flex';
+  });
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'APP_UPDATED')
+      document.getElementById('update-banner').style.display = 'flex';
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { scope: '/admin/', updateViaCache: 'none' })
       .then(reg => {
@@ -6033,7 +6039,13 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--bg);border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--accent);color:#fff;padding:10px 16px;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center">
+  <span style="font-size:13px">Доступна новая версия приложения</span>
+  <button onclick="window.location.reload()" style="background:rgba(255,255,255,.25);border:none;color:#fff;font-size:13px;font-weight:500;padding:4px 14px;border-radius:6px;cursor:pointer">Обновить</button>
+  <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+</div>
+
+<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--bg);border-top:1px solid var(--line);padding:12px 16px;flex-wrap:wrap;align-items:center;gap:12px">
   <span style="flex:1;min-width:200px;font-size:13px;color:var(--fg-2)">Мы используем cookie для аутентификации и работы сервиса. <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Подробнее</a></span>
   <button class="btn btn-sm btn-p" onclick="acceptCookies()" style="flex-shrink:0">Понятно</button>
 </div>
