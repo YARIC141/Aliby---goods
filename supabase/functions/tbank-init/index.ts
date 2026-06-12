@@ -148,40 +148,48 @@ Deno.serve(async (req: Request) => {
 
   // Тестовый режим с ключами T-Bank
   if (!isRealMode && provider === "tinkoff") {
-    const { data: sps } = await serviceClient
+    const { data: sps, error: spsError } = await serviceClient
       .from("store_payment_settings")
       .select("terminal_key_test, secret_key_test, key_version")
       .eq("store_id", store_id).maybeSingle()
-    if (sps?.terminal_key_test && sps?.secret_key_test) {
-      await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_test", edge_fn: "tbank-init", ip, success: true })
-      const kv          = sps.key_version ?? 1
-      const terminalKey = await decryptPaymentKey(sps.terminal_key_test, kv)
-      const password    = await decryptPaymentKey(sps.secret_key_test, kv)
-      const amountKop   = Math.round(total_amount * 100)
-      const scalarParams: Record<string, string | number> = {
-        TerminalKey: terminalKey, Amount: amountKop, OrderId: order.id,
-        Description: "Order #" + order.id.slice(0, 8).toUpperCase(),
-        NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE + order.id, FailURL: FAIL_BASE + order.id,
-      }
-      const tResp = await fetch(TBANK_INIT_URL, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password) }),
-      })
-      const tData = await tResp.json()
-      if (tData.Success && tData.PaymentURL) {
-        const { data: payment, error: paymentError } = await serviceClient
-          .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: String(tData.PaymentId) })
-          .select("id").single()
-        if (paymentError || !payment) {
-          await serviceClient.from("orders").delete().eq("id", order.id)
-          return jsonResponse({ error: "Failed to create payment record" }, 500)
-        }
-        return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_url: tData.PaymentURL, amount: total_amount })
-      }
+    if (!sps?.terminal_key_test || !sps?.secret_key_test) {
+      await serviceClient.from("orders").delete().eq("id", order.id)
+      return jsonResponse({ error: "Test payment keys not configured. Set them in admin → Интернет-эквайринг." }, 400)
     }
+    await logKeyAccess({ store_id, user_id: user.id, action: "decrypt_test", edge_fn: "tbank-init", ip, success: true })
+    const kv          = sps.key_version ?? 1
+    const terminalKey = await decryptPaymentKey(sps.terminal_key_test, kv)
+    const password    = await decryptPaymentKey(sps.secret_key_test, kv)
+    const amountKop   = Math.round(total_amount * 100)
+    const scalarParams: Record<string, string | number> = {
+      TerminalKey: terminalKey, Amount: amountKop, OrderId: order.id,
+      Description: "Order #" + order.id.slice(0, 8).toUpperCase(),
+      NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE + order.id, FailURL: FAIL_BASE + order.id,
+    }
+    const tResp = await fetch(TBANK_INIT_URL, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password) }),
+    })
+    const tData = await tResp.json()
+    if (!tData.Success || !tData.PaymentURL) {
+      await serviceClient.from("orders").delete().eq("id", order.id)
+      return jsonResponse({ error: "T-Bank: " + (tData.Message || tData.Details || JSON.stringify(tData)) }, 400)
+    }
+    const { data: payment, error: paymentError } = await serviceClient
+      .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: String(tData.PaymentId) })
+      .select("id").single()
+    if (paymentError || !payment) {
+      await serviceClient.from("orders").delete().eq("id", order.id)
+      return jsonResponse({ error: "Failed to create payment record" }, 500)
+    }
+    return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_url: tData.PaymentURL, amount: total_amount })
   }
 
-  // Эмуляция — fallback если ключи не настроены
+  // provider = none или не tinkoff — эмуляция только когда нет провайдера
+  if (provider !== "none") {
+    await serviceClient.from("orders").delete().eq("id", order.id)
+    return jsonResponse({ error: "Provider '" + provider + "' not yet supported for payment." }, 400)
+  }
   const paymentToken = crypto.randomUUID()
   const { data: payment, error: paymentError } = await serviceClient
     .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: paymentToken })
