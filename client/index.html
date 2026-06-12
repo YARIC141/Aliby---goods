@@ -4943,23 +4943,15 @@ async function doCheckout(useSubscription = false) {
       switchCartTab('order');
       return;
     }
-    // If store has acquiring configured — redirect to payment page
-    const storePayProvider = S.store?.payment_provider || 'none';
-    if (storePayProvider !== 'none') {
+    // Real payment — redirect directly to provider URL
+    if (result.payment_url) {
       localStorage.setItem('alliby_pending_acq', JSON.stringify({
-        payment_token: result.payment_token,
         order_id: result.order_id,
         is_delivery: S.deliveryMode === 'delivery',
         delivery_fee: S.deliveryFee || 0,
         delivery_address: S.profile?.address || null,
       }));
-      const payUrl = new URL('https://alliby.ru/pay/');
-      payUrl.searchParams.set('amount', totalAmount);
-      payUrl.searchParams.set('order', result.order_id.slice(0, 8).toUpperCase());
-      payUrl.searchParams.set('provider', storePayProvider);
-      payUrl.searchParams.set('test', S.store?.payment_test_mode !== false ? '1' : '0');
-      payUrl.searchParams.set('return_url', 'https://alliby.ru/');
-      window.location.href = payUrl.toString();
+      window.location.href = result.payment_url;
       return;
     }
     _pendingPayment = result;
