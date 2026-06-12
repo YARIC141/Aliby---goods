@@ -4891,6 +4891,44 @@ if (!localStorage.getItem('alliby_cookie_ok')) {
   document.getElementById('cookie-banner').style.display = 'flex';
 }
 
+// ─── PWA INSTALL ───
+(function initPwaInstall() {
+  // Already installed or dismissed
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) return;
+  if (localStorage.getItem('alliby_pwa_dismissed')) return;
+
+  const banner = document.getElementById('pwa-banner');
+  const installBtn = document.getElementById('pwa-install-btn');
+  let _deferredPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    banner.style.display = 'block';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!_deferredPrompt) return;
+    _deferredPrompt.prompt();
+    const { outcome } = await _deferredPrompt.userChoice;
+    _deferredPrompt = null;
+    banner.style.display = 'none';
+    if (outcome === 'accepted') {
+      try { localStorage.setItem('alliby_pwa_dismissed', '1'); } catch(e) {}
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    banner.style.display = 'none';
+    try { localStorage.setItem('alliby_pwa_dismissed', '1'); } catch(e) {}
+  });
+})();
+
+function dismissPwaBanner() {
+  document.getElementById('pwa-banner').style.display = 'none';
+  try { localStorage.setItem('alliby_pwa_dismissed', '1'); } catch(e) {}
+}
+
 if ('serviceWorker' in navigator) {
   let _pendingUpdate = false;
   navigator.serviceWorker.addEventListener('message', e => {
@@ -5891,5 +5929,21 @@ function closeStoreSchedDay() {
   <button onclick="window.location.reload()" style="background:rgba(255,255,255,.25);border:none;color:#fff;font-size:13px;font-weight:500;padding:4px 14px;border-radius:6px;cursor:pointer">Обновить</button>
   <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 2px">×</button>
 </div>
+
+<!-- PWA install banner -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:var(--glass-ui);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--line-soft);box-shadow:0 -4px 24px rgba(0,0,0,.12)">
+  <div style="display:flex;align-items:center;gap:12px;max-width:480px;margin:0 auto">
+    <img src="icons/icon-192.v2.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;display:block" alt="">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:600;color:var(--fg)">Установить Alliby</div>
+      <div style="font-size:12px;color:var(--fg-3);margin-top:2px">Быстрый доступ с экрана телефона</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button id="pwa-install-btn" style="background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer">Установить</button>
+      <button onclick="dismissPwaBanner()" style="background:var(--bg-2);border:none;color:var(--fg-3);font-size:13px;font-weight:500;padding:7px 10px;border-radius:8px;cursor:pointer">✕</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

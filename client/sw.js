@@ -1,5 +1,5 @@
-// v24
-const APP_CACHE  = 'alliby-app-v12';
+// v25
+const APP_CACHE  = 'alliby-app-v13';
 const TILE_CACHE = 'alliby-tiles-v2';
 const TILE_PATH  = '/functions/v1/vector-tiles/';
 const MAX_TILES  = 300;
