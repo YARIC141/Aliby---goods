@@ -4611,7 +4611,7 @@ async function loadHome() {
 
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (Array.isArray(cached) && cached.length) _renderRecentStores(el, cached);
+    if (Array.isArray(cached) && cached.length) { try { _renderRecentStores(el, cached); } catch {} }
     else el.innerHTML = '<div class="loading" style="padding:4px 0 8px">Загрузка…</div>';
   } catch { el.innerHTML = '<div class="loading" style="padding:4px 0 8px">Загрузка…</div>'; }
 
@@ -4696,8 +4696,9 @@ async function loadAlibi() {
   const cacheKey = `alliby_alibi_${uid}`;
   try {
     const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-    if (cached) _renderAlibi(el, uid, cached.redemptions, cached.orders);
-    else el.innerHTML = '<div class="loading">Загрузка…</div>';
+    if (cached && Array.isArray(cached.redemptions) && Array.isArray(cached.orders)) {
+      try { _renderAlibi(el, uid, cached.redemptions, cached.orders); } catch {}
+    } else el.innerHTML = '<div class="loading">Загрузка…</div>';
   } catch { el.innerHTML = '<div class="loading">Загрузка…</div>'; }
 
   try {
