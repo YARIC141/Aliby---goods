@@ -2894,26 +2894,53 @@ function getCartSubAllocation() {
   return { us: globalBest.us, sub: globalBest.sub, totalQty, coveredQty, perItem };
 }
 
+function _catsCacheKey(id) { return 'alliby_cats_' + id; }
+function _readCatsCache(id) { try { const r = localStorage.getItem(_catsCacheKey(id)); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
+function _writeCatsCache(id, d) { try { localStorage.setItem(_catsCacheKey(id), JSON.stringify(d)); } catch(e) {} }
+
+function _renderCatBar(bar, cats) {
+  bar.innerHTML = '';
+  cats.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (S.menuCatId === c.id ? ' active' : '');
+    b.dataset.cid = c.id; b.style.cssText = 'display:inline-flex;align-items:center;gap:4px';
+    b.innerHTML = `${svgIco('tag',11)} ${esc(stripEmoji(c.name))}`;
+    b.addEventListener('click', () => { S.menuCatId = S.menuCatId === c.id ? '' : c.id; updateCatActive(); loadMenuItems(); });
+    bar.appendChild(b);
+  });
+}
+
 async function loadCategories() {
   const bar = document.getElementById('cat-bar');
+  const storeId = S.store.id;
+  const cached = _readCatsCache(storeId);
+  if (cached) {
+    S.menuStoreSubs = cached.subs;
+    _renderCatBar(bar, cached.cats);
+    // Background refresh
+    (async () => {
+      try {
+        const [cats, subs] = await Promise.all([
+          req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`),
+          req(`/rest/v1/subscriptions?store_id=eq.${storeId}`),
+        ]);
+        if (S.store?.id !== storeId) return;
+        S.menuStoreSubs = subs;
+        _writeCatsCache(storeId, { cats, subs });
+        _renderCatBar(bar, cats);
+      } catch(e) {}
+    })();
+    return;
+  }
   bar.innerHTML = Array.from({length:3}, () => '<span class="sk" style="width:60px;height:28px;border-radius:var(--r-pill);flex-shrink:0"></span>').join('');
   try {
     const [cats, subs] = await Promise.all([
-      req(`/rest/v1/categories?store_id=eq.${S.store.id}&order=name.asc`),
-      req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}`),
+      req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`),
+      req(`/rest/v1/subscriptions?store_id=eq.${storeId}`),
     ]);
     S.menuStoreSubs = subs;
-    bar.innerHTML = '';
-    cats.forEach(c => {
-      const b = document.createElement('button');
-      b.className = 'chip' + (S.menuCatId === c.id ? ' active' : '');
-      b.dataset.cid = c.id; b.style.display = 'inline-flex'; b.style.alignItems = 'center'; b.style.gap = '4px'; b.innerHTML = `${svgIco('tag',11)} ${esc(stripEmoji(c.name))}`;
-      b.addEventListener('click', () => {
-        S.menuCatId = S.menuCatId === c.id ? '' : c.id;
-        updateCatActive(); loadMenuItems();
-      });
-      bar.appendChild(b);
-    });
+    _writeCatsCache(storeId, { cats, subs });
+    _renderCatBar(bar, cats);
   } catch(e) {}
 }
 
@@ -2921,26 +2948,63 @@ function updateCatActive() {
   document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cid === S.menuCatId));
 }
 
+function _menuCacheKey(id) { return 'alliby_menu_' + id; }
+function _readMenuCache(id) { try { const r = localStorage.getItem(_menuCacheKey(id)); return r ? JSON.parse(r) : null; } catch(e) { return null; } }
+function _writeMenuCache(id, items) { try { localStorage.setItem(_menuCacheKey(id), JSON.stringify(items)); } catch(e) {} }
+
+function _applyMenuFilters(items) {
+  const q     = (document.getElementById('m-search')?.value || '').trim().toLowerCase();
+  const avail = document.getElementById('m-avail')?.checked;
+  const sort  = document.getElementById('m-sort')?.value || '';
+  let res = items;
+  if (S.menuCatId) res = res.filter(it => it.category_id === S.menuCatId);
+  if (q) res = res.filter(it => it.name.toLowerCase().includes(q));
+  if (avail) res = res.filter(it => it.is_available);
+  if (sort) {
+    const [field, dir] = sort.split('.');
+    res = [...res].sort((a, b) => {
+      const av = a[field], bv = b[field];
+      if (av == null) return 1; if (bv == null) return -1;
+      const cmp = typeof av === 'string' ? av.localeCompare(bv, 'ru') : (av - bv);
+      return dir === 'desc' ? -cmp : cmp;
+    });
+  }
+  return res;
+}
+
+let _menuFetchStoreId = null, _menuFetchTs = 0;
+const _MENU_THROTTLE = 30000;
+
 async function loadMenuItems() {
   const el = document.getElementById('menu-items');
   if (!S.store) return;
-
   el.className = 'items-grid';
-  el.innerHTML = SK.itemCards(6);
-  try {
-    // GET /rest/v1/menu_items with filters
-    let url = `/rest/v1/menu_items?store_id=eq.${S.store.id}`;
-    if (S.menuCatId) url += `&category_id=eq.${S.menuCatId}`;
-    const q = document.getElementById('m-search')?.value;
-    if (q) url += `&name=ilike.*${encodeURIComponent(q)}*`;
-    if (document.getElementById('m-avail')?.checked) url += '&is_available=eq.true';
-    const sort = document.getElementById('m-sort')?.value;
-    if (sort) url += `&order=${sort}`;
-    const items = await req(url);
-    if (!items.length) { el.innerHTML = '<div class="empty">Позиций нет</div>'; return; }
-    el.innerHTML = items.map(renderItemCard).join('');
+  const storeId = S.store.id;
+
+  const cached = _readMenuCache(storeId);
+  if (cached) {
+    cached.forEach(it => cacheItem(it));
+    const filtered = _applyMenuFilters(cached);
+    el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
     updateCartCount();
-  } catch(e) { el.innerHTML = '<div class="empty">Ошибка загрузки</div>'; }
+    if (_menuFetchStoreId === storeId && (Date.now() - _menuFetchTs) < _MENU_THROTTLE) return;
+  } else {
+    el.innerHTML = SK.itemCards(6);
+  }
+
+  try {
+    _menuFetchStoreId = storeId;
+    _menuFetchTs = Date.now();
+    const items = await req(`/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc`);
+    if (S.store?.id !== storeId) return;
+    items.forEach(it => cacheItem(it));
+    _writeMenuCache(storeId, items);
+    const filtered = _applyMenuFilters(items);
+    el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
+    updateCartCount();
+  } catch(e) {
+    if (!cached) el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+  }
 }
 
 const _FOOD_IMGS = {
