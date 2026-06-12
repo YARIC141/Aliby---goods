@@ -592,7 +592,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div id="err-login" class="alert alert-e" style="display:none"></div>
       <div class="fg"><label>Email</label><input type="email" id="li-email" autocomplete="username"></div>
       <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
-      <button class="btn btn-p btn-full" onclick="doLogin()">Войти</button>
+      <button class="btn btn-p btn-full" id="login-btn" onclick="doLogin()">Войти</button>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
     </div>
@@ -613,7 +613,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div id="ok-recover" class="alert alert-ok" style="display:none">Письмо отправлено. Проверьте почту.</div>
       <p class="txt-sm" style="margin-bottom:10px">Введите email — пришлём ссылку для сброса пароля.</p>
       <div class="fg"><label>Email</label><input type="email" id="rec-email"></div>
-      <button class="btn btn-p btn-full" onclick="doRecover()">Отправить ссылку</button>
+      <button class="btn btn-p btn-full" id="recover-btn" onclick="doRecover()">Отправить ссылку</button>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('login')">← Назад</button>
     </div>
@@ -621,7 +621,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <div id="auth-reset" class="tab-pane">
       <p class="txt-sm" style="margin-bottom:10px">Введите новый пароль.</p>
       <div class="fg"><label>Новый пароль</label><input type="password" id="rst-pwd" autocomplete="new-password"></div>
-      <button class="btn btn-p btn-full" onclick="doResetPwd()">Сохранить пароль</button>
+      <button class="btn btn-p btn-full" id="reset-btn" onclick="doResetPwd()">Сохранить пароль</button>
     </div>
   </div>
 </div>
@@ -2254,8 +2254,8 @@ function applyFeatureToggles() {
 async function doLogin() {
   const err = document.getElementById('err-login');
   err.style.display = 'none';
+  const done = btnLoad(document.getElementById('login-btn'), 'Вход…');
   try {
-    // POST /auth/v1/token?grant_type=password
     const d = await req('/auth/v1/token?grant_type=password', {
       method:'POST',
       body: JSON.stringify({ email: document.getElementById('li-email').value, password: document.getElementById('li-pwd').value }),
@@ -2277,6 +2277,8 @@ async function doLogin() {
     const raw = e.error_description || e.message || 'Ошибка входа';
     err.textContent = raw === 'Email not confirmed' ? 'Email не подтверждён — проверьте почту и нажмите ссылку в письме' : raw;
     err.style.display = 'block';
+  } finally {
+    done();
   }
 }
 
@@ -2285,6 +2287,7 @@ async function doRegister() {
   err.style.display = 'none';
   const fullName = document.getElementById('reg-name').value.trim();
   if (!fullName) { err.textContent = 'Введите имя и фамилию'; err.style.display = 'block'; return; }
+  const done = btnLoad(document.getElementById('reg-btn'), 'Регистрация…');
   try {
     const d = await req('/auth/v1/signup', {
       method:'POST',
@@ -2316,22 +2319,24 @@ async function doRegister() {
       err.style.display = 'block';
       showAuthTab('login');
     }
-  } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; }
+  } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; } finally { done(); }
 }
 
 async function doRecover() {
+  const done = btnLoad(document.getElementById('recover-btn'), 'Отправка…');
   try {
     await req('/auth/v1/recover?redirect_to=' + encodeURIComponent('https://alliby.ru/'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
     document.getElementById('ok-recover').style.display = 'block';
-  } catch(e) { alert(e.message || 'Ошибка'); }
+  } catch(e) { alert(e.message || 'Ошибка'); } finally { done(); }
 }
 
 async function doResetPwd() {
+  const done = btnLoad(document.getElementById('reset-btn'), 'Сохранение…');
   try {
-    // PUT /auth/v1/user
     await req('/auth/v1/user', { method:'PUT', body: JSON.stringify({ password: document.getElementById('rst-pwd').value }) });
+    done();
     alert('Пароль обновлён'); goTo('map');
-  } catch(e) { alert(e.message || 'Ошибка'); }
+  } catch(e) { done(); alert(e.message || 'Ошибка'); }
 }
 
 async function doLogout() {

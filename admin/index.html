@@ -444,7 +444,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div id="ok-recover" class="alert alert-ok" style="display:none">Письмо отправлено. Проверьте почту.</div>
       <p class="txt-sm" style="margin-bottom:10px">Введите email — пришлём ссылку для сброса пароля.</p>
       <div class="fg"><label>Email</label><input type="email" id="rec-email"></div>
-      <button class="btn btn-p btn-full" onclick="doRecover()">Отправить ссылку</button>
+      <button class="btn btn-p btn-full" id="recover-btn" onclick="doRecover()">Отправить ссылку</button>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('login')">← Назад</button>
     </div>
@@ -468,7 +468,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div id="auth-reset" class="tab-pane">
       <p class="txt-sm" style="margin-bottom:10px">Введите новый пароль.</p>
       <div class="fg"><label>Новый пароль</label><input type="password" id="rst-pwd" autocomplete="new-password"></div>
-      <button class="btn btn-p btn-full" onclick="doResetPwd()">Сохранить пароль</button>
+      <button class="btn btn-p btn-full" id="reset-btn" onclick="doResetPwd()">Сохранить пароль</button>
     </div>
   </div>
 </div>
@@ -2000,19 +2000,22 @@ function showAuthTab(name) {
 document.querySelectorAll('[data-tab-auth]').forEach(b => b.addEventListener('click', () => showAuthTab(b.dataset.tabAuth)));
 
 async function doRecover() {
+  const done = btnLoad(document.getElementById('recover-btn'), 'Отправка…');
   try {
     await req('/auth/v1/recover?redirect_to=' + encodeURIComponent('https://alliby.ru/admin'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
     document.getElementById('ok-recover').style.display = 'block';
-  } catch(e) { alert(e.message || 'Ошибка'); }
+  } catch(e) { alert(e.message || 'Ошибка'); } finally { done(); }
 }
 
 async function doResetPwd() {
+  const done = btnLoad(document.getElementById('reset-btn'), 'Сохранение…');
   try {
     await req('/auth/v1/user', { method:'PUT', body: JSON.stringify({ password: document.getElementById('rst-pwd').value }) });
+    done();
     alert('Пароль обновлён. Войдите с новым паролем.');
     S.session = null;
     showAuthTab('login');
-  } catch(e) { alert(e.message || 'Ошибка'); }
+  } catch(e) { done(); alert(e.message || 'Ошибка'); }
 }
 
 function setSession(d) {
