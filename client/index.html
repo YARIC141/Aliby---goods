@@ -101,7 +101,7 @@ svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stro
 @keyframes navSlideOutLeft{from{transform:translateX(0)}to{transform:translateX(-100%)}}
 @keyframes navSlideOutRight{from{transform:translateX(0)}to{transform:translateX(100%)}}
 .screen-help{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--fg-4);color:var(--fg-4);font-size:12px;cursor:pointer;margin-left:6px;vertical-align:middle;line-height:1;opacity:.7;flex-shrink:0;user-select:none}
-.screen{display:none;flex:1;flex-direction:column;overflow:hidden;overscroll-behavior-y:none}
+.screen{display:none;flex:1;min-height:0;flex-direction:column;overflow:hidden;overscroll-behavior-y:none}
 .screen.active{display:flex}
 
 .sn-logo{font:400 22px/1 var(--font-display);letter-spacing:-0.01em;padding:4px 8px 16px;border-bottom:1px solid var(--line-soft);margin-bottom:8px;color:var(--fg)}
@@ -139,7 +139,7 @@ svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stro
 .ph-icon-btn{width:36px;height:36px;border-radius:var(--r-pill);border:1px solid var(--line-soft);background:var(--glass-sm);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-3);transition:background var(--t-fast),color var(--t-fast);flex-shrink:0}
 .ph-icon-btn:hover{background:var(--bg-2);color:var(--fg)}
 #screen-home .ph h2{letter-spacing:0.06em}
-.pb{flex:1;overflow-y:auto;padding:20px;overscroll-behavior-y:none}
+.pb{flex:1;min-height:0;overflow-y:auto;padding:20px;overscroll-behavior-y:none}
 
 /* ── COMMON ── */
 .sec{margin-bottom:24px}
@@ -197,7 +197,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .auth-box h1{font:400 30px/1 var(--font-display);letter-spacing:-0.01em;margin-bottom:22px;color:var(--brand-ember)}
 
 /* ── MAP ── */
-.map-layout{display:flex;flex:1;overflow:hidden;position:relative}
+.map-layout{display:flex;flex:1;min-height:0;overflow:hidden;position:relative}
 .map-addr-wrap{padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .map-addr-bar{display:flex;align-items:center;gap:8px;padding:7px 10px;width:100%;text-align:left;font-size:17px;font-family:var(--font-sans);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--r-2);cursor:pointer;color:var(--fg);transition:border-color var(--t-fast),box-shadow var(--t-fast);box-sizing:border-box}
 .map-addr-bar:hover,.map-addr-bar:focus{border-color:var(--accent);box-shadow:0 0 0 3px oklch(from var(--accent) l c h / .18)}
@@ -216,7 +216,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats:empty{display:none}
 .sl-cats::-webkit-scrollbar{height:3px}.sl-cats::-webkit-scrollbar-thumb{background:var(--line-soft)}
 .sl-cats .chip{padding:3.5px 11.5px;font-size:15px;flex-shrink:0}
-.sl-list{flex:1;overflow-y:auto;overscroll-behavior-y:none}
+.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
 .sl-item.sel{background:oklch(from var(--bg-2) l c h / .65)}
@@ -763,12 +763,12 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="cart-tab" id="svc-tab-sched" onclick="switchSvcTab('sched')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
   </div>
   <!-- Услуги pane -->
-  <div id="svc-pane-services" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+  <div id="svc-pane-services" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
   <div id="preselect-banner" style="display:none;flex-shrink:0;padding:10px 16px;background:color-mix(in oklch,var(--accent) 10%,var(--bg));border-bottom:1px solid color-mix(in oklch,var(--accent) 28%,var(--bg));align-items:center;justify-content:space-between;gap:8px">
     <span id="preselect-label" style="font:500 13px/1.4 var(--font-sans);color:var(--fg)"></span>
     <button class="btn btn-sm btn-d" onclick="clearPreselect()" style="flex-shrink:0;font-size:12px">✕ Отменить</button>
   </div>
-  <div class="pb" style="flex:1;overflow-y:auto;overscroll-behavior-y:none">
+  <div class="pb" style="flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none">
 
     <div class="store-hero">
       <div class="store-logo" id="store-logo">Фото</div>
@@ -2401,21 +2401,7 @@ async function refreshSession() {
 }
 
 // ─── MAP ───
-function _initMapLayout() {
-  const layout = document.querySelector('.map-layout');
-  if (!layout) return;
-  const isMobile = window.innerWidth <= 600;
-  const noMap = isMobile;
-  layout.classList.toggle('no-map', noMap);
-  const ico = document.getElementById('map-tog-ico');
-  if (ico) ico.innerHTML = noMap
-    ? `<span style="position:relative;display:inline-flex;align-items:center;justify-content:center"><svg class="ico" width="22" height="22" style="opacity:.45"><use href="#i-map"/></svg><svg width="22" height="22" style="position:absolute;inset:0" viewBox="0 0 22 22"><line x1="5" y1="5" x2="17" y2="17" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/><line x1="17" y1="5" x2="5" y2="17" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/></svg></span>`
-    : `<svg class="ico" width="22" height="22"><use href="#i-map"/></svg>`;
-  if (!noMap && S.map) setTimeout(() => S.map.resize(), 50);
-}
-
 async function loadMap() {
-  _initMapLayout();
   loadMapStores();
   loadMapData();
 }
