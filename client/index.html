@@ -84,14 +84,14 @@ html.dark{
 }
 html,body{background-color:var(--bg);background-image:radial-gradient(circle 740px at 0% 0%,rgba(232,116,59,.52) 0%,transparent 80%),radial-gradient(circle 840px at 100% 100%,rgba(120,180,224,.58) 0%,transparent 80%),linear-gradient(135deg,rgba(232,116,59,.18) 0%,rgba(120,180,224,.18) 100%);background-attachment:fixed;overscroll-behavior-y:none}
 html.dark,html.dark body{background-image:radial-gradient(circle 600px at 0% 0%,rgba(232,116,59,.44) 0%,transparent 68%),radial-gradient(circle 700px at 100% 100%,rgba(120,180,224,.54) 0%,transparent 68%)}
-body{font-family:var(--font-sans);font-size:17px;color:var(--fg)}
+body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden;height:100dvh}
 #bg-ornament{position:fixed;inset:-200px 0;width:100%;height:calc(100% + 400px);pointer-events:none;z-index:0;will-change:transform}
 svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
 #bg-ornament .op{stroke:var(--pat);fill:none;stroke-width:1.1}
 #bg-ornament .op-x{stroke-opacity:.45}
 #bg-ornament .op-f{fill:var(--pat);stroke:none}
-#zoom-root{position:fixed;inset:0;overflow:hidden;z-index:1}
-html.has-fzoom #zoom-root{zoom:var(--fzoom);width:calc(100%/var(--fzoom));height:calc(100%/var(--fzoom))}
+#zoom-root{height:100dvh;overflow:hidden;position:relative;z-index:1}
+html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 
 /* ── LAYOUT ── */
 #app{display:flex;height:100%;overflow:hidden}
@@ -140,7 +140,7 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);width:calc(100%/var(--fzoom));height
 .ph-icon-btn{width:36px;height:36px;border-radius:var(--r-pill);border:1px solid var(--line-soft);background:var(--glass-sm);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-3);transition:background var(--t-fast),color var(--t-fast);flex-shrink:0}
 .ph-icon-btn:hover{background:var(--bg-2);color:var(--fg)}
 #screen-home .ph h2{letter-spacing:0.06em}
-.pb{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:20px;overscroll-behavior-y:none;touch-action:pan-y}
+.pb{flex:1;min-height:0;overflow-y:auto;padding:20px;overscroll-behavior-y:none;touch-action:pan-y}
 
 /* ── COMMON ── */
 .sec{margin-bottom:24px}
@@ -208,7 +208,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .map-tog-btn:hover{background:var(--bg-2)}
 .btn-nearby-p{background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 42%),linear-gradient(145deg,#4a90c2,#78b4e0)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 28px rgba(120,180,224,.45)!important}
 .btn-green-p{background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 42%),linear-gradient(145deg,#16a34a,#22c55e)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 28px rgba(22,163,74,.4)!important}
-.sl-panel{width:280px;flex-shrink:0;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;background:transparent;transition:width .25s ease,max-height .25s ease}
+.sl-panel{width:280px;flex-shrink:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;background:transparent;transition:width .25s ease,max-height .25s ease}
 .map-layout.no-map .map-area{flex:0;min-width:0;width:0;overflow:hidden}
 .map-layout.no-map .sl-panel{flex:1;width:auto;border-right:none}
 .sl-search{padding:10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
@@ -217,7 +217,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats:empty{display:none}
 .sl-cats::-webkit-scrollbar{height:3px}.sl-cats::-webkit-scrollbar-thumb{background:var(--line-soft)}
 .sl-cats .chip{padding:3.5px 11.5px;font-size:15px;flex-shrink:0}
-.sl-list{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:none;touch-action:pan-y}
+.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
 .sl-item.sel{background:oklch(from var(--bg-2) l c h / .65)}
@@ -269,6 +269,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 }
 
 /* ── STORE ── */
+#svc-pane-services{display:flex;flex-direction:column;flex:1;min-height:0}
 .store-hero{display:flex;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
 .store-logo{width:96px;height:96px;border:1px solid var(--line-soft);border-radius:var(--r-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;color:var(--fg-4);font-size:14px;background:var(--bg-2)}
 .store-logo img{width:100%;height:100%;object-fit:cover}
@@ -335,7 +336,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .cart-tab:hover{color:var(--fg)}
 .cart-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .cart-layout{display:flex;flex-direction:column;flex:1;min-height:0}
-.cart-body{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior-y:none;touch-action:pan-y}
+.cart-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .cart-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px;flex-wrap:wrap}
 .ci-info{flex:1;min-width:0}
 .ci-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -765,7 +766,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="cart-tab" id="svc-tab-sched" onclick="switchSvcTab('sched')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
   </div>
   <!-- Услуги pane -->
-  <div id="svc-pane-services" style="display:flex;flex-direction:column;flex:1;min-height:0">
+  <div id="svc-pane-services">
   <div id="preselect-banner" style="display:none;flex-shrink:0;padding:10px 16px;background:color-mix(in oklch,var(--accent) 10%,var(--bg));border-bottom:1px solid color-mix(in oklch,var(--accent) 28%,var(--bg));align-items:center;justify-content:space-between;gap:8px">
     <span id="preselect-label" style="font:500 13px/1.4 var(--font-sans);color:var(--fg)"></span>
     <button class="btn btn-sm btn-d" onclick="clearPreselect()" style="flex-shrink:0;font-size:12px">✕ Отменить</button>
@@ -1817,7 +1818,6 @@ function updateDirectionLabels(dir) {
   const svcTabBar = document.getElementById('svc-tab-bar');
   if (svcTabBar) svcTabBar.style.display = dir === 'services' ? '' : 'none';
   if (dir !== 'services') {
-    document.getElementById('svc-pane-services')?.style.removeProperty('display');
     document.getElementById('svc-pane-sched')?.style.setProperty('display', 'none');
     document.getElementById('svc-tab-services')?.classList.add('active');
     document.getElementById('svc-tab-sched')?.classList.remove('active');
@@ -1900,7 +1900,7 @@ function switchSvcTab(tab) {
   _svcTab = tab;
   const isServices = tab === 'services';
   document.getElementById('svc-pane-services').style.display = isServices ? '' : 'none';
-  document.getElementById('svc-pane-sched').style.display    = isServices ? 'none' : '';
+  document.getElementById('svc-pane-sched').style.display    = isServices ? 'none' : 'flex';
   document.getElementById('svc-tab-services')?.classList.toggle('active', isServices);
   document.getElementById('svc-tab-sched')?.classList.toggle('active', !isServices);
   if (!isServices) loadCaScheduleScreen();
@@ -2723,7 +2723,7 @@ async function loadStore() {
   if (S.direction === 'services') {
     _svcTab = 'services';
     document.getElementById('svc-pane-services').style.display = '';
-    document.getElementById('svc-pane-sched').style.display = 'none';
+    document.getElementById('svc-pane-sched').style.display    = 'none';
     document.getElementById('svc-tab-services')?.classList.add('active');
     document.getElementById('svc-tab-sched')?.classList.remove('active');
   }
