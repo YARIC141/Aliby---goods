@@ -4635,9 +4635,9 @@ async function restoreNav() {
     const ok = await navigateDeepLink();
     if (ok) return;
   }
-  const SCREENS = ['home','alibi','store','menu','cart','calenabs','profile'];
+  const SCREENS = ['home','map','alibi','store','menu','cart','calenabs','profile'];
   const nav = localStorage.getItem('alliby_nav');
-  const _navTarget = () => goTo(nav && SCREENS.includes(nav) ? nav : 'home');
+  const _navTarget = () => goTo(nav && SCREENS.includes(nav) ? nav : 'map');
   if (!S.city) {
     _autoDetectCityThenNav(() => { _navTarget(); setTimeout(_prefetchClient, 1500); });
     return;
