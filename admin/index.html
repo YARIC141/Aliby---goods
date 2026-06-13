@@ -355,8 +355,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 .dze-arrow-btn:disabled{opacity:.25;cursor:default}
 .dze-color-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;cursor:pointer;border:2px solid rgba(0,0,0,.15);position:relative}
 .dze-color-dot input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0}
-.dze-zone-name{flex:1;font:500 12px/1 var(--font-sans);border:none;background:transparent;color:var(--fg-1);min-width:0;padding:0}
-.dze-zone-name:focus{outline:none}
+
 .dze-zone-price{width:68px;font:500 12px/1 var(--font-sans);border:none;background:transparent;color:var(--accent);text-align:right;padding:0}
 .dze-zone-price:focus{outline:none}
 .dze-type-btn{font:500 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg-2);cursor:pointer;white-space:nowrap;color:var(--fg-2)}
@@ -6041,7 +6040,7 @@ function dzeRenderList() {
       <div class="dze-color-dot" style="background:${z.color}" title="Цвет зоны">
         <input type="color" value="${z.color}" oninput="dzeSetColor(${realIdx},this.value)" onclick="event.stopPropagation()">
       </div>
-      <input class="dze-zone-name" value="${esc(z.name)}" placeholder="Название" oninput="_dze.zones[${realIdx}].name=this.value" onclick="event.stopPropagation()">
+      <span style="font:700 12px/1 var(--font-sans);color:var(--fg-3);min-width:18px;text-align:center;flex-shrink:0">${vi + 1}</span>
       <input class="dze-zone-price" type="number" min="0" value="${z.price}" placeholder="₽" oninput="_dze.zones[${realIdx}].price=+this.value" onclick="event.stopPropagation()"> <span style="font:400 11px/1 var(--font-sans);color:var(--fg-3)">₽</span>
       <button class="dze-type-btn" onclick="event.stopPropagation();dzeToggleType(${realIdx})">${z.type === 'radius' ? '◎ Радиус' : '⬡ Полигон'}</button>
       <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0">
@@ -6147,12 +6146,12 @@ function dzeUpdateLayer(idx) {
   if (_dze.map.getSource(srcId)) {
     _dze.map.getSource(srcId).setData(geo);
     _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-color', z.color);
-    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-opacity', 0.25);
+    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-opacity', 0.35);
     _dze.map.setPaintProperty('dze-line-' + idx, 'line-color', z.color);
     _dze.map.setPaintProperty('dze-line-' + idx, 'line-width', isActive ? 3 : 1.5);
   } else {
     _dze.map.addSource(srcId, { type: 'geojson', data: geo });
-    _dze.map.addLayer({ id: 'dze-fill-' + idx, type: 'fill', source: srcId, paint: { 'fill-color': z.color, 'fill-opacity': 0.25 } });
+    _dze.map.addLayer({ id: 'dze-fill-' + idx, type: 'fill', source: srcId, paint: { 'fill-color': z.color, 'fill-opacity': 0.35 } });
     _dze.map.addLayer({ id: 'dze-line-' + idx, type: 'line', source: srcId, paint: { 'line-color': z.color, 'line-width': isActive ? 3 : 1.5 } });
   }
 }
@@ -6346,13 +6345,13 @@ async function dzeSave() {
         await req(`/rest/v1/delivery_zones?id=eq.${z.id}`, { method: 'DELETE' });
       } else if (!z._deleted && !z.id) {
         await req('/rest/v1/delivery_zones', { method: 'POST', headers: { Prefer: 'return=minimal' },
-          body: JSON.stringify({ store_id: _dze.storeId, name: z.name, color: z.color, price: z.price,
+          body: JSON.stringify({ store_id: _dze.storeId, name: 'Зона ' + (z.sort_order + 1), color: z.color, price: z.price,
             type: z.type, radius_m: z.type==='radius'?z.radius_m:null,
             center_lat: z.type==='radius'?z.center_lat:null, center_lng: z.type==='radius'?z.center_lng:null,
             vertices: z.type==='polygon'?z.vertices:null, sort_order: z.sort_order }) });
       } else if (!z._deleted && z.id) {
         await req(`/rest/v1/delivery_zones?id=eq.${z.id}`, { method: 'PATCH',
-          body: JSON.stringify({ name: z.name, color: z.color, price: z.price,
+          body: JSON.stringify({ name: 'Зона ' + (z.sort_order + 1), color: z.color, price: z.price,
             type: z.type, radius_m: z.type==='radius'?z.radius_m:null,
             center_lat: z.type==='radius'?z.center_lat:null, center_lng: z.type==='radius'?z.center_lng:null,
             vertices: z.type==='polygon'?z.vertices:null, sort_order: z.sort_order }) });
