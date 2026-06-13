@@ -348,6 +348,11 @@ tr.row-click:hover td{background:var(--bg-2)}
 #dze-zones-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 12px}
 .dze-zone-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r-2);border:1.5px solid var(--line-soft);margin-bottom:6px;cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .dze-zone-row.active{border-color:var(--accent);background:var(--bg-2)}
+.dze-zone-row.dz-drag-over{border-color:var(--accent);background:oklch(from var(--accent) l c h / .08)}
+.dze-drag{cursor:grab;color:var(--fg-4);font-size:14px;flex-shrink:0;padding:0 1px;user-select:none;line-height:1}
+.dze-drag:active{cursor:grabbing}
+.dze-arrow-btn{background:none;border:none;cursor:pointer;color:var(--fg-3);font-size:11px;padding:0 1px;line-height:1;flex-shrink:0}
+.dze-arrow-btn:disabled{opacity:.25;cursor:default}
 .dze-color-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;cursor:pointer;border:2px solid rgba(0,0,0,.15);position:relative}
 .dze-color-dot input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0}
 .dze-zone-name{flex:1;font:500 12px/1 var(--font-sans);border:none;background:transparent;color:var(--fg-1);min-width:0;padding:0}
@@ -1334,14 +1339,7 @@ tr.row-click:hover td{background:var(--bg-2)}
         </label>
       </div>
       <div id="ms-dz-wrap">
-        <div style="font:600 12px/1 var(--font-sans);color:var(--fg-3);margin-bottom:6px">Зоны доставки</div>
-        <div style="display:flex;gap:4px;margin-bottom:4px">
-          <span style="font:600 11px/1 var(--font-sans);color:var(--fg-4);flex:1;text-align:center">Радиус, м</span>
-          <span style="font:600 11px/1 var(--font-sans);color:var(--fg-4);flex:1;text-align:center">Цена, ₽</span>
-          <div style="width:32px"></div>
-        </div>
-        <div id="ms-dz-list"></div>
-        <button class="btn btn-sm" style="margin-top:8px" onclick="addMsDeliveryZone()">+ Добавить зону</button>
+        <button id="ms-dze-btn" class="btn btn-sm" style="display:none;width:100%;margin-top:2px" onclick="openDzeFromEdit()">Настроить зоны доставки →</button>
       </div>
     </div>
     <div class="modal-ft">
@@ -1391,7 +1389,6 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button class="btn" onclick="closeModal('m-store-detail')">Закрыть</button>
       <button class="btn" style="white-space:normal;text-align:center" onclick="shareStoreLink()">Поделиться ссылкой на список товаров и услуг</button>
       <button class="btn" onclick="showStoreQR()">QR-код</button>
-      <button class="btn" onclick="closeModal('m-store-detail');openDzeEditor(_detailStore)">Зоны доставки</button>
       <button class="btn btn-p" onclick="editCurrentStore()">Редактировать</button>
     </div>
   </div>
@@ -2956,7 +2953,7 @@ function _renderStoresList(stores) {
     const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
     const dirLabel = _DIR_LABELS[s.direction] || '';
     const sd = JSON.stringify(s).replace(/"/g, '&quot;');
-    return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openStoreDetail(${sd})">
+    return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openStoreModal(${sd})">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
@@ -3046,7 +3043,9 @@ async function openStoreModal(store) {
     delivEl.disabled = !_activePlatSub;
     delivEl.checked = !!_activePlatSub && (store?.delivery_enabled ?? false);
   }
-  renderMsDeliveryZones(store?.delivery_zones?.length ? store.delivery_zones : [{ radius: 1000, price: 0 }]);
+  const dzeBtnEl = document.getElementById('ms-dze-btn');
+  if (dzeBtnEl) dzeBtnEl.style.display = store?.id ? '' : 'none';
+  _msEditStore = store || null;
   openModal('m-store');
 }
 
@@ -3115,7 +3114,6 @@ async function usePickedCoords() {
   updateStoreCoordsStatus();
   const _de = document.getElementById('ms-delivery-enabled');
   if (_de) { _de.disabled = !_activePlatSub; _de.checked = !!_activePlatSub && (d.delivery_enabled || false); }
-  renderMsDeliveryZones(d.delivery_zones || [{ radius: 1000, price: 0 }]);
   openModal('m-store');
 }
 
@@ -3152,6 +3150,17 @@ function onMsDirChange() {
   const isServices = document.getElementById('ms-dir')?.value === 'services';
   const sec = document.getElementById('ms-delivery-section');
   if (sec) sec.style.display = isServices ? 'none' : '';
+}
+
+let _msEditStore = null;
+
+function openDzeFromEdit() {
+  const id   = document.getElementById('ms-id').value;
+  const name = document.getElementById('ms-name').value;
+  const lat  = parseFloat(document.getElementById('ms-lat').value);
+  const lng  = parseFloat(document.getElementById('ms-lng').value);
+  closeModal('m-store');
+  openDzeEditor({ id, name, latitude: isNaN(lat) ? null : lat, longitude: isNaN(lng) ? null : lng });
 }
 
 function renderMsDeliveryZones(zones) {
@@ -3236,12 +3245,6 @@ async function saveStore() {
       }
     }
   }
-  const zones = getMsDeliveryZones();
-  if (zones.some(z => z.radius < 100)) {
-    restore();
-    alert('Минимальный радиус зоны доставки — 100 м');
-    return;
-  }
   const lat   = parseFloat(document.getElementById('ms-lat').value);
   const lng   = parseFloat(document.getElementById('ms-lng').value);
   const color = document.getElementById('ms-color').value || '#e8430a';
@@ -3258,7 +3261,6 @@ async function saveStore() {
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
     image_url:          document.getElementById('ms-image-url').value || null,
     delivery_enabled:   document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
-    delivery_zones:     zones,
   };
   try {
     let storeId = id;
@@ -6023,15 +6025,29 @@ function dzeRenderList() {
     el.innerHTML = '<div style="color:var(--fg-4);font-size:13px;padding:8px 0">Нет зон. Нажмите «+ Добавить зону»</div>';
     return;
   }
-  el.innerHTML = _dze.zones.filter(z => !z._deleted).map((z, i) => {
+  const visible = _dze.zones.filter(z => !z._deleted);
+  const visCount = visible.length;
+  el.innerHTML = visible.map((z, vi) => {
     const realIdx = _dze.zones.indexOf(z);
-    return `<div class="dze-zone-row${_dze.activeIdx === realIdx ? ' active' : ''}" onclick="dzeSelectZone(${realIdx})">
+    return `<div class="dze-zone-row${_dze.activeIdx === realIdx ? ' active' : ''}"
+      draggable="true"
+      ondragstart="dzeDragStart(${realIdx},event)"
+      ondragover="event.preventDefault()"
+      ondragenter="this.classList.add('dz-drag-over')"
+      ondragleave="this.classList.remove('dz-drag-over')"
+      ondrop="this.classList.remove('dz-drag-over');dzeDrop(${realIdx})"
+      onclick="dzeSelectZone(${realIdx})">
+      <span class="dze-drag" title="Перетащить">⠿</span>
       <div class="dze-color-dot" style="background:${z.color}" title="Цвет зоны">
         <input type="color" value="${z.color}" oninput="dzeSetColor(${realIdx},this.value)" onclick="event.stopPropagation()">
       </div>
       <input class="dze-zone-name" value="${esc(z.name)}" placeholder="Название" oninput="_dze.zones[${realIdx}].name=this.value" onclick="event.stopPropagation()">
       <input class="dze-zone-price" type="number" min="0" value="${z.price}" placeholder="₽" oninput="_dze.zones[${realIdx}].price=+this.value" onclick="event.stopPropagation()"> <span style="font:400 11px/1 var(--font-sans);color:var(--fg-3)">₽</span>
       <button class="dze-type-btn" onclick="event.stopPropagation();dzeToggleType(${realIdx})">${z.type === 'radius' ? '◎ Радиус' : '⬡ Полигон'}</button>
+      <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0">
+        <button class="dze-arrow-btn" ${vi === 0 ? 'disabled' : ''} onclick="event.stopPropagation();dzeMove(${realIdx},-1)" title="Выше">▲</button>
+        <button class="dze-arrow-btn" ${vi === visCount - 1 ? 'disabled' : ''} onclick="event.stopPropagation();dzeMove(${realIdx},1)" title="Ниже">▼</button>
+      </div>
       <button class="btn btn-sm btn-d" style="font-size:11px;padding:2px 7px" onclick="event.stopPropagation();dzeRemoveZone(${realIdx})">✕</button>
     </div>`;
   }).join('');
@@ -6108,12 +6124,16 @@ function dzeCentroid(vertices) {
 
 function dzeRenderAllLayers() {
   if (!_dze.map) return;
-  // Remove old layers/sources
   _dze.zones.forEach((_, i) => {
     ['dze-fill-' + i, 'dze-line-' + i].forEach(id => { try { _dze.map.removeLayer(id); } catch {} });
     try { _dze.map.removeSource('dze-src-' + i); } catch {}
   });
-  _dze.zones.forEach((z, i) => { if (!z._deleted) dzeUpdateLayer(i); });
+  // Render highest sort_order first (bottom), lowest sort_order last (top)
+  const order = _dze.zones
+    .map((z, i) => ({ z, i }))
+    .filter(({ z }) => !z._deleted)
+    .sort((a, b) => (b.z.sort_order ?? b.i) - (a.z.sort_order ?? a.i));
+  order.forEach(({ i }) => dzeUpdateLayer(i));
 }
 
 function dzeUpdateLayer(idx) {
@@ -6127,12 +6147,13 @@ function dzeUpdateLayer(idx) {
   if (_dze.map.getSource(srcId)) {
     _dze.map.getSource(srcId).setData(geo);
     _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-color', z.color);
-    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-opacity', isActive ? 0.35 : 0.2);
+    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-opacity', 0.25);
     _dze.map.setPaintProperty('dze-line-' + idx, 'line-color', z.color);
+    _dze.map.setPaintProperty('dze-line-' + idx, 'line-width', isActive ? 3 : 1.5);
   } else {
     _dze.map.addSource(srcId, { type: 'geojson', data: geo });
-    _dze.map.addLayer({ id: 'dze-fill-' + idx, type: 'fill', source: srcId, paint: { 'fill-color': z.color, 'fill-opacity': isActive ? 0.35 : 0.2 } });
-    _dze.map.addLayer({ id: 'dze-line-' + idx, type: 'line', source: srcId, paint: { 'line-color': z.color, 'line-width': isActive ? 2.5 : 1.5 } });
+    _dze.map.addLayer({ id: 'dze-fill-' + idx, type: 'fill', source: srcId, paint: { 'fill-color': z.color, 'fill-opacity': 0.25 } });
+    _dze.map.addLayer({ id: 'dze-line-' + idx, type: 'line', source: srcId, paint: { 'line-color': z.color, 'line-width': isActive ? 3 : 1.5 } });
   }
 }
 
@@ -6279,6 +6300,41 @@ function dzeRemoveZone(idx) {
   dzeRenderList();
   dzeRenderAllLayers();
   dzeShowVertexBtns();
+}
+
+function dzeMove(idx, dir) {
+  const activeZone = _dze.activeIdx !== null ? _dze.zones[_dze.activeIdx] : null;
+  const visible = _dze.zones.filter(z => !z._deleted);
+  const pos = visible.indexOf(_dze.zones[idx]);
+  const newPos = pos + dir;
+  if (newPos < 0 || newPos >= visible.length) return;
+  const other = visible[newPos];
+  const ai = _dze.zones.indexOf(_dze.zones[idx]);
+  const bi = _dze.zones.indexOf(other);
+  [_dze.zones[ai], _dze.zones[bi]] = [_dze.zones[bi], _dze.zones[ai]];
+  _dze.zones.filter(z => !z._deleted).forEach((z, i) => { z.sort_order = i; });
+  _dze.activeIdx = activeZone ? _dze.zones.indexOf(activeZone) : null;
+  dzeRenderList();
+  dzeRenderAllLayers();
+}
+
+function dzeDragStart(idx, e) {
+  _dze._dragIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function dzeDrop(targetIdx) {
+  const from = _dze._dragIdx;
+  _dze._dragIdx = null;
+  if (from === null || from === targetIdx) return;
+  const activeZone = _dze.activeIdx !== null ? _dze.zones[_dze.activeIdx] : null;
+  const zone = _dze.zones.splice(from, 1)[0];
+  const to = targetIdx > from ? targetIdx - 1 : targetIdx;
+  _dze.zones.splice(to, 0, zone);
+  _dze.zones.filter(z => !z._deleted).forEach((z, i) => { z.sort_order = i; });
+  _dze.activeIdx = activeZone ? _dze.zones.indexOf(activeZone) : null;
+  dzeRenderList();
+  dzeRenderAllLayers();
 }
 
 // ── save / cancel ─────────────────────────────────────────────────────────────
