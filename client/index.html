@@ -2810,7 +2810,7 @@ async function loadStoreSubs(targetEl) {
   if (!S.store) { el.innerHTML = '<span class="txt-sm">Выберите заведение</span>'; return; }
   el.innerHTML = SK.subCards(2);
   try {
-    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}&deleted_at=is.null`);
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}&deleted_at=is.null&is_visible=eq.true`);
     if (!subs.length) { if (sec) sec.style.display = 'none'; return; }
     subs.forEach(s => { subPlans[s.id] = s; });
     el.innerHTML = subs.map(renderSubCard).join('');
@@ -2941,7 +2941,7 @@ async function loadCategories() {
       try {
         const [cats, subs] = await Promise.all([
           req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`),
-          req(`/rest/v1/subscriptions?store_id=eq.${storeId}`),
+          req(`/rest/v1/subscriptions?store_id=eq.${storeId}&is_visible=eq.true`),
         ]);
         if (S.store?.id !== storeId) return;
         S.menuStoreSubs = subs;
@@ -2955,7 +2955,7 @@ async function loadCategories() {
   try {
     const [cats, subs] = await Promise.all([
       req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`),
-      req(`/rest/v1/subscriptions?store_id=eq.${storeId}`),
+      req(`/rest/v1/subscriptions?store_id=eq.${storeId}&is_visible=eq.true`),
     ]);
     S.menuStoreSubs = subs;
     _writeCatsCache(storeId, { cats, subs });
@@ -3028,7 +3028,7 @@ async function loadMenuItems() {
 
   // New store — reset state
   _allMenuItems = [];
-  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc`, loading: false, storeId, hasMore: false };
+  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}&is_visible=eq.true&order=name.asc`, loading: false, storeId, hasMore: false };
 
   const cached = _readMenuCache(storeId);
   let _cacheOk = false;
@@ -3719,7 +3719,7 @@ async function renderCart() {
     const needUser  = S.session && !S.menuUserSubs.length;
     if (needStore || needUser) {
       await Promise.all([
-        needStore ? req(`/rest/v1/subscriptions?store_id=eq.${cartStoreId}`).then(r => { S.menuStoreSubs = r; }).catch(() => {}) : Promise.resolve(),
+        needStore ? req(`/rest/v1/subscriptions?store_id=eq.${cartStoreId}&is_visible=eq.true`).then(r => { S.menuStoreSubs = r; }).catch(() => {}) : Promise.resolve(),
         needUser  ? loadMenuUserSubs(cartStoreId) : Promise.resolve(),
       ]);
     }
@@ -4024,7 +4024,7 @@ async function loadSubsForSelectedStore(storeId) {
       });
       S.storeSubActive = active === true;
     } catch { S.storeSubActive = true; }
-    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${storeId}&deleted_at=is.null`);
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${storeId}&deleted_at=is.null&is_visible=eq.true`);
     subs.forEach(s => { subPlans[s.id] = s; });
     el.innerHTML = subs.length ? subs.map(renderSubCard).join('') : '<span class="txt-sm">Нет абонементов</span>';
   } catch { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }

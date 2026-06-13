@@ -3381,6 +3381,17 @@ function setAdminMenuTab(tab) {
   else loadSubscriptions();
 }
 
+async function toggleItemVisible(table, id, val, cardEl) {
+  try {
+    await req(`/rest/v1/${table}?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ is_visible: val }) });
+    if (cardEl) cardEl.style.opacity = val ? '' : '0.45';
+  } catch(e) {
+    showToast('Ошибка: ' + (e.message || ''));
+    const chk = cardEl?.querySelector('input[type=checkbox]');
+    if (chk) chk.checked = !val;
+  }
+}
+
 function _renderMenuItems(items, append = false) {
   const el = document.getElementById('mi-list');
   if (!el) return;
@@ -3394,12 +3405,17 @@ function _renderMenuItems(items, append = false) {
     const avail = i.is_available
       ? `<span style="font-size:12px;color:var(--ok);display:inline-flex;align-items:center;gap:3px">${svgIco('check',11)} В наличии</span>`
       : `<span style="font-size:12px;color:var(--fg-4)">— Нет в наличии</span>`;
+    const vis = i.is_visible !== false;
     const editBtns = isEmp ? '' : `
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0">
+            <label class="toggle-sw" title="${vis ? 'Скрыть от клиентов' : 'Показать клиентам'}" style="margin:0" onclick="event.stopPropagation()">
+              <input type="checkbox" ${vis ? 'checked' : ''} onchange="toggleItemVisible('menu_items','${i.id}',this.checked,this.closest('.card'))">
+              <span class="toggle-track"></span>
+            </label>
             <button class="btn btn-sm" onclick="event.stopPropagation();openMenuItemModal(${sd})">Ред.</button>
             <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
           </div>`;
-    return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+    return `<div class="card" style="margin-bottom:8px;padding:10px 12px${vis ? '' : ';opacity:0.45'}">
         <div style="display:flex;gap:10px;align-items:flex-start">
           ${thumb}
           <div style="flex:1;min-width:0">
@@ -4544,12 +4560,17 @@ function _renderSubsList(subs) {
       ? (s.discount_type === 'percent' ? `−${s.discount_value}%` : `−${s.discount_value} ₽`)
       : '—';
     const uses = s.total_uses === 0 ? '∞' : s.total_uses;
+    const vis = s.is_visible !== false;
     const editBtns = isEmp ? '' : `
-          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0">
+            <label class="toggle-sw" title="${vis ? 'Скрыть от клиентов' : 'Показать клиентам'}" style="margin:0" onclick="event.stopPropagation()">
+              <input type="checkbox" ${vis ? 'checked' : ''} onchange="toggleItemVisible('subscriptions','${s.id}',this.checked,this.closest('.card'))">
+              <span class="toggle-track"></span>
+            </label>
             <button class="btn btn-sm" onclick="event.stopPropagation();openSubModal(${sd})">Ред.</button>
             <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('sub','${s.id}','${esc(s.name)}')">Удал.</button>
           </div>`;
-    return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
+    return `<div class="card" style="margin-bottom:8px;padding:10px 12px${vis ? '' : ';opacity:0.45'}">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
             <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</div>
