@@ -334,6 +334,30 @@ tr.row-click:hover td{background:var(--bg-2)}
 .sched-tpl-card{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:var(--r-2);border:1.5px solid var(--line);background:var(--bg-1);cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
 .sched-tpl-card:hover{border-color:var(--fg-3)}
 .sched-tpl-card.active{border-color:var(--accent);background:var(--bg-2)}
+/* ── DELIVERY ZONE EDITOR ── */
+#screen-dze{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column}
+#screen-dze.open{display:flex}
+#dze-topbar{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--bg);flex-shrink:0}
+#dze-topbar h3{flex:1;font:600 15px/1 var(--font-sans);margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dze-map-wrap{flex:1;position:relative;min-height:0}
+#dze-map-gl{width:100%;height:100%}
+#dze-float{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:10}
+#dze-panel{height:220px;flex-shrink:0;border-top:1px solid var(--line);background:var(--bg-1);display:flex;flex-direction:column;overflow:hidden}
+#dze-panel-hd{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+#dze-panel-hd span{flex:1;font:600 13px/1 var(--font-sans)}
+#dze-zones-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 12px}
+.dze-zone-row{display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:var(--r-2);border:1.5px solid var(--line-soft);margin-bottom:6px;cursor:pointer;transition:border-color var(--t-fast),background var(--t-fast)}
+.dze-zone-row.active{border-color:var(--accent);background:var(--bg-2)}
+.dze-color-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;cursor:pointer;border:2px solid rgba(0,0,0,.15);position:relative}
+.dze-color-dot input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none;padding:0}
+.dze-zone-name{flex:1;font:500 12px/1 var(--font-sans);border:none;background:transparent;color:var(--fg-1);min-width:0;padding:0}
+.dze-zone-name:focus{outline:none}
+.dze-zone-price{width:68px;font:500 12px/1 var(--font-sans);border:none;background:transparent;color:var(--accent);text-align:right;padding:0}
+.dze-zone-price:focus{outline:none}
+.dze-type-btn{font:500 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg-2);cursor:pointer;white-space:nowrap;color:var(--fg-2)}
+.dze-vmarker{width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.dze-cmarker{width:16px;height:16px;border-radius:50%;background:var(--accent);opacity:.8;cursor:move;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.dze-rmarker{width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid #f97316;cursor:ew-resize;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 </style>
 <script>if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark')</script>
 </head>
@@ -618,6 +642,29 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button id="sched-close-day-btn" class="btn btn-d btn-sm" style="margin-top:10px;font-size:12px" onclick="deleteScheduleDay(this.dataset.date)">Сделать выходным</button>
       <div id="sched-day-bookings"></div>
     </div>
+  </div>
+</div>
+
+<!-- ════════════════ DELIVERY ZONE EDITOR ════════════════ -->
+<div id="screen-dze">
+  <div id="dze-topbar">
+    <h3 id="dze-title">Зоны доставки</h3>
+    <button class="btn btn-sm" onclick="dzeCancel()">Отменить</button>
+    <button class="btn btn-sm btn-p" onclick="dzeSave()">Сохранить</button>
+  </div>
+  <div id="dze-map-wrap">
+    <div id="dze-map-gl"></div>
+    <div id="dze-float">
+      <button class="btn btn-sm" id="dze-add-v-btn" style="display:none" onclick="dzeAddVertex()">+ Вершина</button>
+      <button class="btn btn-sm btn-d" id="dze-del-v-btn" style="display:none" onclick="dzeDeleteVertex()">− Вершина</button>
+    </div>
+  </div>
+  <div id="dze-panel">
+    <div id="dze-panel-hd">
+      <span>Зоны доставки</span>
+      <button class="btn btn-sm btn-p" onclick="dzeAddZone()">+ Добавить зону</button>
+    </div>
+    <div id="dze-zones-scroll"></div>
   </div>
 </div>
 
@@ -1344,6 +1391,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button class="btn" onclick="closeModal('m-store-detail')">Закрыть</button>
       <button class="btn" style="white-space:normal;text-align:center" onclick="shareStoreLink()">Поделиться ссылкой на список товаров и услуг</button>
       <button class="btn" onclick="showStoreQR()">QR-код</button>
+      <button class="btn" onclick="closeModal('m-store-detail');openDzeEditor(_detailStore)">Зоны доставки</button>
       <button class="btn btn-p" onclick="editCurrentStore()">Редактировать</button>
     </div>
   </div>
@@ -5911,6 +5959,361 @@ async function deleteScheduleDay(dateStr) {
 function closeDayView() {
   _sched.openDate = null;
   document.getElementById('sched-day-view').style.display = 'none';
+}
+
+// ─── DELIVERY ZONE EDITOR ───────────────────────────────────────────────────
+const DZ_COLORS = ['#ef4444','#f97316','#eab308','#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#64748b','#0ea5e9'];
+const _dze = {
+  storeId: null, storeName: '', storeLat: null, storeLng: null,
+  zones: [], activeIdx: null,
+  map: null, vMarkers: [], cMarker: null, rMarker: null,
+  _dcStart: null, _dvStart: null,
+};
+
+function openDzeEditor(store) {
+  _dze.storeId  = store.id;
+  _dze.storeName = store.name || '';
+  _dze.storeLat = store.latitude ?? store.lat;
+  _dze.storeLng = store.longitude ?? store.lng;
+  _dze.zones = []; _dze.activeIdx = null;
+  document.getElementById('dze-title').textContent = 'Зоны доставки — ' + _dze.storeName;
+  document.getElementById('screen-dze').classList.add('open');
+  dzeInitMap();
+  dzeLoadZones();
+}
+
+function dzeInitMap() {
+  if (_dze.map) { _dze.map.remove(); _dze.map = null; }
+  _dze.map = new maplibregl.Map({
+    container: 'dze-map-gl',
+    style: S.mapMode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg),
+    center: [_dze.storeLng || 37.6, _dze.storeLat || 55.75],
+    zoom: 13, attributionControl: false,
+    transformRequest: url => url.startsWith(SB_URL) ? { url, headers: { apikey: SB_ANON } } : { url },
+  });
+  _dze.map.on('load', () => {
+    // Store marker
+    const el = document.createElement('div');
+    el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)';
+    new maplibregl.Marker({ element: el }).setLngLat([_dze.storeLng, _dze.storeLat]).addTo(_dze.map);
+    dzeRenderAllLayers();
+  });
+}
+
+async function dzeLoadZones() {
+  try {
+    const rows = await req(`/rest/v1/delivery_zones?store_id=eq.${_dze.storeId}&order=sort_order.asc`);
+    _dze.zones = rows.map(r => ({
+      id: r.id, name: r.name, color: r.color, price: r.price,
+      type: r.type, radius_m: r.radius_m ?? 1000,
+      center_lat: r.center_lat ?? _dze.storeLat,
+      center_lng: r.center_lng ?? _dze.storeLng,
+      vertices: r.vertices ?? [],
+      sort_order: r.sort_order, _deleted: false,
+    }));
+  } catch { _dze.zones = []; }
+  dzeRenderList();
+  if (_dze.map?.loaded()) dzeRenderAllLayers();
+  else _dze.map?.on('load', dzeRenderAllLayers);
+}
+
+function dzeRenderList() {
+  const el = document.getElementById('dze-zones-scroll');
+  if (!_dze.zones.length) {
+    el.innerHTML = '<div style="color:var(--fg-4);font-size:13px;padding:8px 0">Нет зон. Нажмите «+ Добавить зону»</div>';
+    return;
+  }
+  el.innerHTML = _dze.zones.filter(z => !z._deleted).map((z, i) => {
+    const realIdx = _dze.zones.indexOf(z);
+    return `<div class="dze-zone-row${_dze.activeIdx === realIdx ? ' active' : ''}" onclick="dzeSelectZone(${realIdx})">
+      <div class="dze-color-dot" style="background:${z.color}" title="Цвет зоны">
+        <input type="color" value="${z.color}" oninput="dzeSetColor(${realIdx},this.value)" onclick="event.stopPropagation()">
+      </div>
+      <input class="dze-zone-name" value="${esc(z.name)}" placeholder="Название" oninput="_dze.zones[${realIdx}].name=this.value" onclick="event.stopPropagation()">
+      <input class="dze-zone-price" type="number" min="0" value="${z.price}" placeholder="₽" oninput="_dze.zones[${realIdx}].price=+this.value" onclick="event.stopPropagation()"> <span style="font:400 11px/1 var(--font-sans);color:var(--fg-3)">₽</span>
+      <button class="dze-type-btn" onclick="event.stopPropagation();dzeToggleType(${realIdx})">${z.type === 'radius' ? '◎ Радиус' : '⬡ Полигон'}</button>
+      <button class="btn btn-sm btn-d" style="font-size:11px;padding:2px 7px" onclick="event.stopPropagation();dzeRemoveZone(${realIdx})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function dzeSelectZone(idx) {
+  _dze.activeIdx = idx;
+  dzeRenderList();
+  dzeRenderAllLayers();
+  dzeAddHandles();
+  dzeShowVertexBtns();
+}
+
+function dzeShowVertexBtns() {
+  const z = _dze.activeIdx !== null ? _dze.zones[_dze.activeIdx] : null;
+  const show = z && z.type === 'polygon' && !z._deleted;
+  document.getElementById('dze-add-v-btn').style.display = show ? '' : 'none';
+  document.getElementById('dze-del-v-btn').style.display = show ? '' : 'none';
+}
+
+function dzeSetColor(idx, color) {
+  _dze.zones[idx].color = color;
+  dzeRenderList();
+  dzeUpdateLayer(idx);
+}
+
+function dzeToggleType(idx) {
+  const z = _dze.zones[idx];
+  z.type = z.type === 'radius' ? 'polygon' : 'radius';
+  if (z.type === 'polygon' && !z.vertices?.length) {
+    // Create default triangle around store
+    const r = 0.003;
+    z.vertices = [
+      { lat: _dze.storeLat + r,     lng: _dze.storeLng },
+      { lat: _dze.storeLat - r/2,   lng: _dze.storeLng + r },
+      { lat: _dze.storeLat - r/2,   lng: _dze.storeLng - r },
+    ];
+  }
+  dzeRenderList();
+  dzeRenderAllLayers();
+  dzeAddHandles();
+  dzeShowVertexBtns();
+}
+
+// ── map layers ──────────────────────────────────────────────────────────────
+
+function dzeZoneGeoJSON(z) {
+  if (z.type === 'polygon' && z.vertices?.length >= 3) {
+    const coords = [...z.vertices.map(v => [v.lng, v.lat]), [z.vertices[0].lng, z.vertices[0].lat]];
+    return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] }, properties: {} };
+  }
+  if (z.type === 'radius') {
+    return dzeCircleGeoJSON(z.center_lat, z.center_lng, z.radius_m);
+  }
+  return null;
+}
+
+function dzeCircleGeoJSON(lat, lng, radiusM, n = 64) {
+  const coords = [];
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * 2 * Math.PI;
+    const dlat = (radiusM / 111320) * Math.cos(a);
+    const dlng = (radiusM / (111320 * Math.cos(lat * Math.PI / 180))) * Math.sin(a);
+    coords.push([lng + dlng, lat + dlat]);
+  }
+  return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] }, properties: {} };
+}
+
+function dzeCentroid(vertices) {
+  const lat = vertices.reduce((s, v) => s + v.lat, 0) / vertices.length;
+  const lng = vertices.reduce((s, v) => s + v.lng, 0) / vertices.length;
+  return { lat, lng };
+}
+
+function dzeRenderAllLayers() {
+  if (!_dze.map) return;
+  // Remove old layers/sources
+  _dze.zones.forEach((_, i) => {
+    ['dze-fill-' + i, 'dze-line-' + i].forEach(id => { try { _dze.map.removeLayer(id); } catch {} });
+    try { _dze.map.removeSource('dze-src-' + i); } catch {}
+  });
+  _dze.zones.forEach((z, i) => { if (!z._deleted) dzeUpdateLayer(i); });
+}
+
+function dzeUpdateLayer(idx) {
+  if (!_dze.map?.loaded()) return;
+  const z = _dze.zones[idx];
+  if (!z || z._deleted) return;
+  const geo = dzeZoneGeoJSON(z);
+  if (!geo) return;
+  const srcId = 'dze-src-' + idx;
+  const isActive = _dze.activeIdx === idx;
+  if (_dze.map.getSource(srcId)) {
+    _dze.map.getSource(srcId).setData(geo);
+    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-color', z.color);
+    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-opacity', isActive ? 0.35 : 0.2);
+    _dze.map.setPaintProperty('dze-line-' + idx, 'line-color', z.color);
+  } else {
+    _dze.map.addSource(srcId, { type: 'geojson', data: geo });
+    _dze.map.addLayer({ id: 'dze-fill-' + idx, type: 'fill', source: srcId, paint: { 'fill-color': z.color, 'fill-opacity': isActive ? 0.35 : 0.2 } });
+    _dze.map.addLayer({ id: 'dze-line-' + idx, type: 'line', source: srcId, paint: { 'line-color': z.color, 'line-width': isActive ? 2.5 : 1.5 } });
+  }
+}
+
+// ── drag handles ─────────────────────────────────────────────────────────────
+
+function dzeClearHandles() {
+  _dze.vMarkers.forEach(m => m.remove());
+  _dze.vMarkers = [];
+  if (_dze.cMarker) { _dze.cMarker.remove(); _dze.cMarker = null; }
+  if (_dze.rMarker) { _dze.rMarker.remove(); _dze.rMarker = null; }
+}
+
+function dzeAddHandles() {
+  dzeClearHandles();
+  const idx = _dze.activeIdx;
+  if (idx === null) return;
+  const z = _dze.zones[idx];
+  if (!z || z._deleted) return;
+
+  if (z.type === 'polygon' && z.vertices?.length >= 3) {
+    // Vertex markers
+    z.vertices.forEach((v, vi) => {
+      const el = document.createElement('div'); el.className = 'dze-vmarker';
+      const m = new maplibregl.Marker({ element: el, draggable: true }).setLngLat([v.lng, v.lat]).addTo(_dze.map);
+      m.on('drag', () => {
+        const p = m.getLngLat();
+        z.vertices[vi] = { lat: p.lat, lng: p.lng };
+        dzeUpdateLayer(idx);
+        const c = dzeCentroid(z.vertices);
+        _dze.cMarker?.setLngLat([c.lng, c.lat]);
+      });
+      _dze.vMarkers.push(m);
+    });
+    // Center marker
+    const c = dzeCentroid(z.vertices);
+    const cel = document.createElement('div'); cel.className = 'dze-cmarker';
+    _dze.cMarker = new maplibregl.Marker({ element: cel, draggable: true }).setLngLat([c.lng, c.lat]).addTo(_dze.map);
+    _dze.cMarker.on('dragstart', () => {
+      _dze._dcStart = _dze.cMarker.getLngLat();
+      _dze._dvStart = z.vertices.map(v => ({ ...v }));
+    });
+    _dze.cMarker.on('drag', () => {
+      const cur = _dze.cMarker.getLngLat();
+      const dlat = cur.lat - _dze._dcStart.lat, dlng = cur.lng - _dze._dcStart.lng;
+      z.vertices = _dze._dvStart.map(v => ({ lat: v.lat + dlat, lng: v.lng + dlng }));
+      _dze.vMarkers.forEach((m, vi) => m.setLngLat([z.vertices[vi].lng, z.vertices[vi].lat]));
+      dzeUpdateLayer(idx);
+    });
+  }
+
+  if (z.type === 'radius') {
+    // Center marker
+    const cel = document.createElement('div'); cel.className = 'dze-cmarker';
+    _dze.cMarker = new maplibregl.Marker({ element: cel, draggable: true })
+      .setLngLat([z.center_lng, z.center_lat]).addTo(_dze.map);
+    _dze.cMarker.on('drag', () => {
+      const p = _dze.cMarker.getLngLat();
+      z.center_lat = p.lat; z.center_lng = p.lng;
+      dzeUpdateLayer(idx);
+      const bearing = 90 * Math.PI / 180;
+      const dlat = (z.radius_m / 111320) * Math.cos(bearing);
+      const dlng = (z.radius_m / (111320 * Math.cos(p.lat * Math.PI / 180))) * Math.sin(bearing);
+      _dze.rMarker?.setLngLat([p.lng + dlng, p.lat + dlat]);
+    });
+    // Radius handle (east point)
+    const rel = document.createElement('div'); rel.className = 'dze-rmarker';
+    const dlat = 0;
+    const dlng_r = (z.radius_m / (111320 * Math.cos(z.center_lat * Math.PI / 180)));
+    _dze.rMarker = new maplibregl.Marker({ element: rel, draggable: true })
+      .setLngLat([z.center_lng + dlng_r, z.center_lat]).addTo(_dze.map);
+    _dze.rMarker.on('drag', () => {
+      const rp = _dze.rMarker.getLngLat();
+      const haversine = (lat1, lng1, lat2, lng2) => {
+        const R = 6371000, tr = Math.PI / 180;
+        const dLat = (lat2 - lat1) * tr, dLng = (lng2 - lng1) * tr;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*tr)*Math.cos(lat2*tr)*Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      };
+      z.radius_m = Math.max(100, Math.round(haversine(z.center_lat, z.center_lng, rp.lat, rp.lng)));
+      dzeUpdateLayer(idx);
+    });
+  }
+}
+
+// ── vertex ops ───────────────────────────────────────────────────────────────
+
+function dzeAddVertex() {
+  const idx = _dze.activeIdx;
+  if (idx === null) return;
+  const z = _dze.zones[idx];
+  if (!z || z.type !== 'polygon') return;
+  const verts = z.vertices;
+  let maxLen = -1, maxI = 0;
+  for (let i = 0; i < verts.length; i++) {
+    const j = (i + 1) % verts.length;
+    const d = Math.hypot(verts[j].lat - verts[i].lat, verts[j].lng - verts[i].lng);
+    if (d > maxLen) { maxLen = d; maxI = i; }
+  }
+  const j = (maxI + 1) % verts.length;
+  verts.splice(j, 0, { lat: (verts[maxI].lat + verts[j].lat) / 2, lng: (verts[maxI].lng + verts[j].lng) / 2 });
+  dzeUpdateLayer(idx);
+  dzeAddHandles();
+}
+
+function dzeDeleteVertex() {
+  const idx = _dze.activeIdx;
+  if (idx === null) return;
+  const z = _dze.zones[idx];
+  if (!z || z.type !== 'polygon') return;
+  if (z.vertices.length <= 3) { showAdminToast('Минимум 3 вершины'); return; }
+  z.vertices.pop();
+  dzeUpdateLayer(idx);
+  dzeAddHandles();
+}
+
+// ── zone CRUD ────────────────────────────────────────────────────────────────
+
+function dzeAddZone() {
+  const i = _dze.zones.filter(z => !z._deleted).length;
+  const color = DZ_COLORS[i % DZ_COLORS.length];
+  const r = 0.004;
+  const newZone = {
+    id: null, name: 'Зона ' + (i + 1), color, price: 0,
+    type: 'polygon', radius_m: 1000,
+    center_lat: _dze.storeLat, center_lng: _dze.storeLng,
+    vertices: [
+      { lat: _dze.storeLat + r,   lng: _dze.storeLng },
+      { lat: _dze.storeLat - r/2, lng: _dze.storeLng + r },
+      { lat: _dze.storeLat - r/2, lng: _dze.storeLng - r },
+    ],
+    sort_order: i, _deleted: false,
+  };
+  _dze.zones.push(newZone);
+  _dze.activeIdx = _dze.zones.length - 1;
+  dzeRenderList();
+  dzeRenderAllLayers();
+  dzeAddHandles();
+  dzeShowVertexBtns();
+}
+
+function dzeRemoveZone(idx) {
+  _dze.zones[idx]._deleted = true;
+  if (_dze.activeIdx === idx) { _dze.activeIdx = null; dzeClearHandles(); }
+  dzeRenderList();
+  dzeRenderAllLayers();
+  dzeShowVertexBtns();
+}
+
+// ── save / cancel ─────────────────────────────────────────────────────────────
+
+async function dzeSave() {
+  try {
+    for (const z of _dze.zones) {
+      if (z._deleted && z.id) {
+        await req(`/rest/v1/delivery_zones?id=eq.${z.id}`, { method: 'DELETE' });
+      } else if (!z._deleted && !z.id) {
+        await req('/rest/v1/delivery_zones', { method: 'POST', headers: { Prefer: 'return=minimal' },
+          body: JSON.stringify({ store_id: _dze.storeId, name: z.name, color: z.color, price: z.price,
+            type: z.type, radius_m: z.type==='radius'?z.radius_m:null,
+            center_lat: z.type==='radius'?z.center_lat:null, center_lng: z.type==='radius'?z.center_lng:null,
+            vertices: z.type==='polygon'?z.vertices:null, sort_order: z.sort_order }) });
+      } else if (!z._deleted && z.id) {
+        await req(`/rest/v1/delivery_zones?id=eq.${z.id}`, { method: 'PATCH',
+          body: JSON.stringify({ name: z.name, color: z.color, price: z.price,
+            type: z.type, radius_m: z.type==='radius'?z.radius_m:null,
+            center_lat: z.type==='radius'?z.center_lat:null, center_lng: z.type==='radius'?z.center_lng:null,
+            vertices: z.type==='polygon'?z.vertices:null, sort_order: z.sort_order }) });
+      }
+    }
+    showAdminToast('Зоны сохранены');
+    dzeClose();
+  } catch { showAdminToast('Ошибка сохранения'); }
+}
+
+function dzeCancel() { dzeClose(); }
+
+function dzeClose() {
+  document.getElementById('screen-dze').classList.remove('open');
+  dzeClearHandles();
+  if (_dze.map) { _dze.map.remove(); _dze.map = null; }
+  _dze.zones = []; _dze.activeIdx = null;
 }
 
 // ─── SCHEDULE REALTIME ───
