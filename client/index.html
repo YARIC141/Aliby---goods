@@ -3000,6 +3000,24 @@ function _applyMenuFilters(items) {
 
 let _menuFetchStoreId = null, _menuFetchTs = 0;
 const _MENU_THROTTLE = 30000;
+const _CLI_LIMIT = 30;
+let _menuCliState = { offset: 0, baseUrl: '', loading: false, storeId: null, hasMore: false };
+let _allMenuItems = [];
+
+function _renderMenuGrid(el, allItems, appendItems = null) {
+  const filtered = _applyMenuFilters(appendItems ?? allItems);
+  if (appendItems) {
+    document.getElementById('cli-load-more')?.parentElement?.remove();
+    if (filtered.length) el.insertAdjacentHTML('beforeend', filtered.map(renderItemCard).join(''));
+  } else {
+    el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
+  }
+  updateCartCount();
+  if (_menuCliState.hasMore) {
+    el.insertAdjacentHTML('beforeend',
+      `<div style="grid-column:1/-1"><button id="cli-load-more" class="btn btn-full" style="margin-top:4px" onclick="loadMoreClientMenu()">Загрузить ещё</button></div>`);
+  }
+}
 
 async function loadMenuItems() {
   const el = document.getElementById('menu-items');
@@ -3007,14 +3025,23 @@ async function loadMenuItems() {
   el.className = 'items-grid';
   const storeId = S.store.id;
 
+  // Same store already loaded — just re-filter (category/search change)
+  if (_menuCliState.storeId === storeId && _allMenuItems.length) {
+    _renderMenuGrid(el, _allMenuItems);
+    return;
+  }
+
+  // New store — reset state
+  _allMenuItems = [];
+  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc`, loading: false, storeId, hasMore: false };
+
   const cached = _readMenuCache(storeId);
   let _cacheOk = false;
   if (Array.isArray(cached)) {
     try {
       cached.forEach(it => cacheItem(it));
-      const filtered = _applyMenuFilters(cached);
-      el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
-      updateCartCount();
+      _allMenuItems = cached;
+      _renderMenuGrid(el, cached);
       _cacheOk = true;
     } catch {}
   }
@@ -3027,16 +3054,39 @@ async function loadMenuItems() {
   try {
     _menuFetchStoreId = storeId;
     _menuFetchTs = Date.now();
-    const items = await req(`/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc`);
+    const items = await req(`${_menuCliState.baseUrl}&limit=${_CLI_LIMIT}&offset=0`);
     if (S.store?.id !== storeId) return;
     items.forEach(it => cacheItem(it));
+    _allMenuItems = items;
     _writeMenuCache(storeId, items);
-    const filtered = _applyMenuFilters(items);
-    el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
-    updateCartCount();
+    _menuCliState.hasMore = items.length === _CLI_LIMIT;
+    _renderMenuGrid(el, items);
   } catch(e) {
-    if (!cached) el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+    if (!_cacheOk) el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
   }
+}
+
+async function loadMoreClientMenu() {
+  if (_menuCliState.loading) return;
+  _menuCliState.loading = true;
+  _menuCliState.offset += _CLI_LIMIT;
+  const btn = document.getElementById('cli-load-more');
+  if (btn) { btn.textContent = 'Загрузка…'; btn.disabled = true; }
+  try {
+    const items = await req(`${_menuCliState.baseUrl}&limit=${_CLI_LIMIT}&offset=${_menuCliState.offset}`);
+    items.forEach(it => cacheItem(it));
+    _allMenuItems = [..._allMenuItems, ...items];
+    _writeMenuCache(_menuCliState.storeId, _allMenuItems);
+    _menuCliState.hasMore = items.length === _CLI_LIMIT;
+    const el = document.getElementById('menu-items');
+    _renderMenuGrid(el, _allMenuItems, items);
+    updateCartCount();
+  } catch {
+    _menuCliState.offset -= _CLI_LIMIT;
+    const btn2 = document.getElementById('cli-load-more');
+    if (btn2) { btn2.textContent = 'Загрузить ещё'; btn2.disabled = false; }
+  }
+  _menuCliState.loading = false;
 }
 
 const _FOOD_IMGS = {
@@ -4498,6 +4548,43 @@ function _autoDetectCityThenNav(cb) {
 }
 
 // ─── NAV / CART RESTORE ───
+async function _prefetchClient() {
+  const uid = S.session?.user?.id;
+  if (!uid) return;
+  const STORE_SEL = 'name,direction,image_url,store_categories(name,icon)';
+  await Promise.allSettled([
+    (async () => {
+      const [redemptions, orders] = await Promise.all([
+        req(`/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions!inner(subscriptions(name,stores(name)))&user_subscriptions.user_id=eq.${uid}&order=redeemed_at.desc&limit=50`),
+        req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30`),
+      ]);
+      try { localStorage.setItem(`alliby_alibi_${uid}`, JSON.stringify({ redemptions, orders })); } catch {}
+    })(),
+    (async () => {
+      const [allSubs, gifts] = await Promise.all([
+        req(`/rest/v1/user_subscriptions?gift_status=is.null&user_id=eq.${uid}&select=*,subscriptions(*)&order=purchase_date.desc`),
+        req(`/rest/v1/user_subscriptions?gift_status=in.(pending,activated)&user_id=eq.${uid}&select=*,subscriptions(*)&order=purchase_date.desc`),
+      ]);
+      try { localStorage.setItem(`alliby_subs_${uid}`, JSON.stringify({ user: allSubs, gifts })); } catch {}
+    })(),
+    (async () => {
+      const [orders, bookings, subs] = await Promise.all([
+        req(`/rest/v1/orders?user_id=eq.${uid}&select=id,store_id,order_time,stores(${STORE_SEL})&order=order_time.desc&limit=30`).catch(() => []),
+        req(`/rest/v1/bookings?user_id=eq.${uid}&select=id,store_id,slot_date,stores(${STORE_SEL})&order=slot_date.desc&limit=30`).catch(() => []),
+        req(`/rest/v1/user_subscriptions?user_id=eq.${uid}&last_used_at=not.is.null&select=last_used_at,subscriptions(store_id,stores(${STORE_SEL}))&order=last_used_at.desc&limit=30`).catch(() => []),
+      ]);
+      const entries = [];
+      for (const o of orders  || []) if (o.stores) entries.push({ ts: o.order_time, store_id: o.store_id, store: o.stores });
+      for (const b of bookings|| []) if (b.stores) entries.push({ ts: b.slot_date,  store_id: b.store_id, store: b.stores });
+      for (const us of subs   || []) { const s = us.subscriptions; if (s?.stores) entries.push({ ts: us.last_used_at, store_id: s.store_id, store: s.stores }); }
+      entries.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+      const seen = new Set(), unique = [];
+      for (const e of entries) if (!seen.has(e.store_id)) { seen.add(e.store_id); unique.push(e); }
+      try { localStorage.setItem(`alliby_home_${uid}`, JSON.stringify(unique)); } catch {}
+    })(),
+  ]);
+}
+
 async function restoreNav() {
   hideSplash();
   // restore direction
@@ -4552,11 +4639,12 @@ async function restoreNav() {
   const nav = localStorage.getItem('alliby_nav');
   const _navTarget = () => goTo(nav && SCREENS.includes(nav) ? nav : 'home');
   if (!S.city) {
-    _autoDetectCityThenNav(_navTarget);
+    _autoDetectCityThenNav(() => { _navTarget(); setTimeout(_prefetchClient, 1500); });
     return;
   }
   document.querySelectorAll('.city-name-lbl').forEach(el => el.textContent = S.city);
   _navTarget();
+  setTimeout(_prefetchClient, 1500);
 }
 
 // ─── SPLASH ───
