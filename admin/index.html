@@ -1293,47 +1293,6 @@ tr.row-click:hover td{background:var(--bg-2)}
         <button class="btn btn-sm" style="margin-top:8px" onclick="addMsDeliveryZone()">+ Добавить зону</button>
       </div>
     </div>
-    <div style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px">
-      <div style="font:600 13px/1 var(--font-sans);margin-bottom:10px">
-        Интернет-эквайринг
-        <span class="hint" data-tip="Клиенты будут перенаправляться на страницу оплаты выбранного провайдера. Ключи хранятся отдельно с ограниченным доступом.">?</span>
-      </div>
-      <div class="fg" style="margin-bottom:8px">
-        <label>Провайдер</label>
-        <select id="ms-pay-provider" onchange="onMsPayProviderChange()">
-          <option value="none">— Не настроено —</option>
-          <option value="tinkoff">Тинькофф T-Касса</option>
-          <option value="yokassa">ЮKassa (Яндекс) — эмуляция</option>
-          <option value="cloudpayments">CloudPayments — эмуляция</option>
-          <option value="sberbank">СберБанк Ecom — эмуляция</option>
-          <option value="alfabank">Альфа-Банк Эквайринг — эмуляция</option>
-          <option value="vtb">ВТБ Эквайринг — эмуляция</option>
-          <option value="robokassa">Robokassa — эмуляция</option>
-          <option value="paykeeper">PayKeeper — эмуляция</option>
-        </select>
-      </div>
-      <div id="ms-pay-fields" style="display:none">
-        <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:2px">Тестовые ключи</div>
-        <div class="fg" style="margin-bottom:8px">
-          <label><span id="ms-pay-key-test-label">Terminal Key</span> <span id="ms-key-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-          <input type="text" id="ms-pay-terminal-key-test" placeholder="Введите тестовый ключ" autocomplete="off">
-        </div>
-        <div class="fg" style="margin-bottom:12px">
-          <label><span id="ms-pay-secret-test-label">Секретный ключ</span> <span id="ms-secret-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-          <input type="password" id="ms-pay-secret-key-test" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
-        </div>
-        <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:10px;border-top:1px solid var(--line-soft)">Боевые ключи</div>
-        <div class="fg" style="margin-bottom:8px">
-          <label><span id="ms-pay-key-label">Terminal Key</span> <span id="ms-key-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-          <input type="text" id="ms-pay-terminal-key" placeholder="Введите ключ" autocomplete="off">
-        </div>
-        <div class="fg" style="margin-bottom:8px">
-          <label><span id="ms-pay-secret-label">Секретный ключ</span> <span id="ms-secret-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-          <input type="password" id="ms-pay-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
-        </div>
-        <div id="ms-pay-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3)"></div>
-      </div>
-    </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-store')">Отмена</button>
       <button class="btn btn-p" id="ms-save-btn" onclick="saveStore()">Сохранить</button>
@@ -3036,22 +2995,6 @@ async function openStoreModal(store) {
     delivEl.checked = !!_activePlatSub && (store?.delivery_enabled ?? false);
   }
   renderMsDeliveryZones(store?.delivery_zones?.length ? store.delivery_zones : [{ radius: 1000, price: 0 }]);
-  document.getElementById('ms-pay-provider').value = store?.payment_provider || 'none';
-  document.getElementById('ms-pay-terminal-key-test').value = '';
-  document.getElementById('ms-pay-secret-key-test').value = '';
-  document.getElementById('ms-pay-terminal-key').value = '';
-  document.getElementById('ms-pay-secret-key').value = '';
-  if (store?.id) {
-    req('/functions/v1/payment-settings-meta', { method: 'POST', body: JSON.stringify({ store_id: store.id }) }).then(meta => {
-      document.getElementById('ms-key-test-set-badge').style.display    = meta?.has_terminal_key_test ? '' : 'none';
-      document.getElementById('ms-secret-test-set-badge').style.display = meta?.has_secret_key_test    ? '' : 'none';
-      document.getElementById('ms-key-set-badge').style.display         = meta?.has_terminal_key ? '' : 'none';
-      document.getElementById('ms-secret-set-badge').style.display      = meta?.has_secret_key    ? '' : 'none';
-      document.getElementById('ms-pay-terminal-key-test').placeholder   = meta?.has_terminal_key_test ? 'Оставьте пустым чтобы не менять' : 'Введите тестовый ключ';
-      document.getElementById('ms-pay-terminal-key').placeholder        = meta?.has_terminal_key ? 'Оставьте пустым чтобы не менять' : 'Введите ключ';
-    }).catch(() => {});
-  }
-  onMsPayProviderChange();
   openModal('m-store');
 }
 
@@ -3121,12 +3064,6 @@ async function usePickedCoords() {
   const _de = document.getElementById('ms-delivery-enabled');
   if (_de) { _de.disabled = !_activePlatSub; _de.checked = !!_activePlatSub && (d.delivery_enabled || false); }
   renderMsDeliveryZones(d.delivery_zones || [{ radius: 1000, price: 0 }]);
-  document.getElementById('ms-pay-provider').value = d.pay_provider || 'none';
-  document.getElementById('ms-pay-terminal-key-test').value = '';
-  document.getElementById('ms-pay-secret-key-test').value = '';
-  document.getElementById('ms-pay-terminal-key').value = '';
-  document.getElementById('ms-pay-secret-key').value = '';
-  onMsPayProviderChange();
   openModal('m-store');
 }
 
@@ -3152,43 +3089,12 @@ async function cancelPickMode() {
     document.getElementById('ms-image-url').value = d.image_url || '';
     _restoreStoreImgPreview(d.image_url || '');
     updateStoreCoordsStatus();
-    document.getElementById('ms-pay-provider').value = d.pay_provider || 'none';
-    document.getElementById('ms-pay-terminal-key-test').value = '';
-    document.getElementById('ms-pay-secret-key-test').value = '';
-    document.getElementById('ms-pay-terminal-key').value = '';
-    document.getElementById('ms-pay-secret-key').value = '';
-    onMsPayProviderChange();
     openModal('m-store');
   }
 }
 
 function onMsDeliveryChange() {}
 
-const _PAY_META = {
-  tinkoff:       { keyLabel:'TerminalKey', secretLabel:'Password', hint:'TerminalKey и Password — в личном кабинете Тинькофф → Магазин → Интеграция. Тест: TerminalKey с суффиксом DEMO, Password = TestPassword.' },
-  yokassa:       { keyLabel:'shopId', secretLabel:'Секретный ключ', hint:'shopId и секретный ключ — в ЮKassa → Интеграция → HTTP API. Тест: shopId = 100500, ключ = test_...' },
-  cloudpayments: { keyLabel:'Public ID', secretLabel:'API Secret', hint:'Public ID и API Secret — в CloudPayments → Настройки → Сайты и API.' },
-  sberbank:      { keyLabel:'userName', secretLabel:'password', hint:'Реквизиты выдаёт банк при подключении. Тестовая среда — UAT: securepayments.sberbank.ru.' },
-  alfabank:      { keyLabel:'userName', secretLabel:'password', hint:'Логин и пароль выдаёт Альфа-Банк при подключении эквайринга. Тестовая среда: web.rbsuat.com/payment (отдельный кластер от Сбера).' },
-  vtb:           { keyLabel:'userName', secretLabel:'password', hint:'Логин и пароль выдаёт ВТБ при подключении. Тестовая среда: 3dsec.vtb.ru/payment.' },
-  robokassa:     { keyLabel:'Логин магазина', secretLabel:'Пароль #1', hint:'Логин магазина и Пароль #1 — в личном кабинете Robokassa → Технические настройки. Тест: создать магазин в тестовом режиме.' },
-  paykeeper:     { keyLabel:'Логин API', secretLabel:'Пароль API', hint:'Логин и пароль API — в личном кабинете PayKeeper → Настройки → Интеграция. Тестовый сервер: demo.paykeeper.ru.' },
-};
-
-function onMsPayProviderChange() {
-  const p = document.getElementById('ms-pay-provider').value;
-  const f = document.getElementById('ms-pay-fields');
-  if (p === 'none') { f.style.display = 'none'; return; }
-  f.style.display = '';
-  const m = _PAY_META[p] || {};
-  const kl = m.keyLabel    || 'Ключ';
-  const sl = m.secretLabel || 'Секретный ключ';
-  document.getElementById('ms-pay-key-test-label').textContent    = kl;
-  document.getElementById('ms-pay-secret-test-label').textContent = sl;
-  document.getElementById('ms-pay-key-label').textContent         = kl;
-  document.getElementById('ms-pay-secret-label').textContent      = sl;
-  document.getElementById('ms-pay-hint').textContent              = m.hint || '';
-}
 
 function onMsDirChange() {
   const isServices = document.getElementById('ms-dir')?.value === 'services';
@@ -3214,6 +3120,17 @@ function getMsDeliveryZones() {
   const ps = [...document.querySelectorAll('#ms-dz-list .ms-dz-p')];
   return rs.map((r, i) => ({ radius: Math.max(100, parseInt(r.value) || 1000), price: Math.max(0, parseInt(ps[i]?.value) || 0) }));
 }
+
+const _PAY_META = {
+  tinkoff:       { keyLabel:'TerminalKey', secretLabel:'Password', hint:'TerminalKey и Password — в личном кабинете Тинькофф → Магазин → Интеграция. Тест: TerminalKey с суффиксом DEMO, Password = TestPassword.' },
+  yokassa:       { keyLabel:'shopId', secretLabel:'Секретный ключ', hint:'shopId и секретный ключ — в ЮKassa → Интеграция → HTTP API. Тест: shopId = 100500, ключ = test_...' },
+  cloudpayments: { keyLabel:'Public ID', secretLabel:'API Secret', hint:'Public ID и API Secret — в CloudPayments → Настройки → Сайты и API.' },
+  sberbank:      { keyLabel:'userName', secretLabel:'password', hint:'Реквизиты выдаёт банк при подключении. Тестовая среда — UAT: securepayments.sberbank.ru.' },
+  alfabank:      { keyLabel:'userName', secretLabel:'password', hint:'Логин и пароль выдаёт Альфа-Банк при подключении эквайринга. Тестовая среда: web.rbsuat.com/payment (отдельный кластер от Сбера).' },
+  vtb:           { keyLabel:'userName', secretLabel:'password', hint:'Логин и пароль выдаёт ВТБ при подключении. Тестовая среда: 3dsec.vtb.ru/payment.' },
+  robokassa:     { keyLabel:'Логин магазина', secretLabel:'Пароль #1', hint:'Логин магазина и Пароль #1 — в личном кабинете Robokassa → Технические настройки. Тест: создать магазин в тестовом режиме.' },
+  paykeeper:     { keyLabel:'Логин API', secretLabel:'Пароль API', hint:'Логин и пароль API — в личном кабинете PayKeeper → Настройки → Интеграция. Тестовый сервер: demo.paykeeper.ru.' },
+};
 
 function addMsDeliveryZone() {
   const zones = getMsDeliveryZones();
@@ -3290,7 +3207,6 @@ async function saveStore() {
     image_url:          document.getElementById('ms-image-url').value || null,
     delivery_enabled:   document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
     delivery_zones:     zones,
-    payment_provider:   document.getElementById('ms-pay-provider').value,
   };
   try {
     let storeId = id;
@@ -3318,23 +3234,6 @@ async function saveStore() {
         method: 'POST',
         body: JSON.stringify({ p_store_id: storeId, p_lng: lng, p_lat: lat, p_color: color }),
       });
-    }
-    // Save payment credentials (encrypted via Edge Function)
-    const termKey       = document.getElementById('ms-pay-terminal-key').value.trim();
-    const secretKey     = document.getElementById('ms-pay-secret-key').value.trim();
-    const termKeyTest   = document.getElementById('ms-pay-terminal-key-test').value.trim();
-    const secretKeyTest = document.getElementById('ms-pay-secret-key-test').value.trim();
-    if (storeId && body.payment_provider !== 'none' && (termKey || secretKey || termKeyTest || secretKeyTest)) {
-      req('/functions/v1/payment-settings-set', {
-        method: 'POST',
-        body: JSON.stringify({
-          store_id: storeId,
-          ...(termKey && { terminal_key: termKey }),
-          ...(secretKey && { secret_key: secretKey }),
-          ...(termKeyTest && { terminal_key_test: termKeyTest }),
-          ...(secretKeyTest && { secret_key_test: secretKeyTest }),
-        }),
-      }).catch(() => {});
     }
     restore(); closeModal('m-store'); loadStores();
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
