@@ -745,22 +745,25 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="map-no-cat-inner"><svg class="ico" width="22" height="22" style="margin-right:6px;opacity:.5"><use href="#i-list"/></svg>Выбери категорию заведения</div>
       </div>
       <div id="geo-toast" class="geo-toast"></div>
-      <div class="map-legend">
-        <div class="leg-row">
-          <div class="leg-del" style="background:#f5c518"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="#000"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM5.2 4H2V2H0v2h2l3.6 7.59-1.35 2.44C4.1 14.37 4 14.68 4 15c0 1.1.9 2 2 2h14v-2H6.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.24-5.88A1 1 0 0023.1 6H5.2z"/></svg></div>
-          <span class="leg-lbl">Доступен<br>онлайн&#8209;заказ</span>
-        </div>
-        <div class="leg-row">
-          <div class="leg-del" style="background:#16a34a;color:#fff"><svg class="ico" width="11" height="11"><use href="#i-bicycle"/></svg></div>
-          <span class="leg-lbl">Доставка<br>в вашу зону</span>
-        </div>
-        <div class="leg-row">
-          <div class="leg-del" style="background:#ef4444;color:#fff"><svg class="ico" width="11" height="11"><use href="#i-bicycle"/></svg></div>
-          <span class="leg-lbl">Вне зоны<br>доставки</span>
-        </div>
-        <div class="leg-row">
-          <svg class="ico" width="22" height="22" style="flex-shrink:0"><use href="#i-home"/></svg>
-          <span class="leg-lbl">Адрес<br>доставки</span>
+      <div class="map-legend" id="map-legend">
+        <button id="map-legend-btn" onclick="toggleMapLegend()" style="background:none;border:none;cursor:pointer;padding:0;font:500 11px/1 var(--font-sans);color:var(--fg-2);display:flex;align-items:center;gap:4px;white-space:nowrap">Легенда <span id="map-legend-arrow">▾</span></button>
+        <div id="map-legend-rows" style="display:none;flex-direction:column;gap:7px">
+          <div class="leg-row">
+            <div class="leg-del" style="background:#f5c518"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="#000"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM5.2 4H2V2H0v2h2l3.6 7.59-1.35 2.44C4.1 14.37 4 14.68 4 15c0 1.1.9 2 2 2h14v-2H6.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.24-5.88A1 1 0 0023.1 6H5.2z"/></svg></div>
+            <span class="leg-lbl">Доступен<br>онлайн&#8209;заказ</span>
+          </div>
+          <div class="leg-row">
+            <div class="leg-del" style="background:#16a34a;color:#fff"><svg class="ico" width="11" height="11"><use href="#i-bicycle"/></svg></div>
+            <span class="leg-lbl">Доставка<br>в вашу зону</span>
+          </div>
+          <div class="leg-row">
+            <div class="leg-del" style="background:#ef4444;color:#fff"><svg class="ico" width="11" height="11"><use href="#i-bicycle"/></svg></div>
+            <span class="leg-lbl">Вне зоны<br>доставки</span>
+          </div>
+          <div class="leg-row">
+            <svg class="ico" width="22" height="22" style="flex-shrink:0"><use href="#i-home"/></svg>
+            <span class="leg-lbl">Адрес<br>доставки</span>
+          </div>
         </div>
       </div>
       <div class="map-popup hidden" id="map-popup">
@@ -2729,6 +2732,14 @@ async function showStorePopup(st, listItem) {
   trackEvent('store_open', st.id);
 }
 function closePopup() { document.getElementById('map-popup').classList.add('hidden'); }
+
+function toggleMapLegend() {
+  const rows = document.getElementById('map-legend-rows');
+  const arrow = document.getElementById('map-legend-arrow');
+  const open = rows.style.display === 'none';
+  rows.style.display = open ? 'flex' : 'none';
+  arrow.textContent = open ? '▴' : '▾';
+}
 
 function toggleSlFilter() {
   const open = document.getElementById('sl-filters').classList.toggle('open');
