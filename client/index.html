@@ -476,11 +476,12 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-day{height:40px;text-align:center;vertical-align:middle;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--border-light);position:relative;cursor:pointer;transition:background var(--t-fast);user-select:none}
 .sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
 .sched-day.empty{pointer-events:none;color:var(--muted)}
-.sched-day.today .sd-n{background:var(--accent);color:var(--accent-fg);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.sched-day.today .sd-n{background:transparent;color:var(--accent);border:2px solid var(--accent);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
 .sched-day.has-sched{background:color-mix(in oklch,var(--accent) 13%,var(--bg))}
 .sched-day.has-sched:hover:not(.selected){background:color-mix(in oklch,var(--accent) 22%,var(--bg))}
 .sched-day.selected{background:color-mix(in oklch,var(--accent) 20%,var(--bg))}
 .sched-day.selected .sd-n{background:var(--accent);color:var(--accent-fg);width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700}
+.sched-day.today.selected .sd-n{background:var(--accent);color:var(--accent-fg);border:none}
 .sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-sans);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-bk-done{position:absolute;top:3px;left:4px;font:700 9px/14px var(--font-sans);background:var(--ok);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.bk-full{color:var(--fg-4);cursor:default}
