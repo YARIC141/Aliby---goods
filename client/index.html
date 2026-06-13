@@ -336,7 +336,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 
 /* ── CART ── */
 .cart-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
-.cart-tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);display:flex;align-items:center;justify-content:center;gap:0}
+.cart-tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font:500 16px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);display:flex;align-items:center;justify-content:center;gap:0}
 .cart-tab:hover{color:var(--fg)}
 .cart-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab-badge{display:none;min-width:16px;height:16px;border-radius:8px;background:var(--accent);font:700 9px/1 var(--font-sans);color:#fff;padding:0 3px;align-items:center;justify-content:center;box-sizing:border-box;margin-left:5px;flex-shrink:0}
@@ -579,7 +579,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
 <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></symbol>
 <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
-<symbol id="i-pushpin" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><circle cx="12" cy="8" r="2"/><line x1="12" y1="13" x2="12" y2="21"/></symbol>
+<symbol id="i-pushpin" viewBox="0 0 24 24"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></symbol>
 <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="3.5" height="3.5" rx=".5"/><rect x="17.5" y="13" width="3.5" height="3.5" rx=".5"/><rect x="13" y="17.5" width="3.5" height="3.5" rx=".5"/><rect x="17.5" y="17.5" width="3.5" height="3.5" rx=".5"/></symbol>
 <symbol id="i-chart" viewBox="0 0 24 24"><line x1="3" y1="20" x2="21" y2="20"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="9"/></symbol>
 </defs>
@@ -602,7 +602,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> <span class="nav-store-lbl">Меню</span></button>
   <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина <span class="sn-badge" id="sn-cart-cnt"></span></button>
-  <button class="sn-btn" data-nav="calenabs"><svg width="16" height="16"><use href="#i-pushpin"/></svg> Алиби <span class="sn-badge" id="sn-bk-badge"></span></button>
+  <button class="sn-btn" data-nav="calenabs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pushpin"/></svg> Алиби <span class="sn-badge" id="sn-bk-badge"></span></button>
   <div class="sn-spacer"></div>
   <div class="sn-user" id="sn-email"></div>
 </nav>
@@ -810,8 +810,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="screen-tip"></div>
   <!-- Services tabs (only shown when direction=services) -->
   <div id="svc-tab-bar" style="display:none;flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)" class="cart-tabs">
-    <button class="cart-tab active" id="svc-tab-services" onclick="switchSvcTab('services')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-goods"/></svg>Услуги</button>
-    <button class="cart-tab" id="svc-tab-sched" onclick="switchSvcTab('sched')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
+    <button class="cart-tab active" id="svc-tab-services" onclick="switchSvcTab('services')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-goods"/></svg>Услуги</button>
+    <button class="cart-tab" id="svc-tab-sched" onclick="switchSvcTab('sched')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
   </div>
   <!-- Услуги pane -->
   <div id="svc-pane-services">
@@ -929,9 +929,9 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
         <div id="delivery-toggle-wrap" style="display:none;margin-top:12px">
           <div style="display:flex;gap:8px">
-            <button id="del-pickup-btn" class="btn btn-p" style="flex:1" onclick="setDeliveryMode('pickup')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
+            <button id="del-pickup-btn" class="btn btn-p" style="flex:1" onclick="setDeliveryMode('pickup')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
             <button id="del-delivery-btn" class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px" onclick="setDeliveryMode('delivery')">
-              <span><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-bicycle"/></svg>Доставка</span>
+              <span><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-bicycle"/></svg>Доставка</span>
               <span id="del-price-lbl" style="font-size:11px;opacity:.7"></span>
             </button>
           </div>
@@ -951,9 +951,9 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="ph"><h2>Алиби<span class="screen-help" data-info="Ваши заказы, записи и абонементы в одном месте">?</span></h2></div>
   <div class="screen-tip"></div>
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
-    <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
-    <button class="cart-tab" id="ca-tab-bk" onclick="switchCalenabsTab('bk')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Записи<span class="tab-badge" id="ca-badge-bk"></span></button>
-    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-ticket"/></svg>Абоны<span class="tab-badge" id="ca-badge-sub"></span></button>
+    <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
+    <button class="cart-tab" id="ca-tab-bk" onclick="switchCalenabsTab('bk')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Записи<span class="tab-badge" id="ca-badge-bk"></span></button>
+    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-ticket"/></svg>Абоны<span class="tab-badge" id="ca-badge-sub"></span></button>
   </div>
   <!-- История заказов pane -->
   <div id="ca-pane-ord" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
@@ -968,7 +968,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <button class="sub-store-chip" data-ord-status="cancelled" onclick="setOrderFilter('cancelled')">Отменён</button>
     </div>
     <div id="active-orders-content" style="flex:1;overflow-y:auto;overscroll-behavior-y:none"><div class="empty" style="padding:32px 0">Нет активных заказов</div></div>
-    <div style="padding:4px 16px 16px;flex-shrink:0"><button class="btn btn-full" onclick="loadActiveOrders()"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-refresh"/></svg>Обновить статус</button></div>
+    <div style="padding:4px 16px 16px;flex-shrink:0"><button class="btn btn-full" onclick="loadActiveOrders()"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-refresh"/></svg>Обновить статус</button></div>
   </div>
   <!-- Расписание pane -->
   <div id="ca-pane-bk" style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none">
@@ -1128,7 +1128,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <button class="bn-btn" data-nav="map"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="store"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span><span class="nav-store-lbl bn-lbl">Меню</span></button>
     <button class="bn-btn" data-nav="cart" style="position:relative"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="nav-badge" id="nav-cart-badge"></span></span><span class="nav-cart-lbl bn-lbl">Корзина</span></button>
-    <button class="bn-btn" data-nav="calenabs" style="position:relative"><span class="ico" style="position:relative"><svg width="1em" height="1em"><use href="#i-pushpin"/></svg><span class="nav-badge" id="nav-bk-badge"></span></span>Алиби</button>
+    <button class="bn-btn" data-nav="calenabs" style="position:relative"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pushpin"/></svg><span class="nav-badge" id="nav-bk-badge"></span></span>Алиби</button>
   </div>
 </div>
 
