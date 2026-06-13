@@ -444,6 +444,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .ht-icon{font-size:36px;line-height:1}
 .ht-name{font:600 20px/1.2 var(--font-display);color:var(--fg)}
 .ht-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3)}
+.ht-sub-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;border:none;background:none;cursor:pointer;color:inherit;font:600 13px/1.2 var(--font-sans);border-radius:var(--r-2);transition:background var(--t-fast);-webkit-tap-highlight-color:transparent}
+.ht-sub-btn:hover{background:var(--bg-2)}
+.ht-sub-btn:active{transform:scale(0.95)}
 .home-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .home-tile-alibi::before{background:var(--brand-ember)}
 .home-tile-food::before{background:var(--brand-ember)}
@@ -576,6 +579,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
 <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></symbol>
 <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="3.5" height="3.5" rx=".5"/><rect x="17.5" y="13" width="3.5" height="3.5" rx=".5"/><rect x="13" y="17.5" width="3.5" height="3.5" rx=".5"/><rect x="17.5" y="17.5" width="3.5" height="3.5" rx=".5"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><line x1="3" y1="20" x2="21" y2="20"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="9"/></symbol>
 </defs>
 </svg>
 <div id="zoom-root">
@@ -659,14 +664,20 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 <!-- ════════════════ HOME (hub) ════════════════ -->
 <div id="screen-home" class="screen">
   <div class="ph">
-    <h2>Alliby<span class="screen-help" data-info="Выбирай товары, услуги или блюда, смотри заведения в которых ты делал заказы недавно">?</span></h2>
+    <h2>Главная<span class="screen-help" data-info="Быстрый переход к разделам приложения и недавним заведениям">?</span></h2>
   </div>
   <div class="screen-tip"></div>
   <div class="home-tiles">
-    <div class="home-tile home-tile-alibi" onclick="goTo('alibi')">
-      <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-ticket"/></svg></div>
-      <div class="ht-name">Алиби</div>
-      <div class="ht-desc">QR‑код и история</div>
+    <div class="home-tile home-tile-alibi" style="flex-direction:row;padding:8px;cursor:default;gap:0;align-items:stretch">
+      <button class="ht-sub-btn" onclick="showQrModal()">
+        <svg class="ico" width="28" height="28"><use href="#i-qr"/></svg>
+        <span>QR</span>
+      </button>
+      <div style="width:1px;background:var(--line-soft);flex-shrink:0;align-self:center;height:55%"></div>
+      <button class="ht-sub-btn" onclick="goTo('alibi')">
+        <svg class="ico" width="28" height="28"><use href="#i-chart"/></svg>
+        <span>Статистика</span>
+      </button>
     </div>
     <div class="home-tile home-tile-food" onclick="openDirection('food')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-food"/></svg></div>
@@ -936,7 +947,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 
 <!-- ════════════════ CALENDAR & SUBSCRIPTIONS ════════════════ -->
 <div id="screen-calenabs" class="screen">
-  <div class="ph"><h2>Расписание и заказы<span class="screen-help" data-info="История ваших заказов, записей на услуги и абонементов. Можно отфильтровать по статусу или типу.">?</span></h2></div>
+  <div class="ph"><h2>Алиби<span class="screen-help" data-info="Ваши заказы, записи и абонементы в одном месте">?</span></h2></div>
   <div class="screen-tip"></div>
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
     <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
