@@ -1858,8 +1858,8 @@ function setDirection(dir) {
 }
 
 function updateDirectionLabels(dir) {
-  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги и запись' }[dir] || 'Меню';
-  document.querySelectorAll('.nav-store-lbl').forEach(el => { el.textContent = storeLbl; });
+  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги<br>и запись' }[dir] || 'Меню';
+  document.querySelectorAll('.nav-store-lbl').forEach(el => { el.innerHTML = storeLbl; });
   const svcTabBar = document.getElementById('svc-tab-bar');
   if (svcTabBar) svcTabBar.style.display = dir === 'services' ? '' : 'none';
   if (dir !== 'services') {
