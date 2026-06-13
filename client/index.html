@@ -484,6 +484,14 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-day.today.selected .sd-n{background:var(--accent);color:var(--accent-fg);border:none}
 .sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-sans);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-bk-done{position:absolute;top:3px;left:4px;font:700 9px/14px var(--font-sans);background:var(--ok);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
+#m-dz-viewer{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+#m-dz-viewer.open{transform:none}
+#dz-viewer-map{flex:1;min-height:0;position:relative}
+.dz-legend{flex-shrink:0;padding:10px 14px;overflow-y:auto;max-height:160px;border-top:1px solid var(--line-soft)}
+.dz-legend-row{display:flex;align-items:center;gap:10px;padding:6px 0;font:400 13px/1.3 var(--font-sans);border-bottom:1px solid var(--line-soft)}
+.dz-legend-row:last-child{border-bottom:none}
+.dz-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;border:2px solid rgba(0,0,0,.15)}
+.dz-legend-in{font-weight:700;color:var(--ok);white-space:nowrap}
 .sched-day.bk-full{color:var(--fg-4);cursor:default}
 .slot-chip{display:inline-flex;align-items:center;padding:5px 11px;border-radius:var(--r-pill);font:500 12px/1 var(--font-sans);border:1px solid var(--border);white-space:nowrap}
 .slot-chip.free{background:var(--bg-1);color:var(--fg-2)}
@@ -785,7 +793,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="meta-line" id="st-addr"></div>
         <div class="meta-line" id="st-hours"></div>
         <div class="meta-line" id="st-phone"></div>
-        <div id="st-delivery-badge" style="display:none;margin-top:5px;font-size:12px;color:#16a34a;font-weight:600;display:flex;align-items:center;gap:4px"><svg class="ico" width="13" height="13"><use href="#i-bicycle"/></svg>Доступна доставка</div>
+        <button id="st-delivery-badge" style="display:none;margin-top:5px;font-size:12px;color:#16a34a;font-weight:600;display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit" onclick="openDzViewer(S.store)"><svg class="ico" width="13" height="13"><use href="#i-bicycle"/></svg>Доставка · Зоны →</button>
         <button class="btn btn-sm" id="st-sched-btn" style="margin-top:8px;font-size:12px" onclick="openStoreSchedule(S.store)"></button>
       </div>
     </div>
@@ -2665,7 +2673,7 @@ function toggleMapPanel() {
 
 function filterStores(q) { applyMapFilter(q); }
 
-function showStorePopup(st, listItem) {
+async function showStorePopup(st, listItem) {
   if (!st) return;
   S.store = st;
   try { localStorage.setItem('alliby_store', JSON.stringify(st)); } catch(e) {}
@@ -2685,14 +2693,15 @@ function showStorePopup(st, listItem) {
   ppCart.style.display = st.has_cart ? 'flex' : 'none';
   const ppDel = document.getElementById('pp-delivery');
   if (ppDel) {
-    if (st.delivery_enabled && st.delivery_zones?.length) {
-      const zones = [...st.delivery_zones].sort((a, b) => a.radius - b.radius);
-      ppDel.style.display = '';
-      ppDel.innerHTML = `${svgIco('bicycle',13)} ` +
-        zones.map(z => `до ${z.radius >= 1000 ? (z.radius/1000).toFixed(z.radius%1000?1:0)+'км' : z.radius+'м'} — ${z.price} ₽`).join(' · ');
-    } else {
-      ppDel.style.display = 'none';
-    }
+    if (st.delivery_enabled) {
+      const zones = await loadStoreZones(st.id);
+      if (zones.length) {
+        const di = S.userAddrLat != null ? _checkDeliveryZones(zones, S.userAddrLat, S.userAddrLng) : null;
+        const priceStr = di?.inZone ? (di.price > 0 ? ` · ${di.price} ₽` : ' · бесплатно') : '';
+        ppDel.style.display = '';
+        ppDel.innerHTML = `<button onclick="openDzViewer(S.store)" style="background:none;border:none;cursor:pointer;padding:0;font:600 12px/1 var(--font-sans);color:var(--ok);display:flex;align-items:center;gap:4px">${svgIco('bicycle',13)} Доставка${priceStr} · Зоны →</button>`;
+      } else { ppDel.style.display = 'none'; }
+    } else { ppDel.style.display = 'none'; }
   }
   document.getElementById('map-popup').classList.remove('hidden');
   trackEvent('store_open', st.id);
@@ -2712,6 +2721,7 @@ async function loadStore() {
   if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
   const st = S.store;
   trackEvent('menu_open', st.id);
+  if (st.delivery_enabled && st.id) loadStoreZones(st.id);
   if (st.direction && st.direction !== S.direction) {
     const dirLabel = {food:'Еда',goods:'Товары',services:'Услуги'}[S.direction] || S.direction;
     document.getElementById('store-ph-name').textContent = dirLabel;
@@ -3635,12 +3645,18 @@ function clearNearbyFilter() {
   applyMapFilter();
 }
 
-function toggleDeliveryFilter() {
+async function toggleDeliveryFilter() {
   if (!S.deliveryFilter && S.userAddrLat == null) {
     openAddressPicker(); return;
   }
   S.deliveryFilter = !S.deliveryFilter;
   document.getElementById('delivery-filter-btn')?.classList.toggle('btn-green-p', S.deliveryFilter);
+  if (S.deliveryFilter) {
+    await Promise.all(
+      S.allStores.filter(st => st.delivery_enabled && _dzCache[st.id] === undefined)
+        .map(st => loadStoreZones(st.id))
+    );
+  }
   applyMapFilter();
 }
 
@@ -3658,16 +3674,154 @@ function updateMapAddrBtn() {
   }
 }
 
+const _dzCache = {};
+async function loadStoreZones(storeId) {
+  if (_dzCache[storeId] !== undefined) return _dzCache[storeId];
+  try {
+    const rows = await req(`/rest/v1/delivery_zones?store_id=eq.${storeId}&order=sort_order.asc`);
+    _dzCache[storeId] = (rows || []).map(r => ({
+      id: r.id, name: r.name, color: r.color, price: r.price,
+      type: r.type, radius_m: r.radius_m,
+      center_lat: r.center_lat, center_lng: r.center_lng,
+      vertices: r.vertices || [],
+    }));
+  } catch { _dzCache[storeId] = []; }
+  return _dzCache[storeId];
+}
+
+function pointInPolygon(lat, lng, vertices) {
+  let inside = false;
+  const n = vertices.length;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = vertices[i].lng, yi = vertices[i].lat;
+    const xj = vertices[j].lng, yj = vertices[j].lat;
+    if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)
+      inside = !inside;
+  }
+  return inside;
+}
+
+function _checkDeliveryZones(zones, lat, lng) {
+  let best = null;
+  for (const z of zones) {
+    let inside = false;
+    if (z.type === 'radius' && z.center_lat != null)
+      inside = haversineM(lat, lng, z.center_lat, z.center_lng) <= z.radius_m;
+    else if (z.type === 'polygon' && z.vertices?.length >= 3)
+      inside = pointInPolygon(lat, lng, z.vertices);
+    if (inside && (best === null || z.price < best.price)) best = z;
+  }
+  return { inZone: !!best, price: best?.price ?? 0, zone: best };
+}
+
 function getDeliveryInfo(store) {
-  if (!store?.delivery_enabled || !store?.has_cart) return null; // has_cart = subscription active
-  const zones = [...(store.delivery_zones || [])].sort((a, b) => a.radius - b.radius);
-  if (!zones.length) return { inZone: false, price: 0 };
+  if (!store?.delivery_enabled || !store?.has_cart) return null;
+  const zones = _dzCache[store.id];
+  if (!zones?.length) return { inZone: false, price: 0 };
   if (S.userAddrLat == null) return { inZone: false, price: 0 };
-  const sLat = store.lat ?? store.latitude, sLng = store.lng ?? store.longitude;
-  if (sLat == null) return { inZone: false, price: 0 };
-  const dist = haversineM(S.userAddrLat, S.userAddrLng, sLat, sLng);
-  const zone = zones.find(z => dist <= z.radius);
-  return { inZone: !!zone, price: zone?.price ?? 0 };
+  return _checkDeliveryZones(zones, S.userAddrLat, S.userAddrLng);
+}
+
+// ── Zone viewer ───────────────────────────────────────────────────────────────
+let _dzvMap = null, _dzvStore = null, _dzvHomeMarker = null;
+
+async function openDzViewer(store) {
+  if (!store) return;
+  _dzvStore = store;
+  const zones = await loadStoreZones(store.id);
+  document.getElementById('dz-viewer-title').textContent = store.name || 'Зоны доставки';
+  _dzvRenderLegend(zones);
+  document.getElementById('m-dz-viewer').classList.add('open');
+  const sLng = store.lng ?? store.longitude ?? 37.6;
+  const sLat = store.lat ?? store.latitude ?? 55.75;
+  setTimeout(() => {
+    if (!_dzvMap) {
+      _dzvMap = new maplibregl.Map({
+        container: 'dz-viewer-map',
+        style: { version:8, sources:{ osm:{ type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize:256, attribution:'© OpenStreetMap' } }, layers:[{ id:'osm', type:'raster', source:'osm' }] },
+        center: [sLng, sLat], zoom: 13, attributionControl: false,
+      });
+      _dzvMap.on('load', () => _dzvRenderZones(zones, store));
+    } else {
+      _dzvMap.resize();
+      if (_dzvMap.loaded()) _dzvRenderZones(zones, store);
+      else _dzvMap.once('load', () => _dzvRenderZones(zones, store));
+    }
+  }, 50);
+}
+
+function closeDzViewer() {
+  document.getElementById('m-dz-viewer').classList.remove('open');
+}
+
+function _dzvRenderLegend(zones) {
+  const el = document.getElementById('dz-viewer-legend');
+  if (!zones.length) { el.innerHTML = '<div style="color:var(--fg-3);font-size:13px;padding:4px 0">Зоны доставки не настроены</div>'; return; }
+  const check = S.userAddrLat != null ? _checkDeliveryZones(zones, S.userAddrLat, S.userAddrLng) : null;
+  el.innerHTML = zones.map(z => {
+    const isIn = check?.zone?.id === z.id;
+    const priceStr = z.price > 0 ? z.price + ' ₽' : 'бесплатно';
+    return `<div class="dz-legend-row">
+      <span class="dz-legend-dot" style="background:${z.color}"></span>
+      <span style="flex:1">${esc(z.name)}</span>
+      <span style="color:var(--fg-3);font-size:12px">${priceStr}</span>
+      ${isIn ? '<span class="dz-legend-in">✓</span>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function _dzvCircleGeoJSON(lat, lng, radiusM, n = 64) {
+  const coords = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI;
+    const dLat = (radiusM / 6371000) * (180 / Math.PI) * Math.cos(a);
+    const dLng = (radiusM / 6371000) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180) * Math.sin(a);
+    coords.push([lng + dLng, lat + dLat]);
+  }
+  coords.push(coords[0]);
+  return { type:'Feature', geometry:{ type:'Polygon', coordinates:[coords] }, properties:{} };
+}
+
+function _dzvRenderZones(zones, store) {
+  if (!_dzvMap) return;
+  const style = _dzvMap.getStyle();
+  (style?.layers || []).filter(l => l.id.startsWith('dzv-')).forEach(l => _dzvMap.removeLayer(l.id));
+  Object.keys(style?.sources || {}).filter(s => s.startsWith('dzv-')).forEach(s => _dzvMap.removeSource(s));
+
+  const bounds = new maplibregl.LngLatBounds();
+  const sLng = store.lng ?? store.longitude, sLat = store.lat ?? store.latitude;
+  if (sLng != null) bounds.extend([sLng, sLat]);
+
+  zones.forEach((z, i) => {
+    let geo = null;
+    if (z.type === 'radius' && z.center_lat != null) {
+      geo = _dzvCircleGeoJSON(z.center_lat, z.center_lng, z.radius_m);
+      const rm = (z.radius_m || 1000) / 111000;
+      bounds.extend([z.center_lng - rm, z.center_lat - rm]);
+      bounds.extend([z.center_lng + rm, z.center_lat + rm]);
+    } else if (z.type === 'polygon' && z.vertices?.length >= 3) {
+      const coords = [...z.vertices.map(v => [v.lng, v.lat]), [z.vertices[0].lng, z.vertices[0].lat]];
+      geo = { type:'Feature', geometry:{ type:'Polygon', coordinates:[coords] }, properties:{} };
+      z.vertices.forEach(v => bounds.extend([v.lng, v.lat]));
+    }
+    if (!geo) return;
+    const sid = `dzv-${i}`;
+    _dzvMap.addSource(sid, { type:'geojson', data:geo });
+    _dzvMap.addLayer({ id:`${sid}-fill`, type:'fill', source:sid, paint:{ 'fill-color':z.color, 'fill-opacity':0.2 } });
+    _dzvMap.addLayer({ id:`${sid}-line`, type:'line', source:sid, paint:{ 'line-color':z.color, 'line-width':2.5 } });
+  });
+
+  if (_dzvHomeMarker) { _dzvHomeMarker.remove(); _dzvHomeMarker = null; }
+  if (S.userAddrLat != null) {
+    bounds.extend([S.userAddrLng, S.userAddrLat]);
+    const hEl = document.createElement('div');
+    hEl.innerHTML = svgIco('home', 32);
+    hEl.style.cssText = 'color:var(--accent);filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))';
+    _dzvHomeMarker = new maplibregl.Marker({ element:hEl, anchor:'bottom' })
+      .setLngLat([S.userAddrLng, S.userAddrLat]).addTo(_dzvMap);
+  }
+
+  if (!bounds.isEmpty()) _dzvMap.fitBounds(bounds, { padding:40, maxZoom:15, duration:600 });
 }
 
 function getCartStore() {
@@ -6167,6 +6321,16 @@ function closeStoreSchedDay() {
       <button onclick="dismissPwaBanner()" style="background:var(--bg-2);border:none;color:var(--fg-3);font-size:13px;font-weight:500;padding:7px 10px;border-radius:8px;cursor:pointer">✕</button>
     </div>
   </div>
+</div>
+
+<!-- ════ DELIVERY ZONE VIEWER ════ -->
+<div id="m-dz-viewer">
+  <div class="ph" style="flex-shrink:0">
+    <button onclick="closeDzViewer()" style="background:none;border:none;font-size:20px;line-height:1;cursor:pointer;padding:8px 10px 8px 4px;color:var(--fg)">←</button>
+    <h2 id="dz-viewer-title">Зоны доставки</h2>
+  </div>
+  <div id="dz-viewer-map"></div>
+  <div class="dz-legend" id="dz-viewer-legend"></div>
 </div>
 
 </body>
