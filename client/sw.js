@@ -1,5 +1,5 @@
 // v26
-const APP_CACHE  = 'alliby-app-v14';
+const APP_CACHE  = 'alliby-app-v15';
 const TILE_CACHE = 'alliby-tiles-v2';
 const TILE_PATH  = '/functions/v1/vector-tiles/';
 const MAX_TILES  = 300;
@@ -43,10 +43,11 @@ self.addEventListener('fetch', e => {
           // Serve from cache immediately, revalidate in background
           fetch(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
             if (!resp.ok) return;
-            const newTag = resp.headers.get('etag') || resp.headers.get('last-modified');
-            const oldTag = cached.headers.get('etag') || cached.headers.get('last-modified');
+            const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
+            const newTag = getTag(resp);
+            const oldTag = getTag(cached);
             await cache.put(e.request, resp.clone());
-            if (newTag && oldTag && newTag !== oldTag) {
+            if (!newTag || !oldTag || newTag !== oldTag) {
               const clients = await self.clients.matchAll({ includeUncontrolled: true });
               clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
             }

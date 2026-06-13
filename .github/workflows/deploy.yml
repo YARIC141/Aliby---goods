@@ -22,7 +22,9 @@ jobs:
         run: |
           TS=$(date +%s)
           sed -i "1s/.*/\/\/ v${TS}/" client/sw.js
+          sed -i "s/alliby-app-v[0-9]*/alliby-app-v${TS}/" client/sw.js
           sed -i "1s/.*/\/\/ v${TS}/" admin/sw.js
+          sed -i "s/aliby-admin-app-v[0-9]*/aliby-admin-app-v${TS}/" admin/sw.js
           rsync -az --delete -e "ssh -p 2222" client/ root@${{ secrets.VPS_HOST }}:/var/www/alliby/client/
           rsync -az --delete -e "ssh -p 2222" admin/  root@${{ secrets.VPS_HOST }}:/var/www/alliby/admin/
           rsync -az --delete -e "ssh -p 2222" site/   root@${{ secrets.VPS_HOST }}:/var/www/alliby/site/
