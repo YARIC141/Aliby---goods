@@ -3464,6 +3464,8 @@ async function saveCat() {
 // ─── MENU ITEMS ───
 // ─── MENU SCREEN (items + subscriptions tabs) ───
 let _adminMenuTab = 'items';
+const _MI_LIMIT = 50;
+let _miState = { offset: 0, baseUrl: '', loading: false };
 
 function loadMenuScreen() {
   setAdminMenuTab(_adminMenuTab);
@@ -3480,12 +3482,12 @@ function setAdminMenuTab(tab) {
   else loadSubscriptions();
 }
 
-function _renderMenuItems(items) {
+function _renderMenuItems(items, append = false) {
   const el = document.getElementById('mi-list');
   if (!el) return;
   const isEmp = S.profile?.role === 'employee';
-  if (!items.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет позиций</div>'; return; }
-  el.innerHTML = items.map(i => {
+  if (!append && !items.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет позиций</div>'; return; }
+  const html = items.map(i => {
     const sd = JSON.stringify(i).replace(/"/g, '&quot;');
     const thumb = i.image_url
       ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
@@ -3510,6 +3512,31 @@ function _renderMenuItems(items) {
         </div>
       </div>`;
   }).join('');
+  if (append) {
+    el.insertAdjacentHTML('beforeend', html);
+  } else {
+    el.innerHTML = html;
+  }
+  if (items.length === _MI_LIMIT) {
+    el.insertAdjacentHTML('beforeend',
+      `<button id="mi-load-more" class="btn" style="width:100%;margin-top:4px" onclick="loadMoreMenuItems()">Загрузить ещё</button>`);
+  }
+}
+
+async function loadMoreMenuItems() {
+  if (_miState.loading) return;
+  _miState.loading = true;
+  _miState.offset += _MI_LIMIT;
+  const btn = document.getElementById('mi-load-more');
+  if (btn) { btn.textContent = 'Загрузка…'; btn.disabled = true; }
+  try {
+    const items = await req(`${_miState.baseUrl}&limit=${_MI_LIMIT}&offset=${_miState.offset}`);
+    if (btn) btn.remove();
+    _renderMenuItems(items, true);
+  } catch {
+    if (btn) { btn.textContent = 'Загрузить ещё'; btn.disabled = false; }
+  }
+  _miState.loading = false;
 }
 
 async function loadMenuItems() {
@@ -3531,21 +3558,23 @@ async function loadMenuItems() {
     el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   }
   try {
-    let url = '/rest/v1/menu_items?select=*,categories(name)&order=name.asc';
+    let baseUrl = '/rest/v1/menu_items?select=*,categories(name)&order=name.asc';
     if (isEmp) {
-      url += `&store_id=eq.${S.profile.employee_store_id}`;
+      baseUrl += `&store_id=eq.${S.profile.employee_store_id}`;
       if (storeFilter) { storeFilter.value = S.profile.employee_store_id; storeFilter.disabled = true; }
     } else {
       const storeId = storeFilter?.value;
       if (storeId) {
-        url += `&store_id=eq.${storeId}`;
+        baseUrl += `&store_id=eq.${storeId}`;
       } else if (S.stores?.length) {
-        url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
+        baseUrl += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
       }
     }
-    if (catId)   url += `&category_id=eq.${catId}`;
-    if (search)  url += `&name=ilike.*${encodeURIComponent(search)}*`;
-    const items = await req(url);
+    if (catId)  baseUrl += `&category_id=eq.${catId}`;
+    if (search) baseUrl += `&name=ilike.*${encodeURIComponent(search)}*`;
+    _miState = { offset: 0, baseUrl, loading: false };
+    const fetchLimit = noFilters ? _MI_LIMIT : 500;
+    const items = await req(`${baseUrl}&limit=${fetchLimit}&offset=0`);
     if (noFilters) try { localStorage.setItem(cacheKey, JSON.stringify(items)); } catch(ex) {}
     _renderMenuItems(items);
   } catch(e) { if (!el.querySelector('.card')) el.innerHTML = '<div class="empty" style="padding:16px 0">Ошибка</div>'; }
@@ -4524,6 +4553,32 @@ function globalBookingsRealtimeDisconnect() {
   if (_globalBkWs) { try { _globalBkWs.close(); } catch {} _globalBkWs = null; }
 }
 
+async function _prefetchAdmin() {
+  const uid = S.session?.user?.id;
+  if (!uid) return;
+  const isEmp = S.profile?.role === 'employee';
+  const storeIds = S.stores?.map(s => s.id).join(',');
+  const sf = isEmp ? `&store_id=eq.${S.profile?.employee_store_id}` : (storeIds ? `&store_id=in.(${storeIds})` : '');
+  await Promise.allSettled([
+    (async () => {
+      const cats = await req(`/rest/v1/categories?order=name.asc&select=*,stores(name)${sf}`);
+      try { localStorage.setItem(`admin_cats_${uid}`, JSON.stringify(cats)); } catch {}
+    })(),
+    (async () => {
+      const subs = await req(`/rest/v1/subscriptions?deleted_at=is.null&select=*,stores(name)&order=name.asc${sf}`);
+      try { localStorage.setItem(`admin_subs_${uid}`, JSON.stringify(subs)); } catch {}
+    })(),
+    isEmp ? Promise.resolve() : (async () => {
+      const emps = await req('/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc');
+      try { localStorage.setItem(`admin_emps_${uid}`, JSON.stringify(emps)); } catch {}
+    })(),
+    (async () => {
+      const items = await req(`/rest/v1/menu_items?select=*,categories(name)&order=name.asc${sf}&limit=${_MI_LIMIT}&offset=0`);
+      try { localStorage.setItem(`admin_menu_items_${uid}`, JSON.stringify(items)); } catch {}
+    })(),
+  ]);
+}
+
 async function onAdminReady() {
   adminRealtimeConnect();
   globalBookingsRealtimeConnect();
@@ -4532,6 +4587,7 @@ async function onAdminReady() {
     const profs = await req(`/rest/v1/profiles?id=eq.${S.session.user.id}&select=*&limit=1`);
     if (profs[0]) { S.profile = profs[0]; applyRoleRestrictions(); }
   } catch {}
+  setTimeout(_prefetchAdmin, 1000);
 }
 
 function applyRoleRestrictions() {
