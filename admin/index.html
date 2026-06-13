@@ -174,7 +174,7 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .btn-full{width:100%;justify-content:center}
 
 .badge{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:var(--r-pill);border:1px solid currentColor;font:500 11px/1 var(--font-sans);letter-spacing:.02em}
-.b-pending{color:var(--fg-4)}.b-paid{color:var(--ok)}.b-ready{color:var(--info)}
+.b-pending{color:var(--fg-4)}.b-paid{color:var(--ok)}.b-ok{color:var(--ok);font-weight:700}.b-ready{color:var(--info)}
 .b-issued{color:var(--fg-2)}.b-cancelled{color:var(--err)}
 .empty{text-align:center;padding:48px 20px;color:var(--fg-4);font:400 13px/1.5 var(--font-sans)}
 .loading{text-align:center;padding:28px;color:var(--fg-4);font:400 12px/1.5 var(--font-sans)}
@@ -5761,7 +5761,7 @@ function openBookingDetail(bookingId) {
   if (!entry) return;
   _newBookingIds.delete(bookingId); updateNavBadge();
   const { b, p } = entry;
-  const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+  const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'}, completed:{lbl:'Завершена',cls:'b-ok'} };
   const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, pending:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
   const st  = ST[b.status]           || { lbl: b.status,          cls: 'b-pending' };
   const pay = PAY[b.payment_status]  || { lbl: b.payment_status,  cls: 'b-pending' };
@@ -5796,11 +5796,12 @@ function openBookingDetail(bookingId) {
       <div class="lbl" style="margin-bottom:3px">ID записи</div>
       <div style="font:400 11px/1.5 var(--font-sans);color:var(--fg-4);word-break:break-all">${esc(b.id)}</div>
     </div>`;
-  const cancelled = b.status === 'cancelled', paid = b.payment_status === 'paid';
+  const cancelled = b.status === 'cancelled', completed = b.status === 'completed', paid = b.payment_status === 'paid';
   document.getElementById('mbd-actions').innerHTML =
     `<button class="btn" onclick="closeModal('m-booking-detail')">Закрыть</button>`
-    + (!paid && !cancelled ? `<button class="btn btn-p" onclick="closeModal('m-booking-detail');markBookingPaid('${b.id}','${b.slot_date}')">Подтвердить оплату</button>` : '')
-    + (!cancelled ? `<button class="btn btn-d" onclick="closeModal('m-booking-detail');cancelBooking('${b.id}','${b.slot_date}')">Отменить запись</button>` : '');
+    + (!paid && !cancelled && !completed ? `<button class="btn btn-p" onclick="closeModal('m-booking-detail');markBookingPaid('${b.id}','${b.slot_date}')">Подтвердить оплату</button>` : '')
+    + (!cancelled && !completed ? `<button class="btn btn-p" style="background:var(--ok);color:#fff" onclick="closeModal('m-booking-detail');completeBooking('${b.id}','${b.slot_date}')">Завершить</button>` : '')
+    + (!cancelled && !completed ? `<button class="btn btn-d" onclick="closeModal('m-booking-detail');cancelBooking('${b.id}','${b.slot_date}')">Отменить запись</button>` : '');
   openModal('m-booking-detail');
 }
 
@@ -5827,7 +5828,7 @@ async function renderDayBookings(dateStr) {
 
     if (!bks.length) { bkEl.innerHTML = ''; return; }
 
-    const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+    const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'}, completed:{lbl:'Завершена',cls:'b-ok'} };
     const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, pending:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
 
     bkEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
@@ -5839,8 +5840,9 @@ async function renderDayBookings(dateStr) {
       _bkCache[b.id] = { b, p };
       const st  = ST[b.status]          || { lbl: b.status,         cls: 'b-pending' };
       const pay = PAY[b.payment_status] || { lbl: b.payment_status, cls: 'b-pending' };
-      const cancelled = b.status === 'cancelled';
-      const paid      = b.payment_status === 'paid';
+      const cancelled  = b.status === 'cancelled';
+      const completedB = b.status === 'completed';
+      const paid       = b.payment_status === 'paid';
       return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--bg);opacity:${cancelled ? '.5' : '1'};cursor:pointer" onclick="openBookingDetail('${b.id}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0">
@@ -5855,8 +5857,9 @@ async function renderDayBookings(dateStr) {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
             <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price ?? b.menu_items?.price ?? ''} ₽</div>
-            ${!paid && !cancelled ? `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${b.id}','${dateStr}')">Подтвердить оплату</button>` : ''}
-            ${!cancelled ? `<button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${b.id}','${dateStr}')">Отменить</button>` : ''}
+            ${!paid && !cancelled && !completedB ? `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${b.id}','${dateStr}')">Оплачена</button>` : ''}
+            ${!cancelled && !completedB ? `<button class="btn btn-sm" style="background:var(--ok);color:#fff;font-size:11px" onclick="event.stopPropagation();completeBooking('${b.id}','${dateStr}')">Завершить</button>` : ''}
+            ${!cancelled && !completedB ? `<button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${b.id}','${dateStr}')">Отменить</button>` : ''}
           </div>
         </div>
       </div>`;
@@ -5868,6 +5871,15 @@ async function markBookingPaid(bookingId, dateStr) {
   try {
     await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ payment_status:'paid' }) });
     showAdminToast('Оплата подтверждена');
+    if (_sched.openDate === dateStr) renderDayBookings(dateStr);
+    if (_bkTab.openDate === dateStr) renderBkTabDayView(dateStr);
+  } catch { showAdminToast('Ошибка'); }
+}
+
+async function completeBooking(bookingId, dateStr) {
+  try {
+    await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ status:'completed' }) });
+    showAdminToast('Запись завершена');
     if (_sched.openDate === dateStr) renderDayBookings(dateStr);
     if (_bkTab.openDate === dateStr) renderBkTabDayView(dateStr);
   } catch { showAdminToast('Ошибка'); }
