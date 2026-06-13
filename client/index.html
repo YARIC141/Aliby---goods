@@ -3760,17 +3760,20 @@ function closeDzViewer() {
   document.getElementById('m-dz-viewer').classList.remove('open');
 }
 
-let _dzvPickMode = false, _dzvPickTimer = null, _dzvPickResult = null;
+let _dzvPickMode = false, _dzvPickTimer = null, _dzvPickResult = null, _dzvClickMarker = null;
 
 function dzvEnterPickMode() {
   _dzvPickMode = true;
   _dzvPickResult = null;
-  document.getElementById('dz-pick-pin').style.display = '';
-  document.getElementById('dz-pick-lbl').style.display = '';
-  document.getElementById('dz-pick-lbl').textContent = 'Переместите карту, чтобы выбрать точку';
+  const lbl = document.getElementById('dz-pick-lbl');
+  lbl.textContent = 'Нажмите на карту, чтобы выбрать место';
+  lbl.style.display = '';
   document.getElementById('dz-pick-ft').style.display = 'flex';
   document.getElementById('dz-addr-btn-wrap').style.display = 'none';
-  if (_dzvMap) _dzvMap.on('moveend', _dzvOnMoveEnd);
+  if (_dzvMap) {
+    _dzvMap.getCanvas().style.cursor = 'crosshair';
+    _dzvMap.on('click', _dzvOnMapClick);
+  }
 }
 
 function dzvCancelPick() {
@@ -3778,11 +3781,14 @@ function dzvCancelPick() {
   _dzvPickMode = false;
   _dzvPickResult = null;
   clearTimeout(_dzvPickTimer);
-  document.getElementById('dz-pick-pin').style.display = 'none';
+  if (_dzvClickMarker) { _dzvClickMarker.remove(); _dzvClickMarker = null; }
   document.getElementById('dz-pick-lbl').style.display = 'none';
   document.getElementById('dz-pick-ft').style.display = 'none';
   document.getElementById('dz-addr-btn-wrap').style.display = '';
-  if (_dzvMap) _dzvMap.off('moveend', _dzvOnMoveEnd);
+  if (_dzvMap) {
+    _dzvMap.getCanvas().style.cursor = '';
+    _dzvMap.off('click', _dzvOnMapClick);
+  }
 }
 
 async function dzvConfirmPick() {
@@ -3797,13 +3803,20 @@ async function dzvConfirmPick() {
   dzvCancelPick();
 }
 
-function _dzvOnMoveEnd() {
-  if (!_dzvPickMode || !_dzvMap) return;
-  const c = _dzvMap.getCenter();
-  _dzvPickResult = { lat: c.lat, lng: c.lng, addr: null };
+function _dzvOnMapClick(e) {
+  if (!_dzvPickMode) return;
+  const { lat, lng } = e.lngLat;
+  _dzvPickResult = { lat, lng, addr: null };
+  if (!_dzvClickMarker) {
+    const el = document.createElement('div');
+    el.innerHTML = '<svg class="ico" width="32" height="32" style="color:var(--accent);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))"><use href="#i-pin"/></svg>';
+    _dzvClickMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([lng, lat]).addTo(_dzvMap);
+  } else {
+    _dzvClickMarker.setLngLat([lng, lat]);
+  }
   document.getElementById('dz-pick-lbl').textContent = 'Определяем адрес…';
   clearTimeout(_dzvPickTimer);
-  _dzvPickTimer = setTimeout(() => _dzvGeocode(c.lat, c.lng), 600);
+  _dzvPickTimer = setTimeout(() => _dzvGeocode(lat, lng), 600);
 }
 
 async function _dzvGeocode(lat, lng) {
