@@ -216,6 +216,10 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-cats:empty{display:none}
 .sl-cats .chip{padding:3.5px 11.5px;font-size:14px}
+.sl-filter-bar{padding:5px 10px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:6px;flex-shrink:0}
+#sl-filters{display:none;flex-direction:column;flex-shrink:0}
+#sl-filters.open{display:flex}
+#map-dz-btn{position:absolute;top:14px;right:14px;z-index:10;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--r-pill);padding:5px 12px;font:500 12px/1 var(--font-sans);color:var(--fg);cursor:pointer;box-shadow:var(--shadow-1);white-space:nowrap;display:flex;align-items:center;gap:5px}
 .sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
@@ -711,19 +715,27 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
           <span class="addr-lbl placeholder" id="map-addr-lbl">Укажите адрес доставки</span>
         </button>
       </div>
-      <div class="sl-search">
-        <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
-        <div style="display:flex;gap:6px">
-          <button id="nearby-btn" class="btn btn-sm" onclick="openNearbyModal()" title="Рядом со мной" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-locate"/></svg>Рядом</button>
-          <button id="delivery-filter-btn" class="btn btn-sm" onclick="toggleDeliveryFilter()" title="Доставка до меня" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-bicycle"/></svg>Доставка</button>
-        </div>
+      <div class="sl-filter-bar">
+        <button id="sl-filter-btn" class="btn btn-sm" onclick="toggleSlFilter()" style="display:flex;align-items:center;gap:4px"><svg class="ico" width="13" height="13"><use href="#i-search"/></svg>Фильтр</button>
       </div>
-      <div class="sl-cats" id="sl-cats"></div>
+      <div id="sl-filters">
+        <div class="sl-search">
+          <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+          <div style="display:flex;gap:6px">
+            <button id="nearby-btn" class="btn btn-sm" onclick="openNearbyModal()" title="Рядом со мной" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-locate"/></svg>Рядом</button>
+            <button id="delivery-filter-btn" class="btn btn-sm" onclick="toggleDeliveryFilter()" title="Доставка до меня" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-bicycle"/></svg>Доставка</button>
+          </div>
+        </div>
+        <div class="sl-cats" id="sl-cats"></div>
+      </div>
       <div class="sl-list" id="sl-list"><div class="loading">Загрузка…</div></div>
     </div>
 
     <div class="map-area" id="map-area">
       <div id="map-gl" class="map-gl"></div>
+      <button id="map-dz-btn" onclick="toggleMapZones()" title="Показать зоны доставки">
+        <svg class="ico" width="13" height="13"><use href="#i-truck"/></svg> Зоны доставки
+      </button>
       <div class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
       <div id="map-no-cat" class="map-no-cat hidden">
         <div class="map-no-cat-inner"><svg class="ico" width="22" height="22" style="margin-right:6px;opacity:.5"><use href="#i-list"/></svg>Выбери категорию заведения</div>
@@ -2709,9 +2721,56 @@ async function showStorePopup(st, listItem) {
     } else { ppDel.style.display = 'none'; }
   }
   document.getElementById('map-popup').classList.remove('hidden');
+  if (_mapDzZoneToggle) showMapStoreZones(st);
   trackEvent('store_open', st.id);
 }
 function closePopup() { document.getElementById('map-popup').classList.add('hidden'); }
+
+function toggleSlFilter() {
+  const open = document.getElementById('sl-filters').classList.toggle('open');
+  document.getElementById('sl-filter-btn').classList.toggle('btn-p', open);
+}
+
+let _mapDzZoneToggle = false;
+
+function toggleMapZones() {
+  _mapDzZoneToggle = !_mapDzZoneToggle;
+  document.getElementById('map-dz-btn').classList.toggle('btn-green-p', _mapDzZoneToggle);
+  if (!_mapDzZoneToggle) clearMapStoreZones();
+}
+
+function _mapDzGeoJSON(z) {
+  if (z.type === 'radius' && z.center_lat != null && z.center_lng != null)
+    return _dzvCircleGeoJSON(z.center_lat, z.center_lng, z.radius_m);
+  if (z.type === 'polygon' && z.vertices?.length >= 3) {
+    const coords = z.vertices.map(v => [v.lng, v.lat]);
+    coords.push(coords[0]);
+    return { type:'Feature', geometry:{ type:'Polygon', coordinates:[coords] }, properties:{} };
+  }
+  return null;
+}
+
+async function showMapStoreZones(st) {
+  const zones = await loadStoreZones(st.id);
+  clearMapStoreZones();
+  if (!zones.length || !S.map?.loaded()) return;
+  [...zones].sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0)).forEach((z, i) => {
+    const geo = _mapDzGeoJSON(z);
+    if (!geo) return;
+    try {
+      S.map.addSource('mdz-' + i, { type:'geojson', data: geo });
+      S.map.addLayer({ id:'mdz-fill-' + i, type:'fill', source:'mdz-' + i, paint:{'fill-color':z.color,'fill-opacity':0.25} });
+      S.map.addLayer({ id:'mdz-line-' + i, type:'line', source:'mdz-' + i, paint:{'line-color':z.color,'line-width':1.5} });
+    } catch {}
+  });
+}
+
+function clearMapStoreZones() {
+  if (!S.map?.loaded()) return;
+  const style = S.map.getStyle();
+  (style?.layers||[]).map(l=>l.id).filter(id=>id.startsWith('mdz-fill-')||id.startsWith('mdz-line-')).forEach(id=>{try{S.map.removeLayer(id);}catch{}});
+  Object.keys(style?.sources||{}).filter(s=>s.startsWith('mdz-')).forEach(s=>{try{S.map.removeSource(s);}catch{}});
+}
 function showGeoToast(msg) {
   const t = document.getElementById('geo-toast');
   t.textContent = msg;
