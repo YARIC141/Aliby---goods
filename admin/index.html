@@ -5993,10 +5993,13 @@ function dzeInitMap() {
     transformRequest: url => url.startsWith(SB_URL) ? { url, headers: { apikey: SB_ANON } } : { url },
   });
   _dze.map.on('load', () => {
-    // Store marker
-    const el = document.createElement('div');
-    el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)';
-    new maplibregl.Marker({ element: el }).setLngLat([_dze.storeLng, _dze.storeLat]).addTo(_dze.map);
+    if (_dze.storeLat != null && _dze.storeLng != null) {
+      const el = document.createElement('div');
+      el.style.cssText = 'width:38px;height:38px;border-radius:50%;background:#fff;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4);color:var(--accent);cursor:default';
+      el.innerHTML = svgIco('store', 18);
+      el.title = _dze.storeName || 'Заведение';
+      new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([_dze.storeLng, _dze.storeLat]).addTo(_dze.map);
+    }
     dzeRenderAllLayers();
   });
 }
