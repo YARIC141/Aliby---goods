@@ -6070,19 +6070,19 @@ function dzeShowVertexBtns() {
 function dzeSetColor(idx, color) {
   _dze.zones[idx].color = color;
   dzeRenderList();
-  dzeUpdateLayer(idx);
+  dzeRenderAllLayers();
 }
 
 function dzeToggleType(idx) {
   const z = _dze.zones[idx];
   z.type = z.type === 'radius' ? 'polygon' : 'radius';
   if (z.type === 'polygon' && !z.vertices?.length) {
-    // Create default triangle around store
     const r = 0.003;
     z.vertices = [
-      { lat: _dze.storeLat + r,     lng: _dze.storeLng },
-      { lat: _dze.storeLat - r/2,   lng: _dze.storeLng + r },
-      { lat: _dze.storeLat - r/2,   lng: _dze.storeLng - r },
+      { lat: _dze.storeLat + r, lng: _dze.storeLng - r },
+      { lat: _dze.storeLat + r, lng: _dze.storeLng + r },
+      { lat: _dze.storeLat - r, lng: _dze.storeLng + r },
+      { lat: _dze.storeLat - r, lng: _dze.storeLng - r },
     ];
   }
   dzeRenderList();
@@ -6098,7 +6098,7 @@ function dzeZoneGeoJSON(z) {
     const coords = [...z.vertices.map(v => [v.lng, v.lat]), [z.vertices[0].lng, z.vertices[0].lat]];
     return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] }, properties: {} };
   }
-  if (z.type === 'radius') {
+  if (z.type === 'radius' && z.center_lat != null && z.center_lng != null) {
     return dzeCircleGeoJSON(z.center_lat, z.center_lng, z.radius_m);
   }
   return null;
@@ -6122,38 +6122,42 @@ function dzeCentroid(vertices) {
 }
 
 function dzeRenderAllLayers() {
-  if (!_dze.map) return;
-  _dze.zones.forEach((_, i) => {
-    ['dze-fill-' + i, 'dze-line-' + i].forEach(id => { try { _dze.map.removeLayer(id); } catch {} });
-    try { _dze.map.removeSource('dze-src-' + i); } catch {}
-  });
-  // Render highest sort_order first (bottom), lowest sort_order last (top)
+  if (!_dze.map?.loaded()) return;
+  // Use style introspection — index-based guessing misses layers after reorder/delete
+  const style = _dze.map.getStyle();
+  (style?.layers || []).map(l => l.id)
+    .filter(id => id.startsWith('dze-fill-') || id.startsWith('dze-line-'))
+    .forEach(id => { try { _dze.map.removeLayer(id); } catch {} });
+  Object.keys(style?.sources || {})
+    .filter(s => s.startsWith('dze-src-'))
+    .forEach(s => { try { _dze.map.removeSource(s); } catch {} });
+  // Highest sort_order first (bottom), lowest sort_order last (on top)
   const order = _dze.zones
     .map((z, i) => ({ z, i }))
     .filter(({ z }) => !z._deleted)
     .sort((a, b) => (b.z.sort_order ?? b.i) - (a.z.sort_order ?? a.i));
-  order.forEach(({ i }) => dzeUpdateLayer(i));
+  order.forEach(({ z, i }) => {
+    const geo = dzeZoneGeoJSON(z);
+    if (!geo) return;
+    const isActive = _dze.activeIdx === i;
+    try {
+      _dze.map.addSource('dze-src-' + i, { type: 'geojson', data: geo });
+      _dze.map.addLayer({ id: 'dze-fill-' + i, type: 'fill', source: 'dze-src-' + i,
+        paint: { 'fill-color': z.color, 'fill-opacity': 0.4 } });
+      _dze.map.addLayer({ id: 'dze-line-' + i, type: 'line', source: 'dze-src-' + i,
+        paint: { 'line-color': z.color, 'line-width': isActive ? 3 : 1.5 } });
+    } catch(e) { console.warn('dze layer add failed', i, e); }
+  });
 }
 
 function dzeUpdateLayer(idx) {
+  // Called only during drag — source always exists at this point
   if (!_dze.map?.loaded()) return;
   const z = _dze.zones[idx];
   if (!z || z._deleted) return;
   const geo = dzeZoneGeoJSON(z);
   if (!geo) return;
-  const srcId = 'dze-src-' + idx;
-  const isActive = _dze.activeIdx === idx;
-  if (_dze.map.getSource(srcId)) {
-    _dze.map.getSource(srcId).setData(geo);
-    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-color', z.color);
-    _dze.map.setPaintProperty('dze-fill-' + idx, 'fill-opacity', 0.35);
-    _dze.map.setPaintProperty('dze-line-' + idx, 'line-color', z.color);
-    _dze.map.setPaintProperty('dze-line-' + idx, 'line-width', isActive ? 3 : 1.5);
-  } else {
-    _dze.map.addSource(srcId, { type: 'geojson', data: geo });
-    _dze.map.addLayer({ id: 'dze-fill-' + idx, type: 'fill', source: srcId, paint: { 'fill-color': z.color, 'fill-opacity': 0.35 } });
-    _dze.map.addLayer({ id: 'dze-line-' + idx, type: 'line', source: srcId, paint: { 'line-color': z.color, 'line-width': isActive ? 3 : 1.5 } });
-  }
+  try { _dze.map.getSource('dze-src-' + idx)?.setData(geo); } catch {}
 }
 
 // ── drag handles ─────────────────────────────────────────────────────────────
@@ -6279,9 +6283,10 @@ function dzeAddZone() {
     type: 'polygon', radius_m: 1000,
     center_lat: _dze.storeLat, center_lng: _dze.storeLng,
     vertices: [
-      { lat: _dze.storeLat + r,   lng: _dze.storeLng },
-      { lat: _dze.storeLat - r/2, lng: _dze.storeLng + r },
-      { lat: _dze.storeLat - r/2, lng: _dze.storeLng - r },
+      { lat: _dze.storeLat + r, lng: _dze.storeLng - r },
+      { lat: _dze.storeLat + r, lng: _dze.storeLng + r },
+      { lat: _dze.storeLat - r, lng: _dze.storeLng + r },
+      { lat: _dze.storeLat - r, lng: _dze.storeLng - r },
     ],
     sort_order: i, _deleted: false,
   };
