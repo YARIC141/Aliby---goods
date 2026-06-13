@@ -218,9 +218,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats .chip{padding:3.5px 11.5px;font-size:14px}
 .sl-filter-bar{padding:5px 10px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:6px;flex-shrink:0}
 #sl-filters{display:none;flex-direction:column;flex-shrink:0}
-#sl-filters.open{display:flex}
-#map-dz-btn{position:absolute;top:14px;right:14px;z-index:10;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:var(--r-pill);padding:5px 12px;font:500 12px/1 var(--font-sans);color:var(--fg);cursor:pointer;box-shadow:var(--shadow-1);white-space:nowrap;display:flex;align-items:center;gap:5px}
-.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
+#sl-filters.open{display:flex}.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
 .sl-item.sel{background:oklch(from var(--bg-2) l c h / .65)}
@@ -738,9 +736,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <div class="map-area" id="map-area">
       <div id="map-resize-handle" aria-hidden="true"></div>
       <div id="map-gl" class="map-gl"></div>
-      <button id="map-dz-btn" onclick="toggleMapZones()" title="Показать зоны доставки">
-        <svg class="ico" width="13" height="13"><use href="#i-truck"/></svg> Зоны доставки
-      </button>
       <div class="map-attr">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
       <div id="map-no-cat" class="map-no-cat hidden">
         <div class="map-no-cat-inner"><svg class="ico" width="22" height="22" style="margin-right:6px;opacity:.5"><use href="#i-list"/></svg>Выбери категорию заведения</div>
