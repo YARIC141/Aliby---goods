@@ -199,8 +199,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 
 /* ── MAP ── */
 .map-layout{display:flex;flex:1;min-height:0;overflow:hidden;position:relative}
-.map-addr-wrap{padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
-.map-addr-bar{display:flex;align-items:center;gap:8px;padding:7px 10px;width:100%;text-align:left;font-size:17px;font-family:var(--font-sans);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--r-2);cursor:pointer;color:var(--fg);transition:border-color var(--t-fast),box-shadow var(--t-fast);box-sizing:border-box}
+.map-addr-wrap{padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0;display:flex;gap:6px}
+.map-addr-bar{display:flex;align-items:center;gap:7px;padding:7px 10px;text-align:left;font-size:14px;font-family:var(--font-sans);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:var(--r-2);cursor:pointer;color:var(--fg);transition:border-color var(--t-fast),box-shadow var(--t-fast);box-sizing:border-box;white-space:nowrap}
 .map-addr-bar:hover,.map-addr-bar:focus{border-color:var(--accent);box-shadow:0 0 0 3px oklch(from var(--accent) l c h / .18)}
 .map-addr-bar .addr-lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .map-addr-bar .addr-lbl.placeholder{color:var(--fg-4)}
@@ -216,7 +216,6 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-cats:empty{display:none}
 .sl-cats .chip{padding:3.5px 11.5px;font-size:14px}
-.sl-filter-bar{padding:5px 10px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:6px;flex-shrink:0}
 #sl-filters{display:none;flex-direction:column;flex-shrink:0}
 #sl-filters.open{display:flex}.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
@@ -712,13 +711,13 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <button class="dir-tab" data-dir="services" onclick="setDirection('services')"><svg class="ico" width="16" height="16" style="margin-right:5px"><use href="#i-services"/></svg>Услуги</button>
       </div>
       <div class="map-addr-wrap">
-        <button class="map-addr-bar" id="map-addr-bar" onclick="openAddressPicker()">
+        <button class="map-addr-bar" id="map-addr-bar" onclick="openAddressPicker()" style="flex:1;min-width:0">
           <svg class="ico" width="14" height="14" style="flex-shrink:0;color:var(--accent)"><use href="#i-pin"/></svg>
           <span class="addr-lbl placeholder" id="map-addr-lbl">Укажите адрес доставки</span>
         </button>
-      </div>
-      <div class="sl-filter-bar">
-        <button id="sl-filter-btn" class="btn btn-sm" onclick="toggleSlFilter()" style="display:flex;align-items:center;gap:4px"><svg class="ico" width="13" height="13"><use href="#i-search"/></svg>Фильтр</button>
+        <button id="sl-filter-btn" class="map-addr-bar" onclick="toggleSlFilter()">
+          <svg class="ico" width="13" height="13" style="flex-shrink:0"><use href="#i-search"/></svg>Фильтр
+        </button>
       </div>
       <div id="sl-filters">
         <div class="sl-search">
@@ -2738,7 +2737,9 @@ function toggleMapLegend() {
 
 function toggleSlFilter() {
   const open = document.getElementById('sl-filters').classList.toggle('open');
-  document.getElementById('sl-filter-btn').classList.toggle('btn-p', open);
+  const btn = document.getElementById('sl-filter-btn');
+  btn.style.borderColor = open ? 'var(--accent)' : '';
+  btn.style.color = open ? 'var(--accent)' : '';
 }
 
 let _mapDzZoneToggle = false;
