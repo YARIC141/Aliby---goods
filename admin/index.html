@@ -1082,7 +1082,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       <button class="modal-x" onclick="closeModal('m-no-main-sub')">✕</button>
     </div>
     <p style="font-size:14px;color:var(--fg-2);line-height:1.5;margin-bottom:18px">
-      Чтобы добавить ещё одно заведение, оформите основную подписку на Aliby.
+      Чтобы добавить ещё одно заведение, оформите основную подписку на Alliby.
     </p>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-p btn-full" onclick="closeModal('m-no-main-sub');startPlatformSubscription()">
@@ -1125,7 +1125,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div class="overlay" id="m-platsub-plans">
   <div class="modal" style="max-width:400px">
     <div class="modal-hd">
-      <h3>Подписка Aliby</h3>
+      <h3>Подписка Alliby</h3>
       <button class="modal-x" onclick="closeModal('m-platsub-plans')">✕</button>
     </div>
     <div style="background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:16px;margin-bottom:16px">
@@ -2762,7 +2762,7 @@ async function loadPlatformSubscription() {
       el.innerHTML =
         `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">` +
           `<div>` +
-            `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">Подписка Aliby · ${nextAmt.toLocaleString('ru-RU')} ₽/мес</div>` +
+            `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">Подписка Alliby · ${nextAmt.toLocaleString('ru-RU')} ₽/мес</div>` +
             `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">Активна до ${endFmt}</div>` +
             trialNote + graceNote + renewNote +
           `</div>` +
@@ -3224,7 +3224,7 @@ async function saveStore() {
       // 2nd+ store requires main subscription + per-store subscription slot
       if (!_activePlatSub) {
         restore();
-        alert('Для добавления второго заведения оформите подписку Aliby');
+        alert('Для добавления второго заведения оформите подписку Alliby');
         startPlatformSubscription();
         return;
       }
