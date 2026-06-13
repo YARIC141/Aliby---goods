@@ -1,0 +1,46 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'   # каждый понедельник 03:00 UTC
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  trivy:
+    name: Trivy — secrets & misconfig
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan repo for secrets and misconfigurations
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          scanners: secret,misconfig
+          exit-code: '0'
+
+      - name: Upload results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Print summary table
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: CRITICAL,HIGH,MEDIUM
+          scanners: secret,misconfig
+          exit-code: '0'
