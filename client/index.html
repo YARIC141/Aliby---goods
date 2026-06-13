@@ -263,8 +263,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .map-popup.hidden{display:none}
 .popup-close{float:right;background:none;border:none;cursor:pointer;font-size:19px;line-height:1;color:var(--fg-3)}
 
-#map-resize-handle{display:none;position:absolute;top:0;left:0;right:0;height:22px;z-index:25;cursor:ns-resize;touch-action:none;align-items:center;justify-content:center;user-select:none}
-#map-resize-handle::after{content:'';width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:10px solid rgba(100,100,100,.55);filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+#map-resize-handle{display:none;position:absolute;top:0;left:0;right:0;height:22px;z-index:25;cursor:ns-resize;touch-action:none;align-items:center;justify-content:center;flex-direction:column;gap:2px;user-select:none}
+#map-resize-handle::before{content:'';width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:10px solid rgba(100,100,100,.55);filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+#map-resize-handle::after{content:'';width:20px;height:3px;border-radius:1.5px;background:rgba(100,100,100,.55)}
 @media(max-width:600px){
   .map-layout{flex-direction:column}
   .sl-panel{width:100%;height:50dvh;flex-shrink:0;flex-basis:auto;border-right:none;border-bottom:1px solid var(--border)}
