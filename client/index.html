@@ -486,7 +486,12 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-bk-done{position:absolute;top:3px;left:4px;font:700 9px/14px var(--font-sans);background:var(--ok);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 #m-dz-viewer{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
 #m-dz-viewer.open{transform:none}
-#dz-viewer-map{flex:1;min-height:0;position:relative}
+#dz-viewer-map-wrap{flex:1;min-height:0;position:relative}
+#dz-viewer-map{position:absolute;inset:0}
+#dz-pick-pin{position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;color:var(--accent);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));display:none;z-index:2}
+#dz-pick-lbl{position:absolute;bottom:8px;left:8px;right:8px;background:rgba(10,8,6,.75);backdrop-filter:blur(8px);color:#fff;border-radius:var(--r-2);padding:8px 12px;font:400 12px/1.5 var(--font-sans);text-align:center;pointer-events:none;display:none;z-index:2}
+#dz-pick-ft{display:none;padding:10px 14px;gap:8px;flex-shrink:0;border-top:1px solid var(--line-soft)}
+#dz-addr-btn-wrap{padding:8px 14px 12px;flex-shrink:0}
 .dz-legend{flex-shrink:0;padding:10px 14px;overflow-y:auto;max-height:160px;border-top:1px solid var(--line-soft)}
 .dz-legend-row{display:flex;align-items:center;gap:10px;padding:6px 0;font:400 13px/1.3 var(--font-sans);border-bottom:1px solid var(--line-soft)}
 .dz-legend-row:last-child{border-bottom:none}
@@ -3751,7 +3756,68 @@ async function openDzViewer(store) {
 }
 
 function closeDzViewer() {
+  dzvCancelPick();
   document.getElementById('m-dz-viewer').classList.remove('open');
+}
+
+let _dzvPickMode = false, _dzvPickTimer = null, _dzvPickResult = null;
+
+function dzvEnterPickMode() {
+  _dzvPickMode = true;
+  _dzvPickResult = null;
+  document.getElementById('dz-pick-pin').style.display = '';
+  document.getElementById('dz-pick-lbl').style.display = '';
+  document.getElementById('dz-pick-lbl').textContent = 'Переместите карту, чтобы выбрать точку';
+  document.getElementById('dz-pick-ft').style.display = 'flex';
+  document.getElementById('dz-addr-btn-wrap').style.display = 'none';
+  if (_dzvMap) _dzvMap.on('moveend', _dzvOnMoveEnd);
+}
+
+function dzvCancelPick() {
+  if (!_dzvPickMode) return;
+  _dzvPickMode = false;
+  _dzvPickResult = null;
+  clearTimeout(_dzvPickTimer);
+  document.getElementById('dz-pick-pin').style.display = 'none';
+  document.getElementById('dz-pick-lbl').style.display = 'none';
+  document.getElementById('dz-pick-ft').style.display = 'none';
+  document.getElementById('dz-addr-btn-wrap').style.display = '';
+  if (_dzvMap) _dzvMap.off('moveend', _dzvOnMoveEnd);
+}
+
+async function dzvConfirmPick() {
+  if (!_dzvPickResult) return;
+  const { lat, lng, addr } = _dzvPickResult;
+  S.userAddrLat = lat;
+  S.userAddrLng = lng;
+  S.userAddr = addr || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  if (_dzvHomeMarker) _dzvHomeMarker.setLngLat([lng, lat]);
+  const zones = _dzvStore ? await loadStoreZones(_dzvStore.id) : [];
+  _dzvRenderLegend(zones);
+  dzvCancelPick();
+}
+
+function _dzvOnMoveEnd() {
+  if (!_dzvPickMode || !_dzvMap) return;
+  const c = _dzvMap.getCenter();
+  _dzvPickResult = { lat: c.lat, lng: c.lng, addr: null };
+  document.getElementById('dz-pick-lbl').textContent = 'Определяем адрес…';
+  clearTimeout(_dzvPickTimer);
+  _dzvPickTimer = setTimeout(() => _dzvGeocode(c.lat, c.lng), 600);
+}
+
+async function _dzvGeocode(lat, lng) {
+  const lbl = document.getElementById('dz-pick-lbl');
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`);
+    const j = await r.json();
+    const addr = j.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    _dzvPickResult = { lat, lng, addr };
+    if (lbl) lbl.textContent = addr;
+  } catch {
+    if (lbl) lbl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    _dzvPickResult = { lat, lng, addr: `${lat.toFixed(5)}, ${lng.toFixed(5)}` };
+  }
 }
 
 function _dzvRenderLegend(zones) {
@@ -6329,8 +6395,19 @@ function closeStoreSchedDay() {
     <button onclick="closeDzViewer()" style="background:none;border:none;font-size:20px;line-height:1;cursor:pointer;padding:8px 10px 8px 4px;color:var(--fg)">←</button>
     <h2 id="dz-viewer-title">Зоны доставки</h2>
   </div>
-  <div id="dz-viewer-map"></div>
+  <div id="dz-viewer-map-wrap">
+    <div id="dz-viewer-map"></div>
+    <div id="dz-pick-pin"><svg class="ico" width="32" height="32"><use href="#i-pin"/></svg></div>
+    <div id="dz-pick-lbl">Определяем адрес…</div>
+  </div>
   <div class="dz-legend" id="dz-viewer-legend"></div>
+  <div id="dz-pick-ft">
+    <button class="btn" onclick="dzvCancelPick()">Отмена</button>
+    <button class="btn btn-p" style="flex:1" onclick="dzvConfirmPick()">Подтвердить</button>
+  </div>
+  <div id="dz-addr-btn-wrap">
+    <button class="btn btn-p btn-full" onclick="dzvEnterPickMode()">Выбрать место доставки</button>
+  </div>
 </div>
 
 </body>
