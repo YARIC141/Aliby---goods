@@ -2724,7 +2724,7 @@ async function showStorePopup(st, listItem) {
         const di = S.userAddrLat != null ? _checkDeliveryZones(zones, S.userAddrLat, S.userAddrLng) : null;
         const priceStr = di?.inZone ? (di.price > 0 ? ` · ${di.price} ₽` : ' · бесплатно') : '';
         ppDel.style.display = '';
-        ppDel.innerHTML = `<button onclick="openDzViewer(S.store)" style="background:none;border:none;cursor:pointer;padding:0;font:600 12px/1 var(--font-sans);color:var(--ok);display:flex;align-items:center;gap:4px">${svgIco('bicycle',13)} Доставка${priceStr} · Зоны →</button>`;
+        ppDel.innerHTML = `<button class="btn btn-sm btn-full" onclick="openDzViewer(S.store)" style="gap:5px;margin-top:2px">${svgIco('bicycle',13)} Доставка${priceStr} · Зоны →</button>`;
       } else { ppDel.style.display = 'none'; }
     } else { ppDel.style.display = 'none'; }
   }
