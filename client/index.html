@@ -336,9 +336,11 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 
 /* ── CART ── */
 .cart-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
-.cart-tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast)}
+.cart-tab{flex:1;padding:10px 4px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);display:flex;align-items:center;justify-content:center;gap:0}
 .cart-tab:hover{color:var(--fg)}
 .cart-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{display:none;min-width:16px;height:16px;border-radius:8px;background:var(--accent);font:700 9px/1 var(--font-sans);color:#fff;padding:0 3px;align-items:center;justify-content:center;box-sizing:border-box;margin-left:5px;flex-shrink:0}
+.tab-badge.on{display:inline-flex}
 .cart-layout{display:flex;flex-direction:column;flex:1;min-height:0}
 .cart-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .cart-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line-soft);gap:10px;flex-wrap:wrap}
@@ -474,9 +476,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .nav-badge.on{display:flex}
 .sn-badge{display:none;min-width:17px;height:17px;border-radius:9px;background:var(--accent);font:700 10px/1 var(--font-sans);color:#fff;padding:0 4px;align-items:center;justify-content:center;box-sizing:border-box;flex-shrink:0}
 .sn-badge.on{display:inline-flex}
-.bn-cal-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:32px}
+.bn-cal-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%}
 .bn-cal-ico{position:absolute;inset:0;margin:auto;opacity:.38;width:28px;height:28px;flex-shrink:0}
-.bn-cal-lbl{position:relative;z-index:1;text-align:center;line-height:1.2;font-size:10px;font-weight:700;text-shadow:0 0 3px var(--bg),0 0 5px var(--bg),0 0 5px var(--bg)}
+.bn-cal-lbl{position:relative;z-index:1;text-align:center;line-height:1.1;font-size:12px;font-weight:600;text-shadow:0 0 3px var(--bg),0 0 5px var(--bg),0 0 5px var(--bg)}
 .sub-store-chip:hover:not(.active){border-color:var(--fg-3);background:var(--bg-2)}
 .sub-store-chip.active{border-color:var(--accent);color:var(--accent);background:var(--bg-2)}
 /* ── STORE SCHEDULE CALENDAR ── */
@@ -940,9 +942,9 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="ph"><h2>Расписание и заказы<span class="screen-help" data-info="История ваших заказов, записей на услуги и абонементов. Можно отфильтровать по статусу или типу.">?</span></h2></div>
   <div class="screen-tip"></div>
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
-    <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-list"/></svg>История заказов</button>
-    <button class="cart-tab" id="ca-tab-bk" onclick="switchCalenabsTab('bk')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Расписание</button>
-    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-ticket"/></svg>Абонементы</button>
+    <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
+    <button class="cart-tab" id="ca-tab-bk" onclick="switchCalenabsTab('bk')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-calendar"/></svg>Записи<span class="tab-badge" id="ca-badge-bk"></span></button>
+    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="14" height="14" style="margin-right:4px"><use href="#i-ticket"/></svg>Абоны<span class="tab-badge" id="ca-badge-sub"></span></button>
   </div>
   <!-- История заказов pane -->
   <div id="ca-pane-ord" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
@@ -3428,6 +3430,8 @@ function updateCartCount() {
   if (mc) mc.textContent = n;
   const cb = document.getElementById('nav-cart-badge');
   if (cb) { const u = S.cart.length + subN; cb.textContent = u; cb.classList.toggle('on', u > 0); }
+  const sb = document.getElementById('ca-badge-sub');
+  if (sb) { sb.textContent = subN || ''; sb.classList.toggle('on', subN > 0); }
 }
 
 // ─── REALTIME ───
@@ -3437,7 +3441,7 @@ let _bkNotifCount = 0;
 function _updateBkBadge() {
   const on = _bkNotifCount > 0;
   const txt = on ? _bkNotifCount : '';
-  ['nav-bk-badge', 'sn-bk-badge'].forEach(id => {
+  ['nav-bk-badge', 'sn-bk-badge', 'ca-badge-bk'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = txt;
@@ -3542,6 +3546,8 @@ function _renderOrdNotifDots() {
     const has = s === '' ? _ordNotif.size > 0 : _ordNotif.has(s);
     btn.querySelector('.ord-notif-dot')?.classList.toggle('on', has);
   });
+  const ob = document.getElementById('ca-badge-ord');
+  if (ob) { const n = _ordNotif.size; ob.textContent = n || ''; ob.classList.toggle('on', n > 0); }
 }
 
 function setOrderFilter(status) {
@@ -6114,6 +6120,7 @@ async function confirmBooking(payNow) {
       });
       closeModal('m-book-slot');
       showGeoToast('Слот забронирован');
+      if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
       if (_storeSchedIsActive()) loadCaScheduleScreen();
       if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
     } catch(e) {
@@ -6145,6 +6152,7 @@ async function confirmBooking(payNow) {
         });
         closeModal('m-book-slot');
         showGeoToast('Запись по абонементу создана');
+        if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
         if (_storeSchedIsActive()) loadCaScheduleScreen();
         if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
       } catch(e) {
