@@ -5033,19 +5033,21 @@ function _pwaIsDismissed() {
   return ts > 0 && (Date.now() - ts) < 7 * 24 * 3600 * 1000;
 }
 
-function triggerPwaInstall() {
-  if (window._pwaDeferred) {
-    window._pwaDeferred.prompt();
-    window._pwaDeferred.userChoice.then(function(r) {
-      window._pwaDeferred = null;
-      const tile = document.getElementById('home-install-tile');
-      if (tile) tile.style.display = 'none';
-      if (r.outcome === 'accepted') {
-        try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch(ex) {}
-      }
-    });
-  } else {
-    const sheet = document.getElementById('ios-install-sheet');
+async function triggerPwaInstall() {
+  const sheet = document.getElementById('ios-install-sheet');
+  if (!window._pwaDeferred) { if (sheet) sheet.style.display = 'flex'; return; }
+  try {
+    const result = await window._pwaDeferred.prompt();
+    window._pwaDeferred = null;
+    const tile = document.getElementById('home-install-tile');
+    const banner = document.getElementById('pwa-banner');
+    if (tile) tile.style.display = 'none';
+    if (banner) banner.style.display = 'none';
+    if (result?.outcome === 'accepted') {
+      try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch {}
+    }
+  } catch {
+    window._pwaDeferred = null;
     if (sheet) sheet.style.display = 'flex';
   }
 }
@@ -5073,18 +5075,7 @@ function triggerPwaInstall() {
   }
 
   if (installBtn) {
-    installBtn.addEventListener('click', async function() {
-      if (!window._pwaDeferred) return;
-      window._pwaDeferred.prompt();
-      const r = await window._pwaDeferred.userChoice;
-      window._pwaDeferred = null;
-      if (banner) banner.style.display = 'none';
-      const tile = document.getElementById('home-install-tile');
-      if (tile) tile.style.display = 'none';
-      if (r.outcome === 'accepted') {
-        try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch(ex) {}
-      }
-    });
+    installBtn.addEventListener('click', function() { triggerPwaInstall(); });
   }
 
   window.addEventListener('appinstalled', function() {
@@ -6110,7 +6101,7 @@ function closeStoreSchedDay() {
     </div>
     <div style="display:flex;align-items:center;gap:12px;background:var(--bg-2);border-radius:12px;padding:12px 14px;margin-bottom:16px">
       <div style="font-size:28px;flex-shrink:0">⬆️</div>
-      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-2)"><b>Safari:</b> кнопка «Поделиться» → «На экран "Домой"»<br><b>Chrome:</b> меню ⋮ → «Добавить на главный экран»</div>
+      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-2)"><b>iOS Safari:</b> кнопка «Поделиться» (□↑) → «На экран "Домой"»<br><b>Android Chrome:</b> меню ⋮ → «Добавить на главный экран» или «Установить приложение»</div>
     </div>
     <button onclick="document.getElementById('ios-install-sheet').style.display='none'" style="width:100%;padding:13px;border-radius:12px;background:var(--brand-ember);border:none;font:700 15px/1 var(--font-sans);color:#fff;cursor:pointer">Понятно</button>
   </div>
