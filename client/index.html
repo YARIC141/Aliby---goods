@@ -114,7 +114,7 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 
 #bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--line-soft);background:var(--glass-ui)}
 .bn-row{display:flex}
-.bn-btn{flex:1;padding:10px 2px 8px;border:none;background:none;cursor:pointer;font:500 12px/1.2 var(--font-sans);color:var(--fg-3);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;transition:color var(--t-fast);white-space:nowrap}
+.bn-btn{flex:1;padding:10px 2px 8px;border:none;background:none;cursor:pointer;font:500 12px/1.2 var(--font-sans);color:var(--fg-3);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;transition:color var(--t-fast);white-space:nowrap;overflow:visible}
 .bn-btn .ico{font-size:28px;line-height:1;display:block}
 .bn-btn.active{color:var(--accent)}
 .screen-tip{font:400 13px/1.5 var(--font-sans);color:var(--fg-3);background:var(--bg-2);border-left:3px solid var(--accent,#e8743b);padding:0 14px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;flex-shrink:0}
@@ -472,6 +472,8 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .ord-notif-dot.on{display:block}
 .nav-badge{position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);border:2px solid var(--bg);display:none;pointer-events:none;font:700 10px/1 var(--font-sans);color:#fff;padding:0 4px;align-items:center;justify-content:center;box-sizing:border-box}
 .nav-badge.on{display:flex}
+.sn-badge{display:none;min-width:17px;height:17px;border-radius:9px;background:var(--accent);font:700 10px/1 var(--font-sans);color:#fff;padding:0 4px;align-items:center;justify-content:center;box-sizing:border-box;flex-shrink:0}
+.sn-badge.on{display:inline-flex}
 .sub-store-chip:hover:not(.active){border-color:var(--fg-3);background:var(--bg-2)}
 .sub-store-chip.active{border-color:var(--accent);color:var(--accent);background:var(--bg-2)}
 /* ── STORE SCHEDULE CALENDAR ── */
@@ -591,8 +593,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <button class="sn-btn" data-nav="home"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Алиби</button>
   <button class="sn-btn" data-nav="map"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-7.5-8-13a8 8 0 0116 0c0 5.5-8 13-8 13z"/><circle cx="12" cy="8" r="2.5"/></svg> Заведения</button>
   <button class="sn-btn" data-nav="store"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> <span class="nav-store-lbl">Меню</span></button>
-  <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина <span id="sn-cart-cnt"></span></button>
-  <button class="sn-btn" data-nav="calenabs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Расписание и заказы</button>
+  <button class="sn-btn" data-nav="cart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Корзина <span class="sn-badge" id="sn-cart-cnt"></span></button>
+  <button class="sn-btn" data-nav="calenabs"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1V2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg> Заказы / Записи <span class="sn-badge" id="sn-bk-badge"></span></button>
   <div class="sn-spacer"></div>
   <div class="sn-user" id="sn-email"></div>
 </nav>
@@ -3417,7 +3419,8 @@ function updateCartCount() {
   const subN = S.subCart.filter(c => (c.direction || 'food') === S.direction).length
              + S.giftSubCart.filter(c => (c.direction || 'food') === S.direction).length;
   const total = n + subN;
-  document.getElementById('sn-cart-cnt').textContent = total > 0 ? `(${total})` : '';
+  const sc = document.getElementById('sn-cart-cnt');
+  if (sc) { sc.textContent = total > 0 ? total : ''; sc.classList.toggle('on', total > 0); }
   const mc = document.getElementById('menu-cart-cnt');
   if (mc) mc.textContent = n;
   const cb = document.getElementById('nav-cart-badge');
@@ -3429,10 +3432,14 @@ let _rtWs = null, _rtRef = 0, _rtHb = null;
 let _rtBkWs = null, _rtBkRef = 0, _rtBkHb = null;
 let _bkNotifCount = 0;
 function _updateBkBadge() {
-  const el = document.getElementById('nav-bk-badge');
-  if (!el) return;
-  el.textContent = _bkNotifCount;
-  el.classList.toggle('on', _bkNotifCount > 0);
+  const on = _bkNotifCount > 0;
+  const txt = on ? _bkNotifCount : '';
+  ['nav-bk-badge', 'sn-bk-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = txt;
+    el.classList.toggle('on', on);
+  });
 }
 
 function realtimeSubscribeOrders(userId) {
