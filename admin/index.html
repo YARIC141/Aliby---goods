@@ -551,7 +551,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div id="screen-map" class="screen">
   <div class="ph">
     <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
-    <h2 id="map-screen-title">Карта</h2>
+    <h2 id="map-screen-title">Карта<span class="screen-help" data-info="Карта расположения заведений. Переключайте вид между векторными тайлами и OSM. Нажмите на метку, чтобы перейти к заведению.">?</span></h2>
     <button class="btn btn-sm" id="map-mode-btn" onclick="setMapMode(S.mapMode==='osm'?'tiles':'osm')" title="Переключить вид карты"><svg class="ico" width="13" height="13" style="margin-right:4px"><use href="#i-map"/></svg>Тайлы</button>
   </div>
 
@@ -579,7 +579,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div id="screen-schedule" class="screen">
   <div class="ph">
     <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
-    <h2 id="sched-store-name">Расписание</h2>
+    <h2 id="sched-store-name">Расписание<span class="screen-help" data-info="Шаблон рабочего расписания заведения по дням недели. Задайте временные слоты — они будут доступны клиентам для записи.">?</span></h2>
     <button class="btn btn-sm" id="sched-edit-btn" onclick="toggleSchedEditMode()">Редактировать</button>
   </div>
   <div class="pb">
@@ -850,7 +850,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 
 <!-- ════════════════ QR / ANALYTICS ════════════════ -->
 <div id="screen-qr" class="screen">
-  <div class="ph"><h2>Аналитика и QR сканер</h2></div>
+  <div class="ph"><h2>Аналитика и QR сканер<span class="screen-help" data-info="QR сканер: списывайте абонементы клиентов по QR-коду. Аналитика: статистика продаж, заказов и использования абонементов по вашему заведению.">?</span></h2></div>
   <div class="obt-tabs">
     <button class="obt-tab active" id="qr-tab-qr" onclick="switchQrTab('qr')">QR сканер</button>
     <button class="obt-tab" id="qr-tab-an" onclick="switchQrTab('an')">Аналитика</button>
