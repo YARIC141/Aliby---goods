@@ -1225,10 +1225,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 </div>
 
 <!-- ════════════════ COOKIE BANNER ════════════════ -->
-<div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--bg);border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-  <span style="flex:1;min-width:200px;font-size:13px;color:var(--fg-2)">Мы используем cookie для аутентификации и работы сервиса. <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Подробнее</a></span>
-  <button class="btn btn-sm btn-p" onclick="acceptCookies()" style="flex-shrink:0">Понятно</button>
-</div>
 
 <!-- ════════════════ BUYER CONTRACT MODAL ════════════════ -->
 <div class="overlay" id="m-contract-buyer">
@@ -5017,13 +5013,6 @@ window.addEventListener('hashchange', () => {
   }
 })();
 
-function acceptCookies() {
-  localStorage.setItem('alliby_cookie_ok', '1');
-  document.getElementById('cookie-banner').style.display = 'none';
-}
-if (!localStorage.getItem('alliby_cookie_ok')) {
-  document.getElementById('cookie-banner').style.display = 'flex';
-}
 
 // ─── PWA INSTALL ───
 window._pwaDeferred = null;
