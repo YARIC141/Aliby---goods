@@ -818,7 +818,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="meta-line" id="st-addr"></div>
         <div class="meta-line" id="st-hours"></div>
         <div class="meta-line" id="st-phone"></div>
-        <button id="st-delivery-badge" style="display:none;margin-top:5px;font-size:12px;color:#16a34a;font-weight:600;display:flex;align-items:center;gap:4px;background:none;border:none;cursor:pointer;padding:0;font-family:inherit" onclick="openDzViewer(S.store)"><svg class="ico" width="13" height="13"><use href="#i-bicycle"/></svg>Доставка · Зоны →</button>
+        <button id="st-delivery-badge" class="btn btn-sm" style="display:none;margin-top:8px;gap:5px" onclick="openDzViewer(S.store)"><svg class="ico" width="13" height="13"><use href="#i-bicycle"/></svg>Доставка · Зоны →</button>
         <button class="btn btn-sm" id="st-sched-btn" style="margin-top:8px;font-size:12px" onclick="openStoreSchedule(S.store)"></button>
       </div>
     </div>
@@ -2729,7 +2729,6 @@ async function showStorePopup(st, listItem) {
     } else { ppDel.style.display = 'none'; }
   }
   document.getElementById('map-popup').classList.remove('hidden');
-  if (_mapDzZoneToggle) showMapStoreZones(st);
   trackEvent('store_open', st.id);
 }
 function closePopup() { document.getElementById('map-popup').classList.add('hidden'); }
