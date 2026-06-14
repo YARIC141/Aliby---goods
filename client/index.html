@@ -836,6 +836,11 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       </div>
     </div>
 
+    <div id="store-legal-sec" style="display:none;margin-bottom:12px">
+      <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.sl-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="background:none;border:none;cursor:pointer;font:400 12px/1 var(--font-sans);color:var(--fg-4);padding:4px 0;display:flex;align-items:center;gap:4px">Реквизиты продавца <span class="sl-arrow">▼</span></button>
+      <div id="store-legal-body" style="display:none;margin-top:6px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-1);border:1px solid var(--line-soft);font:400 12px/1.7 var(--font-sans);color:var(--fg-3)"></div>
+    </div>
+
     <div id="store-subs-sec" class="sec" style="position:sticky;top:0;z-index:5;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);margin:0 -20px;padding:10px 20px 12px;border-bottom:1px solid var(--line-soft)">
       <div class="sec-title">Абонементы</div>
       <div class="subs-row" id="store-subs"><div class="loading">Загрузка…</div></div>
@@ -2890,6 +2895,7 @@ async function loadStore() {
     const db = document.getElementById('st-delivery-badge'); if (db) db.style.display = 'none';
     const sb = document.getElementById('st-sched-btn'); if (sb) { sb.textContent = ''; sb.style.display = 'none'; }
     const cl = document.getElementById('st-complaint-link'); if (cl) cl.style.display = 'none';
+    const ls = document.getElementById('store-legal-sec'); if (ls) ls.style.display = 'none';
     document.getElementById('store-logo').textContent = '';
     const subs = document.getElementById('store-subs'); if (subs) subs.innerHTML = '';
     const mi = document.getElementById('menu-items');
@@ -2916,6 +2922,21 @@ async function loadStore() {
   const delBadgeEl = document.getElementById('st-delivery-badge');
   if (delBadgeEl) delBadgeEl.style.display = (st.delivery_enabled && st.direction !== 'services') ? '' : 'none';
   const clLink = document.getElementById('st-complaint-link'); if (clLink) clLink.style.display = '';
+  const legalSec = document.getElementById('store-legal-sec');
+  const legalBody = document.getElementById('store-legal-body');
+  if (legalSec && legalBody) {
+    const hasLegal = st.legal_name || st.inn || st.ogrn;
+    legalSec.style.display = hasLegal ? '' : 'none';
+    legalBody.style.display = 'none';
+    legalSec.querySelector('.sl-arrow').textContent = '▼';
+    if (hasLegal) {
+      legalBody.innerHTML = [
+        st.legal_name ? `<div>${esc(st.legal_name)}</div>` : '',
+        st.inn  ? `<div>ИНН: ${esc(st.inn)}</div>` : '',
+        st.ogrn ? `<div>ОГРН/ОГРНИП: ${esc(st.ogrn)}</div>` : '',
+      ].join('');
+    }
+  }
   const logoEl = document.getElementById('store-logo');
   if (st.image_url) {
     logoEl.innerHTML = `<img src="${esc(st.image_url)}" alt="${esc(st.name)}">`;

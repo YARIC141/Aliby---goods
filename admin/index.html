@@ -1285,6 +1285,23 @@ tr.row-click:hover td{background:var(--bg-2)}
         <input type="number" id="ms-avg" min="0" placeholder="Пусто — не показывать на карте">
       </div>
     </div>
+    <div style="margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-1)">
+      <div style="font:600 13px/1 var(--font-sans);color:var(--fg-3);margin-bottom:10px">Юридические данные продавца <span class="hint" data-tip="Обязательно по ФЗ «О защите прав потребителей» (ст. 26.1) при дистанционной торговле. Отображаются клиенту на странице заведения.">?</span></div>
+      <div class="grid2" style="gap:10px">
+        <div class="fg" style="grid-column:1/-1">
+          <label>Юридическое наименование</label>
+          <input type="text" id="ms-legal-name" placeholder="ООО «Название» или ИП Иванов Иван Иванович">
+        </div>
+        <div class="fg">
+          <label>ИНН</label>
+          <input type="text" id="ms-inn" placeholder="1234567890" maxlength="12">
+        </div>
+        <div class="fg">
+          <label>ОГРН / ОГРНИП</label>
+          <input type="text" id="ms-ogrn" placeholder="1234567890123" maxlength="15">
+        </div>
+      </div>
+    </div>
     <div style="margin-bottom:12px">
       <label style="display:block;font:600 13px/1 var(--font-sans);color:var(--fg-3);margin-bottom:8px">Фото заведения</label>
       <div style="display:flex;align-items:center;gap:10px">
@@ -3012,8 +3029,11 @@ async function openStoreModal(store) {
   document.getElementById('ms-hours').value   = store?.working_hours || '';
   document.getElementById('ms-dir').value     = store?.direction || 'food';
   document.getElementById('ms-color').value   = store?._loc?.marker_color || '#e8430a';
-  document.getElementById('ms-avg').value     = store?.avg_order_amount ?? '';
-  document.getElementById('ms-image-url').value = store?.image_url || '';
+  document.getElementById('ms-avg').value        = store?.avg_order_amount ?? '';
+  document.getElementById('ms-legal-name').value = store?.legal_name || '';
+  document.getElementById('ms-inn').value         = store?.inn  || '';
+  document.getElementById('ms-ogrn').value        = store?.ogrn || '';
+  document.getElementById('ms-image-url').value   = store?.image_url || '';
   _restoreStoreImgPreview(store?.image_url || '');
   await loadStoreCategoriesFiltered();
   document.getElementById('ms-sc').value = store?.store_category_id || '';
@@ -3241,6 +3261,9 @@ async function saveStore() {
     city:               document.getElementById('ms-city').value || S.city || '',
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
+    legal_name:         document.getElementById('ms-legal-name').value || null,
+    inn:                document.getElementById('ms-inn').value  || null,
+    ogrn:               document.getElementById('ms-ogrn').value || null,
     image_url:          document.getElementById('ms-image-url').value || null,
     delivery_enabled:   document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
   };
