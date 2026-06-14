@@ -4607,8 +4607,9 @@ function addSubToCart(id) {
   if (!S.subCart.find(c => c.sub.id === id)) {
     const existingStoreId = S.subCart.find(c => (c.direction || 'food') === S.direction && c.sub.store_id)?.sub.store_id;
     if (existingStoreId && sub.store_id && existingStoreId !== sub.store_id) {
-      showGeoToast('Абонементы из разных заведений нельзя купить вместе — сначала оформите текущую корзину');
-      return;
+      if (!confirm('В корзине абонементы из другого заведения. Очистить?')) return;
+      S.subCart = S.subCart.filter(c => (c.direction || 'food') !== S.direction);
+      saveSubCart(); updateCartCount(); renderSubCartSection();
     }
     S.subCart.push({ sub, direction: S.direction });
     saveSubCart();
@@ -4717,11 +4718,6 @@ async function checkoutSubs() {
   const dirItems = S.subCart.filter(c => (c.direction || 'food') === S.direction);
   if (!dirItems.length) return;
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
-  const storeIds = [...new Set(dirItems.map(c => c.sub.store_id).filter(Boolean))];
-  if (storeIds.length > 1) {
-    showGeoToast('Абонементы из разных заведений нельзя купить вместе — оформите по одному заведению');
-    return;
-  }
   const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
   const label = dirItems.length === 1 ? `Абонемент «${dirItems[0].sub.name}»` : `${dirItems.length} абонемента`;
   await _initSubPayment(
@@ -4735,11 +4731,6 @@ async function checkoutGiftSubs() {
   const dirItems = S.giftSubCart.filter(c => (c.direction || 'food') === S.direction);
   if (!dirItems.length) return;
   if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
-  const storeIds = [...new Set(dirItems.map(c => c.sub.store_id).filter(Boolean))];
-  if (storeIds.length > 1) {
-    showGeoToast('Подарочные абонементы из разных заведений нельзя купить вместе — оформите по одному заведению');
-    return;
-  }
   const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
   const label = dirItems.length === 1
     ? `${svgIco('gift',13)} Абонемент «${dirItems[0].sub.name}»`
