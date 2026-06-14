@@ -559,16 +559,15 @@ function _savePushToken(token,uid){
   var bearer=(typeof S!=='undefined'&&S.session&&S.session.access_token)||'';
   var apikey=(typeof SB_ANON!=='undefined'?SB_ANON:'');
   var sbUrl=(typeof SB_URL!=='undefined'?SB_URL:'https://alliby.ru');
-  _dbg('savePushToken uid='+uid+' token='+token.slice(0,12)+'... platform='+platform+' hasBearer='+!!bearer+' hasKey='+!!apikey);
+  _dbg('savePushToken uid='+uid+' token='+token.slice(0,12)+'... platform='+platform+' hasBearer='+!!bearer);
   if(!bearer||!uid||!token)return;
-  var body=JSON.stringify({user_id:uid,app:'client',device_token:token,platform:platform,endpoint:token,p256dh:'',auth_key:''});
-  fetch(sbUrl+'/rest/v1/push_subscriptions',{
+  fetch(sbUrl+'/rest/v1/rpc/save_device_token',{
     method:'POST',
-    headers:{'Content-Type':'application/json','apikey':apikey,'Authorization':'Bearer '+bearer,'Prefer':'resolution=merge-duplicates'},
-    body:body
+    headers:{'Content-Type':'application/json','apikey':apikey,'Authorization':'Bearer '+bearer},
+    body:JSON.stringify({p_user_id:uid,p_app:'client',p_token:token,p_platform:platform})
   }).then(function(r){
-    return r.text().then(function(t){_dbg('fetch status='+r.status+' resp='+t.slice(0,120));});
-  }).catch(function(e){_dbg('fetch error='+e);});
+    return r.text().then(function(t){_dbg('rpc status='+r.status+' resp='+t.slice(0,120));});
+  }).catch(function(e){_dbg('rpc error='+e);});
 }
 
 function _showNativeToast(title,body){
