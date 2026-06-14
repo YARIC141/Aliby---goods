@@ -410,6 +410,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 /* ── SPLASH ── */
 #splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:opacity var(--t-slow) var(--ease-out)}
 #splash.hide{opacity:0;pointer-events:none}
+/* ── AGE GATE ── */
+#age-gate{position:fixed;inset:0;z-index:9998;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;gap:0}
+#age-gate-denied{display:none;text-align:center;padding:32px;color:var(--fg-3);font:400 16px/1.6 var(--font-sans)}
 .sp1,.sp2{font:400 18px/1.4 var(--font-display);color:var(--fg-3);margin:0;font-style:italic;text-align:center}
 .sp3{font:400 52px/1 var(--font-display);letter-spacing:-0.02em;color:var(--accent);margin:6px 0 0}
 .sp-icon{width:100px;height:100px;border-radius:var(--r-4);margin-top:20px;box-shadow:var(--shadow-2)}
@@ -592,6 +595,17 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <p class="sp2">то у тебя есть</p>
   <p class="sp3">Alliby</p>
   <img class="sp-icon" src="favicon.svg" alt="Alliby">
+</div>
+
+<div id="age-gate">
+  <div style="font-size:52px;margin-bottom:16px">🔞</div>
+  <h2 style="font:600 22px/1.3 var(--font-sans);margin-bottom:12px">Вам исполнилось 18 лет?</h2>
+  <p style="color:var(--fg-3);font:400 14px/1.6 var(--font-sans);max-width:280px;margin-bottom:28px">Часть заведений на платформе реализует алкогольную продукцию. Для продолжения необходимо подтвердить возраст.</p>
+  <div style="display:flex;gap:12px;width:100%;max-width:280px">
+    <button class="btn btn-full" onclick="ageGateDeny()">Нет</button>
+    <button class="btn btn-p btn-full" onclick="ageGateAccept()">Да, мне 18+</button>
+  </div>
+  <div id="age-gate-denied" style="display:none;margin-top:20px;color:var(--fg-3);font:400 14px/1.6 var(--font-sans)">Приложение доступно только для лиц старше 18 лет.</div>
 </div>
 
 <div id="app">
@@ -831,6 +845,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="meta-line" id="st-phone"></div>
         <button id="st-delivery-badge" class="btn btn-sm" style="display:none;margin-top:8px" onclick="openDzViewer(S.store)"><svg class="ico" width="13" height="13"><use href="#i-bicycle"/></svg>Доставка · Зоны →</button>
         <button class="btn btn-sm" id="st-sched-btn" style="margin-top:8px" onclick="openStoreSchedule(S.store)"></button>
+        <a id="st-complaint-link" href="#" onclick="openStoreComplaint();return false" style="display:none;margin-top:10px;font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:underline;text-underline-offset:3px">Пожаловаться на заведение</a>
       </div>
     </div>
 
@@ -2869,6 +2884,7 @@ async function loadStore() {
     ['st-cuisine','st-addr','st-hours','st-phone'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
     const db = document.getElementById('st-delivery-badge'); if (db) db.style.display = 'none';
     const sb = document.getElementById('st-sched-btn'); if (sb) { sb.textContent = ''; sb.style.display = 'none'; }
+    const cl = document.getElementById('st-complaint-link'); if (cl) cl.style.display = 'none';
     document.getElementById('store-logo').textContent = '';
     const subs = document.getElementById('store-subs'); if (subs) subs.innerHTML = '';
     const mi = document.getElementById('menu-items');
@@ -2894,6 +2910,7 @@ async function loadStore() {
   document.getElementById('st-phone').textContent  = st.phone || '';
   const delBadgeEl = document.getElementById('st-delivery-badge');
   if (delBadgeEl) delBadgeEl.style.display = (st.delivery_enabled && st.direction !== 'services') ? '' : 'none';
+  const clLink = document.getElementById('st-complaint-link'); if (clLink) clLink.style.display = '';
   const logoEl = document.getElementById('store-logo');
   if (st.image_url) {
     logoEl.innerHTML = `<img src="${esc(st.image_url)}" alt="${esc(st.name)}">`;
@@ -5081,12 +5098,25 @@ async function restoreNav() {
   setTimeout(_prefetchClient, 1500);
 }
 
+// ─── AGE GATE ───
+function ageGateAccept() {
+  localStorage.setItem('alliby_age_ok', '1');
+  document.getElementById('age-gate').style.display = 'none';
+}
+function ageGateDeny() {
+  document.getElementById('age-gate-denied').style.display = 'block';
+  document.getElementById('age-gate').querySelectorAll('h2,p:first-of-type,.btn').forEach(el => el.style.display = 'none');
+}
+
 // ─── SPLASH ───
 function hideSplash() {
   const el = document.getElementById('splash');
   if (!el) return;
   el.classList.add('hide');
   setTimeout(() => el.remove(), 500);
+  if (!localStorage.getItem('alliby_age_ok')) {
+    document.getElementById('age-gate').style.display = 'flex';
+  }
 }
 setTimeout(hideSplash, 500);
 
@@ -5599,8 +5629,30 @@ Email: yarich92@gmail.com
 4.2. Платформа прилагает разумные усилия для проверки информации о Продавцах,
 но не гарантирует достоверность всех материалов карточек товаров.
 
-5. ПЕРСОНАЛЬНЫЕ ДАННЫЕ
-5.1. Оформляя заказ, Покупатель дает согласие на обработку персональных
+5. ОТМЕНА ЗАКАЗА И ВОЗВРАТ СРЕДСТВ
+5.1. Платформа является информационным агентом и не является стороной
+договора между Покупателем и Продавцом. Политику возврата средств,
+сроки и порядок отмены устанавливает каждый Продавец самостоятельно.
+5.2. Порядок отмены заказа и возврата средств устанавливается Продавцом.
+При отмене возврат осуществляется Продавцом в сроки, установленные его
+политикой возврата и правилами банка-эквайера.
+Платформа не несет ответственности за сроки возврата средств Продавцом.
+5.3. Претензии по качеству товара, срокам доставки и возврату денежных средств
+Покупатель предъявляет напрямую Продавцу. Платформа содействует в урегулировании
+споров по письменному обращению Покупателя.
+5.4. Активированный (использованный) абонемент возврату и обмену не подлежит.
+Неиспользованный абонемент может быть возвращён по условиям Продавца.
+
+6. ПОРЯДОК ПОДАЧИ ЖАЛОБ
+6.1. Жалобы на действия Продавцов, недостоверность информации о заведении
+или нарушение настоящего Соглашения направляются на: yarich92@gmail.com.
+6.2. Платформа рассматривает обращение в срок до 7 (семи) рабочих дней
+и уведомляет заявителя о принятых мерах.
+6.3. В случае неурегулирования спора Покупатель вправе обратиться в Роспотребнадзор
+или в суд по месту нахождения Оператора Платформы (г. Самара).
+
+7. ПЕРСОНАЛЬНЫЕ ДАННЫЕ
+7.1. Оформляя заказ, Покупатель дает согласие на обработку персональных
 данных Платформе и Продавцу с целью исполнения заказа.
 Политика обработки персональных данных: https://site.alliby.ru/privacy
 
@@ -6357,6 +6409,14 @@ async function myBookingsPrevMonth() {
 async function myBookingsNextMonth() {
   if (_myBk.month === 11) { _myBk.month = 0; _myBk.year++; } else _myBk.month++;
   await loadBookingsScreen();
+}
+
+function openStoreComplaint() {
+  const st = S.store;
+  const name = st?.name || 'заведение';
+  const subject = encodeURIComponent(`Жалоба на заведение: ${name}`);
+  const body = encodeURIComponent(`Название заведения: ${name}\nID: ${st?.id || ''}\n\nОпишите проблему:\n`);
+  window.open(`mailto:yarich92@gmail.com?subject=${subject}&body=${body}`, '_blank');
 }
 
 function openStoreScheduleById(id) {
