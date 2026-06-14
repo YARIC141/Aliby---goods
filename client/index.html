@@ -917,6 +917,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <div id="ctab-cart-pane" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
       <div id="sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
         <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted);display:flex;align-items:center;gap:6px"><svg class="ico" width="16" height="16"><use href="#i-ticket"/></svg>Абонементы к покупке</div>
+        <div id="sub-cart-store-lbl" style="padding:2px 16px 4px;font-size:12px;color:var(--accent);font-weight:500"></div>
         <div id="sub-cart-list"></div>
         <div style="padding:8px 16px 12px">
           <button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button>
@@ -924,6 +925,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       </div>
       <div id="gift-sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
         <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted);display:flex;align-items:center;gap:6px"><svg class="ico" width="16" height="16"><use href="#i-gift"/></svg>Подарочные абонементы</div>
+        <div id="gift-cart-store-lbl" style="padding:2px 16px 0;font-size:12px;color:var(--accent);font-weight:500"></div>
         <div style="padding:2px 16px 6px;font-size:13px;color:var(--muted)">Срок начинается с момента покупки</div>
         <div id="gift-sub-cart-list"></div>
         <div style="padding:8px 16px 12px">
@@ -4260,7 +4262,9 @@ async function renderCart() {
   }
   foot.style.display = 'block';
   const alloc = getCartSubAllocation();
-  body.innerHTML = S.cart.map(({ item, qty }) => {
+  const cartStoreName = getCartStore()?.name || '';
+  const cartStoreHdr = cartStoreName ? `<div style="padding:6px 16px 4px;font-size:12px;color:var(--accent);font-weight:500">${esc(cartStoreName)}</div>` : '';
+  body.innerHTML = cartStoreHdr + S.cart.map(({ item, qty }) => {
     const fullSum = item.price * qty;
     const info = alloc?.perItem.get(item.id);
     const { covered = 0, uncovered = qty, disc = 0 } = info || {};
@@ -4678,6 +4682,9 @@ function renderSubCartSection() {
   const items = S.subCart.filter(c => (c.direction || 'food') === S.direction);
   if (!items.length) { sect.style.display = 'none'; return; }
   sect.style.display = 'block';
+  const subStoreName = (items[0]?.sub.store_id && S.allStores?.find(s => s.id === items[0].sub.store_id)?.name) || S.store?.name || '';
+  const subLbl = document.getElementById('sub-cart-store-lbl');
+  if (subLbl) subLbl.textContent = subStoreName;
   list.innerHTML = items.map(({ sub }) =>
     `<div class="cart-item">
       <div class="ci-info">
@@ -4696,6 +4703,9 @@ function renderGiftCartSection() {
   const items = S.giftSubCart.filter(c => (c.direction || 'food') === S.direction);
   if (!items.length) { sect.style.display = 'none'; return; }
   sect.style.display = 'block';
+  const giftStoreName = (items[0]?.sub.store_id && S.allStores?.find(s => s.id === items[0].sub.store_id)?.name) || S.store?.name || '';
+  const giftLbl = document.getElementById('gift-cart-store-lbl');
+  if (giftLbl) giftLbl.textContent = giftStoreName;
   list.innerHTML = items.map(({ sub }) =>
     `<div class="cart-item">
       <div class="ci-info">
