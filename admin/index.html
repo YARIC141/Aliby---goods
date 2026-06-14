@@ -691,6 +691,30 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
 
+    <div class="sec" id="p-sec-legal">
+      <div class="sec-title">Юридические данные<span class="hint" data-tip="ИНН, ОГРН и наименование одинаковы для всех ваших заведений. Отображаются клиенту в разделе «Реквизиты продавца» на странице каждого заведения (ФЗ «О защите прав потребителей» ст. 26.1).">?</span></div>
+      <div class="card" style="display:flex;flex-direction:column;gap:10px">
+        <div class="fg" style="margin:0">
+          <label>Юридическое наименование</label>
+          <input type="text" id="p-legal-name" placeholder="ООО «Название» или ИП Иванов Иван Иванович">
+        </div>
+        <div class="grid2" style="gap:10px">
+          <div class="fg" style="margin:0">
+            <label>ИНН</label>
+            <input type="text" id="p-inn" placeholder="1234567890" maxlength="12">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>ОГРН / ОГРНИП</label>
+            <input type="text" id="p-ogrn" placeholder="1234567890123" maxlength="15">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn btn-p" onclick="saveLegalData()">Сохранить</button>
+          <div id="p-legal-msg" style="display:none;font-size:12px"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="sec" id="p-sec-stores-subs">
       <div class="sec-title">Заведения и подписки</div>
       <button class="btn btn-full" id="p-stores-subs-btn" onclick="openStoresSubsModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
@@ -1283,23 +1307,6 @@ tr.row-click:hover td{background:var(--bg-2)}
       <div class="fg" style="grid-column:1/-1">
         <label>Средний чек (₽)<span class="hint" data-tip="Отображается на маркере заведения на карте клиентского приложения. Пусто — не показывать.">?</span></label>
         <input type="number" id="ms-avg" min="0" placeholder="Пусто — не показывать на карте">
-      </div>
-    </div>
-    <div style="margin:0 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-1)">
-      <div style="font:600 13px/1 var(--font-sans);color:var(--fg-3);margin-bottom:10px">Юридические данные продавца <span class="hint" data-tip="Обязательно по ФЗ «О защите прав потребителей» (ст. 26.1) при дистанционной торговле. Отображаются клиенту на странице заведения.">?</span></div>
-      <div class="grid2" style="gap:10px">
-        <div class="fg" style="grid-column:1/-1">
-          <label>Юридическое наименование</label>
-          <input type="text" id="ms-legal-name" placeholder="ООО «Название» или ИП Иванов Иван Иванович">
-        </div>
-        <div class="fg">
-          <label>ИНН</label>
-          <input type="text" id="ms-inn" placeholder="1234567890" maxlength="12">
-        </div>
-        <div class="fg">
-          <label>ОГРН / ОГРНИП</label>
-          <input type="text" id="ms-ogrn" placeholder="1234567890123" maxlength="15">
-        </div>
       </div>
     </div>
     <div style="margin-bottom:12px">
@@ -2135,8 +2142,13 @@ async function loadProfile() {
       const roleLabels = { admin: 'Администратор', employee: 'Сотрудник', user: 'Пользователь' };
       document.getElementById('p-role').textContent = roleLabels[profs[0].role] || profs[0].role || '';
       document.getElementById('p-phone').value = profs[0].phone || '';
+      document.getElementById('p-legal-name').value = profs[0].legal_name || '';
+      document.getElementById('p-inn').value         = profs[0].inn || '';
+      document.getElementById('p-ogrn').value        = profs[0].ogrn || '';
     }
   } catch(e) {}
+  const legalSec = document.getElementById('p-sec-legal');
+  if (legalSec) legalSec.style.display = S.profile?.role === 'employee' ? 'none' : '';
   applyRoleRestrictions();
   if (S.profile?.role !== 'employee') {
     await loadStoreSubscriptions();
@@ -2424,6 +2436,26 @@ async function savePhone() {
       body: JSON.stringify({ phone: phone || null }),
     });
     msg.textContent = phone ? 'Сохранено' : 'Телефон удалён';
+    msg.style.cssText = 'display:block;color:var(--ok)';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  } catch(e) {
+    msg.textContent = 'Ошибка: ' + (e.message || '');
+    msg.style.cssText = 'display:block;color:var(--err)';
+  }
+}
+
+async function saveLegalData() {
+  const msg = document.getElementById('p-legal-msg');
+  try {
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        legal_name: document.getElementById('p-legal-name').value.trim() || null,
+        inn:        document.getElementById('p-inn').value.trim() || null,
+        ogrn:       document.getElementById('p-ogrn').value.trim() || null,
+      }),
+    });
+    msg.textContent = 'Сохранено';
     msg.style.cssText = 'display:block;color:var(--ok)';
     setTimeout(() => { msg.style.display = 'none'; }, 2000);
   } catch(e) {
@@ -3030,9 +3062,6 @@ async function openStoreModal(store) {
   document.getElementById('ms-dir').value     = store?.direction || 'food';
   document.getElementById('ms-color').value   = store?._loc?.marker_color || '#e8430a';
   document.getElementById('ms-avg').value        = store?.avg_order_amount ?? '';
-  document.getElementById('ms-legal-name').value = store?.legal_name || '';
-  document.getElementById('ms-inn').value         = store?.inn  || '';
-  document.getElementById('ms-ogrn').value        = store?.ogrn || '';
   document.getElementById('ms-image-url').value   = store?.image_url || '';
   _restoreStoreImgPreview(store?.image_url || '');
   await loadStoreCategoriesFiltered();
@@ -3261,9 +3290,6 @@ async function saveStore() {
     city:               document.getElementById('ms-city').value || S.city || '',
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
-    legal_name:         document.getElementById('ms-legal-name').value || null,
-    inn:                document.getElementById('ms-inn').value  || null,
-    ogrn:               document.getElementById('ms-ogrn').value || null,
     image_url:          document.getElementById('ms-image-url').value || null,
     delivery_enabled:   document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
   };

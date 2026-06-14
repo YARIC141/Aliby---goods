@@ -2924,18 +2924,21 @@ async function loadStore() {
   const clLink = document.getElementById('st-complaint-link'); if (clLink) clLink.style.display = '';
   const legalSec = document.getElementById('store-legal-sec');
   const legalBody = document.getElementById('store-legal-body');
-  if (legalSec && legalBody) {
-    const hasLegal = st.legal_name || st.inn || st.ogrn;
-    legalSec.style.display = hasLegal ? '' : 'none';
-    legalBody.style.display = 'none';
-    legalSec.querySelector('.sl-arrow').textContent = '▼';
-    if (hasLegal) {
+  if (legalSec) legalSec.style.display = 'none';
+  if (st.user_id && legalSec && legalBody) {
+    req('/rest/v1/rpc/get_store_legal_info', {
+      method: 'POST', body: JSON.stringify({ p_store_id: st.id }),
+    }).then(legal => {
+      if (!legal || (!legal.legal_name && !legal.inn && !legal.ogrn)) return;
+      legalBody.style.display = 'none';
+      legalSec.querySelector('.sl-arrow').textContent = '▼';
       legalBody.innerHTML = [
-        st.legal_name ? `<div>${esc(st.legal_name)}</div>` : '',
-        st.inn  ? `<div>ИНН: ${esc(st.inn)}</div>` : '',
-        st.ogrn ? `<div>ОГРН/ОГРНИП: ${esc(st.ogrn)}</div>` : '',
+        legal.legal_name ? `<div>${esc(legal.legal_name)}</div>` : '',
+        legal.inn  ? `<div>ИНН: ${esc(legal.inn)}</div>` : '',
+        legal.ogrn ? `<div>ОГРН/ОГРНИП: ${esc(legal.ogrn)}</div>` : '',
       ].join('');
-    }
+      legalSec.style.display = '';
+    }).catch(() => {});
   }
   const logoEl = document.getElementById('store-logo');
   if (st.image_url) {
