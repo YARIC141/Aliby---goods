@@ -701,11 +701,13 @@ tr.row-click:hover td{background:var(--bg-2)}
         <div class="grid2" style="gap:10px">
           <div class="fg" style="margin:0">
             <label>ИНН</label>
-            <input type="text" id="p-inn" placeholder="1234567890" maxlength="12">
+            <input type="text" id="p-inn" placeholder="1234567890" maxlength="12" inputmode="numeric" oninput="_validateInnInput(this,'p-inn-hint')">
+            <div id="p-inn-hint" style="font-size:11px;margin-top:3px;color:var(--fg-4)">10 цифр — ООО/АО · 12 цифр — ИП</div>
           </div>
           <div class="fg" style="margin:0">
             <label>ОГРН / ОГРНИП</label>
-            <input type="text" id="p-ogrn" placeholder="1234567890123" maxlength="15">
+            <input type="text" id="p-ogrn" placeholder="1234567890123" maxlength="15" inputmode="numeric" oninput="_validateOgrnInput(this,'p-ogrn-hint')">
+            <div id="p-ogrn-hint" style="font-size:11px;margin-top:3px;color:var(--fg-4)">13 цифр — ООО · 15 цифр — ОГРНИП</div>
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
@@ -1027,6 +1029,34 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
     <div id="mbd-body" style="display:flex;flex-direction:column;gap:14px"></div>
     <div class="modal-ft" id="mbd-actions" style="margin-top:16px;flex-wrap:wrap;gap:8px"></div>
+  </div>
+</div>
+
+<!-- ════════════════ LEGAL REQUIRED MODAL ════════════════ -->
+<div class="overlay" id="m-legal-required">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd"><h3>Юридические данные продавца</h3></div>
+    <p style="font-size:13px;color:var(--fg-3);margin-bottom:14px">Необходимо для заключения договора. Отображаются клиенту на странице вашего заведения (ст. 26.1 ЗОПП).</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="fg" style="margin:0">
+        <label>Юридическое наименование <span style="color:var(--err)">*</span></label>
+        <input type="text" id="mlr-legal-name" placeholder="ООО «Название» или ИП Иванов Иван Иванович">
+      </div>
+      <div class="fg" style="margin:0">
+        <label>ИНН <span style="color:var(--err)">*</span></label>
+        <input type="text" id="mlr-inn" placeholder="10 или 12 цифр" maxlength="12" inputmode="numeric" oninput="_validateInnInput(this,'mlr-inn-hint')">
+        <div id="mlr-inn-hint" style="font-size:11px;margin-top:3px;color:var(--fg-4)">10 цифр — ООО/АО · 12 цифр — ИП</div>
+      </div>
+      <div class="fg" style="margin:0">
+        <label>ОГРН / ОГРНИП</label>
+        <input type="text" id="mlr-ogrn" placeholder="13 или 15 цифр" maxlength="15" inputmode="numeric" oninput="_validateOgrnInput(this,'mlr-ogrn-hint')">
+        <div id="mlr-ogrn-hint" style="font-size:11px;margin-top:3px;color:var(--fg-4)">13 цифр — ООО · 15 цифр — ОГРНИП</div>
+      </div>
+    </div>
+    <div id="mlr-err" style="display:none;font-size:12px;color:var(--err);margin-top:10px"></div>
+    <div class="modal-ft">
+      <button id="mlr-btn" class="btn btn-p btn-full" onclick="saveLegalRequired()">Продолжить →</button>
+    </div>
   </div>
 </div>
 
@@ -2461,6 +2491,75 @@ async function saveLegalData() {
   } catch(e) {
     msg.textContent = 'Ошибка: ' + (e.message || '');
     msg.style.cssText = 'display:block;color:var(--err)';
+  }
+}
+
+// ─── INN / OGRN VALIDATION ───
+function validateInn(inn) {
+  if (!/^\d{10}$|^\d{12}$/.test(inn)) return false;
+  const d = inn.split('').map(Number);
+  if (inn.length === 10) {
+    return [2,4,10,3,5,9,4,6,8].reduce((s,k,i) => s + k*d[i], 0) % 11 % 10 === d[9];
+  }
+  const n11 = [7,2,4,10,3,5,9,4,6,8].reduce((s,k,i) => s + k*d[i], 0) % 11 % 10;
+  const n12 = [3,7,2,4,10,3,5,9,4,6,8].reduce((s,k,i) => s + k*d[i], 0) % 11 % 10;
+  return n11 === d[10] && n12 === d[11];
+}
+
+function validateOgrn(ogrn) {
+  if (!/^\d{13}$|^\d{15}$/.test(ogrn)) return false;
+  if (ogrn.length === 13) return (parseInt(ogrn.slice(0,12)) % 11) % 10 === +ogrn[12];
+  return (parseInt(ogrn.slice(0,14)) % 13) % 10 === +ogrn[14];
+}
+
+function _validateInnInput(el, hintId) {
+  const hint = document.getElementById(hintId);
+  if (!hint) return;
+  const v = el.value.replace(/\D/g, '');
+  el.value = v;
+  if (!v) { hint.textContent = '10 цифр — ООО/АО · 12 цифр — ИП'; hint.style.color = 'var(--fg-4)'; return; }
+  if (v.length !== 10 && v.length !== 12) { hint.textContent = `Введено ${v.length} цифр (нужно 10 или 12)`; hint.style.color = 'var(--warn)'; return; }
+  if (validateInn(v)) { hint.textContent = `✓ ИНН ${v.length === 10 ? 'юридического лица' : 'ИП'} корректен`; hint.style.color = 'var(--ok)'; }
+  else { hint.textContent = '✗ Контрольная цифра не совпадает — проверьте ввод'; hint.style.color = 'var(--err)'; }
+}
+
+function _validateOgrnInput(el, hintId) {
+  const hint = document.getElementById(hintId);
+  if (!hint) return;
+  const v = el.value.replace(/\D/g, '');
+  el.value = v;
+  if (!v) { hint.textContent = '13 цифр — ООО · 15 цифр — ОГРНИП'; hint.style.color = 'var(--fg-4)'; return; }
+  if (v.length !== 13 && v.length !== 15) { hint.textContent = `Введено ${v.length} цифр (нужно 13 или 15)`; hint.style.color = 'var(--warn)'; return; }
+  if (validateOgrn(v)) { hint.textContent = `✓ ОГРН${v.length === 15 ? 'ИП' : ''} корректен`; hint.style.color = 'var(--ok)'; }
+  else { hint.textContent = '✗ Контрольная цифра не совпадает — проверьте ввод'; hint.style.color = 'var(--err)'; }
+}
+
+async function saveLegalRequired() {
+  const btn  = document.getElementById('mlr-btn');
+  const err  = document.getElementById('mlr-err');
+  const name = document.getElementById('mlr-legal-name').value.trim();
+  const inn  = document.getElementById('mlr-inn').value.trim();
+  const ogrn = document.getElementById('mlr-ogrn').value.trim();
+  err.style.display = 'none';
+  if (!name) { err.textContent = 'Укажите юридическое наименование'; err.style.display = ''; return; }
+  if (!inn)  { err.textContent = 'Укажите ИНН'; err.style.display = ''; return; }
+  if (!validateInn(inn)) { err.textContent = 'ИНН не прошёл проверку контрольной цифры. Проверьте правильность ввода.'; err.style.display = ''; return; }
+  if (ogrn && !validateOgrn(ogrn)) { err.textContent = 'ОГРН/ОГРНИП не прошёл проверку контрольной цифры. Проверьте правильность ввода.'; err.style.display = ''; return; }
+  btn.disabled = true; btn.textContent = 'Сохранение…';
+  try {
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ legal_name: name, inn, ogrn: ogrn || null }),
+    });
+    if (S.profile) { S.profile.legal_name = name; S.profile.inn = inn; S.profile.ogrn = ogrn || null; }
+    const pName = document.getElementById('p-legal-name'); if (pName) pName.value = name;
+    const pInn  = document.getElementById('p-inn');        if (pInn)  pInn.value  = inn;
+    const pOgrn = document.getElementById('p-ogrn');       if (pOgrn) pOgrn.value = ogrn;
+    closeModal('m-legal-required');
+    _showContractModal();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Продолжить →';
+    err.textContent = 'Ошибка сохранения: ' + (e.message || ''); err.style.display = '';
   }
 }
 
@@ -5234,7 +5333,7 @@ function _renderContractText(tpl) {
   return text;
 }
 const SELLER_CONTRACT = {
-  version: '2026-06-14',
+  version: '2026-06-14-v2',
   text: `ЛИЦЕНЗИОННЫЙ ДОГОВОР (ПУБЛИЧНАЯ ОФЕРТА)
 на право использования программного обеспечения
 
@@ -5334,6 +5433,18 @@ Email: yarich92@gmail.com
 настоящего Договора и блокировки Личного кабинета Продавца без возврата
 оплаченного периода.
 
+5.6. ДОСТОВЕРНОСТЬ ПРЕДОСТАВЛЯЕМЫХ ДАННЫХ.
+Продавец гарантирует, что все сведения, указанные при регистрации
+и размещённые в Сервисе (юридическое наименование, ИНН, ОГРН, описания
+товаров, цены, состав, аллергены, фотографии), являются достоверными
+и актуальными на момент их предоставления.
+Продавец обязуется незамедлительно обновлять данные при их изменении.
+Продавец несёт полную гражданско-правовую ответственность за убытки
+Покупателей и Лицензиара, возникшие вследствие предоставления заведомо
+ложных или устаревших сведений (ст. 12 Закона РФ №2300-1, ст. 14.7 КоАП РФ).
+Лицензиар вправе заблокировать Личный кабинет Продавца без возврата
+оплаченного периода при установлении факта предоставления ложных данных.
+
 6. КОНФИДЕНЦИАЛЬНОСТЬ И ПЕРСОНАЛЬНЫЕ ДАННЫЕ
 6.1. Лицензиар принимает технические и организационные меры защиты персональных
 данных Продавца и Покупателей в соответствии с ФЗ-152.
@@ -5361,16 +5472,7 @@ async function _sha256(text) {
 
 let _contractNext = null;
 
-async function requireContract(type, next) {
-  if (!S.session) { next(); return; }
-  try {
-    const contract = type === 'seller' ? SELLER_CONTRACT : null;
-    if (!contract) { next(); return; }
-    const uid = S.session.user.id;
-    const sigs = await req(`/rest/v1/contract_signatures?user_id=eq.${uid}&contract=eq.${type}&version=eq.${contract.version}&select=id&limit=1`);
-    if (sigs.length) { next(); return; }
-  } catch(e) { next(); return; }
-  _contractNext = next;
+function _showContractModal() {
   const scroll = document.getElementById('mcs-scroll');
   const text   = document.getElementById('mcs-text');
   const accept = document.getElementById('mcs-accept');
@@ -5383,6 +5485,30 @@ async function requireContract(type, next) {
   btn.textContent   = 'Подписать';
   scroll.scrollTop  = 0;
   openModal('m-contract-seller');
+}
+
+async function requireContract(type, next) {
+  if (!S.session) { next(); return; }
+  try {
+    const contract = type === 'seller' ? SELLER_CONTRACT : null;
+    if (!contract) { next(); return; }
+    const uid = S.session.user.id;
+    const sigs = await req(`/rest/v1/contract_signatures?user_id=eq.${uid}&contract=eq.${type}&version=eq.${contract.version}&select=id&limit=1`);
+    if (sigs.length) { next(); return; }
+  } catch(e) { next(); return; }
+  _contractNext = next;
+  // If profile missing legal data — show legal form first
+  if (!S.profile?.inn || !S.profile?.legal_name) {
+    document.getElementById('mlr-legal-name').value = S.profile?.legal_name || '';
+    document.getElementById('mlr-inn').value         = S.profile?.inn  || '';
+    document.getElementById('mlr-ogrn').value        = S.profile?.ogrn || '';
+    document.getElementById('mlr-err').style.display = 'none';
+    const mlrBtn = document.getElementById('mlr-btn');
+    mlrBtn.disabled = false; mlrBtn.textContent = 'Продолжить →';
+    openModal('m-legal-required');
+    return;
+  }
+  _showContractModal();
 }
 
 function onContractScroll(prefix) {
