@@ -131,23 +131,11 @@ Deno.serve(async (req: Request) => {
     provider,
   }
 
-  // provider = none → emulation (in-app card form)
-  if (provider === "none") {
-    const paymentToken = crypto.randomUUID()
-    const { data: intent, error: intentError } = await serviceClient
-      .from("payment_intents")
-      .insert({ ...intentBase, payment_token: paymentToken })
-      .select("id").single()
+  if (provider === "none")
+    return jsonResponse({ error: "Настройте провайдера эквайринга в admin → Интернет-эквайринг." }, 400)
 
-    if (intentError || !intent)
-      return jsonResponse({ error: "Failed to create payment intent: " + (intentError?.message ?? "unknown") }, 500)
-
-    return jsonResponse({ intent_id: intent.id, payment_token: paymentToken, amount: total_amount })
-  }
-
-  if (provider !== "tinkoff") {
+  if (provider !== "tinkoff")
     return jsonResponse({ error: "Provider '" + provider + "' not yet supported." }, 400)
-  }
 
   // Get keys from user_payment_settings
   const { data: ups } = await serviceClient

@@ -26,9 +26,9 @@ CREATE POLICY "user_own_intents" ON payment_intents
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
--- pg_cron: delete abandoned intents older than 2 hours, runs every hour
+-- pg_cron: delete abandoned intents older than 25h (T-Bank link TTL = 24h), runs daily at 02:00
 SELECT cron.schedule(
   'cleanup-payment-intents',
-  '0 * * * *',
-  $$DELETE FROM payment_intents WHERE created_at < NOW() - INTERVAL '2 hours'$$
+  '0 2 * * *',
+  $$DELETE FROM payment_intents WHERE created_at < NOW() - INTERVAL '25 hours'$$
 );
