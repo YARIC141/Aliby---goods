@@ -1,4 +1,11 @@
 node_modules/
-android/
-ios/
 dist/
+# Android: исключаем сгенерированные артефакты, но сохраняем исходники
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+# iOS
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/.xcode.env.local

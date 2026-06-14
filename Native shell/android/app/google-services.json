@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "ЗАМЕНИТЕ_НА_НОМЕР_ПРОЕКТА",
+    "project_id": "ЗАМЕНИТЕ_НА_PROJECT_ID",
+    "storage_bucket": "ЗАМЕНИТЕ_НА_PROJECT_ID.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:НОМЕР_ПРОЕКТА:android:ХЭШ",
+        "android_client_info": {
+          "package_name": "ru.alliby.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "ЗАМЕНИТЕ_НА_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

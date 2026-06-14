@@ -20,5 +20,8 @@
     "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/status-bar": "^8.0.2",
     "@capawesome/capacitor-badge": "^8.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
   }
 }

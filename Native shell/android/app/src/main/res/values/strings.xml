@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Alliby</string>
+    <string name="title_activity_main">Alliby</string>
+    <string name="package_name">ru.alliby.app</string>
+    <string name="custom_url_scheme">ru.alliby.app</string>
+    <!-- FCM notification channels -->
+    <string name="default_notification_channel_id">alliby_orders</string>
+    <string name="channel_orders_name">Заказы</string>
+    <string name="channel_orders_desc">Уведомления о статусе ваших заказов</string>
+    <string name="channel_bookings_name">Записи</string>
+    <string name="channel_bookings_desc">Уведомления о бронированиях</string>
+</resources>
