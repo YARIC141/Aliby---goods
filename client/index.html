@@ -556,7 +556,7 @@ function _dbg(msg){console.log('[AllibyBridge] '+msg);}
 function _savePushToken(token,uid){
   var c=_cap();
   var platform=(c&&c.getPlatform&&c.getPlatform())||'android';
-  var bearer=(window.S&&S.session&&S.session.access_token)||'';
+  var bearer=(typeof S!=='undefined'&&S.session&&S.session.access_token)||'';
   _dbg('savePushToken uid='+uid+' token='+token.slice(0,12)+'... platform='+platform+' hasBearer='+!!bearer);
   if(!bearer||!uid||!token)return;
   fetch('/rest/v1/push_subscriptions',{
@@ -650,7 +650,7 @@ document.addEventListener('deviceready',function(){
   var App=_P().App;
   if(App){
     App.addListener('appStateChange',function(s){
-      if(s.isActive&&typeof realtimeSubscribeOrders==='function'&&window.S&&S.session&&S.session.user){
+      if(s.isActive&&typeof realtimeSubscribeOrders==='function'&&typeof S!=='undefined'&&S.session&&S.session.user){
         realtimeSubscribeOrders(S.session.user.id);
       }
     });
@@ -664,7 +664,7 @@ document.addEventListener('deviceready',function(){
     SB.setBackgroundColor({color:dark?'#0f0f0f':'#ffffff'});
   }
   // Если сессия уже восстановлена из localStorage до deviceready — регистрируем пуш
-  if(window.S&&S.session&&S.session.user&&S.session.user.id){
+  if(typeof S!=='undefined'&&S.session&&S.session.user&&S.session.user.id){
     window.AllibyBridge.registerPush(S.session.user.id);
   }
 },{once:true});
