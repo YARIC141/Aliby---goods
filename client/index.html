@@ -541,15 +541,19 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 </script>
 <script>
 // ─── NATIVE BRIDGE ───
+// window.Capacitor инжектируется Capacitor через evaluateJavascript в onPageFinished,
+// поэтому проверяем его лениво при каждом вызове, а не один раз при загрузке скрипта.
 (function(){
 'use strict';
-var _cap=window.Capacitor;
-var isNative=!!(_cap&&_cap.isNativePlatform&&_cap.isNativePlatform());
-var _P=isNative?_cap.Plugins:{};
 var _pushInited=false;
 
+function _cap(){return window.Capacitor||null;}
+function _isNative(){var c=_cap();return !!(c&&c.isNativePlatform&&c.isNativePlatform());}
+function _P(){var c=_cap();return c&&c.Plugins||{};}
+
 function _savePushToken(token,uid){
-  var platform=(_cap&&_cap.getPlatform&&_cap.getPlatform())||'android';
+  var c=_cap();
+  var platform=(c&&c.getPlatform&&c.getPlatform())||'android';
   var bearer=(window.S&&S.session&&S.session.access_token)||'';
   if(!bearer||!uid||!token)return;
   fetch('/rest/v1/push_subscriptions',{
@@ -570,14 +574,15 @@ function _showNativeToast(title,body){
 window.AllibyBridge={
 
   registerPush:function(uid){
-    if(!isNative||!_P.PushNotifications||_pushInited)return;
+    if(!_isNative()||!_P().PushNotifications||_pushInited)return;
     _pushInited=true;
-    _P.PushNotifications.requestPermissions().then(function(perm){
+    var PN=_P().PushNotifications;
+    PN.requestPermissions().then(function(perm){
       if(perm.receive!=='granted')return;
-      _P.PushNotifications.register();
-      _P.PushNotifications.addListener('registration',function(t){_savePushToken(t.value,uid);});
-      _P.PushNotifications.addListener('pushNotificationReceived',function(n){_showNativeToast(n.title,n.body);});
-      _P.PushNotifications.addListener('pushNotificationActionPerformed',function(a){
+      PN.register();
+      PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
+      PN.addListener('pushNotificationReceived',function(n){_showNativeToast(n.title,n.body);});
+      PN.addListener('pushNotificationActionPerformed',function(a){
         var data=a.notification.data||{};
         if(typeof goTo==='function'){
           if(data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued')goTo('calenabs');
@@ -588,14 +593,14 @@ window.AllibyBridge={
   },
 
   clearPush:function(){
-    if(!isNative||!_P.PushNotifications)return;
-    _P.PushNotifications.removeAllListeners();
+    if(!_isNative()||!_P().PushNotifications)return;
+    _P().PushNotifications.removeAllListeners();
     _pushInited=false;
   },
 
   requestLocation:function(){
-    if(isNative&&_P.Geolocation){
-      return _P.Geolocation.getCurrentPosition({enableHighAccuracy:true,timeout:8000})
+    if(_isNative()&&_P().Geolocation){
+      return _P().Geolocation.getCurrentPosition({enableHighAccuracy:true,timeout:8000})
         .then(function(r){return{lat:r.coords.latitude,lng:r.coords.longitude,accuracy:r.coords.accuracy};});
     }
     return new Promise(function(res,rej){
@@ -608,9 +613,9 @@ window.AllibyBridge={
   },
 
   haptic:function(style){
-    if(isNative&&_P.Haptics){
+    if(_isNative()&&_P().Haptics){
       var m={light:'LIGHT',medium:'MEDIUM',heavy:'HEAVY'};
-      _P.Haptics.impact({style:m[style]||'MEDIUM'});
+      _P().Haptics.impact({style:m[style]||'MEDIUM'});
       return;
     }
     var d={light:30,medium:60,heavy:100};
@@ -618,33 +623,42 @@ window.AllibyBridge={
   },
 
   setBadge:function(count){
-    if(isNative&&_P.Badge){count>0?_P.Badge.set({count:count}):_P.Badge.clear();return;}
+    if(_isNative()&&_P().Badge){count>0?_P().Badge.set({count:count}):_P().Badge.clear();return;}
     if(navigator.setAppBadge)count>0?navigator.setAppBadge(count):navigator.clearAppBadge();
   },
 
   setTheme:function(dark){
-    if(!isNative||!_P.StatusBar)return;
-    _P.StatusBar.setStyle({style:dark?'DARK':'LIGHT'});
-    _P.StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#ffffff'});
+    if(!_isNative()||!_P().StatusBar)return;
+    _P().StatusBar.setStyle({style:dark?'DARK':'LIGHT'});
+    _P().StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#ffffff'});
   },
 };
 
-// App lifecycle: reconnect WS on foreground
-if(isNative&&_P.App){
-  _P.App.addListener('appStateChange',function(s){
-    if(s.isActive&&typeof realtimeSubscribeOrders==='function'&&window.S&&S.session&&S.session.user){
-      realtimeSubscribeOrders(S.session.user.id);
-    }
-  });
-  _P.App.addListener('backButton',function(){if(typeof goBack==='function')goBack();});
-}
-
-// Начальная тема статус-бара
-var _initDark=document.documentElement.classList.contains('dark');
-if(isNative&&_P.StatusBar){
-  _P.StatusBar.setStyle({style:_initDark?'DARK':'LIGHT'});
-  _P.StatusBar.setBackgroundColor({color:_initDark?'#0f0f0f':'#ffffff'});
-}
+// Capacitor инжектируется после загрузки страницы — ждём deviceready.
+// Если пользователь уже залогинен (сохранённая сессия), регистрируем пуш здесь.
+document.addEventListener('deviceready',function(){
+  // Lifecycle listeners
+  var App=_P().App;
+  if(App){
+    App.addListener('appStateChange',function(s){
+      if(s.isActive&&typeof realtimeSubscribeOrders==='function'&&window.S&&S.session&&S.session.user){
+        realtimeSubscribeOrders(S.session.user.id);
+      }
+    });
+    App.addListener('backButton',function(){if(typeof goBack==='function')goBack();});
+  }
+  // Тема статус-бара
+  var SB=_P().StatusBar;
+  if(SB){
+    var dark=document.documentElement.classList.contains('dark');
+    SB.setStyle({style:dark?'DARK':'LIGHT'});
+    SB.setBackgroundColor({color:dark?'#0f0f0f':'#ffffff'});
+  }
+  // Если сессия уже восстановлена из localStorage до deviceready — регистрируем пуш
+  if(window.S&&S.session&&S.session.user&&S.session.user.id){
+    window.AllibyBridge.registerPush(S.session.user.id);
+  }
+},{once:true});
 })();
 </script>
 </head>
