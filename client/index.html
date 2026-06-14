@@ -1236,7 +1236,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     <div id="mi-price" class="item-price" style="margin-bottom:10px"></div>
     <div id="mi-subs"></div>
     <div class="modal-ft" style="margin-top:14px">
-      <button id="mi-cart-btn" class="btn btn-p btn-full" onclick="addToCartFromDetail()">В заказ</button>
+      <button id="mi-cart-btn" class="btn btn-p btn-full" onclick="addToCartFromDetail()">В корзину</button>
     </div>
   </div>
 </div>
@@ -3328,6 +3328,7 @@ function itemFallbackImg(item, alt) {
 
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
+  if (item.is_alcohol) return '';
   if (S.direction === 'services') {
     if (_schedulePreselect) {
       return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();bookWithPreselect(this,itemCache.get('${item.id}'))">Записаться ${_schedulePreselect.start}</button>`;
@@ -3336,7 +3337,7 @@ function itemActions(item, qty) {
   }
   return qty > 0
     ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
-    : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В заказ</button>`;
+    : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В корзину</button>`;
 }
 
 function updateItemCardInPlace(id) {
@@ -3428,13 +3429,18 @@ function openItemDetail(id) {
   }
 
   const btn = document.getElementById('mi-cart-btn');
-  btn.disabled = !item.is_available;
-  if (S.direction === 'services' && item.is_available) {
-    btn.textContent = 'Записаться';
-    btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
+  if (item.is_alcohol) {
+    btn.style.display = 'none';
   } else {
-    btn.textContent = item.is_available ? 'В заказ' : 'Недоступно';
-    btn.onclick = addToCartFromDetail;
+    btn.style.display = '';
+    btn.disabled = !item.is_available;
+    if (S.direction === 'services' && item.is_available) {
+      btn.textContent = 'Записаться';
+      btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
+    } else {
+      btn.textContent = item.is_available ? 'В корзину' : 'Недоступно';
+      btn.onclick = addToCartFromDetail;
+    }
   }
   openModal('m-item');
 }
@@ -5867,6 +5873,9 @@ async function doCheckout(useSubscription = false) {
         subscription_discount: subDiscount,
         applied_user_subscription_id: appliedUsSubId,
         payment_method: paymentMethod,
+        is_delivery: S.deliveryMode === 'delivery',
+        delivery_fee: S.deliveryFee || 0,
+        delivery_address: S.profile?.address || null,
       }),
     });
     if (result.free) {
@@ -5878,18 +5887,12 @@ async function doCheckout(useSubscription = false) {
     }
     // Real payment — redirect directly to provider URL
     if (result.payment_url) {
-      localStorage.setItem('alliby_pending_acq', JSON.stringify({
-        order_id: result.order_id,
-        is_delivery: S.deliveryMode === 'delivery',
-        delivery_fee: S.deliveryFee || 0,
-        delivery_address: S.profile?.address || null,
-      }));
       window.location.href = result.payment_url;
       return;
     }
     _pendingPayment = result;
     document.getElementById('tbank-amount').textContent = totalAmount + ' ₽';
-    document.getElementById('tbank-order-info').textContent = 'Заказ #' + result.order_id.slice(0, 8).toUpperCase();
+    document.getElementById('tbank-order-info').textContent = 'Оплата #' + (result.intent_id || '').slice(0, 8).toUpperCase();
     document.getElementById('tbank-card').value = '';
     document.getElementById('tbank-exp').value = '';
     document.getElementById('tbank-cvv').value = '';
@@ -5978,14 +5981,7 @@ async function submitPayment() {
         body: JSON.stringify({ payment_token: _pendingPayment.payment_token, status: 'succeeded' }),
       });
       closeModal('m-tbank-pay');
-      const ordId = _pendingPayment?.order_id;
       _pendingPayment = null;
-      if (S.deliveryMode === 'delivery' && ordId) {
-        req(`/rest/v1/orders?id=eq.${ordId}`, {
-          method: 'PATCH',
-          body: JSON.stringify({ is_delivery: true, delivery_fee: S.deliveryFee, delivery_address: S.profile?.address || null }),
-        }).catch(() => {});
-      }
       S.deliveryMode = null; S.deliveryFee = 0;
       S.cart = []; S.cartStoreId = null; S.appliedSub = null;
       saveCart(); updateCartCount(); renderCart();
@@ -6036,14 +6032,7 @@ async function handlePaymentReturn() {
   // T-Bank real payment return (food orders)
   if (tpay === 'store_success') {
     history.replaceState({}, '', window.location.pathname);
-    const pending = JSON.parse(localStorage.getItem('alliby_pending_acq') || 'null');
     localStorage.removeItem('alliby_pending_acq');
-    if (pending?.is_delivery && pending?.order_id) {
-      req(`/rest/v1/orders?id=eq.${pending.order_id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ is_delivery: true, delivery_fee: pending.delivery_fee, delivery_address: pending.delivery_address }),
-      }).catch(() => {});
-    }
     S.deliveryMode = null; S.deliveryFee = 0;
     S.cart = []; S.cartStoreId = null; S.appliedSub = null;
     saveCart(); updateCartCount(); renderCart?.();
