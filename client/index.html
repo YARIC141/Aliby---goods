@@ -543,12 +543,61 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
 // ─── NATIVE BRIDGE ───
 (function(){
 'use strict';
-var isNative=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+var _cap=window.Capacitor;
+var isNative=!!(_cap&&_cap.isNativePlatform&&_cap.isNativePlatform());
+var _P=isNative?_cap.Plugins:{};
+var _pushInited=false;
+
+function _savePushToken(token,uid){
+  var platform=(_cap&&_cap.getPlatform&&_cap.getPlatform())||'android';
+  var bearer=(window.S&&S.session&&S.session.access_token)||'';
+  if(!bearer||!uid||!token)return;
+  fetch('/rest/v1/push_subscriptions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+bearer,'Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify({user_id:uid,app:'client',device_token:token,platform:platform,endpoint:token,p256dh:'',auth_key:''})
+  }).catch(function(){});
+}
+
+function _showNativeToast(title,body){
+  var el=document.createElement('div');
+  el.style.cssText='position:fixed;top:max(env(safe-area-inset-top,0px) + 12px,20px);left:12px;right:12px;background:var(--surface-2,#fff);border:1px solid var(--line-soft,#eee);border-radius:14px;padding:12px 16px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.18)';
+  el.innerHTML='<div style="font:600 14px/1.4 var(--font-sans)">'+(title||'')+'</div><div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:2px">'+(body||'')+'</div>';
+  document.body.appendChild(el);
+  setTimeout(function(){el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(function(){el.remove();},300);},4000);
+}
+
 window.AllibyBridge={
-  registerPush:function(uid){if(isNative&&window.AllibyNative)window.AllibyNative.registerPush(uid);},
-  clearPush:function(){if(isNative&&window.AllibyNative)window.AllibyNative.clearPush();},
+
+  registerPush:function(uid){
+    if(!isNative||!_P.PushNotifications||_pushInited)return;
+    _pushInited=true;
+    _P.PushNotifications.requestPermissions().then(function(perm){
+      if(perm.receive!=='granted')return;
+      _P.PushNotifications.register();
+      _P.PushNotifications.addListener('registration',function(t){_savePushToken(t.value,uid);});
+      _P.PushNotifications.addListener('pushNotificationReceived',function(n){_showNativeToast(n.title,n.body);});
+      _P.PushNotifications.addListener('pushNotificationActionPerformed',function(a){
+        var data=a.notification.data||{};
+        if(typeof goTo==='function'){
+          if(data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued')goTo('calenabs');
+          if(data.type==='booking_confirmed'||data.type==='booking_cancelled')goTo('calenabs');
+        }
+      });
+    }).catch(function(){});
+  },
+
+  clearPush:function(){
+    if(!isNative||!_P.PushNotifications)return;
+    _P.PushNotifications.removeAllListeners();
+    _pushInited=false;
+  },
+
   requestLocation:function(){
-    if(isNative&&window.AllibyNative)return window.AllibyNative.requestLocation();
+    if(isNative&&_P.Geolocation){
+      return _P.Geolocation.getCurrentPosition({enableHighAccuracy:true,timeout:8000})
+        .then(function(r){return{lat:r.coords.latitude,lng:r.coords.longitude,accuracy:r.coords.accuracy};});
+    }
     return new Promise(function(res,rej){
       if(!navigator.geolocation){rej(new Error('no geolocation'));return;}
       navigator.geolocation.getCurrentPosition(
@@ -557,41 +606,45 @@ window.AllibyBridge={
       );
     });
   },
+
   haptic:function(style){
-    if(isNative&&window.AllibyNative){window.AllibyNative.haptic(style||'medium');return;}
-    var d={light:30,medium:60,heavy:100};navigator.vibrate&&navigator.vibrate(d[style]||60);
+    if(isNative&&_P.Haptics){
+      var m={light:'LIGHT',medium:'MEDIUM',heavy:'HEAVY'};
+      _P.Haptics.impact({style:m[style]||'MEDIUM'});
+      return;
+    }
+    var d={light:30,medium:60,heavy:100};
+    navigator.vibrate&&navigator.vibrate(d[style]||60);
   },
+
   setBadge:function(count){
-    if(isNative&&window.AllibyNative){window.AllibyNative.setBadge(count);return;}
+    if(isNative&&_P.Badge){count>0?_P.Badge.set({count:count}):_P.Badge.clear();return;}
     if(navigator.setAppBadge)count>0?navigator.setAppBadge(count):navigator.clearAppBadge();
   },
-  setTheme:function(dark){if(isNative&&window.AllibyNative)window.AllibyNative.setTheme(dark);},
+
+  setTheme:function(dark){
+    if(!isNative||!_P.StatusBar)return;
+    _P.StatusBar.setStyle({style:dark?'DARK':'LIGHT'});
+    _P.StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#ffffff'});
+  },
 };
-window.addEventListener('message',function(e){
-  var msg=e.data;
-  if(!msg||typeof msg.type!=='string'||!msg.type.startsWith('alliby:'))return;
-  var type=msg.type.replace('alliby:','');
-  if(type==='push:registered'&&msg.token&&msg.userId){
-    var platform=(window.Capacitor&&window.Capacitor.getPlatform&&window.Capacitor.getPlatform())||'web';
-    fetch('/rest/v1/push_subscriptions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+(window.S&&S.session&&S.session.access_token||''),'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({user_id:msg.userId,app:'client',device_token:msg.token,platform:platform,endpoint:msg.token,p256dh:'',auth_key:''})}).catch(function(){});
-  }
-  if(type==='push:received'){_showNativeToast(msg.title,msg.body);}
-  if(type==='navigate'){if(typeof goTo==='function')goTo(msg.screen);}
-  if(type==='app:stateChange'&&msg.isActive){
-    if(typeof realtimeSubscribeOrders==='function'&&window.S&&S.session&&S.session.user)realtimeSubscribeOrders(S.session.user.id);
-  }
-  if(type==='app:backButton'){if(typeof goBack==='function')goBack();}
-});
-function _showNativeToast(title,body){
-  var el=document.createElement('div');
-  el.style.cssText='position:fixed;top:max(env(safe-area-inset-top,0px) + 12px,20px);left:12px;right:12px;background:var(--surface-2,#fff);border:1px solid var(--line-soft,#eee);border-radius:14px;padding:12px 16px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.18);animation:fadeInDown .2s ease';
-  el.innerHTML='<div style="font:600 14px/1.4 var(--font-sans)">'+(title||'')+'</div><div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:2px">'+(body||'')+'</div>';
-  document.body.appendChild(el);
-  setTimeout(function(){el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(function(){el.remove();},300);},4000);
+
+// App lifecycle: reconnect WS on foreground
+if(isNative&&_P.App){
+  _P.App.addListener('appStateChange',function(s){
+    if(s.isActive&&typeof realtimeSubscribeOrders==='function'&&window.S&&S.session&&S.session.user){
+      realtimeSubscribeOrders(S.session.user.id);
+    }
+  });
+  _P.App.addListener('backButton',function(){if(typeof goBack==='function')goBack();});
 }
-// Применить начальную тему к статус-бару при запуске
+
+// Начальная тема статус-бара
 var _initDark=document.documentElement.classList.contains('dark');
-if(isNative&&window.AllibyNative)window.AllibyNative.setTheme(_initDark);
+if(isNative&&_P.StatusBar){
+  _P.StatusBar.setStyle({style:_initDark?'DARK':'LIGHT'});
+  _P.StatusBar.setBackgroundColor({color:_initDark?'#0f0f0f':'#ffffff'});
+}
 })();
 </script>
 </head>
