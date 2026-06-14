@@ -3696,7 +3696,7 @@ async function loadActiveOrders(append = false) {
   try {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; _ordLoading = false; return; }
-    const statusQ = (_ordFilter && _ordFilter !== 'all') ? `&status=eq.${_ordFilter}` : '';
+    const statusQ = (_ordFilter && _ordFilter !== 'all') ? `&status=eq.${_ordFilter}` : '&status=neq.pending';
     const url = `/rest/v1/orders?user_id=eq.${uid}${statusQ}&stores.direction=eq.${S.direction}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     const page = await req(url);
     _ordHasMore = page.length === 20;

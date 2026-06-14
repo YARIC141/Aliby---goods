@@ -848,7 +848,6 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <button class="ord-chip active" data-ord-status="all" onclick="setAdminOrderFilter('all')">Все</button>
-        <button class="ord-chip" data-ord-status="pending" onclick="setAdminOrderFilter('pending')">Создан<span class="ord-cnt" id="ord-cnt-pending"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="paid" onclick="setAdminOrderFilter('paid')">Оплачен<span class="ord-cnt" id="ord-cnt-paid"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="in_progress" onclick="setAdminOrderFilter('in_progress')">В работе<span class="ord-cnt" id="ord-cnt-in_progress"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="looking_for_courier" onclick="setAdminOrderFilter('looking_for_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-search"/></svg>Ищем курьера<span class="ord-cnt" id="ord-cnt-looking_for_courier"></span><span class="ord-notif-dot"></span></button>
@@ -4059,7 +4058,7 @@ const _adminOrdNotif = new Set();
 const _adminOrdCounts = {};
 let _ordPage = 0, _ordHasMore = false, _ordLoading = false, _ordObserver = null;
 
-const _ORD_CNT_STATUSES = ['pending','paid','in_progress','looking_for_courier','on_the_way','ready'];
+const _ORD_CNT_STATUSES = ['paid','in_progress','looking_for_courier','on_the_way','ready'];
 
 function _renderAdminOrdDots() {
   document.querySelectorAll('[data-ord-status]').forEach(btn => {
@@ -4084,7 +4083,7 @@ async function loadOrdCounts() {
     const storeId = S.profile?.role === 'employee'
       ? S.profile.employee_store_id
       : document.getElementById('ord-store-filter')?.value;
-    let url = '/rest/v1/orders?select=status&status=in.(pending,paid,in_progress,looking_for_courier,on_the_way,ready)&limit=2000';
+    let url = '/rest/v1/orders?select=status&status=in.(paid,in_progress,looking_for_courier,on_the_way,ready)&limit=2000';
     if (storeId) url += `&store_id=eq.${storeId}`;
     const rows = await req(url);
     _ORD_CNT_STATUSES.forEach(s => { _adminOrdCounts[s] = 0; });
@@ -4119,6 +4118,7 @@ async function loadOrders(append = false) {
     let url = `/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     if (storeId) url += `&store_id=eq.${storeId}`;
     if (_adminOrdFilter && _adminOrdFilter !== 'all') url += `&status=eq.${_adminOrdFilter}`;
+    else url += '&status=neq.pending';
     const page = await req(url);
     _ordHasMore = page.length === 20;
     _ordPage++;
@@ -4167,8 +4167,7 @@ function renderOrderCard(o) {
   let actionBtns = '';
   if (!_FINAL.has(o.status)) {
     let lbl = '', ns = '', icon = '', danger = false;
-    if      (o.status === 'pending')               { lbl = 'Отменить';        ns = 'cancelled';           danger = true; }
-    else if (o.status === 'paid')                  { lbl = 'В работу →';      ns = 'in_progress'; }
+    if      (o.status === 'paid')                  { lbl = 'В работу →';      ns = 'in_progress'; }
     else if (o.status === 'in_progress' &&  o.is_delivery) { lbl = 'Ищем курьера'; ns = 'looking_for_courier'; icon = svgIco('search',12)+' '; }
     else if (o.status === 'in_progress' && !o.is_delivery) { lbl = 'Готов';         ns = 'ready'; }
     else if (o.status === 'looking_for_courier')   { lbl = 'Едет к вам';      ns = 'on_the_way';          icon = svgIco('bicycle',12)+' '; }

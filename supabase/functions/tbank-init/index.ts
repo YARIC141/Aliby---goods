@@ -5,8 +5,8 @@ import { logKeyAccess } from "../_shared/audit.ts"
 
 const TBANK_INIT_URL = "https://securepay.tinkoff.ru/v2/Init"
 const NOTIFY_URL     = "https://alliby.ru/functions/v1/tbank-store-notify"
-const SUCCESS_BASE   = "https://alliby.ru/?tpay=store_success&order="
-const FAIL_BASE      = "https://alliby.ru/?tpay=store_fail&order="
+const SUCCESS_BASE   = "https://alliby.ru/?tpay=store_success"
+const FAIL_BASE      = "https://alliby.ru/?tpay=store_fail"
 
 async function calcToken(params: Record<string, string | number>, password: string): Promise<string> {
   const all    = { ...params, Password: password }
@@ -41,10 +41,17 @@ Deno.serve(async (req: Request) => {
     subscription_discount?: number
     applied_user_subscription_id?: string
     payment_method?: string
+    is_delivery?: boolean
+    delivery_fee?: number
+    delivery_address?: string | null
   }
   try { body = await req.json() } catch { return jsonResponse({ error: "Invalid JSON body" }, 400) }
 
-  const { store_id, items, total_amount, subscription_discount, applied_user_subscription_id, payment_method } = body
+  const {
+    store_id, items, total_amount,
+    subscription_discount, applied_user_subscription_id, payment_method,
+    is_delivery = false, delivery_fee = 0, delivery_address = null,
+  } = body
 
   if (!store_id || !items?.length || total_amount === undefined)
     return jsonResponse({ error: "store_id, items and total_amount are required" }, 400)
@@ -80,52 +87,65 @@ Deno.serve(async (req: Request) => {
   const isRealMode = ownerProfile?.payment_test_mode === false
   const provider   = ownerProfile?.payment_provider || "none"
 
-  // Create order
-  const { data: order, error: orderError } = await userClient
-    .from("orders")
-    .insert({
-      user_id: user.id, store_id, total_amount, status: "pending",
-      payment_method: payment_method || "card",
-      subscription_discount: subscription_discount || 0,
-      applied_user_subscription_id: applied_user_subscription_id || null,
-    })
-    .select("id").single()
-
-  if (orderError || !order)
-    return jsonResponse({ error: "Failed to create order: " + (orderError?.message ?? "unknown") }, 500)
-
-  const { error: itemsError } = await userClient.from("order_items").insert(
-    items.map(item => ({ order_id: order.id, menu_item_id: item.menu_item_id, quantity: item.quantity, price_at_time: item.price_at_time }))
-  )
-  if (itemsError) {
-    await serviceClient.from("orders").delete().eq("id", order.id)
-    return jsonResponse({ error: "Failed to create order items: " + itemsError.message }, 500)
-  }
-
+  // Free order (paid fully by subscription) — create order directly, no payment needed
   if (total_amount === 0) {
-    await serviceClient.from("orders").update({ status: "paid" }).eq("id", order.id)
-    if (applied_user_subscription_id && Number(subscription_discount) > 0)
+    const { data: order, error: orderError } = await serviceClient
+      .from("orders")
+      .insert({
+        user_id: user.id, store_id, total_amount: 0, status: "paid",
+        payment_method: payment_method || "subscription",
+        subscription_discount: subscription_discount || 0,
+        applied_user_subscription_id: applied_user_subscription_id || null,
+        is_delivery, delivery_fee, delivery_address,
+      })
+      .select("id").single()
+
+    if (orderError || !order)
+      return jsonResponse({ error: "Failed to create order: " + (orderError?.message ?? "unknown") }, 500)
+
+    const { error: itemsError } = await serviceClient.from("order_items").insert(
+      items.map(item => ({ order_id: order.id, menu_item_id: item.menu_item_id, quantity: item.quantity, price_at_time: item.price_at_time }))
+    )
+    if (itemsError) {
+      await serviceClient.from("orders").delete().eq("id", order.id)
+      return jsonResponse({ error: "Failed to create order items: " + itemsError.message }, 500)
+    }
+
+    if (applied_user_subscription_id && Number(subscription_discount) > 0) {
       await serviceClient.from("subscription_redemptions").insert({
         user_subscription_id: applied_user_subscription_id, order_id: order.id, amount_discounted: subscription_discount,
       })
+    }
     return jsonResponse({ order_id: order.id, free: true, amount: 0 })
   }
 
-  // provider = none → emulation
+  // Create payment intent (cart data held here until payment confirmed)
+  const intentBase = {
+    user_id: user.id, store_id,
+    items: JSON.parse(JSON.stringify(items)),
+    total_amount,
+    subscription_discount: subscription_discount || 0,
+    applied_user_subscription_id: applied_user_subscription_id || null,
+    payment_method: payment_method || "card",
+    is_delivery, delivery_fee, delivery_address,
+    provider,
+  }
+
+  // provider = none → emulation (in-app card form)
   if (provider === "none") {
     const paymentToken = crypto.randomUUID()
-    const { data: payment, error: paymentError } = await serviceClient
-      .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: paymentToken })
+    const { data: intent, error: intentError } = await serviceClient
+      .from("payment_intents")
+      .insert({ ...intentBase, payment_token: paymentToken })
       .select("id").single()
-    if (paymentError || !payment) {
-      await serviceClient.from("orders").delete().eq("id", order.id)
-      return jsonResponse({ error: "Failed to create payment: " + (paymentError?.message ?? "unknown") }, 500)
-    }
-    return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_token: paymentToken, amount: total_amount })
+
+    if (intentError || !intent)
+      return jsonResponse({ error: "Failed to create payment intent: " + (intentError?.message ?? "unknown") }, 500)
+
+    return jsonResponse({ intent_id: intent.id, payment_token: paymentToken, amount: total_amount })
   }
 
   if (provider !== "tinkoff") {
-    await serviceClient.from("orders").delete().eq("id", order.id)
     return jsonResponse({ error: "Provider '" + provider + "' not yet supported." }, 400)
   }
 
@@ -139,11 +159,19 @@ Deno.serve(async (req: Request) => {
   const secretEnc  = isRealMode ? ups?.secret_key        : ups?.secret_key_test
 
   if (!termKeyEnc || !secretEnc) {
-    await serviceClient.from("orders").delete().eq("id", order.id)
     const mode = isRealMode ? "боевые" : "тестовые"
     await logKeyAccess({ store_id, user_id: user.id, action: isRealMode ? "decrypt_prod" : "decrypt_test", edge_fn: "tbank-init", ip, success: false, detail: "keys_not_configured" })
     return jsonResponse({ error: `Введите ${mode} ключи в admin → Интернет-эквайринг.` }, 400)
   }
+
+  // Create intent first, use its id as T-Bank OrderId
+  const { data: intent, error: intentError } = await serviceClient
+    .from("payment_intents")
+    .insert(intentBase)
+    .select("id").single()
+
+  if (intentError || !intent)
+    return jsonResponse({ error: "Failed to create payment intent: " + (intentError?.message ?? "unknown") }, 500)
 
   await logKeyAccess({ store_id, user_id: user.id, action: isRealMode ? "decrypt_prod" : "decrypt_test", edge_fn: "tbank-init", ip, success: true })
   const kv          = ups?.key_version ?? 1
@@ -151,9 +179,9 @@ Deno.serve(async (req: Request) => {
   const password    = await decryptPaymentKey(secretEnc, kv)
   const amountKop   = Math.round(total_amount * 100)
   const scalarParams: Record<string, string | number> = {
-    TerminalKey: terminalKey, Amount: amountKop, OrderId: order.id,
-    Description: "Order #" + order.id.slice(0, 8).toUpperCase(),
-    NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE + order.id, FailURL: FAIL_BASE + order.id,
+    TerminalKey: terminalKey, Amount: amountKop, OrderId: intent.id,
+    Description: "Order #" + intent.id.slice(0, 8).toUpperCase(),
+    NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE, FailURL: FAIL_BASE,
   }
   const tResp = await fetch(TBANK_INIT_URL, {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -161,15 +189,12 @@ Deno.serve(async (req: Request) => {
   })
   const tData = await tResp.json()
   if (!tData.Success || !tData.PaymentURL) {
-    await serviceClient.from("orders").delete().eq("id", order.id)
+    await serviceClient.from("payment_intents").delete().eq("id", intent.id)
     return jsonResponse({ error: "T-Bank: " + (tData.Message || tData.Details || JSON.stringify(tData)) }, 400)
   }
-  const { data: payment, error: paymentError } = await serviceClient
-    .from("payments").insert({ order_id: order.id, amount: total_amount, status: "pending", provider_transaction_id: String(tData.PaymentId) })
-    .select("id").single()
-  if (paymentError || !payment) {
-    await serviceClient.from("orders").delete().eq("id", order.id)
-    return jsonResponse({ error: "Failed to create payment record" }, 500)
-  }
-  return jsonResponse({ order_id: order.id, payment_id: payment.id, payment_url: tData.PaymentURL, amount: total_amount })
+
+  // Store T-Bank PaymentId in intent for webhook verification
+  await serviceClient.from("payment_intents").update({ provider_payment_id: String(tData.PaymentId) }).eq("id", intent.id)
+
+  return jsonResponse({ intent_id: intent.id, payment_url: tData.PaymentURL, amount: total_amount })
 })

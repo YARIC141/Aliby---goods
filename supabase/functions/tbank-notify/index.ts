@@ -1,7 +1,7 @@
 /**
  * Edge Function: tbank-notify
- * Эмуляция T-Bank securepay notificationURL.
- * Обновляет статус платежа и заказа по результату оплаты.
+ * Эмуляция T-Bank notificationURL — вызывается клиентом после ввода карты.
+ * Находит payment_intent по токену, создаёт заказ при успехе.
  *
  * POST /functions/v1/tbank-notify
  * Body: { payment_token, status: 'succeeded' | 'cancelled' | 'failed' }
@@ -28,81 +28,78 @@ Deno.serve(async (req: Request) => {
   if (authError || !user) return jsonResponse({ error: 'Unauthorized' }, 401)
 
   let body: { payment_token?: string; status?: string }
-  try {
-    body = await req.json()
-  } catch {
-    return jsonResponse({ error: 'Invalid JSON body' }, 400)
-  }
+  try { body = await req.json() } catch { return jsonResponse({ error: 'Invalid JSON body' }, 400) }
 
   const { payment_token, status } = body
 
-  if (!payment_token || !status) {
+  if (!payment_token || !status)
     return jsonResponse({ error: 'payment_token and status are required' }, 400)
-  }
 
-  if (!['succeeded', 'cancelled', 'failed'].includes(status)) {
+  if (!['succeeded', 'cancelled', 'failed'].includes(status))
     return jsonResponse({ error: 'status must be succeeded, cancelled or failed' }, 400)
-  }
 
   const serviceClient = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   )
 
-  // Ищем платёж по токену
-  const { data: payment, error: paymentError } = await serviceClient
-    .from('payments')
-    .select('id, order_id, status')
-    .eq('provider_transaction_id', payment_token)
+  const { data: intent, error: intentError } = await serviceClient
+    .from('payment_intents')
+    .select('*')
+    .eq('payment_token', payment_token)
     .single()
 
-  if (paymentError || !payment) {
-    return jsonResponse({ error: 'Payment not found' }, 404)
+  if (intentError || !intent) return jsonResponse({ error: 'Payment intent not found' }, 404)
+
+  if (intent.user_id !== user.id) return jsonResponse({ error: 'Forbidden' }, 403)
+
+  if (status !== 'succeeded') {
+    await serviceClient.from('payment_intents').delete().eq('id', intent.id)
+    return jsonResponse({ ok: true, order_status: 'cancelled' })
   }
 
-  if (payment.status !== 'pending') {
-    return jsonResponse({ error: 'Payment already processed' }, 409)
-  }
-
-  // Проверяем, что заказ принадлежит этому пользователю
+  // Create the real order from intent data
   const { data: order, error: orderError } = await serviceClient
     .from('orders')
-    .select('id, user_id, applied_user_subscription_id, subscription_discount')
-    .eq('id', payment.order_id)
-    .single()
+    .insert({
+      user_id: intent.user_id,
+      store_id: intent.store_id,
+      total_amount: intent.total_amount,
+      status: 'paid',
+      payment_method: intent.payment_method,
+      subscription_discount: intent.subscription_discount,
+      applied_user_subscription_id: intent.applied_user_subscription_id,
+      is_delivery: intent.is_delivery,
+      delivery_fee: intent.delivery_fee,
+      delivery_address: intent.delivery_address,
+    })
+    .select('id').single()
 
-  if (orderError || !order) {
-    return jsonResponse({ error: 'Order not found' }, 404)
+  if (orderError || !order) return jsonResponse({ error: 'Failed to create order' }, 500)
+
+  const items = intent.items as { menu_item_id: string; quantity: number; price_at_time: number }[]
+  const { error: itemsError } = await serviceClient.from('order_items').insert(
+    items.map(i => ({ order_id: order.id, menu_item_id: i.menu_item_id, quantity: i.quantity, price_at_time: i.price_at_time }))
+  )
+  if (itemsError) {
+    await serviceClient.from('orders').delete().eq('id', order.id)
+    return jsonResponse({ error: 'Failed to create order items' }, 500)
   }
 
-  if (order.user_id !== user.id) {
-    return jsonResponse({ error: 'Forbidden' }, 403)
+  await serviceClient.from('payments').insert({
+    order_id: order.id, amount: intent.total_amount,
+    status: 'succeeded', provider_transaction_id: payment_token,
+  })
+
+  if (intent.applied_user_subscription_id && Number(intent.subscription_discount) > 0) {
+    await serviceClient.from('subscription_redemptions').insert({
+      user_subscription_id: intent.applied_user_subscription_id,
+      order_id: order.id,
+      amount_discounted: intent.subscription_discount,
+    })
   }
 
-  const orderStatus = status === 'succeeded' ? 'paid' : 'cancelled'
+  await serviceClient.from('payment_intents').delete().eq('id', intent.id)
 
-  // Обновляем платёж
-  await serviceClient
-    .from('payments')
-    .update({ status })
-    .eq('id', payment.id)
-
-  // Обновляем заказ
-  await serviceClient
-    .from('orders')
-    .update({ status: orderStatus })
-    .eq('id', order.id)
-
-  // Создаём запись списания абонемента при успешной оплате
-  if (status === 'succeeded' && order.applied_user_subscription_id && Number(order.subscription_discount) > 0) {
-    await serviceClient
-      .from('subscription_redemptions')
-      .insert({
-        user_subscription_id: order.applied_user_subscription_id,
-        order_id: order.id,
-        amount_discounted: order.subscription_discount,
-      })
-  }
-
-  return jsonResponse({ ok: true, order_status: orderStatus })
+  return jsonResponse({ ok: true, order_status: 'paid', order_id: order.id })
 })
