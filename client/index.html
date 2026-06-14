@@ -1224,6 +1224,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
     </div>
     <div id="mi-img"></div>
     <div id="mi-desc" class="item-desc" style="margin-bottom:8px"></div>
+    <div id="mi-allergens" style="display:none;margin-bottom:8px;padding:6px 10px;border-radius:var(--r-2);background:color-mix(in oklch,var(--warn) 12%,var(--bg));font:400 12px/1.4 var(--font-sans);color:var(--fg-3)"></div>
     <div id="mi-price" class="item-price" style="margin-bottom:10px"></div>
     <div id="mi-subs"></div>
     <div class="modal-ft" style="margin-top:14px">
@@ -3360,6 +3361,14 @@ function openItemDetail(id) {
     item.preparation_time > 0 ? `<span style="color:var(--fg-4)">⏱ ${prepLabel}: ${item.preparation_time} мин</span>` : '',
   ].filter(Boolean).join('<br>');
   descEl.style.display = (item.description || item.preparation_time > 0) ? '' : 'none';
+
+  const allerEl = document.getElementById('mi-allergens');
+  if (item.allergens) {
+    allerEl.innerHTML = `⚠️ Аллергены: ${esc(item.allergens)}`;
+    allerEl.style.display = '';
+  } else {
+    allerEl.style.display = 'none';
+  }
 
   const best = getBestDisc(item);
   const discPrice = best ? Math.max(0, item.price - best.disc) : null;
