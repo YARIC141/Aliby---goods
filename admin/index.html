@@ -1886,8 +1886,6 @@ function goTo(id, opts = {}) {
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   if (prevId === 'qr' && id !== 'qr') stopQrCamera();
-  if (prevId === 'orders' && id !== 'orders') clearInterval(_adminPollTimer);
-  if (id === 'orders') { clearInterval(_adminPollTimer); _adminPollTimer = setInterval(loadOrders, 12000); }
   if (prevId === 'schedule' && id !== 'schedule') schedRealtimeDisconnect();
   ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen,cities:loadCitiesScreen})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
@@ -4130,14 +4128,21 @@ function renderOrderCard(o) {
   const delivBadge = o.is_delivery
     ? `<span style="font-size:11px;background:#f5c51822;color:#b8860b;border:1px solid #f5c518;border-radius:99px;padding:1px 7px;margin-right:6px;display:inline-flex;align-items:center;gap:3px">${svgIco('bicycle',11)} Доставка</span>`
     : `<span style="font-size:11px;background:var(--bg-2);color:var(--fg-3);border:1px solid var(--line);border-radius:99px;padding:1px 7px;margin-right:6px;display:inline-flex;align-items:center;gap:3px">${svgIco('store',11)} Самовывоз</span>`;
-  let delivBtns = '';
-  if (o.is_delivery) {
-    if (o.status === 'in_progress')
-      delivBtns = `<div style="margin-top:8px;display:flex;gap:6px"><button class="btn btn-sm btn-p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px" onclick="event.stopPropagation();setDeliveryStatus('${o.id}','looking_for_courier')">${svgIco('search',12)} Ищем курьера</button></div>`;
-    else if (o.status === 'looking_for_courier')
-      delivBtns = `<div style="margin-top:8px;display:flex;gap:6px"><button class="btn btn-sm btn-p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px" onclick="event.stopPropagation();setDeliveryStatus('${o.id}','on_the_way')">${svgIco('bicycle',12)} Едет к вам</button></div>`;
-    else if (o.status === 'on_the_way')
-      delivBtns = `<div style="margin-top:8px;display:flex;gap:6px"><button class="btn btn-sm btn-p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px" onclick="event.stopPropagation();setDeliveryStatus('${o.id}','issued')">${svgIco('check-circle',12)} Выдан</button></div>`;
+  const _FINAL = new Set(['issued','cancelled']);
+  let actionBtns = '';
+  if (!_FINAL.has(o.status)) {
+    let lbl = '', ns = '', icon = '', danger = false;
+    if      (o.status === 'pending')               { lbl = 'Отменить';        ns = 'cancelled';           danger = true; }
+    else if (o.status === 'paid')                  { lbl = 'В работу →';      ns = 'in_progress'; }
+    else if (o.status === 'in_progress' &&  o.is_delivery) { lbl = 'Ищем курьера'; ns = 'looking_for_courier'; icon = svgIco('search',12)+' '; }
+    else if (o.status === 'in_progress' && !o.is_delivery) { lbl = 'Готов';         ns = 'ready'; }
+    else if (o.status === 'looking_for_courier')   { lbl = 'Едет к вам';      ns = 'on_the_way';          icon = svgIco('bicycle',12)+' '; }
+    else if (o.status === 'on_the_way')            { lbl = 'Выдан ✓';         ns = 'issued'; }
+    else if (o.status === 'ready')                 { lbl = 'Выдан ✓';         ns = 'issued'; }
+    if (ns) actionBtns = `<div style="margin-top:8px;display:flex;gap:6px">
+      <button class="btn btn-sm ${danger ? 'btn-d' : 'btn-p'}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px"
+        onclick="event.stopPropagation();quickAdvance('${o.id}','${ns}')">${icon}${lbl}</button>
+    </div>`;
   }
   return `<div class="card" style="margin-bottom:8px;cursor:pointer;padding:12px 14px;${delivBorder}" onclick="openOrderModal('${esc(o.id)}')">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -4153,7 +4158,7 @@ function renderOrderCard(o) {
         <div style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid ${color};color:${color}">${label}</div>
       </div>
     </div>
-    ${delivBtns}
+    ${actionBtns}
   </div>`;
 }
 
@@ -4262,8 +4267,28 @@ async function advanceOrder(newStatus) {
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
+async function quickAdvance(orderId, newStatus) {
+  if (newStatus === 'cancelled' && !confirm('Отменить заказ?')) return;
+  const o = _orders.find(x => x.id === orderId);
+  const body = { status: newStatus };
+  if (newStatus === 'in_progress' && (o?.stores?.direction || 'food') !== 'services') {
+    body.estimated_ready_at = new Date(Date.now() + 30 * 60000).toISOString();
+  }
+  const btn = event.currentTarget;
+  const restore = btnLoad(btn);
+  try {
+    await req(`/rest/v1/orders?id=eq.${orderId}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body),
+    });
+    restore();
+    loadOrders();
+  } catch(e) { restore(); showAdminToast('Ошибка: ' + (e.message || '')); }
+}
+
 // ─── ADMIN REALTIME ───
-let _adminRtWs = null, _adminRtRef = 0, _adminRtHb = null, _adminPollTimer = null;
+let _adminRtWs = null, _adminRtRef = 0, _adminRtHb = null;
 let _schedRtWs = null, _schedRtRef = 0, _schedRtHb = null, _schedPollTimer = null;
 
 function showAdminToast(msg) {
@@ -4351,11 +4376,26 @@ function adminRealtimeConnect() {
 }
 
 function adminRealtimeDisconnect() {
-  clearInterval(_adminPollTimer); clearInterval(_adminRtHb);
+  clearInterval(_adminRtHb);
   if (_adminRtWs) { try { _adminRtWs.close(); } catch {} _adminRtWs = null; }
   globalBookingsRealtimeDisconnect();
   _setOrdDot(false);
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !S.session) return;
+  const onOrders   = document.getElementById('screen-orders')?.classList.contains('active');
+  const onSchedule = document.getElementById('screen-schedule')?.classList.contains('active');
+  if (onOrders) {
+    if (!_adminRtWs || _adminRtWs.readyState !== WebSocket.OPEN) adminRealtimeConnect();
+    loadOrders();
+    loadOrdCounts();
+  }
+  if (onSchedule && _sched.storeId) {
+    if (!_schedRtWs || _schedRtWs.readyState !== WebSocket.OPEN) schedRealtimeConnect();
+    if (_sched.openDate) renderDayBookings(_sched.openDate);
+  }
+});
 
 // ─── NAV BADGES ───
 const _newOrderIds   = new Set();
@@ -6593,10 +6633,6 @@ function setSchedLiveDot(on) {
 function schedRealtimeConnect() {
   schedRealtimeDisconnect();
   if (!_sched.storeId) return;
-
-  _schedPollTimer = setInterval(() => {
-    if (_sched.openDate) renderDayBookings(_sched.openDate);
-  }, 20000);
 
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
