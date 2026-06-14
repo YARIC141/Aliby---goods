@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "ЗАМЕНИТЕ_НА_НОМЕР_ПРОЕКТА",
-    "project_id": "ЗАМЕНИТЕ_НА_PROJECT_ID",
-    "storage_bucket": "ЗАМЕНИТЕ_НА_PROJECT_ID.appspot.com"
+    "project_number": "447232030446",
+    "project_id": "alliby-82a8b",
+    "storage_bucket": "alliby-82a8b.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:НОМЕР_ПРОЕКТА:android:ХЭШ",
+        "mobilesdk_app_id": "1:447232030446:android:6e5e7a57fa0c2bf2df65ff",
         "android_client_info": {
           "package_name": "ru.alliby.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "ЗАМЕНИТЕ_НА_API_KEY"
+          "current_key": "AIzaSyD049TsLFA59769-LZsa0Qv7KcT4riUS6o"
         }
       ],
       "services": {
