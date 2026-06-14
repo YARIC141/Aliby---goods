@@ -559,11 +559,15 @@ function _savePushToken(token,uid){
   var bearer=(typeof S!=='undefined'&&S.session&&S.session.access_token)||'';
   _dbg('savePushToken uid='+uid+' token='+token.slice(0,12)+'... platform='+platform+' hasBearer='+!!bearer);
   if(!bearer||!uid||!token)return;
+  var body=JSON.stringify({user_id:uid,app:'client',device_token:token,platform:platform,endpoint:token,p256dh:'',auth_key:''});
+  _dbg('fetch body='+body);
   fetch('/rest/v1/push_subscriptions',{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+bearer,'Prefer':'resolution=merge-duplicates'},
-    body:JSON.stringify({user_id:uid,app:'client',device_token:token,platform:platform,endpoint:token,p256dh:'',auth_key:''})
-  }).catch(function(){});
+    body:body
+  }).then(function(r){
+    return r.text().then(function(t){_dbg('fetch status='+r.status+' body='+t);});
+  }).catch(function(e){_dbg('fetch error='+e);});
 }
 
 function _showNativeToast(title,body){
