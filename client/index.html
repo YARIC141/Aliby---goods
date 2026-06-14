@@ -935,8 +935,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
         <div id="delivery-toggle-wrap" style="display:none;margin-top:12px">
           <div style="display:flex;gap:8px">
-            <button id="del-pickup-btn" class="btn" style="flex:1;min-height:48px" onclick="setDeliveryMode('pickup')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
-            <button id="del-delivery-btn" class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px" onclick="setDeliveryMode('delivery')">
+            <button id="del-pickup-btn" class="btn btn-p" style="flex:1;min-height:48px" onclick="setDeliveryMode('pickup')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
+            <button id="del-delivery-btn" class="btn btn-p" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px" onclick="setDeliveryMode('delivery')">
               <span><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-bicycle"/></svg>Доставка</span>
               <span id="del-price-lbl" style="font-size:11px;opacity:.7"></span>
             </button>
@@ -945,7 +945,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
-        <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Оформляя заказ, вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
+        <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Совершая покупку, вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
       </div>
     </div>
   </div>
@@ -3490,7 +3490,7 @@ function changeQty(id, delta) {
 function saveCart() {
   const dir = S.direction || 'food';
   S._carts[dir] = { items: S.cart, storeId: S.cartStoreId };
-  try { localStorage.setItem(`alliby_cart_${dir}`, JSON.stringify({ storeId: S.cartStoreId, items: S.cart })); } catch(e) {}
+  try { localStorage.setItem(`alliby_cart_${dir}`, JSON.stringify({ storeId: S.cartStoreId, items: S.cart, deliveryMode: S.deliveryMode, deliveryFee: S.deliveryFee })); } catch(e) {}
 }
 
 function updateCartCount() {
@@ -4182,8 +4182,10 @@ function renderDeliveryToggle() {
   wrap.style.display = show ? '' : 'none';
   if (!show) { const dr = document.getElementById('c-delivery-row'); if (dr) dr.style.display = 'none'; return; }
   const isDelivery = S.deliveryMode === 'delivery';
-  document.getElementById('del-pickup-btn')?.classList.toggle('btn-p', !isDelivery);
-  document.getElementById('del-delivery-btn')?.classList.toggle('btn-p', isDelivery);
+  const pu = document.getElementById('del-pickup-btn');
+  const dv = document.getElementById('del-delivery-btn');
+  if (pu) pu.style.opacity  = isDelivery ? '0.45' : '1';
+  if (dv) dv.style.opacity  = isDelivery ? '1'    : '0.45';
   const di = getDeliveryInfo(store);
   const priceLbl = document.getElementById('del-price-lbl');
   if (priceLbl) priceLbl.textContent = di ? (di.inZone ? `${di.price} ₽` : '(недоступно)') : '';
@@ -4603,6 +4605,11 @@ function addSubToCart(id) {
   const sub = subPlans[id];
   if (!sub) return;
   if (!S.subCart.find(c => c.sub.id === id)) {
+    const existingStoreId = S.subCart.find(c => (c.direction || 'food') === S.direction && c.sub.store_id)?.sub.store_id;
+    if (existingStoreId && sub.store_id && existingStoreId !== sub.store_id) {
+      showGeoToast('Абонементы из разных заведений нельзя купить вместе — сначала оформите текущую корзину');
+      return;
+    }
     S.subCart.push({ sub, direction: S.direction });
     saveSubCart();
     showGeoToast('Абонемент добавлен в корзину');
@@ -5149,6 +5156,7 @@ async function restoreNav() {
     }
     const dc = S._carts[S.direction];
     S.cart = dc.items; S.cartStoreId = dc.storeId;
+    if (dc.deliveryMode) { S.deliveryMode = dc.deliveryMode; S.deliveryFee = dc.deliveryFee || 0; }
     updateCartCount();
   } catch(e) {}
   try {
