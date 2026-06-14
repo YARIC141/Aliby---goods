@@ -961,12 +961,12 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
     <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
     <button class="cart-tab" id="ca-tab-bk" onclick="switchCalenabsTab('bk')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Записи<span class="tab-badge" id="ca-badge-bk"></span></button>
-    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-ticket"/></svg>Абоны<span class="tab-badge" id="ca-badge-sub"></span></button>
+    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-ticket"/></svg>Абонементы<span class="tab-badge" id="ca-badge-sub"></span></button>
   </div>
   <!-- История заказов pane -->
   <div id="ca-pane-ord" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
     <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 4px;flex-shrink:0">
-      <button class="sub-store-chip active" data-ord-status="" onclick="setOrderFilter('')">Активные<span class="ord-notif-dot"></span></button>
+      <button class="sub-store-chip active" data-ord-status="all" onclick="setOrderFilter('all')">Все<span class="ord-notif-dot"></span></button>
       <button class="sub-store-chip" data-ord-status="paid" onclick="setOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
       <button class="sub-store-chip" data-ord-status="in_progress" onclick="setOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
       <button class="sub-store-chip" data-ord-status="looking_for_courier" onclick="setOrderFilter('looking_for_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-search"/></svg>Курьер<span class="ord-notif-dot"></span></button>
@@ -1008,7 +1008,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <button class="sub-store-chip active" data-sub-filter="all" onclick="setSubFilter('all')">Все</button>
         <button class="sub-store-chip" data-sub-filter="active" onclick="setSubFilter('active')">Активные</button>
         <button class="sub-store-chip" data-sub-filter="gifts" onclick="setSubFilter('gifts')">Подарки</button>
-        <button class="sub-store-chip" data-sub-filter="store" onclick="setSubFilter('store')">Купить</button>
       </div>
       <div id="sub-unified-list"></div>
       <div id="sub-gift-activate" style="display:none;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
@@ -1962,7 +1961,10 @@ function switchCalenabsTab(tab) {
   document.getElementById('ca-tab-sub')?.classList.toggle('active', tab === 'sub');
   if (tab === 'bk')  { _bkNotifCount = 0; _updateBkBadge(); loadBookingsScreen(); }
   else if (tab === 'sub') loadMySubscriptions();
-  else if (tab === 'ord') { _ordNotif.clear(); _renderOrdNotifDots(); loadActiveOrders(); }
+  else if (tab === 'ord') {
+    const _firstNotif = _ORD_STATUS_PRIORITY.find(s => _ordNotif.has(s));
+    setOrderFilter(_firstNotif || 'all');
+  }
 }
 function loadCalenabsScreen() { switchCalenabsTab(_calenabsTab); }
 function _calenabsIsActive() { return document.getElementById('screen-calenabs')?.classList.contains('active'); }
@@ -3603,15 +3605,16 @@ function _onRealtimeBooking(record) {
   }
 }
 
-let _ordFilter = '';
+let _ordFilter = 'all';
 const _ordNotif = new Set();
+const _ORD_STATUS_PRIORITY = ['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready'];
 let _activeOrders = [];
 let _ordPage = 0, _ordHasMore = false, _ordLoading = false, _ordObserver = null;
 
 function _renderOrdNotifDots() {
   document.querySelectorAll('[data-ord-status]').forEach(btn => {
     const s = btn.dataset.ordStatus;
-    const has = s === '' ? _ordNotif.size > 0 : _ordNotif.has(s);
+    const has = s === 'all' ? _ordNotif.size > 0 : _ordNotif.has(s);
     btn.querySelector('.ord-notif-dot')?.classList.toggle('on', has);
   });
   const ob = document.getElementById('ca-badge-ord');
@@ -3620,7 +3623,7 @@ function _renderOrdNotifDots() {
 
 function setOrderFilter(status) {
   _ordFilter = status;
-  if (status === '') _ordNotif.clear(); else _ordNotif.delete(status);
+  if (!status || status === 'all') _ordNotif.clear(); else _ordNotif.delete(status);
   document.querySelectorAll('[data-ord-status]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.ordStatus === status);
   });
@@ -3634,7 +3637,7 @@ function _onRealtimeOrder(record) {
   const calenabsActive = document.getElementById('screen-calenabs')?.classList.contains('active');
   const isVisible = calenabsActive && _calenabsTab === 'ord';
   if (status && ACTIVE.has(status)) {
-    const viewing = isVisible && (_ordFilter === '' || _ordFilter === status);
+    const viewing = isVisible && (_ordFilter === 'all' || _ordFilter === status);
     if (!viewing) {
       _ordNotif.add(status);
       _renderOrdNotifDots();
@@ -3653,7 +3656,7 @@ function switchCartTab(tab) {
   if (cp) cp.style.display = isCart ? 'flex' : 'none';
   if (op) op.style.display = isCart ? 'none' : '';
   if (!isCart) {
-    if (_ordFilter === '') _ordNotif.clear(); else _ordNotif.delete(_ordFilter);
+    if (_ordFilter === 'all') _ordNotif.clear(); else _ordNotif.delete(_ordFilter);
     _renderOrdNotifDots();
     loadActiveOrders();
   }
@@ -3676,7 +3679,7 @@ async function loadActiveOrders(append = false) {
   try {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; _ordLoading = false; return; }
-    const statusQ = _ordFilter ? `&status=eq.${_ordFilter}` : `&status=in.(paid,in_progress,looking_for_courier,on_the_way,ready)`;
+    const statusQ = (_ordFilter && _ordFilter !== 'all') ? `&status=eq.${_ordFilter}` : '';
     const url = `/rest/v1/orders?user_id=eq.${uid}${statusQ}&stores.direction=eq.${S.direction}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     const page = await req(url);
     _ordHasMore = page.length === 20;
