@@ -740,55 +740,13 @@ tr.row-click:hover td{background:var(--bg-2)}
 
     <div class="sec" id="p-pay-sec" style="display:none">
       <div class="sec-title">Интернет-эквайринг<span class="hint" data-tip="Клиенты будут перенаправляться на страницу оплаты выбранного провайдера. Ключи хранятся только у вас.">?</span></div>
-      <div class="card">
-        <div class="fg" style="margin-bottom:8px">
-          <label>Провайдер</label>
-          <select id="pp-provider" onchange="onPpProviderChange()">
-            <option value="none">— Не настроено —</option>
-            <option value="tinkoff">Тинькофф T-Касса</option>
-            <option value="yokassa">ЮKassa (Яндекс) — эмуляция</option>
-            <option value="cloudpayments">CloudPayments — эмуляция</option>
-            <option value="sberbank">СберБанк Ecom — эмуляция</option>
-            <option value="alfabank">Альфа-Банк Эквайринг — эмуляция</option>
-            <option value="vtb">ВТБ Эквайринг — эмуляция</option>
-            <option value="robokassa">Robokassa — эмуляция</option>
-            <option value="paykeeper">PayKeeper — эмуляция</option>
-          </select>
+      <button class="btn btn-full" onclick="openPaymentProfileModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
+        <div style="text-align:left">
+          <div style="font-size:13px;color:var(--fg)" id="pp-summary-provider">— Не настроено —</div>
+          <div style="font-size:12px;margin-top:2px" id="pp-summary-mode"></div>
         </div>
-        <div id="pp-fields" style="display:none">
-          <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:2px">Тестовые ключи</div>
-          <div class="fg" style="margin-bottom:8px">
-            <label><span id="pp-key-test-label">Terminal Key</span> <span id="pp-key-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-            <input type="text" id="pp-terminal-key-test" placeholder="Введите тестовый ключ" autocomplete="off">
-          </div>
-          <div class="fg" style="margin-bottom:12px">
-            <label><span id="pp-secret-test-label">Секретный ключ</span> <span id="pp-secret-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-            <input type="password" id="pp-secret-key-test" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
-          </div>
-          <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:10px;border-top:1px solid var(--line-soft)">Боевые ключи</div>
-          <div class="fg" style="margin-bottom:8px">
-            <label><span id="pp-key-label">Terminal Key</span> <span id="pp-key-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-            <input type="text" id="pp-terminal-key" placeholder="Введите ключ" autocomplete="off">
-          </div>
-          <div class="fg" style="margin-bottom:8px">
-            <label><span id="pp-secret-label">Секретный ключ</span> <span id="pp-secret-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
-            <input type="password" id="pp-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
-          </div>
-          <div id="pp-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3);margin-bottom:10px"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);margin-bottom:10px">
-            <div>
-              <div style="font:600 13px/1.2 var(--font-sans);margin-bottom:3px">Режим оплаты</div>
-              <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">Сейчас: <span id="pp-mode-label" style="font-weight:600;color:var(--warn)">Тестовый</span></div>
-            </div>
-            <label class="toggle-sw" style="margin:0" title="Переключить режим оплаты">
-              <input type="checkbox" id="pp-test-mode-toggle" onchange="togglePpPaymentMode(this)">
-              <span class="toggle-track"></span>
-            </label>
-          </div>
-        </div>
-        <button class="btn btn-p" id="pp-save-btn" onclick="savePaymentProfile()">Сохранить</button>
-        <div id="pp-msg" style="display:none;font-size:12px;margin-top:6px"></div>
-      </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
     </div>
 
     <div class="sec" id="p-sec-pwd">
@@ -1205,6 +1163,65 @@ tr.row-click:hover td{background:var(--bg-2)}
       <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px;line-height:1.5">Нажимая «Оплатить», вы соглашаетесь с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a></p>
     </div>
     <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
+  </div>
+</div>
+
+<!-- Payment profile modal -->
+<div class="overlay" id="m-payment-profile">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h3>Настройки эквайринга</h3>
+      <button class="modal-x" onclick="closeModal('m-payment-profile')">✕</button>
+    </div>
+    <div class="fg" style="margin-bottom:8px">
+      <label>Провайдер</label>
+      <select id="pp-provider" onchange="onPpProviderChange()">
+        <option value="none">— Не настроено —</option>
+        <option value="tinkoff">Тинькофф T-Касса</option>
+        <option value="yokassa">ЮKassa (Яндекс) — эмуляция</option>
+        <option value="cloudpayments">CloudPayments — эмуляция</option>
+        <option value="sberbank">СберБанк Ecom — эмуляция</option>
+        <option value="alfabank">Альфа-Банк Эквайринг — эмуляция</option>
+        <option value="vtb">ВТБ Эквайринг — эмуляция</option>
+        <option value="robokassa">Robokassa — эмуляция</option>
+        <option value="paykeeper">PayKeeper — эмуляция</option>
+      </select>
+    </div>
+    <div id="pp-fields" style="display:none">
+      <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:2px">Тестовые ключи</div>
+      <div class="fg" style="margin-bottom:8px">
+        <label><span id="pp-key-test-label">Terminal Key</span> <span id="pp-key-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <input type="text" id="pp-terminal-key-test" placeholder="Введите тестовый ключ" autocomplete="off">
+      </div>
+      <div class="fg" style="margin-bottom:12px">
+        <label><span id="pp-secret-test-label">Секретный ключ</span> <span id="pp-secret-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <input type="password" id="pp-secret-key-test" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
+      </div>
+      <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:10px;border-top:1px solid var(--line-soft)">Боевые ключи</div>
+      <div class="fg" style="margin-bottom:8px">
+        <label><span id="pp-key-label">Terminal Key</span> <span id="pp-key-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <input type="text" id="pp-terminal-key" placeholder="Введите ключ" autocomplete="off">
+      </div>
+      <div class="fg" style="margin-bottom:8px">
+        <label><span id="pp-secret-label">Секретный ключ</span> <span id="pp-secret-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <input type="password" id="pp-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
+      </div>
+      <div id="pp-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3);margin-bottom:10px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);margin-bottom:10px">
+        <div>
+          <div style="font:600 13px/1.2 var(--font-sans);margin-bottom:3px">Режим оплаты</div>
+          <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">Сейчас: <span id="pp-mode-label" style="font-weight:600;color:var(--warn)">Тестовый</span></div>
+        </div>
+        <label class="toggle-sw" style="margin:0" title="Переключить режим оплаты">
+          <input type="checkbox" id="pp-test-mode-toggle" onchange="togglePpPaymentMode(this)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-ft" style="flex-direction:column;gap:8px">
+      <button class="btn btn-p btn-full" id="pp-save-btn" onclick="savePaymentProfile()">Сохранить</button>
+      <div id="pp-msg" style="display:none;font-size:12px;text-align:center"></div>
+    </div>
   </div>
 </div>
 
@@ -2186,6 +2203,21 @@ async function loadProfile() {
   }
 }
 
+function _updatePpSummary() {
+  const provider = document.getElementById('pp-provider')?.value || 'none';
+  const isReal = document.getElementById('pp-test-mode-toggle')?.checked;
+  const labels = { none:'— Не настроено —', tinkoff:'Тинькофф T-Касса', yokassa:'ЮKassa', cloudpayments:'CloudPayments', sberbank:'СберБанк Ecom', alfabank:'Альфа-Банк Эквайринг', vtb:'ВТБ Эквайринг', robokassa:'Robokassa', paykeeper:'PayKeeper' };
+  const sp = document.getElementById('pp-summary-provider');
+  const sm = document.getElementById('pp-summary-mode');
+  if (sp) sp.textContent = labels[provider] || provider;
+  if (sm) {
+    sm.textContent = provider === 'none' ? '' : (isReal ? 'Реальная оплата' : 'Тестовый режим');
+    sm.style.color = isReal ? 'var(--ok)' : 'var(--warn)';
+  }
+}
+
+function openPaymentProfileModal() { openModal('m-payment-profile'); }
+
 async function loadPaymentProfile() {
   try {
     const profs = await req(`/rest/v1/profiles?id=eq.${S.session.user.id}&select=payment_provider,payment_test_mode`);
@@ -2213,6 +2245,7 @@ async function loadPaymentProfile() {
     document.getElementById('pp-terminal-key-test').placeholder = meta?.has_terminal_key_test ? 'Оставьте пустым чтобы не менять' : 'Введите тестовый ключ';
     document.getElementById('pp-terminal-key').placeholder      = meta?.has_terminal_key ? 'Оставьте пустым чтобы не менять' : 'Введите ключ';
     document.getElementById('p-pay-sec').style.display = '';
+    _updatePpSummary();
   } catch(e) {}
 }
 
@@ -2253,6 +2286,7 @@ async function togglePpPaymentMode(el) {
     const modeLabel = document.getElementById('pp-mode-label');
     modeLabel.textContent = enableReal ? '✓ Реальная' : 'Тестовый';
     modeLabel.style.color = enableReal ? 'var(--ok)' : 'var(--warn)';
+    _updatePpSummary();
     loadStoreSubscriptions();
   } catch(e) {
     el.checked = !enableReal;
@@ -2305,6 +2339,7 @@ async function savePaymentProfile() {
       if (secretKey)       document.getElementById('pp-secret-set-badge').style.display = '';
     }
     restore();
+    _updatePpSummary();
     msg.textContent = 'Настройки сохранены';
     msg.style.color = 'var(--ok)';
     msg.style.display = 'block';
