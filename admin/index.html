@@ -439,7 +439,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="stores"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg> Заведения</button>
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" id="sn-btn-schedule" style="display:none" onclick="openEmployeeSchedule()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Расписание</button>
-    <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg> Аналитика и QR сканер</button>
+    <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Аналитика</button>
     <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы и записи<span class="sn-badge" id="sn-orders-badge" style="display:none">0</span></button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
@@ -903,37 +903,12 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
-<!-- ════════════════ QR / ANALYTICS ════════════════ -->
+<!-- ════════════════ ANALYTICS ════════════════ -->
 <div id="screen-qr" class="screen">
-  <div class="ph"><h2>Аналитика и QR сканер<span class="screen-help" data-info="QR сканер: списывайте абонементы клиентов по QR-коду. Аналитика: статистика продаж, заказов и использования абонементов по вашему заведению.">?</span></h2></div>
-  <div class="obt-tabs">
-    <button class="obt-tab active" id="qr-tab-qr" onclick="switchQrTab('qr')">QR сканер</button>
-    <button class="obt-tab" id="qr-tab-an" onclick="switchQrTab('an')">Аналитика</button>
-  </div>
-
-  <!-- QR pane -->
-  <div id="qr-pane-qr" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
-    <div class="pb">
-      <div style="margin-bottom:12px;display:flex;gap:8px">
-        <button class="btn btn-p" id="qr-start-btn" onclick="startQrCamera()" style="display:inline-flex;align-items:center;gap:5px"><svg class="ico" width="14" height="14"><use href="#i-camera"/></svg> Сканировать QR</button>
-        <button class="btn" id="qr-stop-btn" style="display:none" onclick="stopQrCamera()">✕ Остановить</button>
-      </div>
-      <div id="qr-video-wrap" style="display:none;position:relative;margin-bottom:14px">
-        <video id="qr-video" autoplay playsinline muted style="width:100%;max-width:400px;border-radius:var(--r-3);border:2px solid var(--accent);display:block"></video>
-        <canvas id="qr-canvas" style="display:none"></canvas>
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:160px;height:160px;border:2px solid rgba(255,255,255,.7);border-radius:10px;pointer-events:none"></div>
-      </div>
-      <div id="qr-status" class="txt-muted" style="margin-bottom:12px"></div>
-      <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
-        <input id="qr-manual-id" type="text" placeholder="Вставьте ID пользователя (UUID)" style="flex:1;padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--s2);color:var(--fg);font-size:13px" onkeydown="if(event.key==='Enter')manualLookup()">
-        <button class="btn btn-p" onclick="manualLookup()">Найти</button>
-      </div>
-      <div id="qr-results"></div>
-    </div>
-  </div>
+  <div class="ph"><h2>Аналитика<span class="screen-help" data-info="Статистика продаж, заказов и использования абонементов по вашему заведению.">?</span></h2></div>
 
   <!-- Analytics pane -->
-  <div id="qr-pane-an" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+  <div id="qr-pane-an" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
     <div class="pb">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
         <select id="an-store-filter" onchange="loadAnalyticsTab()" style="flex:1;min-width:140px">
@@ -967,7 +942,7 @@ tr.row-click:hover td{background:var(--bg-2)}
   <div class="bn-row">
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
-    <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3z"/></svg></span>Аналитика<br>и QR</button>
+    <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Аналитика</button>
     <button class="bn-btn ord-has-badge" data-nav="orders"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="bn-nav-badge" id="bn-orders-badge">0</span></span>Заказы и<br>записи</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
@@ -4583,13 +4558,6 @@ function applyRoleRestrictions() {
   if (schedEditBtn) schedEditBtn.style.display = 'none';
   const schedNavBtn = document.getElementById('sn-btn-schedule');
   if (schedNavBtn) schedNavBtn.style.display = '';
-  // Аналитика — скрыть таб и переименовать кнопки навигации
-  const anTab = document.getElementById('qr-tab-an');
-  if (anTab) anTab.style.display = 'none';
-  document.querySelectorAll('[data-nav="qr"]').forEach(btn => {
-    const svg = btn.querySelector('svg,span');
-    if (svg) btn.innerHTML = svg.outerHTML + (btn.classList.contains('bn-btn') ? 'QR сканер' : ' QR сканер');
-  });
 }
 
 async function openEmployeeSchedule() {
@@ -5391,21 +5359,12 @@ function manualLookup() {
 }
 
 function loadQrScreen() {
-  switchQrTab('qr');
-  document.getElementById('qr-results').innerHTML = '';
-  document.getElementById('qr-status').textContent = 'Нажмите «Сканировать QR» для запуска камеры';
+  switchQrTab('an');
 }
 
-function switchQrTab(tab) {
-  if (tab === 'an' && S.profile?.role === 'employee') tab = 'qr';
-  const isQr = tab === 'qr';
-  document.getElementById('qr-tab-qr')?.classList.toggle('active', isQr);
-  document.getElementById('qr-tab-an')?.classList.toggle('active', !isQr);
-  const qp = document.getElementById('qr-pane-qr');
+function switchQrTab() {
   const ap = document.getElementById('qr-pane-an');
-  if (qp) qp.style.display = isQr ? 'flex' : 'none';
-  if (ap) ap.style.display = !isQr ? 'flex' : 'none';
-  if (isQr) { stopQrCamera(); return; }
+  if (ap) ap.style.display = 'flex';
   const anFilter = document.getElementById('an-store-filter');
   if (anFilter) {
     if (S.profile?.role === 'employee') {
