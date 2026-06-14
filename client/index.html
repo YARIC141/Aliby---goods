@@ -415,6 +415,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sp1,.sp2{font:400 18px/1.4 var(--font-display);color:var(--fg-3);margin:0;font-style:italic;text-align:center}
 .sp3{font:400 52px/1 var(--font-display);letter-spacing:-0.02em;color:var(--accent);margin:6px 0 0}
 .sp-icon{width:100px;height:100px;border-radius:var(--r-4);margin-top:20px;box-shadow:var(--shadow-2)}
+.sp-quote{font:400 13px/1.6 var(--font-sans);color:var(--fg-4);font-style:italic;text-align:center;max-width:280px;margin:14px 16px 0;padding:0}
 
 /* ── HOME SCREEN ── */
 .home-savings{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:18px;margin-bottom:20px;text-align:center}
@@ -594,6 +595,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <p class="sp2">то у тебя есть</p>
   <p class="sp3">Alliby</p>
   <img class="sp-icon" src="favicon.svg" alt="Alliby">
+  <p class="sp-quote" id="sp-quote"></p>
 </div>
 
 
@@ -5205,13 +5207,54 @@ async function restoreNav() {
 
 
 // ─── SPLASH ───
+const _SPLASH_QUOTES = [
+  '«Истинный друг — это одна душа в двух телах.» — Аристотель',
+  '«Скажи мне, кто твои друзья, и я скажу, кто ты.» — М. де Сервантес',
+  '«Не имей сто рублей, а имей сто друзей.» — русская пословица',
+  '«Дружба, которая заканчивается, никогда не была настоящей.» — Аристотель',
+  '«Любовь — это не взгляд друг на друга, а совместный взгляд в одну сторону.» — А. де Сент-Экзюпери',
+  '«Где любовь, там и жизнь.» — Махатма Ганди',
+  '«Любить — значит видеть чудо, невидимое другим.» — Ф. Мориак',
+  '«Величайшее счастье в жизни — быть уверенным, что тебя любят.» — В. Гюго',
+  '«Гений — это 1% вдохновения и 99% пота.» — Томас Эдисон',
+  '«Успех — это сумма маленьких усилий, повторяемых изо дня в день.» — Р. Кольер',
+  '«Лучший способ предсказать будущее — создать его.» — Питер Друкер',
+  '«Под лежачий камень вода не течёт.» — русская пословица',
+  '«Трудности — это то, что видишь, когда отводишь взгляд от цели.» — Генри Форд',
+  '«Тот, кто знает зачем, вынесет любое как.» — Фридрих Ницше',
+  '«Великий путь начинается с первого шага.» — Лао-цзы',
+  '«Не важно, насколько медленно ты идёшь, — главное, не останавливаться.» — Конфуций',
+  '«Мечта без действия — это просто мечта.» — народная мудрость',
+  '«Семья — это не вещь. Это — всё.» — Майкл Дж. Фокс',
+  '«Любящее сердце — начало всей мудрости.» — Томас Карлейль',
+  '«Береги тех, кто любит тебя, — их немного.» — народная мудрость',
+  '«Родители сажают деревья, в тени которых отдыхают дети.» — народная мудрость',
+  '«Самое ценное в жизни — люди рядом с тобой.» — народная мудрость',
+  '«Упав семь раз — встань восемь.» — японская пословица',
+  '«В середине каждой трудности скрыта возможность.» — Альберт Эйнштейн',
+  '«Не бойся медленно идти — бойся стоять на месте.» — китайская пословица',
+  '«Гладкое море не делает искусного моряка.» — африканская пословица',
+  '«Ошибки — это уроки, которые жизнь даёт нам бесплатно.» — народная мудрость',
+  '«Самая великая победа — победа над самим собой.» — Платон',
+  '«Каждое утро — новый шанс стать лучше.» — народная мудрость',
+  '«Единственный верный способ проиграть — сдаться.» — народная мудрость',
+];
+const _splashShownAt = Date.now();
+const _SPLASH_MIN_MS = 2000;
+(function() {
+  const el = document.getElementById('sp-quote');
+  if (el) el.textContent = _SPLASH_QUOTES[Math.floor(Math.random() * _SPLASH_QUOTES.length)];
+})();
 function hideSplash() {
-  const el = document.getElementById('splash');
-  if (!el) return;
-  el.classList.add('hide');
-  setTimeout(() => el.remove(), 500);
+  const splash = document.getElementById('splash');
+  if (!splash) return;
+  const wait = Math.max(0, _SPLASH_MIN_MS - (Date.now() - _splashShownAt));
+  setTimeout(() => {
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 500);
+  }, wait);
 }
-setTimeout(hideSplash, 500);
+setTimeout(hideSplash, _SPLASH_MIN_MS + 500);
 
 // ─── HOME ───
 const DIR_META = {
