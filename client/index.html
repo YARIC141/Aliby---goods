@@ -935,8 +935,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
         <div id="delivery-toggle-wrap" style="display:none;margin-top:12px">
           <div style="display:flex;gap:8px">
-            <button id="del-pickup-btn" class="btn" style="flex:1;background:var(--cta-from);color:#000;font-weight:600;min-height:48px" onclick="setDeliveryMode('pickup')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
-            <button id="del-delivery-btn" class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--cta-from);color:#000;font-weight:600;min-height:48px" onclick="setDeliveryMode('delivery')">
+            <button id="del-pickup-btn" class="btn" style="flex:1;min-height:48px" onclick="setDeliveryMode('pickup')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
+            <button id="del-delivery-btn" class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:48px" onclick="setDeliveryMode('delivery')">
               <span><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-bicycle"/></svg>Доставка</span>
               <span id="del-price-lbl" style="font-size:11px;opacity:.7"></span>
             </button>
