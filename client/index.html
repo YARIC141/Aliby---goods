@@ -551,23 +551,18 @@ function _cap(){return window.Capacitor||null;}
 function _isNative(){var c=_cap();return !!(c&&c.isNativePlatform&&c.isNativePlatform());}
 function _P(){var c=_cap();return c&&c.Plugins||{};}
 
-function _dbg(msg){console.log('[AllibyBridge] '+msg);}
-
 function _savePushToken(token,uid){
   var c=_cap();
   var platform=(c&&c.getPlatform&&c.getPlatform())||'android';
   var bearer=(typeof S!=='undefined'&&S.session&&S.session.access_token)||'';
   var apikey=(typeof SB_ANON!=='undefined'?SB_ANON:'');
   var sbUrl=(typeof SB_URL!=='undefined'?SB_URL:'https://alliby.ru');
-  _dbg('savePushToken uid='+uid+' token='+token.slice(0,12)+'... platform='+platform+' hasBearer='+!!bearer);
   if(!bearer||!uid||!token)return;
   fetch(sbUrl+'/rest/v1/rpc/save_device_token',{
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':apikey,'Authorization':'Bearer '+bearer},
     body:JSON.stringify({p_user_id:uid,p_app:'client',p_token:token,p_platform:platform})
-  }).then(function(r){
-    return r.text().then(function(t){_dbg('rpc status='+r.status+' resp='+t.slice(0,120));});
-  }).catch(function(e){_dbg('rpc error='+e);});
+  }).catch(function(){});
 }
 
 function _showNativeToast(title,body){
@@ -581,12 +576,10 @@ function _showNativeToast(title,body){
 window.AllibyBridge={
 
   registerPush:function(uid){
-    _dbg('registerPush called uid='+uid+' isNative='+_isNative()+' hasPN='+!!_P().PushNotifications+' inited='+_pushInited);
     if(!_isNative()||!_P().PushNotifications||_pushInited)return;
     _pushInited=true;
     var PN=_P().PushNotifications;
     PN.requestPermissions().then(function(perm){
-      _dbg('permissions: '+perm.receive);
       if(perm.receive!=='granted')return;
       PN.register();
       PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
@@ -645,11 +638,7 @@ window.AllibyBridge={
 
 // Capacitor инжектируется после загрузки страницы — ждём deviceready.
 // Если пользователь уже залогинен (сохранённая сессия), регистрируем пуш здесь.
-_dbg('script loaded. Capacitor='+!!window.Capacitor);
-setTimeout(function(){_dbg('after 3s: Capacitor='+!!window.Capacitor+' isNative='+_isNative());},3000);
-
 document.addEventListener('deviceready',function(){
-  _dbg('deviceready fired! Capacitor='+!!window.Capacitor+' isNative='+_isNative());
   // Lifecycle listeners
   var App=_P().App;
   if(App){

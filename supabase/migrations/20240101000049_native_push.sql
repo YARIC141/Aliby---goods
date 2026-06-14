@@ -53,3 +53,25 @@ CREATE TRIGGER trg_order_status_push
   EXECUTE FUNCTION notify_order_status_push();
 
 -- Note: booking trigger will be added when bookings table exists (migration 033)
+
+-- RPC: save or update native device token
+-- Called from WebView bridge; bypasses PostgREST schema cache issues
+CREATE OR REPLACE FUNCTION public.save_device_token(
+  p_user_id  UUID,
+  p_app      TEXT,
+  p_token    TEXT,
+  p_platform TEXT
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  INSERT INTO public.push_subscriptions
+    (user_id, app, device_token, platform, endpoint, p256dh, auth_key)
+  VALUES
+    (p_user_id, p_app, p_token, p_platform, p_token, '', '')
+  ON CONFLICT (user_id, app) DO UPDATE SET
+    device_token = EXCLUDED.device_token,
+    platform     = EXCLUDED.platform,
+    endpoint     = EXCLUDED.endpoint;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.save_device_token TO authenticated;
