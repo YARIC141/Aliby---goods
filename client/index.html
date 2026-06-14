@@ -415,7 +415,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sp1,.sp2{font:400 18px/1.4 var(--font-display);color:var(--fg-3);margin:0;font-style:italic;text-align:center}
 .sp3{font:400 52px/1 var(--font-display);letter-spacing:-0.02em;color:var(--accent);margin:6px 0 0}
 .sp-icon{width:100px;height:100px;border-radius:var(--r-4);margin-top:20px;box-shadow:var(--shadow-2)}
-.sp-quote{font:400 13px/1.6 var(--font-sans);color:var(--fg-4);font-style:italic;text-align:center;max-width:280px;margin:14px 16px 0;padding:0}
+
 
 /* ── HOME SCREEN ── */
 .home-savings{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:18px;margin-bottom:20px;text-align:center}
@@ -595,7 +595,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <p class="sp2">то у тебя есть</p>
   <p class="sp3">Alliby</p>
   <img class="sp-icon" src="favicon.svg" alt="Alliby">
-  <p class="sp-quote" id="sp-quote"></p>
 </div>
 
 
@@ -5207,54 +5206,13 @@ async function restoreNav() {
 
 
 // ─── SPLASH ───
-const _SPLASH_QUOTES = [
-  '«Дружба удваивает радости и делит горе пополам.» — Фрэнсис Бэкон',
-  '«Чтобы иметь хорошего друга, нужно самому им быть.» — Р. У. Эмерсон',
-  '«Истинная дружба — редкое растение, которое медленно растёт.» — Джордж Вашингтон',
-  '«Дружба, которая заканчивается, никогда не была настоящей.» — Аристотель',
-  '«Любить — значит видеть чудо, невидимое другим.» — Франсуа Мориак',
-  '«Величайшее счастье в жизни — быть уверенным, что тебя любят.» — Виктор Гюго',
-  '«Любовь — это решение, которое мы принимаем каждый день заново.» — Эрих Фромм',
-  '«Мы любим тех, кто принимает нас такими, какие мы есть.» — народная мудрость',
-  '«Деревья, которые растут медленно, дают самые сладкие плоды.» — Мольер',
-  '«Успех — это сумма маленьких усилий, повторяемых изо дня в день.» — Р. Кольер',
-  '«Делай что должен — и будь что будет.» — Лев Толстой',
-  '«Великие дела совершаются не силой, а упорством.» — Сэмюэл Джонсон',
-  '«Если не знаешь, куда плыть, никакой ветер не будет попутным.» — Сенека',
-  '«Тот, кто не стремится вперёд, движется назад.» — Иоганн Вольфганг Гёте',
-  '«Будущее принадлежит тем, кто верит в красоту своих мечтаний.» — Элеонора Рузвельт',
-  '«Человек без цели подобен кораблю без руля.» — Томас Карлейль',
-  '«Ничто великое в мире не совершалось без страсти.» — Г. В. Ф. Гегель',
-  '«Любящее сердце — начало всей мудрости.» — Томас Карлейль',
-  '«Родители сажают деревья, в тени которых отдыхают дети.» — народная мудрость',
-  '«Тот, кто дарит радость другим, в конечном счёте находит её сам.» — Р. У. Эмерсон',
-  '«Добрые дела живут дольше, чем их творцы.» — народная мудрость',
-  '«Гладкое море не делает искусного моряка.» — африканская пословица',
-  '«Характер строится не в покое, а в бурях жизни.» — Хелен Келлер',
-  '«Нет ничего постоянного, кроме перемен.» — Гераклит',
-  '«Кризис — это возможность, облачённая в рабочую одежду.» — народная мудрость',
-  '«Мудрость — это умение превращать поражения в опыт.» — народная мудрость',
-  '«Человека закаляют не победы, а то, как он встаёт после поражений.» — народная мудрость',
-  '«Удары молота закаляют железо, а трудности — характер.» — народная мудрость',
-  '«Терпение, упорство и труд — непобедимое сочетание.» — Наполеон Хилл',
-  '«Не страшно упасть — страшно не найти сил подняться.» — народная мудрость',
-];
-const _splashShownAt = Date.now();
-const _SPLASH_MIN_MS = 2000;
-(function() {
-  const el = document.getElementById('sp-quote');
-  if (el) el.textContent = _SPLASH_QUOTES[Math.floor(Math.random() * _SPLASH_QUOTES.length)];
-})();
 function hideSplash() {
   const splash = document.getElementById('splash');
   if (!splash) return;
-  const wait = Math.max(0, _SPLASH_MIN_MS - (Date.now() - _splashShownAt));
-  setTimeout(() => {
-    splash.classList.add('hide');
-    setTimeout(() => splash.remove(), 500);
-  }, wait);
+  splash.classList.add('hide');
+  setTimeout(() => splash.remove(), 500);
 }
-setTimeout(hideSplash, _SPLASH_MIN_MS + 500);
+setTimeout(hideSplash, 500);
 
 // ─── HOME ───
 const DIR_META = {
