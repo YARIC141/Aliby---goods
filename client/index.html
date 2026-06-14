@@ -114,7 +114,7 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 
 #bottom-nav{display:none;flex-shrink:0;border-top:1px solid var(--line-soft);background:var(--glass-ui)}
 .bn-row{display:flex}
-.bn-btn{flex:1;padding:8px 2px 8px;border:none;background:none;cursor:pointer;font:500 12px/1.2 var(--font-sans);color:var(--fg-3);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;transition:color var(--t-fast);white-space:nowrap;overflow:visible}
+.bn-btn{flex:1;padding:8px 2px 6px;border:none;background:none;cursor:pointer;font:500 12px/1.2 var(--font-sans);color:var(--fg-3);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;transition:color var(--t-fast);white-space:nowrap;overflow:visible}
 .bn-btn .ico{font-size:28px;line-height:1;display:block}
 .bn-lbl{min-height:2.4em;display:flex;align-items:flex-start;justify-content:center;text-align:center;white-space:normal;line-height:1.2}
 .bn-btn.active{color:var(--accent)}
@@ -969,7 +969,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <button class="sub-store-chip" data-ord-status="cancelled" onclick="setOrderFilter('cancelled')">Отменён</button>
     </div>
     <div id="active-orders-content" style="flex:1;overflow-y:auto;overscroll-behavior-y:none"><div class="empty" style="padding:32px 0">Нет активных заказов</div></div>
-    <div style="padding:4px 16px 16px;flex-shrink:0"><button class="btn btn-full" onclick="loadActiveOrders()"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-refresh"/></svg>Обновить статус</button></div>
   </div>
   <!-- Расписание pane -->
   <div id="ca-pane-bk" style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none">
@@ -1793,6 +1792,7 @@ async function req(path, opts = {}, _retried = false) {
   const r = await fetch(SB_URL + path, { ...opts, headers: h });
   const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
   if (r.status === 401 && !_retried) {
+    if (!S.session) throw { message: 'Требуется авторизация' };
     const ok = await refreshSession();
     if (ok === true) return req(path, opts, true);
     if (ok === null) throw { message: 'Нет соединения' }; // network error — keep session
@@ -2165,7 +2165,8 @@ function goTo(id, opts = {}) {
   if (id === 'bookings')     { _calenabsTab = 'bk';  id = 'calenabs'; }
   if (id === 'subscriptions'){ _calenabsTab = 'sub'; id = 'calenabs'; }
   if (id === 'orders')       { _calenabsTab = 'ord'; id = 'calenabs'; }
-  if (id !== 'auth' && !S.session) { goTo('auth'); return; }
+  const _GUEST_OK = ['map', 'store', 'cart', 'auth'];
+  if (!_GUEST_OK.includes(id) && !S.session) { _pendingNavAfterAuth = id; goTo('auth'); return; }
   document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
   if (id !== 'auth') localStorage.setItem('alliby_nav', id);
   const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
@@ -2317,7 +2318,7 @@ async function doLogin() {
       err.style.display = 'block';
       return;
     }
-    const proceed = async () => { if (!(await navigateDeepLink())) goTo('map'); };
+    const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'map'; _pendingNavAfterAuth = null; goTo(_d); } };
     if (!S.city) {
       openAddressPicker(async () => { await requireContract('buyer', proceed); });
     } else {
@@ -2357,7 +2358,7 @@ async function doRegister() {
           body: JSON.stringify({ full_name: fullName }),
         });
       } catch {}
-      const proceed = async () => { if (!(await navigateDeepLink())) goTo('map'); };
+      const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'map'; _pendingNavAfterAuth = null; goTo(_d); } };
       if (!S.city) {
         openAddressPicker(async () => { await requireContract('buyer', proceed); });
       } else {
@@ -4616,7 +4617,7 @@ async function _initSubPayment(subIds, isGift, pendingPayment, amountText, order
 async function checkoutSubs() {
   const dirItems = S.subCart.filter(c => (c.direction || 'food') === S.direction);
   if (!dirItems.length) return;
-  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
   const label = dirItems.length === 1 ? `Абонемент «${dirItems[0].sub.name}»` : `${dirItems.length} абонемента`;
   await _initSubPayment(
@@ -5070,7 +5071,7 @@ async function restoreNav() {
   }
   const SCREENS = ['home','map','alibi','store','menu','cart','calenabs','profile'];
   const nav = localStorage.getItem('alliby_nav');
-  const _navTarget = () => goTo(nav && SCREENS.includes(nav) ? nav : 'map');
+  const _navTarget = () => { if (!S.session) { goTo('map'); return; } goTo(nav && SCREENS.includes(nav) ? nav : 'map'); };
   if (!S.city) {
     _autoDetectCityThenNav(() => { _navTarget(); setTimeout(_prefetchClient, 1500); });
     return;
@@ -5364,6 +5365,7 @@ function openStoreFromHome(storeId, storeName) {
 
 // ─── DEEPLINK ───
 let deepStoreId = null;
+let _pendingNavAfterAuth = null;
 
 async function navigateDeepLink() {
   if (!deepStoreId) return false;
@@ -5417,10 +5419,10 @@ window.addEventListener('hashchange', () => {
       S.session = { access_token: hash.get('access_token') };
       showAuthTab('reset');
       document.getElementById('screen-auth').classList.add('active');
+      hideSplash();
     } else {
-      document.getElementById('screen-auth').classList.add('active');
+      await restoreNav(); // guest → map (hideSplash called inside restoreNav)
     }
-    hideSplash();
     return;
   }
 
@@ -5678,7 +5680,7 @@ async function signContract(type) {
 let _pendingPayment = null; // { order_id, payment_id, payment_token, amount }
 
 function startCheckout() {
-  if (!S.session) { showGeoToast('Войдите в аккаунт для оплаты'); return; }
+  if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   if (!S.cart.length) return;
   const alloc = getCartSubAllocation();
   if (alloc) {
@@ -5711,7 +5713,7 @@ function startCheckout() {
 }
 
 async function doCheckout(useSubscription = false) {
-  if (!S.session) { showGeoToast('Войдите в аккаунт для оплаты'); return; }
+  if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   if (!S.cart.length) return;
   const storeId = S.cartStoreId || S.store?.id;
   if (!storeId) { showGeoToast('Не удалось определить заведение'); return; }
@@ -6027,7 +6029,7 @@ function getAvailableSlots(windows, booked, prepMin) {
 }
 
 async function openBookingSlotModal(item, rescheduleId = null) {
-  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  if (!S.session) { _pendingNavAfterAuth = 'store'; goTo('auth'); return; }
   if (!item) return;
   _booking.item = item;
   _booking.rescheduleId = rescheduleId || null;
