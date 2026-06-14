@@ -2555,8 +2555,10 @@ async function saveLegalRequired() {
     const pName = document.getElementById('p-legal-name'); if (pName) pName.value = name;
     const pInn  = document.getElementById('p-inn');        if (pInn)  pInn.value  = inn;
     const pOgrn = document.getElementById('p-ogrn');       if (pOgrn) pOgrn.value = ogrn;
+    const cb = _legalRequiredNext;
+    _legalRequiredNext = null;
     closeModal('m-legal-required');
-    _showContractModal();
+    cb?.();
   } catch(e) {
     btn.disabled = false; btn.textContent = 'Продолжить →';
     err.textContent = 'Ошибка сохранения: ' + (e.message || ''); err.style.display = '';
@@ -3734,6 +3736,10 @@ function updatePrepTimeLabel() {
 
 let _miModalSeq = 0;
 function openMenuItemModal(item) {
+  if (!item && (!S.profile?.inn || !S.profile?.legal_name)) {
+    _requireLegalData(() => openMenuItemModal());
+    return;
+  }
   document.getElementById('mmi-title').textContent = item ? 'Редактировать позицию' : 'Новая позиция';
   document.getElementById('mmi-id').value        = item?.id              || '';
   document.getElementById('mmi-name').value      = item?.name            || '';
@@ -4798,6 +4804,10 @@ async function loadSubscriptions() {
 }
 
 function openSubModal(sub) {
+  if (!sub && (!S.profile?.inn || !S.profile?.legal_name)) {
+    _requireLegalData(() => openSubModal());
+    return;
+  }
   document.getElementById('msub-title').textContent = sub ? 'Редактировать абонемент' : 'Новый абонемент';
   document.getElementById('msub-id').value          = sub?.id            || '';
   document.getElementById('msub-store').value       = sub?.store_id      || '';
@@ -5470,7 +5480,20 @@ async function _sha256(text) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-let _contractNext = null;
+let _contractNext      = null;
+let _legalRequiredNext = null;
+
+function _requireLegalData(next) {
+  if (S.profile?.inn && S.profile?.legal_name) { next(); return; }
+  _legalRequiredNext = next;
+  document.getElementById('mlr-legal-name').value = S.profile?.legal_name || '';
+  document.getElementById('mlr-inn').value         = S.profile?.inn  || '';
+  document.getElementById('mlr-ogrn').value        = S.profile?.ogrn || '';
+  document.getElementById('mlr-err').style.display = 'none';
+  const mlrBtn = document.getElementById('mlr-btn');
+  mlrBtn.disabled = false; mlrBtn.textContent = 'Продолжить →';
+  openModal('m-legal-required');
+}
 
 function _showContractModal() {
   const scroll = document.getElementById('mcs-scroll');
@@ -5497,18 +5520,7 @@ async function requireContract(type, next) {
     if (sigs.length) { next(); return; }
   } catch(e) { next(); return; }
   _contractNext = next;
-  // If profile missing legal data — show legal form first
-  if (!S.profile?.inn || !S.profile?.legal_name) {
-    document.getElementById('mlr-legal-name').value = S.profile?.legal_name || '';
-    document.getElementById('mlr-inn').value         = S.profile?.inn  || '';
-    document.getElementById('mlr-ogrn').value        = S.profile?.ogrn || '';
-    document.getElementById('mlr-err').style.display = 'none';
-    const mlrBtn = document.getElementById('mlr-btn');
-    mlrBtn.disabled = false; mlrBtn.textContent = 'Продолжить →';
-    openModal('m-legal-required');
-    return;
-  }
-  _showContractModal();
+  _requireLegalData(_showContractModal);
 }
 
 function onContractScroll(prefix) {
