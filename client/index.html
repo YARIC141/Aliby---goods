@@ -3145,7 +3145,7 @@ function updateCatActive() {
   document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cid === S.menuCatId));
 }
 
-function _menuCacheKey(id) { return 'alliby_menu_' + id; }
+function _menuCacheKey(id) { return 'alliby_menu_v2_' + id; }
 function _readMenuCache(id) { try { const r = localStorage.getItem(_menuCacheKey(id)); if (!r) return null; const d = JSON.parse(r); return Array.isArray(d) ? d : d.items; } catch(e) { return null; } }
 function _menuCacheTs(id)   { try { const r = localStorage.getItem(_menuCacheKey(id)); if (!r) return 0; const d = JSON.parse(r); return Array.isArray(d) ? 0 : (d.ts || 0); } catch(e) { return 0; } }
 function _writeMenuCache(id, items) { try { localStorage.setItem(_menuCacheKey(id), JSON.stringify({ ts: Date.now(), items })); } catch(e) {} }
@@ -3232,6 +3232,7 @@ async function loadMenuItems() {
     items.forEach(it => cacheItem(it));
     _allMenuItems = items;
     _writeMenuCache(storeId, items);
+    S.cart.forEach(c => { const f = itemCache.get(c.item.id); if (f) c.item = f; });
     _menuCliState.hasMore = items.length === _CLI_LIMIT;
     _renderMenuGrid(el, items);
   } catch(e) {
@@ -3249,6 +3250,7 @@ async function loadMoreClientMenu() {
     const items = await req(`${_menuCliState.baseUrl}&limit=${_CLI_LIMIT}&offset=${_menuCliState.offset}`);
     items.forEach(it => cacheItem(it));
     _allMenuItems = [..._allMenuItems, ...items];
+    S.cart.forEach(c => { const f = itemCache.get(c.item.id); if (f) c.item = f; });
     _writeMenuCache(_menuCliState.storeId, _allMenuItems);
     _menuCliState.hasMore = items.length === _CLI_LIMIT;
     const el = document.getElementById('menu-items');

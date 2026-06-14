@@ -3455,7 +3455,10 @@ function _renderMenuItems(items, append = false) {
         <div style="display:flex;gap:10px;align-items:flex-start">
           ${thumb}
           <div style="flex:1;min-width:0">
-            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.name)}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;min-width:0">
+              <span style="font:600 14px/1.2 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.name)}</span>
+              ${i.is_alcohol ? '<span style="flex-shrink:0;background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);letter-spacing:.03em">Алкоголь</span>' : ''}
+            </div>
             <div style="font-size:12px;color:var(--fg-3);margin-bottom:3px">${esc(i.categories?.name || '—')} · ${i.price} ₽</div>
             ${avail}
           </div>
@@ -3498,7 +3501,7 @@ async function loadMenuItems() {
   const catId  = document.getElementById('mi-cat-filter')?.value;
   const search = document.getElementById('mi-search')?.value;
   const noFilters = !catId && !search;
-  const cacheKey = `admin_menu_items_${uid}`;
+  const cacheKey = `admin_menu_items_v2_${uid}`;
   if (noFilters) {
     try {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
@@ -4529,7 +4532,7 @@ async function _prefetchAdmin() {
     })(),
     (async () => {
       const items = await req(`/rest/v1/menu_items?select=*,categories(name)&order=name.asc${sf}&limit=${_MI_LIMIT}&offset=0`);
-      try { localStorage.setItem(`admin_menu_items_${uid}`, JSON.stringify(items)); } catch {}
+      try { localStorage.setItem(`admin_menu_items_v2_${uid}`, JSON.stringify(items)); } catch {}
     })(),
   ]);
 }
