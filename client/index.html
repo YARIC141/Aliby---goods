@@ -410,9 +410,6 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 /* ── SPLASH ── */
 #splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:opacity var(--t-slow) var(--ease-out)}
 #splash.hide{opacity:0;pointer-events:none}
-/* ── AGE GATE ── */
-#age-gate{position:fixed;inset:0;z-index:9998;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;gap:0}
-#age-gate-denied{display:none;text-align:center;padding:32px;color:var(--fg-3);font:400 16px/1.6 var(--font-sans)}
 .sp1,.sp2{font:400 18px/1.4 var(--font-display);color:var(--fg-3);margin:0;font-style:italic;text-align:center}
 .sp3{font:400 52px/1 var(--font-display);letter-spacing:-0.02em;color:var(--accent);margin:6px 0 0}
 .sp-icon{width:100px;height:100px;border-radius:var(--r-4);margin-top:20px;box-shadow:var(--shadow-2)}
@@ -597,16 +594,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   <img class="sp-icon" src="favicon.svg" alt="Alliby">
 </div>
 
-<div id="age-gate">
-  <div style="font-size:52px;margin-bottom:16px">🔞</div>
-  <h2 style="font:600 22px/1.3 var(--font-sans);margin-bottom:12px">Вам исполнилось 18 лет?</h2>
-  <p style="color:var(--fg-3);font:400 14px/1.6 var(--font-sans);max-width:280px;margin-bottom:28px">Часть заведений на платформе реализует алкогольную продукцию. Для продолжения необходимо подтвердить возраст.</p>
-  <div style="display:flex;gap:12px;width:100%;max-width:280px">
-    <button class="btn btn-full" onclick="ageGateDeny()">Нет</button>
-    <button class="btn btn-p btn-full" onclick="ageGateAccept()">Да, мне 18+</button>
-  </div>
-  <div id="age-gate-denied" style="display:none;margin-top:20px;color:var(--fg-3);font:400 14px/1.6 var(--font-sans)">Приложение доступно только для лиц старше 18 лет.</div>
-</div>
 
 <div id="app">
 
@@ -3338,6 +3325,7 @@ function renderItemCard(item) {
     <div class="item-body">
       <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
       ${item.description ? `<div class="item-desc">${esc(item.description)}</div>` : ''}
+      ${item.allergens ? `<div class="item-desc" style="color:var(--warn,#e8a020)">⚠ Аллергены: ${esc(item.allergens)}</div>` : ''}
       ${item.preparation_time > 0 ? `<div class="item-desc" style="color:var(--fg-4)">⏱ ${item.preparation_time} мин</div>` : ''}
       <div class="item-price">${subNoteHtml}<div class="price-wrap">${priceHtml}</div></div>
       <div class="item-actions">${itemActions(item, qty)}</div>
@@ -5107,15 +5095,6 @@ async function restoreNav() {
   setTimeout(_prefetchClient, 1500);
 }
 
-// ─── AGE GATE ───
-function ageGateAccept() {
-  localStorage.setItem('alliby_age_ok', '1');
-  document.getElementById('age-gate').style.display = 'none';
-}
-function ageGateDeny() {
-  document.getElementById('age-gate-denied').style.display = 'block';
-  document.getElementById('age-gate').querySelectorAll('h2,p:first-of-type,.btn').forEach(el => el.style.display = 'none');
-}
 
 // ─── SPLASH ───
 function hideSplash() {
@@ -5123,9 +5102,6 @@ function hideSplash() {
   if (!el) return;
   el.classList.add('hide');
   setTimeout(() => el.remove(), 500);
-  if (!localStorage.getItem('alliby_age_ok')) {
-    document.getElementById('age-gate').style.display = 'flex';
-  }
 }
 setTimeout(hideSplash, 500);
 
@@ -5743,6 +5719,10 @@ let _pendingPayment = null; // { order_id, payment_id, payment_token, amount }
 function startCheckout() {
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   if (!S.cart.length) return;
+  if (S.cart.some(c => c.item.is_alcohol)) {
+    showGeoToast('Дистанционная продажа алкоголя запрещена законом (ФЗ-171). Оплата заказа с алкогольной продукцией недоступна.');
+    return;
+  }
   const alloc = getCartSubAllocation();
   if (alloc) {
     // Есть активный абонемент, покрывающий товары
@@ -5776,6 +5756,10 @@ function startCheckout() {
 async function doCheckout(useSubscription = false) {
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   if (!S.cart.length) return;
+  if (S.cart.some(c => c.item.is_alcohol)) {
+    showGeoToast('Дистанционная продажа алкоголя запрещена законом (ФЗ-171). Оплата заказа с алкогольной продукцией недоступна.');
+    return;
+  }
   const storeId = S.cartStoreId || S.store?.id;
   if (!storeId) { showGeoToast('Не удалось определить заведение'); return; }
 

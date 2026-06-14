@@ -1454,6 +1454,10 @@ tr.row-click:hover td{background:var(--bg-2)}
         <input type="checkbox" id="mmi-avail" checked style="width:auto">
         <label for="mmi-avail">В наличии <span class="hint" data-tip="Снимите галочку, чтобы временно скрыть позицию от клиентов">?</span></label>
       </div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:4px">
+        <input type="checkbox" id="mmi-alcohol" style="width:auto;accent-color:var(--err)">
+        <label for="mmi-alcohol" style="color:var(--err)">Алкогольная продукция <span class="hint" data-tip="Обязательно отметьте, если товар является алкогольной продукцией. Дистанционная продажа алкоголя запрещена (ФЗ-171) — оплата таких позиций через приложение будет заблокирована">?</span></label>
+      </div>
     </div>
 
     <!-- Photo upload -->
@@ -3586,7 +3590,8 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-allergens').value = item?.allergens       || '';
   document.getElementById('mmi-price').value     = item?.price           || '';
   document.getElementById('mmi-prep-time').value = item?.preparation_time ?? 0;
-  document.getElementById('mmi-avail').checked   = item ? item.is_available : true;
+  document.getElementById('mmi-avail').checked    = item ? item.is_available : true;
+  document.getElementById('mmi-alcohol').checked  = item?.is_alcohol || false;
   document.getElementById('mmi-image-url').value = item?.image_url       || '';
   document.getElementById('mmi-store').value    = item?.store_id    || '';
   S.uploadedPhotoFilename = null;
@@ -3827,6 +3832,7 @@ async function saveMenuItem() {
     price:            parseFloat(document.getElementById('mmi-price').value),
     preparation_time: parseInt(document.getElementById('mmi-prep-time').value, 10) || 0,
     is_available:     document.getElementById('mmi-avail').checked,
+    is_alcohol:       document.getElementById('mmi-alcohol').checked,
     image_url:        document.getElementById('mmi-image-url').value || null,
   };
   const ctrl = new AbortController();
@@ -5176,7 +5182,7 @@ function _renderContractText(tpl) {
   return text;
 }
 const SELLER_CONTRACT = {
-  version: '2026-06-09',
+  version: '2026-06-14',
   text: `ЛИЦЕНЗИОННЫЙ ДОГОВОР (ПУБЛИЧНАЯ ОФЕРТА)
 на право использования программного обеспечения
 
@@ -5261,6 +5267,20 @@ Email: yarich92@gmail.com
 своего банка-эквайера для корректной интеграции приёма платежей в Сервис.
 5.4. Продавец несёт единоличную ответственность за качество товара, доставку,
 возвраты и соблюдение Закона РФ «О защите прав потребителей».
+5.5. ЗАПРЕТ РЕАЛИЗАЦИИ АЛКОГОЛЬНОЙ ПРОДУКЦИИ.
+Дистанционная продажа алкогольной продукции запрещена законодательством
+Российской Федерации (статья 16 Федерального закона от 22.11.1995 №171-ФЗ
+«О государственном регулировании производства и оборота этилового спирта,
+алкогольной и спиртосодержащей продукции»).
+Продавец обязан:
+— не размещать алкогольную продукцию для дистанционного заказа и доставки;
+— при размещении товара, содержащего алкоголь, обязательно отмечать
+   его флагом «Алкогольная продукция» в карточке товара в Личном кабинете.
+Сервис автоматически блокирует онлайн-оплату заказов, содержащих
+товары, помеченные как алкогольная продукция.
+Нарушение данного пункта является основанием для немедленного расторжения
+настоящего Договора и блокировки Личного кабинета Продавца без возврата
+оплаченного периода.
 
 6. КОНФИДЕНЦИАЛЬНОСТЬ И ПЕРСОНАЛЬНЫЕ ДАННЫЕ
 6.1. Лицензиар принимает технические и организационные меры защиты персональных
