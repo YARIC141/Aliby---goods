@@ -200,6 +200,9 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .ord-chip.active{border-color:var(--accent);color:var(--accent);background:var(--bg-2)}
 .ord-notif-dot{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:#e53e3e;border:2px solid var(--bg);display:none;pointer-events:none}
 .ord-notif-dot.on{display:block}
+.ord-cnt{margin-left:5px;background:var(--bg-3);color:var(--fg-3);font:600 11px/1 var(--font-sans);padding:1px 6px;border-radius:99px;display:none;pointer-events:none}
+.ord-cnt.on{display:inline-block}
+.ord-chip.active .ord-cnt{background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent)}
 
 /* ── TABLE ── */
 .tbl-wrap{overflow-x:auto}
@@ -886,15 +889,14 @@ tr.row-click:hover td{background:var(--bg-2)}
         </select>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <button class="ord-chip active" data-ord-status="" onclick="setAdminOrderFilter('')">Активные<span class="ord-notif-dot"></span></button>
-        <button class="ord-chip" data-ord-status="all" onclick="setAdminOrderFilter('all')">Все</button>
-        <button class="ord-chip" data-ord-status="pending" onclick="setAdminOrderFilter('pending')">Создан<span class="ord-notif-dot"></span></button>
-        <button class="ord-chip" data-ord-status="paid" onclick="setAdminOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
-        <button class="ord-chip" data-ord-status="in_progress" onclick="setAdminOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
-        <button class="ord-chip" data-ord-status="looking_for_courier" onclick="setAdminOrderFilter('looking_for_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-search"/></svg>Курьер<span class="ord-notif-dot"></span></button>
-        <button class="ord-chip" data-ord-status="on_the_way" onclick="setAdminOrderFilter('on_the_way')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-bicycle"/></svg>Едет<span class="ord-notif-dot"></span></button>
-        <button class="ord-chip" data-ord-status="ready" onclick="setAdminOrderFilter('ready')">Готов<span class="ord-notif-dot"></span></button>
-        <button class="ord-chip" data-ord-status="issued" onclick="setAdminOrderFilter('issued')">Выдан<span class="ord-notif-dot"></span></button>
+        <button class="ord-chip active" data-ord-status="all" onclick="setAdminOrderFilter('all')">Все</button>
+        <button class="ord-chip" data-ord-status="pending" onclick="setAdminOrderFilter('pending')">Создан<span class="ord-cnt" id="ord-cnt-pending"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="paid" onclick="setAdminOrderFilter('paid')">Оплачен<span class="ord-cnt" id="ord-cnt-paid"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="in_progress" onclick="setAdminOrderFilter('in_progress')">В работе<span class="ord-cnt" id="ord-cnt-in_progress"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="looking_for_courier" onclick="setAdminOrderFilter('looking_for_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-search"/></svg>Курьер<span class="ord-cnt" id="ord-cnt-looking_for_courier"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="on_the_way" onclick="setAdminOrderFilter('on_the_way')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-bicycle"/></svg>Едет<span class="ord-cnt" id="ord-cnt-on_the_way"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="ready" onclick="setAdminOrderFilter('ready')">Готов<span class="ord-cnt" id="ord-cnt-ready"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="issued" onclick="setAdminOrderFilter('issued')">Выдан</button>
         <button class="ord-chip" data-ord-status="cancelled" onclick="setAdminOrderFilter('cancelled')">Отменён</button>
       </div>
       <div id="ord-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
@@ -4019,22 +4021,48 @@ function fmtTime(d) {
   return new Date(d).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 }
 
-let _adminOrdFilter = '';
+let _adminOrdFilter = 'all';
 const _adminOrdNotif = new Set();
+const _adminOrdCounts = {};
 let _ordPage = 0, _ordHasMore = false, _ordLoading = false, _ordObserver = null;
+
+const _ORD_CNT_STATUSES = ['pending','paid','in_progress','looking_for_courier','on_the_way','ready'];
 
 function _renderAdminOrdDots() {
   document.querySelectorAll('[data-ord-status]').forEach(btn => {
     const s = btn.dataset.ordStatus;
-    const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready']);
-    const has = s === '' ? ([...ACTIVE].some(x => _adminOrdNotif.has(x))) : _adminOrdNotif.has(s);
+    const has = s === 'all' ? _adminOrdNotif.size > 0 : _adminOrdNotif.has(s);
     btn.querySelector('.ord-notif-dot')?.classList.toggle('on', has);
   });
 }
 
+function _renderOrdCounts() {
+  _ORD_CNT_STATUSES.forEach(s => {
+    const el = document.getElementById('ord-cnt-' + s);
+    if (!el) return;
+    const n = _adminOrdCounts[s] || 0;
+    el.textContent = n || '';
+    el.classList.toggle('on', n > 0);
+  });
+}
+
+async function loadOrdCounts() {
+  try {
+    const storeId = S.profile?.role === 'employee'
+      ? S.profile.employee_store_id
+      : document.getElementById('ord-store-filter')?.value;
+    let url = '/rest/v1/orders?select=status&status=in.(pending,paid,in_progress,looking_for_courier,on_the_way,ready)&limit=2000';
+    if (storeId) url += `&store_id=eq.${storeId}`;
+    const rows = await req(url);
+    _ORD_CNT_STATUSES.forEach(s => { _adminOrdCounts[s] = 0; });
+    rows.forEach(r => { if (r.status in _adminOrdCounts) _adminOrdCounts[r.status]++; });
+    _renderOrdCounts();
+  } catch {}
+}
+
 function setAdminOrderFilter(status) {
   _adminOrdFilter = status;
-  if (status === '') _adminOrdNotif.clear(); else _adminOrdNotif.delete(status);
+  if (!status || status === 'all') _adminOrdNotif.clear(); else _adminOrdNotif.delete(status);
   document.querySelectorAll('[data-ord-status]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.ordStatus === status);
   });
@@ -4049,6 +4077,7 @@ async function loadOrders(append = false) {
   if (!append) {
     _ordPage = 0; _orders = [];
     el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+    loadOrdCounts();
   }
   try {
     const storeId = S.profile?.role === 'employee'
@@ -4056,9 +4085,7 @@ async function loadOrders(append = false) {
       : document.getElementById('ord-store-filter')?.value;
     let url = `/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     if (storeId) url += `&store_id=eq.${storeId}`;
-    if (_adminOrdFilter === 'all') { /* no status filter */ }
-    else if (_adminOrdFilter) url += `&status=eq.${_adminOrdFilter}`;
-    else url += '&status=in.(paid,in_progress,looking_for_courier,on_the_way,ready)';
+    if (_adminOrdFilter && _adminOrdFilter !== 'all') url += `&status=eq.${_adminOrdFilter}`;
     const page = await req(url);
     _ordHasMore = page.length === 20;
     _ordPage++;
@@ -4306,12 +4333,12 @@ function adminRealtimeConnect() {
           if (type === 'INSERT') {
             showAdminToast('Новый заказ!');
             if (record?.id) { _newOrderIds.add(record.id); updateNavBadge(); }
-            if (newStatus && ACTIVE.has(newStatus) && _adminOrdFilter !== '' && _adminOrdFilter !== newStatus) {
+            if (newStatus && ACTIVE.has(newStatus) && _adminOrdFilter !== 'all' && _adminOrdFilter !== newStatus) {
               _adminOrdNotif.add(newStatus); _renderAdminOrdDots();
             }
             loadOrders();
           } else if (type === 'UPDATE') {
-            if (newStatus && ACTIVE.has(newStatus) && _adminOrdFilter !== '' && _adminOrdFilter !== newStatus) {
+            if (newStatus && ACTIVE.has(newStatus) && _adminOrdFilter !== 'all' && _adminOrdFilter !== newStatus) {
               _adminOrdNotif.add(newStatus); _renderAdminOrdDots();
             }
             loadOrders();
