@@ -3646,6 +3646,17 @@ function _onRealtimeOrder(record) {
   if (isVisible) loadActiveOrders();
 }
 
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !S.session?.user?.id) return;
+  const uid = S.session.user.id;
+  if (!_rtWs || _rtWs.readyState !== WebSocket.OPEN) realtimeSubscribeOrders(uid);
+  if (!_rtBkWs || _rtBkWs.readyState !== WebSocket.OPEN) realtimeSubscribeBookings(uid);
+  if (_calenabsIsActive()) {
+    if (_calenabsTab === 'ord') loadActiveOrders();
+    else if (_calenabsTab === 'bk') loadBookingsScreen();
+  }
+});
+
 // ─── CART TABS ───
 function switchCartTab(tab) {
   const isCart = tab === 'cart';
