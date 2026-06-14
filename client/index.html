@@ -918,7 +918,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div id="sub-cart-list"></div>
         <div style="padding:8px 16px 12px">
           <button class="btn btn-p btn-full" onclick="checkoutSubs()">Купить абонементы</button>
-          <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Купить абонементы», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
         </div>
       </div>
       <div id="gift-sub-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
@@ -927,7 +926,6 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div id="gift-sub-cart-list"></div>
         <div style="padding:8px 16px 12px">
           <button class="btn btn-p btn-full" onclick="checkoutGiftSubs()">Купить подарочные абонементы</button>
-          <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Купить», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
         </div>
       </div>
       <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
@@ -937,8 +935,8 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         <div class="cart-row cart-total-row"><span>Итого</span><span id="c-total">0 ₽</span></div>
         <div id="delivery-toggle-wrap" style="display:none;margin-top:12px">
           <div style="display:flex;gap:8px">
-            <button id="del-pickup-btn" class="btn btn-p" style="flex:1" onclick="setDeliveryMode('pickup')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
-            <button id="del-delivery-btn" class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px" onclick="setDeliveryMode('delivery')">
+            <button id="del-pickup-btn" class="btn" style="flex:1;background:var(--cta-from);color:#000;font-weight:600;min-height:48px" onclick="setDeliveryMode('pickup')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-store"/></svg>Самовывоз</button>
+            <button id="del-delivery-btn" class="btn" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--cta-from);color:#000;font-weight:600;min-height:48px" onclick="setDeliveryMode('delivery')">
               <span><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-bicycle"/></svg>Доставка</span>
               <span id="del-price-lbl" style="font-size:11px;opacity:.7"></span>
             </button>
@@ -947,7 +945,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
         </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
-        <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Нажимая «Оплатить», вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
+        <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Оформляя заказ, вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
       </div>
     </div>
   </div>
@@ -1178,9 +1176,9 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
       <div id="mbs-slots" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px"></div>
     </div>
     <div id="mbs-no-sched" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Расписание не задано</div>
-    <div class="modal-ft">
-      <button class="btn" id="mbs-book-btn" disabled onclick="confirmBooking(false)">Забронировать</button>
-      <button class="btn btn-p" id="mbs-pay-btn" disabled onclick="confirmBooking(true)">Оплатить и записаться</button>
+    <div class="modal-ft" style="flex-wrap:wrap">
+      <button class="btn" id="mbs-book-btn" disabled onclick="confirmBooking(false)" style="flex:1;min-width:120px">Забронировать</button>
+      <button class="btn btn-p" id="mbs-pay-btn" disabled onclick="confirmBooking(true)" style="flex:1;min-width:140px">Оплатить и записаться</button>
     </div>
   </div>
 </div>
@@ -4712,6 +4710,11 @@ async function checkoutSubs() {
   const dirItems = S.subCart.filter(c => (c.direction || 'food') === S.direction);
   if (!dirItems.length) return;
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
+  const storeIds = [...new Set(dirItems.map(c => c.sub.store_id).filter(Boolean))];
+  if (storeIds.length > 1) {
+    showGeoToast('Абонементы из разных заведений нельзя купить вместе — оформите по одному заведению');
+    return;
+  }
   const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
   const label = dirItems.length === 1 ? `Абонемент «${dirItems[0].sub.name}»` : `${dirItems.length} абонемента`;
   await _initSubPayment(
@@ -4725,6 +4728,11 @@ async function checkoutGiftSubs() {
   const dirItems = S.giftSubCart.filter(c => (c.direction || 'food') === S.direction);
   if (!dirItems.length) return;
   if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  const storeIds = [...new Set(dirItems.map(c => c.sub.store_id).filter(Boolean))];
+  if (storeIds.length > 1) {
+    showGeoToast('Подарочные абонементы из разных заведений нельзя купить вместе — оформите по одному заведению');
+    return;
+  }
   const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
   const label = dirItems.length === 1
     ? `${svgIco('gift',13)} Абонемент «${dirItems[0].sub.name}»`
