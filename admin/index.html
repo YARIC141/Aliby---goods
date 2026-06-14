@@ -2620,7 +2620,7 @@ async function loadStoreSubscriptions() {
   try {
     const [subs, stores] = await Promise.all([
       req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.asc`),
-      req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&order=name.asc&select=id,name,is_visible,payment_provider,payment_test_mode`),
+      req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&order=name.asc&select=id,name,is_visible`),
     ]);
 
     const now      = new Date();
@@ -2767,19 +2767,19 @@ function _renderStoreSubCard(store, sub, isFirst) {
       ${!sub ? 'Активировать подписку' : 'Продлить подписку'}
     </button>` : '';
 
-  const provider   = store?.payment_provider || 'none';
-  const isTestMode = store?.payment_test_mode !== false;
+  const provider   = S.profile?.payment_provider || 'none';
+  const isTestMode = S.profile?.payment_test_mode !== false;
   const payModeRow = store ? `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--line-soft)">
       <div style="font-size:12px;color:var(--fg-3)">
-        Оплата заказов:&nbsp;<span style="font-weight:600;color:${isTestMode ? 'var(--warn)' : 'var(--ok)'}">
-          ${isTestMode ? 'Тестовая' : '✓ Реальная'}
+        Эквайринг:&nbsp;<span style="font-weight:600;color:${isTestMode ? 'var(--warn)' : 'var(--ok)'}">
+          ${isTestMode ? 'Тестовый' : '✓ Реальный'}
         </span>
         ${provider !== 'none' ? `<span style="color:var(--fg-4)"> · ${provider}</span>` : ''}
       </div>
       <label class="toggle-sw" style="margin:0" title="${isTestMode ? 'Включить реальный эквайринг' : 'Переключить в тестовый режим'}">
         <input type="checkbox" ${!isTestMode ? 'checked' : ''}
-          onchange="toggleStorePaymentMode('${storeId}',this.checked,this)">
+          onchange="toggleStorePaymentMode(this.checked,this)">
         <span class="toggle-track"></span>
       </label>
     </div>` : '';
@@ -2806,28 +2806,26 @@ async function toggleStoreVisibility(storeId, visible) {
   } catch(e) { showToast('Ошибка: ' + (e.message || '')); }
 }
 
-async function toggleStorePaymentMode(storeId, enableReal, el) {
+async function toggleStorePaymentMode(enableReal, el) {
   if (enableReal) {
-    // Проверяем провайдера и ключи перед включением реального режима
-    const stores = await req(`/rest/v1/stores?id=eq.${storeId}&select=payment_provider`).catch(() => null);
-    const provider = stores?.[0]?.payment_provider;
+    const provider = S.profile?.payment_provider || 'none';
     if (!provider || provider === 'none') {
       el.checked = false;
-      showToast('Сначала выберите провайдера эквайринга в настройках заведения');
+      showToast('Сначала выберите провайдера в разделе «Профиль → Интернет-эквайринг»');
       return;
     }
     const meta = await req('/functions/v1/payment-settings-meta', {
       method: 'POST',
-      body: JSON.stringify({ store_id: storeId }),
+      body: JSON.stringify({}),
     }).catch(() => null);
     if (!meta?.has_terminal_key) {
       el.checked = false;
-      showToast('Сначала введите Terminal Key в настройках заведения (раздел Интернет-эквайринг)');
+      showToast('Сначала введите Terminal Key в разделе «Профиль → Интернет-эквайринг»');
       return;
     }
     if (!meta?.has_secret_key) {
       el.checked = false;
-      showToast('Сначала введите Секретный ключ в настройках заведения');
+      showToast('Сначала введите Секретный ключ в разделе «Профиль → Интернет-эквайринг»');
       return;
     }
     if (provider !== 'tinkoff') {
@@ -2837,10 +2835,15 @@ async function toggleStorePaymentMode(storeId, enableReal, el) {
     }
   }
   try {
-    await req(`/rest/v1/stores?id=eq.${storeId}`, {
+    await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ payment_test_mode: !enableReal }),
     });
+    if (S.profile) S.profile.payment_test_mode = !enableReal;
+    const modeLabel = document.getElementById('pp-mode-label');
+    if (modeLabel) { modeLabel.textContent = enableReal ? '✓ Реальная' : 'Тестовый'; modeLabel.style.color = enableReal ? 'var(--ok)' : 'var(--warn)'; }
+    const ppToggle = document.getElementById('pp-test-mode-toggle');
+    if (ppToggle) ppToggle.checked = enableReal;
     loadStoreSubscriptions();
   } catch(e) {
     el.checked = !enableReal;
