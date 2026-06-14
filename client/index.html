@@ -673,16 +673,9 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   </div>
   <div class="screen-tip"></div>
   <div class="home-tiles">
-    <div class="home-tile home-tile-alibi" style="flex-direction:row;padding:8px;cursor:default;gap:0;align-items:stretch">
-      <button class="ht-sub-btn" onclick="showQrModal()">
-        <svg class="ico" width="28" height="28"><use href="#i-qr"/></svg>
-        <span>QR</span>
-      </button>
-      <div style="width:1px;background:var(--line-soft);flex-shrink:0;align-self:center;height:55%"></div>
-      <button class="ht-sub-btn" onclick="goTo('alibi')">
-        <svg class="ico" width="28" height="28"><use href="#i-chart"/></svg>
-        <span>Статистика</span>
-      </button>
+    <div class="home-tile home-tile-alibi" onclick="goTo('alibi')">
+      <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-chart"/></svg></div>
+      <div class="ht-name">Статистика</div>
     </div>
     <div class="home-tile home-tile-food" onclick="openDirection('food')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-food"/></svg></div>
