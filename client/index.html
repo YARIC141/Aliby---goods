@@ -644,8 +644,12 @@ window.AllibyBridge={
         // show toast when user taps notification while app was in background
         if(n.title||n.body)setTimeout(function(){_showNativeToast(n.title,n.body);},350);
         if(typeof goTo==='function'){
-          if(data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued')goTo('calenabs');
-          if(data.type==='booking_confirmed'||data.type==='booking_cancelled')goTo('calenabs');
+          var _isOrd=data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued';
+          var _isBk=data.type==='booking_confirmed'||data.type==='booking_cancelled';
+          if(_isOrd||_isBk){
+            var _onCal=document.getElementById('screen-calenabs')?.classList.contains('active');
+            if(!_onCal)goTo('calenabs');
+          }
         }
       });
     }).catch(function(){});
@@ -3890,7 +3894,7 @@ async function loadActiveOrders(append = false) {
   if (!el) { _ordLoading = false; return; }
   if (!append) {
     _ordPage = 0; _activeOrders = [];
-    el.innerHTML = '<div class="loading">Загрузка…</div>';
+    if (!el.querySelector('.card')) el.innerHTML = '<div class="loading">Загрузка…</div>';
   }
   try {
     const uid = S.session?.user?.id;
