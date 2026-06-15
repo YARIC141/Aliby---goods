@@ -685,7 +685,7 @@ window.AllibyBridge={
 
   setTheme:function(dark){
     if(!_isNative()||!_P().StatusBar)return;
-    _P().StatusBar.setStyle({style:'DARK'});
+    _P().StatusBar.setStyle({style:'LIGHT'});
     _P().StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#e8743b'});
   },
 };
@@ -706,9 +706,13 @@ document.addEventListener('deviceready',function(){
   // Тема статус-бара
   var SB=_P().StatusBar;
   if(SB){
-    var dark=document.documentElement.classList.contains('dark');
-    SB.setStyle({style:'DARK'});
-    SB.setBackgroundColor({color:dark?'#0f0f0f':'#e8743b'});
+    function _applyStatusBar(){
+      var dark=document.documentElement.classList.contains('dark');
+      SB.setStyle({style:'LIGHT'});
+      SB.setBackgroundColor({color:dark?'#0f0f0f':'#e8743b'});
+    }
+    if(document.readyState==='complete'){_applyStatusBar();}
+    else{window.addEventListener('load',_applyStatusBar,{once:true});}
   }
   // Если сессия уже восстановлена из localStorage до deviceready — регистрируем пуш
   if(typeof S!=='undefined'&&S.session&&S.session.user&&S.session.user.id){
@@ -1182,7 +1186,7 @@ document.addEventListener('deviceready',function(){
     </div>
   </div>
   <!-- Subscriptions pane -->
-  <div id="ca-pane-sub" style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none">
+  <div id="ca-pane-sub" style="display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden">
     <div class="pb">
       <input id="sub-search" type="search" placeholder="Поиск…" oninput="filterSubs()" style="margin-bottom:12px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
@@ -2140,7 +2144,7 @@ function switchCalenabsTab(tab) {
   try { localStorage.setItem('alliby_calenabs_tab', tab); } catch(e) {}
   document.getElementById('ca-pane-ord').style.display = tab === 'ord' ? 'flex' : 'none';
   document.getElementById('ca-pane-bk').style.display  = tab === 'bk'  ? '' : 'none';
-  document.getElementById('ca-pane-sub').style.display = tab === 'sub' ? '' : 'none';
+  document.getElementById('ca-pane-sub').style.display = tab === 'sub' ? 'flex' : 'none';
   document.getElementById('ca-tab-ord')?.classList.toggle('active', tab === 'ord');
   document.getElementById('ca-tab-bk')?.classList.toggle('active',  tab === 'bk');
   document.getElementById('ca-tab-sub')?.classList.toggle('active', tab === 'sub');
