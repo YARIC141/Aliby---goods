@@ -1523,44 +1523,6 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
-<!-- ════════════════ TBANK PAYMENT MODAL ════════════════ -->
-<div class="overlay" id="m-tbank-pay">
-  <div class="modal">
-    <div class="modal-hd">
-      <div style="display:flex;align-items:center;gap:10px">
-        <span class="pay-bank-badge">T‑Bank</span>
-        <h3 style="margin:0;font-size:20px">Оплата картой</h3>
-      </div>
-      <button class="modal-x" onclick="cancelPayment()">✕</button>
-    </div>
-    <div class="pay-amount-row">
-      <span style="font-size:14px;color:var(--fg-3)">К оплате</span>
-      <span id="tbank-amount" class="pay-amount-val">0 ₽</span>
-    </div>
-    <div id="tbank-order-info" style="font-size:12px;color:var(--fg-4);margin-bottom:16px;font-family:var(--font-sans)"></div>
-    <div class="pay-field">
-      <label>Номер карты</label>
-      <input type="text" id="tbank-card" placeholder="0000 0000 0000 0000" maxlength="19" oninput="fmtCardNum(this)" autocomplete="cc-number">
-    </div>
-    <div class="pay-card-row">
-      <div class="pay-field" style="flex:1">
-        <label>Срок</label>
-        <input type="text" id="tbank-exp" placeholder="ММ/ГГ" maxlength="5" oninput="fmtExpiry(this)" autocomplete="cc-exp">
-      </div>
-      <div class="pay-field" style="flex:1">
-        <label>CVV</label>
-        <input type="password" id="tbank-cvv" placeholder="•••" maxlength="3" autocomplete="cc-csc">
-      </div>
-    </div>
-    <div id="tbank-error" style="color:var(--err);font-size:13px;margin-bottom:8px;display:none"></div>
-    <div class="modal-ft">
-      <button class="btn" id="tbank-cancel-btn" onclick="cancelPayment()">Отмена</button>
-      <button class="btn btn-p" id="tbank-pay-btn" onclick="submitPayment()">Оплатить →</button>
-    </div>
-    <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:10px">Демо-режим • Реальных списаний нет</p>
-  </div>
-</div>
-
 <!-- ════════════════ ORDER DETAIL MODAL ════════════════ -->
 <div class="overlay" id="m-order-detail">
   <div class="modal" style="max-width:480px">
@@ -6013,7 +5975,6 @@ async function signContract(type) {
 }
 
 // ─── CHECKOUT ───
-let _pendingPayment = null; // { order_id, payment_id, payment_token, amount }
 
 function startCheckout() {
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
@@ -6118,133 +6079,6 @@ async function doCheckout(useSubscription = false) {
   }
 }
 
-async function submitPayment() {
-  if (!_pendingPayment) return;
-  const card = document.getElementById('tbank-card').value.replace(/\s/g, '');
-  const exp  = document.getElementById('tbank-exp').value;
-  const cvv  = document.getElementById('tbank-cvv').value;
-  const errEl = document.getElementById('tbank-error');
-  if (card.length < 16) { errEl.textContent = 'Введите номер карты'; errEl.style.display = 'block'; return; }
-  if (exp.length < 5)   { errEl.textContent = 'Введите срок действия'; errEl.style.display = 'block'; return; }
-  if (cvv.length < 3)   { errEl.textContent = 'Введите CVV'; errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
-
-  const payBtn = document.getElementById('tbank-pay-btn');
-  const cancelBtn = document.getElementById('tbank-cancel-btn');
-  const restorePay = btnLoad(payBtn, 'Обработка…');
-  cancelBtn.disabled = true;
-
-  try {
-    const ptype = _pendingPayment.type || 'goods';
-    if (ptype === 'pay-existing-booking') {
-      const { bookingId } = _pendingPayment;
-      await req(`/rest/v1/bookings?id=eq.${bookingId}&user_id=eq.${S.session.user.id}`, {
-        method: 'PATCH', body: JSON.stringify({ payment_status: 'paid' }),
-      });
-      closeModal('m-tbank-pay');
-      _pendingPayment = null;
-      showGeoToast('Запись оплачена');
-      if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
-    } else if (ptype === 'booking') {
-      const { data, rescheduleId } = _pendingPayment;
-      if (rescheduleId) {
-        await req(`/rest/v1/bookings?id=eq.${rescheduleId}&user_id=eq.${S.session.user.id}`, {
-          method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
-        });
-      }
-      await req('/rest/v1/bookings', {
-        method: 'POST', headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({ ...data, payment_status: 'paid' }),
-      });
-      closeModal('m-tbank-pay');
-      _pendingPayment = null;
-      showGeoToast('Запись создана и оплачена');
-      if (_storeSchedIsActive()) loadCaScheduleScreen();
-      if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
-    } else if (ptype === 'sub' || ptype === 'gift-sub') {
-      const isGift = ptype === 'gift-sub';
-      const items = _pendingPayment.items;
-      const today = new Date();
-      for (const { sub } of items) {
-        const end = new Date(today);
-        end.setDate(end.getDate() + sub.duration_days);
-        await req('/rest/v1/user_subscriptions', {
-          method: 'POST',
-          headers: { Prefer: 'return=minimal' },
-          body: JSON.stringify({
-            user_id: S.session.user.id,
-            subscription_id: sub.id,
-            status: 'active',
-            start_date: today.toISOString().split('T')[0],
-            end_date: end.toISOString().split('T')[0],
-            remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
-            ...(isGift ? { gift_status: 'pending' } : {}),
-          }),
-        });
-      }
-      closeModal('m-tbank-pay');
-      _pendingPayment = null;
-      if (isGift) {
-        S.giftSubCart = S.giftSubCart.filter(c => (c.direction || 'food') !== S.direction);
-        saveSubCart(); renderGiftCartSection(); refreshSubCardViews();
-        showGeoToast('Подарочный абонемент куплен!');
-        _subFilter = 'gifts';
-        goTo('subscriptions');
-      } else {
-        S.subCart = S.subCart.filter(c => (c.direction || 'food') !== S.direction);
-        saveSubCart(); renderSubCartSection(); refreshSubCardViews();
-        showGeoToast('Абонемент куплен!');
-        goTo('subscriptions');
-      }
-    } else {
-      await req('/functions/v1/tbank-notify', {
-        method: 'POST',
-        body: JSON.stringify({ payment_token: _pendingPayment.payment_token, status: 'succeeded' }),
-      });
-      closeModal('m-tbank-pay');
-      _pendingPayment = null;
-      S.deliveryMode = null; S.deliveryFee = 0;
-      S.cart = []; S.cartStoreId = null; S.appliedSub = null;
-      saveCart(); updateCartCount(); renderCart();
-      showGeoToast('Заказ успешно оплачен!');
-    }
-  } catch(e) {
-    errEl.textContent = 'Ошибка оплаты: ' + (e.message || 'Попробуйте ещё раз');
-    errEl.style.display = 'block';
-    payBtn.disabled = false; payBtn.textContent = 'Оплатить →';
-    cancelBtn.disabled = false;
-  }
-}
-
-async function cancelPayment() {
-  if (!_pendingPayment) { closeModal('m-tbank-pay'); return; }
-  const cancelBtn = document.getElementById('tbank-cancel-btn');
-  cancelBtn.disabled = true;
-  const ptype = _pendingPayment.type || 'goods';
-  if (ptype !== 'sub' && ptype !== 'gift-sub' && ptype !== 'booking') {
-    try {
-      await req('/functions/v1/tbank-notify', {
-        method: 'POST',
-        body: JSON.stringify({ payment_token: _pendingPayment.payment_token, status: 'cancelled' }),
-      });
-    } catch(e) { /* не блокируем закрытие при ошибке отмены */ }
-  }
-  closeModal('m-tbank-pay');
-  _pendingPayment = null;
-  cancelBtn.disabled = false;
-}
-
-function fmtCardNum(input) {
-  const v = input.value.replace(/\D/g, '').slice(0, 16);
-  input.value = v.replace(/(.{4})/g, '$1 ').trim();
-}
-
-function fmtExpiry(input) {
-  let v = input.value.replace(/\D/g, '').slice(0, 4);
-  if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2);
-  input.value = v;
-}
-
 // ─── ACQUIRING RETURN HANDLER ───
 async function handlePaymentReturn() {
   const params = new URLSearchParams(window.location.search);
@@ -6279,6 +6113,20 @@ async function handlePaymentReturn() {
   if (tpay === 'sub_fail') {
     history.replaceState({}, '', window.location.pathname);
     showGeoToast('Оплата не прошла. Попробуйте ещё раз.');
+    return;
+  }
+
+  // T-Bank real payment return (bookings)
+  if (tpay === 'booking_success') {
+    history.replaceState({}, '', window.location.pathname);
+    showGeoToast('Запись оплачена!');
+    _calenabsTab = 'bk'; goTo('calenabs');
+    return;
+  }
+  if (tpay === 'booking_fail') {
+    history.replaceState({}, '', window.location.pathname);
+    showGeoToast('Оплата не прошла. Попробуйте ещё раз.');
+    _calenabsTab = 'bk'; goTo('calenabs');
     return;
   }
 
@@ -6463,16 +6311,35 @@ async function confirmBooking(payNow) {
       return;
     }
   }
-  // open T-Bank modal, booking is created after payment confirmation
-  closeModal('m-book-slot');
-  _pendingPayment = { type: 'booking', data: bookingData, rescheduleId: _booking.rescheduleId };
-  document.getElementById('tbank-amount').textContent = (_booking.item.price || 0) + ' ₽';
-  document.getElementById('tbank-order-info').textContent = `Запись: ${_booking.item.name}, ${_booking.currentDate} ${_booking.selectedSlot.start}`;
-  document.getElementById('tbank-card').value = '';
-  document.getElementById('tbank-exp').value = '';
-  document.getElementById('tbank-cvv').value = '';
-  document.getElementById('tbank-error').style.display = 'none';
-  openModal('m-tbank-pay');
+  // Real T-Bank payment: create booking with unpaid status, then redirect to T-Bank
+  const btn3 = document.getElementById('mbs-pay-btn');
+  const restorePay = btnLoad(btn3, '…');
+  try {
+    if (_booking.rescheduleId) {
+      await req(`/rest/v1/bookings?id=eq.${_booking.rescheduleId}&user_id=eq.${S.session.user.id}`, {
+        method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
+      });
+    }
+    const newBk = await req('/rest/v1/bookings', {
+      method: 'POST', headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ ...bookingData, payment_status: 'unpaid' }),
+    });
+    const bookingId = newBk?.[0]?.id;
+    if (!bookingId) throw new Error('no id');
+    const result = await req('/functions/v1/tbank-init-booking', {
+      method: 'POST',
+      body: JSON.stringify({ booking_id: bookingId }),
+    });
+    if (result.payment_url) {
+      closeModal('m-book-slot');
+      window.location.href = result.payment_url;
+    } else {
+      throw new Error(result.error || 'no payment_url');
+    }
+  } catch(e) {
+    showGeoToast('Ошибка оплаты: ' + (e?.error || e?.message || ''));
+    restorePay();
+  }
 }
 
 // ── My Bookings Screen ──
@@ -6590,19 +6457,20 @@ function closeMyBookingsDay() {
   renderMyBookingsCalendar();
 }
 
-function payExistingBooking(id) {
-  const b = Object.values(_myBk.byDate).flat().find(bk => bk.id === id);
-  if (!b) return;
-  const amount = b.total_price || b.menu_items?.price || 0;
-  const sStart = (b.slot_start||'').slice(0,5);
-  _pendingPayment = { type: 'pay-existing-booking', bookingId: id };
-  document.getElementById('tbank-amount').textContent = amount + ' ₽';
-  document.getElementById('tbank-order-info').textContent = `${b.menu_items?.name||'Запись'} · ${b.slot_date} ${sStart}`;
-  document.getElementById('tbank-card').value = '';
-  document.getElementById('tbank-exp').value = '';
-  document.getElementById('tbank-cvv').value = '';
-  document.getElementById('tbank-error').style.display = 'none';
-  openModal('m-tbank-pay');
+async function payExistingBooking(id) {
+  try {
+    const result = await req('/functions/v1/tbank-init-booking', {
+      method: 'POST',
+      body: JSON.stringify({ booking_id: id }),
+    });
+    if (result.payment_url) {
+      window.location.href = result.payment_url;
+    } else {
+      showGeoToast('Ошибка: ' + (result.error || 'нет ссылки на оплату'));
+    }
+  } catch(e) {
+    showGeoToast('Ошибка оплаты: ' + (e?.error || e?.message || ''));
+  }
 }
 
 async function cancelBooking(id) {
