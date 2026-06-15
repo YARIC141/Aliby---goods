@@ -871,22 +871,23 @@ tr.row-click:hover td{background:var(--bg-2)}
         <span id="bk-month-label" style="font:600 15px/1 var(--font-sans);letter-spacing:0.01em"></span>
         <button class="btn btn-sm" onclick="bkTabNextMonth()">→</button>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
-        <button class="ord-chip active" data-bk-status="all"       onclick="setBkStatusFilter('all')">Все</button>
-        <button class="ord-chip"        data-bk-status="booked"    onclick="setBkStatusFilter('booked')">Записан</button>
-        <button class="ord-chip"        data-bk-status="completed" onclick="setBkStatusFilter('completed')">Завершена</button>
-        <button class="ord-chip"        data-bk-status="cancelled" onclick="setBkStatusFilter('cancelled')">Отменена</button>
-      </div>
       <div class="sched-cal-wrap">
         <table class="sched-cal-table">
           <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
           <tbody id="bk-calendar"></tbody>
         </table>
       </div>
-      <div id="bk-day-view" style="display:none;margin-top:16px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
+        <button class="ord-chip active" data-bk-status="all"       onclick="setBkStatusFilter('all')">Все</button>
+        <button class="ord-chip"        data-bk-status="booked"    onclick="setBkStatusFilter('booked')">Записан</button>
+        <button class="ord-chip"        data-bk-status="completed" onclick="setBkStatusFilter('completed')">Завершена</button>
+        <button class="ord-chip"        data-bk-status="cancelled" onclick="setBkStatusFilter('cancelled')">Отменена</button>
+      </div>
+      <div id="bk-placeholder" style="text-align:center;color:var(--fg-4);font-size:14px;padding:36px 0">Выберите заведение и дату</div>
+      <div id="bk-day-view" style="display:none;margin-top:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div id="bk-day-title" style="font:600 15px/1 var(--font-sans)"></div>
-          <button class="btn btn-sm" onclick="document.getElementById('bk-day-view').style.display='none';_bkTab.openDate=null">✕</button>
+          <button class="btn btn-sm" onclick="document.getElementById('bk-day-view').style.display='none';document.getElementById('bk-placeholder').style.display='';_bkTab.openDate=null">✕</button>
         </div>
         <div id="bk-day-bks"></div>
       </div>
@@ -4618,6 +4619,7 @@ function setBkStatusFilter(status) {
 function onBkTabStoreChange() {
   _bkTab.storeId = document.getElementById('bk-store-filter')?.value || null;
   document.getElementById('bk-day-view').style.display = 'none';
+  document.getElementById('bk-placeholder').style.display = '';
   _bkTab.openDate = null;
   loadBkTabMonth();
 }
@@ -4626,6 +4628,7 @@ function bkTabPrevMonth() {
   if (_bkTab.month === 0) { _bkTab.month = 11; _bkTab.year--; }
   else _bkTab.month--;
   document.getElementById('bk-day-view').style.display = 'none';
+  document.getElementById('bk-placeholder').style.display = '';
   _bkTab.openDate = null;
   loadBkTabMonth();
 }
@@ -4634,6 +4637,7 @@ function bkTabNextMonth() {
   if (_bkTab.month === 11) { _bkTab.month = 0; _bkTab.year++; }
   else _bkTab.month++;
   document.getElementById('bk-day-view').style.display = 'none';
+  document.getElementById('bk-placeholder').style.display = '';
   _bkTab.openDate = null;
   loadBkTabMonth();
 }
@@ -4698,6 +4702,7 @@ function onBkTabDayClick(dateStr) {
   const DAY = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('bk-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
+  document.getElementById('bk-placeholder').style.display = 'none';
   document.getElementById('bk-day-view').style.display = '';
   renderBkTabDayView(dateStr);
   setTimeout(() => {
