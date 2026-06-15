@@ -39,7 +39,7 @@ BEGIN
                ),
     headers := jsonb_build_object(
                  'Content-Type',  'application/json',
-                 'x-push-secret', 'alliby_push_2026.'
+                 'x-push-secret', 'Zw8hHn4mv3ee1XzbX12H7EutpMv2lLyo'
                )
   );
 
