@@ -33,7 +33,7 @@ BEGIN
     url     := 'https://bucxawpwttvtwdwdtuhh.supabase.co/functions/v1/send-push',
     headers := jsonb_build_object(
       'Content-Type',  'application/json',
-      'x-push-secret', 'alliby_push_2026'
+      'x-push-secret', 'alliby_push_2026.'
     ),
     body := jsonb_build_object(
       'user_id', NEW.user_id,
