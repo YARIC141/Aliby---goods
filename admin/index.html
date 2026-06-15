@@ -3816,6 +3816,7 @@ async function uploadMenuPhoto(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
+  if (file.size > 5 * 1024 * 1024) { alert('Файл слишком большой. Максимум 5 МБ.'); return; }
   const preview = document.getElementById('mmi-preview');
   const hint = document.getElementById('mmi-preview-hint');
 
@@ -3887,6 +3888,7 @@ let _scpCleanup = null;
 function openStoreCrop(file) {
   if (!file) return;
   document.getElementById('ms-photo').value = '';
+  if (file.size > 10 * 1024 * 1024) { alert('Файл слишком большой. Максимум 10 МБ.'); return; }
   const img = document.getElementById('scp-img');
   const reader = new FileReader();
   reader.onload = e => {
@@ -4005,9 +4007,10 @@ async function deleteStorePhoto() {
   if (!url || !confirm('Удалить фото?')) return;
   const filename = url.split('/menu-photos/').pop();
   try {
-    await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
+    await fetch(`${SB_URL}/storage/v1/object/menu-photos`, {
       method: 'DELETE',
-      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token },
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prefixes: [filename] }),
     });
     document.getElementById('ms-image-url').value = '';
     _restoreStoreImgPreview('');
