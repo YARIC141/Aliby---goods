@@ -1185,7 +1185,7 @@ document.addEventListener('deviceready',function(){
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
         <button class="sub-store-chip active" data-mbk-status="all"       onclick="setMbkStatusFilter('all')">Все</button>
-        <button class="sub-store-chip"        data-mbk-status="booked"    onclick="setMbkStatusFilter('booked')">Записана</button>
+        <button class="sub-store-chip"        data-mbk-status="booked"    onclick="setMbkStatusFilter('booked')">Активна</button>
         <button class="sub-store-chip"        data-mbk-status="completed" onclick="setMbkStatusFilter('completed')">Завершена</button>
         <button class="sub-store-chip"        data-mbk-status="cancelled" onclick="setMbkStatusFilter('cancelled')">Отменена</button>
       </div>
@@ -6561,10 +6561,16 @@ async function proceedReschedule() {
 }
 
 async function myBookingsPrevMonth() {
+  _myBk.openDate = null;
+  document.getElementById('mbk-day-view').style.display = 'none';
+  document.getElementById('mbk-placeholder').style.display = '';
   if (_myBk.month === 0) { _myBk.month = 11; _myBk.year--; } else _myBk.month--;
   await loadBookingsScreen();
 }
 async function myBookingsNextMonth() {
+  _myBk.openDate = null;
+  document.getElementById('mbk-day-view').style.display = 'none';
+  document.getElementById('mbk-placeholder').style.display = '';
   if (_myBk.month === 11) { _myBk.month = 0; _myBk.year++; } else _myBk.month++;
   await loadBookingsScreen();
 }
