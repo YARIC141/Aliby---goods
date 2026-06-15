@@ -866,10 +866,16 @@ tr.row-click:hover td{background:var(--bg-2)}
           <option value="">Выберите заведение</option>
         </select>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:12px">
         <button class="btn btn-sm" onclick="bkTabPrevMonth()">←</button>
         <span id="bk-month-label" style="font:600 15px/1 var(--font-sans);letter-spacing:0.01em"></span>
         <button class="btn btn-sm" onclick="bkTabNextMonth()">→</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="ord-chip active" data-bk-status="all"       onclick="setBkStatusFilter('all')">Все</button>
+        <button class="ord-chip"        data-bk-status="booked"    onclick="setBkStatusFilter('booked')">Записан</button>
+        <button class="ord-chip"        data-bk-status="completed" onclick="setBkStatusFilter('completed')">Завершена</button>
+        <button class="ord-chip"        data-bk-status="cancelled" onclick="setBkStatusFilter('cancelled')">Отменена</button>
       </div>
       <div class="sched-cal-wrap">
         <table class="sched-cal-table">
@@ -877,10 +883,10 @@ tr.row-click:hover td{background:var(--bg-2)}
           <tbody id="bk-calendar"></tbody>
         </table>
       </div>
-      <div id="bk-day-view" style="display:none;margin-top:14px;padding:12px;border-radius:var(--r-3);border:1px solid var(--line-soft);background:var(--bg-1)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div id="bk-day-title" style="font:600 14px/1 var(--font-sans)"></div>
-          <button class="btn btn-sm" onclick="document.getElementById('bk-day-view').style.display='none'">✕</button>
+      <div id="bk-day-view" style="display:none;margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div id="bk-day-title" style="font:600 15px/1 var(--font-sans)"></div>
+          <button class="btn btn-sm" onclick="document.getElementById('bk-day-view').style.display='none';_bkTab.openDate=null">✕</button>
         </div>
         <div id="bk-day-bks"></div>
       </div>
@@ -4599,6 +4605,15 @@ const _bkTab = {
   bookingCounts: {},
   openDate: null,
 };
+let _bkStatusFilter = 'all';
+
+function setBkStatusFilter(status) {
+  _bkStatusFilter = status;
+  document.querySelectorAll('[data-bk-status]').forEach(el => {
+    el.classList.toggle('active', el.dataset.bkStatus === status);
+  });
+  if (_bkTab.openDate) renderBkTabDayView(_bkTab.openDate);
+}
 
 function onBkTabStoreChange() {
   _bkTab.storeId = document.getElementById('bk-store-filter')?.value || null;
@@ -4685,6 +4700,9 @@ function onBkTabDayClick(dateStr) {
   document.getElementById('bk-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
   document.getElementById('bk-day-view').style.display = '';
   renderBkTabDayView(dateStr);
+  setTimeout(() => {
+    document.getElementById('bk-day-view')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 80);
 }
 
 async function renderBkTabDayView(dateStr) {
@@ -4701,18 +4719,34 @@ async function renderBkTabDayView(dateStr) {
     _bkTab.bookingCounts[dateStr] = bks.filter(b => b.status !== 'cancelled').length;
     renderBkTabCalendar();
     if (!bks.length) { el.innerHTML = '<div class="txt-muted" style="font-size:13px;padding:8px 0">Записей нет</div>'; return; }
-    const ST  = { confirmed:{lbl:'Подтверждена',cls:'b-paid'}, pending:{lbl:'Ожидает',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+
+    const ST  = { booked:{lbl:'Записан',cls:'b-paid'}, completed:{lbl:'Завершена',cls:'b-ok'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
     const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, unpaid:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
-    el.innerHTML = bks.map(b => {
+
+    // Cancelled at the bottom
+    const active    = bks.filter(b => b.status !== 'cancelled');
+    const cancelled = bks.filter(b => b.status === 'cancelled');
+    const sorted    = [...active, ...cancelled];
+
+    // Apply status chip filter
+    const filtered = _bkStatusFilter === 'all' ? sorted : sorted.filter(b => b.status === _bkStatusFilter);
+
+    if (!filtered.length) {
+      el.innerHTML = '<div class="txt-muted" style="font-size:13px;padding:8px 0">Нет записей с выбранным статусом</div>';
+      return;
+    }
+
+    el.innerHTML = filtered.map(b => {
       const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
       const p = pm[b.user_id] || null;
       _bkCache[b.id] = { b, p };
-      const st  = ST[b.status]          || { lbl:b.status,         cls:'b-pending' };
-      const pay = PAY[b.payment_status] || { lbl:b.payment_status, cls:'b-pending' };
-      const cancelled = b.status === 'cancelled';
-      const paid      = b.payment_status === 'paid';
-      const isNew = _newBookingIds.has(b.id);
-      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid ${isNew?'var(--accent)':'var(--line-soft)'};margin-bottom:8px;background:var(--bg);opacity:${cancelled?'.5':'1'};cursor:pointer${isNew?';box-shadow:0 0 0 1px var(--accent)':''}" onclick="openBookingDetail('${esc(b.id)}')">
+      const st   = ST[b.status]          || { lbl: b.status,         cls: 'b-pending' };
+      const pay  = PAY[b.payment_status] || { lbl: b.payment_status, cls: 'b-pending' };
+      const isCancelled  = b.status === 'cancelled';
+      const isCompleted  = b.status === 'completed';
+      const isPaid       = b.payment_status === 'paid';
+      const isNew        = _newBookingIds.has(b.id);
+      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid ${isNew?'var(--accent)':'var(--line-soft)'};margin-bottom:8px;background:var(--bg);opacity:${isCancelled?'.5':'1'};cursor:pointer${isNew?';box-shadow:0 0 0 1px var(--accent)':''}" onclick="openBookingDetail('${esc(b.id)}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
@@ -4726,8 +4760,9 @@ async function renderBkTabDayView(dateStr) {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
             <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price??b.menu_items?.price??''} ₽</div>
-            ${!paid&&!cancelled?`<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${esc(b.id)}','${dateStr}')">Подтвердить оплату</button>`:''}
-            ${!cancelled?`<button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${esc(b.id)}','${dateStr}')">Отменить</button>`:''}
+            ${!isPaid&&!isCancelled&&!isCompleted?`<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${esc(b.id)}','${dateStr}')">Подтвердить оплату</button>`:''}
+            ${!isCancelled&&!isCompleted?`<button class="btn btn-sm" style="background:var(--ok);color:#fff;font-size:11px" onclick="event.stopPropagation();completeBooking('${esc(b.id)}','${dateStr}')">Завершить</button>`:''}
+            ${!isCancelled&&!isCompleted?`<button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${esc(b.id)}','${dateStr}')">Отменить</button>`:''}
           </div>
         </div>
       </div>`;
