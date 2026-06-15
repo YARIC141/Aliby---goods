@@ -639,7 +639,10 @@ window.AllibyBridge={
       PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
       PN.addListener('pushNotificationReceived',function(n){_showNativeToast(n.title,n.body);});
       PN.addListener('pushNotificationActionPerformed',function(a){
-        var data=a.notification.data||{};
+        var n=a.notification;
+        var data=n.data||{};
+        // show toast when user taps notification while app was in background
+        if(n.title||n.body)setTimeout(function(){_showNativeToast(n.title,n.body);},350);
         if(typeof goTo==='function'){
           if(data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued')goTo('calenabs');
           if(data.type==='booking_confirmed'||data.type==='booking_cancelled')goTo('calenabs');
