@@ -685,8 +685,8 @@ window.AllibyBridge={
 
   setTheme:function(dark){
     if(!_isNative()||!_P().StatusBar)return;
-    _P().StatusBar.setStyle({style:dark?'DARK':'LIGHT'});
-    _P().StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#ffffff'});
+    _P().StatusBar.setStyle({style:'DARK'});
+    _P().StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#e8743b'});
   },
 };
 
@@ -707,8 +707,8 @@ document.addEventListener('deviceready',function(){
   var SB=_P().StatusBar;
   if(SB){
     var dark=document.documentElement.classList.contains('dark');
-    SB.setStyle({style:dark?'DARK':'LIGHT'});
-    SB.setBackgroundColor({color:dark?'#0f0f0f':'#ffffff'});
+    SB.setStyle({style:'DARK'});
+    SB.setBackgroundColor({color:dark?'#0f0f0f':'#e8743b'});
   }
   // Если сессия уже восстановлена из localStorage до deviceready — регистрируем пуш
   if(typeof S!=='undefined'&&S.session&&S.session.user&&S.session.user.id){
