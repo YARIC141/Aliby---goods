@@ -3744,7 +3744,7 @@ function realtimeSubscribeBookings(userId) {
         topic: 'realtime:client-bk-watch',
         event: 'phx_join',
         payload: {
-          config: { postgres_changes: [{ event: 'UPDATE', schema: 'public', table: 'bookings', filter: 'user_id=eq.' + userId }] },
+          config: { postgres_changes: [{ event: '*', schema: 'public', table: 'bookings', filter: 'user_id=eq.' + userId }] },
           access_token: S.session?.access_token
         },
         ref: String(++_rtBkRef)
@@ -3757,8 +3757,10 @@ function realtimeSubscribeBookings(userId) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.event === 'postgres_changes') {
-          const record = msg.payload?.data?.record || msg.payload?.record;
-          if (record) _onRealtimeBooking(record);
+          const data   = msg.payload?.data ?? msg.payload;
+          const type   = (data?.type || '').toUpperCase();
+          const record = data?.record;
+          if (record) _onRealtimeBooking(record, type);
         }
       } catch {}
     };
@@ -3766,14 +3768,15 @@ function realtimeSubscribeBookings(userId) {
   } catch {}
 }
 
-function _onRealtimeBooking(record) {
+function _onRealtimeBooking(record, type) {
   const isVisible = _calenabsIsActive() && _calenabsTab === 'bk';
   if (isVisible) {
     loadBookingsScreen();
-  } else {
+  } else if (type === 'INSERT') {
     _bkNotifCount++;
     _updateBkBadge();
   }
+  // UPDATE: silent refresh — user sees changes next time they open the tab
 }
 
 let _ordFilter = 'all';

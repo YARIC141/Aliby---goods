@@ -4780,7 +4780,7 @@ function globalBookingsRealtimeConnect() {
     _globalBkWs = ws;
     ws.onopen = () => {
       _globalBkRef = 0;
-      ws.send(JSON.stringify({ topic:'realtime:admin-bk-global', event:'phx_join', payload:{ config:{ postgres_changes:[{ event:'INSERT', schema:'public', table:'bookings' }] }, access_token:S.session?.access_token }, ref:String(++_globalBkRef) }));
+      ws.send(JSON.stringify({ topic:'realtime:admin-bk-global', event:'phx_join', payload:{ config:{ postgres_changes:[{ event:'*', schema:'public', table:'bookings' }] }, access_token:S.session?.access_token }, ref:String(++_globalBkRef) }));
       _globalBkHb = setInterval(() => { if (ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(++_globalBkRef)})); }, 25000);
     };
     ws.onmessage = e => {
@@ -4795,6 +4795,15 @@ function globalBookingsRealtimeConnect() {
             updateNavBadge();
             showAdminToast('Новая запись!');
             if (document.getElementById('obt-bookings')?.classList.contains('active')) loadBkTabMonth();
+          }
+          if ((type === 'UPDATE' || type === 'DELETE') && record?.id) {
+            const bookDate = record.slot_date;
+            if (bookDate && _bkTab.openDate === bookDate && record.store_id === _bkTab.storeId) {
+              renderBkTabDayView(bookDate);
+            }
+            if (bookDate && _sched.openDate === bookDate) {
+              renderDayBookings(bookDate);
+            }
           }
         }
       } catch {}
