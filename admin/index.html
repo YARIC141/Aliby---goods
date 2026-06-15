@@ -3831,7 +3831,7 @@ async function uploadMenuPhoto(input) {
   try {
     const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
       method: 'POST',
-      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': file.type, 'x-upsert': 'true' },
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': file.type },
       body: file,
     });
     if (!r.ok) { const e = await r.json(); throw e; }
