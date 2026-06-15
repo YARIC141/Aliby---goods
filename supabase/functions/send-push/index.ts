@@ -125,10 +125,10 @@ Deno.serve(async (req: Request) => {
     return new Response('Unauthorized', { status: 401 })
   }
 
-  const serviceClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  )
+  // Читаем данные с VPS если указан VPS_SUPABASE_URL (основная БД на VPS)
+  const sbUrl = Deno.env.get('VPS_SUPABASE_URL') || Deno.env.get('SUPABASE_URL')!
+  const sbKey = Deno.env.get('VPS_SERVICE_ROLE_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  const serviceClient = createClient(sbUrl, sbKey)
 
   let payload: {
     user_id?: string
