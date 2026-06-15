@@ -6446,7 +6446,7 @@ function openMyBookingsDay(ds) {
   document.getElementById('mbk-placeholder').style.display = 'none';
   document.getElementById('mbk-day-view').style.display = '';
   renderMyBookingsDay(ds);
-  setTimeout(() => document.getElementById('mbk-day-view')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  setTimeout(() => document.getElementById('mbk-day-view')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
 }
 
 function renderMyBookingsDay(ds) {

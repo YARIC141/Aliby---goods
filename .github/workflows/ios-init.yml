@@ -1,0 +1,37 @@
+name: iOS — Init project (run once)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  init-ios:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Capacitor deps
+        working-directory: "Native shell"
+        run: npm install
+
+      - name: Add iOS platform
+        working-directory: "Native shell"
+        run: npx cap add ios
+
+      - name: Sync web assets
+        working-directory: "Native shell"
+        run: npx cap sync ios
+
+      - name: Commit iOS project
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "Native shell/ios"
+          git commit -m "chore: init Capacitor iOS project" || echo "Nothing to commit"
+          git push
