@@ -31,7 +31,7 @@ BEGIN
 
   -- pg_net 0.14+: body is jsonb (not text), headers is last named param
   PERFORM net.http_post(
-    url     := 'https://bucxawpwttvtwdwdtuhh.supabase.co/functions/v1/send-push',
+    url     := 'https://alliby.ru/functions/v1/send-push',
     body    := jsonb_build_object(
                  'user_id', NEW.user_id,
                  'type',    v_type,
