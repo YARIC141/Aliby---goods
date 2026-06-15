@@ -557,12 +557,13 @@ function _savePushToken(token,uid){
   var bearer=(typeof S!=='undefined'&&S.session&&S.session.access_token)||'';
   var apikey=(typeof SB_ANON!=='undefined'?SB_ANON:'');
   var sbUrl=(typeof SB_URL!=='undefined'?SB_URL:'https://alliby.ru');
+  console.log('[PUSH] token='+token.slice(0,16)+' bearer='+!!bearer+' uid='+uid);
   if(!bearer||!uid||!token)return;
   fetch(sbUrl+'/rest/v1/rpc/save_device_token',{
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':apikey,'Authorization':'Bearer '+bearer},
     body:JSON.stringify({p_user_id:uid,p_app:'client',p_token:token,p_platform:platform})
-  }).catch(function(){});
+  }).then(function(r){r.text().then(function(t){console.log('[PUSH] rpc='+r.status+' '+t.slice(0,80));});}).catch(function(e){console.log('[PUSH] err='+e);});
 }
 
 function _showNativeToast(title,body){
