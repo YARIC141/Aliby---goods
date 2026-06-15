@@ -35,10 +35,6 @@ BEGIN
     RAISE EXCEPTION 'not_found';
   END IF;
 
-  IF v_gift.user_id = auth.uid() THEN
-    RAISE EXCEPTION 'self_activation';
-  END IF;
-
   -- Tell the stock trigger this is a gift activation (slot already counted at purchase).
   PERFORM set_config('aliby.gift_activation', 'true', true);
 
