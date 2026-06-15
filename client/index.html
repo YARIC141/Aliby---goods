@@ -3935,7 +3935,7 @@ function _setupClientOrdSentinel() {
 
 function renderActiveOrderCard(o) {
   const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)' };
-  const statusLabels = { paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов!' };
+  const statusLabels = { paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов!', issued:'Выдан', cancelled:'Отменён', pending:'Создан' };
   const color = statusColors[o.status] || 'var(--fg-3)';
   const label = statusLabels[o.status] || o.status;
   const isReady = o.status === 'ready';
@@ -6136,7 +6136,16 @@ async function submitPayment() {
 
   try {
     const ptype = _pendingPayment.type || 'goods';
-    if (ptype === 'booking') {
+    if (ptype === 'pay-existing-booking') {
+      const { bookingId } = _pendingPayment;
+      await req(`/rest/v1/bookings?id=eq.${bookingId}&user_id=eq.${S.session.user.id}`, {
+        method: 'PATCH', body: JSON.stringify({ payment_status: 'paid' }),
+      });
+      closeModal('m-tbank-pay');
+      _pendingPayment = null;
+      showGeoToast('Запись оплачена');
+      if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
+    } else if (ptype === 'booking') {
       const { data, rescheduleId } = _pendingPayment;
       if (rescheduleId) {
         await req(`/rest/v1/bookings?id=eq.${rescheduleId}&user_id=eq.${S.session.user.id}`, {
@@ -6567,6 +6576,7 @@ function openMyBookingsDay(ds) {
         ${b.stores?.address ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-4);margin-top:4px;display:flex;align-items:center;gap:3px">${svgIco('pin',11)}${esc(b.stores.address)}</div>` : ''}
       </div>
       ${!completed ? `<div class="bk-item-actions">
+        ${!paid ? `<button class="btn btn-sm btn-p" onclick="payExistingBooking('${b.id}')">Оплатить</button>` : ''}
         <button class="btn btn-sm" onclick="openRescheduleInfo('${b.id}','${b.menu_item_id}')">Перенести</button>
         <button class="btn btn-sm btn-d" onclick="cancelBooking('${b.id}')">Отменить</button>
       </div>` : ''}
@@ -6578,6 +6588,21 @@ function closeMyBookingsDay() {
   _myBk.openDate = null;
   document.getElementById('mbk-day-view').style.display = 'none';
   renderMyBookingsCalendar();
+}
+
+function payExistingBooking(id) {
+  const b = Object.values(_myBk.byDate).flat().find(bk => bk.id === id);
+  if (!b) return;
+  const amount = b.total_price || b.menu_items?.price || 0;
+  const sStart = (b.slot_start||'').slice(0,5);
+  _pendingPayment = { type: 'pay-existing-booking', bookingId: id };
+  document.getElementById('tbank-amount').textContent = amount + ' ₽';
+  document.getElementById('tbank-order-info').textContent = `${b.menu_items?.name||'Запись'} · ${b.slot_date} ${sStart}`;
+  document.getElementById('tbank-card').value = '';
+  document.getElementById('tbank-exp').value = '';
+  document.getElementById('tbank-cvv').value = '';
+  document.getElementById('tbank-error').style.display = 'none';
+  openModal('m-tbank-pay');
 }
 
 async function cancelBooking(id) {
