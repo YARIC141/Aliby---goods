@@ -29,17 +29,18 @@ BEGIN
 
   IF v_type IS NULL THEN RETURN NEW; END IF;
 
+  -- pg_net 0.14+: body is jsonb (not text), headers is last named param
   PERFORM net.http_post(
     url     := 'https://bucxawpwttvtwdwdtuhh.supabase.co/functions/v1/send-push',
+    body    := jsonb_build_object(
+                 'user_id', NEW.user_id,
+                 'type',    v_type,
+                 'data',    jsonb_build_object('order_id', NEW.id::text)
+               ),
     headers := jsonb_build_object(
-      'Content-Type',  'application/json',
-      'x-push-secret', 'alliby_push_2026.'
-    ),
-    body := jsonb_build_object(
-      'user_id', NEW.user_id,
-      'type',    v_type,
-      'data',    jsonb_build_object('order_id', NEW.id::text)
-    )::text
+                 'Content-Type',  'application/json',
+                 'x-push-secret', 'alliby_push_2026.'
+               )
   );
 
   RETURN NEW;
