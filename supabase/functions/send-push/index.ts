@@ -86,7 +86,11 @@ async function sendFcm(
           data,
           android: {
             priority: 'high',
-            notification: { sound: 'default', channel_id: 'alliby_orders' },
+            notification: {
+              sound: 'default',
+              channel_id: 'alliby_orders',
+              image: 'https://alliby.ru/icons/notification-large.png',
+            },
           },
           apns: {
             payload: { aps: { sound: 'default', badge: 1 } },

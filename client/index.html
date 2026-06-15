@@ -566,11 +566,65 @@ function _savePushToken(token,uid){
 }
 
 function _showNativeToast(title,body){
+  var prev=document.getElementById('_alliby_toast');
+  if(prev)prev.remove();
+
   var el=document.createElement('div');
-  el.style.cssText='position:fixed;top:max(env(safe-area-inset-top,0px) + 12px,20px);left:12px;right:12px;background:var(--surface-2,#fff);border:1px solid var(--line-soft,#eee);border-radius:14px;padding:12px 16px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.18)';
-  el.innerHTML='<div style="font:600 14px/1.4 var(--font-sans)">'+(title||'')+'</div><div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:2px">'+(body||'')+'</div>';
+  el.id='_alliby_toast';
+  el.style.cssText=[
+    'position:fixed',
+    'top:max(env(safe-area-inset-top,0px) + 12px,20px)',
+    'left:12px','right:12px',
+    'background:var(--bg-1)',
+    'border:1px solid var(--line-soft)',
+    'border-left:3px solid var(--accent,#e8743b)',
+    'border-radius:14px',
+    'padding:11px 12px 11px 12px',
+    'z-index:9999',
+    'box-shadow:0 4px 24px var(--shadow,rgba(0,0,0,.22))',
+    'display:flex','align-items:flex-start','gap:10px',
+    'cursor:pointer',
+    'opacity:0',
+    'transform:translateY(-10px)',
+    'transition:opacity .22s ease,transform .28s cubic-bezier(.22,1,.36,1)'
+  ].join(';');
+
+  /* logo badge */
+  var badge=document.createElement('div');
+  badge.style.cssText='width:34px;height:34px;border-radius:8px;flex-shrink:0;background:linear-gradient(160deg,#f09560 0%,#bf4f1a 100%);display:flex;align-items:center;justify-content:center;font:italic 400 22px/1 Georgia,serif;color:rgba(255,255,255,.93)';
+  badge.textContent='A';
+
+  /* text */
+  var wrap=document.createElement('div');
+  wrap.style.cssText='flex:1;min-width:0';
+  var t=document.createElement('div');
+  t.style.cssText='font:600 14px/1.4 var(--font-sans,system-ui);color:var(--fg)';
+  t.textContent=title||'';
+  wrap.appendChild(t);
+  if(body){
+    var b=document.createElement('div');
+    b.style.cssText='font:400 13px/1.4 var(--font-sans,system-ui);color:var(--fg-3);margin-top:2px';
+    b.textContent=body;
+    wrap.appendChild(b);
+  }
+
+  el.appendChild(badge);
+  el.appendChild(wrap);
   document.body.appendChild(el);
-  setTimeout(function(){el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(function(){el.remove();},300);},4000);
+
+  requestAnimationFrame(function(){
+    el.style.opacity='1';
+    el.style.transform='translateY(0)';
+  });
+
+  function dismiss(){
+    clearTimeout(tid);
+    el.style.opacity='0';
+    el.style.transform='translateY(-6px)';
+    setTimeout(function(){el.remove();},240);
+  }
+  var tid=setTimeout(dismiss,4500);
+  el.addEventListener('click',dismiss);
 }
 
 window.AllibyBridge={
