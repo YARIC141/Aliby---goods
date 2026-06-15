@@ -15,8 +15,8 @@ const config: CapacitorConfig = {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
     StatusBar: {
-      style: 'default',
-      backgroundColor: '#ffffff',
+      style: 'LIGHT',
+      backgroundColor: '#e8743b',
     },
     SplashScreen: {
       launchShowDuration: 0,
