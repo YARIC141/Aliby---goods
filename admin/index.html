@@ -1534,8 +1534,8 @@ tr.row-click:hover td{background:var(--bg-2)}
         <label for="mmi-avail">В наличии <span class="hint" data-tip="Снимите галочку, чтобы временно скрыть позицию от клиентов">?</span></label>
       </div>
       <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:4px">
-        <input type="checkbox" id="mmi-alcohol" style="width:auto;accent-color:var(--err)">
-        <label for="mmi-alcohol" style="color:var(--err)">Алкогольная продукция <span class="hint" data-tip="Обязательно отметьте, если товар является алкогольной продукцией. Дистанционная продажа алкоголя запрещена (ФЗ-171) — оплата таких позиций через приложение будет заблокирована">?</span></label>
+        <input type="checkbox" id="mmi-passport" style="width:auto;accent-color:var(--err)">
+        <label for="mmi-passport" style="color:var(--err)">Продажа только по паспорту <span class="hint" data-tip="Отметьте для товаров, реализация которых ограничена по возрасту (алкоголь, табак, вейпы, пиротехника и др.). Онлайн-оплата таких позиций будет заблокирована — расчёт только при получении после проверки документа">?</span></label>
       </div>
     </div>
 
@@ -3660,7 +3660,7 @@ function _renderMenuItems(items, append = false) {
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;min-width:0">
               <span style="font:600 14px/1.2 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.name)}</span>
-              ${i.is_alcohol ? '<span style="flex-shrink:0;background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);letter-spacing:.03em">Алкоголь</span>' : ''}
+              ${i.is_passport_required ? '<span style="flex-shrink:0;background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);letter-spacing:.03em">18+</span>' : ''}
             </div>
             <div style="font-size:12px;color:var(--fg-3);margin-bottom:3px">${esc(i.categories?.name || '—')} · ${i.price} ₽</div>
             ${avail}
@@ -3797,7 +3797,7 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-price').value     = item?.price           || '';
   document.getElementById('mmi-prep-time').value = item?.preparation_time ?? 0;
   document.getElementById('mmi-avail').checked    = item ? item.is_available : true;
-  document.getElementById('mmi-alcohol').checked  = item?.is_alcohol || false;
+  document.getElementById('mmi-passport').checked  = item?.is_passport_required || false;
   document.getElementById('mmi-image-url').value = item?.image_url       || '';
   document.getElementById('mmi-store').value    = item?.store_id    || '';
   S.uploadedPhotoFilename = null;
@@ -4046,7 +4046,7 @@ async function saveMenuItem() {
     price:            parseFloat(document.getElementById('mmi-price').value),
     preparation_time: parseInt(document.getElementById('mmi-prep-time').value, 10) || 0,
     is_available:     document.getElementById('mmi-avail').checked,
-    is_alcohol:       document.getElementById('mmi-alcohol').checked,
+    is_passport_required: document.getElementById('mmi-passport').checked,
     image_url:        document.getElementById('mmi-image-url').value || null,
   };
   const ctrl = new AbortController();
@@ -5590,18 +5590,32 @@ Email: yarich92@gmail.com
 своего банка-эквайера для корректной интеграции приёма платежей в Сервис.
 5.4. Продавец несёт единоличную ответственность за качество товара, доставку,
 возвраты и соблюдение Закона РФ «О защите прав потребителей».
-5.5. ЗАПРЕТ РЕАЛИЗАЦИИ АЛКОГОЛЬНОЙ ПРОДУКЦИИ.
-Дистанционная продажа алкогольной продукции запрещена законодательством
-Российской Федерации (статья 16 Федерального закона от 22.11.1995 №171-ФЗ
-«О государственном регулировании производства и оборота этилового спирта,
-алкогольной и спиртосодержащей продукции»).
+5.5. ТОВАРЫ, ОТПУСКАЕМЫЕ ТОЛЬКО ПРИ ПРЕДЪЯВЛЕНИИ ДОКУМЕНТА, УДОСТОВЕРЯЮЩЕГО ЛИЧНОСТЬ.
+К товарам, реализация которых ограничена возрастным цензом 18 лет или запрещена
+в дистанционном формате, относятся в том числе:
+— алкогольная продукция (ст. 16 Федерального закона от 22.11.1995 №171-ФЗ
+   «О государственном регулировании производства и оборота этилового спирта,
+   алкогольной и спиртосодержащей продукции»): дистанционная продажа запрещена;
+— никотинсодержащая продукция, табачные изделия и устройства для их потребления
+   (ст. 20 Федерального закона от 23.02.2013 №15-ФЗ «Об охране здоровья граждан
+   от воздействия окружающего табачного дыма и последствий потребления табака»);
+— пиротехнические изделия II–V классов опасности
+   (Технический регламент ЕАЭС о безопасности пиротехнических изделий ТР ЕАЭС 006/2011);
+— иные товары, оборот которых ограничен по возрастному признаку федеральным
+   или региональным законодательством Российской Федерации.
 Продавец обязан:
-— не размещать алкогольную продукцию для дистанционного заказа и доставки;
-— при размещении товара, содержащего алкоголь, обязательно отмечать
-   его флагом «Алкогольная продукция» в карточке товара в Личном кабинете.
-Сервис автоматически блокирует онлайн-оплату заказов, содержащих
-товары, помеченные как алкогольная продукция.
-Нарушение данного пункта является основанием для немедленного расторжения
+— при размещении любого товара из указанного перечня отмечать его флагом
+   «Продажа только по паспорту» в карточке товара в Личном кабинете;
+— при передаче такого товара покупателю лично убедиться в достижении им
+   совершеннолетия путём проверки паспорта или иного документа, удостоверяющего личность;
+— отказать в передаче товара покупателю, не предъявившему документ
+   или не достигшему 18-летнего возраста;
+— не размещать алкогольную продукцию для дистанционной покупки и доставки.
+Сервис автоматически запрещает онлайн-оплату заказов, содержащих товары
+с флагом «Продажа только по паспорту»: расчёт производится исключительно
+при получении (наличными или картой) после предъявления покупателем
+документа, удостоверяющего личность.
+Нарушение настоящего пункта является основанием для немедленного расторжения
 настоящего Договора и блокировки Личного кабинета Продавца без возврата
 оплаченного периода.
 
