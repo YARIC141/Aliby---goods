@@ -2760,7 +2760,7 @@ function _renderStoreSubCard(store, sub, isFirst) {
 
   const storeName = store ? esc(store.name) : (isFirst ? 'Заведение 1' : 'Новое заведение');
   const storeId   = store?.id || '';
-  const isVisible = store ? store.is_visible !== false : true;
+  const isVisible = store ? store.is_visible === true : false;
 
   let subInfo = '';
   if (sub) {
@@ -2788,7 +2788,7 @@ function _renderStoreSubCard(store, sub, isFirst) {
 
   const visToggle = store ? `
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg-3);cursor:pointer;margin-top:8px">
-      <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleStoreVisibility('${storeId}',this.checked)" style="width:auto">
+      <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleStoreVisibility('${storeId}',this.checked,this)" style="width:auto">
       Показывать на карте
     </label>` : '';
 
@@ -2834,7 +2834,20 @@ function _renderStoreSubCard(store, sub, isFirst) {
   </div>`;
 }
 
-async function toggleStoreVisibility(storeId, visible) {
+async function toggleStoreVisibility(storeId, visible, el) {
+  if (visible && (!S.profile?.inn || !S.profile?.legal_name)) {
+    if (el) el.checked = false;
+    _requireLegalData(async () => {
+      try {
+        await req(`/rest/v1/stores?id=eq.${storeId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ is_visible: true }),
+        });
+        if (el) el.checked = true;
+      } catch(e) { showToast('Ошибка: ' + (e.message || '')); }
+    });
+    return;
+  }
   try {
     await req(`/rest/v1/stores?id=eq.${storeId}`, {
       method: 'PATCH',
@@ -3776,10 +3789,6 @@ function updatePrepTimeLabel() {
 
 let _miModalSeq = 0;
 function openMenuItemModal(item) {
-  if (!item && (!S.profile?.inn || !S.profile?.legal_name)) {
-    _requireLegalData(() => openMenuItemModal());
-    return;
-  }
   document.getElementById('mmi-title').textContent = item ? 'Редактировать позицию' : 'Новая позиция';
   document.getElementById('mmi-id').value        = item?.id              || '';
   document.getElementById('mmi-name').value      = item?.name            || '';
@@ -4961,10 +4970,6 @@ async function loadSubscriptions() {
 }
 
 function openSubModal(sub) {
-  if (!sub && (!S.profile?.inn || !S.profile?.legal_name)) {
-    _requireLegalData(() => openSubModal());
-    return;
-  }
   document.getElementById('msub-title').textContent = sub ? 'Редактировать абонемент' : 'Новый абонемент';
   document.getElementById('msub-id').value          = sub?.id            || '';
   document.getElementById('msub-store').value       = sub?.store_id      || '';
