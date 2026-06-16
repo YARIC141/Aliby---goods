@@ -3104,7 +3104,8 @@ async function loadStore() {
   if (st.owner_user_id && legalSec && legalBody) {
     req('/rest/v1/rpc/get_store_legal_info', {
       method: 'POST', body: JSON.stringify({ p_store_id: st.id }),
-    }).then(legal => {
+    }).then(rows => {
+      const legal = Array.isArray(rows) ? rows[0] : rows;
       if (!legal || (!legal.legal_name && !legal.inn && !legal.ogrn)) return;
       legalBody.style.display = 'none';
       legalSec.querySelector('.sl-arrow').textContent = '▼';
