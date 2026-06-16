@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -78,9 +78,17 @@ nav{
 }
 .nav-logo{font:400 22px/1 var(--font-display);color:var(--fg);text-decoration:none;letter-spacing:-.01em}
 .nav-logo span{color:var(--brand)}
-.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links{display:flex;align-items:center;gap:18px}
 .nav-link{font:600 14px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s}
 .nav-link:hover{color:var(--fg)}
+.nav-drop{position:relative;display:flex;align-items:center}
+.nav-drop-t{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.nav-drop-t svg{transition:transform .18s}
+.nav-drop:hover .nav-drop-t svg{transform:rotate(180deg)}
+.nav-drop-menu{position:absolute;top:100%;left:50%;transform:translateX(-50%) translateY(8px);display:flex;flex-direction:column;gap:1px;min-width:184px;padding:8px;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-3);box-shadow:0 18px 50px rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .16s,transform .16s;z-index:120}
+.nav-drop:hover .nav-drop-menu{opacity:1;visibility:visible;transform:translateX(-50%) translateY(2px)}
+.nav-drop-menu a{padding:9px 12px;border-radius:var(--r-2);font:600 13px/1.2 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:background .14s,color .14s}
+.nav-drop-menu a:hover{background:var(--bg-2);color:var(--fg)}
 .nav-cta{
   display:inline-flex;align-items:center;gap:8px;
   padding:9px 20px;border-radius:var(--r-pill);
@@ -88,7 +96,7 @@ nav{
   text-decoration:none;transition:background .18s,transform .14s;white-space:nowrap;
 }
 .nav-cta:hover{background:var(--brand-deep);transform:translateY(-1px)}
-@media(max-width:720px){.nav-links .nav-link{display:none}}
+@media(max-width:720px){.nav-links .nav-link,.nav-drop{display:none}}
 
 /* ── PAGE HERO ── */
 #page-hero{
@@ -514,6 +522,48 @@ footer{
   .btn-primary,.btn-blue{justify-content:center}
 }
 
+/* ── COMPARISON TABLE ── */
+.ct-wrap{
+  display:grid;grid-template-columns:1fr 1fr;gap:18px;
+  max-width:1100px;margin:40px auto 0;
+}
+.ct-col{
+  display:flex;flex-direction:column;text-decoration:none;
+  border-radius:var(--r-4);overflow:hidden;
+  border:1px solid var(--line);
+  transition:transform .2s,box-shadow .2s;
+  background:var(--glass-card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.ct-col.ct-client:hover{transform:translateY(-3px);border-color:rgba(232,116,59,.5);box-shadow:0 16px 40px rgba(232,116,59,.16)}
+.ct-col.ct-biz:hover{transform:translateY(-3px);border-color:rgba(120,180,224,.5);box-shadow:0 16px 40px rgba(120,180,224,.16)}
+.ct-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.ct-client .ct-head{background:rgba(232,116,59,.11)}
+.ct-biz .ct-head{background:rgba(120,180,224,.11)}
+.ct-lbl{font:700 14px/1 var(--font-sans);letter-spacing:.05em;text-transform:uppercase}
+.ct-client .ct-lbl{color:var(--brand)}
+.ct-biz .ct-lbl{color:var(--blue)}
+.ct-cta{font:600 13px/1 var(--font-sans)}
+.ct-client .ct-cta{color:var(--brand)}
+.ct-biz .ct-cta{color:var(--blue)}
+.ct-list{list-style:none;display:flex;flex-direction:column;gap:0;flex:1}
+.ct-group-hd{padding:9px 20px 6px;font:700 11px/1 var(--font-sans);letter-spacing:.07em;text-transform:uppercase}
+.ct-group-hd.ct-free{color:#22c55e;background:rgba(34,197,94,.04)}
+.ct-group-hd.ct-paid{color:#facc15;background:rgba(250,204,21,.05)}
+.ct-feat-placeholder{}
+.ct-feat.ct-free{background:rgba(34,197,94,.04)}
+.ct-feat.ct-paid{background:rgba(250,204,21,.07);color:#facc15}
+.ct-feat::before{content:'✔';font:700 16px/1 var(--font-sans);color:#22c55e;flex-shrink:0}
+.ct-feat.ct-paid::before{color:#facc15}
+.ct-client .ct-feat.ct-free{color:var(--fg)}
+.ct-biz .ct-feat.ct-free{color:var(--fg)}
+.ct-feat{display:flex;align-items:flex-start;gap:10px;padding:9px 20px;font:400 16px/1.45 var(--font-sans);text-align:left}
+.ct-footer{display:flex;gap:12px;padding:11px 20px;border-top:1px solid var(--line)}
+.ct-legend{display:inline-flex;align-items:center;gap:6px;font:500 12px/1 var(--font-sans)}
+.ct-legend::before{content:'';width:7px;height:7px;border-radius:50%}
+.ct-legend.ct-free{color:#22c55e}.ct-legend.ct-free::before{background:#22c55e}
+.ct-legend.ct-paid{color:#facc15}.ct-legend.ct-paid::before{background:#facc15}
+@media(max-width:700px){.ct-wrap{grid-template-columns:1fr}}
+
 /* ── LIGHT THEME ── */
 html[data-theme="light"]{
   --bg:#faf9f7;
@@ -717,6 +767,18 @@ html[data-theme="light"] .ms-plbl{background:rgba(250,249,247,.92);border-color:
 .ms-bi-r{position:relative}
 .ms-cbadge{position:absolute;top:-1px;right:0;background:#e8743b;color:#fff;border-radius:50%;min-width:9px;height:9px;font:700 6px/9px var(--font-sans);text-align:center;display:none;padding:0 1px;pointer-events:none}
 .ms-bi[onclick]{cursor:pointer}.ms-ord[onclick]{cursor:pointer}.ms-lrow[onclick]{cursor:pointer}
+/* ── SCENARIO ACCORDION ── */
+.scen-wrap{transition:padding-top .3s,padding-bottom .3s}
+.scen-wrap:not(.open){padding-top:34px;padding-bottom:34px}
+.scen-wrap .scen-header{cursor:pointer;-webkit-user-select:none;user-select:none;display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:12px}
+.scen-wrap:not(.open) .scen-header{padding-bottom:0}
+.scen-wrap .scen-header .seg-head{align-items:flex-start;text-align:left}
+.scen-head-inner{flex:1}
+.scen-body{display:none}
+.scen-wrap.open .scen-body{display:block}
+.scen-chevron{flex-shrink:0;order:-1;margin:0 16px 0 0;color:var(--fg-3);transform:rotate(-90deg);transition:transform .32s,color .18s}
+.scen-wrap.open .scen-chevron{transform:rotate(0deg);color:var(--accent)}
+.scen-header:hover .scen-chevron{color:var(--accent)}
 /* ── THEME TOGGLE ── */
 .theme-toggle{
   background:none;border:1px solid var(--line);border-radius:var(--r-pill);
@@ -799,10 +861,28 @@ html[data-theme="light"] .icon-moon{display:flex}
 <!-- NAV -->
 <nav>
   <a class="nav-logo" href="/">Alli<span>by</span></a>
-  <div class="nav-links">
+  <div class="nav-links" data-comment-anchor="bb5ef9755d-div">
     <a class="nav-link" href="#guests">Для клиентов</a>
+    <div class="nav-drop">
+      <span class="nav-link nav-drop-t">Сценарии для клиентов<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      <div class="nav-drop-menu">
+        <a href="#c-pickup">Заказ ко времени</a>
+        <a href="#c-save">Абонементы</a>
+        <a href="#c-book">Запись к мастеру</a>
+      </div>
+    </div>
     <a class="nav-link" href="#business">Для бизнеса</a>
-    <a class="nav-link" href="#invest" data-comment-anchor="0ced1bab57-a">Абонементы</a>
+    <div class="nav-drop">
+      <span class="nav-link nav-drop-t">Сценарии для бизнеса<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+      <div class="nav-drop-menu">
+        <a href="#showcase">Электронная витрина</a>
+        <a href="#invest" data-comment-anchor="0ced1bab57-a">Абонементы</a>
+        <a href="#delivery">Доставка</a>
+        <a href="#analytics">Аналитика</a>
+        <a href="#bookings">Записи</a>
+        <a href="#employees">Сотрудники</a>
+      </div>
+    </div>
     <a class="nav-link" href="#pricing">Тарифы</a>
   </div>
   <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
@@ -816,33 +896,70 @@ html[data-theme="light"] .icon-moon{display:flex}
 </nav>
 
 <!-- PAGE HERO -->
-<header id="page-hero">
-  <h1 class="ph-h1" data-comment-anchor="d425043386-h1">Площадка для товаров и услуг без комиссий и сервисных сборов</h1>
-  <p class="ph-sub" data-comment-anchor="a45b823ee0-p">Клиенты находят заведения рядом, заказывают онлайн и радуются выгодным покупкам 
-Заведения публикуют ассортимент, принимают заказы и ведут онлайн-запись</p>
-  <div class="side-jump" data-comment-anchor="df7c4fe6ed-div">
-    <a class="side-card orange" href="#guests" style="order:2">
-      <span class="sc-eyebrow"><span class="sc-dot"></span>Клиентам</span>
-      <span class="sc-title" data-comment-anchor="da57d199f9-span">Alliby глазами клиентов</span>
-      <span class="sc-desc" data-comment-anchor="526362a0f6-span">Удобный поиск. Онлайн запись. Указание времени для приготовления блюд или товаров. Экономия с использованием абонементов.</span>
-      <span class="sc-arrow">Смотреть возможности →</span>
+<header id="page-hero" data-comment-anchor="721818a54a-header">
+  <h1 class="ph-h1" data-comment-anchor="d425043386-h1">Без комиссий <span class="em-orange">для бизнеса</span> и сервисных сборов для клиентов</h1>
+  <p class="ph-sub" data-comment-anchor="a45b823ee0-p">Alliby — призван помочь малому бизнесу давая ему все инструменты крупного без необходимости больших финансовых вложений.</p>
+  
+
+  <div class="ct-wrap">
+    <a class="ct-col ct-client" href="#guests">
+      <div class="ct-head">
+        <span class="ct-lbl">Для клиента</span>
+        <span class="ct-cta">Подробнее →</span>
+      </div>
+      <u<ul class="ct-list">
+        <li class="ct-group-hd ct-free">Бесплатно</li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Поиск заведений на карте — находи кафе, магазины и мастеров рядом</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Еда, Услуги и Товары — три направления в одном приложении</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span>Онлайн-заказ — собери корзину и оплати картой прямо в приложении</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg><span>Самовывоз и доставка — выбирай удобный способ получения заказа</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M9 14l2 2 4-4"/></svg><span>Запись на услуги онлайн — выбирай свободный слот без звонков</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg><span>Отслеживание заказа — следи за статусом готовности в реальном времени</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg><span>Абонементы со скидкой — покупай пакеты посещений по выгодной цене</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="18" x2="18" y2="18"/><line x1="14" y1="21" x2="21" y2="21"/></svg><span>Личный QR для списания — показывай код на кассе для активации абонемента</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>История экономии — смотри, сколько уже сэкономил с Alliby</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="10" y1="18" x2="14" y2="18"/></svg><span>PWA — сохрани на главный экран, работает как приложение</span></li>
+      </ul>
+      <div class="ct-footer">
+        <span class="ct-legend ct-free">Всё бесплатно</span>
+      </div>
     </a>
-    <a class="side-card blue" href="#business" style="order:1">
-      <span class="sc-eyebrow"><span class="sc-dot"></span>Бизнесу</span>
-      <span class="sc-title">Alliby для бизнеса</span>
-      <span class="sc-desc" data-comment-anchor="2571e37feb-span">Онлайн меню. Интеграция с эквайрингом. Календарь записей. Выбор зон и стоимости доставки. Выпуск абонементов. Отображение скидок.</span>
-      <span class="sc-arrow">Смотреть возможности →</span>
+    <a class="ct-col ct-biz" href="#business">
+      <div class="ct-head">
+        <span class="ct-lbl">Для бизнеса</span>
+        <span class="ct-cta">Подробнее →</span>
+      </div>
+      <u<ul class="ct-list">
+        <li class="ct-group-hd ct-free">Бесплатно</li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg><span>Заведение на карте — добавь заведение и клиенты найдут тебя рядом</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span>Меню, цены, описание — создай каталог с фото, ценами и временем готовки</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>QR-меню для офлайн — распечатай QR и клиент увидит актуальное меню</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg><span>Расписание мастеров — открывай слоты и принимай онлайн-записи</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M9 14l2 2 4-4"/></svg><span>Записи клиентов онлайн — клиенты записываются сами, без звонков тебе</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 12h4l2 6 4-14 2 8h6"/><circle cx="19" cy="5" r="3"/></svg><span>Управление статусами заказов — веди заказ от оплаты до выдачи</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg><span>Абонементы и акции — выпускай пакеты скидок для постоянных клиентов</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="18" x2="18" y2="18"/><line x1="14" y1="21" x2="21" y2="21"/></svg><span>QR-сканер абонементов — списывай абонемент клиента за одно касание</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Сотрудники — передавай управление заведением сотрудникам</span></li>
+        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Аналитика — следи за выручкой, популярными позициями и просмотрами</span></li>
+        <li class="ct-group-hd ct-paid">По подписке</li>
+        <li class="ct-feat ct-paid"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Интернет-заказ и оплата — принимай заказы и оплату картой онлайн</span></li>
+        <li class="ct-feat ct-paid"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg><span>Доставка собственными силами или наёмным курьером — настрой зоны и цены доставки</span></li>
+      </ul>
+      <div class="ct-footer">
+        <span class="ct-legend ct-free">Бесплатно</span>
+        <span class="ct-legend ct-paid">По подписке</span>
+      </div>
     </a>
   </div>
 </header>
 
 <!-- ════════════════ ДЛЯ ГОСТЕЙ ════════════════ -->
-<section class="seg" id="guests">
+<section class="seg" id="guests" data-comment-anchor="a95ca199ce-section">
   <div class="seg-inner">
     <div class="seg-head">
       <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для клиентов</span>
-      <h2 class="seg-h2" data-comment-anchor="b0bc7135dc-h2">Alliby ценит своего клиента!</h2>
-      <p class="seg-sub" data-comment-anchor="5ce00d3f53-p">Поможем найти то что вы ищите и дадим ключевую информацию для принятия решения. Мы ценим своих клиентов и не интегрируем в сервис рекламу</p>
+      <h2 class="seg-h2" data-comment-anchor="b0bc7135dc-h2">Находите лучшее рядом — <em>и платите меньше</em></h2>
+      <p class="seg-sub" data-comment-anchor="5ce00d3f53-p">Заведения рядом, честные цены и никакой рекламы — показываем только то, что нужно для выбора.</p>
       <div class="nav-preview">
         <span class="np-pill" data-comment-anchor="3a15e3009d-span"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-11a7 7 0 0114 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Заведения</span>
         <span class="np-pill" data-comment-anchor="cd3b022562-span"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>Меню</span>
@@ -1024,8 +1141,131 @@ html[data-theme="light"] .icon-moon{display:flex}
   </div>
 </section>
 
+
+<!-- ════════════════ СЦЕНАРИИ ДЛЯ КЛИЕНТОВ ════════════════ -->
+<!-- CLIENTS SCENARIOS HEADER -->
+<section class="seg" style="padding-top:64px;padding-bottom:0;--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
+  <div class="seg-inner"><div class="bridge" style="margin-bottom:0"><span class="bridge-tag">Для клиентов</span><h2 class="bridge-h">Как работает <span class="o">Alliby</span> для клиента</h2></div></div>
+</section>
+<section class="seg scen-wrap" id="c-pickup" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59;scroll-margin-top:64px" data-comment-anchor="da193bc4d4-section">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="seg-head" style="margin-bottom:0;flex:1">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для клиентов · Заказ</span>
+        <h2 class="seg-h2">Знаешь, сколько ждать. Платишь заранее. <em>Забираешь готовое.</em></h2>
+        <p class="seg-lead">У каждого блюда — точное время готовки. Оплати онлайн по дороге и <span class="mark">забери готовый заказ без единой минуты ожидания</span>.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div class="scen-body">
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Перерыв 30 минут? <b>Закажи по пути</b> — и уйди с готовым заказом</h3>
+          <p class="inv-vs">Видишь меню → выбираешь → платишь картой. Приложение показывает точное время готовности. К твоему приходу заказ ждёт на кассе — забрал и пошёл.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg></div>
+            <div>
+              <div class="inv-prod-n">Заказ ко времени</div>
+              <div class="inv-prod-m">Готово к вашему приходу — без ожидания</div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Как это работает</div>
+          <div class="inv-step"><div class="inv-step-n">1</div><div class="inv-step-l">Выбираете блюда<span>у каждой позиции — время приготовления</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">2</div><div class="inv-step-l">Оплачиваете онлайн<span>картой прямо в приложении</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">3</div><div class="inv-step-l">Забираете готовое или ждёте курьера<span>статус заказа — в реальном времени</span></div></div>
+          <div class="inv-result">
+            <div class="inv-result-l">Время — твоё,<br>очереди — чужие</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">−15 мин</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="seg scen-wrap" id="c-save" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59;scroll-margin-top:64px" data-comment-anchor="420a9ea978-section">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="seg-head" style="margin-bottom:0;flex:1">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для клиентов · Абонементы</span>
+        <h2 class="seg-h2">Покупаешь каждый день? <em>Плати как постоянный клиент.</em></h2>
+        <p class="seg-lead">Один раз купил абонемент — и каждая привычная покупка обходится дешевле. Показываешь QR, <span class="mark">приложение само считает, сколько ты уже сэкономил</span>.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div class="scen-body">
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Кофе каждое утро? <b>Купи 30 — заплати за 20.</b> Выгода без усилий.</h3>
+          <p class="inv-vs">Один раз берёшь пакет со скидкой. Каждое утро просто показываешь личный QR. Никаких карточек и штампиков — приложение автоматически копит статистику твоей экономии.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"></path><path d="M3 9v6l9 5 9-5V9"></path></svg></div>
+            <div>
+              <div class="inv-prod-n">Абонемент со скидкой</div>
+              <div class="inv-prod-m">Та же привычка — меньше трат</div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Как это работает</div>
+          <div class="inv-step"><div class="inv-step-n">1</div><div class="inv-step-l">Покупаете абонемент<span>пакет покупок по выгодной цене</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">2</div><div class="inv-step-l">Списываете по личному QR<span>одно касание на кассе</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">3</div><div class="inv-step-l">Следите за экономией<span>приложение считает, сколько вы сберегли</span></div></div>
+          <div class="inv-result">
+            <div class="inv-result-l">Та же привычка<br>меньше трат</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">до −33%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="seg scen-wrap" id="c-book" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59;scroll-margin-top:64px">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="seg-head" style="margin-bottom:0;flex:1">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для клиентов · Записи</span>
+        <h2 class="seg-h2">Хочешь записаться? <em>Не нужно звонить.</em></h2>
+        <p class="seg-lead">Видишь реальное расписание мастера и выбираешь слот сам — <span class="mark">за 10 секунд, в любое время суток, без ожидания ответа</span>.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div class="scen-body">
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Занято? Не берут трубку? <b>Запишись сам</b> за 10 секунд</h3>
+          <p class="inv-vs">Открываешь заведение, видишь расписание мастера и бронируешь удобный слот. Запись сразу в личном календаре. Нужно перенести — один клик, ни одного звонка.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="16" y1="2" x2="16" y2="6"></line><path d="M9 14l2 2 4-4"></path></svg></div>
+            <div>
+              <div class="inv-prod-n">Онлайн-запись</div>
+              <div class="inv-prod-m">Без звонков и ожидания ответа</div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Как это работает</div>
+          <div class="inv-step"><div class="inv-step-n">1</div><div class="inv-step-l">Видите свободные слоты<span>актуальное расписание в реальном времени</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">2</div><div class="inv-step-l">Выбираете время и подтверждаете<span>запись за пару касаний</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">3</div><div class="inv-step-l">Запись — в личном календаре<span>перенос или отмена в один клик</span></div></div>
+          <div class="inv-result">
+            <div class="inv-result-l">Без звонков<br>и ожидания ответа</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">10 сек</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ════════════════ BRIDGE ════════════════ -->
-<section class="seg" style="padding-top:80px;padding-bottom:80px">
+<section class="seg" style="padding-top:80px;padding-bottom:80px" data-comment-anchor="32c51443e5-section">
   <div class="bridge">
     <span class="bridge-tag">
 </span>
@@ -1232,13 +1472,21 @@ html[data-theme="light"] .icon-moon{display:flex}
 </section>
 
 <!-- ════════════════ ЭЛЕКТРОННАЯ ВИТРИНА ════════════════ -->
-<section class="seg" id="showcase" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224">
+<!-- BUSINESS SCENARIOS HEADER -->
+<section class="seg" style="padding-top:64px;padding-bottom:0;--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224">
+  <div class="seg-inner"><div class="bridge" style="margin-bottom:0"><span class="bridge-tag">Для бизнеса</span><h2 class="bridge-h">Сценарии работы <span class="b">с Alliby</span></h2></div></div>
+</section>
+<section class="seg scen-wrap" id="showcase" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224" data-comment-anchor="6982335268-section">
   <div class="seg-inner">
-    <div class="seg-head">
-      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Витрина</span>
-      <h2 class="seg-h2">Электронная витрина заведения <em>по QR или ссылке</em></h2>
-      <p class="seg-lead">При создании заведения Alliby генерирует цифровую витрину — <span class="mark">ссылку и QR, которые всегда ведут на актуальный список</span> ваших товаров и услуг.</p>
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="seg-head" style="margin-bottom:0;flex:1">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Витрина</span>
+        <h2 class="seg-h2" data-comment-anchor="86d60a2f8f-h2">Электронная витрина заведения <em>по QR или ссылке</em></h2>
+        <p class="seg-lead">При создании заведения Alliby генерирует цифровую витрину — <span class="mark">ссылку и QR, которые всегда ведут на актуальный список</span> ваших товаров и услуг.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
+    <div class="scen-body">
 
     <div class="inv-deal">
       <div class="inv-hook" data-comment-anchor="782c82c3fa-div">
@@ -1308,17 +1556,22 @@ html[data-theme="light"] .icon-moon{display:flex}
         </ul>
       </div>
     </div>
+    </div><!-- /scen-body -->
   </div>
 </section>
 
 <!-- ════════════════ ИНВЕСТИЦИИ ЧЕРЕЗ АБОНЕМЕНТЫ ════════════════ -->
-<section class="seg" id="invest" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59" data-comment-anchor="ca0c45b1d1-section">
+<section class="seg scen-wrap" id="invest" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59" data-comment-anchor="ca0c45b1d1-section">
   <div class="seg-inner">
-    <div class="seg-head">
-      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Инвестиции</span>
-      <h2 class="seg-h2" data-comment-anchor="be6d722920-em">Привлекайте инвестиции <em data-comment-anchor="c7c13a789e-em">с помощью абонементов</em></h2>
-      <p class="seg-lead">Alliby превращает абонементы в инструмент привлечения денег — <span class="mark">без банков и процентов</span>.</p>
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="seg-head" style="margin-bottom:0;flex:1">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Инвестиции</span>
+        <h2 class="seg-h2" data-comment-anchor="be6d722920-em">Привлекайте инвестиции <em data-comment-anchor="c7c13a789e-em">с помощью абонементов</em></h2>
+        <p class="seg-lead">Alliby превращает абонементы в инструмент привлечения денег — <span class="mark">без банков и процентов</span>.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
+    <div class="scen-body">
 
     <div class="inv-deal">
       <div class="inv-hook">
@@ -1388,17 +1641,22 @@ html[data-theme="light"] .icon-moon{display:flex}
         </ul>
       </div>
     </div>
+    </div><!-- /scen-body -->
   </div>
 </section>
 
 <!-- ════════════════ ДОСТАВКА ════════════════ -->
-<section class="seg" id="delivery" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
+<section class="seg scen-wrap" id="delivery" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59" data-comment-anchor="f53bb51bf8-section">
   <div class="seg-inner">
-    <div class="seg-head">
-      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Доставка</span>
-      <h2 class="seg-h2">Доставляй <em>на своих условиях</em></h2>
-      <p class="seg-lead">Назначайте радиусы вокруг заведения и свою цену доставки — <span class="mark">разница со стоимостью курьера остаётся вам</span>.</p>
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="seg-head" style="margin-bottom:0;flex:1">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Доставка</span>
+        <h2 class="seg-h2">Доставляй <em>на своих условиях</em></h2>
+        <p class="seg-lead" data-comment-anchor="2050ec8d39-p">Назначайте радиусы вокруг заведения и свою цену доставки — <span class="mark">разница со стоимостью курьера остаётся вам</span>.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
+    <div class="scen-body">
 
     <div class="inv-deal">
       <div class="inv-hook">
@@ -1466,15 +1724,408 @@ html[data-theme="light"] .icon-moon{display:flex}
         </ul>
       </div>
     </div>
+    </div><!-- /scen-body -->
   </div>
 </section>
 
+<!-- ════════════════ АНАЛИТИКА ════════════════ -->
+<section class="seg scen-wrap" id="analytics" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224;background:rgba(0,0,0,.18);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:64px">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="scen-head-inner">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Аналитика</span>
+        <h2 class="seg-h2">Принимай решения на основе <em>данных</em>, а не догадок</h2>
+        <p class="seg-sub">Популярные блюда, выручка, средний чек, просмотры профиля и активность абонементов — всё в одном экране, всегда актуально.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div class="scen-body">
+
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Какое блюдо принесло вам <b>40% выручки</b> за этот месяц?</h3>
+          <p class="inv-vs">Без аналитики — интуиция. С Alliby — конкретные цифры: что продаётся, на сколько, откуда приходят клиенты и какие абонементы работают лучше всего.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
+            <div>
+              <div class="inv-prod-n">Аналитика заведения</div>
+              <div class="inv-prod-m">Данные по заказам, выручке и просмотрам — в реальном времени</div>
+            </div>
+          </div>
+          <p class="inv-vs" style="margin:14px 0 0">Запустили акцию или подняли цену? Аналитика сразу покажет, как это отразилось на выручке и числе заказов.</p>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Что вы видите</div>
+          <div class="inv-step">
+            <div class="inv-step-n">1</div>
+            <div class="inv-step-l">Топ позиций<span>рейтинг блюд, товаров и услуг по числу заказов</span></div>
+          </div>
+          <div class="inv-step">
+            <div class="inv-step-n">2</div>
+            <div class="inv-step-l">Выручка и динамика<span>по дням, неделям и месяцам — с графиком</span></div>
+          </div>
+          <div class="inv-step">
+            <div class="inv-step-n">3</div>
+            <div class="inv-step-l">Средний чек<span>сколько клиент оставляет за один визит</span></div>
+          </div>
+          <div class="inv-step">
+            <div class="inv-step-n">4</div>
+            <div class="inv-step-l">Просмотры профиля и активность абонементов<span>охват и конверсия в реальном времени</span></div>
+          </div>
+          <div class="inv-result">
+            <div class="inv-result-l">Полная картина без Excel<br>и ручного подсчёта</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">в одном экране</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv-cols">
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 6 4-14 2 8h6"></path></svg></div>
+            <div class="inv-rtitle">Данные для роста</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Видите что заказывают чаще всего и на какую сумму</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Сравниваете периоды — отслеживаете сезонный рост</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Понимаете какие акции и позиции реально работают</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Убираете из меню то, что не покупают</li>
+          </ul>
+          <div class="inv-note">
+            <div class="inv-note-k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg>Важно</div>
+            <div class="inv-note-t">Меняли цену или запускали акцию? Аналитика покажет, <b>как именно это повлияло на выручку и число заказов</b>.</div>
+          </div>
+        </div>
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5-9 5-9-5z"></path><path d="M3 9v6l9 5 9-5V9"></path></svg></div>
+            <div class="inv-rtitle">Аналитика абонементов</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Сколько абонементов продано и сколько ещё активно</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Какие абонементы чаще покупают — оптимизируйте предложение</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Просмотры профиля — сколько клиентов находят вас через Alliby</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Конверсия из просмотра в заказ по каждому заведению</li>
+          </ul>
+        </div>
+      </div>
+
+
+    </div><!-- /scen-body -->
+  </div>
+</section>
+
+<!-- ════════════════ УПРАВЛЕНИЕ ЗАПИСЯМИ ════════════════ -->
+<section class="seg scen-wrap" id="bookings" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59;scroll-margin-top:64px">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="scen-head-inner">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Записи и расписание</span>
+        <h2 class="seg-h2">Держи записи под контролем — <em>не теряй клиентов</em></h2>
+        <p class="seg-sub">Позвоните клиенту прямо из карточки записи, отмените бронь в один клик и управляйте расписанием без таблиц и мессенджеров.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div class="scen-body">
+
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Клиент не пришёл — позвоните и уточните: <b>один тап</b> прямо из записи</h3>
+          <p class="inv-vs">Не нужно искать номер в мессенджерах — телефон клиента в карточке записи. Позвонили, уточнили, перенесли или отменили — слот сразу освобождается для следующего.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="16" y1="2" x2="16" y2="6"></line><path d="M9 14l2 2 4-4"></path></svg></div>
+            <div>
+              <div class="inv-prod-n">Управление записями в реальном времени</div>
+              <div class="inv-prod-m">Календарь, контакт клиента и статус — в одном экране</div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Как это работает</div>
+          <div class="inv-step">
+            <div class="inv-step-n">1</div>
+            <div class="inv-step-l">Откройте запись в календаре<span>все записи дня — на одном экране</span></div>
+          </div>
+          <div class="inv-step">
+            <div class="inv-step-n">2</div>
+            <div class="inv-step-l">Позвоните клиенту одним тапом<span>номер телефона в карточке записи</span></div>
+          </div>
+          <div class="inv-step">
+            <div class="inv-step-n">3</div>
+            <div class="inv-step-l">Перенесите или отмените запись<span>слот освобождается автоматически</span></div>
+          </div>
+          <div class="inv-result">
+            <div class="inv-result-l">Не теряете клиентов<br>из-за недоразумений</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">0 потерянных броней</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv-cols">
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="16" y1="2" x2="16" y2="6"></line></svg></div>
+            <div class="inv-rtitle">Управление расписанием</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Открывайте и закрывайте временные слоты в один клик</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Шаблоны расписания по дням недели — настроил один раз</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Записи клиентов появляются в расписании в режиме live</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Быстрый переход к записям любого дня из календаря</li>
+          </ul>
+          <div class="inv-note">
+            <div class="inv-note-k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg>Важно</div>
+            <div class="inv-note-t">При отмене записи клиент <b>получает уведомление</b> — вы не теряете репутацию и оставляете хорошее впечатление.</div>
+          </div>
+        </div>
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"></path></svg></div>
+            <div class="inv-rtitle">Действия с записью</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Позвонить клиенту — номер прямо в карточке, один тап</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Отменить запись — слот сразу освобождается для других</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>История визитов по каждому клиенту</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Фильтр по статусам: активна, завершена, отменена</li>
+          </ul>
+        </div>
+      </div>
+
+
+    </div><!-- /scen-body -->
+  </div>
+</section>
+
+<!-- ════════════════ УПРАВЛЕНИЕ СОТРУДНИКАМИ ════════════════ -->
+<section class="seg scen-wrap" id="employees" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224;background:rgba(0,0,0,.18);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:64px" data-comment-anchor="0857c4be3a-section">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="scen-head-inner">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Сотрудники</span>
+        <h2 class="seg-h2">Делегируй операции — <em>сохраняй контроль</em></h2>
+        <p class="seg-sub">Добавьте сотрудников для работы с заказами и записями. Финансы, тарифы и выпуск абонементов остаются только у вас.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </div>
+    <div class="scen-body">
+
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Добавьте администратора — он ведёт записи, но <b>не видит финансы</b></h3>
+          <p class="inv-vs">Сотрудник работает с операционными задачами: принимает заказы, обслуживает клиентов, ведёт расписание. Выручка, эквайринг и ценовая политика — только в ваших руках.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg></div>
+            <div>
+              <div class="inv-prod-n">Разделение прав доступа</div>
+              <div class="inv-prod-m">Операции — сотруднику, управление бизнесом — вам</div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Как это работает</div>
+          <div class="inv-step">
+            <div class="inv-step-n">1</div>
+            <div class="inv-step-l">Приглашаете сотрудника<span>он получает доступ к заведению мгновенно</span></div>
+          </div>
+          <div class="inv-step">
+            <div class="inv-step-n">2</div>
+            <div class="inv-step-l">Сотрудник ведёт операционную работу<span>заказы, записи, QR-сканер абонементов</span></div>
+          </div>
+          <div class="inv-step">
+            <div class="inv-step-n">3</div>
+            <div class="inv-step-l">Финансы и настройки — только у владельца<span>сотрудник не видит выручку и эквайринг</span></div>
+          </div>
+          <div class="inv-result">
+            <div class="inv-result-l">Работа делегирована.<br>Контроль у вас.</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">0 рисков</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv-cols">
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+            <div class="inv-rtitle">Что может сотрудник</div>
+          </div>
+          <ul class="inv-checks">
+            <li data-comment-anchor="0716a61e69-li"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Принимать заказы и менять их статусы</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Вести расписание и подтверждать записи клиентов</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Сканировать QR абонементов и обслуживать клиентов</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Работать с меню: просматривать позиции и их доступность</li>
+          </ul>
+          <div class="inv-note">
+            <div class="inv-note-k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg>Просто</div>
+            <div class="inv-note-t">Пригласите сотрудника одной ссылкой — <b>он сразу получает доступ</b> к нужным функциям заведения.</div>
+          </div>
+        </div>
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+            <div class="inv-rtitle">Что защищено</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Аналитика и финансовые отчёты — только владелец</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Редактирование тарифов и выпуск абонементов — только владелец</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Банковские реквизиты и настройки эквайринга — только владелец</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Отозвать доступ сотрудника можно мгновенно в любой момент</li>
+          </ul>
+        </div>
+      </div>
+
+
+    </div><!-- /scen-body -->
+  </div>
+</section>
+
+<!-- ════════════════ ПЕРСОНАЛЬНЫЙ МАРКЕТПЛЕЙС ════════════════ -->
+<section class="seg scen-wrap" id="marketplace" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224;scroll-margin-top:64px">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="scen-head-inner">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Витрина</span>
+        <h2 class="seg-h2">Твой онлайн-магазин — <em>без маркетплейсов и комиссий</em></h2>
+        <p class="seg-sub">Размещай товары с описанием и сроком готовности. Получай заказы, уточняй детали и общайся с клиентом напрямую — все контакты у тебя.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="scen-body">
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Продавай онлайн <b>без посредников</b> — все данные клиента у тебя</h3>
+          <p class="inv-vs">Размещаешь товары или услуги с фото, ценой и ориентировочным сроком. После оплаты — уточняешь точное время через статус заказа. Клиент видит обновление в реальном времени.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg></div>
+            <div>
+              <div class="inv-prod-n">Персональный Маркетплейс</div>
+              <div class="inv-prod-m">Витрина, заказы и клиентские данные — без комиссий</div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Как это работает</div>
+          <div class="inv-step"><div class="inv-step-n">1</div><div class="inv-step-l">Добавляешь товары с фото и сроком готовности<span>клиент сразу видит, сколько ждать</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">2</div><div class="inv-step-l">Клиент оплачивает онлайн<span>деньги поступают сразу на твой счёт</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">3</div><div class="inv-step-l">Уточняешь срок в статусе заказа<span>клиент видит обновление в реальном времени</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">4</div><div class="inv-step-l">Решаешь вопросы напрямую<span>имя, телефон и адрес клиента — у тебя</span></div></div>
+          <div class="inv-result">
+            <div class="inv-result-l">Полный контроль<br>без посредников</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">0% комиссий</div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-cols">
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></div>
+            <div class="inv-rtitle">Твой магазин</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Товары с фото, описанием и сроком готовности</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Онлайн-оплата картой — деньги сразу у тебя</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Обновляй срок готовности прямо в статусе заказа</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Имя, телефон и адрес клиента всегда под рукой</li>
+          </ul>
+        </div>
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <div class="inv-rtitle">Для твоего клиента</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Видит товары с актуальными ценами и сроками</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Оплачивает картой без наличных и очередей</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Следит за статусом заказа в реальном времени</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ АДСКАЯ КУХНЯ ════════════════ -->
+<section class="seg scen-wrap" id="hellskitchen" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59;background:rgba(0,0,0,.18);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:64px">
+  <div class="seg-inner">
+    <div class="scen-header" onclick="toggleScen(this)">
+      <div class="scen-head-inner">
+        <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby для бизнеса · Управление</span>
+        <h2 class="seg-h2">Весь процесс — <em>от заказа до порога клиента</em></h2>
+        <p class="seg-sub">Клиент, кухня, администратор, курьер и владелец — каждый видит свой этап. Никаких звонков, записей на бумаге и потерянных заказов.</p>
+      </div>
+      <svg class="scen-chevron" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="scen-body">
+      <div class="inv-deal">
+        <div class="inv-hook">
+          <div class="inv-kicker">Сценарий</div>
+          <h3 class="inv-q">Заказ принят. <b>Кухня готовит. Курьер едет.</b> Клиент в курсе.</h3>
+          <p class="inv-vs">Клиент оформляет заказ онлайн — его сразу видят администратор и шеф. Кухня берёт в работу и указывает время готовки. Администратор передаёт курьеру. Все — от повара до владельца — видят текущий статус.</p>
+          <div class="inv-prod">
+            <div class="inv-prod-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+            <div>
+              <div class="inv-prod-n">Адская кухня — полная прозрачность</div>
+              <div class="inv-prod-m">Каждый участник видит все этапы заказа</div>
+            </div>
+          </div>
+        </div>
+        <div class="inv-math">
+          <div class="inv-math-h">Цепочка процесса</div>
+          <div class="inv-step"><div class="inv-step-n">1</div><div class="inv-step-l">Клиент заказывает и оплачивает<span>уведомление мгновенно — всем участникам</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">2</div><div class="inv-step-l">Кухня принимает и указывает время готовки<span>клиент видит точный срок в приложении</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">3</div><div class="inv-step-l">Администратор формирует заказ для курьера<span>статус обновляется автоматически</span></div></div>
+          <div class="inv-step"><div class="inv-step-n">4</div><div class="inv-step-l">Курьер забирает и доставляет<span>владелец контролирует весь процесс</span></div></div>
+          <div class="inv-result">
+            <div class="inv-result-l">Полная видимость<br>для каждого участника</div>
+            <div class="inv-result-v" style="font-size:clamp(18px,2vw,24px)">0 звонков</div>
+          </div>
+        </div>
+      </div>
+      <div class="inv-cols">
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+            <div class="inv-rtitle">Кто что видит</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Клиент — статус заказа и время доставки</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Кухня и администратор — состав и приоритет</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Курьер — адрес и время готовности</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Владелец — полная картина всего процесса</li>
+          </ul>
+          <div class="inv-note">
+            <div class="inv-note-k"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>Главный эффект</div>
+            <div class="inv-note-t">Добавляй сотрудников в Alliby и <b>каждый видит только то, что ему нужно</b> — без лишних звонков и путаницы.</div>
+          </div>
+        </div>
+        <div class="inv-rcard">
+          <div class="inv-rhead">
+            <div class="feat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg></div>
+            <div class="inv-rtitle">Что даёт прозрачность</div>
+          </div>
+          <ul class="inv-checks">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Ноль потерянных заказов — всё в одной системе</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Клиент не звонит — он видит статус сам</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Владелец контролирует без присутствия</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Каждый участник сосредоточен на своей задаче</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <!-- ════════════════ ТАРИФЫ ════════════════ -->
-<section class="seg" id="pricing">
+<section class="seg" id="pricing" data-comment-anchor="25a3f20101-section">
   <div class="seg-inner" data-comment-anchor="c5cd839b4b-div">
     <div class="seg-head">
       <span class="seg-eyebrow"><span class="sc-dot"></span>Тарифы для бизнеса</span>
-      <h2 class="seg-h2">Почти всё — <em>бесплатно</em></h2>
+      <h2 class="seg-h2" data-comment-anchor="cfb740d159-h2">Почти всё — <em>бесплатно</em></h2>
       <p class="seg-sub">Заводите заведения, ведите меню, расписание, записи и абонементы без оплаты. Подписка нужна только для приёма заказов и оплат через интернет и доставки.</p>
     </div>
 
@@ -1482,23 +2133,23 @@ html[data-theme="light"] .icon-moon{display:flex}
       <div class="tier free" data-comment-anchor="da2410eb8f-div">
         <div class="tier-label" data-comment-anchor="a06f9d2624-div"><span style="color:#1f9d57">Бесплатно</span> <span class="pill">всегда</span></div>
         <ul data-comment-anchor="103fcaae32-ul">
-          <li data-comment-anchor="b5096e0137-li" style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Отображение заведения на карте</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Меню, цены, описание товаров и услуг</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>QR меню или списка услуг для офлайн использования</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>График работы и расписание мастеров</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Заказы и записи онлайн</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Создание абонементов и акций</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>QR для списания абонементов</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доступ к клиентской базе для уведомлений</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Добавление сотрудников</li>
-          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Аналитика по заведению</li>
+          <li data-comment-anchor="b5096e0137-li" style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Отображение заведения на карте</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Меню, цены, описание товаров и услуг</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>QR меню или списка услуг для офлайн использования</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>График работы и расписание мастеров</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Заказы и записи онлайн</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Создание абонементов и акций</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>QR для списания абонементов</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Доступ к клиентской базе для уведомлений</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Добавление сотрудников</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Аналитика по заведению</li>
         </ul>
       </div>
       <div class="tier paid">
         <div class="tier-label">По подписке <span class="pill">Alliby Бизнес</span></div>
         <ul>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span><strong>Интернет-заказ и онлайн-оплата</strong> — клиенты заказывают и платят картой прямо в приложении</span></li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg><span><strong>Доставка</strong> — приём и обработка заказов с доставкой</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"></circle><circle cx="18" cy="20" r="1.5"></circle><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"></path></svg><span><strong>Интернет-заказ и онлайн-оплата</strong> — клиенты заказывают и платят картой прямо в приложении</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"></rect><path d="M16 8h4l3 3v5h-7V8z"></path><circle cx="5.5" cy="18.5" r="2"></circle><circle cx="18.5" cy="18.5" r="2"></circle></svg><span><strong>Доставка</strong> — приём и обработка заказов с доставкой</span></li>
         </ul>
       </div>
     </div>
@@ -1510,8 +2161,8 @@ html[data-theme="light"] .icon-moon{display:flex}
         <div class="plan-price"><span class="amt" style="font-size:30px;font-style:italic">Бесплатно</span></div>
         <div class="plan-save">Одно заведение</div>
         <ul class="plan-incl">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Интернет-заказ и онлайн-оплата</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доставка</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Интернет-заказ и онлайн-оплата</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Доставка</li>
         </ul>
       </div>
       <div class="plan" data-comment-anchor="9b9a33797d-div">
@@ -1519,18 +2170,17 @@ html[data-theme="light"] .icon-moon{display:flex}
         <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic" data-comment-anchor="191960d596-span">1000 ₽</span><span class="per">/мес</span></div>
         <div class="plan-save">Одно заведение</div>
         <ul class="plan-incl">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Интернет-заказ и онлайн-оплата</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доставка</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Интернет-заказ и онлайн-оплата</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Доставка</li>
         </ul>
       </div>
       <div class="plan">
         <div class="plan-name">Годовая</div>
-        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">10 000 ₽</span><span class="per">/год</span></div>
-        <div class="plan-save">Экономия 2 000 ₽ против помесячной</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">10 000 ₽</span><span class="per">/год</span></div>
+        <div class="plan-save">Экономия 2 000 ₽ против помесячной</div>
         <ul class="plan-incl">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Интернет-заказ и онлайн-оплата</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Доставка</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Одно заведение</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Интернет-заказ и онлайн-оплата</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Одно заведение</li>
         </ul>
       </div>
       <div class="plan">
@@ -1538,14 +2188,14 @@ html[data-theme="light"] .icon-moon{display:flex}
         <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">300 ₽</span><span class="per">/мес</span></div>
         <div class="plan-save">за каждое доп. заведение</div>
         <ul class="plan-incl">
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Добавьте к учётной записи ещё одно заведение</li>
-          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Управляйте всеми заведениями в едином окне</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Добавьте к учётной записи ещё одно заведение</li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Управляйте всеми заведениями в едином окне</li>
         </ul>
       </div>
     </div>
 
     <div class="acq">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
       <div class="acq-text">
         <strong>Нужен интернет-эквайринг</strong>
         <span>Для подписки требуется подключённый интернет-эквайринг для приёма онлайн-оплат. Мы помогаем подключить и настроить его — вам не нужно разбираться в этом самостоятельно.</span>
@@ -1560,12 +2210,12 @@ html[data-theme="light"] .icon-moon{display:flex}
   <p class="cta-sub">Клиентам — найти место и заказать за минуту. Бизнесу — подключить заведение и принимать заказы онлайн.</p>
   <div class="cta-btns">
     <a class="btn-primary" href="https://alliby.ru/">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
       Открыть Alliby
     </a>
     <a class="btn-blue" href="https://admin.alliby.ru/">
       Подключить заведение
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
     </a>
   </div>
 </section>
@@ -1625,6 +2275,7 @@ html[data-theme="light"] .icon-moon{display:flex}
   <div class="footer-nav">
     <a href="#guests">Для клиентов</a>
     <a href="#business" data-comment-anchor="d3d1804aa7-a">Для бизнеса</a>
+    <a href="#showcase">Сценарии для бизнеса</a>
     <a href="#pricing">Тарифы</a>
     <a href="#team">Команда</a>
     <a href="https://alliby.ru/">Приложение</a>
@@ -1746,22 +2397,19 @@ function orderTake(btn){
   document.querySelectorAll('.spotlight-visual').forEach(function(sv){
     var wraps=Array.from(sv.querySelectorAll('.mk-wrap'));
     if(!wraps.length)return;
-    var aw=wraps[0]; // phone — animates
+    var aw=wraps[0];
     var timer=null,paused=false,pauseT=null;
     function start(){if(timer)return;timer=setInterval(function(){if(!paused)advance(aw);},DELAY);}
     function stop(){clearInterval(timer);timer=null;}
-    // pause auto-play on user interaction, resume after PAUSE ms
     aw.addEventListener('click',function(){
       paused=true;clearTimeout(pauseT);
       pauseT=setTimeout(function(){paused=false;},PAUSE);
     },true);
-    // all animated elements in this section (map anim + counter-scale pins + list scroll)
     function anims(sv){
       return Array.from(sv.querySelectorAll(
         '.ms-map-anim,.ms-map-anim .ms-sc,.ms-rows-scrl'
       ));
     }
-    // trigger when section reaches ~1/3 from top of viewport
     var obs=new IntersectionObserver(function(es){
       es.forEach(function(e){
         var state=e.isIntersecting?'running':'paused';
@@ -1781,6 +2429,10 @@ function orderTake(btn){
     setTimeout(function(){b.style.display='flex';},800);
   }
 })();
+function toggleScen(header){
+  var s=header.closest('.scen-wrap');
+  s.classList.toggle('open');
+}
 function acceptCookies(){
   localStorage.setItem('cookie_ok','1');
   var b=document.getElementById('cookie-banner');
