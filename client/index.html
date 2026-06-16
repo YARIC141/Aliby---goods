@@ -3993,8 +3993,12 @@ function openActiveOrderDetail(orderId) {
   const extraEl = document.getElementById('mod-order-extra');
   if (extraEl) {
     let extraHtml = '';
+    if (o.estimated_ready_at && !o.is_delivery)
+      extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--warn);font-size:14px;color:var(--warn);display:flex;align-items:center;gap:6px">${svgIco('clock',14)}Готов примерно к ${fmtTime(o.estimated_ready_at)}</div>`;
     if (o.is_delivery && o.courier_phone)
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid #06b6d4;font-size:14px;color:#06b6d4;display:flex;align-items:center;gap:6px">${svgIco('phone',14)}Телефон курьера: <a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4;font-weight:600">${esc(o.courier_phone)}</a></div>`;
+    if (o.status === 'ready' && !o.is_delivery)
+      extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--ok);font-size:14px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:6px">${svgIco('check-circle',14)}Ваш заказ готов! Можно забрать.</div>`;
     if (o.status === 'issued')
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--ok);font-size:14px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:6px">${o.is_delivery ? `${svgIco('pkg',14)}Заказ доставлен!` : `${svgIco('check-circle',14)}Ваш заказ готов! Можете забирать.`}</div>`;
     extraEl.innerHTML = extraHtml;
