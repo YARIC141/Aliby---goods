@@ -468,11 +468,21 @@ tr.row-click:hover td{background:var(--bg-2)}
 
     <div id="auth-login" class="tab-pane active">
       <div id="err-login" class="alert alert-e" style="display:none"></div>
-      <div class="fg"><label>Email или логин сотрудника</label><input type="text" id="li-email" autocomplete="username"></div>
-      <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
-      <button class="btn btn-p btn-full" id="login-btn" onclick="doLogin()">Войти</button>
-      <hr>
-      <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
+      <div id="login-fields">
+        <div class="fg"><label>Email или логин сотрудника</label><input type="text" id="li-email" autocomplete="username"></div>
+        <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
+        <button class="btn btn-p btn-full" id="login-btn" onclick="doLogin()">Войти</button>
+        <hr>
+        <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
+      </div>
+      <div id="upgrade-prompt" style="display:none">
+        <div style="padding:16px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-2);margin-bottom:12px">
+          <p style="margin:0 0 6px;font-size:15px;font-weight:600">Аккаунт покупателя</p>
+          <p style="margin:0 0 14px;font-size:13px;color:var(--fg-3)">Этот email уже зарегистрирован как покупатель. Вы можете открыть кабинет продавца на том же аккаунте — история заказов сохранится.</p>
+          <button class="btn btn-p btn-full" id="upgrade-btn" onclick="doUpgradeToSeller()">Стать продавцом</button>
+        </div>
+        <button class="btn btn-full" onclick="cancelUpgrade()">← Назад</button>
+      </div>
     </div>
 
     <div id="auth-recover" class="tab-pane">
@@ -2016,6 +2026,13 @@ async function doLogin() {
     });
     const profs = await req(`/rest/v1/profiles?id=eq.${d.user.id}`, { headers: { Authorization: 'Bearer ' + d.access_token } });
     const role = profs[0]?.role;
+    if (role === 'user') {
+      restore();
+      _pendingUpgradeSession = d;
+      document.getElementById('login-fields').style.display = 'none';
+      document.getElementById('upgrade-prompt').style.display = '';
+      return;
+    }
     if (!['admin', 'employee'].includes(role)) { restore(); err.textContent = 'Нет прав доступа'; err.style.display = 'block'; return; }
     restore();
     S.profile = profs[0];
@@ -2029,6 +2046,53 @@ async function doLogin() {
       else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }
     }
   } catch(e) { restore(); err.textContent = e.error_description || e.message || 'Ошибка входа'; err.style.display = 'block'; }
+}
+
+let _pendingUpgradeSession = null;
+
+async function doUpgradeToSeller() {
+  const d = _pendingUpgradeSession;
+  if (!d) return;
+  const btn = document.getElementById('upgrade-btn');
+  const err = document.getElementById('err-login');
+  const restore = btnLoad(btn, 'Обновляем…');
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/rpc/upgrade_to_seller', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SB_ANON, Authorization: 'Bearer ' + d.access_token },
+      body: '{}',
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.message || 'Ошибка апгрейда'); }
+    const profs = await fetch(SB_URL + `/rest/v1/profiles?id=eq.${d.user.id}`, {
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + d.access_token },
+    }).then(x => x.json());
+    restore();
+    _pendingUpgradeSession = null;
+    document.getElementById('upgrade-prompt').style.display = 'none';
+    document.getElementById('login-fields').style.display = '';
+    S.profile = profs[0];
+    setSession(d);
+    applyRoleRestrictions();
+    onAdminReady();
+    if (!S.city) { openAdminCityModal(() => { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }); }
+    else { document.querySelectorAll('.admin-city-lbl').forEach(el => el.textContent = S.city); goTo('stores'); }
+  } catch(e) {
+    restore();
+    err.textContent = e.message || 'Не удалось обновить аккаунт';
+    err.style.display = 'block';
+  }
+}
+
+function cancelUpgrade() {
+  if (_pendingUpgradeSession) {
+    fetch(SB_URL + '/auth/v1/logout', {
+      method: 'POST',
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + _pendingUpgradeSession.access_token },
+    }).catch(() => {});
+    _pendingUpgradeSession = null;
+  }
+  document.getElementById('upgrade-prompt').style.display = 'none';
+  document.getElementById('login-fields').style.display = '';
 }
 
 async function doRegister() {
