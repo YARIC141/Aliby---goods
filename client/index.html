@@ -3941,7 +3941,7 @@ function renderActiveOrderCard(o) {
       </div>
       <span style="padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid ${color};color:${color}">${label}</span>
     </div>
-    ${o.estimated_ready_at && !o.is_delivery ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--warn);font-size:13px;color:var(--warn)${isReady ? ';margin-bottom:10px' : ''}"><span style="display:flex;align-items:center;gap:5px">${svgIco('clock',14)}Готов примерно к ${fmtTime(o.estimated_ready_at)}</span></div>` : ''}
+    ${o.estimated_ready_at && !isLooking && !isOnTheWay ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--warn);font-size:13px;color:var(--warn)${isReady ? ';margin-bottom:10px' : ''}"><span style="display:flex;align-items:center;gap:5px">${svgIco('clock',14)}${o.is_delivery ? 'Ожидаемая доставка к' : 'Готов примерно к'} ${fmtTime(o.estimated_ready_at)}</span></div>` : ''}
     ${isLooking ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid #f97316;font-size:13px;color:#f97316;display:flex;align-items:center;gap:6px">${svgIco('search',14)}Ищем курьера для вашего заказа…</div>` : ''}
     ${isOnTheWay ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid #06b6d4;font-size:13px;color:#06b6d4;font-weight:600;display:flex;align-items:center;gap:6px">${svgIco('bicycle',14)}Курьер уже едет к вам!${o.courier_phone ? `<div style="margin-top:4px;font-size:12px;display:flex;align-items:center;gap:4px">${svgIco('phone',12)}<a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4">${esc(o.courier_phone)}</a></div>` : ''}</div>` : ''}
     ${isReady && !o.is_delivery ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--ok);font-size:13px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:6px">${svgIco('check-circle',14)}Ваш заказ готов! Можно забрать.</div>` : ''}
@@ -3994,8 +3994,8 @@ function openActiveOrderDetail(orderId) {
   const extraEl = document.getElementById('mod-order-extra');
   if (extraEl) {
     let extraHtml = '';
-    if (o.estimated_ready_at && !o.is_delivery)
-      extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--warn);font-size:14px;color:var(--warn);display:flex;align-items:center;gap:6px">${svgIco('clock',14)}Готов примерно к ${fmtTime(o.estimated_ready_at)}</div>`;
+    if (o.estimated_ready_at && o.status !== 'looking_for_courier' && o.status !== 'on_the_way')
+      extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--warn);font-size:14px;color:var(--warn);display:flex;align-items:center;gap:6px">${svgIco('clock',14)}${o.is_delivery ? 'Ожидаемая доставка к' : 'Готов примерно к'} ${fmtTime(o.estimated_ready_at)}</div>`;
     if (o.is_delivery && o.courier_phone)
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid #06b6d4;font-size:14px;color:#06b6d4;display:flex;align-items:center;gap:6px">${svgIco('phone',14)}Телефон курьера: <a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4;font-weight:600">${esc(o.courier_phone)}</a></div>`;
     if (o.status === 'ready' && !o.is_delivery)
@@ -6086,7 +6086,7 @@ async function doCheckout(useSubscription = false) {
         payment_method: paymentMethod,
         is_delivery: S.deliveryMode === 'delivery',
         delivery_fee: S.deliveryFee || 0,
-        delivery_address: S.profile?.address || null,
+        delivery_address: S.userAddr || S.profile?.address || null,
       }),
     });
     if (result.free) {
