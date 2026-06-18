@@ -2672,7 +2672,8 @@ async function refreshSession() {
 }
 
 // ─── MAP ───
-let _firstMapLoad = false; // set on first install; cleared after first loadMapStores
+let _firstMapLoad  = false; // set on first install; cleared after first loadMapStores
+let _autoGeoNeeded = false; // set each guest session; cleared after first loadMapStores
 
 async function loadMap() {
   loadMapStores();
@@ -2691,8 +2692,8 @@ async function loadMapStores() {
   const el = document.getElementById('sl-list');
   const _city = S.city || 'Самара';
   const _dir  = S.direction;
-  const _isFirst = _firstMapLoad;
-  if (_isFirst) _firstMapLoad = false;
+  const _isFirst = _firstMapLoad;   if (_isFirst)  _firstMapLoad   = false;
+  const _needGeo = _autoGeoNeeded;  if (_needGeo)  _autoGeoNeeded  = false;
 
   // Show cached stores immediately (stale-while-revalidate)
   const cached = _readStoresCache(_city, _dir);
@@ -2727,20 +2728,27 @@ async function loadMapStores() {
     }));
 
     if (_isFirst) {
-      // Cache each direction separately for fast subsequent tab switches
+      // First install: cache all directions for instant tab switches
       for (const dir of ['food', 'goods', 'services']) {
         _writeStoresCache(_city, dir, enriched.filter(st => st.direction === dir));
       }
       S.allStores = enriched.filter(st => st.direction === _dir);
+    } else {
+      S.allStores = enriched;
+      _writeStoresCache(_city, _dir, S.allStores);
+    }
+
+    // Apply geo filter on first install OR every guest session
+    if ((_isFirst || _needGeo) && !S.geoLat) {
       const geoBanner = document.getElementById('geo-locate-banner');
-      if (S.userAddrLat != null && !S.geoLat) {
+      if (S.userAddrLat != null) {
         // Coordinates already known from city auto-detection — apply immediately
         S.geoLat = S.userAddrLat; S.geoLng = S.userAddrLng;
         S.nearbyMeters = 300;
         document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
         if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 16, duration: 600 });
-      } else if (!S.geoLat) {
-        // Show banner while silently waiting for geolocation
+      } else {
+        // Show banner, try geo silently — re-filters when result arrives
         if (geoBanner) geoBanner.style.display = 'flex';
         window.AllibyBridge.requestLocation().then(pos => {
           S.geoLat = pos.lat; S.geoLng = pos.lng;
@@ -2752,9 +2760,6 @@ async function loadMapStores() {
           if (geoBanner) geoBanner.style.display = 'none';
         });
       }
-    } else {
-      S.allStores = enriched;
-      _writeStoresCache(_city, _dir, S.allStores);
     }
 
     renderMapCategoryChips();
@@ -5399,6 +5404,8 @@ async function restoreNav() {
     try { localStorage.setItem('alliby_launched', '1'); } catch {}
     _firstMapLoad = true;
   }
+  // Guests: try geo every session so nearby filter applies automatically
+  if (!S.session) _autoGeoNeeded = true;
   // restore direction
   try {
     const savedDir = localStorage.getItem('alliby_dir');
