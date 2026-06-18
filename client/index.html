@@ -176,6 +176,9 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .b-active{color:var(--ok)}.b-expired{color:var(--err)}.b-sub-pending{color:var(--warn)}
 .empty{text-align:center;padding:48px 20px;color:var(--fg-4);font:400 16px/1.5 var(--font-sans)}
 .loading{text-align:center;padding:28px;color:var(--fg-4);font:400 14px/1.5 var(--font-sans)}
+#offline-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:8000;background:#dc2626;color:#fff;padding:6px 14px;font:500 13px/1.4 var(--font-sans);text-align:center;align-items:center;justify-content:center;gap:8px}
+#offline-banner.show{display:flex}
+#geo-locate-banner{display:none;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:13px;color:var(--fg-3)}
 @keyframes _spin{to{transform:rotate(360deg)}}
 .btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:_spin .6s linear infinite;vertical-align:-2px;margin-right:5px;flex-shrink:0}
 @keyframes skshimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -789,6 +792,11 @@ document.addEventListener('deviceready',function(){
 </div>
 
 
+<div id="offline-banner">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
+  Нет соединения — данные из кеша
+</div>
+
 <div id="app">
 
 <!-- ════════════════ DESKTOP SIDE NAV ════════════════ -->
@@ -940,6 +948,10 @@ document.addEventListener('deviceready',function(){
           </div>
         </div>
         <div class="sl-cats" id="sl-cats"></div>
+      </div>
+      <div id="geo-locate-banner">
+        <span class="btn-spinner" style="border-color:var(--fg-3);border-top-color:var(--accent)"></span>
+        Загружаем заведения рядом…
       </div>
       <div class="sl-list" id="sl-list"><div class="loading">Загрузка…</div></div>
     </div>
@@ -2720,21 +2732,25 @@ async function loadMapStores() {
         _writeStoresCache(_city, dir, enriched.filter(st => st.direction === dir));
       }
       S.allStores = enriched.filter(st => st.direction === _dir);
-      // Apply nearby filter using address already obtained during city detection
+      const geoBanner = document.getElementById('geo-locate-banner');
       if (S.userAddrLat != null && !S.geoLat) {
+        // Coordinates already known from city auto-detection — apply immediately
         S.geoLat = S.userAddrLat; S.geoLng = S.userAddrLng;
-        S.nearbyMeters = 5000;
+        S.nearbyMeters = 300;
         document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
-        if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 13, duration: 600 });
+        if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 16, duration: 600 });
       } else if (!S.geoLat) {
-        // Silently try geolocation — non-blocking, re-filters when result arrives
+        // Show banner while silently waiting for geolocation
+        if (geoBanner) geoBanner.style.display = 'flex';
         window.AllibyBridge.requestLocation().then(pos => {
           S.geoLat = pos.lat; S.geoLng = pos.lng;
-          S.nearbyMeters = 5000;
+          S.nearbyMeters = 300;
           document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
           applyMapFilter();
-          if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 13, duration: 600 });
-        }).catch(() => {});
+          if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 16, duration: 600 });
+        }).catch(() => {}).finally(() => {
+          if (geoBanner) geoBanner.style.display = 'none';
+        });
       }
     } else {
       S.allStores = enriched;
@@ -5901,6 +5917,16 @@ if ('serviceWorker' in navigator) {
       .catch(() => {});
   });
 }
+
+// ─── OFFLINE BANNER ───
+(function() {
+  const banner = document.getElementById('offline-banner');
+  if (!banner) return;
+  function sync() { banner.classList.toggle('show', !navigator.onLine); }
+  window.addEventListener('online',  sync);
+  window.addEventListener('offline', sync);
+  sync(); // set initial state
+})();
 
 // ─── CONTRACTS / ПЭП ───
 function _renderContractText(tpl) {
