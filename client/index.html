@@ -2041,10 +2041,16 @@ function setDirection(dir) {
   applyScreenAccent('map');
   // update tab active state
   document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === dir));
-  // rebuild category chips for new direction and re-filter
+  // rebuild category chips for new direction and reload stores
   S.mapCat = localStorage.getItem('alliby_cat_' + dir) || null;
-  renderMapCategoryChips();
-  applyMapFilter();
+  S.allStores = [];
+  S.mapFitted = false;
+  if (document.getElementById('screen-map')?.classList.contains('active')) {
+    loadMapStores();
+  } else {
+    renderMapCategoryChips();
+    applyMapFilter();
+  }
   updateMenuSearchPlaceholder();
   updateDirectionLabels(dir);
 }
@@ -2514,7 +2520,7 @@ async function doLogin() {
       err.style.display = 'block';
       return;
     }
-    const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'map'; _pendingNavAfterAuth = null; goTo(_d); } };
+    const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'home'; _pendingNavAfterAuth = null; goTo(_d); } };
     if (!S.city) {
       openAddressPicker(async () => { await requireContract('buyer', proceed); });
     } else {
@@ -2554,7 +2560,7 @@ async function doRegister() {
           body: JSON.stringify({ full_name: fullName }),
         });
       } catch {}
-      const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'map'; _pendingNavAfterAuth = null; goTo(_d); } };
+      const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'home'; _pendingNavAfterAuth = null; goTo(_d); } };
       if (!S.city) {
         openAddressPicker(async () => { await requireContract('buyer', proceed); });
       } else {
@@ -2659,20 +2665,21 @@ async function loadMap() {
   loadMapData();
 }
 
-function _storesCacheKey(city) { return 'alliby_stores_' + city; }
-function _readStoresCache(city) {
-  try { const r = localStorage.getItem(_storesCacheKey(city)); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+function _storesCacheKey(city, dir) { return 'alliby_stores_' + city + '_' + dir; }
+function _readStoresCache(city, dir) {
+  try { const r = localStorage.getItem(_storesCacheKey(city, dir)); return r ? JSON.parse(r) : null; } catch(e) { return null; }
 }
-function _writeStoresCache(city, stores) {
-  try { localStorage.setItem(_storesCacheKey(city), JSON.stringify(stores)); } catch(e) {}
+function _writeStoresCache(city, dir, stores) {
+  try { localStorage.setItem(_storesCacheKey(city, dir), JSON.stringify(stores)); } catch(e) {}
 }
 
 async function loadMapStores() {
   const el = document.getElementById('sl-list');
   const _city = S.city || 'Самара';
+  const _dir  = S.direction;
 
   // Show cached stores immediately (stale-while-revalidate)
-  const cached = _readStoresCache(_city);
+  const cached = _readStoresCache(_city, _dir);
   if (cached?.length) {
     S.allStores = cached;
     renderMapCategoryChips();
@@ -2685,7 +2692,7 @@ async function loadMapStores() {
   // Always fetch fresh data in background
   try {
     const [stores, locs, subOwners] = await Promise.all([
-      req(`/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&order=name.asc&select=*,store_categories(name,icon)`),
+      req(`/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&direction=eq.${_dir}&order=name.asc&select=*,store_categories(name,icon)`),
       req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
       req('/rest/v1/rpc/get_active_sub_owner_ids', { method: 'POST', body: '{}' }).catch(() => []),
     ]);
@@ -2698,7 +2705,7 @@ async function loadMapStores() {
       marker_color: locMap.get(st.id)?.marker_color ?? '#e8430a',
       has_cart: activeOwners.has(st.owner_user_id),
     }));
-    _writeStoresCache(_city, S.allStores);
+    _writeStoresCache(_city, _dir, S.allStores);
     renderMapCategoryChips();
     applyMapFilter();
     if (!cached?.length) fitMapToAllStores();
@@ -5387,7 +5394,7 @@ async function restoreNav() {
   }
   const SCREENS = ['home','map','alibi','store','menu','cart','calenabs','profile'];
   const nav = localStorage.getItem('alliby_nav');
-  const _navTarget = () => { if (!S.session) { goTo('map'); return; } goTo(nav && SCREENS.includes(nav) ? nav : 'map'); };
+  const _navTarget = () => { if (!S.session) { goTo('map'); return; } goTo(nav && SCREENS.includes(nav) ? nav : 'home'); };
   if (!S.city) {
     _autoDetectCityThenNav(() => { _navTarget(); setTimeout(_prefetchClient, 1500); });
     return;
