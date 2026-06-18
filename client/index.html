@@ -2713,7 +2713,7 @@ async function loadMapStores() {
   try {
     const [stores, locs, subOwners] = await Promise.all([
       req(storeQuery),
-      req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
+      req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }).catch(() => []),
       req('/rest/v1/rpc/get_active_sub_owner_ids', { method: 'POST', body: '{}' }).catch(() => []),
     ]);
     const locMap       = new Map(locs.map(l => [l.id, l]));

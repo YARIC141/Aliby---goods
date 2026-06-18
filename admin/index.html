@@ -2579,16 +2579,16 @@ async function savePhone() {
 }
 
 async function saveLegalData() {
-  const msg = document.getElementById('p-legal-msg');
+  const msg  = document.getElementById('p-legal-msg');
+  const name = document.getElementById('p-legal-name').value.trim() || null;
+  const inn  = document.getElementById('p-inn').value.trim() || null;
+  const ogrn = document.getElementById('p-ogrn').value.trim() || null;
   try {
     await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({
-        legal_name: document.getElementById('p-legal-name').value.trim() || null,
-        inn:        document.getElementById('p-inn').value.trim() || null,
-        ogrn:       document.getElementById('p-ogrn').value.trim() || null,
-      }),
+      body: JSON.stringify({ legal_name: name, inn, ogrn }),
     });
+    if (S.profile) { S.profile.legal_name = name; S.profile.inn = inn; S.profile.ogrn = ogrn; }
     msg.textContent = 'Сохранено';
     msg.style.cssText = 'display:block;color:var(--ok)';
     setTimeout(() => { msg.style.display = 'none'; }, 2000);
