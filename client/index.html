@@ -2520,7 +2520,7 @@ async function doLogin() {
       err.style.display = 'block';
       return;
     }
-    const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'home'; _pendingNavAfterAuth = null; goTo(_d); } };
+    const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'map'; _pendingNavAfterAuth = null; goTo(_d); } };
     if (!S.city) {
       openAddressPicker(async () => { await requireContract('buyer', proceed); });
     } else {
@@ -2560,7 +2560,7 @@ async function doRegister() {
           body: JSON.stringify({ full_name: fullName }),
         });
       } catch {}
-      const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'home'; _pendingNavAfterAuth = null; goTo(_d); } };
+      const proceed = async () => { if (!(await navigateDeepLink())) { const _d = _pendingNavAfterAuth || 'map'; _pendingNavAfterAuth = null; goTo(_d); } };
       if (!S.city) {
         openAddressPicker(async () => { await requireContract('buyer', proceed); });
       } else {
@@ -2660,6 +2660,8 @@ async function refreshSession() {
 }
 
 // ─── MAP ───
+let _firstMapLoad = false; // set on first install; cleared after first loadMapStores
+
 async function loadMap() {
   loadMapStores();
   loadMapData();
@@ -2677,6 +2679,8 @@ async function loadMapStores() {
   const el = document.getElementById('sl-list');
   const _city = S.city || 'Самара';
   const _dir  = S.direction;
+  const _isFirst = _firstMapLoad;
+  if (_isFirst) _firstMapLoad = false;
 
   // Show cached stores immediately (stale-while-revalidate)
   const cached = _readStoresCache(_city, _dir);
@@ -2689,23 +2693,54 @@ async function loadMapStores() {
     el.innerHTML = SK.storeList();
   }
 
-  // Always fetch fresh data in background
+  // On first launch load all directions at once — pre-populates caches for direction switches
+  const storeQuery = _isFirst
+    ? `/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&order=name.asc&select=*,store_categories(name,icon)`
+    : `/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&direction=eq.${_dir}&order=name.asc&select=*,store_categories(name,icon)`;
+
   try {
     const [stores, locs, subOwners] = await Promise.all([
-      req(`/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&direction=eq.${_dir}&order=name.asc&select=*,store_categories(name,icon)`),
+      req(storeQuery),
       req('/rest/v1/rpc/get_stores_with_locations', { method: 'POST', body: '{}' }),
       req('/rest/v1/rpc/get_active_sub_owner_ids', { method: 'POST', body: '{}' }).catch(() => []),
     ]);
     const locMap       = new Map(locs.map(l => [l.id, l]));
     const activeOwners = new Set(subOwners.map(r => r.user_id));
-    S.allStores = stores.map(st => ({
+    const enriched = stores.map(st => ({
       ...st,
       lng: locMap.get(st.id)?.lng ?? null,
       lat: locMap.get(st.id)?.lat ?? null,
       marker_color: locMap.get(st.id)?.marker_color ?? '#e8430a',
       has_cart: activeOwners.has(st.owner_user_id),
     }));
-    _writeStoresCache(_city, _dir, S.allStores);
+
+    if (_isFirst) {
+      // Cache each direction separately for fast subsequent tab switches
+      for (const dir of ['food', 'goods', 'services']) {
+        _writeStoresCache(_city, dir, enriched.filter(st => st.direction === dir));
+      }
+      S.allStores = enriched.filter(st => st.direction === _dir);
+      // Apply nearby filter using address already obtained during city detection
+      if (S.userAddrLat != null && !S.geoLat) {
+        S.geoLat = S.userAddrLat; S.geoLng = S.userAddrLng;
+        S.nearbyMeters = 5000;
+        document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
+        if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 13, duration: 600 });
+      } else if (!S.geoLat) {
+        // Silently try geolocation — non-blocking, re-filters when result arrives
+        window.AllibyBridge.requestLocation().then(pos => {
+          S.geoLat = pos.lat; S.geoLng = pos.lng;
+          S.nearbyMeters = 5000;
+          document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
+          applyMapFilter();
+          if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 13, duration: 600 });
+        }).catch(() => {});
+      }
+    } else {
+      S.allStores = enriched;
+      _writeStoresCache(_city, _dir, S.allStores);
+    }
+
     renderMapCategoryChips();
     applyMapFilter();
     if (!cached?.length) fitMapToAllStores();
@@ -5343,6 +5378,11 @@ async function _prefetchClient() {
 
 async function restoreNav() {
   hideSplash();
+  // First-install detection
+  if (!localStorage.getItem('alliby_launched')) {
+    try { localStorage.setItem('alliby_launched', '1'); } catch {}
+    _firstMapLoad = true;
+  }
   // restore direction
   try {
     const savedDir = localStorage.getItem('alliby_dir');
@@ -5394,7 +5434,7 @@ async function restoreNav() {
   }
   const SCREENS = ['home','map','alibi','store','menu','cart','calenabs','profile'];
   const nav = localStorage.getItem('alliby_nav');
-  const _navTarget = () => { if (!S.session) { goTo('map'); return; } goTo(nav && SCREENS.includes(nav) ? nav : 'home'); };
+  const _navTarget = () => { if (!S.session) { goTo('map'); return; } goTo(nav && SCREENS.includes(nav) ? nav : 'map'); };
   if (!S.city) {
     _autoDetectCityThenNav(() => { _navTarget(); setTimeout(_prefetchClient, 1500); });
     return;
