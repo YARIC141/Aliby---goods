@@ -952,7 +952,7 @@ tr.row-click:hover td{background:var(--bg-2)}
         <div style="font-size:32px;margin-bottom:12px">🔒</div>
         <div style="font-weight:600;margin-bottom:6px">Функция доступна по подписке Alliby Business</div>
         <div class="txt-muted" style="margin-bottom:16px;font-size:13px">Рассылка push-уведомлений по покупателям доступна на платном тарифе</div>
-        <button class="btn btn-p" onclick="navigateTo('profile')">Оформить подписку</button>
+        <button class="btn btn-p" onclick="goTo('profile')">Оформить подписку</button>
       </div>
       <!-- Форма рассылки -->
       <div id="ads-form">
@@ -5957,9 +5957,8 @@ async function sendPromoPush() {
   if (btn) btn.disabled = true;
 
   try {
-    const session = await _sb.auth.getSession();
-    const token   = session.data?.session?.access_token;
-    const resp    = await fetch(`${_SUPABASE_URL}/functions/v1/send-promo-push`, {
+    const token = S.session?.access_token;
+    const resp  = await fetch(`${SB_URL}/functions/v1/send-promo-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
