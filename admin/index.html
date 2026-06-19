@@ -442,7 +442,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="stores"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg> Заведения</button>
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" id="sn-btn-schedule" style="display:none" onclick="openEmployeeSchedule()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Расписание</button>
-    <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Аналитика</button>
+    <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Аналитика и реклама</button>
     <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы и записи<span class="sn-badge" id="sn-orders-badge" style="display:none">0</span></button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
@@ -905,9 +905,15 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
-<!-- ════════════════ ANALYTICS ════════════════ -->
+<!-- ════════════════ ANALYTICS & ADS ════════════════ -->
 <div id="screen-qr" class="screen">
-  <div class="ph"><h2>Аналитика<span class="screen-help" data-info="Статистика продаж, заказов и использования абонементов по вашему заведению.">?</span></h2></div>
+  <div class="ph"><h2>Аналитика и реклама<span class="screen-help" data-info="Статистика продаж и рекламные рассылки по покупателям вашего заведения.">?</span></h2></div>
+
+  <!-- Tab switcher -->
+  <div style="display:flex;gap:4px;padding:0 12px 10px">
+    <button id="qr-tab-an-btn"  class="btn btn-sm btn-p"  onclick="switchQrTab('an')"  style="flex:1">Аналитика</button>
+    <button id="qr-tab-ads-btn" class="btn btn-sm btn-sec" onclick="switchQrTab('ads')" style="flex:1">Реклама</button>
+  </div>
 
   <!-- Analytics pane -->
   <div id="qr-pane-an" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
@@ -937,6 +943,55 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
   </div>
+
+  <!-- Ads pane (платная функция) -->
+  <div id="qr-pane-ads" style="display:none;flex-direction:column;flex:1;overflow-y:auto">
+    <div class="pb">
+      <!-- Заглушка для неактивной подписки -->
+      <div id="ads-locked" style="display:none;text-align:center;padding:32px 16px">
+        <div style="font-size:32px;margin-bottom:12px">🔒</div>
+        <div style="font-weight:600;margin-bottom:6px">Функция доступна по подписке Alliby Business</div>
+        <div class="txt-muted" style="margin-bottom:16px;font-size:13px">Рассылка push-уведомлений по покупателям доступна на платном тарифе</div>
+        <button class="btn btn-p" onclick="navigateTo('profile')">Оформить подписку</button>
+      </div>
+      <!-- Форма рассылки -->
+      <div id="ads-form">
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Заведение</label>
+          <select id="ads-store-filter" style="width:100%">
+            <option value="">Выберите заведение</option>
+          </select>
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Отправить покупателям за последние</label>
+          <div style="display:flex;gap:8px">
+            <label style="flex:1;cursor:pointer">
+              <input type="radio" name="ads-days" value="7" style="margin-right:4px">7 дней
+            </label>
+            <label style="flex:1;cursor:pointer">
+              <input type="radio" name="ads-days" value="30" checked style="margin-right:4px">30 дней
+            </label>
+            <label style="flex:1;cursor:pointer">
+              <input type="radio" name="ads-days" value="90" style="margin-right:4px">90 дней
+            </label>
+          </div>
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Заголовок <span class="txt-muted">(макс 64 символа)</span></label>
+          <input id="ads-title" type="text" maxlength="64" placeholder="Например: Скидка 15% только сегодня" style="width:100%">
+        </div>
+        <div style="margin-bottom:20px">
+          <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Текст сообщения <span class="txt-muted">(макс 200 символов)</span></label>
+          <textarea id="ads-body" maxlength="200" rows="3" placeholder="Текст вашей акции или предложения…" style="width:100%;resize:vertical"></textarea>
+        </div>
+        <div style="background:var(--bg-2,#f5f5f5);border-radius:8px;padding:12px;margin-bottom:20px;font-size:12px;color:var(--fg-4)">
+          Рассылка является рекламой (ФЗ-38). Покупатели дали согласие на уведомления при установке приложения. Вы можете отправить не более 1 рассылки в 24 часа.
+        </div>
+        <button class="btn btn-p" style="width:100%" onclick="sendPromoPush()">Отправить рассылку</button>
+        <div id="ads-result" style="margin-top:12px;text-align:center;font-size:14px"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
@@ -944,7 +999,7 @@ tr.row-click:hover td{background:var(--bg-2)}
   <div class="bn-row">
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
-    <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Аналитика</button>
+    <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Аналитика<br>и реклама</button>
     <button class="bn-btn ord-has-badge" data-nav="orders"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="bn-nav-badge" id="bn-orders-badge">0</span></span>Заказы и<br>записи</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
@@ -5836,19 +5891,93 @@ function loadQrScreen() {
   switchQrTab('an');
 }
 
-function switchQrTab() {
-  const ap = document.getElementById('qr-pane-an');
-  if (ap) ap.style.display = 'flex';
-  const anFilter = document.getElementById('an-store-filter');
-  if (anFilter) {
-    if (S.profile?.role === 'employee') {
-      anFilter.value = S.profile.employee_store_id;
-      anFilter.disabled = true;
-    } else if (!anFilter.value && S.stores?.length) {
-      anFilter.value = S.stores[0].id;
+function switchQrTab(tab) {
+  const showAn  = !tab || tab === 'an';
+  const paneAn  = document.getElementById('qr-pane-an');
+  const paneAds = document.getElementById('qr-pane-ads');
+  const btnAn   = document.getElementById('qr-tab-an-btn');
+  const btnAds  = document.getElementById('qr-tab-ads-btn');
+
+  if (paneAn)  paneAn.style.display  = showAn ? 'flex' : 'none';
+  if (paneAds) paneAds.style.display = showAn ? 'none' : 'flex';
+  if (btnAn)  { btnAn.className  = showAn ? 'btn btn-sm btn-p'  : 'btn btn-sm btn-sec'; }
+  if (btnAds) { btnAds.className = showAn ? 'btn btn-sm btn-sec' : 'btn btn-sm btn-p'; }
+
+  if (showAn) {
+    const anFilter = document.getElementById('an-store-filter');
+    if (anFilter) {
+      if (S.profile?.role === 'employee') {
+        anFilter.value = S.profile.employee_store_id;
+        anFilter.disabled = true;
+      } else if (!anFilter.value && S.stores?.length) {
+        anFilter.value = S.stores[0].id;
+      }
     }
+    loadAnalyticsTab();
+  } else {
+    _initAdsPane();
   }
-  loadAnalyticsTab();
+}
+
+function _initAdsPane() {
+  const locked  = document.getElementById('ads-locked');
+  const form    = document.getElementById('ads-form');
+  const hasSub  = !!_activePlatSub;
+  if (locked) locked.style.display = hasSub ? 'none' : 'block';
+  if (form)   form.style.display   = hasSub ? 'block' : 'none';
+  if (!hasSub) return;
+
+  const sel = document.getElementById('ads-store-filter');
+  if (sel && S.stores?.length) {
+    if (sel.options.length <= 1) {
+      S.stores.forEach(st => {
+        const o = document.createElement('option');
+        o.value = st.id; o.textContent = st.name;
+        sel.appendChild(o);
+      });
+    }
+    if (!sel.value) sel.value = S.stores[0].id;
+  }
+  document.getElementById('ads-result').textContent = '';
+}
+
+async function sendPromoPush() {
+  const storeId = document.getElementById('ads-store-filter').value;
+  const days    = parseInt(document.querySelector('input[name="ads-days"]:checked')?.value || '30', 10);
+  const title   = document.getElementById('ads-title').value.trim();
+  const body    = document.getElementById('ads-body').value.trim();
+  const result  = document.getElementById('ads-result');
+
+  if (!storeId) { result.textContent = 'Выберите заведение'; return; }
+  if (!title)   { result.textContent = 'Введите заголовок';  return; }
+  if (!body)    { result.textContent = 'Введите текст сообщения'; return; }
+
+  result.textContent = 'Отправляем…';
+  const btn = result.previousElementSibling;
+  if (btn) btn.disabled = true;
+
+  try {
+    const session = await _sb.auth.getSession();
+    const token   = session.data?.session?.access_token;
+    const resp    = await fetch(`${_SUPABASE_URL}/functions/v1/send-promo-push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ store_id: storeId, days, title, body }),
+    });
+    const json = await resp.json();
+    if (!resp.ok) {
+      result.textContent = 'Ошибка: ' + (json.error || resp.status);
+    } else {
+      result.textContent = `Отправлено: ${json.sent}, без токена: ${json.skipped}`;
+    }
+  } catch (e) {
+    result.textContent = 'Сетевая ошибка: ' + e.message;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function startQrCamera() {
