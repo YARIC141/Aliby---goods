@@ -118,12 +118,14 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const nd = e.notification.data || {};
-  const msg = { type: 'PROMO_NOTIF', title: e.notification.title, body: e.notification.body, store_id: nd.store_id || null };
+  const storeId = nd.store_id || null;
+  const msg = { type: 'PROMO_NOTIF', title: e.notification.title, body: e.notification.body, store_id: storeId };
+  const url = storeId ? '/?promo_store=' + storeId : '/';
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       const client = clients.find(c => 'focus' in c);
       if (client) { client.postMessage(msg); return client.focus(); }
-      return self.clients.openWindow('/');
+      return self.clients.openWindow(url);
     })
   );
 });

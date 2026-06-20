@@ -2753,6 +2753,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var item = e.target.closest('[data-store-id]');
     if (item && item.dataset.storeId) _openPromoStore(item.dataset.storeId);
   });
+  // Handle ?promo_store=ID when app is opened via notification click (no active client)
+  var _promoStoreOnLoad = new URLSearchParams(location.search).get('promo_store');
+  if (_promoStoreOnLoad) history.replaceState(null, '', '/');
 });
 
 // ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
@@ -2842,6 +2845,10 @@ function setSession(d) {
     _registerWebPush(uid);
   }
   _updatePromoNotifBadge();
+  if (typeof _promoStoreOnLoad !== 'undefined' && _promoStoreOnLoad) {
+    var sid = _promoStoreOnLoad; _promoStoreOnLoad = null;
+    setTimeout(function() { _openPromoStore(sid); }, 300);
+  }
 }
 
 async function blockIfEmployee() {
