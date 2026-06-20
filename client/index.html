@@ -2688,6 +2688,13 @@ function openPromoNotifs() {
     localStorage.setItem(_PROMO_KEY, JSON.stringify(list));
   } catch(e) {}
   _updatePromoNotifBadge();
+  // Show push enable banner for PWA users who haven't enabled notifications
+  const banner = document.getElementById('push-enable-banner');
+  if (banner) {
+    const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+    const needsBanner = !isNative && _isWebPushSupported() && Notification.permission !== 'granted';
+    banner.style.display = needsBanner ? 'block' : 'none';
+  }
 }
 
 function closePromoNotifs() {
@@ -2735,8 +2742,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
-// Public VAPID key — must match VAPID_PUBLIC_KEY env var on the server.
-// Generate once: npx web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = 'BFXKlSja26SPz9wPeyK-8T5X3X5tw7YpD9cnWIFcSV3BAoiTPrFJUugSRzqO2jViNetqU-eOBybtuh02I8Cru24';
 
 function _b64toUint8(b64) {
@@ -2744,40 +2749,64 @@ function _b64toUint8(b64) {
   return Uint8Array.from(atob(s), c => c.charCodeAt(0));
 }
 
+function _isWebPushSupported() {
+  return 'serviceWorker' in navigator && 'PushManager' in window && !!VAPID_PUBLIC_KEY;
+}
+
+async function _saveWebPushSub(uid, sub) {
+  const j = sub.toJSON();
+  if (!j.keys) return;
+  await req('/rest/v1/push_subscriptions', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates, return=minimal' },
+    body: JSON.stringify({
+      user_id: uid, platform: 'web', app: 'client',
+      device_token: null,
+      endpoint: sub.endpoint,
+      p256dh: j.keys.p256dh,
+      auth_key: j.keys.auth,
+    }),
+  });
+}
+
+// Called on login — silently subscribes if permission already granted
 async function _registerWebPush(uid) {
-  if (typeof _isNative === 'function' && _isNative()) return;
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
-  if (Notification.permission === 'denied') return;
+  if (window.Capacitor?.isNativePlatform?.()) return;
+  if (!_isWebPushSupported() || Notification.permission !== 'granted') return;
   try {
     const swReg = await navigator.serviceWorker.ready;
     let sub = await swReg.pushManager.getSubscription();
     if (!sub) {
-      if (Notification.permission !== 'granted') {
-        const perm = await Notification.requestPermission();
-        if (perm !== 'granted') return;
-      }
       sub = await swReg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
       });
     }
-    const j = sub.toJSON();
-    if (!j.keys) return;
-    await req('/rest/v1/push_subscriptions', {
-      method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        user_id: uid,
-        platform: 'web',
-        app: 'client',
-        device_token: null,
-        endpoint: sub.endpoint,
-        p256dh: j.keys.p256dh,
-        auth_key: j.keys.auth,
-      }),
-    });
+    await _saveWebPushSub(uid, sub);
   } catch(e) { console.warn('web push reg failed', e); }
+}
+
+// Called from user-gesture (button click) — requests permission then subscribes
+async function _enableWebPush() {
+  if (!_isWebPushSupported()) return;
+  const banner = document.getElementById('push-enable-banner');
+  if (!S.session?.user?.id) return;
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      if (banner) banner.querySelector('div').textContent = 'Разрешение отклонено. Включите в настройках браузера.';
+      return;
+    }
+    const swReg = await navigator.serviceWorker.ready;
+    const sub = await swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
+    });
+    await _saveWebPushSub(S.session.user.id, sub);
+    if (banner) banner.style.display = 'none';
+  } catch(e) {
+    console.warn('_enableWebPush failed', e);
+  }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -7071,6 +7100,10 @@ function closeStoreSchedDay() {
     <div class="modal-hd" style="flex-shrink:0">
       <h3>Уведомления</h3>
       <button class="modal-x" onclick="closePromoNotifs()">✕</button>
+    </div>
+    <div id="push-enable-banner" style="display:none;padding:12px 16px;background:var(--bg-2);border-bottom:1px solid var(--line-soft)">
+      <div style="font:500 13px/1.4 var(--font-sans);color:var(--fg-2);margin-bottom:8px">Включите уведомления, чтобы получать акции от заведений</div>
+      <button class="btn btn-p" style="font-size:13px;padding:6px 16px" onclick="_enableWebPush()">Включить уведомления</button>
     </div>
     <div id="promo-notifs-list" style="flex:1;overflow-y:auto"></div>
     <div class="modal-ft" style="flex-shrink:0;padding:12px 16px">
