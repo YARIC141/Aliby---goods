@@ -2123,10 +2123,15 @@ function showQrModal() {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data?.type === 'NAVIGATE') goTo(e.data.screen || 'home');
-    if (e.data?.type === 'PROMO_NOTIF') {
-      _savePromoNotif(e.data.title, e.data.body, e.data.store_id || null);
-      if (e.data.store_id) _openPromoStore(e.data.store_id);
-      else openPromoNotifs();
+    if (e.data?.type === 'SW_NOTIF_TAP') {
+      if (e.data.notif_type === 'promo') {
+        _savePromoNotif(e.data.title, e.data.body, e.data.store_id || null);
+        if (e.data.store_id) _openPromoStore(e.data.store_id);
+        else openPromoNotifs();
+      } else {
+        // Order/booking notification — go to orders tab, don't save to bell
+        if (typeof goTo === 'function') goTo('calenabs');
+      }
     }
   });
 }

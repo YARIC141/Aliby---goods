@@ -118,9 +118,11 @@ self.addEventListener('push', e => {
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const nd = e.notification.data || {};
+  const isPromo = !nd.type || nd.type === 'promo';
   const storeId = nd.store_id || null;
-  const msg = { type: 'PROMO_NOTIF', title: e.notification.title, body: e.notification.body, store_id: storeId };
-  const url = storeId ? '/?promo_store=' + storeId : '/';
+  // Pass raw notification data so client decides routing (promo vs order)
+  const msg = { type: 'SW_NOTIF_TAP', notif_type: nd.type || 'promo', title: e.notification.title, body: e.notification.body, store_id: storeId };
+  const url = isPromo && storeId ? '/?promo_store=' + storeId : '/';
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       const client = clients.find(c => 'focus' in c);
