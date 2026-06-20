@@ -2786,19 +2786,31 @@ async function _saveWebPushSub(uid, sub) {
   } catch(e) { console.error('web push sub save failed:', e); }
 }
 
+// Returns a valid push subscription with our VAPID key, re-subscribing if needed
+async function _getPushSub(swReg) {
+  const key = _b64toUint8(VAPID_PUBLIC_KEY);
+  let sub = await swReg.pushManager.getSubscription();
+  if (sub) {
+    // If the existing subscription was created with a different key, we must re-subscribe
+    const existing = sub.options?.applicationServerKey;
+    const match = existing && existing.byteLength === key.byteLength &&
+      new Uint8Array(existing).every((b, i) => b === key[i]);
+    if (!match) {
+      await sub.unsubscribe();
+      sub = null;
+    }
+  }
+  if (!sub) sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+  return sub;
+}
+
 // Called on login — silently subscribes if permission already granted
 async function _registerWebPush(uid) {
   if (window.Capacitor?.isNativePlatform?.()) return;
   if (!_isWebPushSupported() || Notification.permission !== 'granted') return;
   try {
     const swReg = await navigator.serviceWorker.ready;
-    let sub = await swReg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await swReg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
-      });
-    }
+    const sub = await _getPushSub(swReg);
     await _saveWebPushSub(uid, sub);
   } catch(e) { console.warn('_registerWebPush failed', e); }
 }
@@ -2810,13 +2822,7 @@ async function _enableWebPush() {
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return;
     const swReg = await navigator.serviceWorker.ready;
-    let sub = await swReg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await swReg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
-      });
-    }
+    const sub = await _getPushSub(swReg);
     await _saveWebPushSub(S.session.user.id, sub);
     const banner = document.getElementById('push-enable-banner');
     if (banner) banner.style.display = 'none';
