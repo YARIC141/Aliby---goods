@@ -94,7 +94,40 @@ self.addEventListener('fetch', e => {
   }
 });
 
-// ── Web Push: show notification when received in background ──────────────────
+// ── IndexedDB helpers for persisting promo notifications ─────────────────────
+function _idbOpen() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('alliby-sw', 1);
+    req.onupgradeneeded = ev => ev.target.result.createObjectStore('promos', { autoIncrement: true });
+    req.onsuccess = ev => res(ev.target.result);
+    req.onerror   = ev => rej(ev.target.error);
+  });
+}
+function _idbSave(item) {
+  return _idbOpen().then(db => new Promise((res, rej) => {
+    const tx = db.transaction('promos', 'readwrite');
+    tx.objectStore('promos').add(item);
+    tx.oncomplete = res; tx.onerror = ev => rej(ev.target.error);
+  }));
+}
+function _idbFlush() {
+  return _idbOpen().then(db => new Promise((res, rej) => {
+    const tx = db.transaction('promos', 'readwrite');
+    const store = tx.objectStore('promos');
+    const items = [];
+    store.openCursor().onsuccess = ev => {
+      const cur = ev.target.result;
+      if (cur) { items.push({ key: cur.key, ...cur.value }); cur.continue(); }
+      else {
+        items.forEach(i => store.delete(i.key));
+        tx.oncomplete = () => res(items);
+      }
+    };
+    tx.onerror = ev => rej(ev.target.error);
+  }));
+}
+
+// ── Web Push: show notification and save to bell immediately ──────────────────
 self.addEventListener('push', e => {
   let payload;
   if (e.data) {
@@ -103,15 +136,24 @@ self.addEventListener('push', e => {
     payload = { title: 'Alliby', body: 'Новое уведомление' };
   }
   const { title = 'Alliby', body = '', data = {} } = payload;
-  e.waitUntil(
+  const isPromo = !data.type || data.type === 'promo';
+
+  e.waitUntil(Promise.all([
     self.registration.showNotification(title, {
-      body,
-      icon: '/icons/client-192.png',
-      badge: '/icons/client-192.png',
-      data,
-      tag: data.store_id ? 'promo-' + data.store_id : 'promo',
-    })
-  );
+      body, icon: '/icons/client-192.png', badge: '/icons/client-192.png',
+      data, tag: data.store_id ? 'promo-' + data.store_id : 'promo',
+    }),
+    // Save promo to bell immediately — post to open clients or persist in IDB
+    isPromo && (async () => {
+      const notif = { title, body, store_id: data.store_id || null };
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      if (clients.length) {
+        clients.forEach(c => c.postMessage({ type: 'SW_PROMO_RECEIVED', ...notif }));
+      } else {
+        await _idbSave(notif);
+      }
+    })(),
+  ]));
 });
 
 // ── Web Push: user tapped notification ───────────────────────────────────────

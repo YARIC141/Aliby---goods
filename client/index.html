@@ -2123,13 +2123,15 @@ function showQrModal() {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data?.type === 'NAVIGATE') goTo(e.data.screen || 'home');
+    if (e.data?.type === 'SW_PROMO_RECEIVED') {
+      _savePromoNotif(e.data.title, e.data.body, e.data.store_id || null);
+    }
     if (e.data?.type === 'SW_NOTIF_TAP') {
       if (e.data.notif_type === 'promo') {
         _savePromoNotif(e.data.title, e.data.body, e.data.store_id || null);
         if (e.data.store_id) _openPromoStore(e.data.store_id);
         else openPromoNotifs();
       } else {
-        // Order/booking notification — go to orders tab, don't save to bell
         if (typeof goTo === 'function') goTo('calenabs');
       }
     }
@@ -2765,6 +2767,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
 const VAPID_PUBLIC_KEY = 'BFXKlSja26SPz9wPeyK-8T5X3X5tw7YpD9cnWIFcSV3BAoiTPrFJUugSRzqO2jViNetqU-eOBybtuh02I8Cru24';
+
+// Read promos saved by SW while the app was closed and add them to the bell
+function _flushSwPromos() {
+  try {
+    const req = indexedDB.open('alliby-sw', 1);
+    req.onsuccess = function(ev) {
+      const db = ev.target.result;
+      if (!db.objectStoreNames.contains('promos')) return;
+      const tx = db.transaction('promos', 'readwrite');
+      const store = tx.objectStore('promos');
+      store.openCursor().onsuccess = function(ce) {
+        const cur = ce.target.result;
+        if (!cur) return;
+        _savePromoNotif(cur.value.title, cur.value.body, cur.value.store_id || null);
+        cur.delete();
+        cur.continue();
+      };
+    };
+  } catch(e) {}
+}
 
 function _b64toUint8(b64) {
   const s = (b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
@@ -6172,6 +6194,8 @@ if ('serviceWorker' in navigator) {
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') reg.update();
         });
+        // Flush promos that arrived while app was closed (stored in SW IndexedDB)
+        _flushSwPromos();
       })
       .catch(() => {});
   });
