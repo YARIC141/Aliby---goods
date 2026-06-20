@@ -569,7 +569,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
     <div id="menu-tab-items" class="tab-pane active">
       <div class="toolbar">
-        <select id="mi-store-filter" onchange="loadMenuItems()">
+        <select id="mi-store-filter" onchange="_fillMiCatFilter();loadMenuItems()">
           <option value="">Все заведения</option>
         </select>
         <select id="mi-cat-filter" onchange="loadMenuItems()">
@@ -3761,7 +3761,27 @@ const _MI_LIMIT = 50;
 let _miState = { offset: 0, baseUrl: '', loading: false };
 
 function loadMenuScreen() {
+  _fillMiCatFilter();
   setAdminMenuTab(_adminMenuTab);
+}
+
+async function _fillMiCatFilter() {
+  const storeId = document.getElementById('mi-store-filter')?.value;
+  const sel = document.getElementById('mi-cat-filter');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Все категории</option>';
+  if (!storeId) return;
+  try {
+    const cats = await req(`/rest/v1/categories?store_id=eq.${storeId}&order=name.asc`);
+    cats.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.name;
+      sel.appendChild(o);
+    });
+    if (prev && sel.querySelector(`option[value="${prev}"]`)) sel.value = prev;
+  } catch {}
 }
 
 function setAdminMenuTab(tab) {
