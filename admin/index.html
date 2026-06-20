@@ -5967,7 +5967,9 @@ function openSupportEmail() {
   const stores = S.stores?.map(s => s.name + ' (' + s.id + ')').join(', ') || '—';
   const subject = encodeURIComponent('Поддержка');
   const body = encodeURIComponent('Опишите проблему:\n\n\n---\nEmail: ' + (u?.email || '—') + '\nID: ' + (u?.id || '—') + '\nЗаведения: ' + stores);
-  window.open('mailto:alliby.app@gmail.com?subject=' + subject + '&body=' + body, '_blank');
+  const a = document.createElement('a');
+  a.href = 'mailto:alliby.app@gmail.com?subject=' + subject + '&body=' + body;
+  a.click();
 }
 
 async function sendPromoPush() {

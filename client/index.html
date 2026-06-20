@@ -7013,7 +7013,9 @@ function openSupportEmail() {
   const u = S.session?.user;
   const subject = encodeURIComponent('Поддержка');
   const body = encodeURIComponent('Опишите проблему:\n\n\n---\nID: ' + (u?.id || '—') + '\nEmail: ' + (u?.email || '—'));
-  window.open('mailto:alliby.app@gmail.com?subject=' + subject + '&body=' + body, '_blank');
+  const a = document.createElement('a');
+  a.href = 'mailto:alliby.app@gmail.com?subject=' + subject + '&body=' + body;
+  a.click();
 }
 
 function openStoreComplaint() {
@@ -7021,7 +7023,9 @@ function openStoreComplaint() {
   const name = st?.name || 'заведение';
   const subject = encodeURIComponent(`Жалоба на заведение: ${name}`);
   const body = encodeURIComponent(`Название заведения: ${name}\nID: ${st?.id || ''}\n\nОпишите проблему:\n`);
-  window.open(`mailto:alliby.app@gmail.com?subject=${subject}&body=${body}`, '_blank');
+  const a = document.createElement('a');
+  a.href = `mailto:alliby.app@gmail.com?subject=${subject}&body=${body}`;
+  a.click();
 }
 
 function openStoreScheduleById(id) {
