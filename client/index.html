@@ -2768,6 +2768,24 @@ document.addEventListener('DOMContentLoaded', function() {
 // ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
 const VAPID_PUBLIC_KEY = 'BFXKlSja26SPz9wPeyK-8T5X3X5tw7YpD9cnWIFcSV3BAoiTPrFJUugSRzqO2jViNetqU-eOBybtuh02I8Cru24';
 
+// Fetch unread promo notifications from DB and add to bell (works for native + PWA).
+// Marks them as read immediately so they don't re-appear on next login.
+async function _syncPromoNotifications(uid) {
+  try {
+    const rows = await req(
+      `/rest/v1/promo_notifications?user_id=eq.${uid}&read_at=is.null&select=id,store_id,title,body,sent_at&order=sent_at.asc&limit=50`
+    );
+    if (!rows?.length) return;
+    rows.forEach(r => _savePromoNotif(r.title, r.body, r.store_id || null));
+    const ids = rows.map(r => `id=eq.${r.id}`).join(',');
+    // Mark as read
+    await req(`/rest/v1/promo_notifications?or=(${ids})`, {
+      method: 'PATCH',
+      body: JSON.stringify({ read_at: new Date().toISOString() }),
+    }).catch(() => {});
+  } catch(e) {}
+}
+
 // Read promos saved by SW while the app was closed and add them to the bell
 function _flushSwPromos() {
   try {
@@ -2870,6 +2888,7 @@ function setSession(d) {
     req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) S.profile = p[0]; }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
     _registerWebPush(uid);
+    _syncPromoNotifications(uid);
   }
   _updatePromoNotifBadge();
   if (typeof _promoStoreOnLoad !== 'undefined' && _promoStoreOnLoad) {

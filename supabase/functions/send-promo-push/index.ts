@@ -174,5 +174,15 @@ Deno.serve(async (req: Request) => {
   const sent    = results.filter(r => r.status === 'fulfilled' && r.value).length
   const skipped = uniqueUserIds.length - sent
 
+  // Persist notification for every recipient so the bell populates on next login
+  // regardless of whether they tapped the system notification or the app was hidden.
+  if (uniqueUserIds.length) {
+    await svcClient.from('promo_notifications').insert(
+      uniqueUserIds.map((uid: string) => ({
+        user_id: uid, store_id, title: pushTitle, body,
+      }))
+    )
+  }
+
   return jsonResponse({ sent, skipped })
 })
