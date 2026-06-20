@@ -3,6 +3,7 @@
 *.env
 .env.*
 .claude/
+*.keystore
 
 # Supabase local dev
 supabase/.temp/
