@@ -642,13 +642,22 @@ window.AllibyBridge={
       if(perm.receive!=='granted')return;
       PN.register();
       PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
-      PN.addListener('pushNotificationReceived',function(n){_showNativeToast(n.title,n.body);});
+      PN.addListener('pushNotificationReceived',function(n){
+        var data=n.data||{};
+        if(data.type==='promo')_savePromoNotif(n.title,n.body);
+        _showNativeToast(n.title,n.body);
+      });
       PN.addListener('pushNotificationActionPerformed',function(a){
         var n=a.notification;
         var data=n.data||{};
         // show toast when user taps notification while app was in background
         if(n.title||n.body)setTimeout(function(){_showNativeToast(n.title,n.body);},350);
         if(typeof goTo==='function'){
+          if(data.type==='promo'){
+            _savePromoNotif(n.title,n.body);
+            setTimeout(function(){openPromoNotifs();},400);
+            return;
+          }
           var _isOrd=data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued';
           var _isBk=data.type==='booking_confirmed'||data.type==='booking_cancelled';
           if(_isOrd||_isBk){
@@ -815,6 +824,10 @@ document.addEventListener('deviceready',function(){
 
 <!-- ════════════════ PH ACTIONS (profile + theme — float top-right) ════════════════ -->
 <div id="ph-actions" style="display:none">
+  <button class="ph-icon-btn" id="ph-notif-btn" onclick="openPromoNotifs()" title="Уведомления" style="position:relative">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg>
+    <span id="ph-notif-badge" style="display:none;position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--accent);pointer-events:none"></span>
+  </button>
   <button class="ph-icon-btn" id="ph-theme-btn" onclick="toggleThemeBtn()" title="Тема"></button>
   <button class="ph-icon-btn" onclick="goTo('profile')" title="Профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></button>
 </div>
@@ -2622,6 +2635,75 @@ async function doDeleteAccount() {
   } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
 }
 
+// ─── PROMO NOTIFICATIONS ───────────────────────────────────────────────────────
+const _PROMO_KEY = 'alliby_promo_notifs';
+
+function _savePromoNotif(title, body) {
+  if (!title && !body) return;
+  try {
+    const list = JSON.parse(localStorage.getItem(_PROMO_KEY) || '[]');
+    list.unshift({ id: Date.now(), title: title || '', body: body || '', ts: Date.now(), read: false });
+    if (list.length > 50) list.splice(50);
+    localStorage.setItem(_PROMO_KEY, JSON.stringify(list));
+  } catch(e) {}
+  _updatePromoNotifBadge();
+}
+
+function _updatePromoNotifBadge() {
+  const badge = document.getElementById('ph-notif-badge');
+  if (!badge) return;
+  try {
+    const list = JSON.parse(localStorage.getItem(_PROMO_KEY) || '[]');
+    badge.style.display = list.some(n => !n.read) ? 'block' : 'none';
+  } catch(e) { badge.style.display = 'none'; }
+}
+
+function openPromoNotifs() {
+  const panel = document.getElementById('m-promo-notifs');
+  if (!panel) return;
+  panel.style.display = 'flex';
+  _renderPromoNotifs();
+  try {
+    const list = JSON.parse(localStorage.getItem(_PROMO_KEY) || '[]');
+    list.forEach(n => { n.read = true; });
+    localStorage.setItem(_PROMO_KEY, JSON.stringify(list));
+  } catch(e) {}
+  _updatePromoNotifBadge();
+}
+
+function closePromoNotifs() {
+  const panel = document.getElementById('m-promo-notifs');
+  if (panel) panel.style.display = 'none';
+}
+
+function _renderPromoNotifs() {
+  const el = document.getElementById('promo-notifs-list');
+  if (!el) return;
+  try {
+    const list = JSON.parse(localStorage.getItem(_PROMO_KEY) || '[]');
+    if (!list.length) {
+      el.innerHTML = '<div style="padding:32px 16px;text-align:center;color:var(--fg-3);font-size:14px">Нет рекламных уведомлений</div>';
+      return;
+    }
+    el.innerHTML = list.map(n => `
+      <div style="padding:14px 16px;border-bottom:1px solid var(--line-soft)">
+        <div style="font:600 14px/1.3 var(--font-sans);color:var(--fg);margin-bottom:3px">${_esc(n.title)}</div>
+        <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-2)">${_esc(n.body)}</div>
+        <div style="font-size:11px;color:var(--fg-3);margin-top:5px">${new Date(n.ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = ''; }
+}
+
+function clearPromoNotifs() {
+  try { localStorage.removeItem(_PROMO_KEY); } catch(e) {}
+  _renderPromoNotifs();
+  _updatePromoNotifBadge();
+}
+
+function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ───────────────────────────────────────────────────────────────────────────────
+
 function setSession(d) {
   S.session = d;
   localStorage.setItem('alliby_s', JSON.stringify(d));
@@ -2634,6 +2716,7 @@ function setSession(d) {
     req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) S.profile = p[0]; }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
   }
+  _updatePromoNotifBadge();
 }
 
 async function blockIfEmployee() {
@@ -6901,6 +6984,20 @@ function closeStoreSchedDay() {
   </div>
   <div id="dz-addr-btn-wrap">
     <button class="btn btn-p btn-full" onclick="dzvEnterPickMode()">Выбрать место доставки</button>
+  </div>
+</div>
+
+<!-- ════════════════ PROMO NOTIFICATIONS PANEL ════════════════ -->
+<div id="m-promo-notifs" class="overlay" style="display:none;align-items:flex-end">
+  <div class="modal" style="width:100%;max-width:480px;max-height:70vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;margin:0 auto">
+    <div class="modal-hd" style="flex-shrink:0">
+      <h3>Уведомления</h3>
+      <button class="modal-x" onclick="closePromoNotifs()">✕</button>
+    </div>
+    <div id="promo-notifs-list" style="flex:1;overflow-y:auto"></div>
+    <div class="modal-ft" style="flex-shrink:0;padding:12px 16px">
+      <button class="btn btn-sec btn-full" onclick="clearPromoNotifs()" style="font-size:13px">Очистить всё</button>
+    </div>
   </div>
 </div>
 
