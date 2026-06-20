@@ -2678,6 +2678,11 @@ function _updatePromoNotifBadge() {
 }
 
 function openPromoNotifs() {
+  const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+  // Bell tap IS a user gesture — use it to request push permission on first open
+  if (!isNative && _isWebPushSupported() && Notification.permission === 'default') {
+    _enableWebPush();
+  }
   const panel = document.getElementById('m-promo-notifs');
   if (!panel) return;
   panel.style.display = 'flex';
@@ -2688,12 +2693,16 @@ function openPromoNotifs() {
     localStorage.setItem(_PROMO_KEY, JSON.stringify(list));
   } catch(e) {}
   _updatePromoNotifBadge();
-  // Show push enable banner for PWA users who haven't enabled notifications
+  // Banner: only show when permission was explicitly denied (direct browser action required)
   const banner = document.getElementById('push-enable-banner');
   if (banner) {
-    const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
-    const needsBanner = !isNative && _isWebPushSupported() && Notification.permission !== 'granted';
-    banner.style.display = needsBanner ? 'block' : 'none';
+    if (!isNative && _isWebPushSupported() && Notification.permission === 'denied') {
+      banner.querySelector('div').textContent = 'Уведомления заблокированы — разрешите их в настройках браузера';
+      banner.querySelector('button').style.display = 'none';
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
   }
 }
 
@@ -2755,18 +2764,21 @@ function _isWebPushSupported() {
 
 async function _saveWebPushSub(uid, sub) {
   const j = sub.toJSON();
-  if (!j.keys) return;
-  await req('/rest/v1/push_subscriptions', {
-    method: 'POST',
-    headers: { Prefer: 'resolution=merge-duplicates, return=minimal' },
-    body: JSON.stringify({
-      user_id: uid, platform: 'web', app: 'client',
-      device_token: null,
-      endpoint: sub.endpoint,
-      p256dh: j.keys.p256dh,
-      auth_key: j.keys.auth,
-    }),
-  });
+  if (!j.keys) { console.warn('web push: no keys in subscription'); return; }
+  try {
+    await req('/rest/v1/push_subscriptions', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates, return=minimal' },
+      body: JSON.stringify({
+        user_id: uid, platform: 'web', app: 'client',
+        device_token: null,
+        endpoint: sub.endpoint,
+        p256dh: j.keys.p256dh,
+        auth_key: j.keys.auth,
+      }),
+    });
+    console.log('web push sub saved');
+  } catch(e) { console.error('web push sub save failed:', e); }
 }
 
 // Called on login — silently subscribes if permission already granted
@@ -2783,30 +2795,27 @@ async function _registerWebPush(uid) {
       });
     }
     await _saveWebPushSub(uid, sub);
-  } catch(e) { console.warn('web push reg failed', e); }
+  } catch(e) { console.warn('_registerWebPush failed', e); }
 }
 
-// Called from user-gesture (button click) — requests permission then subscribes
+// Called from user gesture context (bell click) — requests permission then subscribes
 async function _enableWebPush() {
-  if (!_isWebPushSupported()) return;
-  const banner = document.getElementById('push-enable-banner');
-  if (!S.session?.user?.id) return;
+  if (!_isWebPushSupported() || !S.session?.user?.id) return;
   try {
     const perm = await Notification.requestPermission();
-    if (perm !== 'granted') {
-      if (banner) banner.querySelector('div').textContent = 'Разрешение отклонено. Включите в настройках браузера.';
-      return;
-    }
+    if (perm !== 'granted') return;
     const swReg = await navigator.serviceWorker.ready;
-    const sub = await swReg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
-    });
+    let sub = await swReg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
+      });
+    }
     await _saveWebPushSub(S.session.user.id, sub);
+    const banner = document.getElementById('push-enable-banner');
     if (banner) banner.style.display = 'none';
-  } catch(e) {
-    console.warn('_enableWebPush failed', e);
-  }
+  } catch(e) { console.warn('_enableWebPush failed', e); }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
