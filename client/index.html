@@ -3882,6 +3882,7 @@ function itemActions(item, qty) {
     }
     return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openBookingSlotModal(itemCache.get('${item.id}'))">Записаться</button>`;
   }
+  if (S.store?.accepts_online_payment === false) return '';
   return qty > 0
     ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
     : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В корзину</button>`;
@@ -3976,7 +3977,7 @@ function openItemDetail(id) {
   }
 
   const btn = document.getElementById('mi-cart-btn');
-  if (item.is_passport_required) {
+  if (item.is_passport_required || S.store?.accepts_online_payment === false) {
     btn.style.display = 'none';
   } else {
     btn.style.display = '';

@@ -1493,6 +1493,16 @@ tr.row-click:hover td{background:var(--bg-2)}
         <button id="ms-dze-btn" class="btn btn-sm" style="display:none;width:100%;margin-top:2px" onclick="openDzeFromEdit()">Настроить зоны доставки →</button>
       </div>
     </div>
+    <div style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <span style="font:600 13px/1 var(--font-sans)">Онлайн-оплата</span>
+        <span class="hint" data-tip="Если выключено — клиенты видят меню, но кнопка «В корзину» скрыта и оформить онлайн-заказ нельзя">?</span>
+      </div>
+      <label class="toggle-sw">
+        <input type="checkbox" id="ms-online-payment" checked>
+        <span class="toggle-track"></span>
+      </label>
+    </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-store')">Отмена</button>
       <button class="btn btn-p" id="ms-save-btn" onclick="saveStore()">Сохранить</button>
@@ -3385,6 +3395,8 @@ async function openStoreModal(store) {
   }
   const dzeBtnEl = document.getElementById('ms-dze-btn');
   if (dzeBtnEl) dzeBtnEl.style.display = store?.id ? '' : 'none';
+  const opEl = document.getElementById('ms-online-payment');
+  if (opEl) opEl.checked = store?.accepts_online_payment !== false;
   _msEditStore = store || null;
   openModal('m-store');
 }
@@ -3600,7 +3612,8 @@ async function saveStore() {
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
     image_url:          document.getElementById('ms-image-url').value || null,
-    delivery_enabled:   document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
+    delivery_enabled:         document.getElementById('ms-dir')?.value !== 'services' && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
+    accepts_online_payment:   document.getElementById('ms-online-payment')?.checked ?? true,
   };
   try {
     let storeId = id;
