@@ -1595,6 +1595,23 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+<!-- Support modal -->
+<div class="overlay" id="m-support" onclick="if(event.target===this)closeModal('m-support')">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd">
+      <h3>Написать в поддержку</h3>
+      <button class="modal-x" onclick="closeModal('m-support')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--fg-2);margin-bottom:12px">alliby.app@gmail.com</p>
+    <textarea id="support-body-preview" readonly rows="5" style="width:100%;resize:none;font-size:12px;padding:8px;border:1px solid var(--line-soft);border-radius:8px;background:var(--bg-2);color:var(--fg-2);font-family:var(--font-sans)"></textarea>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+      <a id="support-mailto-btn" class="btn btn-p btn-full" style="text-align:center;text-decoration:none" href="#">Открыть почтовый клиент</a>
+      <a id="support-gmail-btn" class="btn btn-sec btn-full" style="text-align:center;text-decoration:none" href="#" target="_blank" rel="noopener">Открыть Gmail в браузере</a>
+      <button class="btn btn-sec btn-full" onclick="navigator.clipboard.writeText('alliby.app@gmail.com').then(()=>showGeoToast('Адрес скопирован'))">Скопировать адрес</button>
+    </div>
+  </div>
+</div>
+
 <!-- Store schedule modal -->
 <div class="overlay" id="m-store-sched">
   <div class="modal" style="max-width:400px">
@@ -7007,11 +7024,14 @@ async function myBookingsNextMonth() {
 
 function openSupportEmail() {
   const u = S.session?.user;
-  const subject = encodeURIComponent('Поддержка');
-  const body = encodeURIComponent('Опишите проблему:\n\n\n---\nID: ' + (u?.id || '—') + '\nEmail: ' + (u?.email || '—'));
-  const a = document.createElement('a');
-  a.href = 'mailto:alliby.app@gmail.com?subject=' + subject + '&body=' + body;
-  a.click();
+  const subject = 'Поддержка';
+  const bodyText = 'Опишите проблему:\n\n\n---\nID: ' + (u?.id || '—') + '\nEmail: ' + (u?.email || '—');
+  const encS = encodeURIComponent(subject);
+  const encB = encodeURIComponent(bodyText);
+  document.getElementById('support-body-preview').value = 'Кому: alliby.app@gmail.com\nТема: ' + subject + '\n\n' + bodyText;
+  document.getElementById('support-mailto-btn').href = 'mailto:alliby.app@gmail.com?subject=' + encS + '&body=' + encB;
+  document.getElementById('support-gmail-btn').href = 'https://mail.google.com/mail/?view=cm&to=alliby.app@gmail.com&su=' + encS + '&body=' + encB;
+  openModal('m-support');
 }
 
 function openStoreComplaint() {
