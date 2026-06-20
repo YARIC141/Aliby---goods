@@ -3210,12 +3210,13 @@ function renderMapMarkers(stores) {
     el.className = 'store-pin';
     const _cartBadge = '<div class="p-cart"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM5.2 4H2V2H0v2h2l3.6 7.59-1.35 2.44C4.1 14.37 4 14.68 4 15c0 1.1.9 2 2 2h14v-2H6.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.24-5.88A1 1 0 0023.1 6H5.2z"/></svg></div>';
     const delInfo = getDeliveryInfo(st);
+    const _stHasCart = st.has_cart && st.accepts_online_payment !== false;
     const _delBadge = delInfo
-      ? `<div class="p-del${st.has_cart ? '' : ' no-cart'}" style="background:${delInfo.inZone?'#16a34a':'#ef4444'};color:#fff;display:flex;align-items:center;justify-content:center">${svgIco('bicycle',11)}</div>`
+      ? `<div class="p-del${_stHasCart ? '' : ' no-cart'}" style="background:${delInfo.inZone?'#16a34a':'#ef4444'};color:#fff;display:flex;align-items:center;justify-content:center">${svgIco('bicycle',11)}</div>`
       : '';
     const pinHead = st.image_url
-      ? `<div class="p-img-wrap"><img class="p-img" src="${esc(st.image_url)}" alt="">${st.has_cart ? _cartBadge : ''}${_delBadge}</div>`
-      : `<div class="p-dot-wrap"><div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div>${st.has_cart ? _cartBadge : ''}${_delBadge}</div>`;
+      ? `<div class="p-img-wrap"><img class="p-img" src="${esc(st.image_url)}" alt="">${_stHasCart ? _cartBadge : ''}${_delBadge}</div>`
+      : `<div class="p-dot-wrap"><div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div>${_stHasCart ? _cartBadge : ''}${_delBadge}</div>`;
     el.innerHTML = `
       ${pinHead}
       <div class="p-lbl">${esc(st.name)}</div>
@@ -4549,7 +4550,7 @@ function _checkDeliveryZones(zones, lat, lng) {
 }
 
 function getDeliveryInfo(store) {
-  if (!store?.delivery_enabled || !store?.has_cart) return null;
+  if (!store?.delivery_enabled || !store?.has_cart || store?.accepts_online_payment === false) return null;
   const zones = _dzCache[store.id];
   if (!zones?.length) return { inZone: false, price: 0 };
   if (S.userAddrLat == null) return { inZone: false, price: 0 };
