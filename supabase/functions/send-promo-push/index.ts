@@ -55,7 +55,7 @@ async function getFcmAccessToken(): Promise<string> {
   return access_token
 }
 
-async function sendFcm(token: string, title: string, body: string): Promise<boolean> {
+async function sendFcm(token: string, title: string, body: string, storeId: string, storeDirection: string): Promise<boolean> {
   try {
     const accessToken = await getFcmAccessToken()
     const resp = await fetch(
@@ -67,7 +67,7 @@ async function sendFcm(token: string, title: string, body: string): Promise<bool
           message: {
             token,
             notification: { title, body },
-            data: { type: 'promo' },
+            data: { type: 'promo', store_id: storeId, store_direction: storeDirection },
             android: {
               priority: 'normal',
               notification: { sound: 'default', channel_id: 'alliby_orders' },
@@ -101,27 +101,29 @@ Deno.serve(async (req: Request) => {
   const { data: { user }, error: authErr } = await userClient.auth.getUser()
   if (authErr || !user) return jsonResponse({ error: 'Unauthorized' }, 401)
 
-  let payload: { store_id?: string; days?: number; title?: string; body?: string }
+  let payload: { store_id?: string; days?: number; body?: string }
   try { payload = await req.json() } catch { return jsonResponse({ error: 'Bad JSON' }, 400) }
 
-  const { store_id, days, title, body } = payload
-  if (!store_id || !days || !title || !body)
-    return jsonResponse({ error: 'store_id, days, title, body are required' }, 400)
+  const { store_id, days, body } = payload
+  if (!store_id || !days || !body)
+    return jsonResponse({ error: 'store_id, days, body are required' }, 400)
   if (![7, 30, 90].includes(days))
     return jsonResponse({ error: 'days must be 7, 30 or 90' }, 400)
-  if (title.length > 64 || body.length > 200)
-    return jsonResponse({ error: 'title max 64, body max 200 chars' }, 400)
+  if (body.length > 200)
+    return jsonResponse({ error: 'body max 200 chars' }, 400)
 
   const svcClient = createClient(sbUrl, sbSvcKey)
 
-  // Проверяем что магазин принадлежит этому пользователю
+  // Проверяем что магазин принадлежит этому пользователю, берём name и direction
   const { data: store } = await svcClient
     .from('stores')
-    .select('id')
+    .select('id, name, direction')
     .eq('id', store_id)
     .eq('owner_user_id', user.id)
     .maybeSingle()
   if (!store) return jsonResponse({ error: 'Store not found or access denied' }, 403)
+
+  const pushTitle = (store as { name: string }).name || 'Alliby'
 
   // Проверяем активную подписку платформы
   const today = new Date().toISOString().split('T')[0]
@@ -158,9 +160,10 @@ Deno.serve(async (req: Request) => {
 
   if (!subs?.length) return jsonResponse({ sent: 0, skipped: uniqueUserIds.length })
 
-  // Отправляем пуши
+  // Отправляем пуши (заголовок = название магазина, data содержит store_id для навигации)
+  const storeDirection = (store as { direction?: string }).direction || 'food'
   const results = await Promise.allSettled(
-    subs.map((s: { device_token: string }) => sendFcm(s.device_token, title, body))
+    subs.map((s: { device_token: string }) => sendFcm(s.device_token, pushTitle, body, store_id, storeDirection))
   )
 
   const sent    = results.filter(r => r.status === 'fulfilled' && r.value).length

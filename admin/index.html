@@ -976,10 +976,6 @@ tr.row-click:hover td{background:var(--bg-2)}
             </label>
           </div>
         </div>
-        <div style="margin-bottom:14px">
-          <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Заголовок <span class="txt-muted">(макс 64 символа)</span></label>
-          <input id="ads-title" type="text" maxlength="64" placeholder="Например: Скидка 15% только сегодня" style="width:100%">
-        </div>
         <div style="margin-bottom:20px">
           <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Текст сообщения <span class="txt-muted">(макс 200 символов)</span></label>
           <textarea id="ads-body" maxlength="200" rows="3" placeholder="Текст вашей акции или предложения…" style="width:100%;resize:vertical"></textarea>
@@ -5944,12 +5940,10 @@ function _initAdsPane() {
 async function sendPromoPush() {
   const storeId = document.getElementById('ads-store-filter').value;
   const days    = parseInt(document.querySelector('input[name="ads-days"]:checked')?.value || '30', 10);
-  const title   = document.getElementById('ads-title').value.trim();
   const body    = document.getElementById('ads-body').value.trim();
   const result  = document.getElementById('ads-result');
 
   if (!storeId) { result.textContent = 'Выберите заведение'; return; }
-  if (!title)   { result.textContent = 'Введите заголовок';  return; }
   if (!body)    { result.textContent = 'Введите текст сообщения'; return; }
 
   result.textContent = 'Отправляем…';
@@ -5964,7 +5958,7 @@ async function sendPromoPush() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ store_id: storeId, days, title, body }),
+      body: JSON.stringify({ store_id: storeId, days, body }),
     });
     const json = await resp.json();
     if (!resp.ok) {

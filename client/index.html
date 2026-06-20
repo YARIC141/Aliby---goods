@@ -644,7 +644,7 @@ window.AllibyBridge={
       PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
       PN.addListener('pushNotificationReceived',function(n){
         var data=n.data||{};
-        if(data.type==='promo')_savePromoNotif(n.title,n.body);
+        if(data.type==='promo')_savePromoNotif(n.title,n.body,data.store_id||null);
         _showNativeToast(n.title,n.body);
       });
       PN.addListener('pushNotificationActionPerformed',function(a){
@@ -654,8 +654,9 @@ window.AllibyBridge={
         if(n.title||n.body)setTimeout(function(){_showNativeToast(n.title,n.body);},350);
         if(typeof goTo==='function'){
           if(data.type==='promo'){
-            _savePromoNotif(n.title,n.body);
-            setTimeout(function(){openPromoNotifs();},400);
+            _savePromoNotif(n.title,n.body,data.store_id||null);
+            if(data.store_id){setTimeout(function(){_openPromoStore(data.store_id);},400);}
+            else{setTimeout(function(){openPromoNotifs();},400);}
             return;
           }
           var _isOrd=data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued';
@@ -2638,15 +2639,28 @@ async function doDeleteAccount() {
 // ─── PROMO NOTIFICATIONS ───────────────────────────────────────────────────────
 const _PROMO_KEY = 'alliby_promo_notifs';
 
-function _savePromoNotif(title, body) {
+function _savePromoNotif(title, body, storeId) {
   if (!title && !body) return;
   try {
     const list = JSON.parse(localStorage.getItem(_PROMO_KEY) || '[]');
-    list.unshift({ id: Date.now(), title: title || '', body: body || '', ts: Date.now(), read: false });
+    list.unshift({ id: Date.now(), title: title || '', body: body || '', store_id: storeId || null, ts: Date.now(), read: false });
     if (list.length > 50) list.splice(50);
     localStorage.setItem(_PROMO_KEY, JSON.stringify(list));
   } catch(e) {}
   _updatePromoNotifBadge();
+}
+
+async function _openPromoStore(storeId) {
+  if (!storeId) return;
+  closePromoNotifs();
+  try {
+    const res = await req(`/rest/v1/stores?id=eq.${storeId}&select=*&limit=1`);
+    const st = Array.isArray(res) ? res[0] : null;
+    if (!st) return;
+    if (st.direction && st.direction !== S.direction) setDirection(st.direction);
+    S.store = st;
+    goTo('store');
+  } catch(e) {}
 }
 
 function _updatePromoNotifBadge() {
@@ -2685,12 +2699,14 @@ function _renderPromoNotifs() {
       el.innerHTML = '<div style="padding:32px 16px;text-align:center;color:var(--fg-3);font-size:14px">Нет рекламных уведомлений</div>';
       return;
     }
-    el.innerHTML = list.map(n => `
-      <div style="padding:14px 16px;border-bottom:1px solid var(--line-soft)">
+    el.innerHTML = list.map(n => {
+      const clickable = n.store_id ? `onclick="_openPromoStore('${_esc(n.store_id)}')" style="padding:14px 16px;border-bottom:1px solid var(--line-soft);cursor:pointer"` : `style="padding:14px 16px;border-bottom:1px solid var(--line-soft)"`;
+      return `<div ${clickable}>
         <div style="font:600 14px/1.3 var(--font-sans);color:var(--fg);margin-bottom:3px">${_esc(n.title)}</div>
         <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-2)">${_esc(n.body)}</div>
         <div style="font-size:11px;color:var(--fg-3);margin-top:5px">${new Date(n.ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   } catch(e) { el.innerHTML = ''; }
 }
 
