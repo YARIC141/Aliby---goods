@@ -107,6 +107,8 @@ export async function sendWebPush(
       },
       body: encrypted,
     })
+    const respText = await resp.text().catch(() => '')
+    console.log('sendWebPush response', resp.status, respText)
     return resp.ok || resp.status === 201
   } catch(e) {
     console.error('sendWebPush error', e)
