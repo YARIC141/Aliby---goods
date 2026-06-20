@@ -96,9 +96,12 @@ self.addEventListener('fetch', e => {
 
 // ── Web Push: show notification when received in background ──────────────────
 self.addEventListener('push', e => {
-  if (!e.data) return;
   let payload;
-  try { payload = e.data.json(); } catch { payload = { title: 'Alliby', body: e.data.text() }; }
+  if (e.data) {
+    try { payload = e.data.json(); } catch { payload = { title: 'Alliby', body: e.data.text() }; }
+  } else {
+    payload = { title: 'Alliby', body: 'Новое уведомление' };
+  }
   const { title = 'Alliby', body = '', data = {} } = payload;
   e.waitUntil(
     self.registration.showNotification(title, {
