@@ -3300,7 +3300,7 @@ async function showStorePopup(st, listItem) {
   if (st.avg_order_amount) { ppAvg.textContent = `Средний чек: ~${st.avg_order_amount} ₽`; ppAvg.style.display = ''; }
   else ppAvg.style.display = 'none';
   const ppCart = document.getElementById('pp-cart-badge');
-  ppCart.style.display = st.has_cart ? 'flex' : 'none';
+  ppCart.style.display = (st.has_cart && st.accepts_online_payment !== false) ? 'flex' : 'none';
   const ppDel = document.getElementById('pp-delivery');
   if (ppDel) {
     if (st.delivery_enabled) {
