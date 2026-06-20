@@ -2118,6 +2118,11 @@ function showQrModal() {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data?.type === 'NAVIGATE') goTo(e.data.screen || 'home');
+    if (e.data?.type === 'PROMO_NOTIF') {
+      _savePromoNotif(e.data.title, e.data.body, e.data.store_id || null);
+      if (e.data.store_id) _openPromoStore(e.data.store_id);
+      else openPromoNotifs();
+    }
   });
 }
 const payMap    = { card:'Карта', subscription:'Абонемент', mixed:'Смешанный' };
@@ -2700,8 +2705,10 @@ function _renderPromoNotifs() {
       return;
     }
     el.innerHTML = list.map(n => {
-      const clickable = n.store_id ? `onclick="_openPromoStore('${_esc(n.store_id)}')" style="padding:14px 16px;border-bottom:1px solid var(--line-soft);cursor:pointer"` : `style="padding:14px 16px;border-bottom:1px solid var(--line-soft)"`;
-      return `<div ${clickable}>
+      const extra = n.store_id
+        ? `data-store-id="${_esc(n.store_id)}" style="padding:14px 16px;border-bottom:1px solid var(--line-soft);cursor:pointer"`
+        : `style="padding:14px 16px;border-bottom:1px solid var(--line-soft)"`;
+      return `<div ${extra}>
         <div style="font:600 14px/1.3 var(--font-sans);color:var(--fg);margin-bottom:3px">${_esc(n.title)}</div>
         <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-2)">${_esc(n.body)}</div>
         <div style="font-size:11px;color:var(--fg-3);margin-top:5px">${new Date(n.ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
@@ -2718,7 +2725,61 @@ function clearPromoNotifs() {
 
 function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// ───────────────────────────────────────────────────────────────────────────────
+// Delegated click on notification list items (avoids inline onclick in innerHTML)
+document.addEventListener('DOMContentLoaded', function() {
+  var el = document.getElementById('promo-notifs-list');
+  if (el) el.addEventListener('click', function(e) {
+    var item = e.target.closest('[data-store-id]');
+    if (item && item.dataset.storeId) _openPromoStore(item.dataset.storeId);
+  });
+});
+
+// ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
+// Public VAPID key — must match VAPID_PUBLIC_KEY env var on the server.
+// Generate once: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
+
+function _b64toUint8(b64) {
+  const s = (b64 + '='.repeat((4 - b64.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
+
+async function _registerWebPush(uid) {
+  if (typeof _isNative === 'function' && _isNative()) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === 'YOUR_VAPID_PUBLIC_KEY_HERE') return;
+  if (Notification.permission === 'denied') return;
+  try {
+    const swReg = await navigator.serviceWorker.ready;
+    let sub = await swReg.pushManager.getSubscription();
+    if (!sub) {
+      if (Notification.permission !== 'granted') {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') return;
+      }
+      sub = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
+      });
+    }
+    const j = sub.toJSON();
+    if (!j.keys) return;
+    await req('/rest/v1/push_subscriptions', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({
+        user_id: uid,
+        platform: 'web',
+        app: 'client',
+        device_token: null,
+        endpoint: sub.endpoint,
+        p256dh: j.keys.p256dh,
+        auth_key: j.keys.auth,
+      }),
+    });
+  } catch(e) { console.warn('web push reg failed', e); }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function setSession(d) {
   S.session = d;
@@ -2731,6 +2792,7 @@ function setSession(d) {
     realtimeSubscribeBookings(uid);
     req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) S.profile = p[0]; }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
+    _registerWebPush(uid);
   }
   _updatePromoNotifBadge();
 }

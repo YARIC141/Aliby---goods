@@ -93,3 +93,34 @@ self.addEventListener('fetch', e => {
     return;
   }
 });
+
+// ── Web Push: show notification when received in background ──────────────────
+self.addEventListener('push', e => {
+  if (!e.data) return;
+  let payload;
+  try { payload = e.data.json(); } catch { payload = { title: 'Alliby', body: e.data.text() }; }
+  const { title = 'Alliby', body = '', data = {} } = payload;
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: '/icons/client-192.png',
+      badge: '/icons/client-192.png',
+      data,
+      tag: data.store_id ? 'promo-' + data.store_id : 'promo',
+    })
+  );
+});
+
+// ── Web Push: user tapped notification ───────────────────────────────────────
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const nd = e.notification.data || {};
+  const msg = { type: 'PROMO_NOTIF', title: e.notification.title, body: e.notification.body, store_id: nd.store_id || null };
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+      const client = clients.find(c => 'focus' in c);
+      if (client) { client.postMessage(msg); return client.focus(); }
+      return self.clients.openWindow('/');
+    })
+  );
+});
