@@ -5452,7 +5452,22 @@ async function confirmAction() {
         cat:   `/rest/v1/categories?id=eq.${id}`,
         mi:    `/rest/v1/menu_items?id=eq.${id}`,
       };
-      await req(paths[type], { method:'DELETE' });
+      try {
+        await req(paths[type], { method:'DELETE' });
+      } catch(e) {
+        if (type === 'mi' && (e.message || '').includes('order_items_menu_item_id_fkey')) {
+          await req(`/rest/v1/menu_items?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_visible: false }),
+          });
+          closeModal('m-confirm');
+          S.pendingConfirm = null;
+          loadMenuItems();
+          showAdminToast('Позиция скрыта от клиентов (удалить нельзя — есть в истории заказов)');
+          return;
+        }
+        throw e;
+      }
     }
     closeModal('m-confirm');
     S.pendingConfirm = null;
