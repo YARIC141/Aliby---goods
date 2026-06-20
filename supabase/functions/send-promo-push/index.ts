@@ -99,14 +99,16 @@ Deno.serve(async (req: Request) => {
   const { data: { user }, error: authErr } = await userClient.auth.getUser()
   if (authErr || !user) return jsonResponse({ error: 'Unauthorized' }, 401)
 
-  let payload: { store_id?: string; days?: number; body?: string }
+  let payload: { store_id?: string; days?: number; body?: string; audience?: string }
   try { payload = await req.json() } catch { return jsonResponse({ error: 'Bad JSON' }, 400) }
 
-  const { store_id, days, body } = payload
-  if (!store_id || !days || !body)
-    return jsonResponse({ error: 'store_id, days, body are required' }, 400)
-  if (![7, 30, 90].includes(days))
-    return jsonResponse({ error: 'days must be 7, 30 or 90' }, 400)
+  const { store_id, days, body, audience = 'orders' } = payload
+  if (!store_id || !body)
+    return jsonResponse({ error: 'store_id, body are required' }, 400)
+  if (!['orders', 'city'].includes(audience))
+    return jsonResponse({ error: 'audience must be orders or city' }, 400)
+  if (audience === 'orders' && (!days || ![7, 30, 90].includes(days)))
+    return jsonResponse({ error: 'days must be 7, 30 or 90 for orders audience' }, 400)
   if (body.length > 200)
     return jsonResponse({ error: 'body max 200 chars' }, 400)
 
@@ -114,14 +116,15 @@ Deno.serve(async (req: Request) => {
 
   const { data: store } = await svcClient
     .from('stores')
-    .select('id, name, direction')
+    .select('id, name, direction, city')
     .eq('id', store_id)
     .eq('owner_user_id', user.id)
     .maybeSingle()
   if (!store) return jsonResponse({ error: 'Store not found or access denied' }, 403)
 
-  const pushTitle    = (store as { name: string }).name || 'Alliby'
+  const pushTitle      = (store as { name: string }).name || 'Alliby'
   const storeDirection = (store as { direction?: string }).direction || 'food'
+  const storeCity      = (store as { city?: string }).city || ''
 
   const today = new Date().toISOString().split('T')[0]
   const { data: platSub } = await svcClient
@@ -134,17 +137,27 @@ Deno.serve(async (req: Request) => {
     .maybeSingle()
   if (!platSub) return jsonResponse({ error: 'Active platform subscription required' }, 403)
 
-  const since = new Date(Date.now() - days * 86400_000).toISOString()
-  const { data: orders } = await svcClient
-    .from('orders')
-    .select('user_id')
-    .eq('store_id', store_id)
-    .in('status', ['paid', 'ready', 'issued'])
-    .gte('order_time', since)
+  let uniqueUserIds: string[]
 
-  if (!orders?.length) return jsonResponse({ sent: 0, skipped: 0 })
-
-  const uniqueUserIds = [...new Set(orders.map((o: { user_id: string }) => o.user_id))]
+  if (audience === 'city') {
+    const { data: profiles } = await svcClient
+      .from('profiles')
+      .select('id')
+      .eq('city', storeCity)
+      .eq('promo_consent', true)
+    if (!profiles?.length) return jsonResponse({ sent: 0, skipped: 0 })
+    uniqueUserIds = profiles.map((p: { id: string }) => p.id)
+  } else {
+    const since = new Date(Date.now() - (days as number) * 86400_000).toISOString()
+    const { data: orders } = await svcClient
+      .from('orders')
+      .select('user_id')
+      .eq('store_id', store_id)
+      .in('status', ['paid', 'ready', 'issued'])
+      .gte('order_time', since)
+    if (!orders?.length) return jsonResponse({ sent: 0, skipped: 0 })
+    uniqueUserIds = [...new Set(orders.map((o: { user_id: string }) => o.user_id))]
+  }
 
   const { data: subs } = await svcClient
     .from('push_subscriptions')

@@ -963,8 +963,16 @@ tr.row-click:hover td{background:var(--bg-2)}
           </select>
         </div>
         <div style="margin-bottom:14px">
-          <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Отправить покупателям за последние</label>
-          <div style="display:flex;gap:8px">
+          <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Аудитория</label>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <label style="flex:1;cursor:pointer">
+              <input type="radio" name="ads-audience" value="orders" checked onchange="adsAudienceChange()" style="margin-right:4px">По покупателям
+            </label>
+            <label style="flex:1;cursor:pointer">
+              <input type="radio" name="ads-audience" value="city" onchange="adsAudienceChange()" style="margin-right:4px">Всем в городе
+            </label>
+          </div>
+          <div id="ads-days-row" style="display:flex;gap:8px">
             <label style="flex:1;cursor:pointer">
               <input type="radio" name="ads-days" value="7" style="margin-right:4px">7 дней
             </label>
@@ -975,6 +983,7 @@ tr.row-click:hover td{background:var(--bg-2)}
               <input type="radio" name="ads-days" value="90" style="margin-right:4px">90 дней
             </label>
           </div>
+          <div id="ads-city-hint" style="display:none;font-size:12px;color:var(--fg-3)">Рассылка всем пользователям города заведения, которые дали согласие на рекламные уведомления</div>
         </div>
         <div style="margin-bottom:20px">
           <label style="display:block;font-size:13px;font-weight:500;margin-bottom:4px">Текст сообщения <span class="txt-muted">(макс 200 символов)</span></label>
@@ -5937,11 +5946,20 @@ function _initAdsPane() {
   document.getElementById('ads-result').textContent = '';
 }
 
+function adsAudienceChange() {
+  const audience  = document.querySelector('input[name="ads-audience"]:checked')?.value;
+  const daysRow   = document.getElementById('ads-days-row');
+  const cityHint  = document.getElementById('ads-city-hint');
+  if (daysRow)  daysRow.style.display  = audience === 'city' ? 'none' : 'flex';
+  if (cityHint) cityHint.style.display = audience === 'city' ? 'block' : 'none';
+}
+
 async function sendPromoPush() {
-  const storeId = document.getElementById('ads-store-filter').value;
-  const days    = parseInt(document.querySelector('input[name="ads-days"]:checked')?.value || '30', 10);
-  const body    = document.getElementById('ads-body').value.trim();
-  const result  = document.getElementById('ads-result');
+  const storeId  = document.getElementById('ads-store-filter').value;
+  const audience = document.querySelector('input[name="ads-audience"]:checked')?.value || 'orders';
+  const days     = parseInt(document.querySelector('input[name="ads-days"]:checked')?.value || '30', 10);
+  const body     = document.getElementById('ads-body').value.trim();
+  const result   = document.getElementById('ads-result');
 
   if (!storeId) { result.textContent = 'Выберите заведение'; return; }
   if (!body)    { result.textContent = 'Введите текст сообщения'; return; }
@@ -5951,14 +5969,17 @@ async function sendPromoPush() {
   if (btn) btn.disabled = true;
 
   try {
-    const token = S.session?.access_token;
+    const token   = S.session?.access_token;
+    const payload = audience === 'city'
+      ? { store_id: storeId, audience: 'city', body }
+      : { store_id: storeId, audience: 'orders', days, body };
     const resp  = await fetch(`${SB_URL}/functions/v1/send-promo-push`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ store_id: storeId, days, body }),
+      body: JSON.stringify(payload),
     });
     const json = await resp.json();
     if (!resp.ok) {
