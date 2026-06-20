@@ -14,6 +14,7 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.107.0'
+import { sendWebPush } from '../_shared/webpush.ts'
 
 const FCM_PROJECT_ID    = Deno.env.get('FCM_PROJECT_ID')!
 const FCM_SA_RAW        = Deno.env.get('FCM_SERVICE_ACCOUNT')!
@@ -145,24 +146,40 @@ Deno.serve(async (req: Request) => {
   const { user_id, type, data = {} } = payload
   if (!user_id || !type) return new Response('user_id and type are required', { status: 400 })
 
-  // Берём device_token пользователя
+  // Берём подписку пользователя (FCM или Web Push)
   const { data: sub } = await serviceClient
     .from('push_subscriptions')
-    .select('device_token, platform')
+    .select('device_token, platform, endpoint, p256dh, auth_key')
     .eq('user_id', user_id)
     .eq('app', 'client')
     .maybeSingle()
-
-  if (!sub?.device_token) {
-    return new Response(JSON.stringify({ skipped: 'no_token' }), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    })
-  }
 
   const tpl = PUSH_TEMPLATES[type]
   const { title, body } = tpl
     ? tpl(data)
     : { title: payload.title ?? 'Alliby', body: payload.body ?? '' }
+
+  // Web Push (PWA)
+  if (sub?.platform === 'web' && sub.endpoint && sub.p256dh && sub.auth_key) {
+    try {
+      const ok = await sendWebPush(sub.endpoint, sub.p256dh, sub.auth_key, title, body, { type, ...data })
+      return new Response(JSON.stringify({ sent: ok }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      })
+    } catch (err) {
+      console.error('Web push error:', err)
+      return new Response(JSON.stringify({ error: String(err) }), {
+        status: 500, headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
+  // FCM (native Android / iOS)
+  if (!sub?.device_token) {
+    return new Response(JSON.stringify({ skipped: 'no_token' }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     await sendFcm(sub.device_token, title, body, { type, ...data })
