@@ -154,7 +154,7 @@ Deno.serve(async (req: Request) => {
 
   if (!subs?.length) return jsonResponse({ sent: 0, skipped: uniqueUserIds.length })
 
-  type Sub = { device_token: string | null; platform: string | null; endpoint: string | null; p256dh: string | null; auth_key: string | null }
+  type Sub = { user_id: string; device_token: string | null; platform: string | null; endpoint: string | null; p256dh: string | null; auth_key: string | null }
 
   const validSubs = (subs as Sub[]).filter(
     s => (s.platform !== 'web' && s.device_token) || (s.platform === 'web' && s.endpoint && s.p256dh && s.auth_key)
@@ -171,7 +171,12 @@ Deno.serve(async (req: Request) => {
     })
   )
 
-  const sent    = results.filter(r => r.status === 'fulfilled' && r.value).length
+  // Count unique users who had at least one successful delivery
+  const sentUserIds = new Set<string>()
+  results.forEach((r, i) => {
+    if (r.status === 'fulfilled' && r.value) sentUserIds.add(validSubs[i].user_id)
+  })
+  const sent    = sentUserIds.size
   const skipped = uniqueUserIds.length - sent
 
   // Persist notification for every recipient so the bell populates on next login
