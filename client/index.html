@@ -2786,18 +2786,21 @@ async function _saveWebPushSub(uid, sub) {
   } catch(e) { console.error('web push sub save failed:', e); }
 }
 
-// Called on login — subscribes (or re-subscribes) if permission already granted
+// Called on login — subscribes if no valid subscription with our VAPID key exists
 async function _registerWebPush(uid) {
   if (window.Capacitor?.isNativePlatform?.()) return;
   if (!_isWebPushSupported() || Notification.permission !== 'granted') return;
   try {
     const swReg = await navigator.serviceWorker.ready;
-    const old = await swReg.pushManager.getSubscription();
-    if (old) await old.unsubscribe();
-    const sub = await swReg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
-    });
+    const vapidKey = _b64toUint8(VAPID_PUBLIC_KEY);
+    let sub = await swReg.pushManager.getSubscription();
+    if (sub) {
+      const existingKey = sub.options?.applicationServerKey;
+      const sameKey = existingKey && new Uint8Array(existingKey).length === vapidKey.length &&
+        new Uint8Array(existingKey).every((b, i) => b === vapidKey[i]);
+      if (!sameKey) { await sub.unsubscribe(); sub = null; }
+    }
+    if (!sub) sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
     await _saveWebPushSub(uid, sub);
   } catch(e) { console.warn('_registerWebPush failed', e); }
 }
@@ -2809,12 +2812,15 @@ async function _enableWebPush() {
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return;
     const swReg = await navigator.serviceWorker.ready;
-    const old = await swReg.pushManager.getSubscription();
-    if (old) await old.unsubscribe();
-    const sub = await swReg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: _b64toUint8(VAPID_PUBLIC_KEY),
-    });
+    const vapidKey = _b64toUint8(VAPID_PUBLIC_KEY);
+    let sub = await swReg.pushManager.getSubscription();
+    if (sub) {
+      const existingKey = sub.options?.applicationServerKey;
+      const sameKey = existingKey && new Uint8Array(existingKey).length === vapidKey.length &&
+        new Uint8Array(existingKey).every((b, i) => b === vapidKey[i]);
+      if (!sameKey) { await sub.unsubscribe(); sub = null; }
+    }
+    if (!sub) sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: vapidKey });
     await _saveWebPushSub(S.session.user.id, sub);
     const banner = document.getElementById('push-enable-banner');
     if (banner) banner.style.display = 'none';
