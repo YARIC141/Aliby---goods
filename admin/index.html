@@ -5981,9 +5981,8 @@ function adsAudienceChange() {
 
 function openSupportEmail() {
   const u = S.session?.user;
-  const stores = S.stores?.map(s => s.name + ' (' + s.id + ')').join(', ') || '—';
   const subject = 'Поддержка';
-  const bodyText = 'Опишите проблему:\n\n\n---\nEmail: ' + (u?.email || '—') + '\nID: ' + (u?.id || '—') + '\nЗаведения: ' + stores;
+  const bodyText = 'Опишите проблему:\n\n\n---\nEmail: ' + (u?.email || '—') + '\nID: ' + (u?.id || '—') + '\nНазвание заведения: ';
   const encS = encodeURIComponent(subject);
   const encB = encodeURIComponent(bodyText);
   document.getElementById('support-body-preview').value = 'Кому: alliby.app@gmail.com\nТема: ' + subject + '\n\n' + bodyText;
