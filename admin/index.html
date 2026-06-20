@@ -3885,8 +3885,9 @@ async function loadMenuItems() {
   const storeFilter = document.getElementById('mi-store-filter');
   const catId  = document.getElementById('mi-cat-filter')?.value;
   const search = document.getElementById('mi-search')?.value;
+  const storeId = storeFilter?.value;
   const noFilters = !catId && !search;
-  const cacheKey = `admin_menu_items_v2_${uid}`;
+  const cacheKey = `admin_menu_items_v3_${uid}`;
   if (noFilters) {
     try {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
@@ -3902,7 +3903,6 @@ async function loadMenuItems() {
       baseUrl += `&store_id=eq.${S.profile.employee_store_id}`;
       if (storeFilter) { storeFilter.value = S.profile.employee_store_id; storeFilter.disabled = true; }
     } else {
-      const storeId = storeFilter?.value;
       if (storeId) {
         baseUrl += `&store_id=eq.${storeId}`;
       } else if (S.stores?.length) {
@@ -3912,7 +3912,8 @@ async function loadMenuItems() {
     if (catId)  baseUrl += `&category_id=eq.${catId}`;
     if (search) baseUrl += `&name=ilike.*${encodeURIComponent(search)}*`;
     _miState = { offset: 0, baseUrl, loading: false };
-    const fetchLimit = noFilters ? _MI_LIMIT : 500;
+    const singleStore = isEmp || !!storeId;
+    const fetchLimit = (noFilters && !singleStore) ? _MI_LIMIT : 500;
     const items = await req(`${baseUrl}&limit=${fetchLimit}&offset=0`);
     if (noFilters) try { localStorage.setItem(cacheKey, JSON.stringify(items)); } catch(ex) {}
     _renderMenuItems(items);
