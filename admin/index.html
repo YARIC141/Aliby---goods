@@ -3889,29 +3889,46 @@ function _renderMenuItems(items, append = false) {
     el.innerHTML = html;
   }
   if (items.length === _MI_LIMIT) {
-    if (!el.querySelector('#mi-load-more'))
-      el.insertAdjacentHTML('beforeend',
-        `<button id="mi-load-more" class="btn" style="width:100%;margin-top:4px" onclick="loadMoreMenuItems()">Загрузить ещё</button>`);
+    if (!el.querySelector('#mi-sentinel')) {
+      el.insertAdjacentHTML('beforeend', `<div id="mi-sentinel" style="height:1px"></div>`);
+    }
+    _attachMiObserver();
   }
+}
+
+let _miObserver = null;
+
+function _attachMiObserver() {
+  if (_miObserver) return;
+  const sentinel = document.getElementById('mi-sentinel');
+  if (!sentinel) return;
+  _miObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) loadMoreMenuItems();
+  }, { rootMargin: '120px' });
+  _miObserver.observe(sentinel);
+}
+
+function _detachMiObserver() {
+  if (_miObserver) { _miObserver.disconnect(); _miObserver = null; }
 }
 
 async function loadMoreMenuItems() {
   if (_miState.loading) return;
   _miState.loading = true;
   _miState.offset += _MI_LIMIT;
-  const btn = document.getElementById('mi-load-more');
-  if (btn) { btn.textContent = 'Загрузка…'; btn.disabled = true; }
   try {
     const items = await req(`${_miState.baseUrl}&limit=${_MI_LIMIT}&offset=${_miState.offset}`);
-    if (btn) btn.remove();
+    if (items.length < _MI_LIMIT) {
+      _detachMiObserver();
+      document.getElementById('mi-sentinel')?.remove();
+    }
     _renderMenuItems(items, true);
-  } catch {
-    if (btn) { btn.textContent = 'Загрузить ещё'; btn.disabled = false; }
-  }
+  } catch {}
   _miState.loading = false;
 }
 
 async function loadMenuItems() {
+  _detachMiObserver();
   const el = document.getElementById('mi-list');
   const uid = S.session?.user?.id;
   const isEmp = S.profile?.role === 'employee';
