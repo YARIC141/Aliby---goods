@@ -3751,22 +3751,39 @@ const _CLI_LIMIT = 30;
 let _menuCliState = { offset: 0, baseUrl: '', loading: false, storeId: null, hasMore: false };
 let _allMenuItems = [];
 
+let _cliObserver = null;
+
+function _attachCliObserver() {
+  if (_cliObserver) return;
+  const sentinel = document.getElementById('cli-sentinel');
+  if (!sentinel) return;
+  _cliObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) loadMoreClientMenu();
+  }, { rootMargin: '150px' });
+  _cliObserver.observe(sentinel);
+}
+
+function _detachCliObserver() {
+  if (_cliObserver) { _cliObserver.disconnect(); _cliObserver = null; }
+}
+
 function _renderMenuGrid(el, allItems, appendItems = null) {
   const filtered = _applyMenuFilters(appendItems ?? allItems);
   if (appendItems) {
-    document.getElementById('cli-load-more')?.parentElement?.remove();
+    document.getElementById('cli-sentinel')?.remove();
     if (filtered.length) el.insertAdjacentHTML('beforeend', filtered.map(renderItemCard).join(''));
   } else {
     el.innerHTML = filtered.length ? filtered.map(renderItemCard).join('') : '<div class="empty">Позиций нет</div>';
   }
   updateCartCount();
   if (_menuCliState.hasMore) {
-    el.insertAdjacentHTML('beforeend',
-      `<div style="grid-column:1/-1"><button id="cli-load-more" class="btn btn-full" style="margin-top:4px" onclick="loadMoreClientMenu()">Загрузить ещё</button></div>`);
+    el.insertAdjacentHTML('beforeend', `<div id="cli-sentinel" style="grid-column:1/-1;height:1px"></div>`);
+    _attachCliObserver();
   }
 }
 
 async function loadMenuItems() {
+  _detachCliObserver();
   const el = document.getElementById('menu-items');
   if (!S.store) return;
   el.className = 'items-grid';
@@ -3818,8 +3835,6 @@ async function loadMoreClientMenu() {
   if (_menuCliState.loading) return;
   _menuCliState.loading = true;
   _menuCliState.offset += _CLI_LIMIT;
-  const btn = document.getElementById('cli-load-more');
-  if (btn) { btn.textContent = 'Загрузка…'; btn.disabled = true; }
   try {
     const items = await req(`${_menuCliState.baseUrl}&limit=${_CLI_LIMIT}&offset=${_menuCliState.offset}`);
     items.forEach(it => cacheItem(it));
@@ -3827,13 +3842,12 @@ async function loadMoreClientMenu() {
     S.cart.forEach(c => { const f = itemCache.get(c.item.id); if (f) c.item = f; });
     _writeMenuCache(_menuCliState.storeId, _allMenuItems);
     _menuCliState.hasMore = items.length === _CLI_LIMIT;
+    if (!_menuCliState.hasMore) _detachCliObserver();
     const el = document.getElementById('menu-items');
     _renderMenuGrid(el, _allMenuItems, items);
     updateCartCount();
   } catch {
     _menuCliState.offset -= _CLI_LIMIT;
-    const btn2 = document.getElementById('cli-load-more');
-    if (btn2) { btn2.textContent = 'Загрузить ещё'; btn2.disabled = false; }
   }
   _menuCliState.loading = false;
 }
