@@ -6268,7 +6268,8 @@ async function handleQrResult(userId) {
       }
     } catch(e) {}
   } catch(e) {
-    results.innerHTML = '<div class="empty">Ошибка загрузки абонементов</div>';
+    const msg = e?.message || e?.error || e?.hint || (typeof e === 'number' ? 'HTTP ' + e : JSON.stringify(e));
+    results.innerHTML = `<div class="empty">Ошибка загрузки абонементов<br><span style="font-size:12px;opacity:.6">${esc(String(msg))}</span></div>`;
     status.textContent = '';
   }
 }
