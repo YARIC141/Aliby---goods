@@ -4379,7 +4379,7 @@ async function loadActiveOrders(append = false) {
     if (_ordPage === 0) _loadOrderStores();
     const statusQ = (_ordFilter && _ordFilter !== 'all') ? `&status=eq.${_ordFilter}` : '&status=neq.pending';
     const storeQ  = (_ordStoreFilter && _ordStoreFilter !== 'all') ? `&store_id=eq.${_ordStoreFilter}` : '';
-    const url = `/rest/v1/orders?user_id=eq.${uid}${statusQ}${storeQ}&stores.direction=eq.${S.direction}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
+    const url = `/rest/v1/orders?user_id=eq.${uid}${statusQ}${storeQ}&stores.direction=eq.${S.direction}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores!inner(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     const page = await req(url);
     _ordHasMore = page.length === 20;
     _ordPage++;
