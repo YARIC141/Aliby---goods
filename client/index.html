@@ -3321,6 +3321,8 @@ async function loadMapData() {
   });
   S.map.addControl(geoCtrl, 'top-right');
   geoCtrl.on('error', () => showGeoToast('Геолокация недоступна или запрещена'));
+  // Render cached markers immediately — DOM markers don't need map 'load'
+  if (S.allStores?.length) { applyMapFilter(); fitMapToAllStores(); }
   S.map.on('load', applyMapFilter);
 }
 
