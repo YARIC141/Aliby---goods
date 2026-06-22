@@ -3529,7 +3529,10 @@ async function loadStore() {
   }
   const _titleEl = document.getElementById('store-items-title');
   if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги' }[S.direction] || 'Товары и Услуги';
-  document.getElementById('store-ph-name').textContent = st.name;
+  const _phNameEl = document.getElementById('store-ph-name');
+  const _phSpan = _phNameEl.querySelector('.screen-help');
+  _phNameEl.textContent = st.name;
+  if (_phSpan) _phNameEl.appendChild(_phSpan);
   document.getElementById('st-addr').textContent   = st.address || '';
   document.getElementById('st-hours').textContent  = st.working_hours || '';
   document.getElementById('st-phone').textContent  = st.phone || '';
@@ -3639,6 +3642,8 @@ async function loadStoreSubs(targetEl) {
 async function loadMenu() {
   if (!S.store) return;
   document.getElementById('menu-ph-name').textContent = S.store.name;
+  const _menuBack = document.querySelector('#screen-menu .btn-back');
+  if (_menuBack) _menuBack.textContent = '← ' + S.store.name;
   loadCategories();
   loadMenuItems();
   loadMenuUserSubs().then(() => { if (S.menuUserSubs?.length) loadMenuItems(); });
