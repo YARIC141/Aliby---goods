@@ -445,6 +445,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg> Товары и Услуги</button>
     <button class="sn-btn" id="sn-btn-schedule" style="display:none" onclick="openEmployeeSchedule()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Расписание</button>
     <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Аналитика и реклама</button>
+    <button class="sn-btn" data-nav="scan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Сканер QR</button>
     <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы и записи<span class="sn-badge" id="sn-orders-badge" style="display:none">0</span></button>
     <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
   </div>
@@ -1024,12 +1025,40 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
+<!-- ════════════════ SCAN QR ════════════════ -->
+<div id="screen-scan" class="screen">
+  <div class="ph"><h2>Сканер QR<span class="screen-help" data-info="Сканируйте QR-код клиента в приложении Alliby, чтобы увидеть его активные абонементы и списать использование.">?</span></h2></div>
+  <div class="pb" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button id="qr-start-btn" class="btn btn-p" onclick="startQrCamera()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Включить камеру</button>
+      <button id="qr-stop-btn" class="btn" style="display:none" onclick="stopQrCamera()">Стоп</button>
+    </div>
+    <div id="qr-video-wrap" style="display:none;position:relative;border-radius:12px;overflow:hidden;background:#000;max-width:480px;aspect-ratio:4/3">
+      <video id="qr-video" style="width:100%;height:100%;object-fit:cover;display:block" playsinline muted></video>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+        <div style="width:200px;height:200px;border:2px solid rgba(255,255,255,.75);border-radius:10px;box-shadow:0 0 0 4000px rgba(0,0,0,.35)"></div>
+      </div>
+    </div>
+    <canvas id="qr-canvas" style="display:none"></canvas>
+    <div id="qr-status" style="font:500 14px/1.4 var(--font-sans);color:var(--fg-3);min-height:20px"></div>
+    <div class="card" style="padding:14px 16px">
+      <div style="font:600 13px/1 var(--font-sans);margin-bottom:10px;color:var(--fg-3)">Ввести ID вручную</div>
+      <div style="display:flex;gap:8px">
+        <input id="qr-manual-id" class="inp" type="text" placeholder="UUID пользователя" style="flex:1;min-width:0;font:400 13px var(--font-sans)">
+        <button class="btn btn-p" onclick="manualLookup()">Найти</button>
+      </div>
+    </div>
+    <div id="qr-results"></div>
+  </div>
+</div>
+
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
   <div class="bn-row">
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Аналитика<br>и реклама</button>
+    <button class="bn-btn" data-nav="scan"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>Сканер<br>QR</button>
     <button class="bn-btn ord-has-badge" data-nav="orders"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="bn-nav-badge" id="bn-orders-badge">0</span></span>Заказы и<br>записи</button>
     <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Профиль</button>
   </div>
@@ -2012,9 +2041,9 @@ function goTo(id, opts = {}) {
   }
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
-  if (prevId === 'qr' && id !== 'qr') stopQrCamera();
+  if ((prevId === 'qr' || prevId === 'scan') && id !== prevId) stopQrCamera();
   if (prevId === 'schedule' && id !== 'schedule') schedRealtimeDisconnect();
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,profile:loadProfile,schedule:loadScheduleScreen,cities:loadCitiesScreen})[id]?.();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,scan:loadScanScreen,profile:loadProfile,schedule:loadScheduleScreen,cities:loadCitiesScreen})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -6012,6 +6041,12 @@ function manualLookup() {
 
 function loadQrScreen() {
   switchQrTab('an');
+}
+
+function loadScanScreen() {
+  document.getElementById('qr-status').textContent = '';
+  document.getElementById('qr-results').innerHTML = '';
+  document.getElementById('qr-manual-id').value = '';
 }
 
 function switchQrTab(tab) {
