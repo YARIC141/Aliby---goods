@@ -47,7 +47,8 @@ self.addEventListener('fetch', e => {
   // ── Supabase REST GET: stale-while-revalidate ─────────────────────────────
   // Covers /rest/v1/stores, /rest/v1/menu_items, /rest/v1/store_categories, etc.
   // Mutations (POST/PATCH/DELETE) and auth are not cached.
-  if (e.request.method === 'GET' && e.request.url.includes('/rest/v1/')) {
+  // promo_notifications excluded: client PATCHes read_at, stale GET would re-show cleared items.
+  if (e.request.method === 'GET' && e.request.url.includes('/rest/v1/') && !e.request.url.includes('promo_notifications')) {
     e.respondWith(
       caches.open(API_CACHE).then(cache =>
         cache.match(e.request).then(cached => {

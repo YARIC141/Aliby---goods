@@ -2812,6 +2812,7 @@ async function clearPromoNotifs() {
       }
     } catch(e) {}
   }
+  _promoSyncCancelledAt = Date.now();
   try { localStorage.removeItem(_PROMO_KEY); } catch(e) {}
   _renderPromoNotifs();
   _updatePromoNotifBadge();
@@ -2834,14 +2835,19 @@ document.addEventListener('DOMContentLoaded', function() {
 // ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
 const VAPID_PUBLIC_KEY = 'BFXKlSja26SPz9wPeyK-8T5X3X5tw7YpD9cnWIFcSV3BAoiTPrFJUugSRzqO2jViNetqU-eOBybtuh02I8Cru24';
 
+let _promoSyncCancelledAt = 0;
+
 // Fetch unread promo notifications from DB and add to bell (works for native + PWA).
 // Marks them as read immediately so they don't re-appear on next login.
 async function _syncPromoNotifications(uid) {
+  const startedAt = Date.now();
   try {
     const rows = await req(
       `/rest/v1/promo_notifications?user_id=eq.${uid}&read_at=is.null&select=id,store_id,title,body,sent_at&order=sent_at.asc&limit=50`
     );
     if (!rows?.length) return;
+    // Skip if bell was cleared while we were fetching (race condition guard)
+    if (_promoSyncCancelledAt > startedAt) return;
     rows.forEach(r => _savePromoNotif(r.title, r.body, r.store_id || null));
     const ids = rows.map(r => `id=eq.${r.id}`).join(',');
     // Mark as read
