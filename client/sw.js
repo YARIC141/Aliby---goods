@@ -1,4 +1,4 @@
-// v27
+// v28
 const APP_CACHE  = 'alliby-app-v16';
 const TILE_CACHE = 'alliby-tiles-v2';
 const API_CACHE  = 'alliby-api-v1';
@@ -44,18 +44,19 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // ── Supabase REST GET: network-first, offline fallback to cache ────────────
+  // ── Supabase REST GET: stale-while-revalidate ─────────────────────────────
   // Covers /rest/v1/stores, /rest/v1/menu_items, /rest/v1/store_categories, etc.
   // Mutations (POST/PATCH/DELETE) and auth are not cached.
   if (e.request.method === 'GET' && e.request.url.includes('/rest/v1/')) {
     e.respondWith(
-      fetch(e.request.clone()).then(resp => {
-        if (resp.ok) {
-          caches.open(API_CACHE).then(c => { c.put(e.request, resp.clone()); trimApiCache(); });
-        }
-        return resp;
-      }).catch(() =>
-        caches.match(e.request).then(cached => cached || Response.error())
+      caches.open(API_CACHE).then(cache =>
+        cache.match(e.request).then(cached => {
+          const networkFetch = fetch(e.request.clone()).then(resp => {
+            if (resp.ok) { cache.put(e.request, resp.clone()); trimApiCache(); }
+            return resp;
+          }).catch(() => null);
+          return cached || networkFetch;
+        })
       )
     );
     return;

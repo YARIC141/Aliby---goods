@@ -2679,21 +2679,31 @@ async function doResetPwd() {
 }
 
 async function doLogout() {
+  const _uid = S.session?.user?.id;
   try { await req('/auth/v1/logout', { method:'POST' }); } finally {
     localStorage.removeItem('alliby_s');
+    _clearProfileCache(_uid);
     S.session = null; S.profile = null; goTo('auth');
   }
 }
 
 async function doDeleteAccount() {
   if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
+  const _uid = S.session?.user?.id;
   try {
     await req('/functions/v1/delete-account', { method: 'POST' });
     localStorage.removeItem('alliby_s');
+    _clearProfileCache(_uid);
     S.session = null; S.profile = null;
     goTo('auth');
   } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
 }
+
+// ─── PROFILE CACHE ────────────────────────────────────────────────────────────
+function _profileCacheKey(uid) { return 'alliby_profile_' + uid; }
+function _readProfileCache(uid) { try { const r = localStorage.getItem(_profileCacheKey(uid)); return r ? JSON.parse(r) : null; } catch { return null; } }
+function _writeProfileCache(uid, p) { try { localStorage.setItem(_profileCacheKey(uid), JSON.stringify(p)); } catch {} }
+function _clearProfileCache(uid) { try { if (uid) localStorage.removeItem(_profileCacheKey(uid)); } catch {} }
 
 // ─── PROMO NOTIFICATIONS ───────────────────────────────────────────────────────
 const _PROMO_KEY = 'alliby_promo_notifs';
@@ -2863,6 +2873,7 @@ async function _promoConsentAccept() {
     method: 'PATCH',
     body: JSON.stringify({ promo_consent: true }),
   }).catch(() => {});
+  if (S.profile) { S.profile.promo_consent = true; _writeProfileCache(uid, S.profile); }
 }
 
 function _promoConsentDecline() {
@@ -2970,7 +2981,8 @@ function setSession(d) {
   if (uid) {
     realtimeSubscribeOrders(uid);
     realtimeSubscribeBookings(uid);
-    req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) S.profile = p[0]; }).catch(() => {});
+    const _cp = _readProfileCache(uid); if (_cp) S.profile = _cp;
+    req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) { S.profile = p[0]; _writeProfileCache(uid, p[0]); } }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
     _registerWebPush(uid);
     _syncPromoNotifications(uid);
@@ -3026,12 +3038,20 @@ async function loadMap() {
   loadMapData();
 }
 
+const _STORES_FRESH = 5 * 60 * 1000;
 function _storesCacheKey(city, dir) { return 'alliby_stores_' + city + '_' + dir; }
 function _readStoresCache(city, dir) {
-  try { const r = localStorage.getItem(_storesCacheKey(city, dir)); return r ? JSON.parse(r) : null; } catch(e) { return null; }
+  try {
+    const r = localStorage.getItem(_storesCacheKey(city, dir));
+    if (!r) return null;
+    const d = JSON.parse(r);
+    return Array.isArray(d)
+      ? { stores: d, fresh: false }
+      : { stores: d.stores, fresh: (Date.now() - (d.ts || 0)) < _STORES_FRESH };
+  } catch { return null; }
 }
 function _writeStoresCache(city, dir, stores) {
-  try { localStorage.setItem(_storesCacheKey(city, dir), JSON.stringify(stores)); } catch(e) {}
+  try { localStorage.setItem(_storesCacheKey(city, dir), JSON.stringify({ ts: Date.now(), stores })); } catch {}
 }
 
 async function loadMapStores() {
@@ -3042,7 +3062,8 @@ async function loadMapStores() {
   const _needGeo = _autoGeoNeeded;  if (_needGeo)  _autoGeoNeeded  = false;
 
   // Show cached stores immediately (stale-while-revalidate)
-  const cached = _readStoresCache(_city, _dir);
+  const cacheResult = _readStoresCache(_city, _dir);
+  const cached = cacheResult?.stores;
   if (cached?.length) {
     S.allStores = cached;
     renderMapCategoryChips();
@@ -3051,6 +3072,9 @@ async function loadMapStores() {
   } else {
     el.innerHTML = SK.storeList();
   }
+
+  // Skip network fetch if cache is fresh (not first install, no geo detection needed)
+  if (!_isFirst && !_needGeo && cacheResult?.fresh) return;
 
   // On first launch load all directions at once — pre-populates caches for direction switches
   const storeQuery = _isFirst
@@ -3110,7 +3134,7 @@ async function loadMapStores() {
 
     renderMapCategoryChips();
     applyMapFilter();
-    if (!cached?.length) fitMapToAllStores();
+    if (!cached?.length) fitMapToAllStores(); // already fitted above if cache was present
     if (document.getElementById('screen-cart')?.classList.contains('active')) renderDeliveryToggle();
   } catch(e) {
     if (!cached?.length) el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
@@ -4604,9 +4628,18 @@ function updateMapAddrBtn() {
   }
 }
 
+const _DZ_FRESH = 30 * 60 * 1000;
 const _dzCache = {};
+function _readDzCache(id) {
+  try { const r = localStorage.getItem('alliby_dz_' + id); if (!r) return null; const d = JSON.parse(r); return (Date.now() - (d.ts || 0)) < _DZ_FRESH ? d.zones : null; } catch { return null; }
+}
+function _writeDzCache(id, zones) {
+  try { localStorage.setItem('alliby_dz_' + id, JSON.stringify({ ts: Date.now(), zones })); } catch {}
+}
 async function loadStoreZones(storeId) {
   if (_dzCache[storeId] !== undefined) return _dzCache[storeId];
+  const lsCached = _readDzCache(storeId);
+  if (lsCached) { _dzCache[storeId] = lsCached; return lsCached; }
   try {
     const rows = await req(`/rest/v1/delivery_zones?store_id=eq.${storeId}&order=sort_order.asc`);
     _dzCache[storeId] = (rows || []).map(r => ({
@@ -4615,6 +4648,7 @@ async function loadStoreZones(storeId) {
       center_lat: r.center_lat, center_lng: r.center_lng,
       vertices: r.vertices || [],
     }));
+    _writeDzCache(storeId, _dzCache[storeId]);
   } catch { _dzCache[storeId] = []; }
   return _dzCache[storeId];
 }
@@ -5574,6 +5608,7 @@ async function loadProfile() {
     const profs = await req(`/rest/v1/profiles?id=eq.${u.id}`);
     if (profs.length) {
       S.profile = profs[0];
+      _writeProfileCache(u.id, profs[0]);
       S.userAddrLat = profs[0].address_lat ?? null;
       S.userAddrLng = profs[0].address_lng ?? null;
       document.getElementById('p-role').textContent  = profs[0].role;
@@ -5598,11 +5633,12 @@ async function loadProfile() {
 async function updateName() {
   const restore = btnLoad(document.getElementById('p-name-btn'));
   try {
-    // PATCH /rest/v1/profiles?id=eq.{uuid}
+    const full_name = document.getElementById('p-name').value;
     await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ full_name: document.getElementById('p-name').value }),
+      body: JSON.stringify({ full_name }),
     });
+    if (S.profile) { S.profile.full_name = full_name; _writeProfileCache(S.session.user.id, S.profile); }
     restore();
     alert('Имя сохранено');
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
@@ -5620,6 +5656,7 @@ async function updateAddress() {
     });
     S.userAddrLat = lat;
     S.userAddrLng = lng;
+    if (S.profile) { S.profile.address = address; S.profile.address_lat = lat; S.profile.address_lng = lng; _writeProfileCache(S.session.user.id, S.profile); }
     updateMapAddrBtn();
     _renderHomeMarker();
     restore(); alert('Адрес сохранён');
@@ -5752,10 +5789,12 @@ function confirmAddrPick() {
 async function updatePhone() {
   const restore = btnLoad(document.getElementById('p-phone-btn'));
   try {
+    const phone = document.getElementById('p-phone').value.trim() || null;
     await req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
-      body: JSON.stringify({ phone: document.getElementById('p-phone').value.trim() || null }),
+      body: JSON.stringify({ phone }),
     });
+    if (S.profile) { S.profile.phone = phone; _writeProfileCache(S.session.user.id, S.profile); }
     restore();
     alert('Телефон сохранён');
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
