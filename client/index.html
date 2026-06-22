@@ -1647,6 +1647,12 @@ document.addEventListener('deviceready',function(){
       <h3>Указать адрес на карте</h3>
       <button class="modal-x" onclick="closeAddrPicker()">✕</button>
     </div>
+    <div style="display:flex;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line-soft)">
+      <input type="text" id="addr-srch-inp" placeholder="Город или адрес…" autocomplete="off"
+        style="flex:1;padding:7px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);font:14px/1 var(--font-sans);background:var(--bg-2);color:var(--fg);outline:none"
+        onkeydown="if(event.key==='Enter')_addrSrchGo()">
+      <button onclick="_addrSrchGo()" class="btn btn-p" style="padding:7px 14px;font-size:13px;white-space:nowrap">Найти</button>
+    </div>
     <div style="position:relative;height:min(60vh,500px)">
       <div id="addr-pick-gl" style="width:100%;height:100%"></div>
       <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5));color:var(--accent)"><svg class="ico" width="32" height="32"><use href="#i-pushpin"/></svg></div>
@@ -1668,13 +1674,24 @@ document.addEventListener('deviceready',function(){
       <button class="modal-x" onclick="closeModal('m-nearby')">✕</button>
     </div>
     <div class="fg" style="margin-bottom:16px">
-      <label>Радиус поиска (метры)</label>
-      <input type="number" id="nearby-meters" value="1000" min="100" max="50000" step="100">
+      <label style="display:block;margin-bottom:12px">Радиус поиска</label>
+      <div style="text-align:center;margin-bottom:12px;min-height:32px">
+        <span id="nearby-val-lbl" onclick="_nearbyLblClick()" title="Нажмите, чтобы ввести вручную"
+          style="cursor:pointer;font-size:24px;font-weight:700;color:var(--accent);user-select:none">1&#x202F;000&#x202F;м</span>
+        <input type="number" id="nearby-val-inp" min="100" max="10000"
+          style="display:none;width:120px;text-align:center;font-size:24px;font-weight:700;border:none;border-bottom:2px solid var(--accent);background:transparent;color:var(--accent);outline:none"
+          onblur="_nearbyInpBlur()" onkeydown="if(event.key==='Enter')this.blur()">
+      </div>
+      <input type="range" id="nearby-slider" min="0" max="13" step="1" value="5"
+        style="width:100%;accent-color:var(--accent)" oninput="_nearbySliderInput()">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--fg-3);margin-top:5px">
+        <span>100&#x202F;м</span><span>10&#x202F;км</span>
+      </div>
     </div>
     <div id="nearby-geo-warn" style="display:none;font-size:13px;color:var(--err);margin-bottom:12px;line-height:1.5"></div>
     <div class="modal-ft">
       <button class="btn" onclick="clearNearbyFilter()">Сбросить</button>
-      <button class="btn btn-p" onclick="applyNearbyFilter(+document.getElementById('nearby-meters').value)">Найти</button>
+      <button class="btn btn-p" onclick="applyNearbyFilter(_nearbySliderVal())">Найти</button>
     </div>
   </div>
 </div>
@@ -1856,7 +1873,7 @@ const S = {
   session: null, profile: null, store: null, storeSubActive: true,
   cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [],
   menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
-  map: null, mapMarkers: [], homeMarker: null, mapFitted: false, allStores: [], mapCat: null,
+  map: null, mapMarkers: [], homeMarker: null, mapFitted: false, allStores: [], mapCat: new Set(),
   mapMode: 'osm',
   nearbyMeters: null, geoLat: null, geoLng: null, deliveryFilter: false,
   navHistory: [], navIdx: -1,
@@ -2094,7 +2111,7 @@ function setDirection(dir) {
   // update tab active state
   document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === dir));
   // rebuild category chips for new direction and reload stores
-  S.mapCat = localStorage.getItem('alliby_cat_' + dir) || null;
+  try { const _mc = localStorage.getItem('alliby_cat_' + dir); const _mp = _mc ? JSON.parse(_mc) : []; S.mapCat = new Set(Array.isArray(_mp) ? _mp : [_mp]); } catch { S.mapCat = new Set(); }
   S.allStores = [];
   S.mapFitted = false;
   if (document.getElementById('screen-map')?.classList.contains('active')) {
@@ -3108,11 +3125,9 @@ function renderMapCategoryChips() {
       catsMap.set(st.store_category_id, st.store_categories);
   });
   if (!catsMap.size) { el.innerHTML = ''; return; }
-  // if cached category no longer exists in current direction — reset
-  if (S.mapCat && !catsMap.has(S.mapCat)) {
-    S.mapCat = null;
-    try { localStorage.removeItem('alliby_cat_' + S.direction); } catch(e) {}
-  }
+  // remove stale ids that no longer exist in this direction
+  for (const id of S.mapCat) if (!catsMap.has(id)) S.mapCat.delete(id);
+  if (!S.mapCat.size) { try { localStorage.removeItem('alliby_cat_' + S.direction); } catch(e) {} }
   const sorted = [...catsMap.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
   el.innerHTML = '';
   const mkChip = (label, active, onClick) => {
@@ -3122,16 +3137,19 @@ function renderMapCategoryChips() {
     btn.addEventListener('click', onClick);
     el.appendChild(btn);
   };
-  mkChip('Все', !S.mapCat, () => {
-    S.mapCat = null;
+  mkChip('Все', S.mapCat.size === 0, () => {
+    S.mapCat.clear();
     try { localStorage.removeItem('alliby_cat_' + S.direction); } catch(e) {}
     renderMapCategoryChips();
     applyMapFilter();
   });
   sorted.forEach(([id, cat]) => {
-    mkChip(svgIco('tag', 11) + ' ' + esc(stripEmoji(cat.name)), S.mapCat === id, () => {
-      S.mapCat = id;
-      try { localStorage.setItem('alliby_cat_' + S.direction, id); } catch(e) {}
+    mkChip(svgIco('tag', 11) + ' ' + esc(stripEmoji(cat.name)), S.mapCat.has(id), () => {
+      if (S.mapCat.has(id)) S.mapCat.delete(id); else S.mapCat.add(id);
+      try {
+        if (S.mapCat.size) localStorage.setItem('alliby_cat_' + S.direction, JSON.stringify([...S.mapCat]));
+        else localStorage.removeItem('alliby_cat_' + S.direction);
+      } catch(e) {}
       renderMapCategoryChips();
       applyMapFilter();
     });
@@ -3143,7 +3161,7 @@ function applyMapFilter(q) {
   const ql = q.toLowerCase();
   const filtered = S.allStores.filter(st => {
     if (st.direction !== S.direction) return false;
-    if (S.mapCat && st.store_category_id !== S.mapCat) return false;
+    if (S.mapCat.size > 0 && !S.mapCat.has(st.store_category_id)) return false;
     if (ql && !st.name.toLowerCase().includes(ql) && !(st.address || '').toLowerCase().includes(ql)) return false;
     if (S.nearbyMeters && S.geoLat != null) {
       const sLat = st.lat ?? st.latitude, sLng = st.lng ?? st.longitude;
@@ -4446,6 +4464,42 @@ function trackEvent(event, storeId, extra) {
   } catch(e) {}
 }
 
+const RADIUS_STEPS = [100,200,300,400,500,1000,1500,2000,3000,4000,5000,7000,9000,10000];
+function _nearbyFmt(m) {
+  return m.toLocaleString('ru-RU') + ' м';
+}
+function _nearbySliderVal() {
+  return RADIUS_STEPS[+document.getElementById('nearby-slider').value] || 1000;
+}
+function _nearbySliderInput() {
+  document.getElementById('nearby-val-lbl').textContent = _nearbyFmt(_nearbySliderVal());
+}
+function _nearbyLblClick() {
+  const lbl = document.getElementById('nearby-val-lbl');
+  const inp = document.getElementById('nearby-val-inp');
+  inp.value = _nearbySliderVal();
+  lbl.style.display = 'none'; inp.style.display = ''; inp.focus(); inp.select();
+}
+function _nearbyInpBlur() {
+  const inp = document.getElementById('nearby-val-inp');
+  const lbl = document.getElementById('nearby-val-lbl');
+  const v = Math.max(100, Math.min(10000, +inp.value || 1000));
+  const idx = RADIUS_STEPS.reduce((b, c, i) => Math.abs(c - v) < Math.abs(RADIUS_STEPS[b] - v) ? i : b, 0);
+  document.getElementById('nearby-slider').value = idx;
+  lbl.textContent = _nearbyFmt(RADIUS_STEPS[idx]);
+  inp.style.display = 'none'; lbl.style.display = '';
+}
+function _syncNearbySlider() {
+  const sl = document.getElementById('nearby-slider');
+  const lbl = document.getElementById('nearby-val-lbl');
+  const inp = document.getElementById('nearby-val-inp');
+  if (!sl || !lbl) return;
+  const m = S.nearbyMeters || 1000;
+  const idx = RADIUS_STEPS.reduce((b, c, i) => Math.abs(c - m) < Math.abs(RADIUS_STEPS[b] - m) ? i : b, 0);
+  sl.value = idx;
+  lbl.textContent = _nearbyFmt(RADIUS_STEPS[idx]);
+  inp.style.display = 'none'; lbl.style.display = '';
+}
 function openNearbyModal() {
   if (S.userAddrLat == null) {
     openAddressPicker(() => openNearbyModal());
@@ -4453,18 +4507,19 @@ function openNearbyModal() {
   }
   const warn = document.getElementById('nearby-geo-warn');
   warn.style.display = 'none';
+  const doOpen = () => { openModal('m-nearby'); _syncNearbySlider(); };
   if (!navigator.geolocation) {
     warn.textContent = 'Геолокация не поддерживается вашим браузером';
     warn.style.display = 'block';
-    openModal('m-nearby'); return;
+    doOpen(); return;
   }
   navigator.permissions?.query({ name: 'geolocation' }).then(r => {
     if (r.state === 'denied') {
       warn.textContent = 'Геолокация отключена. Разрешите доступ в настройках браузера.';
       warn.style.display = 'block';
     }
-    openModal('m-nearby');
-  }).catch(() => openModal('m-nearby'));
+    doOpen();
+  }).catch(doOpen);
 }
 
 function applyNearbyFilter(meters) {
@@ -5589,6 +5644,26 @@ function addrPickGeolocate() {
     () => { if (lbl) lbl.textContent = 'Не удалось определить местоположение'; }
   );
 }
+async function _addrSrchGo() {
+  const q = document.getElementById('addr-srch-inp')?.value?.trim();
+  if (!q || !_addrPickMap) return;
+  const lbl = document.getElementById('addr-pick-lbl');
+  if (lbl) lbl.textContent = 'Поиск…';
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=ru`,
+      { headers: { 'Accept-Language': 'ru' } }
+    );
+    const d = await r.json();
+    if (d?.[0]) {
+      _addrPickMap.flyTo({ center: [+d[0].lon, +d[0].lat], zoom: 15, duration: 800 });
+    } else {
+      if (lbl) lbl.textContent = 'Место не найдено';
+    }
+  } catch {
+    if (lbl) lbl.textContent = 'Ошибка поиска';
+  }
+}
 
 function _addrPickGeocode() {
   clearTimeout(_addrPickTimer);
@@ -5804,7 +5879,7 @@ async function restoreNav() {
     if (ss) S.store = JSON.parse(ss);
   } catch(e) {}
   try {
-    S.mapCat = localStorage.getItem('alliby_cat_' + S.direction) || null;
+    try { const _mc2 = localStorage.getItem('alliby_cat_' + S.direction); const _mp2 = _mc2 ? JSON.parse(_mc2) : []; S.mapCat = new Set(Array.isArray(_mp2) ? _mp2 : [_mp2]); } catch { S.mapCat = new Set(); }
   } catch(e) {}
   try {
     const t = localStorage.getItem('alliby_calenabs_tab');
