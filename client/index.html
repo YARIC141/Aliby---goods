@@ -2800,17 +2800,15 @@ function _renderPromoNotifs() {
 
 async function clearPromoNotifs() {
   const uid = S.session?.user?.id;
+  const clearedAt = new Date().toISOString();
+  // Save cleared timestamp BEFORE any async work — acts as fallback barrier on next sync
+  try { localStorage.setItem('alliby_promo_cleared', clearedAt); } catch(e) {}
   if (uid) {
-    try {
-      const rows = await req(`/rest/v1/promo_notifications?user_id=eq.${uid}&read_at=is.null&select=id&limit=50`);
-      if (rows?.length) {
-        const ids = rows.map(r => `id=eq.${r.id}`).join(',');
-        await req(`/rest/v1/promo_notifications?or=(${ids})`, {
-          method: 'PATCH',
-          body: JSON.stringify({ read_at: new Date().toISOString() }),
-        }).catch(() => {});
-      }
-    } catch(e) {}
+    // One-shot PATCH: mark all unread rows for this user — no GET needed
+    req(`/rest/v1/promo_notifications?user_id=eq.${uid}&read_at=is.null`, {
+      method: 'PATCH',
+      body: JSON.stringify({ read_at: clearedAt }),
+    }).catch(() => {});
   }
   _promoSyncCancelledAt = Date.now();
   try { localStorage.removeItem(_PROMO_KEY); } catch(e) {}
@@ -2842,9 +2840,12 @@ let _promoSyncCancelledAt = 0;
 async function _syncPromoNotifications(uid) {
   const startedAt = Date.now();
   try {
-    const rows = await req(
-      `/rest/v1/promo_notifications?user_id=eq.${uid}&read_at=is.null&select=id,store_id,title,body,sent_at&order=sent_at.asc&limit=50`
-    );
+    // Filter by clearedAt so notifications sent before last clear never re-appear,
+    // even if the DB PATCH failed (e.g. due to RLS or network error).
+    const clearedAt = localStorage.getItem('alliby_promo_cleared');
+    let url = `/rest/v1/promo_notifications?user_id=eq.${uid}&read_at=is.null&select=id,store_id,title,body,sent_at&order=sent_at.asc&limit=50`;
+    if (clearedAt) url += `&sent_at=gt.${clearedAt}`;
+    const rows = await req(url);
     if (!rows?.length) return;
     // Skip if bell was cleared while we were fetching (race condition guard)
     if (_promoSyncCancelledAt > startedAt) return;
