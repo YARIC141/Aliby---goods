@@ -3790,8 +3790,7 @@ async function loadCategories() {
   if (cached && Array.isArray(cached.cats)) {
     S.menuStoreSubs = cached.subs || [];
     try { _renderCatBar(bar, cached.cats); } catch {}
-    if ((Date.now() - (cached.ts || 0)) < _CATS_FRESH) return;
-    // Background refresh only when cache is stale
+    // Always background-refresh: show cache immediately, update in background
     (async () => {
       try {
         const [cats, subs] = await Promise.all([
@@ -3914,7 +3913,6 @@ async function loadMenuItems() {
   }
   if (!_cacheOk) el.innerHTML = SK.itemCards(6);
   if (_cacheOk) {
-    if ((Date.now() - _menuCacheTs(storeId)) < _MENU_FRESH) return;
     if (_menuFetchStoreId === storeId && (Date.now() - _menuFetchTs) < _MENU_THROTTLE) return;
   }
 
