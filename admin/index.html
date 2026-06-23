@@ -4127,7 +4127,7 @@ function _renderMmiOptGroups() {
   el.innerHTML = _editOptGroups.map((g, gi) => `
     <div style="border:1px solid var(--border);border-radius:var(--r-2);padding:10px;margin-bottom:8px">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-        <input type="text" value="${esc(g.name)}" placeholder="Название группы"
+        <input type="text" value="${esc(g.name)}" placeholder="Название группы (пр. Размер)"
           style="flex:1;min-width:120px;padding:6px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:14px"
           oninput="_optGroupField(${gi},'name',this.value)">
         <select style="padding:6px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:14px"
@@ -4139,21 +4139,22 @@ function _renderMmiOptGroups() {
           <input type="checkbox" ${g.required?'checked':''} style="width:auto"
             onchange="_optGroupField(${gi},'required',this.checked)"> Обяз.
         </label>
-        <button class="btn btn-sm btn-d" type="button" onclick="_removeOptGroup(${gi})" style="padding:0 10px">✕</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;padding-left:8px">
         ${g.options.map((o, oi) => `
           <div style="display:flex;gap:4px;align-items:center">
-            <input type="text" value="${esc(o.name)}" placeholder="Название опции"
+            <input type="text" value="${esc(o.name)}" placeholder="Название опции (пр. Маленькая)"
               style="flex:1;padding:5px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:13px"
               oninput="_optField(${gi},${oi},'name',this.value)">
-            <input type="number" step="0.01" min="0" value="${o.price_add}" placeholder="+₽"
-              style="width:70px;padding:5px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:13px"
+            <input type="number" step="0.01" value="${o.price_add}" placeholder="Надбавка ₽"
+              style="width:90px;padding:5px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:13px"
               oninput="_optField(${gi},${oi},'price_add',parseFloat(this.value)||0)">
             <button class="btn btn-sm" type="button" onclick="_removeOpt(${gi},${oi})" style="padding:0 8px;flex-shrink:0">−</button>
           </div>`).join('')}
-        <button class="btn btn-sm" type="button" onclick="_addOpt(${gi})"
-          style="margin-top:4px;align-self:flex-start">+ Опция</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <button class="btn btn-sm" type="button" onclick="_addOpt(${gi})">+ Опция</button>
+          <button class="btn btn-sm btn-d" type="button" onclick="_removeOptGroup(${gi})">✕ Удалить группу</button>
+        </div>
       </div>
     </div>`).join('');
 }

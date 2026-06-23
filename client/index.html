@@ -4062,7 +4062,13 @@ function _updateDetailPrice() {
   let extra = 0;
   optEl.querySelectorAll('input:checked[data-price-add]').forEach(inp => { extra += parseFloat(inp.dataset.priceAdd || 0); });
   const priceEl = document.getElementById('mi-price');
-  if (priceEl) priceEl.innerHTML = `<div class="price-wrap"><span class="price-val">${_detailBasePrice + extra} ₽</span></div>`;
+  if (!priceEl) return;
+  const val = priceEl.querySelector('.price-val');
+  if (val) {
+    val.textContent = `${_detailBasePrice + extra} ₽`;
+  } else {
+    priceEl.innerHTML = `<div class="price-wrap"><span class="price-val">${_detailBasePrice + extra} ₽</span></div>`;
+  }
 }
 
 function _collectDetailOptions() {
