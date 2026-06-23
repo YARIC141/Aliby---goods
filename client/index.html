@@ -4039,44 +4039,60 @@ async function _getOptionGroups(itemId) {
 function _renderItemOptionGroups(groups) {
   return groups.map((g, gi) => {
     const isRadio = g.type === 'radio';
-    const opts = (g.menu_item_options || []).map((o, oi) => `
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 10px;border-radius:var(--r-2);border:1px solid var(--line);margin-bottom:3px">
-        <input type="${isRadio ? 'radio' : 'checkbox'}" name="og_${gi}"
-          data-group-id="${g.id}" data-option-id="${o.id}"
-          data-option-name="${esc(o.name)}" data-price-add="${o.price_add}"
-          ${isRadio && oi === 0 ? 'checked' : ''}
-          onchange="_updateDetailPrice()" style="width:auto;margin:0;flex-shrink:0">
-        <span style="flex:1;font-size:14px">${esc(o.name)}</span>
-        ${o.price_add !== 0 ? `<span style="color:var(--fg-3);font-size:13px;white-space:nowrap">${o.price_add > 0 ? '+' : ''}${o.price_add} ₽</span>` : ''}
-      </label>`).join('');
+    const opts = (g.menu_item_options || []).map((o, oi) => {
+      const sel = isRadio && oi === 0;
+      return `<button type="button" class="opt-btn"
+        data-radio="${isRadio ? 1 : 0}" data-sel="${sel}"
+        data-group-id="${g.id}" data-option-id="${o.id}"
+        data-option-name="${esc(o.name)}" data-price-add="${o.price_add}"
+        onclick="_selectOpt(this)"
+        style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:7px 12px;border-radius:var(--r-2);border:1px solid var(--line);cursor:pointer;font:400 14px/1.4 var(--font-sans);margin-bottom:4px;${sel ? 'background:var(--accent);border-color:var(--accent);color:#fff' : 'background:transparent'}">
+        <span>${esc(o.name)}</span>
+        ${o.price_add !== 0 ? `<span style="font-size:13px;margin-left:8px;flex-shrink:0;opacity:.9">${o.price_add > 0 ? '+' : ''}${o.price_add} ₽</span>` : ''}
+      </button>`;
+    }).join('');
     return `<div style="margin-bottom:10px">
       <div style="font:600 13px/1 var(--font-sans);margin-bottom:5px;color:var(--fg-2)">${esc(g.name)}${g.required ? '<span style="color:var(--err)"> *</span>' : ''}</div>
-      ${opts}
+      <div>${opts}</div>
     </div>`;
   }).join('');
+}
+
+function _setBtnSel(btn, sel) {
+  btn.dataset.sel = sel;
+  btn.style.background = sel ? 'var(--accent)' : 'transparent';
+  btn.style.borderColor = sel ? 'var(--accent)' : '';
+  btn.style.color = sel ? '#fff' : '';
+}
+
+function _selectOpt(btn) {
+  if (btn.dataset.radio === '1') {
+    btn.parentElement.querySelectorAll('.opt-btn').forEach(b => _setBtnSel(b, false));
+    _setBtnSel(btn, true);
+  } else {
+    _setBtnSel(btn, btn.dataset.sel !== 'true');
+  }
+  _updateDetailPrice();
 }
 
 function _updateDetailPrice() {
   const optEl = document.getElementById('mi-options');
   if (!optEl) return;
   let extra = 0;
-  optEl.querySelectorAll('input:checked[data-price-add]').forEach(inp => { extra += parseFloat(inp.dataset.priceAdd || 0); });
+  optEl.querySelectorAll('.opt-btn[data-sel="true"]').forEach(btn => { extra += parseFloat(btn.dataset.priceAdd || 0); });
   const priceEl = document.getElementById('mi-price');
   if (!priceEl) return;
   const val = priceEl.querySelector('.price-val');
-  if (val) {
-    val.textContent = `${_detailBasePrice + extra} ₽`;
-  } else {
-    priceEl.innerHTML = `<div class="price-wrap"><span class="price-val">${_detailBasePrice + extra} ₽</span></div>`;
-  }
+  if (val) val.textContent = `${_detailBasePrice + extra} ₽`;
+  else priceEl.innerHTML = `<div class="price-wrap"><span class="price-val">${_detailBasePrice + extra} ₽</span></div>`;
 }
 
 function _collectDetailOptions() {
   const optEl = document.getElementById('mi-options');
   if (!optEl) return [];
   const res = [];
-  optEl.querySelectorAll('input:checked[data-option-id]').forEach(inp => {
-    res.push({ group_id: inp.dataset.groupId, option_id: inp.dataset.optionId, name: inp.dataset.optionName, price_add: parseFloat(inp.dataset.priceAdd || 0) });
+  optEl.querySelectorAll('.opt-btn[data-sel="true"][data-option-id]').forEach(btn => {
+    res.push({ group_id: btn.dataset.groupId, option_id: btn.dataset.optionId, name: btn.dataset.optionName, price_add: parseFloat(btn.dataset.priceAdd || 0) });
   });
   return res;
 }
