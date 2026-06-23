@@ -3354,7 +3354,9 @@ function _renderStoresList(stores) {
             ${s.working_hours ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px;display:flex;align-items:center;gap:3px">${svgIco('clock',11)}${esc(s.working_hours)}</div>` : ''}
             ${s.phone ? `<div class="txt-muted" style="font-size:12px;display:flex;align-items:center;gap:3px">${svgIco('phone',11)}${esc(s.phone)}</div>` : ''}
           </div>
-          ${arc ? '' : `<div style="display:flex;gap:4px;flex-shrink:0;align-items:stretch">
+          ${arc
+            ? `<button class="btn btn-sm" style="font-size:12px;padding:4px 10px;align-self:center;white-space:nowrap" onclick="event.stopPropagation();restoreStore('${s.id}')">Восстановить</button>`
+            : `<div style="display:flex;gap:4px;flex-shrink:0;align-items:stretch">
             <button class="btn btn-sm" style="display:flex;align-items:center;justify-content:center;padding:0 10px;height:auto" onclick="event.stopPropagation();showStoreQRDirect(${sd})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg></button>
             <div style="display:flex;flex-direction:column;gap:4px">
               <button class="btn btn-sm" title="Редактировать" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();openStoreModal(${sd})">${svgIco('edit',14)}</button>
@@ -5588,6 +5590,17 @@ async function confirmAction() {
     const reloaders = { store: loadStores, cat: loadCategories, mi: loadMenuItems, sub: loadSubscriptions };
     reloaders[type]?.();
   } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
+}
+
+async function restoreStore(id) {
+  try {
+    await req(`/rest/v1/stores?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ archived_at: null }),
+    });
+    loadStores();
+    showAdminToast('Заведение восстановлено из архива');
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
 }
 
 // ─── SPLASH ───
