@@ -529,7 +529,7 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
   <div class="pb">
     <div class="toolbar">
-      <input type="search" placeholder="Поиск по названию…" oninput="filterTable('stores-table', this.value)">
+      <input type="search" placeholder="Поиск по названию…" oninput="filterStoreCards(this.value)">
     </div>
     <div id="stores-list"><div class="loading">Загрузка…</div></div>
   </div>
@@ -2037,6 +2037,12 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 function filterTable(tableId, q) {
   document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
     tr.style.display = tr.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+function filterStoreCards(q) {
+  const ql = q.toLowerCase();
+  document.querySelectorAll('#stores-list .card').forEach(c => {
+    c.style.display = c.textContent.toLowerCase().includes(ql) ? '' : 'none';
   });
 }
 
