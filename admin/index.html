@@ -1686,6 +1686,15 @@ tr.row-click:hover td{background:var(--bg-2)}
       <input type="hidden" id="mmi-image-url">
     </div>
 
+    <!-- Option groups -->
+    <div class="fg" style="margin-top:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label>Группы опций <span class="hint" data-tip="Радио — взаимоисключающий выбор (напр. размер). Чекбокс — множественный выбор (напр. добавки)">?</span></label>
+        <button class="btn btn-sm" type="button" onclick="addOptionGroup()">+ Группа</button>
+      </div>
+      <div id="mmi-option-groups"></div>
+    </div>
+
     <div class="modal-ft">
       <button class="btn btn-d btn-sm" id="mmi-delete-photo-btn" style="display:none" onclick="deletePhoto()">Удалить фото</button>
       <button class="btn" onclick="closeModal('m-mi')">Отмена</button>
@@ -4099,7 +4108,95 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-photo').value = '';
   updatePrepTimeLabel();
   hideNewCatRow();
+  _editOptGroups = [];
+  _renderMmiOptGroups();
   openModal('m-mi');
+  if (item?.id) _loadOptGroupsForItem(item.id);
+}
+
+// ─── MENU ITEM OPTION GROUPS ───
+let _editOptGroups = [];
+
+function _renderMmiOptGroups() {
+  const el = document.getElementById('mmi-option-groups');
+  if (!el) return;
+  if (!_editOptGroups.length) {
+    el.innerHTML = '<div class="txt-muted" style="font-size:13px;padding:4px 0">Нет групп опций</div>';
+    return;
+  }
+  el.innerHTML = _editOptGroups.map((g, gi) => `
+    <div style="border:1px solid var(--border);border-radius:var(--r-2);padding:10px;margin-bottom:8px">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+        <input type="text" value="${esc(g.name)}" placeholder="Название группы"
+          style="flex:1;min-width:120px;padding:6px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:14px"
+          oninput="_optGroupField(${gi},'name',this.value)">
+        <select style="padding:6px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:14px"
+          onchange="_optGroupField(${gi},'type',this.value)">
+          <option value="radio" ${g.type==='radio'?'selected':''}>Радио</option>
+          <option value="checkbox" ${g.type==='checkbox'?'selected':''}>Чекбокс</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap;cursor:pointer">
+          <input type="checkbox" ${g.required?'checked':''} style="width:auto"
+            onchange="_optGroupField(${gi},'required',this.checked)"> Обяз.
+        </label>
+        <button class="btn btn-sm btn-d" type="button" onclick="_removeOptGroup(${gi})" style="padding:0 10px">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;padding-left:8px">
+        ${g.options.map((o, oi) => `
+          <div style="display:flex;gap:4px;align-items:center">
+            <input type="text" value="${esc(o.name)}" placeholder="Название опции"
+              style="flex:1;padding:5px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:13px"
+              oninput="_optField(${gi},${oi},'name',this.value)">
+            <input type="number" step="0.01" min="0" value="${o.price_add}" placeholder="+₽"
+              style="width:70px;padding:5px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:13px"
+              oninput="_optField(${gi},${oi},'price_add',parseFloat(this.value)||0)">
+            <button class="btn btn-sm" type="button" onclick="_removeOpt(${gi},${oi})" style="padding:0 8px;flex-shrink:0">−</button>
+          </div>`).join('')}
+        <button class="btn btn-sm" type="button" onclick="_addOpt(${gi})"
+          style="margin-top:4px;align-self:flex-start">+ Опция</button>
+      </div>
+    </div>`).join('');
+}
+
+function _optGroupField(gi, f, v) { if (_editOptGroups[gi]) _editOptGroups[gi][f] = v; }
+function _optField(gi, oi, f, v) { if (_editOptGroups[gi]?.options[oi]) _editOptGroups[gi].options[oi][f] = v; }
+function addOptionGroup() { _editOptGroups.push({ name:'', type:'radio', required:false, options:[] }); _renderMmiOptGroups(); }
+function _removeOptGroup(gi) { _editOptGroups.splice(gi, 1); _renderMmiOptGroups(); }
+function _addOpt(gi) { if (_editOptGroups[gi]) { _editOptGroups[gi].options.push({ name:'', price_add:0 }); _renderMmiOptGroups(); } }
+function _removeOpt(gi, oi) { _editOptGroups[gi]?.options.splice(oi, 1); _renderMmiOptGroups(); }
+
+async function _loadOptGroupsForItem(itemId) {
+  try {
+    const groups = await req(`/rest/v1/menu_item_option_groups?menu_item_id=eq.${itemId}&order=sort_order.asc&select=*,menu_item_options(*)`);
+    _editOptGroups = (groups || []).map(g => ({
+      name: g.name, type: g.type, required: g.required,
+      options: (g.menu_item_options || [])
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map(o => ({ name: o.name, price_add: Number(o.price_add) || 0 })),
+    }));
+  } catch(e) { _editOptGroups = []; }
+  _renderMmiOptGroups();
+}
+
+async function _saveOptGroupsForItem(itemId) {
+  await req(`/rest/v1/menu_item_option_groups?menu_item_id=eq.${itemId}`, { method: 'DELETE' });
+  for (let si = 0; si < _editOptGroups.length; si++) {
+    const g = _editOptGroups[si];
+    if (!g.name.trim() || !g.options.length) continue;
+    const created = await req('/rest/v1/menu_item_option_groups', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ menu_item_id: itemId, name: g.name.trim(), type: g.type, required: g.required, sort_order: si }),
+    });
+    const groupId = (Array.isArray(created) ? created[0] : created)?.id;
+    if (!groupId) continue;
+    const validOpts = g.options.filter(o => o.name.trim()).map((o, oi) => ({
+      group_id: groupId, name: o.name.trim(), price_add: o.price_add || 0, sort_order: oi,
+    }));
+    if (validOpts.length) {
+      await req('/rest/v1/menu_item_options', { method: 'POST', body: JSON.stringify(validOpts) });
+    }
+  }
 }
 
 async function uploadMenuPhoto(input) {
@@ -4326,13 +4423,19 @@ async function saveMenuItem() {
   const ctrl = new AbortController();
   const timer = setTimeout(() => { ctrl.abort(); restore(); showAdminToast('Нет ответа от сервера, попробуйте ещё раз'); }, 20000);
   try {
+    let savedId = id;
     if (id) {
       // PATCH /rest/v1/menu_items?id=eq.{id}
       await req(`/rest/v1/menu_items?id=eq.${id}`, { method:'PATCH', body: JSON.stringify(body), signal: ctrl.signal });
     } else {
       // POST /rest/v1/menu_items
-      await req('/rest/v1/menu_items', { method:'POST', body: JSON.stringify(body), signal: ctrl.signal });
+      const created = await req('/rest/v1/menu_items', {
+        method: 'POST', body: JSON.stringify(body), signal: ctrl.signal,
+        headers: { Prefer: 'return=representation' },
+      });
+      savedId = Array.isArray(created) ? created[0]?.id : created?.id;
     }
+    if (savedId) await _saveOptGroupsForItem(savedId);
     clearTimeout(timer);
     closeModal('m-mi'); restore(); loadMenuItems();
   } catch(e) { clearTimeout(timer); restore(); if (e.name !== 'AbortError') alert('Ошибка: ' + (e.message || JSON.stringify(e))); }

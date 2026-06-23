@@ -1479,6 +1479,7 @@ document.addEventListener('deviceready',function(){
     <div id="mi-allergens" style="display:none;margin-bottom:8px;padding:6px 10px;border-radius:var(--r-2);background:color-mix(in oklch,var(--warn) 12%,var(--bg));font:400 12px/1.4 var(--font-sans);color:var(--fg-3)"></div>
     <div id="mi-price" class="item-price" style="margin-bottom:10px"></div>
     <div id="mi-subs"></div>
+    <div id="mi-options" style="margin-top:10px"></div>
     <div class="modal-ft" style="margin-top:14px">
       <button id="mi-cart-btn" class="btn btn-p btn-full" onclick="addToCartFromDetail()">В корзину</button>
     </div>
@@ -3545,7 +3546,7 @@ async function loadStore() {
   const legalSec = document.getElementById('store-legal-sec');
   const legalBody = document.getElementById('store-legal-body');
   if (legalSec) legalSec.style.display = 'none';
-  if (st.owner_user_id && legalSec && legalBody) {
+  if (st.owner_user_id && legalSec && legalBody && st.owner_user_id !== 'aea8c549-2d24-4532-84ae-a184d4413538') {
     req('/rest/v1/rpc/get_store_legal_info', {
       method: 'POST', body: JSON.stringify({ p_store_id: st.id }),
     }).then(rows => {
@@ -3743,6 +3744,12 @@ function _writeCatsCache(id, d) { try { localStorage.setItem(_catsCacheKey(id), 
 
 function _renderCatBar(bar, cats) {
   bar.innerHTML = '';
+  const all = document.createElement('button');
+  all.className = 'chip' + (!S.menuCatId ? ' active' : '');
+  all.dataset.cid = '';
+  all.textContent = 'Все';
+  all.addEventListener('click', () => { S.menuCatId = ''; updateCatActive(); loadMenuItems(); });
+  bar.appendChild(all);
   cats.forEach(c => {
     const b = document.createElement('button');
     b.className = 'chip' + (S.menuCatId === c.id ? ' active' : '');
@@ -4015,12 +4022,66 @@ function renderItemCard(item) {
   </div>`;
 }
 
+// ─── PRODUCT OPTIONS ───
+const _optGroupsCache = new Map();
+let _detailBasePrice = 0;
+
+async function _getOptionGroups(itemId) {
+  if (_optGroupsCache.has(itemId)) return _optGroupsCache.get(itemId);
+  try {
+    const groups = await req(`/rest/v1/menu_item_option_groups?menu_item_id=eq.${itemId}&order=sort_order.asc&select=*,menu_item_options(*)`);
+    groups.forEach(g => { g.menu_item_options = (g.menu_item_options || []).sort((a, b) => a.sort_order - b.sort_order); });
+    _optGroupsCache.set(itemId, groups);
+    return groups;
+  } catch(e) { _optGroupsCache.set(itemId, []); return []; }
+}
+
+function _renderItemOptionGroups(groups) {
+  return groups.map((g, gi) => {
+    const isRadio = g.type === 'radio';
+    const opts = (g.menu_item_options || []).map((o, oi) => `
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 10px;border-radius:var(--r-2);border:1px solid var(--line);margin-bottom:3px">
+        <input type="${isRadio ? 'radio' : 'checkbox'}" name="og_${gi}"
+          data-group-id="${g.id}" data-option-id="${o.id}"
+          data-option-name="${esc(o.name)}" data-price-add="${o.price_add}"
+          ${isRadio && oi === 0 ? 'checked' : ''}
+          onchange="_updateDetailPrice()" style="width:auto;margin:0;flex-shrink:0">
+        <span style="flex:1;font-size:14px">${esc(o.name)}</span>
+        ${o.price_add > 0 ? `<span style="color:var(--fg-3);font-size:13px;white-space:nowrap">+${o.price_add} ₽</span>` : ''}
+      </label>`).join('');
+    return `<div style="margin-bottom:10px">
+      <div style="font:600 13px/1 var(--font-sans);margin-bottom:5px;color:var(--fg-2)">${esc(g.name)}${g.required ? '<span style="color:var(--err)"> *</span>' : ''}</div>
+      ${opts}
+    </div>`;
+  }).join('');
+}
+
+function _updateDetailPrice() {
+  const optEl = document.getElementById('mi-options');
+  if (!optEl) return;
+  let extra = 0;
+  optEl.querySelectorAll('input:checked[data-price-add]').forEach(inp => { extra += parseFloat(inp.dataset.priceAdd || 0); });
+  const priceEl = document.getElementById('mi-price');
+  if (priceEl) priceEl.innerHTML = `<div class="price-wrap"><span class="price-val">${_detailBasePrice + extra} ₽</span></div>`;
+}
+
+function _collectDetailOptions() {
+  const optEl = document.getElementById('mi-options');
+  if (!optEl) return [];
+  const res = [];
+  optEl.querySelectorAll('input:checked[data-option-id]').forEach(inp => {
+    res.push({ group_id: inp.dataset.groupId, option_id: inp.dataset.optionId, name: inp.dataset.optionName, price_add: parseFloat(inp.dataset.priceAdd || 0) });
+  });
+  return res;
+}
+
 let _detailItem = null;
 
 function openItemDetail(id) {
   const item = itemCache.get(id);
   if (!item) return;
   _detailItem = item;
+  _detailBasePrice = item.price;
   trackEvent('item_click', S.store?.id, { item_id: item.id, item_name: item.name });
   document.getElementById('mi-name').textContent = item.name;
   document.getElementById('mi-img').innerHTML = itemFallbackImg(item);
@@ -4078,7 +4139,17 @@ function openItemDetail(id) {
       btn.onclick = addToCartFromDetail;
     }
   }
+  const _optEl = document.getElementById('mi-options');
+  if (_optEl) _optEl.innerHTML = '';
   openModal('m-item');
+  const _oid = item.id;
+  _getOptionGroups(_oid).then(groups => {
+    if (_detailItem?.id !== _oid) return;
+    const el = document.getElementById('mi-options');
+    if (!el || !groups.length) return;
+    el.innerHTML = _renderItemOptionGroups(groups);
+    _updateDetailPrice();
+  }).catch(() => {});
 }
 
 function goToSubCard(userSubId) {
@@ -4090,14 +4161,16 @@ function goToSubCard(userSubId) {
 
 function addToCartFromDetail() {
   if (!_detailItem) return;
+  const options = _collectDetailOptions();
   closeModal('m-item');
-  addToCartById(_detailItem.id);
+  addToCartById(_detailItem.id, options);
 }
 
 // Store items by id for add to cart without JSON injection
 const itemCache = new Map();
 function cacheItem(item) { itemCache.set(item.id, item); return item; }
-async function addToCartById(id) {
+async function addToCartById(id, options) {
+  // options: undefined = from card (auto-detect); array = from detail modal
   let item = itemCache.get(id);
   if (!item) {
     try {
@@ -4106,6 +4179,15 @@ async function addToCartById(id) {
     } catch(e) { return; }
   }
   if (!item) return;
+  // From card: if item has option groups and not yet in cart, open detail modal instead
+  if (options === undefined) {
+    const alreadyInCart = S.cart.some(c => c.item.id === id);
+    if (!alreadyInCart) {
+      const groups = await _getOptionGroups(id);
+      if (groups.length > 0) { openItemDetail(id); return; }
+    }
+    options = [];
+  }
   if (S.cartStoreId && S.cartStoreId !== S.store?.id) {
     if (!confirm('В корзине товары из другого заведения. Очистить?')) return;
     S.cart = []; S.appliedSub = null; S.cartStoreId = null;
@@ -4113,7 +4195,12 @@ async function addToCartById(id) {
   }
   S.cartStoreId = S.store?.id;
   const ex = S.cart.find(c => c.item.id === item.id);
-  if (ex) ex.qty++; else S.cart.push({ item, qty: 1 });
+  if (ex) {
+    ex.qty++;
+    if (options.length) ex.options = options;
+  } else {
+    S.cart.push({ item, qty: 1, options });
+  }
   saveCart(); updateCartCount(); updateItemCardInPlace(id);
   window.AllibyBridge?.haptic('light');
 }
@@ -4955,7 +5042,10 @@ function renderDeliveryToggle() {
 
 // ─── CART ───
 function updateCartTotals() {
-  const full = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
+  const full = S.cart.reduce((s, c) => {
+    const optExtra = (c.options || []).reduce((os, o) => os + (o.price_add || 0), 0);
+    return s + (c.item.price + optExtra) * c.qty;
+  }, 0);
   const alloc = getCartSubAllocation();
   let discounted = full;
   if (alloc) {
@@ -5001,30 +5091,36 @@ async function renderCart() {
   const alloc = getCartSubAllocation();
   const cartStoreName = getCartStore()?.name || '';
   const cartStoreHdr = cartStoreName ? `<div style="padding:6px 16px 4px;font-size:12px;color:var(--accent);font-weight:500">${esc(cartStoreName)}</div>` : '';
-  body.innerHTML = cartStoreHdr + S.cart.map(({ item, qty }) => {
-    const fullSum = item.price * qty;
+  body.innerHTML = cartStoreHdr + S.cart.map(({ item, qty, options = [] }) => {
+    const optExtra = options.reduce((s, o) => s + (o.price_add || 0), 0);
+    const unitPrice = item.price + optExtra;
+    const fullSum = unitPrice * qty;
     const info = alloc?.perItem.get(item.id);
     const { covered = 0, uncovered = qty, disc = 0 } = info || {};
     let priceHtml, subNoteHtml = '';
     if (covered > 0) {
-      const subUnitPrice = item.price - disc;
-      const discSum = subUnitPrice * covered + item.price * uncovered;
-      priceHtml = `<div class="ci-price"><span class="ci-price-strike">${item.price} ₽ × ${qty} = ${fullSum} ₽</span></div>
+      const subUnitPrice = unitPrice - disc;
+      const discSum = subUnitPrice * covered + unitPrice * uncovered;
+      priceHtml = `<div class="ci-price"><span class="ci-price-strike">${unitPrice} ₽ × ${qty} = ${fullSum} ₽</span></div>
         <div class="ci-sub-price">${covered < qty
-          ? `${subUnitPrice} ₽ × ${covered} + ${item.price} ₽ × ${uncovered} = ${discSum} ₽`
+          ? `${subUnitPrice} ₽ × ${covered} + ${unitPrice} ₽ × ${uncovered} = ${discSum} ₽`
           : `${subUnitPrice} ₽ × ${qty} = ${discSum} ₽`
         }</div>`;
       subNoteHtml = `<div class="ci-sub-note">По абонементу «${esc(alloc.sub.name)}»${covered < qty ? ` (${covered} из ${qty})` : ''}</div>`;
     } else {
-      priceHtml = `<div class="ci-price">${item.price} ₽ × ${qty} = ${fullSum} ₽</div>`;
+      priceHtml = `<div class="ci-price">${unitPrice} ₽ × ${qty} = ${fullSum} ₽</div>`;
       const hint = getBestUnownedDiscForItem(item);
       if (hint) {
-        subNoteHtml = `<div class="ci-sub-hint">По абонементу «${esc(hint.sub.name)}» — ${hint.price} ₽</div>`;
+        subNoteHtml = `<div class="ci-sub-hint">По абонементу «${esc(hint.sub.name)}» — ${hint.price + optExtra} ₽</div>`;
       }
     }
+    const optionsHtml = options.length
+      ? `<div style="font-size:12px;color:var(--fg-4);margin-top:2px">${options.map(o => esc(o.name)).join(', ')}</div>`
+      : '';
     return `<div class="cart-item">
       <div class="ci-info">
         <div class="ci-name">${esc(item.name)}${item.is_passport_required ? ' <span style="display:inline-block;background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);vertical-align:middle;letter-spacing:.03em">18+</span>' : ''}</div>
+        ${optionsHtml}
         ${priceHtml}
       </div>
       <div class="qty-ctrl" style="flex-shrink:0"><button class="qty-btn" onclick="cartQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button></div>
@@ -6653,12 +6749,14 @@ async function doCheckout(useSubscription = false) {
   const storeId = S.cartStoreId || S.store?.id;
   if (!storeId) { showGeoToast('Не удалось определить заведение'); return; }
 
-  const fullAmount = S.cart.reduce((s, c) => s + c.item.price * c.qty, 0);
-  const items = S.cart.map(({ item, qty }) => ({
-    menu_item_id: item.id,
-    quantity: qty,
-    price_at_time: item.price,
-  }));
+  const fullAmount = S.cart.reduce((s, c) => {
+    const optExtra = (c.options || []).reduce((os, o) => os + (o.price_add || 0), 0);
+    return s + (c.item.price + optExtra) * c.qty;
+  }, 0);
+  const items = S.cart.map(({ item, qty, options = [] }) => {
+    const optExtra = options.reduce((s, o) => s + (o.price_add || 0), 0);
+    return { menu_item_id: item.id, quantity: qty, price_at_time: item.price + optExtra };
+  });
 
   let subDiscount = 0;
   let appliedUsSubId = null;
