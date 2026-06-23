@@ -4069,7 +4069,7 @@ function _renderItemOptionGroups(groups) {
         data-group-id="${g.id}" data-option-id="${o.id}"
         data-option-name="${esc(o.name)}" data-price-add="${o.price_add}"
         onclick="_selectOpt(this)"
-        style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:7px 12px;border-radius:var(--r-2);border:1px solid var(--line);cursor:pointer;font:400 14px/1.4 var(--font-sans);margin-bottom:4px;${sel ? 'background:var(--accent);border-color:var(--accent);color:#fff' : 'background:transparent'}">
+        style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:7px 12px;border-radius:var(--r-2);border:1px solid var(--line);cursor:pointer;font:400 14px/1.4 var(--font-sans);margin-bottom:4px;${sel ? 'background:var(--accent);border-color:var(--accent);color:#fff' : 'background:transparent;color:var(--fg);border-color:var(--line)'}">
         <span>${esc(o.name)}</span>
         ${o.price_add !== 0 ? `<span style="font-size:13px;margin-left:8px;flex-shrink:0;opacity:.9">${o.price_add > 0 ? '+' : ''}${o.price_add} ₽</span>` : ''}
       </button>`;
