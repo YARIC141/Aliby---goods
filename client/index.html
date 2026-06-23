@@ -3225,6 +3225,7 @@ function applyMapFilter(q) {
   renderStoreList(filtered);
   document.getElementById('map-no-cat')?.classList.add('hidden');
   if (S.map) { renderMapMarkers(filtered); _renderHomeMarker(); }
+  _syncSlFilterBtn();
 }
 
 function _renderHomeMarker() {
@@ -3396,11 +3397,33 @@ function toggleMapLegend() {
   arrow.textContent = open ? '▴' : '▾';
 }
 
+function _slFilterActive() {
+  const q = document.querySelector('#screen-map .sl-search input')?.value || '';
+  return !!(q || S.mapCat.size > 0 || (S.nearbyMeters && S.geoLat != null) || S.deliveryFilter);
+}
+
+function _syncSlFilterBtn() {
+  const active = _slFilterActive();
+  const panel = document.getElementById('sl-filters');
+  const btn   = document.getElementById('sl-filter-btn');
+  if (active && panel && !panel.classList.contains('open')) panel.classList.add('open');
+  if (btn) {
+    const highlight = active || panel?.classList.contains('open');
+    btn.style.borderColor = highlight ? 'var(--accent)' : '';
+    btn.style.color       = highlight ? 'var(--accent)' : '';
+  }
+}
+
 function toggleSlFilter() {
-  const open = document.getElementById('sl-filters').classList.toggle('open');
-  const btn = document.getElementById('sl-filter-btn');
-  btn.style.borderColor = open ? 'var(--accent)' : '';
-  btn.style.color = open ? 'var(--accent)' : '';
+  const panel = document.getElementById('sl-filters');
+  // If any filter is active keep the panel open — only allow toggling when clean
+  if (_slFilterActive()) {
+    if (!panel.classList.contains('open')) panel.classList.add('open');
+    _syncSlFilterBtn();
+    return;
+  }
+  panel.classList.toggle('open');
+  _syncSlFilterBtn();
 }
 
 let _mapDzZoneToggle = false;
@@ -4061,8 +4084,8 @@ function _renderItemOptionGroups(groups) {
 function _setBtnSel(btn, sel) {
   btn.dataset.sel = sel;
   btn.style.background = sel ? 'var(--accent)' : 'transparent';
-  btn.style.borderColor = sel ? 'var(--accent)' : '';
-  btn.style.color = sel ? '#fff' : '';
+  btn.style.borderColor = sel ? 'var(--accent)' : 'var(--line)';
+  btn.style.color = sel ? '#fff' : 'var(--fg)';
 }
 
 function _selectOpt(btn) {
