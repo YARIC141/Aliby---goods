@@ -4047,7 +4047,7 @@ function _renderItemOptionGroups(groups) {
           ${isRadio && oi === 0 ? 'checked' : ''}
           onchange="_updateDetailPrice()" style="width:auto;margin:0;flex-shrink:0">
         <span style="flex:1;font-size:14px">${esc(o.name)}</span>
-        ${o.price_add > 0 ? `<span style="color:var(--fg-3);font-size:13px;white-space:nowrap">+${o.price_add} ₽</span>` : ''}
+        ${o.price_add !== 0 ? `<span style="color:var(--fg-3);font-size:13px;white-space:nowrap">${o.price_add > 0 ? '+' : ''}${o.price_add} ₽</span>` : ''}
       </label>`).join('');
     return `<div style="margin-bottom:10px">
       <div style="font:600 13px/1 var(--font-sans);margin-bottom:5px;color:var(--fg-2)">${esc(g.name)}${g.required ? '<span style="color:var(--err)"> *</span>' : ''}</div>
