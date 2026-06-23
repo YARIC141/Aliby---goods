@@ -3327,17 +3327,26 @@ function _renderStoresList(stores) {
   const el = document.getElementById('stores-list');
   if (!el) return;
   if (!stores.length) { el.innerHTML = '<div class="empty">Нет заведений</div>'; return; }
-  el.innerHTML = stores.map(s => {
+  const sorted = [...stores].sort((a, b) => (!!a.archived_at - !!b.archived_at) || (a.name > b.name ? 1 : -1));
+  const parts = [];
+  let arcHeaderAdded = false;
+  for (const s of sorted) {
+    const arc = !!s.archived_at;
+    if (arc && !arcHeaderAdded) {
+      parts.push(`<div style="display:flex;align-items:center;gap:8px;margin:12px 0 6px"><div style="flex:1;height:1px;background:var(--line)"></div><span style="font-size:11px;color:var(--fg-3);white-space:nowrap">В архиве</span><div style="flex:1;height:1px;background:var(--line)"></div></div>`);
+      arcHeaderAdded = true;
+    }
     const color = esc(s._loc?.marker_color || '#e8430a');
     const cat = s.store_categories ? esc(s.store_categories.icon + ' ' + s.store_categories.name) : '';
     const dirLabel = _DIR_LABELS[s.direction] || '';
     const sd = JSON.stringify(s).replace(/"/g, '&quot;');
-    return `<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:pointer" onclick="openStoreModal(${sd})">
+    parts.push(`<div class="card" style="margin-bottom:8px;padding:10px 12px;cursor:${arc ? 'default' : 'pointer'};${arc ? 'opacity:0.45;filter:grayscale(0.5)' : ''}" ${arc ? '' : `onclick="openStoreModal(${sd})"`}>
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
               <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></span>
               <strong style="font:600 14px/1.2 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</strong>
+              ${arc ? `<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:#fee2e2;color:#b91c1c;white-space:nowrap">удалить нельзя</span>` : ''}
               ${dirLabel ? `<span style="font-size:11px;padding:1px 6px;border-radius:4px;background:var(--bg-2);color:var(--fg-3)">${dirLabel}</span>` : ''}
               ${cat ? `<span class="txt-muted" style="font-size:12px;white-space:nowrap">${cat}</span>` : ''}
             </div>
@@ -3345,17 +3354,18 @@ function _renderStoresList(stores) {
             ${s.working_hours ? `<div class="txt-muted" style="font-size:12px;margin-bottom:1px;display:flex;align-items:center;gap:3px">${svgIco('clock',11)}${esc(s.working_hours)}</div>` : ''}
             ${s.phone ? `<div class="txt-muted" style="font-size:12px;display:flex;align-items:center;gap:3px">${svgIco('phone',11)}${esc(s.phone)}</div>` : ''}
           </div>
-          <div style="display:flex;gap:4px;flex-shrink:0;align-items:stretch">
+          ${arc ? '' : `<div style="display:flex;gap:4px;flex-shrink:0;align-items:stretch">
             <button class="btn btn-sm" style="display:flex;align-items:center;justify-content:center;padding:0 10px;height:auto" onclick="event.stopPropagation();showStoreQRDirect(${sd})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zm3 0h4m-4 3v4M17 17h4m-4 4h4"/></svg></button>
             <div style="display:flex;flex-direction:column;gap:4px">
               <button class="btn btn-sm" title="Редактировать" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();openStoreModal(${sd})">${svgIco('edit',14)}</button>
               <button class="btn btn-sm" title="Расписание" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();openSchedule(${sd})">${svgIco('calendar',14)}</button>
               <button class="btn btn-sm btn-d" title="Удалить" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">${svgIco('trash',14)}</button>
             </div>
-          </div>
+          </div>`}
         </div>
-      </div>`;
-  }).join('');
+      </div>`);
+  }
+  el.innerHTML = parts.join('');
 }
 
 async function loadStores() {
@@ -3386,7 +3396,7 @@ async function loadStores() {
 }
 
 function fillStoreSelects() {
-  const opts = S.stores.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  const opts = S.stores.filter(s => !s.archived_at).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
   ['cat-store-filter','mi-store-filter','ord-store-filter','bk-store-filter','sub-store-filter','mc-store','mmi-store','msub-store','an-store-filter'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -5544,6 +5554,30 @@ async function confirmAction() {
           S.pendingConfirm = null;
           loadMenuItems();
           showAdminToast('Позиция скрыта от клиентов (удалить нельзя — есть в истории заказов)');
+          return;
+        }
+        if (type === 'store' && (e.code === '23503' || (e.message || '').includes('_fkey'))) {
+          await req(`/rest/v1/stores?id=eq.${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ archived_at: new Date().toISOString(), is_visible: false }),
+          });
+          const items = await req(`/rest/v1/menu_items?store_id=eq.${id}&image_url=not.is.null&select=id,image_url`);
+          const prefixes = items.filter(i => i.image_url?.includes('/menu-photos/')).map(i => i.image_url.split('/menu-photos/').pop());
+          if (prefixes.length) {
+            await fetch(`${SB_URL}/storage/v1/object/menu-photos`, {
+              method: 'DELETE',
+              headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prefixes }),
+            });
+            await req(`/rest/v1/menu_items?store_id=eq.${id}`, {
+              method: 'PATCH',
+              body: JSON.stringify({ image_url: null }),
+            });
+          }
+          closeModal('m-confirm');
+          S.pendingConfirm = null;
+          loadStores();
+          showAdminToast(`Нельзя удалить — есть заказы. Заведение перемещено в архив${prefixes.length ? `, фото удалены (${prefixes.length} шт.)` : ''}`);
           return;
         }
         throw e;
