@@ -3081,9 +3081,7 @@ async function loadMapStores() {
     el.innerHTML = SK.storeList();
   }
 
-  // Skip network fetch if cache is fresh (not first install, no geo detection needed)
-  if (!_isFirst && !_needGeo && cacheResult?.fresh) return;
-
+  // Always background-refresh stores (show cache immediately, fetch fresh in background)
   // On first launch load all directions at once — pre-populates caches for direction switches
   const storeQuery = _isFirst
     ? `/rest/v1/stores?city=eq.${encodeURIComponent(_city)}&is_visible=eq.true&order=name.asc&select=*,store_categories(name,icon)`
