@@ -3596,6 +3596,8 @@ async function loadStore() {
   if (schedBtn) { schedBtn.style.display = ''; schedBtn.innerHTML = st.direction === 'services' ? `${svgIco('calendar',13)} Календарь записей` : `${svgIco('clock',13)} График работы`; }
   document.getElementById('store-subs').innerHTML = SK.subCards(2);
   document.getElementById('menu-items').innerHTML = SK.itemCards(6);
+  // Reset category chip when entering a different store
+  if (S._lastMenuStoreId !== st.id) { S.menuCatId = ''; S._lastMenuStoreId = st.id; }
   // Всё в фоне — UI рисуется из кэша немедленно, сеть не блокирует
   loadCategories();   // показывает кэш сразу, фоном обновляет
   loadMenuItems();    // показывает кэш сразу, фоном обновляет
@@ -3845,11 +3847,12 @@ function _applyMenuFilters(items) {
   return res;
 }
 
-let _menuFetchStoreId = null, _menuFetchTs = 0;
+let _menuFetchKey = null, _menuFetchTs = 0;
 const _MENU_THROTTLE = 30000;
 const _CLI_LIMIT = 30;
-let _menuCliState = { offset: 0, baseUrl: '', loading: false, storeId: null, hasMore: false };
+let _menuCliState = { offset: 0, baseUrl: '', loading: false, storeId: null, catId: null, hasMore: false };
 let _allMenuItems = [];
+function _menuCacheId(sid, cid) { return cid ? `${sid}_${cid.slice(0,8)}` : sid; }
 
 let _cliObserver = null;
 
@@ -3888,18 +3891,21 @@ async function loadMenuItems() {
   if (!S.store) return;
   el.className = 'items-grid';
   const storeId = S.store.id;
+  const catId = S.menuCatId;
 
-  // Same store already loaded — just re-filter (category/search change)
-  if (_menuCliState.storeId === storeId && _allMenuItems.length) {
+  // Same store + same category → re-apply filters only (search/sort/avail changed)
+  if (_menuCliState.storeId === storeId && _menuCliState.catId === catId && _allMenuItems.length) {
     _renderMenuGrid(el, _allMenuItems);
     return;
   }
 
-  // New store — reset state
+  // New store or category change — reset state
   _allMenuItems = [];
-  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}&is_visible=eq.true&order=name.asc`, loading: false, storeId, hasMore: false };
+  const catFilter = catId ? `&category_id=eq.${catId}` : '';
+  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}${catFilter}&is_visible=eq.true&order=name.asc`, loading: false, storeId, catId, hasMore: false };
 
-  const cached = _readMenuCache(storeId);
+  const cacheId = _menuCacheId(storeId, catId);
+  const cached = _readMenuCache(cacheId);
   let _cacheOk = false;
   if (Array.isArray(cached)) {
     try {
@@ -3910,18 +3916,19 @@ async function loadMenuItems() {
     } catch {}
   }
   if (!_cacheOk) el.innerHTML = SK.itemCards(6);
+  const fetchKey = `${storeId}_${catId}`;
   if (_cacheOk) {
-    if (_menuFetchStoreId === storeId && (Date.now() - _menuFetchTs) < _MENU_THROTTLE) return;
+    if (_menuFetchKey === fetchKey && (Date.now() - _menuFetchTs) < _MENU_THROTTLE) return;
   }
 
   try {
-    _menuFetchStoreId = storeId;
+    _menuFetchKey = fetchKey;
     _menuFetchTs = Date.now();
     const items = await req(`${_menuCliState.baseUrl}&limit=${_CLI_LIMIT}&offset=0`);
-    if (S.store?.id !== storeId) return;
+    if (S.store?.id !== storeId || S.menuCatId !== catId) return;
     items.forEach(it => cacheItem(it));
     _allMenuItems = items;
-    _writeMenuCache(storeId, items);
+    _writeMenuCache(cacheId, items);
     S.cart.forEach(c => { const f = itemCache.get(c.item.id); if (f) c.item = f; });
     _menuCliState.hasMore = items.length === _CLI_LIMIT;
     _renderMenuGrid(el, items);
@@ -3939,7 +3946,7 @@ async function loadMoreClientMenu() {
     items.forEach(it => cacheItem(it));
     _allMenuItems = [..._allMenuItems, ...items];
     S.cart.forEach(c => { const f = itemCache.get(c.item.id); if (f) c.item = f; });
-    _writeMenuCache(_menuCliState.storeId, _allMenuItems);
+    _writeMenuCache(_menuCacheId(_menuCliState.storeId, _menuCliState.catId), _allMenuItems);
     _menuCliState.hasMore = items.length === _CLI_LIMIT;
     if (!_menuCliState.hasMore) _detachCliObserver();
     const el = document.getElementById('menu-items');
