@@ -4821,12 +4821,23 @@ function _dzvOnMapClick(e) {
   _dzvPickTimer = setTimeout(() => _dzvGeocode(lat, lng), 600);
 }
 
+function _fmtPhotonAddr(data) {
+  const p = data?.features?.[0]?.properties || {};
+  const road = p.street || p.name || '';
+  const num  = p.housenumber || '';
+  const city = p.city || p.town || p.village || '';
+  const parts = [];
+  if (road) parts.push(num ? `${road}, ${num}` : road);
+  if (city) parts.push(city);
+  return parts.join(', ');
+}
+
 async function _dzvGeocode(lat, lng) {
   const lbl = document.getElementById('dz-pick-lbl');
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`);
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=ru`);
     const j = await r.json();
-    const addr = j.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    const addr = _fmtPhotonAddr(j) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     _dzvPickResult = { lat, lng, addr };
     if (lbl) lbl.textContent = addr;
   } catch {
@@ -5772,13 +5783,11 @@ async function _addrSrchGo() {
   const lbl = document.getElementById('addr-pick-lbl');
   if (lbl) lbl.textContent = 'Поиск…';
   try {
-    const r = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&accept-language=ru`,
-      { headers: { 'Accept-Language': 'ru' } }
-    );
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lang=ru`);
     const d = await r.json();
-    if (d?.[0]) {
-      _addrPickMap.flyTo({ center: [+d[0].lon, +d[0].lat], zoom: 15, duration: 800 });
+    if (d?.features?.[0]) {
+      const [lon, lat] = d.features[0].geometry.coordinates;
+      _addrPickMap.flyTo({ center: [lon, lat], zoom: 15, duration: 800 });
     } else {
       if (lbl) lbl.textContent = 'Место не найдено';
     }
@@ -5795,9 +5804,9 @@ function _addrPickGeocode() {
     if (!_addrPickMap) return;
     const { lat, lng } = _addrPickMap.getCenter();
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`, { headers: { 'Accept-Language': 'ru' } });
+      const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=ru`);
       const d = await r.json();
-      const text = d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      const text = _fmtPhotonAddr(d) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       const city = await _resolveCity(lat, lng);
       if (lbl) lbl.textContent = text;
       _addrPickResult = { lat, lng, text, city };

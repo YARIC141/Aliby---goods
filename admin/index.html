@@ -2536,9 +2536,12 @@ async function _addrPickSearch() {
   const city = S.city || '';
   const query = encodeURIComponent(city ? `${q}, ${city}` : q);
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&accept-language=ru`);
+    const r = await fetch(`https://photon.komoot.io/api/?q=${query}&limit=1&lang=ru`);
     const d = await r.json();
-    if (d.length) _addrPickMap.flyTo({ center: [parseFloat(d[0].lon), parseFloat(d[0].lat)], zoom: 17, speed: 1.8 });
+    if (d?.features?.[0]) {
+      const [lon, lat] = d.features[0].geometry.coordinates;
+      _addrPickMap.flyTo({ center: [lon, lat], zoom: 17, speed: 1.8 });
+    }
   } catch {}
 }
 
@@ -2547,15 +2550,15 @@ function closeAddrPicker() {
   if (_addrPickCtx === 'store') openModal('m-store');
 }
 
-function _fmtNomAddr(d) {
-  const a = d.address || {};
-  const road = a.road || a.pedestrian || a.footway || '';
-  const num  = a.house_number || '';
-  const city = a.city || a.town || a.village || a.municipality || '';
+function _fmtPhotonAddr(data) {
+  const p = data?.features?.[0]?.properties || {};
+  const road = p.street || p.name || '';
+  const num  = p.housenumber || '';
+  const city = p.city || p.town || p.village || '';
   const parts = [];
   if (road) parts.push(num ? `${road}, ${num}` : road);
   if (city) parts.push(city);
-  return parts.join(', ') || d.display_name || '';
+  return parts.join(', ');
 }
 
 async function _resolveCity(lat, lng) {
@@ -2580,9 +2583,9 @@ function _addrPickGeocode() {
     if (!_addrPickMap) return;
     const { lat, lng } = _addrPickMap.getCenter();
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ru`);
+      const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=ru`);
       const d = await r.json();
-      const text = _fmtNomAddr(d) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      const text = _fmtPhotonAddr(d) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       const city = await _resolveCity(lat, lng);
       if (lbl) lbl.textContent = text;
       _addrPickResult = { lat, lng, text, city };
