@@ -4799,6 +4799,7 @@ async function dzvConfirmPick() {
   S.userAddrLat = lat;
   S.userAddrLng = lng;
   S.userAddr = addr || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  try { localStorage.setItem('alliby_addr_lat', String(lat)); localStorage.setItem('alliby_addr_lng', String(lng)); } catch {}
   if (_dzvHomeMarker) _dzvHomeMarker.setLngLat([lng, lat]);
   const zones = _dzvStore ? await loadStoreZones(_dzvStore.id) : [];
   _dzvRenderLegend(zones);
@@ -4926,12 +4927,24 @@ function getCartStore() {
 }
 
 async function loadUserAddr() {
+  // localStorage is written when user picks address — takes priority over
+  // SW-cached GET profile (which may be stale for 30s after a PATCH)
+  const lsLat = parseFloat(localStorage.getItem('alliby_addr_lat'));
+  const lsLng = parseFloat(localStorage.getItem('alliby_addr_lng'));
+  if (!isNaN(lsLat) && !isNaN(lsLng)) {
+    S.userAddrLat = lsLat; S.userAddrLng = lsLng;
+    _renderHomeMarker();
+    return;
+  }
   if (!S.session?.user?.id) return;
   try {
     const p = await req(`/rest/v1/profiles?id=eq.${S.session.user.id}&select=address_lat,address_lng`);
     if (p?.[0]) {
       S.userAddrLat = p[0].address_lat ?? null;
       S.userAddrLng = p[0].address_lng ?? null;
+      if (S.userAddrLat != null) {
+        try { localStorage.setItem('alliby_addr_lat', String(S.userAddrLat)); localStorage.setItem('alliby_addr_lng', String(S.userAddrLng)); } catch {}
+      }
       _renderHomeMarker();
     }
   } catch {}
@@ -5830,6 +5843,7 @@ function confirmAddrPick() {
   if (elLng) elLng.value = _addrPickResult.lng;
   S.userAddrLat = _addrPickResult.lat;
   S.userAddrLng = _addrPickResult.lng;
+  try { localStorage.setItem('alliby_addr_lat', String(_addrPickResult.lat)); localStorage.setItem('alliby_addr_lng', String(_addrPickResult.lng)); } catch {}
   if (S.profile) S.profile.address = _addrPickResult.text;
   // update city from map geocoding
   const detectedCity = _addrPickResult.city || '';
