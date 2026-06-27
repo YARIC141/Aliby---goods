@@ -2821,9 +2821,9 @@ async function _saveWebPushSub(uid, sub) {
   const j = sub.toJSON();
   if (!j.keys) { console.warn('web push: no keys in subscription'); return; }
   try {
-    await req('/rest/v1/push_subscriptions', {
+    await req('/rest/v1/push_subscriptions?on_conflict=user_id,app,platform', {
       method: 'POST',
-      headers: { Prefer: 'resolution=merge-duplicates, return=minimal' },
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify({
         user_id: uid, platform: 'web', app: 'client',
         device_token: null,
