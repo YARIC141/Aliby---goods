@@ -5784,7 +5784,8 @@ async function _addrSrchGo() {
   if (lbl) lbl.textContent = 'Поиск…';
   try {
     const _mc = _addrPickMap.getCenter();
-    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lat=${_mc.lat}&lon=${_mc.lng}`);
+    const _cq = S.city ? `, ${S.city}` : '';
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q + _cq)}&limit=1&lat=${_mc.lat}&lon=${_mc.lng}`);
     const d = await r.json();
     if (d?.features?.[0]) {
       const [lon, lat] = d.features[0].geometry.coordinates;
