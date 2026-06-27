@@ -4835,7 +4835,7 @@ function _fmtPhotonAddr(data) {
 async function _dzvGeocode(lat, lng) {
   const lbl = document.getElementById('dz-pick-lbl');
   try {
-    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=ru`);
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`);
     const j = await r.json();
     const addr = _fmtPhotonAddr(j) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
     _dzvPickResult = { lat, lng, addr };
@@ -5783,7 +5783,8 @@ async function _addrSrchGo() {
   const lbl = document.getElementById('addr-pick-lbl');
   if (lbl) lbl.textContent = 'Поиск…';
   try {
-    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lang=ru`);
+    const _mc = _addrPickMap.getCenter();
+    const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1&lat=${_mc.lat}&lon=${_mc.lng}`);
     const d = await r.json();
     if (d?.features?.[0]) {
       const [lon, lat] = d.features[0].geometry.coordinates;
@@ -5804,7 +5805,7 @@ function _addrPickGeocode() {
     if (!_addrPickMap) return;
     const { lat, lng } = _addrPickMap.getCenter();
     try {
-      const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=ru`);
+      const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`);
       const d = await r.json();
       const text = _fmtPhotonAddr(d) || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
       const city = await _resolveCity(lat, lng);
