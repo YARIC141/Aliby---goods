@@ -3904,6 +3904,9 @@ async function loadMenuItems() {
   const catFilter = catId ? `&category_id=eq.${catId}` : '';
   _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}${catFilter}&is_visible=eq.true&order=name.asc`, loading: false, storeId, catId, hasMore: false };
 
+  // Skeleton first (sync) — cache replaces it in the same frame, no visible flash
+  el.innerHTML = SK.itemCards(6);
+
   const cacheId = _menuCacheId(storeId, catId);
   const cached = _readMenuCache(cacheId);
   let _cacheOk = false;
@@ -3915,7 +3918,6 @@ async function loadMenuItems() {
       _cacheOk = true;
     } catch {}
   }
-  if (!_cacheOk) el.innerHTML = SK.itemCards(6);
   const fetchKey = `${storeId}_${catId}`;
   if (_cacheOk) {
     if (_menuFetchKey === fetchKey && (Date.now() - _menuFetchTs) < _MENU_THROTTLE) return;
