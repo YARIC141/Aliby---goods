@@ -3649,19 +3649,33 @@ function renderSubCard(s) {
   </div>`;
 }
 
+function _storeSubsCacheKey(id) { return 'alliby_store_subs_' + id; }
+function _readStoreSubsCache(id) { try { return JSON.parse(localStorage.getItem(_storeSubsCacheKey(id)) || 'null'); } catch { return null; } }
+function _writeStoreSubsCache(id, subs) { try { localStorage.setItem(_storeSubsCacheKey(id), JSON.stringify(subs)); } catch {} }
+
 async function loadStoreSubs(targetEl) {
   const el = targetEl || document.getElementById('store-subs');
   const sec = document.getElementById('store-subs-sec');
   if (!el) return;
-  if (sec) sec.style.display = '';
   if (!S.store) { el.innerHTML = '<span class="txt-sm">Выберите заведение</span>'; return; }
-  el.innerHTML = SK.subCards(2);
+  const storeId = S.store.id;
+  const cached = _readStoreSubsCache(storeId);
+  if (Array.isArray(cached) && cached.length) {
+    if (sec) sec.style.display = '';
+    cached.forEach(s => { subPlans[s.id] = s; });
+    el.innerHTML = cached.map(renderSubCard).join('');
+  } else {
+    if (sec) sec.style.display = '';
+    el.innerHTML = SK.subCards(2);
+  }
   try {
-    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${S.store.id}&deleted_at=is.null&is_visible=eq.true`);
-    if (!subs.length) { if (sec) sec.style.display = 'none'; return; }
+    const subs = await req(`/rest/v1/subscriptions?store_id=eq.${storeId}&deleted_at=is.null&is_visible=eq.true`);
+    if (S.store?.id !== storeId) return;
+    if (!subs.length) { _writeStoreSubsCache(storeId, []); if (sec) sec.style.display = 'none'; el.innerHTML = ''; return; }
     subs.forEach(s => { subPlans[s.id] = s; });
+    _writeStoreSubsCache(storeId, subs);
     el.innerHTML = subs.map(renderSubCard).join('');
-  } catch(e) { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
+  } catch(e) { if (!Array.isArray(cached) || !cached.length) el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
 }
 
 
@@ -5447,7 +5461,13 @@ async function selectSubStore(storeId) {
 async function loadSubsForSelectedStore(storeId) {
   const el = document.getElementById('sub-store-subs');
   if (!el) return;
-  el.innerHTML = SK.subCards(2);
+  const cached = _readStoreSubsCache(storeId);
+  if (Array.isArray(cached) && cached.length) {
+    cached.forEach(s => { subPlans[s.id] = s; });
+    el.innerHTML = cached.map(renderSubCard).join('');
+  } else {
+    el.innerHTML = SK.subCards(2);
+  }
   try {
     try {
       const active = await req('/rest/v1/rpc/is_store_subscription_active', {
@@ -5457,8 +5477,9 @@ async function loadSubsForSelectedStore(storeId) {
     } catch { S.storeSubActive = true; }
     const subs = await req(`/rest/v1/subscriptions?store_id=eq.${storeId}&deleted_at=is.null&is_visible=eq.true`);
     subs.forEach(s => { subPlans[s.id] = s; });
+    _writeStoreSubsCache(storeId, subs);
     el.innerHTML = subs.length ? subs.map(renderSubCard).join('') : '<span class="txt-sm">Нет абонементов</span>';
-  } catch { el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
+  } catch { if (!Array.isArray(cached) || !cached.length) el.innerHTML = '<span class="txt-sm">Ошибка</span>'; }
 }
 
 function renderSubItemCard(sub) {

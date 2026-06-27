@@ -1,7 +1,9 @@
-// v28
+// v29
 const APP_CACHE  = 'alliby-app-v16';
 const TILE_CACHE = 'alliby-tiles-v2';
 const API_CACHE  = 'alliby-api-v1';
+const IMG_CACHE  = 'alliby-img-v1';
+const MAX_IMG    = 200;
 const TILE_PATH  = '/functions/v1/vector-tiles/';
 const MAX_TILES  = 300;
 const MAX_API    = 120;
@@ -12,7 +14,7 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== TILE_CACHE && k !== APP_CACHE && k !== API_CACHE).map(k => caches.delete(k))
+        keys.filter(k => k !== TILE_CACHE && k !== APP_CACHE && k !== API_CACHE && k !== IMG_CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
@@ -33,6 +35,25 @@ async function trimApiCache() {
 }
 
 self.addEventListener('fetch', e => {
+  // ── Images: cache-first, max 200 ─────────────────────────────────────────
+  if (e.request.destination === 'image') {
+    e.respondWith(
+      caches.open(IMG_CACHE).then(cache =>
+        cache.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+          if (resp.ok) {
+            cache.put(e.request, resp.clone());
+            cache.keys().then(keys => {
+              if (keys.length > MAX_IMG)
+                Promise.all(keys.slice(0, keys.length - MAX_IMG).map(k => cache.delete(k)));
+            });
+          }
+          return resp;
+        }))
+      )
+    );
+    return;
+  }
+
   // ── Vector tiles: cache-first ──────────────────────────────────────────────
   if (e.request.url.includes(TILE_PATH)) {
     e.respondWith(
