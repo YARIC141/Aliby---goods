@@ -599,8 +599,7 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div id="screen-map" class="screen">
   <div class="ph">
     <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
-    <h2 id="map-screen-title">Карта<span class="screen-help" data-info="Карта расположения заведений. Переключайте вид между векторными тайлами и OSM. Нажмите на метку, чтобы перейти к заведению.">?</span></h2>
-    <button class="btn btn-sm" id="map-mode-btn" onclick="setMapMode(S.mapMode==='osm'?'tiles':'osm')" title="Переключить вид карты"><svg class="ico" width="13" height="13" style="margin-right:4px"><use href="#i-map"/></svg>Тайлы</button>
+    <h2 id="map-screen-title">Карта<span class="screen-help" data-info="Карта расположения заведений. Нажмите на метку, чтобы перейти к заведению.">?</span></h2>
   </div>
 
   <div style="display:flex;flex:1;overflow:hidden;flex-direction:column">
@@ -1885,18 +1884,7 @@ async function openAdminCityModal(deferred) {
 }
 
 // ─── STATE ───
-const DEFAULT_MAP_CFG = {
-  tileSource: { minzoom: 8, maxzoom: 16 },
-  layers: { water:{minzoom:0}, land_use:{minzoom:10}, roads:{minzoom:8}, buildings:{minzoom:13}, places:{minzoom:14}, addresses:{minzoom:15} },
-  labels: { roads:{minzoom:14,fontSize:11}, buildings:{minzoom:16,fontSize:10}, addresses:{minzoom:15,fontSize:10}, places:{minzoom:15,fontSize:10} },
-  colors: {
-    background:'#f0ede8', water:'#9ecfdf', waterStroke:'#7ab8cc',
-    park:'#b8d8b8', residential:'#f5f0e8',
-    buildingFill:'#e8e0d4', buildingLine:'#c8bfb0',
-    motorway:'#e8a020', primaryRoadBg:'#c0b8a8', primaryRoad:'#ffffff', path:'#c8b898',
-  },
-};
-const DEFAULT_FEATURES = { sStores:true, sCategories:true, sMenu:true, sSubscriptions:true, sOrders:true, sMap:true, sVectorMap:true };
+const DEFAULT_FEATURES = { sStores:true, sCategories:true, sMenu:true, sSubscriptions:true, sOrders:true, sMap:true };
 
 const S = {
   session: null,
@@ -1904,86 +1892,13 @@ const S = {
   currentOrderId: null,
   pendingConfirm: null,
   adminMap: null, adminMapMarkers: [], adminMapFitted: false,
-  mapMode: localStorage.getItem('alliby_map_mode') || 'osm',
   mapStoreData: [], mapEditing: false, mapOrigCoords: null, mapDraftMarker: null, mapPendingStore: null,
   mapPickMode: false, mapPickDraftMarker: null, mapPickCoords: null, storeFormDraft: null, mapViewStore: null,
   navHistory: [], navIdx: -1,
   uploadedPhotoFilename: null,
-  mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
   get city() { return localStorage.getItem('alliby_admin_city'); },
 };
-
-const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
-
-function buildMapStyle(cfg) {
-  const L=cfg.layers||{}, Cl=cfg.colors||{}, lbl=cfg.labels||{}, ts=cfg.tileSource||{};
-  const bg=Cl.background||'#f0ede8', wat=Cl.water||'#9ecfdf', watS=Cl.waterStroke||'#7ab8cc';
-  const park=Cl.park||'#b8d8b8', res=Cl.residential||'#f5f0e8';
-  const bF=Cl.buildingFill||'#e8e0d4', bLn=Cl.buildingLine||'#c8bfb0';
-  const mway=Cl.motorway||'#e8a020', rdBg=Cl.primaryRoadBg||'#c0b8a8';
-  const rd=Cl.primaryRoad||'#ffffff', pth=Cl.path||'#c8b898';
-  const rzm=L.roads?.minzoom??8;
-  const pzm=Math.max(rzm,10);
-  const szm=Math.max(rzm,12);
-  const mzm=Math.max(rzm,13);
-  return {
-    version:8,
-    glyphs:'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
-    sources:{vm:{type:'vector',tiles:[TILE_URL],minzoom:ts.minzoom??8,maxzoom:ts.maxzoom??16}},
-    layers:[
-      {id:'bg',type:'background',paint:{'background-color':bg}},
-      {id:'water',type:'fill',source:'vm','source-layer':'water',minzoom:L.water?.minzoom??0,
-        paint:{'fill-color':wat,'fill-outline-color':watS}},
-      {id:'landuse',type:'fill',source:'vm','source-layer':'land_use',minzoom:L.land_use?.minzoom??8,
-        paint:{'fill-color':['match',['get','class'],'park',park,'forest',park,'residential',res,bg]}},
-      {id:'bldg',type:'fill',source:'vm','source-layer':'buildings',minzoom:L.buildings?.minzoom??13,
-        paint:{'fill-color':bF,'fill-outline-color':bLn}},
-      {id:'road-motorway-bg',type:'line',source:'vm','source-layer':'roads',minzoom:rzm,
-        filter:['match',['get','class'],['motorway','trunk'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':'#b07010','line-width':['interpolate',['linear'],['zoom'],8,3,14,10,16,16]}},
-      {id:'road-motorway-fg',type:'line',source:'vm','source-layer':'roads',minzoom:rzm,
-        filter:['match',['get','class'],['motorway','trunk'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':mway,'line-width':['interpolate',['linear'],['zoom'],8,2,14,7,16,12]}},
-      {id:'road-primary-bg',type:'line',source:'vm','source-layer':'roads',minzoom:pzm,
-        filter:['match',['get','class'],['primary'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rdBg,'line-width':['interpolate',['linear'],['zoom'],10,1,14,5,16,8]}},
-      {id:'road-primary-fg',type:'line',source:'vm','source-layer':'roads',minzoom:pzm,
-        filter:['match',['get','class'],['primary'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],10,0.5,14,3,16,6]}},
-      {id:'road-secondary-fg',type:'line',source:'vm','source-layer':'roads',minzoom:szm,
-        filter:['match',['get','class'],['secondary'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],12,0.5,14,2,16,5]}},
-      {id:'road-minor-fg',type:'line',source:'vm','source-layer':'roads',minzoom:mzm,
-        filter:['match',['get','class'],['motorway','trunk','primary','secondary','path','footway','cycleway'],false,true],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],13,0.3,14,1.5,16,4]}},
-      {id:'road-path-fg',type:'line',source:'vm','source-layer':'roads',minzoom:mzm,
-        filter:['match',['get','class'],['path','footway','cycleway'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':pth,'line-dasharray':[2,2],
-               'line-width':['interpolate',['linear'],['zoom'],13,0.5,16,2]}},
-      {id:'road-label',type:'symbol',source:'vm','source-layer':'roads',minzoom:lbl.roads?.minzoom??14,
-        layout:{'text-field':['get','name'],'symbol-placement':'line',
-                'text-size':lbl.roads?.fontSize??11,'text-font':['Open Sans Regular'],
-                'text-max-angle':30,'text-padding':10},
-        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1.5}},
-      {id:'place-label',type:'symbol',source:'vm','source-layer':'places',minzoom:lbl.places?.minzoom??15,
-        layout:{'text-field':['get','name'],'text-size':lbl.places?.fontSize??10,
-                'text-font':['Open Sans Regular'],'text-anchor':'top','text-offset':[0,0.3]},
-        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1}},
-      {id:'addr-label',type:'symbol',source:'vm','source-layer':'addresses',minzoom:lbl.addresses?.minzoom??17,
-        layout:{'text-field':['get','housenumber'],'text-size':lbl.addresses?.fontSize??10,
-                'text-font':['Open Sans Regular']},
-        paint:{'text-color':'#888','text-halo-color':'#fff','text-halo-width':1}},
-    ]
-  };
-}
 
 function buildOsmStyle() {
   return {
@@ -2123,7 +2038,6 @@ function toggleNavPos() {
 async function loadAppConfig() {
   try {
     const cached = JSON.parse(localStorage.getItem('admin_app_config') || 'null');
-    if (cached?.vectorMap) S.mapCfg = cached.vectorMap;
     if (cached?.features) S.features = { ...DEFAULT_FEATURES, ...cached.features };
     if (cached) applyFeatureToggles();
   } catch(e) {}
@@ -2135,9 +2049,8 @@ async function loadAppConfig() {
       const rows = await r.json();
       if (rows?.length) {
         const cfg = rows[0].config;
-        if (cfg?.vectorMap) S.mapCfg = cfg.vectorMap;
         if (cfg?.ui?.features) S.features = { ...DEFAULT_FEATURES, ...cfg.ui.features };
-        try { localStorage.setItem('admin_app_config', JSON.stringify({ vectorMap: cfg?.vectorMap, features: cfg?.ui?.features })); } catch(ex) {}
+        try { localStorage.setItem('admin_app_config', JSON.stringify({ features: cfg?.ui?.features })); } catch(ex) {}
       }
     }
   } catch(e) {}
@@ -3456,21 +3369,6 @@ async function openStoreModal(store) {
   _msEditStore = store || null;
   openModal('m-store');
 }
-
-function _updateMapModeBtn() {
-  const btn = document.getElementById('map-mode-btn');
-  if (btn) btn.innerHTML = `${svgIco('map',13)} ${S.mapMode === 'osm' ? 'Тайлы' : 'OSM'}`;
-}
-
-function setMapMode(mode) {
-  S.mapMode = mode;
-  localStorage.setItem('alliby_map_mode', mode);
-  _updateMapModeBtn();
-  if (!S.adminMap) return;
-  S.adminMap.setStyle(mode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg), { diff: false });
-  S.adminMap.once('style.load', () => loadAdminMapMarkers());
-}
-
 
 function updateStoreCoordsStatus() {
   const lat  = document.getElementById('ms-lat').value;
@@ -5482,16 +5380,10 @@ async function loadMapAdmin() {
     document.getElementById('map-pick-use-btn').style.display = 'none';
   }
   if (!S.adminMap) {
-    _updateMapModeBtn();
     S.adminMap = new maplibregl.Map({
-      container: 'map-admin-gl', style: S.mapMode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg),
+      container: 'map-admin-gl', style: buildOsmStyle(),
       center: [0, 0], zoom: 2, attributionControl: false,
       transformRequest: (url) => {
-        if (url.includes('/functions/v1/vector-tiles/')) {
-          const h = { apikey: SB_ANON };
-          if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
-          return { url, headers: h };
-        }
         if (url.startsWith(SB_URL)) {
           const headers = { apikey: SB_ANON };
           if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
@@ -6886,7 +6778,7 @@ function dzeInitMap() {
   if (_dze.map) { _dze.map.remove(); _dze.map = null; }
   _dze.map = new maplibregl.Map({
     container: 'dze-map-gl',
-    style: S.mapMode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg),
+    style: buildOsmStyle(),
     center: [_dze.storeLng || 37.6, _dze.storeLat || 55.75],
     zoom: 13, attributionControl: false,
     transformRequest: url => url.startsWith(SB_URL) ? { url, headers: { apikey: SB_ANON } } : { url },

@@ -1849,27 +1849,8 @@ async function openCityModal(deferred) {
 }
 
 // ─── DEFAULTS ───
-const DEFAULT_MAP_CFG = {
-  tileSource: { minzoom: 8, maxzoom: 16 },
-  layers: {
-    water:    { minzoom: 0  }, land_use: { minzoom: 10 },
-    roads:    { minzoom: 8  }, buildings:{ minzoom: 13 },
-    places:   { minzoom: 14 }, addresses:{ minzoom: 15 },
-  },
-  labels: {
-    roads:    { minzoom: 14, fontSize: 11 },
-    places:   { minzoom: 15, fontSize: 10 },
-    addresses:{ minzoom: 15, fontSize: 10 },
-  },
-  colors: {
-    background:'#f0ede8', water:'#9ecfdf', waterStroke:'#7ab8cc',
-    park:'#b8d8b8', residential:'#f5f0e8',
-    buildingFill:'#e8e0d4', buildingLine:'#c8bfb0',
-    motorway:'#e8a020', primaryRoadBg:'#c0b8a8', primaryRoad:'#ffffff', path:'#c8b898',
-  },
-};
 const DEFAULT_FEATURES = {
-  sMap:true, sVectorMap:true, sStores:true, sMenu:true,
+  sMap:true, sStores:true, sMenu:true,
   sCart:true, sOrders:true, sSubscriptions:true, sMySubscriptions:true,
 };
 
@@ -1879,10 +1860,8 @@ const S = {
   cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [],
   menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
   map: null, mapMarkers: [], homeMarker: null, mapFitted: false, allStores: [], mapCat: new Set(),
-  mapMode: 'osm',
   nearbyMeters: null, geoLat: null, geoLng: null, deliveryFilter: false,
   navHistory: [], navIdx: -1,
-  mapCfg: JSON.parse(JSON.stringify(DEFAULT_MAP_CFG)),
   features: { ...DEFAULT_FEATURES },
   direction: 'food',
   _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null} },
@@ -1933,8 +1912,6 @@ function applyDirectionAccents(dir) {
   r.style.setProperty('--header-tint', HEADER_TINTS[dir] || 'transparent');
 }
 
-const TILE_URL = `${SB_URL}/functions/v1/vector-tiles/{z}/{x}/{y}`;
-
 // ─── SKELETONS ───
 const SK = {
   _b: (h, w, mb=5) => `<div class="sk" style="height:${h}px;width:${w};margin-bottom:${mb}px"></div>`,
@@ -1956,84 +1933,6 @@ const SK = {
 };
 
 const subCache = new Map();
-
-function buildMapStyle(cfg) {
-  const L   = cfg.layers    || {};
-  const Cl  = cfg.colors    || {};
-  const lbl = cfg.labels    || {};
-  const ts  = cfg.tileSource|| {};
-  const bg   = Cl.background    || '#f0ede8';
-  const wat  = Cl.water         || '#9ecfdf';
-  const watS = Cl.waterStroke   || '#7ab8cc';
-  const park = Cl.park          || '#b8d8b8';
-  const res  = Cl.residential   || '#f5f0e8';
-  const bF   = Cl.buildingFill  || '#e8e0d4';
-  const bLn  = Cl.buildingLine  || '#c8bfb0';
-  const mway = Cl.motorway      || '#e8a020';
-  const rdBg = Cl.primaryRoadBg || '#c0b8a8';
-  const rd   = Cl.primaryRoad   || '#ffffff';
-  const pth  = Cl.path          || '#c8b898';
-  const rzm  = L.roads?.minzoom ?? 8;
-  const pzm  = Math.max(rzm, 10);
-  const szm  = Math.max(rzm, 12);
-  const mzm  = Math.max(rzm, 13);
-  return {
-    version: 8,
-    glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
-    sources: { vm: { type:'vector', tiles:[TILE_URL], minzoom:ts.minzoom??8, maxzoom:ts.maxzoom??16 } },
-    layers: [
-      { id:'bg',   type:'background', paint:{'background-color':bg} },
-      { id:'water', type:'fill', source:'vm', 'source-layer':'water', minzoom:L.water?.minzoom??0,
-        paint:{'fill-color':wat,'fill-outline-color':watS} },
-      { id:'landuse', type:'fill', source:'vm', 'source-layer':'land_use', minzoom:L.land_use?.minzoom??8,
-        paint:{'fill-color':['match',['get','class'],'park',park,'forest',park,'residential',res,bg]} },
-      { id:'bldg', type:'fill', source:'vm', 'source-layer':'buildings', minzoom:L.buildings?.minzoom??13,
-        paint:{'fill-color':bF,'fill-outline-color':bLn} },
-      { id:'road-motorway-bg', type:'line', source:'vm', 'source-layer':'roads', minzoom:rzm,
-        filter:['match',['get','class'],['motorway','trunk'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':'#b07010','line-width':['interpolate',['linear'],['zoom'],8,3,14,10,16,16]} },
-      { id:'road-motorway-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:rzm,
-        filter:['match',['get','class'],['motorway','trunk'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':mway,'line-width':['interpolate',['linear'],['zoom'],8,2,14,7,16,12]} },
-      { id:'road-primary-bg', type:'line', source:'vm', 'source-layer':'roads', minzoom:pzm,
-        filter:['match',['get','class'],['primary'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rdBg,'line-width':['interpolate',['linear'],['zoom'],10,1,14,5,16,8]} },
-      { id:'road-primary-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:pzm,
-        filter:['match',['get','class'],['primary'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],10,0.5,14,3,16,6]} },
-      { id:'road-secondary-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:szm,
-        filter:['match',['get','class'],['secondary'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],12,0.5,14,2,16,5]} },
-      { id:'road-minor-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:mzm,
-        filter:['match',['get','class'],['motorway','trunk','primary','secondary','path','footway','cycleway'],false,true],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':rd,'line-width':['interpolate',['linear'],['zoom'],13,0.3,14,1.5,16,4]} },
-      { id:'road-path-fg', type:'line', source:'vm', 'source-layer':'roads', minzoom:mzm,
-        filter:['match',['get','class'],['path','footway','cycleway'],true,false],
-        layout:{'line-cap':'round','line-join':'round'},
-        paint:{'line-color':pth,'line-dasharray':[2,2],
-               'line-width':['interpolate',['linear'],['zoom'],13,0.5,16,2]} },
-      { id:'road-label', type:'symbol', source:'vm', 'source-layer':'roads', minzoom:lbl.roads?.minzoom??14,
-        layout:{'text-field':['get','name'],'symbol-placement':'line',
-                'text-size':lbl.roads?.fontSize??11,'text-font':['Open Sans Regular'],
-                'text-max-angle':30,'text-padding':10},
-        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1.5} },
-      { id:'place-label', type:'symbol', source:'vm', 'source-layer':'places', minzoom:lbl.places?.minzoom??15,
-        layout:{'text-field':['get','name'],'text-size':lbl.places?.fontSize??10,
-                'text-font':['Open Sans Regular'],'text-anchor':'top','text-offset':[0,0.3]},
-        paint:{'text-color':'#555','text-halo-color':'#fff','text-halo-width':1} },
-      { id:'addr-label', type:'symbol', source:'vm', 'source-layer':'addresses', minzoom:lbl.addresses?.minzoom??17,
-        layout:{'text-field':['get','housenumber'],'text-size':lbl.addresses?.fontSize??10,
-                'text-font':['Open Sans Regular']},
-        paint:{'text-color':'#888','text-halo-color':'#fff','text-halo-width':1} },
-    ]
-  };
-}
 
 function buildOsmStyle() {
   return {
@@ -2575,7 +2474,6 @@ async function loadAppConfig() {
     const rows = await r.json();
     if (!rows?.length) return;
     const cfg = rows[0].config;
-    if (cfg?.vectorMap) S.mapCfg = cfg.vectorMap;
     if (cfg?.ui?.features) S.features = { ...DEFAULT_FEATURES, ...cfg.ui.features };
   } catch(e) {}
   applyFeatureToggles();
@@ -3296,16 +3194,10 @@ async function loadMapData() {
   if (S.map) { setTimeout(() => S.map.resize(), 0); applyMapFilter(); return; }
   await new Promise(r => setTimeout(r, 0));
   const _ci = _cityInfo();
-  _updateMapModeBtn();
   S.map = new maplibregl.Map({
-    container: 'map-gl', style: S.mapMode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg),
+    container: 'map-gl', style: buildOsmStyle(),
     center: [_ci.lng, _ci.lat], zoom: _ci.zoom, attributionControl: false,
     transformRequest: (url) => {
-      if (url.includes('/functions/v1/vector-tiles/')) {
-        const headers = { apikey: SB_ANON };
-        if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
-        return { url, headers };
-      }
       if (url.startsWith(SB_URL)) {
         const headers = { apikey: SB_ANON };
         if (S.session?.access_token) headers['Authorization'] = 'Bearer ' + S.session.access_token;
@@ -3324,20 +3216,6 @@ async function loadMapData() {
   // Render cached markers immediately — DOM markers don't need map 'load'
   if (S.allStores?.length) { applyMapFilter(); fitMapToAllStores(); }
   S.map.on('load', applyMapFilter);
-}
-
-function _updateMapModeBtn() {
-  const btn = document.getElementById('map-mode-btn');
-  if (btn) btn.innerHTML = `${svgIco('map',14)} ${S.mapMode === 'osm' ? 'Тайлы' : 'OSM'}`;
-}
-
-function setMapMode(mode) {
-  S.mapMode = mode;
-  localStorage.setItem('alliby_map_mode', mode);
-  _updateMapModeBtn();
-  if (!S.map) return;
-  S.map.setStyle(mode === 'osm' ? buildOsmStyle() : buildMapStyle(S.mapCfg), { diff: false });
-  S.map.once('style.load', () => applyMapFilter());
 }
 
 function toggleMapPanel() {
