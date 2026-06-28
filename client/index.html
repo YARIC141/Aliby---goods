@@ -229,8 +229,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-cats:empty{display:none}
 .sl-cats .chip{padding:3.5px 11.5px;font-size:14px}
-#sl-filters{display:none;flex-direction:column;flex-shrink:0}
-#sl-filters.open{display:flex}.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
+#sl-filters{display:flex;flex-direction:column;flex-shrink:0}
+.sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
 .sl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
 .sl-item.sel{background:oklch(from var(--bg-2) l c h / .65)}
@@ -955,9 +955,6 @@ document.addEventListener('deviceready',function(){
           <svg class="ico" width="14" height="14" style="flex-shrink:0;color:var(--accent)"><use href="#i-pushpin"/></svg>
           <span class="addr-lbl placeholder" id="map-addr-lbl">Укажите адрес доставки</span>
         </button>
-        <button id="sl-filter-btn" class="map-addr-bar" onclick="toggleSlFilter()">
-          <svg class="ico" width="13" height="13" style="flex-shrink:0"><use href="#i-search"/></svg>Фильтр
-        </button>
       </div>
       <div id="sl-filters">
         <div class="sl-search">
@@ -1077,6 +1074,7 @@ document.addEventListener('deviceready',function(){
     </div>
 
     <div class="menu-toolbar" style="margin:0 -20px">
+      <button onclick="openAddressPicker()" title="Адрес доставки" class="btn" style="width:36px;height:36px;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--r-2)"><svg class="ico" width="16" height="16"><use href="#i-pushpin"/></svg></button>
       <input type="search" id="m-search" placeholder="Поиск блюда…" oninput="debouncedMenuLoad()">
       <select id="m-sort" onchange="loadMenuItems()">
         <option value="">Сортировка</option>
@@ -1649,7 +1647,7 @@ document.addEventListener('deviceready',function(){
 <div class="overlay" id="m-addr-pick">
   <div class="modal" style="max-width:560px;padding:0;overflow:hidden">
     <div class="modal-hd" style="padding:14px 18px">
-      <h3>Указать адрес на карте</h3>
+      <h3>Укажите ваш адрес на карте</h3>
       <button class="modal-x" onclick="closeAddrPicker()">✕</button>
     </div>
     <div style="display:flex;gap:8px;padding:8px 14px;border-bottom:1px solid var(--line-soft)">
