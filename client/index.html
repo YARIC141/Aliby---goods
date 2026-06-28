@@ -221,6 +221,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 #nearby-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--accent);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3)}
 #nearby-slider::-moz-range-track{background:transparent}
 .btn-green-p{background:linear-gradient(180deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,0) 42%),linear-gradient(145deg,#16a34a,#22c55e)!important;color:#fff!important;border-color:transparent!important;box-shadow:0 10px 28px rgba(22,163,74,.4)!important}
+.btn-yellow-p{background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,0) 42%),linear-gradient(145deg,#f5a800,#ffd000)!important;color:#1a1200!important;border-color:transparent!important;box-shadow:0 10px 28px rgba(245,168,0,.4)!important}
 .sl-panel{width:280px;flex-shrink:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;background:transparent;transition:width .25s ease,max-height .25s ease}
 .map-layout.no-map .map-area{flex:0;min-width:0;width:0;overflow:hidden}
 .map-layout.no-map .sl-panel{flex:1;width:auto;border-right:none}
@@ -4689,7 +4690,7 @@ async function toggleDeliveryFilter() {
     openAddressPicker(); return;
   }
   S.deliveryFilter = !S.deliveryFilter;
-  document.getElementById('delivery-filter-btn')?.classList.toggle('btn-green-p', S.deliveryFilter);
+  document.getElementById('delivery-filter-btn')?.classList.toggle('btn-yellow-p', S.deliveryFilter);
   if (S.deliveryFilter) {
     await Promise.all(
       S.allStores.filter(st => st.delivery_enabled && _dzCache[st.id] === undefined)
