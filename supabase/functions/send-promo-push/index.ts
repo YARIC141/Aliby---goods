@@ -159,6 +159,21 @@ Deno.serve(async (req: Request) => {
     uniqueUserIds = [...new Set(orders.map((o: { user_id: string }) => o.user_id))]
   }
 
+  // Exclude users who explicitly opted out from this store's promos
+  if (uniqueUserIds.length) {
+    const { data: optedOut } = await svcClient
+      .from('store_notif_subs')
+      .select('user_id')
+      .eq('store_id', store_id)
+      .eq('subscribed', false)
+      .in('user_id', uniqueUserIds)
+    if (optedOut?.length) {
+      const optedOutSet = new Set(optedOut.map((r: { user_id: string }) => r.user_id))
+      uniqueUserIds = uniqueUserIds.filter(uid => !optedOutSet.has(uid))
+      if (!uniqueUserIds.length) return jsonResponse({ sent: 0, skipped: optedOut.length })
+    }
+  }
+
   const { data: subs } = await svcClient
     .from('push_subscriptions')
     .select('user_id, device_token, platform, endpoint, p256dh, auth_key')

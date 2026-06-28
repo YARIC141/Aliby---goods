@@ -788,6 +788,7 @@ document.addEventListener('deviceready',function(){
 <symbol id="i-truck" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></symbol>
 <symbol id="i-store" viewBox="0 0 24 24"><path d="M2 3h20v4a2 2 0 01-2 2H4a2 2 0 01-2-2V3z"/><path d="M4 9h16v12H4z"/><path d="M10 13h4v8h-4z"/></symbol>
 <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></symbol>
+<symbol id="i-bell-off" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
 <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></symbol>
@@ -832,6 +833,7 @@ document.addEventListener('deviceready',function(){
 
 <!-- ════════════════ PH ACTIONS (profile + theme — float top-right) ════════════════ -->
 <div id="ph-actions" style="display:none">
+  <button id="store-bell-btn" class="ph-icon-btn" onclick="toggleStoreNotif()" title="Подписаться на уведомления" style="display:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell-off"/></svg></button>
   <button class="ph-icon-btn" id="ph-notif-btn" onclick="openPromoNotifs()" title="Уведомления" style="position:relative">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bell"/></svg>
     <span id="ph-notif-badge" style="display:none;position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:var(--accent);pointer-events:none"></span>
@@ -1056,6 +1058,7 @@ document.addEventListener('deviceready',function(){
         <div class="meta-line" id="st-phone"></div>
         <button id="st-delivery-badge" class="btn btn-sm" style="display:none;margin-top:8px" onclick="openDzViewer(S.store)"><svg class="ico" width="13" height="13"><use href="#i-bicycle"/></svg>Доставка · Зоны →</button>
         <button class="btn btn-sm" id="st-sched-btn" style="margin-top:8px" onclick="openStoreSchedule(S.store)"></button>
+        <button id="st-notif-btn" class="btn btn-sm" onclick="toggleStoreNotif()" style="display:none;margin-top:8px"></button>
         <a id="st-complaint-link" href="#" onclick="openStoreComplaint();return false" style="display:none;margin-top:10px;font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:underline;text-underline-offset:3px">Пожаловаться на заведение</a>
       </div>
     </div>
@@ -2375,6 +2378,7 @@ function goTo(id, opts = {}) {
   document.querySelectorAll('[data-nav]').forEach(b => b.classList.remove('active'));
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   document.getElementById('ph-actions').style.display = id === 'auth' ? 'none' : '';
+  if (id !== 'store') { const _sb = document.getElementById('store-bell-btn'); if (_sb) _sb.style.display = 'none'; }
   const sid = id;
   ({'home':loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,calenabs:loadCalenabsScreen,profile:loadProfile})[sid]?.();
   if (opts.dir && prevId && prevId !== sid) {
@@ -3438,6 +3442,62 @@ function showGeoToast(msg) {
 }
 function openStoreFromPopup() { closePopup(); goTo('store'); }
 
+// ─── STORE NOTIFICATION SUBSCRIPTION ───
+async function loadStoreNotifState(storeId) {
+  S._storeNotifSub = null;
+  const uid = S.session?.user?.id;
+  const phBtn   = document.getElementById('store-bell-btn');
+  const metaBtn = document.getElementById('st-notif-btn');
+  if (!uid) {
+    if (phBtn)   phBtn.style.display   = 'none';
+    if (metaBtn) metaBtn.style.display = 'none';
+    return;
+  }
+  if (phBtn)   phBtn.style.display   = '';
+  if (metaBtn) metaBtn.style.display = '';
+  _updateStoreNotifUI(null);
+  try {
+    const rows = await req(`/rest/v1/store_notif_subs?user_id=eq.${uid}&store_id=eq.${storeId}&select=subscribed`);
+    S._storeNotifSub = rows?.[0]?.subscribed ?? null;
+  } catch { S._storeNotifSub = null; }
+  _updateStoreNotifUI(S._storeNotifSub);
+}
+
+function _updateStoreNotifUI(subscribed) {
+  const isOn = subscribed === true;
+  const phBtn = document.getElementById('store-bell-btn');
+  if (phBtn) {
+    phBtn.style.color = isOn ? 'var(--accent)' : '';
+    phBtn.title = isOn ? 'Отписаться от уведомлений' : 'Подписаться на уведомления';
+    phBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="${isOn ? '#i-bell' : '#i-bell-off'}"/></svg>`;
+  }
+  const metaBtn = document.getElementById('st-notif-btn');
+  if (metaBtn) {
+    metaBtn.innerHTML = `${svgIco(isOn ? 'bell' : 'bell-off', 13)} ${isOn ? 'Подписан' : 'Подписаться'}`;
+    metaBtn.style.color = isOn ? 'var(--accent)' : '';
+  }
+}
+
+async function toggleStoreNotif() {
+  const uid = S.session?.user?.id;
+  if (!uid) { goTo('auth'); return; }
+  if (!S.store?.id) return;
+  const sid = S.store.id;
+  const wasOn = S._storeNotifSub === true;
+  S._storeNotifSub = wasOn ? false : true;
+  _updateStoreNotifUI(S._storeNotifSub);
+  try {
+    await req('/rest/v1/store_notif_subs', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({ user_id: uid, store_id: sid, subscribed: !wasOn }),
+    });
+  } catch {
+    S._storeNotifSub = wasOn ? true : null;
+    _updateStoreNotifUI(S._storeNotifSub);
+  }
+}
+
 // ─── STORE ───
 async function loadStore() {
   if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
@@ -3456,6 +3516,7 @@ async function loadStore() {
     const subs = document.getElementById('store-subs'); if (subs) subs.innerHTML = '';
     const mi = document.getElementById('menu-items');
     if (mi) mi.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:40px 0"><div style="margin-bottom:14px;opacity:.6">${svgIco('pin',40)}</div>Выберите заведение для направления «${dirLabel}»<button class="btn btn-p btn-full" style="margin-top:16px" onclick="goTo('map')">Открыть карту →</button></div>`;
+    ['store-bell-btn','st-notif-btn'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     return;
   }
   updateMenuSearchPlaceholder();
@@ -3530,6 +3591,7 @@ async function loadStore() {
   })();
   loadStoreSubs();
   loadMenuUserSubs().then(() => { if (S.menuUserSubs?.length) loadMenuItems(); });
+  loadStoreNotifState(st.id);
 }
 
 function applyStoreGate() {
