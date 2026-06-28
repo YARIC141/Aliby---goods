@@ -3459,8 +3459,7 @@ async function loadStoreNotifState(storeId) {
   if (metaBtn) metaBtn.style.display = '';
   _updateStoreNotifUI(null);
   try {
-    // _t busts SW cache so we always get fresh subscription state after toggle
-    const rows = await req(`/rest/v1/store_notif_subs?user_id=eq.${uid}&store_id=eq.${storeId}&select=subscribed&_t=${Date.now()}`);
+    const rows = await req(`/rest/v1/store_notif_subs?user_id=eq.${uid}&store_id=eq.${storeId}&select=subscribed`);
     if (S.store?.id !== storeId) return; // пользователь уже перешёл в другое заведение
     S._storeNotifSub = rows?.[0]?.subscribed ?? null;
   } catch { S._storeNotifSub = null; }
@@ -3496,6 +3495,9 @@ async function toggleStoreNotif() {
       headers: { Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify({ user_id: uid, store_id: sid, subscribed: !wasOn }),
     });
+    caches.open('alliby-api-v1').then(c => c.keys().then(keys =>
+      keys.filter(r => r.url.includes('store_notif_subs')).forEach(r => c.delete(r))
+    )).catch(() => {});
   } catch {
     S._storeNotifSub = wasOn ? true : null;
     _updateStoreNotifUI(S._storeNotifSub);
