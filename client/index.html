@@ -3459,7 +3459,9 @@ async function loadStoreNotifState(storeId) {
   if (metaBtn) metaBtn.style.display = '';
   _updateStoreNotifUI(null);
   try {
-    const rows = await req(`/rest/v1/store_notif_subs?user_id=eq.${uid}&store_id=eq.${storeId}&select=subscribed`);
+    // _t busts SW cache so we always get fresh subscription state after toggle
+    const rows = await req(`/rest/v1/store_notif_subs?user_id=eq.${uid}&store_id=eq.${storeId}&select=subscribed&_t=${Date.now()}`);
+    if (S.store?.id !== storeId) return; // пользователь уже перешёл в другое заведение
     S._storeNotifSub = rows?.[0]?.subscribed ?? null;
   } catch { S._storeNotifSub = null; }
   _updateStoreNotifUI(S._storeNotifSub);
