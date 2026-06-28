@@ -84,8 +84,8 @@ html.dark{
   --glass-card:oklch(0.26 0.011 60 / .48);
   --glass-ui:oklch(0.26 0.011 60 / .65);
 }
-html,body{background-color:var(--bg);background-image:radial-gradient(circle 740px at 0% 0%,rgba(232,116,59,.52) 0%,transparent 80%),radial-gradient(circle 840px at 100% 100%,rgba(120,180,224,.58) 0%,transparent 80%),linear-gradient(135deg,rgba(232,116,59,.18) 0%,rgba(120,180,224,.18) 100%);background-attachment:fixed;overscroll-behavior-y:none}
-html.dark,html.dark body{background-image:radial-gradient(circle 600px at 0% 0%,rgba(232,116,59,.44) 0%,transparent 68%),radial-gradient(circle 700px at 100% 100%,rgba(120,180,224,.54) 0%,transparent 68%)}
+html,body{background-color:var(--bg);background-image:radial-gradient(circle 740px at 0% 0%,var(--bg-orb1,rgba(232,116,59,.52)) 0%,transparent 80%),radial-gradient(circle 840px at 100% 100%,rgba(120,180,224,.58) 0%,transparent 80%),linear-gradient(135deg,var(--bg-orb1-sub,rgba(232,116,59,.18)) 0%,rgba(120,180,224,.18) 100%);background-attachment:fixed;overscroll-behavior-y:none}
+html.dark,html.dark body{background-image:radial-gradient(circle 600px at 0% 0%,var(--bg-orb1-dk,rgba(232,116,59,.44)) 0%,transparent 68%),radial-gradient(circle 700px at 100% 100%,rgba(120,180,224,.54) 0%,transparent 68%)}
 body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden;height:100dvh}
 #bg-ornament{position:fixed;inset:-200px 0;width:100%;height:calc(100% + 400px);pointer-events:none;z-index:0}
 svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
@@ -1892,6 +1892,11 @@ const CTA_COLORS = {
   goods:    { from:'#4a90c2', to:'#78b4e0', glow:'rgba(120,180,224,.45)' },
   services: { from:'#c4541e', to:'#e8743b', glow:'rgba(232,116,59,.45)' },
 };
+const BG_ORBS = {
+  food:     { orb1:'rgba(232,116,59,.52)', sub:'rgba(232,116,59,.18)', dk:'rgba(232,116,59,.44)' },
+  goods:    { orb1:'rgba(52,168,98,.52)',  sub:'rgba(52,168,98,.18)',  dk:'rgba(52,168,98,.44)' },
+  services: { orb1:'rgba(120,180,224,.52)',sub:'rgba(120,180,224,.18)',dk:'rgba(120,180,224,.44)' },
+};
 const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
 
 const HEADER_TINTS = {
@@ -1909,6 +1914,10 @@ function applyDirectionAccents(dir) {
   r.style.setProperty('--cta-to',   cta.to);
   r.style.setProperty('--cta-glow', cta.glow);
   r.style.setProperty('--header-tint', HEADER_TINTS[dir] || 'transparent');
+  const orb = BG_ORBS[dir] || BG_ORBS.food;
+  r.style.setProperty('--bg-orb1',     orb.orb1);
+  r.style.setProperty('--bg-orb1-sub', orb.sub);
+  r.style.setProperty('--bg-orb1-dk',  orb.dk);
 }
 
 // ─── SKELETONS ───
