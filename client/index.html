@@ -950,15 +950,15 @@ document.addEventListener('deviceready',function(){
         <button class="dir-tab" data-dir="goods" onclick="setDirection('goods')"><svg class="ico" width="16" height="16" style="margin-right:5px"><use href="#i-goods"/></svg>Товары</button>
         <button class="dir-tab" data-dir="services" onclick="setDirection('services')"><svg class="ico" width="16" height="16" style="margin-right:5px"><use href="#i-services"/></svg>Услуги</button>
       </div>
-      <div class="map-addr-wrap">
-        <button class="map-addr-bar" id="map-addr-bar" onclick="openAddressPicker()" style="flex:1;min-width:0">
-          <svg class="ico" width="14" height="14" style="flex-shrink:0;color:var(--accent)"><use href="#i-pushpin"/></svg>
-          <span class="addr-lbl placeholder" id="map-addr-lbl">Укажите адрес доставки</span>
-        </button>
-      </div>
       <div id="sl-filters">
         <div class="sl-search">
-          <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)" style="width:100%;box-sizing:border-box;margin-bottom:6px">
+          <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+            <button id="map-addr-bar" onclick="openAddressPicker()" class="btn" style="width:36px;height:36px;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--r-2);color:var(--fg-4)">
+              <svg class="ico" width="20" height="20"><use href="#i-home"/></svg>
+              <span id="map-addr-lbl" style="display:none">Укажите адрес доставки</span>
+            </button>
+            <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)" style="flex:1;box-sizing:border-box">
+          </div>
           <div style="display:flex;gap:6px">
             <button id="nearby-btn" class="btn btn-sm" onclick="openNearbyModal()" title="Рядом со мной" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-locate"/></svg>Рядом</button>
             <button id="delivery-filter-btn" class="btn btn-sm" onclick="toggleDeliveryFilter()" title="Доставка до меня" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-bicycle"/></svg>Доставка</button>
@@ -4662,6 +4662,8 @@ function updateMapAddrBtn() {
     if (text) { mapLbl.textContent = text; mapLbl.classList.remove('placeholder'); }
     else { mapLbl.textContent = 'Укажите адрес доставки'; mapLbl.classList.add('placeholder'); }
   }
+  const mapBtn = document.getElementById('map-addr-bar');
+  if (mapBtn) mapBtn.style.color = text ? 'var(--accent)' : 'var(--fg-4)';
   const pLbl = document.getElementById('p-addr-lbl');
   if (pLbl) {
     if (text) { pLbl.textContent = text; pLbl.style.fontStyle = ''; pLbl.style.color = ''; }
