@@ -4646,9 +4646,19 @@ function openNearbyModal() {
 
 function applyNearbyFilter(meters) {
   if (!meters || meters < 100) return;
-  const warn = document.getElementById('nearby-geo-warn');
-  warn.style.display = 'none';
   closeModal('m-nearby');
+
+  // If delivery address is set — use it instantly (same centre as auto-apply on load)
+  if (S.userAddrLat != null) {
+    S.geoLat = S.userAddrLat; S.geoLng = S.userAddrLng;
+    S.nearbyMeters = meters;
+    document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
+    applyMapFilter();
+    if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 14, duration: 600 });
+    return;
+  }
+
+  // Fallback: request device GPS when no delivery address is set
   navigator.geolocation.getCurrentPosition(pos => {
     S.geoLat = pos.coords.latitude;
     S.geoLng = pos.coords.longitude;
@@ -4659,8 +4669,9 @@ function applyNearbyFilter(meters) {
   }, err => {
     const modal = document.getElementById('m-nearby');
     if (modal) modal.style.display = 'flex';
+    const warn = document.getElementById('nearby-geo-warn');
     warn.textContent = err.code === 1
-      ? 'Доступ к геолокации запрещён. Разрешите его в настройках браузера.'
+      ? 'Доступ к геолокации запрещён. Установите адрес доставки или разрешите его в настройках браузера.'
       : 'Не удалось определить местоположение.';
     warn.style.display = 'block';
   }, { maximumAge: 60000, timeout: 8000, enableHighAccuracy: false });
