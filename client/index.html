@@ -953,15 +953,15 @@ document.addEventListener('deviceready',function(){
       <div id="sl-filters">
         <div class="sl-search">
           <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
-            <button id="map-addr-bar" onclick="openAddressPicker()" class="btn" style="width:36px;height:36px;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--r-2);color:var(--fg-4)">
+            <button id="map-addr-bar" onclick="openAddressPicker()" class="btn" style="width:54px;height:36px;flex-shrink:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--r-2);color:var(--fg-4)">
               <svg class="ico" width="20" height="20"><use href="#i-home"/></svg>
               <span id="map-addr-lbl" style="display:none">Укажите адрес доставки</span>
             </button>
             <input type="search" placeholder="Поиск заведения…" oninput="filterStores(this.value)" style="flex:1;box-sizing:border-box">
           </div>
           <div style="display:flex;gap:6px">
-            <button id="nearby-btn" class="btn btn-sm" onclick="openNearbyModal()" title="Рядом со мной" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-locate"/></svg>Рядом</button>
-            <button id="delivery-filter-btn" class="btn btn-sm" onclick="toggleDeliveryFilter()" title="Доставка до меня" style="flex:1;white-space:nowrap"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-bicycle"/></svg>Доставка</button>
+            <button id="nearby-btn" class="btn btn-sm" onclick="openNearbyModal()" title="Рядом со мной" style="flex:1;white-space:nowrap;justify-content:center"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-locate"/></svg>Рядом</button>
+            <button id="delivery-filter-btn" class="btn btn-sm" onclick="toggleDeliveryFilter()" title="Доставка до меня" style="flex:1;white-space:nowrap;justify-content:center"><svg class="ico" width="13" height="13" style="margin-right:3px"><use href="#i-bicycle"/></svg>Доставка</button>
           </div>
         </div>
         <div class="sl-cats" id="sl-cats"></div>
@@ -3118,8 +3118,39 @@ function applyMapFilter(q) {
   });
   renderStoreList(filtered);
   document.getElementById('map-no-cat')?.classList.add('hidden');
-  if (S.map) { renderMapMarkers(filtered); _renderHomeMarker(); }
+  if (S.map) { renderMapMarkers(filtered); _renderHomeMarker(); _renderNearbyCircle(); }
   _syncSlFilterBtn();
+}
+
+function _geoCircle(lng, lat, radiusMeters, steps) {
+  steps = steps || 64;
+  const coords = [];
+  const latRad = lat * Math.PI / 180;
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i / steps) * 2 * Math.PI;
+    coords.push([lng + (radiusMeters / (111320 * Math.cos(latRad))) * Math.sin(angle), lat + (radiusMeters / 111320) * Math.cos(angle)]);
+  }
+  return { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] } }] };
+}
+
+function _renderNearbyCircle() {
+  if (!S.map) return;
+  if (!S.nearbyMeters || S.geoLat == null) { _clearNearbyCircle(); return; }
+  const data = _geoCircle(S.geoLng, S.geoLat, S.nearbyMeters);
+  if (S.map.getSource('nearby-circle')) {
+    S.map.getSource('nearby-circle').setData(data);
+  } else {
+    S.map.addSource('nearby-circle', { type: 'geojson', data });
+    S.map.addLayer({ id: 'nearby-circle-fill', type: 'fill', source: 'nearby-circle', paint: { 'fill-color': '#78b4e0', 'fill-opacity': 0.15 } });
+    S.map.addLayer({ id: 'nearby-circle-border', type: 'line', source: 'nearby-circle', paint: { 'line-color': '#4a90c2', 'line-width': 2, 'line-opacity': 0.75 } });
+  }
+}
+
+function _clearNearbyCircle() {
+  if (!S.map) return;
+  if (S.map.getLayer('nearby-circle-fill')) S.map.removeLayer('nearby-circle-fill');
+  if (S.map.getLayer('nearby-circle-border')) S.map.removeLayer('nearby-circle-border');
+  if (S.map.getSource('nearby-circle')) S.map.removeSource('nearby-circle');
 }
 
 function _renderHomeMarker() {
