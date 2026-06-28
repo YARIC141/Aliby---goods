@@ -2336,6 +2336,7 @@ async function bookWithPreselect(btn, item) {
     _schedulePreselect = null;
     document.getElementById('preselect-banner').style.display = 'none';
     showGeoToast(`Записано на ${date} в ${start}`);
+    _invalidateApiCache('bookings');
     loadMenuItems();
   } catch (e) {
     restore();
@@ -3444,6 +3445,12 @@ function showGeoToast(msg) {
 }
 function openStoreFromPopup() { closePopup(); goTo('store'); }
 
+function _invalidateApiCache(keyword) {
+  caches.open('alliby-api-v1').then(c => c.keys().then(keys =>
+    keys.filter(r => r.url.includes(keyword)).forEach(r => c.delete(r))
+  )).catch(() => {});
+}
+
 // ─── STORE NOTIFICATION SUBSCRIPTION ───
 async function loadStoreNotifState(storeId) {
   S._storeNotifSub = null;
@@ -3495,9 +3502,7 @@ async function toggleStoreNotif() {
       headers: { Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify({ user_id: uid, store_id: sid, subscribed: !wasOn }),
     });
-    caches.open('alliby-api-v1').then(c => c.keys().then(keys =>
-      keys.filter(r => r.url.includes('store_notif_subs')).forEach(r => c.delete(r))
-    )).catch(() => {});
+    _invalidateApiCache('store_notif_subs');
   } catch {
     S._storeNotifSub = wasOn ? true : null;
     _updateStoreNotifUI(S._storeNotifSub);
@@ -5778,7 +5783,7 @@ async function buySubscription() {
     closeModal('m-buy');
     S.pendingSub  = null;
     S.pendingGift = false;
-    // Сбрасываем кэш абонементов чтобы корзина пересчитала цены
+    _invalidateApiCache('user_subscriptions');
     S.menuUserSubs = [];
     if (S.cart.length) {
       const sid = S.store?.id || S.cartStoreId;
@@ -5844,6 +5849,7 @@ async function updateName() {
       body: JSON.stringify({ full_name }),
     });
     if (S.profile) { S.profile.full_name = full_name; _writeProfileCache(S.session.user.id, S.profile); }
+    _invalidateApiCache('profiles');
     restore();
     alert('Имя сохранено');
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
@@ -5862,6 +5868,7 @@ async function updateAddress() {
     S.userAddrLat = lat;
     S.userAddrLng = lng;
     if (S.profile) { S.profile.address = address; S.profile.address_lat = lat; S.profile.address_lng = lng; _writeProfileCache(S.session.user.id, S.profile); }
+    _invalidateApiCache('profiles');
     updateMapAddrBtn();
     _renderHomeMarker();
     restore(); alert('Адрес сохранён');
@@ -5983,7 +5990,7 @@ function confirmAddrPick() {
     req(`/rest/v1/profiles?id=eq.${S.session.user.id}`, {
       method: 'PATCH',
       body: JSON.stringify({ address: _addrPickResult.text, address_lat: _addrPickResult.lat, address_lng: _addrPickResult.lng, city: detectedCity || null }),
-    }).catch(() => {});
+    }).then(() => _invalidateApiCache('profiles')).catch(() => {});
   }
   if (_addrPickNavCb) { const cb = _addrPickNavCb; _addrPickNavCb = null; cb(); }
   if (_pendingDelivery) {
@@ -6001,6 +6008,7 @@ async function updatePhone() {
       body: JSON.stringify({ phone }),
     });
     if (S.profile) { S.profile.phone = phone; _writeProfileCache(S.session.user.id, S.profile); }
+    _invalidateApiCache('profiles');
     restore();
     alert('Телефон сохранён');
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || '')); }
@@ -7329,6 +7337,7 @@ async function cancelBooking(id) {
       method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }),
     });
     showGeoToast('Запись отменена');
+    _invalidateApiCache('bookings');
     loadBookingsScreen();
   } catch(e) { showGeoToast('Ошибка при отмене'); }
 }
