@@ -7442,11 +7442,14 @@ function openSupportEmail() {
 function openStoreComplaint() {
   const st = S.store;
   const name = st?.name || 'заведение';
-  const subject = encodeURIComponent(`Жалоба на заведение: ${name}`);
-  const body = encodeURIComponent(`Название заведения: ${name}\nID: ${st?.id || ''}\n\nОпишите проблему:\n`);
-  const a = document.createElement('a');
-  a.href = `mailto:alliby.app@gmail.com?subject=${subject}&body=${body}`;
-  a.click();
+  const subject = `Жалоба на заведение: ${name}`;
+  const bodyText = `Название заведения: ${name}\nID: ${st?.id || '—'}\n\nОпишите проблему:\n`;
+  const encS = encodeURIComponent(subject);
+  const encB = encodeURIComponent(bodyText);
+  document.getElementById('support-body-preview').value = 'Кому: alliby.app@gmail.com\nТема: ' + subject + '\n\n' + bodyText;
+  document.getElementById('support-mailto-btn').href = 'mailto:alliby.app@gmail.com?subject=' + encS + '&body=' + encB;
+  document.getElementById('support-gmail-btn').href = 'https://mail.google.com/mail/?view=cm&to=alliby.app@gmail.com&su=' + encS + '&body=' + encB;
+  openModal('m-support');
 }
 
 function openStoreScheduleById(id) {
