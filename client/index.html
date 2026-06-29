@@ -1558,9 +1558,12 @@ document.addEventListener('deviceready',function(){
       <pre id="mcb-text" style="white-space:pre-wrap;font-family:inherit;margin:0"></pre>
     </div>
     <p id="mcb-scroll-hint" style="font-size:12px;color:var(--fg-3);text-align:center;margin:8px 0 0">Прокрутите соглашение до конца, чтобы подписать</p>
+    <div class="contract-accept" id="mcb-accept" style="display:none">
+      <label><input type="checkbox" id="mcb-check" onchange="document.getElementById('mcb-sign-btn').disabled=!this.checked"><span>Я ознакомился(лась) с условиями Пользовательского соглашения и принимаю их в полном объёме</span></label>
+    </div>
     <div class="modal-ft" style="flex-direction:column;gap:6px">
       <button id="mcb-sign-btn" class="btn btn-p btn-full" onclick="signContract('buyer')" disabled>Подписать</button>
-      <p style="font-size:11px;color:var(--fg-4);text-align:center;margin:0">Простая электронная подпись · ФЗ-63 · IP-адрес и время фиксируются</p>
+      <p style="font-size:11px;color:var(--fg-4);text-align:center;margin:0">Факт принятия соглашения фиксируется · IP-адрес и время сохраняются</p>
     </div>
   </div>
 </div>
@@ -6785,22 +6788,30 @@ async function requireContract(type, next) {
   const text   = document.getElementById('mc' + (type === 'buyer' ? 'b' : 's') + '-text');
   const btn    = document.getElementById('mc' + (type === 'buyer' ? 'b' : 's') + '-sign-btn');
   const hint   = document.getElementById('mc' + (type === 'buyer' ? 'b' : 's') + '-scroll-hint');
+  const prefix2  = 'mc' + (type === 'buyer' ? 'b' : 's');
+  const accept2  = document.getElementById(prefix2 + '-accept');
+  const check2   = document.getElementById(prefix2 + '-check');
   const contract2 = type === 'buyer' ? BUYER_CONTRACT : null;
   text.textContent  = _renderContractText(contract2.text);
   btn.disabled      = true;
   btn.textContent   = 'Подписать';
-  if (hint) hint.style.display = '';
+  if (hint)    hint.style.display   = '';
+  if (accept2) accept2.style.display = 'none';
+  if (check2)  check2.checked        = false;
   scroll.scrollTop  = 0;
   openModal('m-contract-' + type);
 }
 
 function onContractScroll(prefix) {
-  const el   = document.getElementById(prefix + '-scroll');
-  const btn  = document.getElementById(prefix + '-sign-btn');
-  const hint = document.getElementById(prefix + '-scroll-hint');
+  const el     = document.getElementById(prefix + '-scroll');
+  const btn    = document.getElementById(prefix + '-sign-btn');
+  const hint   = document.getElementById(prefix + '-scroll-hint');
+  const accept = document.getElementById(prefix + '-accept');
   if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) {
-    if (btn) btn.disabled = false;
-    if (hint) hint.style.display = 'none';
+    if (hint)   hint.style.display   = 'none';
+    if (accept) accept.style.display = '';
+    const check = document.getElementById(prefix + '-check');
+    if (btn) btn.disabled = check ? !check.checked : false;
   }
 }
 
