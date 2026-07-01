@@ -1377,22 +1377,6 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
-<!-- ════════════════ ALCOHOL BLOCK MODAL ════════════════ -->
-<div class="overlay" id="m-alcohol-warn">
-  <div class="modal">
-    <div class="modal-hd">
-      <h3>Оплата недоступна</h3>
-      <button class="modal-x" onclick="closeModal('m-alcohol-warn')">✕</button>
-    </div>
-    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px">
-      <span style="font-size:32px;flex-shrink:0">🚫</span>
-      <p style="font:400 14px/1.6 var(--font-sans);color:var(--fg-2);margin:0">В корзине есть товары с пометкой <strong>«Продажа только по паспорту»</strong>. Онлайн-оплата таких позиций недоступна.<br><br>Удалите эти товары из корзины или оплатите заказ при получении после предъявления паспорта.</p>
-    </div>
-    <div class="modal-ft">
-      <button class="btn btn-p btn-full" onclick="closeModal('m-alcohol-warn')">Понятно</button>
-    </div>
-  </div>
-</div>
 
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
@@ -3499,6 +3483,11 @@ async function toggleStoreNotif() {
   if (!S.store?.id) return;
   const sid = S.store.id;
   const wasOn = S._storeNotifSub === true;
+  // Подписка (не отписка) требует явного согласия на рекламные уведомления (ФЗ-38)
+  if (!wasOn && localStorage.getItem(_PROMO_CONSENT_KEY) !== 'yes') {
+    openPromoNotifs(); // покажет баннер «Да, хочу» / «Не сейчас»
+    return;
+  }
   S._storeNotifSub = wasOn ? false : true;
   _updateStoreNotifUI(S._storeNotifSub);
   try {
@@ -4007,7 +3996,6 @@ function itemFallbackImg(item, alt) {
 
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
-  if (item.is_passport_required) return '';
   if (S.direction === 'services') {
     if (_schedulePreselect) {
       return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();bookWithPreselect(this,itemCache.get('${item.id}'))">Записаться ${_schedulePreselect.start}</button>`;
@@ -4047,7 +4035,7 @@ function renderItemCard(item) {
       ? `<span class="sub-note sub-hint">«${esc(hint.sub.name)}»: ${hint.price} ₽</span>`
       : '';
   return `<div class="item-card" data-id="${item.id}" onclick="openItemDetail('${item.id}')">
-    <div class="item-img">${imgHtml}${item.is_passport_required ? '<span style="position:absolute;top:6px;left:6px;background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);padding:3px 7px;border-radius:var(--r-pill);letter-spacing:.04em;pointer-events:none">18+</span>' : ''}</div>
+    <div class="item-img">${imgHtml}</div>
     <div class="item-body">
       <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
       ${item.description ? `<div class="item-desc">${esc(item.description)}</div>` : ''}
@@ -4185,7 +4173,7 @@ function openItemDetail(id) {
   }
 
   const btn = document.getElementById('mi-cart-btn');
-  if (item.is_passport_required || S.store?.accepts_online_payment === false) {
+  if (S.store?.accepts_online_payment === false) {
     btn.style.display = 'none';
   } else {
     btn.style.display = '';
@@ -5217,7 +5205,7 @@ async function renderCart() {
       : '';
     return `<div class="cart-item">
       <div class="ci-info">
-        <div class="ci-name">${esc(item.name)}${item.is_passport_required ? ' <span style="display:inline-block;background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);vertical-align:middle;letter-spacing:.03em">18+</span>' : ''}</div>
+        <div class="ci-name">${esc(item.name)}</div>
         ${optionsHtml}
         ${priceHtml}
       </div>
@@ -5229,22 +5217,8 @@ async function renderCart() {
     : '');
   updateCartTotals();
 
-  const hasAlcohol = S.cart.some(c => c.item.is_passport_required);
   const payBtn = document.getElementById('cart-pay-btn');
-  let alcoholBanner = document.getElementById('cart-alcohol-banner');
-  if (hasAlcohol) {
-    if (!alcoholBanner) {
-      alcoholBanner = document.createElement('div');
-      alcoholBanner.id = 'cart-alcohol-banner';
-      alcoholBanner.style.cssText = 'margin-top:10px;padding:10px 14px;border-radius:var(--r-2);background:oklch(from var(--err) l c h / .12);border:1px solid oklch(from var(--err) l c h / .4);color:var(--err);font:400 13px/1.5 var(--font-sans)';
-      alcoholBanner.innerHTML = '🪪 <strong>Оплата онлайн недоступна:</strong> в корзине есть товары «Продажа только по паспорту». Оплатите при получении после предъявления паспорта.';
-      payBtn.parentNode.insertBefore(alcoholBanner, payBtn);
-    }
-    if (payBtn) { payBtn.disabled = true; payBtn.onclick = () => openModal('m-alcohol-warn'); }
-  } else {
-    alcoholBanner?.remove();
-    if (payBtn) { payBtn.disabled = false; payBtn.onclick = startCheckout; }
-  }
+  if (payBtn) { payBtn.disabled = false; payBtn.onclick = startCheckout; }
 }
 
 function cartQty(id, d) {
@@ -6847,7 +6821,6 @@ function startCheckout() {
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   if (!S.cart.length) return;
   window.AllibyBridge?.haptic('medium');
-  if (S.cart.some(c => c.item.is_passport_required)) { openModal('m-alcohol-warn'); return; }
   const alloc = getCartSubAllocation();
   if (alloc) {
     // Есть активный абонемент, покрывающий товары
@@ -6881,7 +6854,6 @@ function startCheckout() {
 async function doCheckout(useSubscription = false) {
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   if (!S.cart.length) return;
-  if (S.cart.some(c => c.item.is_passport_required)) { openModal('m-alcohol-warn'); return; }
   const storeId = S.cartStoreId || S.store?.id;
   if (!storeId) { showGeoToast('Не удалось определить заведение'); return; }
 

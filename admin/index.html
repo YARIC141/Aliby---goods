@@ -1669,9 +1669,17 @@ tr.row-click:hover td{background:var(--bg-2)}
         <input type="checkbox" id="mmi-avail" checked style="width:auto">
         <label for="mmi-avail">В наличии <span class="hint" data-tip="Снимите галочку, чтобы временно скрыть позицию от клиентов">?</span></label>
       </div>
-      <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:4px">
-        <input type="checkbox" id="mmi-passport" style="width:auto;accent-color:var(--err)">
-        <label for="mmi-passport" style="color:var(--err)">Продажа только по паспорту <span class="hint" data-tip="Отметьте для товаров, реализация которых ограничена по возрасту (алкоголь, табак, вейпы, пиротехника и др.). Онлайн-оплата таких позиций будет заблокирована — расчёт только при получении после проверки документа">?</span></label>
+      <div style="margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:oklch(from var(--err) l c h / .08);border:1px solid oklch(from var(--err) l c h / .3);font:400 12px/1.6 var(--font-sans);color:var(--fg-2)">
+        <strong style="color:var(--err)">⛔ Запрещённые товары</strong><br>
+        На платформе запрещено размещать:<br>
+        • Алкоголь (дистанционная продажа) — подп. 14 п. 2 ст. 16 ФЗ-171<br>
+        • Никотин, табак, электронные сигареты — ФЗ-15<br>
+        • Наркотики, психотропные вещества — ФЗ-3, ст. 228 УК РФ<br>
+        • Оружие, взрывчатые вещества — ФЗ-150, ст. 222.1 УК РФ<br>
+        • Рецептурные лекарства — ФЗ-61<br>
+        • Пиротехника II–V класса — ТР ЕАЭС 006/2011<br>
+        • Нацистская символика, экстремистский контент — ФЗ-114<br>
+        <span style="color:var(--err)">Нарушение = немедленная блокировка кабинета (Лицензионный договор §5.5).</span>
       </div>
     </div>
 
@@ -3804,7 +3812,6 @@ function _menuItemCard(i, isEmp, showCat) {
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;min-width:0">
             <span style="font:600 14px/1.2 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(i.name)}</span>
-            ${i.is_passport_required ? '<span style="flex-shrink:0;background:var(--err);color:#fff;font:700 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);letter-spacing:.03em">18+</span>' : ''}
           </div>
           <div style="font-size:12px;color:var(--fg-3);margin-bottom:3px">${subtitle}</div>
           ${avail}
@@ -3988,7 +3995,6 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-price').value     = item?.price           || '';
   document.getElementById('mmi-prep-time').value = item?.preparation_time ?? 0;
   document.getElementById('mmi-avail').checked    = item ? item.is_available : true;
-  document.getElementById('mmi-passport').checked  = item?.is_passport_required || false;
   document.getElementById('mmi-image-url').value = item?.image_url       || '';
   document.getElementById('mmi-store').value    = item?.store_id    || '';
   S.uploadedPhotoFilename = null;
@@ -4326,7 +4332,6 @@ async function saveMenuItem() {
     price:            parseFloat(document.getElementById('mmi-price').value),
     preparation_time: parseInt(document.getElementById('mmi-prep-time').value, 10) || 0,
     is_available:     document.getElementById('mmi-avail').checked,
-    is_passport_required: document.getElementById('mmi-passport').checked,
     image_url:        document.getElementById('mmi-image-url').value || null,
   };
   const ctrl = new AbortController();
