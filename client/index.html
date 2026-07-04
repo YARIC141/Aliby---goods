@@ -2420,7 +2420,7 @@ function syncStoreNavBtn() {
 
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
   if (b.dataset.nav === 'store' && !S.store) {
-    _showNativeToast('Выберите заведение', 'Сначала выберите заведение');
+    showGeoToast('Сначала выберите заведение');
     return;
   }
   goTo(b.dataset.nav);
