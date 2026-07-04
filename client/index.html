@@ -120,7 +120,8 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 .bn-btn .ico{font-size:28px;line-height:1;display:block}
 .bn-lbl{min-height:2.4em;display:flex;align-items:flex-start;justify-content:center;text-align:center;white-space:normal;line-height:1.2}
 .bn-btn.active{color:var(--accent)}
-.bn-btn[data-nav="store"].store-inactive,.sn-btn[data-nav="store"].store-inactive{opacity:0.4}
+.bn-btn[data-nav="store"],.sn-btn[data-nav="store"]{opacity:0.4;transition:opacity var(--t-fast)}
+.bn-btn[data-nav="store"].store-active,.sn-btn[data-nav="store"].store-active{opacity:1}
 .screen-tip{font:400 13px/1.5 var(--font-sans);color:var(--fg-3);background:var(--bg-2);border-left:3px solid var(--accent,#e8743b);padding:0 14px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;flex-shrink:0}
 .screen-tip.open{max-height:120px;padding:10px 14px}
 
@@ -2414,8 +2415,7 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.screen-tip')) document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
 });
 function syncStoreNavBtn() {
-  const inactive = !S.store;
-  document.querySelectorAll('[data-nav="store"]').forEach(b => b.classList.toggle('store-inactive', inactive));
+  document.querySelectorAll('[data-nav="store"]').forEach(b => b.classList.toggle('store-active', !!S.store));
 }
 
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
