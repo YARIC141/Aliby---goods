@@ -120,6 +120,7 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 .bn-btn .ico{font-size:28px;line-height:1;display:block}
 .bn-lbl{min-height:2.4em;display:flex;align-items:flex-start;justify-content:center;text-align:center;white-space:normal;line-height:1.2}
 .bn-btn.active{color:var(--accent)}
+.bn-btn[data-nav="store"].store-inactive,.sn-btn[data-nav="store"].store-inactive{opacity:0.4}
 .screen-tip{font:400 13px/1.5 var(--font-sans);color:var(--fg-3);background:var(--bg-2);border-left:3px solid var(--accent,#e8743b);padding:0 14px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;flex-shrink:0}
 .screen-tip.open{max-height:120px;padding:10px 14px}
 
@@ -2009,7 +2010,7 @@ function setDirection(dir) {
   S.cart = dc.items; S.cartStoreId = dc.storeId;
   if (dc.storeId) {
     const ns = S.allStores?.find(s => s.id === dc.storeId);
-    if (ns) S.store = ns;
+    if (ns) { S.store = ns; syncStoreNavBtn(); }
   }
   updateCartCount();
   saveCart();
@@ -2412,7 +2413,18 @@ document.addEventListener('click', e => {
   }
   if (!e.target.closest('.screen-tip')) document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
 });
-document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => goTo(b.dataset.nav)));
+function syncStoreNavBtn() {
+  const inactive = !S.store;
+  document.querySelectorAll('[data-nav="store"]').forEach(b => b.classList.toggle('store-inactive', inactive));
+}
+
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
+  if (b.dataset.nav === 'store' && !S.store) {
+    _showNativeToast('Выберите заведение', 'Сначала выберите заведение');
+    return;
+  }
+  goTo(b.dataset.nav);
+}));
 
 
 function showAuthTab(name) {
@@ -2631,6 +2643,7 @@ async function _openPromoStore(storeId) {
     if (!st) return;
     if (st.direction && st.direction !== S.direction) setDirection(st.direction);
     S.store = st;
+    syncStoreNavBtn();
     goTo('store');
   } catch(e) {}
 }
@@ -2731,6 +2744,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Handle ?promo_store=ID when app is opened via notification click (no active client)
   var _promoStoreOnLoad = new URLSearchParams(location.search).get('promo_store');
   if (_promoStoreOnLoad) history.replaceState(null, '', '/');
+  syncStoreNavBtn();
 });
 
 // ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
@@ -3191,6 +3205,7 @@ function renderStoreList(stores) {
       <span style="flex-shrink:0">→</span>`;
     d.addEventListener('click', () => {
       S.store = st;
+      syncStoreNavBtn();
       try { localStorage.setItem('alliby_store', JSON.stringify(st)); } catch(e) {}
       document.querySelectorAll('.sl-item').forEach(el => el.classList.remove('sel'));
       d.classList.add('sel');
@@ -3268,6 +3283,7 @@ function filterStores(q) { applyMapFilter(q); }
 async function showStorePopup(st, listItem) {
   if (!st) return;
   S.store = st;
+  syncStoreNavBtn();
   try { localStorage.setItem('alliby_store', JSON.stringify(st)); } catch(e) {}
   document.querySelectorAll('.sl-item').forEach(el => el.classList.remove('sel'));
   listItem?.classList.add('sel');
