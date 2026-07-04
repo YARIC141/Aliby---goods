@@ -2536,7 +2536,7 @@ async function doRegister() {
       body: JSON.stringify({
         email: document.getElementById('reg-email').value,
         password: document.getElementById('reg-pwd').value,
-        data: { display_name: fullName },
+        data: { full_name: fullName },
       }),
     });
     if (d?.access_token) {
@@ -2892,7 +2892,7 @@ function setSession(d) {
     realtimeSubscribeOrders(uid);
     realtimeSubscribeBookings(uid);
     const _cp = _readProfileCache(uid); if (_cp) S.profile = _cp;
-    req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) { S.profile = p[0]; _writeProfileCache(uid, p[0]); } }).catch(() => {});
+    _profileReady = req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) { S.profile = p[0]; _writeProfileCache(uid, p[0]); } }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
     _registerWebPush(uid);
     _syncPromoNotifications(uid);
@@ -6756,10 +6756,12 @@ async function _sha256(text) {
 }
 
 let _contractNext = null;
+let _profileReady = null;
 
 async function requireContract(type, next) {
   if (!S.session) { next(); return; }
   try {
+    if (_profileReady) { try { await _profileReady; } catch {} }
     const contract = type === 'buyer' ? BUYER_CONTRACT : null;
     if (!contract) { next(); return; }
     const uid = S.session.user.id;
@@ -6805,14 +6807,16 @@ async function signContract(type) {
   if (!check?.checked) return;
   const restoreSign = btnLoad(btn, 'Подписание…');
   try {
-    const contract = type === 'buyer' ? BUYER_CONTRACT : null;
-    const hash     = await _sha256(contract.text);
+    const contract     = type === 'buyer' ? BUYER_CONTRACT : null;
+    const signerName   = S.profile?.full_name || '';
+    const renderedText = _renderContractText(contract.text);
+    const hash         = await _sha256(renderedText);
     const acceptText = type === 'buyer'
       ? 'Я ознакомился(лась) с условиями Пользовательского соглашения (публичная оферта) и принимаю их в полном объёме'
       : 'Я ознакомился(лась) с условиями Лицензионного договора (публичная оферта) и принимаю их в полном объёме';
     await req('/functions/v1/sign-contract', {
       method: 'POST',
-      body: JSON.stringify({ contract: type, version: contract.version, doc_hash: hash, accept_text: acceptText, user_agent: navigator.userAgent }),
+      body: JSON.stringify({ contract: type, version: contract.version, doc_hash: hash, accept_text: acceptText, signer_name: signerName || null, user_agent: navigator.userAgent }),
     });
     closeModal('m-contract-' + type);
     const next = _contractNext;

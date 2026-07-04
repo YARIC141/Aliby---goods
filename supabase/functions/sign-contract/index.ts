@@ -4,7 +4,7 @@
  * IP-адрес берётся из заголовков запроса на стороне сервера.
  *
  * POST /functions/v1/sign-contract
- * Body: { contract, version, doc_hash, accept_text, user_agent? }
+ * Body: { contract, version, doc_hash, accept_text, signer_name?, user_agent? }
  * Response: { ok: true, signature_id, already_signed? }
  */
 
@@ -32,12 +32,13 @@ Deno.serve(async (req: Request) => {
     version?: string
     doc_hash?: string
     accept_text?: string
+    signer_name?: string
     user_agent?: string
   }
   try { body = await req.json() }
   catch { return jsonResponse({ error: 'Invalid JSON body' }, 400) }
 
-  const { contract, version, doc_hash, accept_text, user_agent } = body
+  const { contract, version, doc_hash, accept_text, signer_name, user_agent } = body
 
   if (!contract || !version || !doc_hash || !accept_text) {
     return jsonResponse({ error: 'contract, version, doc_hash, accept_text required' }, 400)
@@ -73,14 +74,15 @@ Deno.serve(async (req: Request) => {
   const { data: sig, error: sigError } = await serviceClient
     .from('contract_signatures')
     .insert({
-      user_id:    user.id,
+      user_id:     user.id,
       contract,
       version,
       doc_hash,
-      ip_address: ip,
-      user_agent: ua,
-      user_email: user.email ?? '',
+      ip_address:  ip,
+      user_agent:  ua,
+      user_email:  user.email ?? '',
       accept_text,
+      signer_name: signer_name || null,
     })
     .select('id')
     .single()
