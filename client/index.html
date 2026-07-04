@@ -2744,7 +2744,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Handle ?promo_store=ID when app is opened via notification click (no active client)
   var _promoStoreOnLoad = new URLSearchParams(location.search).get('promo_store');
   if (_promoStoreOnLoad) history.replaceState(null, '', '/');
-  syncStoreNavBtn();
 });
 
 // ─── WEB PUSH (PWA) ──────────────────────────────────────────────────────────
@@ -6150,7 +6149,7 @@ async function restoreNav() {
   } catch(e) {}
   try {
     const ss = localStorage.getItem('alliby_store');
-    if (ss) S.store = JSON.parse(ss);
+    if (ss) { S.store = JSON.parse(ss); syncStoreNavBtn(); }
   } catch(e) {}
   try {
     try { const _mc2 = localStorage.getItem('alliby_cat_' + S.direction); const _mp2 = _mc2 ? JSON.parse(_mc2) : []; S.mapCat = new Set(Array.isArray(_mp2) ? _mp2 : [_mp2]); } catch { S.mapCat = new Set(); }
@@ -6268,6 +6267,7 @@ async function openRecentStore(storeId) {
     const rows = await req(`/rest/v1/stores?id=eq.${storeId}&select=*,store_categories(name,icon)&limit=1`);
     if (rows?.[0]) {
       S.store = rows[0];
+      syncStoreNavBtn();
       try { localStorage.setItem('alliby_store', JSON.stringify(S.store)); } catch(e) {}
       const dir = rows[0].direction;
       if (dir && dir !== S.direction) setDirection(dir);
@@ -6450,6 +6450,7 @@ function renderSavingsChart(redemptions, totalSaved) {
 function openStoreFromHome(storeId, storeName) {
   if (!storeId) return;
   S.store = { id: storeId, name: storeName };
+  syncStoreNavBtn();
   try { localStorage.setItem('alliby_store', JSON.stringify(S.store)); } catch(e) {}
   goTo('menu');
 }
@@ -6467,6 +6468,7 @@ async function navigateDeepLink() {
     const rows = await req(`/rest/v1/stores?id=eq.${id}&select=*,store_categories(name,icon)&limit=1`);
     if (rows?.[0]) {
       S.store = rows[0];
+      syncStoreNavBtn();
       try { localStorage.setItem('alliby_store', JSON.stringify(S.store)); } catch(e) {}
       if (S.store.direction && DIR_COLORS[S.store.direction]) setDirection(S.store.direction);
       goTo('menu');
