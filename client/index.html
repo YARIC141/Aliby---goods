@@ -676,9 +676,13 @@ window.AllibyBridge={
             else{setTimeout(function(){openPromoNotifs();},400);}
             return;
           }
-          var _isOrd=data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued';
-          var _isBk=data.type==='booking_confirmed'||data.type==='booking_cancelled';
-          if(_isOrd||_isBk){
+          var _isOrd=data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued'||data.type==='order_cancelled';
+          var _isBk=data.type==='booking_created'||data.type==='booking_confirmed'||data.type==='booking_cancelled';
+          if(_isOrd&&data.order_id){
+            setTimeout(function(){openOrderById(data.order_id);},400);
+          }else if(_isBk&&data.booking_id){
+            setTimeout(function(){openBookingById(data.booking_id);},400);
+          }else if(_isOrd||_isBk){
             var _onCal=document.getElementById('screen-calenabs')?.classList.contains('active');
             if(!_onCal)goTo('calenabs');
           }
@@ -6390,6 +6394,31 @@ function openOrderDetail(idx) {
 
   document.getElementById('mod-total-val').textContent = `${amount.toFixed(0)} ₽`;
   openModal('m-order-detail');
+}
+
+async function openOrderById(orderId) {
+  var idx = _homeOrders.findIndex(function(o){ return o.id === orderId; });
+  if (idx < 0) {
+    try {
+      var rows = await req('/rest/v1/orders?id=eq.' + orderId + '&select=*,stores(name,address),order_items(*,menu_items(name,price))');
+      if (rows && rows[0]) { _homeOrders.unshift(rows[0]); idx = 0; }
+    } catch(e) {}
+  }
+  goTo('home');
+  if (idx >= 0) setTimeout(function(){ openOrderDetail(idx); }, 300);
+}
+
+async function openBookingById(bookingId) {
+  goTo('calenabs');
+  try {
+    var rows = await req('/rest/v1/bookings?id=eq.' + bookingId + '&select=slot_date');
+    if (!rows || !rows[0]) return;
+    var ds = rows[0].slot_date;
+    var parts = ds.split('-').map(Number);
+    _myBk.year = parts[0]; _myBk.month = parts[1] - 1;
+    await loadBookingsScreen();
+    setTimeout(function(){ openMyBookingsDay(ds); }, 100);
+  } catch(e) {}
 }
 
 function renderSavingsChart(redemptions, totalSaved) {
