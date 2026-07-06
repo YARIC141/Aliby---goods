@@ -2139,6 +2139,7 @@ function switchCalenabsTab(tab) {
   if (tab === 'bk')  { _bkNotifCount = 0; _updateBkBadge(); loadBookingsScreen(); }
   else if (tab === 'sub') loadMySubscriptions();
   else if (tab === 'ord') {
+    _orderNotifCount = 0; _updateBkBadge();
     const _firstNotif = _ORD_STATUS_PRIORITY.find(s => _ordNotif.has(s));
     setOrderFilter(_firstNotif || 'all');
   }
@@ -4348,15 +4349,18 @@ let _rtBkWs = null, _rtBkRef = 0, _rtBkHb = null;
 let _bkNotifCount = 0;
 let _orderNotifCount = 0;
 function _updateBkBadge() {
-  const on = _bkNotifCount > 0;
-  const txt = on ? _bkNotifCount : '';
-  ['nav-bk-badge', 'sn-bk-badge', 'ca-badge-bk'].forEach(id => {
+  const total = _bkNotifCount + _orderNotifCount;
+  const on = total > 0;
+  const txt = on ? total : '';
+  ['nav-bk-badge', 'sn-bk-badge'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = txt;
     el.classList.toggle('on', on);
   });
-  window.AllibyBridge?.setBadge(_bkNotifCount + _orderNotifCount);
+  const bkEl = document.getElementById('ca-badge-bk');
+  if (bkEl) { bkEl.textContent = _bkNotifCount || ''; bkEl.classList.toggle('on', _bkNotifCount > 0); }
+  window.AllibyBridge?.setBadge(total);
 }
 
 function realtimeSubscribeOrders(userId) {
@@ -7024,8 +7028,9 @@ async function doCheckout(useSubscription = false) {
       const _oc_del = S.deliveryMode === 'delivery';
       S.deliveryMode = null; S.deliveryFee = 0;
       S.cart = []; S.cartStoreId = null; saveCart(); updateCartCount(); renderCart();
+      _orderNotifCount++; _updateBkBadge();
       showOrderConfirm(_oc_store, _oc_del);
-      _calenabsTab = 'ord'; goTo('calenabs');
+      goTo(S.store ? 'store' : 'map');
       return;
     }
     if (result.payment_url) {
@@ -7056,6 +7061,7 @@ async function handlePaymentReturn() {
     S.deliveryMode = null; S.deliveryFee = 0;
     S.cart = []; S.cartStoreId = null; S.appliedSub = null;
     saveCart(); updateCartCount(); renderCart?.();
+    _orderNotifCount++; _updateBkBadge();
     goTo(S.store ? 'store' : 'map');
     setTimeout(() => showOrderConfirm(_octx?.store || null, _octx?.del || false), 400);
     return true;
