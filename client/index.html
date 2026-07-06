@@ -6602,9 +6602,11 @@ window.addEventListener('hashchange', () => {
   }
 
   // Optimistically navigate to last screen before async auth to avoid blank screen
-  // Skip if this is a payment return — handlePaymentReturn will do the navigation
-  const _quickNav = new URLSearchParams(window.location.search).get('tpay')
-    ? null : localStorage.getItem('alliby_nav');
+  const _hasTpay = !!new URLSearchParams(window.location.search).get('tpay');
+  // On payment return (web): show map immediately so user doesn't see blank while session checks run.
+  // handlePaymentReturn (inside restoreNav) will navigate to the correct screen.
+  if (_hasTpay) goTo('map');
+  const _quickNav = _hasTpay ? null : localStorage.getItem('alliby_nav');
   const _quickScreens = ['home','map','store','cart','calenabs','profile','alibi'];
   if (_quickNav && _quickScreens.includes(_quickNav)) {
     try {
@@ -7047,7 +7049,10 @@ async function doCheckout(useSubscription = false) {
     }
     if (result.payment_url) {
       try { localStorage.setItem('alliby_order_ctx', JSON.stringify({ store: S.store?.name || null, del: S.deliveryMode === 'delivery' })); } catch(e) {}
-      window.location.href = result.payment_url;
+      // On native, open in system browser so WebView stays on alliby.ru and Capacitor bridge stays alive.
+      // On web, navigate current page (standard redirect flow).
+      if (_isNat) { window.open(result.payment_url, '_system'); }
+      else { window.location.href = result.payment_url; }
       return;
     }
     showGeoToast('Ошибка: не удалось получить ссылку на оплату');
