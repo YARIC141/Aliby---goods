@@ -3461,6 +3461,7 @@ function showBookingConfirm(date, time) {
   document.getElementById('m-bk-success').classList.add('show');
   clearTimeout(_bksTimer);
   _bksTimer = setTimeout(closeBkSuccess, 4000);
+  showGeoToast(`Запись на ${date} в ${time} создана`);
 }
 function closeBkSuccess() {
   clearTimeout(_bksTimer);
