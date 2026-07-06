@@ -113,7 +113,8 @@ const PUSH_TEMPLATES: Record<string, Tpl> = {
   order_ready:       () => ({ title: '✅ Заказ готов!',          body: 'Можно забирать'                          }),
   order_issued:      () => ({ title: 'Заказ выдан',              body: 'Спасибо что выбрали нас!'               }),
   order_cancelled:   () => ({ title: 'Заказ отменён',            body: 'Обратитесь в заведение за деталями'     }),
-  booking_confirmed: () => ({ title: '📅 Запись подтверждена',   body: 'Ваша запись успешно создана'            }),
+  booking_created:   () => ({ title: '📅 Запись создана',        body: 'Ваша запись успешно создана. Ждём вас!' }),
+  booking_confirmed: () => ({ title: '📅 Запись подтверждена',   body: 'Оплата прошла, запись подтверждена'     }),
   booking_cancelled: () => ({ title: 'Запись отменена',          body: 'Слот был освобождён'                    }),
   subscription_low:  (d) => ({ title: '⚠️ Абонемент заканчивается', body: `Осталось ${d.remaining} посещений`  }),
 }
