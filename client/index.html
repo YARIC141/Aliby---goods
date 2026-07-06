@@ -6606,8 +6606,10 @@ window.addEventListener('hashchange', () => {
   // On payment return (web): show map immediately so user doesn't see blank while session checks run.
   // handlePaymentReturn (inside restoreNav) will navigate to the correct screen.
   if (_hasTpay) goTo('map');
+  // Only quick-restore guest-safe screens — protected screens (home, calenabs, profile, alibi)
+  // redirect to auth when S.session is still null, which looks like a logout to the user.
   const _quickNav = _hasTpay ? null : localStorage.getItem('alliby_nav');
-  const _quickScreens = ['home','map','store','cart','calenabs','profile','alibi'];
+  const _quickScreens = ['map','store','cart'];
   if (_quickNav && _quickScreens.includes(_quickNav)) {
     try {
       const _qd = localStorage.getItem('alliby_dir');
