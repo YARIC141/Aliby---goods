@@ -30,12 +30,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Deep link: alliby://?tpay=... (payment return from T-Bank) -->
+            <!-- Deep link: alliby://?tpay=... (custom scheme fallback) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="alliby" />
+            </intent-filter>
+
+            <!-- App Link: https://alliby.ru/?tpay=... (T-Bank payment return, verified) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="alliby.ru" />
             </intent-filter>
 
         </activity>
