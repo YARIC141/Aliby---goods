@@ -2209,13 +2209,8 @@ function renderCaSchedCalendar() {
     const isPast = ds < today;
     let availCount = 0;
     if (windows && !isPast) {
-      const bk = booked.map(b => ({ s: _timeToMin(b.slot_start), e: _timeToMin(b.slot_end) }));
-      for (const w of windows) {
-        const ws = _timeToMin(w.start), we = _timeToMin(w.end);
-        for (let t = ws; t + 30 <= we; t += 30) {
-          if (!bk.some(b => t < b.e && (t + 30) > b.s)) availCount++;
-        }
-      }
+      const nowMinToday = ds === today ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
+      availCount = getAvailableSlots(windows, booked, 30, nowMinToday).length;
     }
     const isToday = ds === today;
     const hasSched = !!windows;
@@ -2246,12 +2241,14 @@ function openCaSchedDay(dateStr) {
   const windows = _caSched.schedData[dateStr] || [];
   const booked = _caSched.bookedData[dateStr] || [];
   const bk = booked.map(b => ({ s: _timeToMin(b.slot_start), e: _timeToMin(b.slot_end) }));
+  const nowMinToday = dateStr === todayInCity() ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
   const slotsEl = document.getElementById('ca-sched-slots');
   slotsEl.innerHTML = '';
   for (const w of windows) {
     const ws = _timeToMin(w.start), we = _timeToMin(w.end);
     for (let t = ws; t + 30 <= we; t += 30) {
       const te = t + 30;
+      if (te <= nowMinToday) continue;
       const start = _minToTime(t);
       const end = _minToTime(te);
       const isTaken = bk.some(b => t < b.e && te > b.s);
@@ -2326,7 +2323,7 @@ async function bookWithPreselect(btn, item) {
     });
     _schedulePreselect = null;
     document.getElementById('preselect-banner').style.display = 'none';
-    _showNativeToast('📅 Запись создана', `${date} в ${start}`);
+    showGeoToast(`📅 Запись создана: ${date} в ${start}`);
     _invalidateApiCache('bookings');
     loadMenuItems();
   } catch (e) {
@@ -7028,7 +7025,7 @@ let _rescheduleTarget = null;
 function _timeToMin(t) { const [h,m] = t.slice(0,5).split(':').map(Number); return h*60+m; }
 function _minToTime(m) { return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
 
-function getAvailableSlots(windows, booked, prepMin) {
+function getAvailableSlots(windows, booked, prepMin, nowMin = 0) {
   if (!prepMin || prepMin < 5) prepMin = 5;
   const bk = (booked||[]).map(b => ({ s: _timeToMin(b.slot_start||b.start), e: _timeToMin(b.slot_end||b.end) }));
   const res = [];
@@ -7036,6 +7033,7 @@ function getAvailableSlots(windows, booked, prepMin) {
     const ws = _timeToMin(w.start), we = _timeToMin(w.end);
     for (let t = ws; t + prepMin <= we; t += prepMin) {
       const te = t + prepMin;
+      if (te <= nowMin) continue;
       if (!bk.some(b => t < b.e && te > b.s)) res.push({ start: _minToTime(t), end: _minToTime(te) });
     }
   }
@@ -7077,8 +7075,9 @@ async function openBookingSlotModal(item, rescheduleId = null) {
   } catch(e) {}
   document.getElementById('mbs-loading').style.display = 'none';
   const prepMin = item.preparation_time >= 5 ? item.preparation_time : 5;
+  const _nowForSlots = () => { const n = nowInCity(); return n.getHours() * 60 + n.getMinutes(); };
   const dates = Object.keys(_booking.schedData).sort();
-  const firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin).length > 0);
+  const firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
   if (!firstAvail) { document.getElementById('mbs-no-sched').style.display = ''; return; }
   _booking.currentDate = firstAvail;
   renderBookingDateView();
@@ -7093,7 +7092,8 @@ function renderBookingDateView() {
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('mbs-date-label').textContent = `${DOW[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
   const prepMin = _booking.item?.preparation_time || 30;
-  const slots = getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin);
+  const _bkNowMin = ds === todayInCity() ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
+  const slots = getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, _bkNowMin);
   document.getElementById('mbs-slots').innerHTML = slots.length
     ? slots.map(s => `<button class="booking-slot${_booking.selectedSlot?.start===s.start?' active':''}" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start} — ${s.end}</button>`).join('')
     : `<span style="color:var(--muted);font-size:13px">Нет доступных слотов</span>`;
@@ -7146,7 +7146,7 @@ async function confirmBooking(payNow) {
         body: JSON.stringify({ ...bookingData, payment_status: 'unpaid' }),
       });
       closeModal('m-book-slot');
-      _showNativeToast('📅 Запись создана', `${_booking.currentDate} в ${_booking.selectedSlot.start}`);
+      showGeoToast(`📅 Запись создана: ${_booking.currentDate} в ${_booking.selectedSlot.start}`);
       if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
       if (_storeSchedIsActive()) loadCaScheduleScreen();
       if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
@@ -7178,7 +7178,7 @@ async function confirmBooking(payNow) {
           body: JSON.stringify({ ...bookingData, payment_status: 'paid' }),
         });
         closeModal('m-book-slot');
-        _showNativeToast('📅 Запись создана', `По абонементу: ${_booking.currentDate} в ${_booking.selectedSlot.start}`);
+        showGeoToast(`📅 Запись создана: ${_booking.currentDate} в ${_booking.selectedSlot.start}`);
         if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
         if (_storeSchedIsActive()) loadCaScheduleScreen();
         if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
@@ -7312,17 +7312,24 @@ function renderMyBookingsDay(ds) {
     bkEl.innerHTML = `<div style="color:var(--fg-3);font-size:14px;padding:16px 0">${all.length ? 'Нет записей с выбранным статусом' : 'Нет записей за этот день'}</div>`;
     return;
   }
+  const _nowCity = nowInCity();
+  const _todayStr = todayInCity();
   bkEl.innerHTML = filtered.map(b => {
     const sStart = (b.slot_start||'').slice(0,5), sEnd = (b.slot_end||'').slice(0,5);
     const paid       = b.payment_status === 'paid';
     const completed  = b.status === 'completed';
     const isCancelled = b.status === 'cancelled';
+    const isPastBk   = b.slot_date < _todayStr ||
+      (b.slot_date === _todayStr && sEnd && _timeToMin(sEnd) <= _nowCity.getHours()*60+_nowCity.getMinutes());
     const statusBadge = isCancelled
       ? `<span style="color:var(--err)">Отменена</span>`
       : completed
         ? `<span style="color:var(--ok);font-weight:700">✓ Завершена</span>`
-        : `<span style="color:${paid?'var(--ok)':'var(--warn)'}">${paid?'Оплачено':'Не оплачено'}</span>`;
-    return `<div class="bk-item" style="${isCancelled?'opacity:.5':''}">
+        : isPastBk
+          ? `<span style="color:var(--fg-3)">Прошла</span>`
+          : `<span style="color:${paid?'var(--ok)':'var(--warn)'}">${paid?'Оплачено':'Не оплачено'}</span>`;
+    const dimmed = isCancelled || isPastBk;
+    return `<div class="bk-item" style="${dimmed?'opacity:.5':''}">
       <div class="bk-item-main">
         <div style="font:600 14px/1.3 var(--font-sans)">${esc(b.menu_items?.name||'')}</div>
         <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:3px">${esc(b.stores?.name||'')}</div>
@@ -7333,7 +7340,7 @@ function renderMyBookingsDay(ds) {
         </div>
         ${b.stores?.address ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-4);margin-top:4px;display:flex;align-items:center;gap:3px">${svgIco('pin',11)}${esc(b.stores.address)}</div>` : ''}
       </div>
-      ${!completed && !isCancelled ? `<div class="bk-item-actions">
+      ${!completed && !isCancelled && !isPastBk ? `<div class="bk-item-actions">
         ${!paid ? `<button class="btn btn-sm btn-p" onclick="payExistingBooking('${b.id}')">Оплатить</button>` : ''}
         <button class="btn btn-sm" onclick="openRescheduleInfo('${b.id}','${b.menu_item_id}')">Перенести</button>
         <button class="btn btn-sm btn-d" onclick="cancelBooking('${b.id}')">Отменить</button>
