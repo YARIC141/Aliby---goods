@@ -3475,16 +3475,19 @@ function showBookingConfirm(date, time, storeName, itemName) {
   toastParts.push(date + ' в ' + time);
   showGeoToast(toastParts.join(' · '));
 }
-function showOrderConfirm(storeName, isDelivery) {
-  var modeStr = isDelivery ? 'Доставка' : 'Самовывоз';
-  document.getElementById('bks-title').textContent = 'Заказ оформлен!';
+function showOrderConfirm(storeName, isDelivery, titleOverride) {
+  var title = titleOverride || 'Заказ оформлен!';
+  var modeStr = titleOverride ? '' : (isDelivery ? 'Доставка' : 'Самовывоз');
+  document.getElementById('bks-title').textContent = title;
   document.getElementById('bks-sub-text').innerHTML =
     (storeName ? `<div style="font-weight:500;margin-bottom:4px">${esc(storeName)}</div>` : '') +
-    `<div>${modeStr}</div>`;
+    (modeStr ? `<div>${modeStr}</div>` : '');
   document.getElementById('m-bk-success').classList.add('show');
   clearTimeout(_bksTimer);
   _bksTimer = setTimeout(closeBkSuccess, 4000);
-  showGeoToast((storeName ? storeName + ' · ' : '') + modeStr + ' · Заказ оформлен');
+  var toastMsg = storeName ? storeName + ' · ' + title : title;
+  if (modeStr) toastMsg = (storeName ? storeName + ' · ' : '') + modeStr + ' · Заказ оформлен';
+  showGeoToast(toastMsg);
 }
 function closeBkSuccess() {
   clearTimeout(_bksTimer);
@@ -6201,7 +6204,7 @@ async function restoreNav() {
     const t = localStorage.getItem('alliby_calenabs_tab');
     if (t === 'bk' || t === 'sub' || t === 'ord') _calenabsTab = t;
   } catch(e) {}
-  await handlePaymentReturn();
+  if (await handlePaymentReturn()) return;
   if (deepStoreId) {
     const ok = await navigateDeepLink();
     if (ok) return;
@@ -7036,14 +7039,15 @@ async function handlePaymentReturn() {
     S.deliveryMode = null; S.deliveryFee = 0;
     S.cart = []; S.cartStoreId = null; S.appliedSub = null;
     saveCart(); updateCartCount(); renderCart?.();
-    showOrderConfirm(_octx?.store || null, _octx?.del || false);
-    _calenabsTab = 'ord'; goTo('calenabs');
-    return;
+    goTo(S.store ? 'store' : 'map');
+    setTimeout(() => showOrderConfirm(_octx?.store || null, _octx?.del || false), 400);
+    return true;
   }
   if (tpay === 'store_fail') {
     history.replaceState({}, '', window.location.pathname);
-    showGeoToast('Оплата не прошла. Попробуйте ещё раз.');
-    return;
+    goTo(S.store ? 'store' : 'map');
+    setTimeout(() => showGeoToast('Оплата не прошла. Попробуйте ещё раз.'), 400);
+    return true;
   }
 
   // T-Bank real payment return (subscriptions)
@@ -7051,30 +7055,32 @@ async function handlePaymentReturn() {
     history.replaceState({}, '', window.location.pathname);
     S.subCart = []; S.giftSubCart = [];
     saveSubCart?.(); renderSubCartSection?.(); refreshSubCardViews?.();
-    showGeoToast('Абонемент успешно куплен!');
     goTo('subscriptions');
-    return;
+    setTimeout(() => showGeoToast('Абонемент успешно куплен!'), 400);
+    return true;
   }
   if (tpay === 'sub_fail') {
     history.replaceState({}, '', window.location.pathname);
-    showGeoToast('Оплата не прошла. Попробуйте ещё раз.');
-    return;
+    goTo('subscriptions');
+    setTimeout(() => showGeoToast('Оплата не прошла. Попробуйте ещё раз.'), 400);
+    return true;
   }
 
   // T-Bank real payment return (bookings)
   if (tpay === 'booking_success') {
     history.replaceState({}, '', window.location.pathname);
-    showGeoToast('Запись оплачена!');
     _calenabsTab = 'bk'; goTo('calenabs');
-    return;
+    setTimeout(() => showOrderConfirm(null, false, 'Запись оплачена!'), 400);
+    return true;
   }
   if (tpay === 'booking_fail') {
     history.replaceState({}, '', window.location.pathname);
-    showGeoToast('Оплата не прошла. Попробуйте ещё раз.');
     _calenabsTab = 'bk'; goTo('calenabs');
-    return;
+    setTimeout(() => showGeoToast('Оплата не прошла. Попробуйте ещё раз.'), 400);
+    return true;
   }
 
+  return false;
 }
 
 // ─── STORE SCHEDULE ───
