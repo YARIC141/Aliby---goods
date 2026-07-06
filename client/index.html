@@ -3609,9 +3609,7 @@ async function loadStore() {
   const _titleEl = document.getElementById('store-items-title');
   if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги' }[S.direction] || 'Товары и Услуги';
   const _phNameEl = document.getElementById('store-ph-name');
-  const _phSpan = _phNameEl.querySelector('.screen-help');
   _phNameEl.textContent = st.name;
-  if (_phSpan) _phNameEl.appendChild(_phSpan);
   document.getElementById('st-addr').textContent   = st.address || '';
   document.getElementById('st-hours').textContent  = st.working_hours || '';
   document.getElementById('st-phone').textContent  = st.phone || '';
