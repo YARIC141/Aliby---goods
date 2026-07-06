@@ -45,6 +45,8 @@ Deno.serve(async (req: Request) => {
       is_delivery?: boolean
       delivery_fee?: number
       delivery_address?: string | null
+      success_url?: string
+      fail_url?: string
     }
     try { body = await req.json() } catch { return jsonResponse({ error: "Invalid JSON body" }, 400) }
 
@@ -52,6 +54,7 @@ Deno.serve(async (req: Request) => {
       store_id, items, total_amount,
       subscription_discount, applied_user_subscription_id, payment_method,
       is_delivery = false, delivery_fee = 0, delivery_address = null,
+      success_url, fail_url,
     } = body
 
     if (!store_id || !items?.length || total_amount === undefined)
@@ -185,7 +188,9 @@ Deno.serve(async (req: Request) => {
     const scalarParams: Record<string, string | number> = {
       TerminalKey: terminalKey, Amount: amountKop, OrderId: intent.id,
       Description: "Order #" + intent.id.slice(0, 8).toUpperCase(),
-      NotificationURL: NOTIFY_URL, SuccessURL: SUCCESS_BASE, FailURL: FAIL_BASE,
+      NotificationURL: NOTIFY_URL,
+      SuccessURL: success_url ?? SUCCESS_BASE,
+      FailURL: fail_url ?? FAIL_BASE,
     }
 
     // Call T-Bank API — may throw on network error or non-JSON response

@@ -745,6 +745,12 @@ document.addEventListener('deviceready',function(){
       }
     });
     App.addListener('backButton',function(){if(typeof goBack==='function')goBack();});
+    // Handle payment return via alliby:// deep link (T-Bank redirects here after payment)
+    App.addListener('appUrlOpen',function(event){
+      var url=event.url||'';
+      var qs=url.includes('?')?url.slice(url.indexOf('?')):'';
+      if(qs&&typeof handlePaymentReturn==='function')handlePaymentReturn(qs);
+    });
   }
   // Тема статус-бара
   var SB=_P().StatusBar;
@@ -6595,7 +6601,9 @@ window.addEventListener('hashchange', () => {
   }
 
   // Optimistically navigate to last screen before async auth to avoid blank screen
-  const _quickNav = localStorage.getItem('alliby_nav');
+  // Skip if this is a payment return — handlePaymentReturn will do the navigation
+  const _quickNav = new URLSearchParams(window.location.search).get('tpay')
+    ? null : localStorage.getItem('alliby_nav');
   const _quickScreens = ['home','map','store','cart','calenabs','profile','alibi'];
   if (_quickNav && _quickScreens.includes(_quickNav)) {
     try {
@@ -7012,6 +7020,7 @@ async function doCheckout(useSubscription = false) {
   payBtn.textContent = 'Создание заказа…';
 
   try {
+    const _isNat = window.Capacitor?.isNativePlatform?.() ?? false;
     const result = await req('/functions/v1/tbank-init', {
       method: 'POST',
       body: JSON.stringify({
@@ -7022,6 +7031,7 @@ async function doCheckout(useSubscription = false) {
         is_delivery: S.deliveryMode === 'delivery',
         delivery_fee: S.deliveryFee || 0,
         delivery_address: S.userAddr || S.profile?.address || null,
+        ...(_isNat ? { success_url: 'alliby://?tpay=store_success', fail_url: 'alliby://?tpay=store_fail' } : {}),
       }),
     });
     if (result.free) {
@@ -7049,8 +7059,8 @@ async function doCheckout(useSubscription = false) {
 }
 
 // ─── ACQUIRING RETURN HANDLER ───
-async function handlePaymentReturn() {
-  const params = new URLSearchParams(window.location.search);
+async function handlePaymentReturn(overrideSearch) {
+  const params = new URLSearchParams(overrideSearch ?? window.location.search);
   const tpay   = params.get('tpay');
 
   // T-Bank real payment return (food orders)
