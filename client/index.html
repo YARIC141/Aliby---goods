@@ -2338,7 +2338,7 @@ async function bookWithPreselect(btn, item) {
     });
     _schedulePreselect = null;
     document.getElementById('preselect-banner').style.display = 'none';
-    showBookingConfirm(date, start);
+    showBookingConfirm(date, start, S.store?.name, item?.name);
     _invalidateApiCache('bookings');
     loadMenuItems();
   } catch (e) {
@@ -3460,12 +3460,19 @@ function showGeoToast(msg) {
   t._t = setTimeout(() => t.classList.remove('show'), 3000);
 }
 let _bksTimer;
-function showBookingConfirm(date, time) {
-  document.getElementById('bks-sub-text').textContent = date + ' в ' + time;
+function showBookingConfirm(date, time, storeName, itemName) {
+  var sub = (itemName || '') + (itemName && storeName ? ' · ' : '') + (storeName || '');
+  document.getElementById('bks-sub-text').innerHTML =
+    (sub ? `<div style="font-weight:500;margin-bottom:4px">${esc(sub)}</div>` : '') +
+    `<div>${date} в ${time}</div>`;
   document.getElementById('m-bk-success').classList.add('show');
   clearTimeout(_bksTimer);
   _bksTimer = setTimeout(closeBkSuccess, 4000);
-  showGeoToast(`Запись на ${date} в ${time} создана`);
+  var toastParts = [];
+  if (itemName) toastParts.push(itemName);
+  if (storeName) toastParts.push(storeName);
+  toastParts.push(date + ' в ' + time);
+  showGeoToast(toastParts.join(' · '));
 }
 function closeBkSuccess() {
   clearTimeout(_bksTimer);
@@ -7198,7 +7205,7 @@ async function confirmBooking(payNow) {
         body: JSON.stringify({ ...bookingData, payment_status: 'unpaid' }),
       });
       closeModal('m-book-slot');
-      showBookingConfirm(_booking.currentDate, _booking.selectedSlot.start);
+      showBookingConfirm(_booking.currentDate, _booking.selectedSlot.start, S.store?.name, _booking.item?.name);
       if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
       if (_storeSchedIsActive()) loadCaScheduleScreen();
       if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
@@ -7230,7 +7237,7 @@ async function confirmBooking(payNow) {
           body: JSON.stringify({ ...bookingData, payment_status: 'paid' }),
         });
         closeModal('m-book-slot');
-        showBookingConfirm(_booking.currentDate, _booking.selectedSlot.start);
+        showBookingConfirm(_booking.currentDate, _booking.selectedSlot.start, S.store?.name, _booking.item?.name);
         if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
         if (_storeSchedIsActive()) loadCaScheduleScreen();
         if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
