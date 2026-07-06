@@ -2475,6 +2475,8 @@ function applyNavPos() {
   const chk = document.getElementById('nav-pos-chk');
   if (chk) chk.checked = right;
   _updateNavH();
+  // Re-measure after layout is painted — offsetHeight may be 0 on first call during init
+  requestAnimationFrame(_updateNavH);
 }
 
 function _updateNavH() {
