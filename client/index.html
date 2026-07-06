@@ -265,7 +265,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .map-legend .leg-cart{position:absolute;top:-6px;right:-8px;background:#f5c518;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .map-legend .leg-del{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .map-legend .leg-lbl{font:400 11px/1.3 var(--font-sans);color:var(--fg-2)}
-.geo-toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--bg-1);border:1px solid var(--line);padding:9px 16px;border-radius:var(--r-pill);font:400 14px/1 var(--font-sans);color:var(--fg);z-index:20;white-space:nowrap;box-shadow:var(--shadow-1);pointer-events:none;opacity:0;transition:opacity var(--t-med)}
+.geo-toast{position:fixed;top:max(env(safe-area-inset-top,0px) + 14px,14px);left:50%;transform:translateX(-50%);background:var(--bg-1);border:1px solid var(--line);padding:9px 16px;border-radius:var(--r-pill);font:400 14px/1 var(--font-sans);color:var(--fg);z-index:700;white-space:nowrap;box-shadow:var(--shadow-1);pointer-events:none;opacity:0;transition:opacity var(--t-med)}
 .geo-toast.show{opacity:1}
 #m-bk-success{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:oklch(0 0 0 / .55);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s}
 #m-bk-success.show{opacity:1;pointer-events:auto}
@@ -999,7 +999,6 @@ document.addEventListener('deviceready',function(){
       <div id="map-no-cat" class="map-no-cat hidden">
         <div class="map-no-cat-inner"><svg class="ico" width="22" height="22" style="margin-right:6px;opacity:.5"><use href="#i-list"/></svg>Выбери категорию заведения</div>
       </div>
-      <div id="geo-toast" class="geo-toast"></div>
       <div class="map-legend" id="map-legend">
         <button id="map-legend-btn" onclick="toggleMapLegend()" style="background:none;border:none;cursor:pointer;padding:0;font:500 11px/1 var(--font-sans);color:var(--fg-2);display:flex;align-items:center;gap:4px;white-space:nowrap">Легенда <span id="map-legend-arrow">▾</span></button>
         <div id="map-legend-rows" style="display:none;flex-direction:column;gap:7px">
@@ -1407,6 +1406,7 @@ document.addEventListener('deviceready',function(){
 </div><!-- #app -->
 
 <!-- ════════════════ MODALS ════════════════ -->
+<div id="geo-toast" class="geo-toast"></div>
 
 <!-- Booking success popup -->
 <div id="m-bk-success" onclick="closeBkSuccess()"><div class="bks-card" onclick="event.stopPropagation()"><div class="bks-check"><svg viewBox="0 0 24 24"><polyline points="4 13 9 18 20 7"/></svg></div><p class="bks-title" id="bks-title">Запись создана!</p><p class="bks-sub" id="bks-sub-text"></p><button class="btn" style="width:100%" onclick="closeBkSuccess()">Готово</button></div></div>
