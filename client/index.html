@@ -2375,6 +2375,7 @@ function goTo(id, opts = {}) {
   if (id === 'bookings')     { _calenabsTab = 'bk';  id = 'calenabs'; }
   if (id === 'subscriptions'){ _calenabsTab = 'sub'; id = 'calenabs'; }
   if (id === 'orders')       { _calenabsTab = 'ord'; id = 'calenabs'; }
+  syncStoreNavBtn();
   const _GUEST_OK = ['map', 'store', 'cart', 'auth'];
   if (!_GUEST_OK.includes(id) && !S.session) { _pendingNavAfterAuth = id; goTo('auth'); return; }
   document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
@@ -6615,7 +6616,7 @@ window.addEventListener('hashchange', () => {
         updateDirectionLabels(_qd);
       }
       const _qs = localStorage.getItem('alliby_store');
-      if (_qs) S.store = JSON.parse(_qs);
+      if (_qs) { S.store = JSON.parse(_qs); syncStoreNavBtn(); }
     } catch(e) {}
     goTo(_quickNav);
   }
