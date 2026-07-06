@@ -2326,7 +2326,7 @@ async function bookWithPreselect(btn, item) {
     });
     _schedulePreselect = null;
     document.getElementById('preselect-banner').style.display = 'none';
-    showGeoToast(`Записано на ${date} в ${start}`);
+    _showNativeToast('📅 Запись создана', `${date} в ${start}`);
     _invalidateApiCache('bookings');
     loadMenuItems();
   } catch (e) {
@@ -7146,7 +7146,7 @@ async function confirmBooking(payNow) {
         body: JSON.stringify({ ...bookingData, payment_status: 'unpaid' }),
       });
       closeModal('m-book-slot');
-      showGeoToast('Слот забронирован');
+      _showNativeToast('📅 Запись создана', `${_booking.currentDate} в ${_booking.selectedSlot.start}`);
       if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
       if (_storeSchedIsActive()) loadCaScheduleScreen();
       if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
@@ -7178,7 +7178,7 @@ async function confirmBooking(payNow) {
           body: JSON.stringify({ ...bookingData, payment_status: 'paid' }),
         });
         closeModal('m-book-slot');
-        showGeoToast('Запись по абонементу создана');
+        _showNativeToast('📅 Запись создана', `По абонементу: ${_booking.currentDate} в ${_booking.selectedSlot.start}`);
         if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
         if (_storeSchedIsActive()) loadCaScheduleScreen();
         if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
