@@ -996,7 +996,6 @@ document.addEventListener('deviceready',function(){
         <div class="map-no-cat-inner"><svg class="ico" width="22" height="22" style="margin-right:6px;opacity:.5"><use href="#i-list"/></svg>Выбери категорию заведения</div>
       </div>
       <div id="geo-toast" class="geo-toast"></div>
-<div id="m-bk-success" onclick="closeBkSuccess()"><div class="bks-card" onclick="event.stopPropagation()"><div class="bks-check"><svg viewBox="0 0 24 24"><polyline points="4 13 9 18 20 7"/></svg></div><p class="bks-title">Запись создана!</p><p class="bks-sub" id="bks-sub-text"></p><button class="btn" style="width:100%" onclick="closeBkSuccess()">Готово</button></div></div>
       <div class="map-legend" id="map-legend">
         <button id="map-legend-btn" onclick="toggleMapLegend()" style="background:none;border:none;cursor:pointer;padding:0;font:500 11px/1 var(--font-sans);color:var(--fg-2);display:flex;align-items:center;gap:4px;white-space:nowrap">Легенда <span id="map-legend-arrow">▾</span></button>
         <div id="map-legend-rows" style="display:none;flex-direction:column;gap:7px">
@@ -1404,6 +1403,9 @@ document.addEventListener('deviceready',function(){
 </div><!-- #app -->
 
 <!-- ════════════════ MODALS ════════════════ -->
+
+<!-- Booking success popup -->
+<div id="m-bk-success" onclick="closeBkSuccess()"><div class="bks-card" onclick="event.stopPropagation()"><div class="bks-check"><svg viewBox="0 0 24 24"><polyline points="4 13 9 18 20 7"/></svg></div><p class="bks-title">Запись создана!</p><p class="bks-sub" id="bks-sub-text"></p><button class="btn" style="width:100%" onclick="closeBkSuccess()">Готово</button></div></div>
 
 <!-- Booking slot selection modal -->
 <div class="overlay" id="m-book-slot">
