@@ -6604,6 +6604,7 @@ window.addEventListener('hashchange', () => {
         S.direction = _qd;
         document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === _qd));
         applyDirectionAccents(_qd);
+        updateDirectionLabels(_qd);
       }
       const _qs = localStorage.getItem('alliby_store');
       if (_qs) S.store = JSON.parse(_qs);
