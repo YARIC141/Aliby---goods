@@ -1409,7 +1409,7 @@ document.addEventListener('deviceready',function(){
 <!-- ════════════════ MODALS ════════════════ -->
 
 <!-- Booking success popup -->
-<div id="m-bk-success" onclick="closeBkSuccess()"><div class="bks-card" onclick="event.stopPropagation()"><div class="bks-check"><svg viewBox="0 0 24 24"><polyline points="4 13 9 18 20 7"/></svg></div><p class="bks-title">Запись создана!</p><p class="bks-sub" id="bks-sub-text"></p><button class="btn" style="width:100%" onclick="closeBkSuccess()">Готово</button></div></div>
+<div id="m-bk-success" onclick="closeBkSuccess()"><div class="bks-card" onclick="event.stopPropagation()"><div class="bks-check"><svg viewBox="0 0 24 24"><polyline points="4 13 9 18 20 7"/></svg></div><p class="bks-title" id="bks-title">Запись создана!</p><p class="bks-sub" id="bks-sub-text"></p><button class="btn" style="width:100%" onclick="closeBkSuccess()">Готово</button></div></div>
 
 <!-- Booking slot selection modal -->
 <div class="overlay" id="m-book-slot">
@@ -3462,6 +3462,7 @@ function showGeoToast(msg) {
 let _bksTimer;
 function showBookingConfirm(date, time, storeName, itemName) {
   var sub = (itemName || '') + (itemName && storeName ? ' · ' : '') + (storeName || '');
+  document.getElementById('bks-title').textContent = 'Запись создана!';
   document.getElementById('bks-sub-text').innerHTML =
     (sub ? `<div style="font-weight:500;margin-bottom:4px">${esc(sub)}</div>` : '') +
     `<div>${date} в ${time}</div>`;
@@ -3473,6 +3474,17 @@ function showBookingConfirm(date, time, storeName, itemName) {
   if (storeName) toastParts.push(storeName);
   toastParts.push(date + ' в ' + time);
   showGeoToast(toastParts.join(' · '));
+}
+function showOrderConfirm(storeName, isDelivery) {
+  var modeStr = isDelivery ? 'Доставка' : 'Самовывоз';
+  document.getElementById('bks-title').textContent = 'Заказ оформлен!';
+  document.getElementById('bks-sub-text').innerHTML =
+    (storeName ? `<div style="font-weight:500;margin-bottom:4px">${esc(storeName)}</div>` : '') +
+    `<div>${modeStr}</div>`;
+  document.getElementById('m-bk-success').classList.add('show');
+  clearTimeout(_bksTimer);
+  _bksTimer = setTimeout(closeBkSuccess, 4000);
+  showGeoToast((storeName ? storeName + ' · ' : '') + modeStr + ' · Заказ оформлен');
 }
 function closeBkSuccess() {
   clearTimeout(_bksTimer);
@@ -6988,13 +7000,16 @@ async function doCheckout(useSubscription = false) {
       }),
     });
     if (result.free) {
+      const _oc_store = S.store?.name || null;
+      const _oc_del = S.deliveryMode === 'delivery';
       S.deliveryMode = null; S.deliveryFee = 0;
       S.cart = []; S.cartStoreId = null; saveCart(); updateCartCount(); renderCart();
-      showGeoToast('Заказ оплачен абонементом!');
+      showOrderConfirm(_oc_store, _oc_del);
       _calenabsTab = 'ord'; goTo('calenabs');
       return;
     }
     if (result.payment_url) {
+      try { localStorage.setItem('alliby_order_ctx', JSON.stringify({ store: S.store?.name || null, del: S.deliveryMode === 'delivery' })); } catch(e) {}
       window.location.href = result.payment_url;
       return;
     }
@@ -7016,10 +7031,12 @@ async function handlePaymentReturn() {
   if (tpay === 'store_success') {
     history.replaceState({}, '', window.location.pathname);
     localStorage.removeItem('alliby_pending_acq');
+    let _octx = null;
+    try { _octx = JSON.parse(localStorage.getItem('alliby_order_ctx') || 'null'); localStorage.removeItem('alliby_order_ctx'); } catch(e) {}
     S.deliveryMode = null; S.deliveryFee = 0;
     S.cart = []; S.cartStoreId = null; S.appliedSub = null;
     saveCart(); updateCartCount(); renderCart?.();
-    showGeoToast('Заказ успешно оплачен!');
+    showOrderConfirm(_octx?.store || null, _octx?.del || false);
     _calenabsTab = 'ord'; goTo('calenabs');
     return;
   }
