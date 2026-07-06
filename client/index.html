@@ -6590,16 +6590,21 @@ window.addEventListener('hashchange', () => {
     return;
   }
 
-  // Optimistically show last screen immediately to avoid blank screen during async auth
+  // Optimistically navigate to last screen before async auth to avoid blank screen
   const _quickNav = localStorage.getItem('alliby_nav');
   const _quickScreens = ['home','map','store','cart','calenabs','profile','alibi'];
   if (_quickNav && _quickScreens.includes(_quickNav)) {
     try {
+      const _qd = localStorage.getItem('alliby_dir');
+      if (_qd && DIR_COLORS[_qd]) {
+        S.direction = _qd;
+        document.querySelectorAll('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === _qd));
+        applyDirectionAccents(_qd);
+      }
       const _qs = localStorage.getItem('alliby_store');
-      if (_quickNav === 'store' && _qs) S.store = JSON.parse(_qs);
+      if (_qs) S.store = JSON.parse(_qs);
     } catch(e) {}
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById('screen-' + _quickNav)?.classList.add('active');
+    goTo(_quickNav);
   }
 
   const expired = savedSession.expires_at && (Date.now() / 1000 > savedSession.expires_at);
