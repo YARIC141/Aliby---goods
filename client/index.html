@@ -2376,7 +2376,7 @@ function goTo(id, opts = {}) {
   if (id === 'orders')       { _calenabsTab = 'ord'; id = 'calenabs'; }
   syncStoreNavBtn();
   const _GUEST_OK = ['map', 'store', 'cart', 'auth'];
-  if (!_GUEST_OK.includes(id) && !S.session) { _pendingNavAfterAuth = id; goTo('auth'); return; }
+  if (!_GUEST_OK.includes(id) && !S.session && !_initQuickRestore) { _pendingNavAfterAuth = id; goTo('auth'); return; }
   document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
   if (id !== 'auth') localStorage.setItem('alliby_nav', id);
   const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
@@ -4378,6 +4378,11 @@ function updateCartCount() {
   if (cb) { const u = S.cart.length + subN; cb.textContent = u; cb.classList.toggle('on', u > 0); }
   const sb = document.getElementById('ca-badge-sub');
   if (sb) { sb.textContent = subN || ''; sb.classList.toggle('on', subN > 0); }
+  // Dim cart nav buttons when cart is empty
+  document.querySelectorAll('[data-nav="cart"]').forEach(btn => {
+    btn.style.opacity = total > 0 ? '' : '0.35';
+    btn.style.pointerEvents = total > 0 ? '' : 'none';
+  });
 }
 
 // ─── REALTIME ───
@@ -6570,6 +6575,7 @@ function openStoreFromHome(storeId, storeName) {
 // ─── DEEPLINK ───
 let deepStoreId = null;
 let _pendingNavAfterAuth = null;
+let _initQuickRestore = false; // suppresses auth guard during optimistic quick-restore
 
 async function navigateDeepLink() {
   if (!deepStoreId) return false;
@@ -6639,7 +6645,7 @@ window.addEventListener('hashchange', () => {
   // Only quick-restore guest-safe screens — protected screens (home, calenabs, profile, alibi)
   // redirect to auth when S.session is still null, which looks like a logout to the user.
   const _quickNav = _hasTpay ? null : localStorage.getItem('alliby_nav');
-  const _quickScreens = ['map','store','cart'];
+  const _quickScreens = ['map','store','cart','home','calenabs','profile','alibi'];
   if (_quickNav && _quickScreens.includes(_quickNav)) {
     try {
       const _qd = localStorage.getItem('alliby_dir');
@@ -6652,7 +6658,9 @@ window.addEventListener('hashchange', () => {
       const _qs = localStorage.getItem('alliby_store');
       if (_qs) { S.store = JSON.parse(_qs); syncStoreNavBtn(); }
     } catch(e) {}
+    _initQuickRestore = true;
     goTo(_quickNav);
+    _initQuickRestore = false;
   }
 
   const expired = savedSession.expires_at && (Date.now() / 1000 > savedSession.expires_at);
