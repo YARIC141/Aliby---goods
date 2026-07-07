@@ -4396,6 +4396,7 @@ async function loadOrdCounts() {
       : document.getElementById('ord-store-filter')?.value;
     let url = '/rest/v1/orders?select=status&status=in.(paid,in_progress,looking_for_courier,on_the_way,ready)&limit=2000';
     if (storeId) url += `&store_id=eq.${storeId}`;
+    else if (S.stores?.length) url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
     const rows = await req(url);
     _ORD_CNT_STATUSES.forEach(s => { _adminOrdCounts[s] = 0; });
     rows.forEach(r => { if (r.status in _adminOrdCounts) _adminOrdCounts[r.status]++; });
@@ -4428,6 +4429,7 @@ async function loadOrders(append = false) {
       : document.getElementById('ord-store-filter')?.value;
     let url = `/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     if (storeId) url += `&store_id=eq.${storeId}`;
+    else if (S.stores?.length) url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
     if (_adminOrdFilter && _adminOrdFilter !== 'all') url += `&status=eq.${_adminOrdFilter}`;
     else url += '&status=neq.pending';
     const page = await req(url);
