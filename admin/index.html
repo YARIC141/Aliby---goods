@@ -3172,7 +3172,7 @@ function _renderPlatPlans() {
     <div onclick="selectPlatPlan('${p.id}')" style="
       cursor:pointer;border:2px solid ${_selectedPlatPlan === p.id ? 'var(--accent)' : 'var(--line-soft)'};
       border-radius:var(--r-3);padding:12px 10px;
-      background:${_selectedPlatPlan === p.id ? 'rgba(var(--accent-rgb),.07)' : 'var(--bg-2)'};
+      background:${_selectedPlatPlan === p.id ? 'color-mix(in srgb,var(--accent) 9%,var(--bg-2))' : 'var(--bg-2)'};
       transition:border-color .15s,background .15s">
       <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em">${p.label}</div>
       <div style="font:700 22px/1 var(--font-display);color:var(--fg);margin-bottom:1px">${p.perMonth.toLocaleString('ru-RU')} ₽</div>
