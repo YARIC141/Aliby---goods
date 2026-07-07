@@ -22,6 +22,14 @@ const FAIL_URL         = 'https://admin.alliby.ru/?tpay=fail'
 const TRIAL_AMOUNT_KOPECKS    = 100     // 1 ₽ — refunded after card binding
 const ADD_STORE_MONTHLY_KOPECKS = 50000   // 500 ₽/мес
 const ADD_STORE_YEARLY_KOPECKS  = 500000  // 5 000 ₽/год
+const PLATFORM_MONTHLY_KOPECKS  = 160000  // 1 600 ₽/мес
+
+const PAID_PLAN_MAP: Record<string, { days: number; amtKop: number; planVal: string; amtRub: number }> = {
+  '1m':  { days: 30,  amtKop: 160000,  planVal: 'monthly',  amtRub: 1600  },
+  '3m':  { days: 90,  amtKop: 438000,  planVal: '3months',  amtRub: 4380  },
+  '6m':  { days: 180, amtKop: 768000,  planVal: '6months',  amtRub: 7680  },
+  '12m': { days: 365, amtKop: 1116000, planVal: 'yearly',   amtRub: 11160 },
+}
 
 async function calcToken(params: Record<string, string | number>, password: string): Promise<string> {
   const all    = { ...params, Password: password }
@@ -99,7 +107,7 @@ Deno.serve(async (req: Request) => {
         end_date:               endDate.toISOString().split('T')[0],
         amount_paid:            0,
         is_trial:               true,
-        monthly_amount_kopecks: 100000,
+        monthly_amount_kopecks: PLATFORM_MONTHLY_KOPECKS,
         extra_stores:           0,
       })
       .select().single()
@@ -170,7 +178,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: sub.id })
   }
 
-  // ── MONTHLY: full 1 000 ₽ payment (trial already used) ──────────────────────
+  // ── MONTHLY: paid subscription (1/3/6/12 months) ─────────────────────────────
   if (type === 'monthly') {
     const { data: existing } = await serviceClient
       .from('platform_subscriptions')
@@ -188,23 +196,25 @@ Deno.serve(async (req: Request) => {
       .update({ status: 'failed' })
       .eq('user_id', user.id).eq('status', 'pending')
 
+    const planId  = (typeof addStorePlan === 'string' && PAID_PLAN_MAP[addStorePlan]) ? addStorePlan : '1m'
+    const planCfg = PAID_PLAN_MAP[planId]
+
     const now     = new Date()
     const endDate = new Date(now)
-    endDate.setDate(endDate.getDate() + 30)
+    endDate.setDate(endDate.getDate() + planCfg.days)
     const orderId = `sub_${user.id.slice(0, 8)}_${Date.now()}`
-    const amount  = 100000 // 1 000 ₽
 
     const { data: sub, error: subError } = await serviceClient
       .from('platform_subscriptions')
       .insert({
         user_id:                user.id,
-        plan:                   'monthly',
+        plan:                   planCfg.planVal,
         status:                 'pending',
         start_date:             now.toISOString().split('T')[0],
         end_date:               endDate.toISOString().split('T')[0],
-        amount_paid:            1000,
+        amount_paid:            planCfg.amtRub,
         is_trial:               false,
-        monthly_amount_kopecks: 100000,
+        monthly_amount_kopecks: planCfg.amtKop,
         extra_stores:           0,
       })
       .select().single()
@@ -213,11 +223,12 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: 'DB error: ' + subError?.message }, 500)
     }
 
+    const periodLabels: Record<string, string> = { '1m': '1 месяц', '3m': '3 месяца', '6m': '6 месяцев', '12m': '12 месяцев' }
     const scalarParams: Record<string, string | number> = {
       TerminalKey:     terminalKey,
-      Amount:          amount,
+      Amount:          planCfg.amtKop,
       OrderId:         orderId,
-      Description:     'Подписка Aliby — 1 месяц',
+      Description:     `Подписка Aliby — ${periodLabels[planId] || '1 месяц'}`,
       Recurrent:       'Y',
       CustomerKey:     user.id,
       NotificationURL: NOTIFY_URL,
@@ -229,8 +240,8 @@ Deno.serve(async (req: Request) => {
       Email:    user.email,
       Taxation: 'usn_income',
       Items: [{
-        Name: 'Подписка Aliby (1 месяц)',
-        Price: amount, Quantity: 1, Amount: amount,
+        Name: `Подписка Aliby (${periodLabels[planId] || '1 месяц'})`,
+        Price: planCfg.amtKop, Quantity: 1, Amount: planCfg.amtKop,
         Tax: 'none', PaymentMethod: 'full_prepayment', PaymentObject: 'service',
       }],
     }
@@ -251,7 +262,9 @@ Deno.serve(async (req: Request) => {
       .update({ tbank_payment_id: String(tData.PaymentId) })
       .eq('id', sub.id)
 
-    await trackEvent(serviceClient, 'subscription_monthly_started', user.id, { subscription_id: sub.id, order_id: orderId }, `sub_${sub.id}`)
+    await trackEvent(serviceClient, 'subscription_paid_started', user.id, {
+      subscription_id: sub.id, plan: planId, amount: planCfg.amtRub, order_id: orderId,
+    }, `sub_${sub.id}`)
 
     return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: sub.id })
   }

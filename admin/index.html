@@ -1246,12 +1246,12 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div class="overlay" id="m-platsub-plans">
   <div class="modal" style="max-width:400px">
     <div class="modal-hd">
-      <h3>Подписка Alliby</h3>
+      <h3>Пробный период</h3>
       <button class="modal-x" onclick="closeModal('m-platsub-plans')">✕</button>
     </div>
     <div style="background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:16px;margin-bottom:16px">
-      <div style="font:700 28px/1 var(--font-display);color:var(--brand-ice-deep);margin-bottom:4px">1 000 ₽<span style="font:400 14px/1 var(--font-sans);color:var(--fg-3)">/мес</span></div>
-      <div id="platsub-desc-text" style="font:400 13px/1.5 var(--font-sans);color:var(--fg-3);margin-top:6px">Первый месяц — бесплатно. Далее автоматическое списание 1 000 ₽/мес.</div>
+      <div style="font:700 28px/1 var(--font-display);color:var(--brand-ice-deep);margin-bottom:4px">Бесплатно<span style="font:400 14px/1 var(--font-sans);color:var(--fg-3)"> · 1 месяц</span></div>
+      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-3);margin-top:6px">Первый месяц бесплатно. После пробного периода — 1 600 ₽/мес с автоматическим продлением.</div>
     </div>
     <ul style="list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--fg-2)">
       <li>✓ Полный доступ к панели управления</li>
@@ -1262,12 +1262,32 @@ tr.row-click:hover td{background:var(--bg-2)}
     <p style="font-size:12px;color:var(--fg-4);margin-bottom:14px">При активации спишем 1 ₽ для проверки карты — сумма будет возвращена автоматически.</p>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12px;color:var(--fg-3);line-height:1.4;cursor:pointer">
       <input type="checkbox" id="platsub-consent-cb" onchange="document.getElementById('platsub-pay-btn').disabled=!this.checked" style="margin-top:2px;width:auto;flex-shrink:0">
-      Я подтверждаю согласие на автоматические ежемесячные списания в соответствии с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a>. Могу отключить в любой момент.
+      Я подтверждаю согласие на автоматические списания в соответствии с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a>. Могу отключить в любой момент.
     </label>
     <div id="platsub-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn btn-p btn-full" id="platsub-pay-btn" onclick="initTrialPayment()" disabled>Начать бесплатный месяц →</button>
+      <button class="btn btn-p btn-full" id="platsub-pay-btn" onclick="initTrialPayment()" disabled>Начать →</button>
       <button class="btn btn-full" onclick="closeModal('m-platsub-plans')">Отмена</button>
+    </div>
+    <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
+  </div>
+</div>
+
+<div class="overlay" id="m-platsub-paid">
+  <div class="modal" style="max-width:430px">
+    <div class="modal-hd">
+      <h3>Оформить подписку</h3>
+      <button class="modal-x" onclick="closeModal('m-platsub-paid')">✕</button>
+    </div>
+    <div id="platsub-paid-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
+    <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12px;color:var(--fg-3);line-height:1.4;cursor:pointer">
+      <input type="checkbox" id="platsub-paid-consent-cb" onchange="document.getElementById('platsub-paid-btn').disabled=!this.checked" style="margin-top:2px;width:auto;flex-shrink:0">
+      Я подтверждаю согласие на автоматические списания в соответствии с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a>. Могу отключить в любой момент.
+    </label>
+    <div id="platsub-paid-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-p btn-full" id="platsub-paid-btn" onclick="initPaidPayment()" disabled>Оплатить 1 600 ₽ →</button>
+      <button class="btn btn-full" onclick="closeModal('m-platsub-paid')">Отмена</button>
     </div>
     <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
   </div>
@@ -3130,42 +3150,77 @@ async function loadPlatformSubscription() {
   }
 }
 
-let _platSubMode = 'trial';
-let _hadTrial    = false;
+let _hadTrial = false;
 
 function openPlatSubModal() {
   if (_hadTrial) startRegularSubscription();
   else startPlatformSubscription();
 }
 
+const _PLAT_PLANS = [
+  { id: '1m',  label: '1 месяц',    days: 30,  total: 1600,  perMonth: 1600, save: 0 },
+  { id: '3m',  label: '3 месяца',   days: 90,  total: 4380,  perMonth: 1460, save: 420 },
+  { id: '6m',  label: '6 месяцев',  days: 180, total: 7680,  perMonth: 1280, save: 1920 },
+  { id: '12m', label: '12 месяцев', days: 365, total: 11160, perMonth: 930,  save: 8040 },
+];
+let _selectedPlatPlan = '1m';
+
+function _renderPlatPlans() {
+  const grid = document.getElementById('platsub-paid-grid');
+  if (!grid) return;
+  grid.innerHTML = _PLAT_PLANS.map(p => `
+    <div onclick="selectPlatPlan('${p.id}')" style="
+      cursor:pointer;border:2px solid ${_selectedPlatPlan === p.id ? 'var(--accent)' : 'var(--line-soft)'};
+      border-radius:var(--r-3);padding:12px 10px;
+      background:${_selectedPlatPlan === p.id ? 'rgba(var(--accent-rgb),.07)' : 'var(--bg-2)'};
+      transition:border-color .15s,background .15s">
+      <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em">${p.label}</div>
+      <div style="font:700 22px/1 var(--font-display);color:var(--fg);margin-bottom:1px">${p.perMonth.toLocaleString('ru-RU')} ₽</div>
+      <div style="font:400 11px/1 var(--font-sans);color:var(--fg-4)">/мес · ${p.total.toLocaleString('ru-RU')} ₽ итого</div>
+      <div style="font:600 11px/1.3 var(--font-sans);color:var(--accent);margin-top:5px;min-height:14px">${p.save > 0 ? '−' + p.save.toLocaleString('ru-RU') + ' ₽' : ''}</div>
+    </div>`).join('');
+}
+
+function selectPlatPlan(id) {
+  _selectedPlatPlan = id;
+  _renderPlatPlans();
+  const plan = _PLAT_PLANS.find(p => p.id === id);
+  const btn  = document.getElementById('platsub-paid-btn');
+  const cbx  = document.getElementById('platsub-paid-consent-cb');
+  if (btn && plan) {
+    btn.textContent = `Оплатить ${plan.total.toLocaleString('ru-RU')} ₽ →`;
+    btn.disabled = !(cbx?.checked);
+  }
+}
+
 async function startPlatformSubscription() {
-  _platSubMode = 'trial';
   const btn = document.querySelector('[onclick="startPlatformSubscription()"]');
   if (btn) btn.disabled = true;
   await requireContract('seller', () => {
     const errEl = document.getElementById('platsub-pay-err');
     if (errEl) errEl.style.display = 'none';
-    const descEl = document.getElementById('platsub-desc-text');
-    if (descEl) descEl.textContent = 'Первый месяц — бесплатно. Далее автоматическое списание 1 000 ₽/мес.';
+    const cbx = document.getElementById('platsub-consent-cb');
+    if (cbx) { cbx.checked = false; }
     const payBtn = document.getElementById('platsub-pay-btn');
-    if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Начать бесплатный месяц →'; }
+    if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Начать →'; }
     openModal('m-platsub-plans');
   });
   if (btn) btn.disabled = false;
 }
 
 async function startRegularSubscription() {
-  _platSubMode = 'regular';
+  _selectedPlatPlan = '1m';
   const btn = document.querySelector('[onclick="startRegularSubscription()"]');
   if (btn) btn.disabled = true;
   await requireContract('seller', () => {
-    const errEl = document.getElementById('platsub-pay-err');
+    const errEl = document.getElementById('platsub-paid-err');
     if (errEl) errEl.style.display = 'none';
-    const descEl = document.getElementById('platsub-desc-text');
-    if (descEl) descEl.textContent = 'Автоматическое списание 1 000 ₽/мес. Отмена в любой момент.';
-    const payBtn = document.getElementById('platsub-pay-btn');
-    if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Оформить подписку →'; }
-    openModal('m-platsub-plans');
+    const cbx = document.getElementById('platsub-paid-consent-cb');
+    if (cbx) { cbx.checked = false; }
+    const payBtn = document.getElementById('platsub-paid-btn');
+    if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Оплатить 1 600 ₽ →'; }
+    _renderPlatPlans();
+    openModal('m-platsub-paid');
   });
   if (btn) btn.disabled = false;
 }
@@ -3176,18 +3231,39 @@ async function initTrialPayment() {
   if (errEl) errEl.style.display = 'none';
   btn.disabled    = true;
   btn.textContent = 'Подготовка платежа…';
-  const isRegular = _platSubMode === 'regular';
   try {
     const consentGiven = document.getElementById('platsub-consent-cb')?.checked ?? false;
     const data = await req('/functions/v1/tbank-platform-init', {
       method: 'POST',
-      body: JSON.stringify({ type: isRegular ? 'monthly' : 'trial', consent_given: consentGiven }),
+      body: JSON.stringify({ type: 'trial', consent_given: consentGiven }),
     });
     window.location.href = data.payment_url;
   } catch(e) {
     if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
     btn.disabled    = false;
-    btn.textContent = isRegular ? 'Оформить подписку →' : 'Начать бесплатный месяц →';
+    btn.textContent = 'Начать →';
+  }
+}
+
+async function initPaidPayment() {
+  const errEl = document.getElementById('platsub-paid-err');
+  const btn   = document.getElementById('platsub-paid-btn');
+  if (errEl) errEl.style.display = 'none';
+  const plan = _PLAT_PLANS.find(p => p.id === _selectedPlatPlan);
+  if (!plan) return;
+  btn.disabled    = true;
+  btn.textContent = 'Подготовка платежа…';
+  try {
+    const consentGiven = document.getElementById('platsub-paid-consent-cb')?.checked ?? false;
+    const data = await req('/functions/v1/tbank-platform-init', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'monthly', plan: _selectedPlatPlan, consent_given: consentGiven }),
+    });
+    window.location.href = data.payment_url;
+  } catch(e) {
+    if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
+    btn.disabled    = false;
+    btn.textContent = `Оплатить ${plan.total.toLocaleString('ru-RU')} ₽ →`;
   }
 }
 

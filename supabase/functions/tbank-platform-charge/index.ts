@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
   // Find subscriptions due for renewal (end_date <= today, has rebill_id, not yet expired)
   const { data: subs, error } = await db
     .from('platform_subscriptions')
-    .select('id, user_id, store_id, status, end_date, rebill_id, monthly_amount_kopecks, retry_count, is_trial, auto_renew')
+    .select('id, user_id, store_id, plan, status, end_date, rebill_id, monthly_amount_kopecks, retry_count, is_trial, auto_renew')
     .lte('end_date', today)
     .in('status', ['active', 'grace'])
     .eq('auto_renew', true)
@@ -105,9 +105,10 @@ Deno.serve(async (req: Request) => {
       const chargeData = await chargeResp.json()
 
       if (chargeData.Success && chargeData.Status === 'CONFIRMED') {
-        // Extend subscription by 30 days from current end_date
+        const planDays: Record<string, number> = { 'monthly': 30, '3months': 90, '6months': 180, 'yearly': 365 }
+        const renewDays = planDays[sub.plan || 'monthly'] ?? 30
         const prevEnd = new Date(sub.end_date)
-        prevEnd.setDate(prevEnd.getDate() + 30)
+        prevEnd.setDate(prevEnd.getDate() + renewDays)
         const newEnd = prevEnd.toISOString().split('T')[0]
 
         await db.from('platform_subscriptions').update({
