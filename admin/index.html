@@ -1206,7 +1206,7 @@ tr.row-click:hover td{background:var(--bg-2)}
       Чтобы добавить ещё одно заведение, оформите основную подписку на Alliby.
     </p>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="btn btn-p btn-full" onclick="closeModal('m-no-main-sub');startPlatformSubscription()">
+      <button class="btn btn-p btn-full" onclick="closeModal('m-no-main-sub');openPlatSubModal()">
         Оформить подписку →
       </button>
       <button class="btn btn-full" onclick="closeModal('m-no-main-sub')">Отмена</button>
@@ -1251,7 +1251,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     </div>
     <div style="background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:16px;margin-bottom:16px">
       <div style="font:700 28px/1 var(--font-display);color:var(--brand-ice-deep);margin-bottom:4px">1 000 ₽<span style="font:400 14px/1 var(--font-sans);color:var(--fg-3)">/мес</span></div>
-      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-3);margin-top:6px">Первый месяц — бесплатно. Далее автоматическое списание 1 000 ₽/мес.</div>
+      <div id="platsub-desc-text" style="font:400 13px/1.5 var(--font-sans);color:var(--fg-3);margin-top:6px">Первый месяц — бесплатно. Далее автоматическое списание 1 000 ₽/мес.</div>
     </div>
     <ul style="list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--fg-2)">
       <li>✓ Полный доступ к панели управления</li>
@@ -2798,6 +2798,7 @@ async function loadStoreSubscriptions() {
       .filter(s => s.plan_type === 'platform' && ['active','grace'].includes(s.status) && s.end_date >= todayStr)
       .sort((a, b) => (a.end_date < b.end_date ? 1 : -1))[0] || null;
     _activePlatSub = mainSub || null;
+    _hadTrial = subs.some(s => s.is_trial === true && s.plan_type === 'platform');
 
     let html = '';
 
@@ -2814,10 +2815,12 @@ async function loadStoreSubscriptions() {
 
     // ── No-subscription banner if needed ──────────────────────────────────
     if (!mainSub) {
+      const _subBtnOnclick = _hadTrial ? 'startRegularSubscription()' : 'startPlatformSubscription()';
+      const _subBtnText    = _hadTrial ? 'Оформить подписку →' : 'Начать бесплатный месяц →';
       html += `<div class="card" style="padding:14px;margin-top:10px;border:1px dashed var(--line-soft)">` +
         `<div style="font:600 13px/1 var(--font-sans);margin-bottom:6px">Расширьте возможности</div>` +
         `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:10px">Подписка открывает доставку, аналитику, абонементы и возможность добавлять заведения.</div>` +
-        `<button class="btn btn-p btn-full" onclick="startPlatformSubscription()">Начать бесплатный месяц →</button>` +
+        `<button class="btn btn-p btn-full" onclick="${_subBtnOnclick}">${_subBtnText}</button>` +
         `</div>`;
     }
 
@@ -3060,6 +3063,7 @@ async function loadPlatformSubscription() {
     const todayStr = now.toISOString().split('T')[0];
     const active = subs.find(s => ['active','grace'].includes(s.status) && s.end_date >= todayStr);
     _activePlatSub = active || null;
+    _hadTrial = subs.some(s => s.is_trial === true);
 
     if (active) {
       const endDate   = new Date(active.end_date);
@@ -3102,12 +3106,14 @@ async function loadPlatformSubscription() {
       const hint = last
         ? `Истекла ${new Date(last.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`
         : 'Нет активной подписки';
+      const subBtnOnclick = _hadTrial ? 'startRegularSubscription()' : 'startPlatformSubscription()';
+      const subBtnText    = _hadTrial ? 'Оформить подписку →' : 'Начать бесплатный месяц →';
       el.innerHTML =
         `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">` +
           `<div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3)">${hint}</div>` +
           `<span class="platsub-status-badge inactive">Нет</span>` +
         `</div>` +
-        `<button class="btn btn-p btn-full" onclick="startPlatformSubscription()">Начать бесплатный месяц →</button>`;
+        `<button class="btn btn-p btn-full" onclick="${subBtnOnclick}">${subBtnText}</button>`;
     }
   } catch(e) {
     el.innerHTML = `<div style="color:var(--fg-4);font-size:13px">Ошибка загрузки подписки</div>`;
@@ -3124,14 +3130,41 @@ async function loadPlatformSubscription() {
   }
 }
 
+let _platSubMode = 'trial';
+let _hadTrial    = false;
+
+function openPlatSubModal() {
+  if (_hadTrial) startRegularSubscription();
+  else startPlatformSubscription();
+}
+
 async function startPlatformSubscription() {
+  _platSubMode = 'trial';
   const btn = document.querySelector('[onclick="startPlatformSubscription()"]');
   if (btn) btn.disabled = true;
   await requireContract('seller', () => {
     const errEl = document.getElementById('platsub-pay-err');
-    if (errEl) { errEl.style.display = 'none'; }
+    if (errEl) errEl.style.display = 'none';
+    const descEl = document.getElementById('platsub-desc-text');
+    if (descEl) descEl.textContent = 'Первый месяц — бесплатно. Далее автоматическое списание 1 000 ₽/мес.';
     const payBtn = document.getElementById('platsub-pay-btn');
     if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Начать бесплатный месяц →'; }
+    openModal('m-platsub-plans');
+  });
+  if (btn) btn.disabled = false;
+}
+
+async function startRegularSubscription() {
+  _platSubMode = 'regular';
+  const btn = document.querySelector('[onclick="startRegularSubscription()"]');
+  if (btn) btn.disabled = true;
+  await requireContract('seller', () => {
+    const errEl = document.getElementById('platsub-pay-err');
+    if (errEl) errEl.style.display = 'none';
+    const descEl = document.getElementById('platsub-desc-text');
+    if (descEl) descEl.textContent = 'Автоматическое списание 1 000 ₽/мес. Отмена в любой момент.';
+    const payBtn = document.getElementById('platsub-pay-btn');
+    if (payBtn) { payBtn.disabled = false; payBtn.textContent = 'Оформить подписку →'; }
     openModal('m-platsub-plans');
   });
   if (btn) btn.disabled = false;
@@ -3143,17 +3176,18 @@ async function initTrialPayment() {
   if (errEl) errEl.style.display = 'none';
   btn.disabled    = true;
   btn.textContent = 'Подготовка платежа…';
+  const isRegular = _platSubMode === 'regular';
   try {
     const consentGiven = document.getElementById('platsub-consent-cb')?.checked ?? false;
     const data = await req('/functions/v1/tbank-platform-init', {
       method: 'POST',
-      body: JSON.stringify({ type: 'trial', consent_given: consentGiven }),
+      body: JSON.stringify({ type: isRegular ? 'monthly' : 'trial', consent_given: consentGiven }),
     });
     window.location.href = data.payment_url;
   } catch(e) {
     if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
     btn.disabled    = false;
-    btn.textContent = 'Начать бесплатный месяц →';
+    btn.textContent = isRegular ? 'Оформить подписку →' : 'Начать бесплатный месяц →';
   }
 }
 

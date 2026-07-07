@@ -42,8 +42,8 @@ Deno.serve(async (req: Request) => {
   try { body = await req.json() } catch { return jsonResponse({ error: 'Invalid JSON' }, 400) }
 
   const { type, store_id: bodyStoreId, consent_given, plan: addStorePlan } = body
-  if (!type || !['trial', 'add_store'].includes(type)) {
-    return jsonResponse({ error: 'type must be trial or add_store' }, 400)
+  if (!type || !['trial', 'monthly', 'add_store'].includes(type)) {
+    return jsonResponse({ error: 'type must be trial, monthly or add_store' }, 400)
   }
 
   const supabaseUrl    = Deno.env.get('SUPABASE_URL')!
@@ -166,6 +166,92 @@ Deno.serve(async (req: Request) => {
     }
 
     await trackEvent(serviceClient, 'trial_started', user.id, { subscription_id: sub.id, order_id: orderId }, `trial_${sub.id}`)
+
+    return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: sub.id })
+  }
+
+  // ── MONTHLY: full 1 000 ₽ payment (trial already used) ──────────────────────
+  if (type === 'monthly') {
+    const { data: existing } = await serviceClient
+      .from('platform_subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'grace'])
+      .gte('end_date', new Date().toISOString().split('T')[0])
+      .limit(1)
+    if (existing?.length) {
+      return jsonResponse({ error: 'Already has active subscription' }, 409)
+    }
+
+    await serviceClient
+      .from('platform_subscriptions')
+      .update({ status: 'failed' })
+      .eq('user_id', user.id).eq('status', 'pending')
+
+    const now     = new Date()
+    const endDate = new Date(now)
+    endDate.setDate(endDate.getDate() + 30)
+    const orderId = `sub_${user.id.slice(0, 8)}_${Date.now()}`
+    const amount  = 100000 // 1 000 ₽
+
+    const { data: sub, error: subError } = await serviceClient
+      .from('platform_subscriptions')
+      .insert({
+        user_id:                user.id,
+        plan:                   'monthly',
+        status:                 'pending',
+        start_date:             now.toISOString().split('T')[0],
+        end_date:               endDate.toISOString().split('T')[0],
+        amount_paid:            1000,
+        is_trial:               false,
+        monthly_amount_kopecks: 100000,
+        extra_stores:           0,
+      })
+      .select().single()
+
+    if (subError || !sub) {
+      return jsonResponse({ error: 'DB error: ' + subError?.message }, 500)
+    }
+
+    const scalarParams: Record<string, string | number> = {
+      TerminalKey:     terminalKey,
+      Amount:          amount,
+      OrderId:         orderId,
+      Description:     'Подписка Aliby — 1 месяц',
+      Recurrent:       'Y',
+      CustomerKey:     user.id,
+      NotificationURL: NOTIFY_URL,
+      SuccessURL:      SUCCESS_URL,
+      FailURL:         FAIL_URL,
+    }
+
+    const receipt = {
+      Email:    user.email,
+      Taxation: 'usn_income',
+      Items: [{
+        Name: 'Подписка Aliby (1 месяц)',
+        Price: amount, Quantity: 1, Amount: amount,
+        Tax: 'none', PaymentMethod: 'full_prepayment', PaymentObject: 'service',
+      }],
+    }
+
+    const tResp = await fetch(TBANK_INIT_URL, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password), Receipt: receipt }),
+    })
+    const tData = await tResp.json()
+
+    if (!tData.Success || !tData.PaymentURL) {
+      await serviceClient.from('platform_subscriptions').delete().eq('id', sub.id)
+      return jsonResponse({ error: tData.Message || 'T-Bank init failed' }, 400)
+    }
+
+    await serviceClient
+      .from('platform_subscriptions')
+      .update({ tbank_payment_id: String(tData.PaymentId) })
+      .eq('id', sub.id)
+
+    await trackEvent(serviceClient, 'subscription_monthly_started', user.id, { subscription_id: sub.id, order_id: orderId }, `sub_${sub.id}`)
 
     return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: sub.id })
   }
