@@ -214,6 +214,7 @@ Deno.serve(async (req: Request) => {
         end_date:               endDate.toISOString().split('T')[0],
         amount_paid:            planCfg.amtRub,
         is_trial:               false,
+        auto_renew:             false,
         monthly_amount_kopecks: planCfg.amtKop,
         extra_stores:           0,
       })
@@ -229,7 +230,6 @@ Deno.serve(async (req: Request) => {
       Amount:          planCfg.amtKop,
       OrderId:         orderId,
       Description:     `Подписка Aliby — ${periodLabels[planId] || '1 месяц'}`,
-      Recurrent:       'Y',
       CustomerKey:     user.id,
       NotificationURL: NOTIFY_URL,
       SuccessURL:      SUCCESS_URL,

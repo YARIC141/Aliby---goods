@@ -1285,7 +1285,7 @@ tr.row-click:hover td{background:var(--bg-2)}
     <div id="platsub-paid-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12px;color:var(--fg-3);line-height:1.4;cursor:pointer">
       <input type="checkbox" id="platsub-paid-consent-cb" onchange="document.getElementById('platsub-paid-btn').disabled=!this.checked" style="margin-top:2px;width:auto;flex-shrink:0">
-      Я подтверждаю согласие на автоматические списания в соответствии с <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионным договором</a>. Могу отключить в любой момент.
+      Я ознакомлен с условиями <a href="https://site.alliby.ru/license" target="_blank" rel="noopener" style="color:var(--accent)">Лицензионного договора</a> и подтверждаю оплату выбранного периода без автоматического продления.
     </label>
     <div id="platsub-paid-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -2887,8 +2887,10 @@ async function loadStoreSubscriptions() {
           : _activePlatSub.status === 'grace' ? 'Ошибка оплаты' : 'Активна';
         const storePart = storeCount === 0 ? 'Заведений нет'
           : storeCount === 1 ? '1 заведение' : `${storeCount} заведения`;
-        const amount = 1000 + (_activePlatSub.extra_stores || 0) * 500;
-        summaryEl.textContent = `${storePart} · ${statusLabel} · ${amount.toLocaleString('ru-RU')} ₽/мес`;
+        const _summaryPeriod = { 'monthly': '/мес', '3months': '/3 мес', '6months': '/6 мес', 'yearly': '/год' };
+        const amount = Math.round((_activePlatSub.monthly_amount_kopecks || 160000) / 100) + (_activePlatSub.extra_stores || 0) * 500;
+        const periodSuffix = _summaryPeriod[_activePlatSub.plan] || '/мес';
+        summaryEl.textContent = `${storePart} · ${statusLabel} · ${amount.toLocaleString('ru-RU')} ₽${periodSuffix}`;
       } else {
         summaryEl.textContent = storeCount > 0 ? `${storeCount} заведение · Без подписки` : 'Без подписки';
       }
@@ -2923,18 +2925,19 @@ function _renderStoreSubCard(store, sub, isFirst) {
   let subInfo = '';
   if (sub) {
     const endFmt  = new Date(sub.end_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
-    const amount  = Math.round((sub.monthly_amount_kopecks || 100000) / 100);
-    const periodTxt = sub.plan === 'yearly' ? '/год' : '/мес';
+    const amount  = Math.round((sub.monthly_amount_kopecks || 160000) / 100);
+    const _planPeriod = { 'monthly': '/мес', '3months': '/3 мес', '6months': '/6 мес', 'yearly': '/год' };
+    const periodTxt = _planPeriod[sub.plan] || '/мес';
     let costLine = '';
     if (isActive) {
       if (isTrial) {
         costLine = sub.auto_renew
-          ? `После пробного — <b>${amount.toLocaleString('ru-RU')} ₽${periodTxt}</b>`
+          ? `После пробного — <b>1 600 ₽/мес</b>`
           : `До ${endFmt} · подписка отменена`;
       } else {
         costLine = sub.auto_renew
           ? `<b>${amount.toLocaleString('ru-RU')} ₽${periodTxt}</b> · автоплатёж до ${endFmt}`
-          : `До ${endFmt} · без автоплатежа`;
+          : `Активна до <b>${endFmt}</b>`;
       }
     } else if (isGrace) {
       costLine = `Ошибка оплаты · ${amount.toLocaleString('ru-RU')} ₽${periodTxt}`;
@@ -2950,10 +2953,10 @@ function _renderStoreSubCard(store, sub, isFirst) {
       Показывать на карте
     </label>` : '';
 
-  const autoRenewToggle = (isActive && sub) ? `
+  const autoRenewToggle = (isActive && sub && isTrial) ? `
     <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:${sub.auto_renew ? 'var(--err)' : 'var(--accent)'}"
-      onclick="toggleAutoRenew('${sub.id}',${!sub.auto_renew},${isTrial})">
-      ${sub.auto_renew ? (isTrial ? 'Отменить подписку' : 'Отключить автоплатёж') : 'Включить автоплатёж'}
+      onclick="toggleAutoRenew('${sub.id}',${!sub.auto_renew},true)">
+      ${sub.auto_renew ? 'Отменить подписку' : 'Возобновить подписку'}
     </button>` : '';
 
   const payBtn = (!isFirst && store && (!sub || isExpired)) ? `
@@ -3092,25 +3095,26 @@ async function loadPlatformSubscription() {
     if (active) {
       const endDate   = new Date(active.end_date);
       const endFmt    = endDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
-      const daysLeft  = Math.ceil((endDate - now) / 86400000);
-      const nextAmt   = 1000 + (active.extra_stores || 0) * 500;
       const isTrial   = active.is_trial;
       const isGrace   = active.status === 'grace';
       const storesAllowed = 1 + (active.extra_stores || 0);
       const storeCount    = S.stores?.length ?? 0;
+      const _pp = { 'monthly': '/мес', '3months': '/3 мес', '6months': '/6 мес', 'yearly': '/год' };
+      const chargeAmt   = Math.round((active.monthly_amount_kopecks || 160000) / 100);
+      const periodLabel = _pp[active.plan] || '/мес';
 
       let statusBadge = `<span class="platsub-status-badge active">Активна</span>`;
       if (isTrial)  statusBadge = `<span class="platsub-status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0">Пробный период</span>`;
       if (isGrace)  statusBadge = `<span class="platsub-status-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a">Ошибка оплаты</span>`;
 
-      const trialNote  = isTrial  ? `<div style="font:400 11px/1.4 var(--font-sans);color:#16a34a;margin-top:3px">Первый месяц бесплатно — карта привязана</div>` : '';
-      const graceNote  = isGrace  ? `<div style="font:400 11px/1.4 var(--font-sans);color:#b45309;margin-top:3px">Не удалось списать — повторная попытка через ${active.retry_count ? (3 - active.retry_count) : 3} д.</div>` : '';
-      const renewNote  = !isTrial && !isGrace ? `<div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px">Следующее списание: ${endFmt} — ${nextAmt.toLocaleString('ru-RU')} ₽</div>` : '';
+      const trialNote  = isTrial ? `<div style="font:400 11px/1.4 var(--font-sans);color:#16a34a;margin-top:3px">Первый месяц бесплатно — карта привязана, далее 1 600 ₽/мес</div>` : '';
+      const graceNote  = isGrace ? `<div style="font:400 11px/1.4 var(--font-sans);color:#b45309;margin-top:3px">Не удалось списать — повторная попытка через ${active.retry_count ? (3 - active.retry_count) : 3} д.</div>` : '';
+      const renewNote  = (!isTrial && !isGrace && active.auto_renew) ? `<div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px">Следующее списание: ${endFmt} — ${chargeAmt.toLocaleString('ru-RU')} ₽</div>` : '';
 
       el.innerHTML =
         `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">` +
           `<div>` +
-            `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">Подписка Alliby · ${nextAmt.toLocaleString('ru-RU')} ₽/мес</div>` +
+            `<div style="font:600 14px/1 var(--font-sans);margin-bottom:4px">Подписка Alliby · ${chargeAmt.toLocaleString('ru-RU')} ₽${periodLabel}</div>` +
             `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3)">Активна до ${endFmt}</div>` +
             trialNote + graceNote + renewNote +
           `</div>` +
