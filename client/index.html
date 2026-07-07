@@ -3549,16 +3549,12 @@ function _updateStoreNotifUI(subscribed) {
 
 async function toggleStoreNotif() {
   const uid = S.session?.user?.id;
-  console.log('[notif] uid:', uid, 'store:', S.store?.id, 'wasOn:', S._storeNotifSub, 'consent:', localStorage.getItem(_PROMO_CONSENT_KEY));
   if (!uid) { goTo('auth'); return; }
   if (!S.store?.id) return;
   const wasOn = S._storeNotifSub === true;
   // Подписка требует явного согласия на рекламные уведомления (ФЗ-38)
   if (!wasOn && localStorage.getItem(_PROMO_CONSENT_KEY) !== 'yes') {
-    console.log('[notif] showing consent modal');
-    const el = document.getElementById('m-promo-consent');
-    console.log('[notif] modal el:', el);
-    el.classList.add('open');
+    document.getElementById('m-promo-consent').classList.add('open');
     return;
   }
   await _doToggleStoreNotif();
