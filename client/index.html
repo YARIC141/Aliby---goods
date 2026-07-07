@@ -3554,7 +3554,7 @@ async function toggleStoreNotif() {
   const wasOn = S._storeNotifSub === true;
   // Подписка требует явного согласия на рекламные уведомления (ФЗ-38)
   if (!wasOn && localStorage.getItem(_PROMO_CONSENT_KEY) !== 'yes') {
-    document.getElementById('m-promo-consent').style.display = 'flex';
+    document.getElementById('m-promo-consent').classList.add('open');
     return;
   }
   await _doToggleStoreNotif();
@@ -3581,7 +3581,7 @@ async function _doToggleStoreNotif() {
 }
 
 function _promoConsentClose() {
-  document.getElementById('m-promo-consent').style.display = 'none';
+  document.getElementById('m-promo-consent').classList.remove('open');
 }
 
 async function _promoConsentAcceptFromStore() {
@@ -7845,7 +7845,7 @@ function closeStoreSchedDay() {
 </div>
 
 <!-- ════════════════ PROMO CONSENT MODAL ════════════════ -->
-<div class="overlay" id="m-promo-consent" onclick="if(event.target===this)_promoConsentClose()" style="display:none">
+<div class="overlay" id="m-promo-consent" onclick="if(event.target===this)_promoConsentClose()">
   <div class="modal" style="max-width:360px" onclick="event.stopPropagation()">
     <div class="modal-hd">
       <h3>Рекламные уведомления</h3>
