@@ -3551,13 +3551,20 @@ async function toggleStoreNotif() {
   const uid = S.session?.user?.id;
   if (!uid) { goTo('auth'); return; }
   if (!S.store?.id) return;
-  const sid = S.store.id;
   const wasOn = S._storeNotifSub === true;
-  // Подписка (не отписка) требует явного согласия на рекламные уведомления (ФЗ-38)
+  // Подписка требует явного согласия на рекламные уведомления (ФЗ-38)
   if (!wasOn && localStorage.getItem(_PROMO_CONSENT_KEY) !== 'yes') {
-    openPromoNotifs(); // покажет баннер «Да, хочу» / «Не сейчас»
+    document.getElementById('m-promo-consent').style.display = 'flex';
     return;
   }
+  await _doToggleStoreNotif();
+}
+
+async function _doToggleStoreNotif() {
+  const uid = S.session?.user?.id;
+  if (!uid || !S.store?.id) return;
+  const sid = S.store.id;
+  const wasOn = S._storeNotifSub === true;
   S._storeNotifSub = wasOn ? false : true;
   _updateStoreNotifUI(S._storeNotifSub);
   try {
@@ -3571,6 +3578,30 @@ async function toggleStoreNotif() {
     S._storeNotifSub = wasOn ? true : null;
     _updateStoreNotifUI(S._storeNotifSub);
   }
+}
+
+function _promoConsentClose() {
+  document.getElementById('m-promo-consent').style.display = 'none';
+}
+
+async function _promoConsentAcceptFromStore() {
+  _promoConsentClose();
+  localStorage.setItem(_PROMO_CONSENT_KEY, 'yes');
+  const uid = S.session?.user?.id;
+  if (uid) {
+    req(`/rest/v1/profiles?id=eq.${uid}`, {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ promo_consent: true }),
+    }).catch(() => {});
+    if (S.profile) { S.profile.promo_consent = true; _writeProfileCache(uid, S.profile); }
+  }
+  await _doToggleStoreNotif();
+}
+
+function _promoConsentDeclineFromStore() {
+  _promoConsentClose();
+  localStorage.setItem(_PROMO_CONSENT_KEY, 'no');
 }
 
 // ─── STORE ───
@@ -7802,6 +7833,22 @@ function closeStoreSchedDay() {
   </div>
   <div id="dz-addr-btn-wrap">
     <button class="btn btn-p btn-full" onclick="dzvEnterPickMode()">Выбрать место доставки</button>
+  </div>
+</div>
+
+<!-- ════════════════ PROMO CONSENT MODAL ════════════════ -->
+<div class="overlay" id="m-promo-consent" onclick="if(event.target===this)_promoConsentClose()" style="display:none">
+  <div class="modal" style="max-width:360px" onclick="event.stopPropagation()">
+    <div class="modal-hd">
+      <h3>Рекламные уведомления</h3>
+      <button class="modal-x" onclick="_promoConsentClose()">✕</button>
+    </div>
+    <p style="font:400 14px/1.6 var(--font-sans);color:var(--fg-2);margin:0 0 6px">Нажимая «Да», вы даёте согласие на получение рекламных рассылок от заведений в соответствии с <a href="/oferta" target="_blank" style="color:var(--accent)">пользовательским соглашением</a>.</p>
+    <p style="font:400 13px/1.4 var(--font-sans);color:var(--fg-4);margin:0 0 18px">Вы сможете отозвать согласие в любой момент, отписавшись от уведомлений заведения.</p>
+    <div class="modal-ft" style="margin-top:0;padding-top:0;border-top:none;gap:8px">
+      <button class="btn btn-sec" style="flex:1" onclick="_promoConsentDeclineFromStore()">Нет, спасибо</button>
+      <button class="btn btn-p" style="flex:1" onclick="_promoConsentAcceptFromStore()">Да, согласен</button>
+    </div>
   </div>
 </div>
 
