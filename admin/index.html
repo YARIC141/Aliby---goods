@@ -3149,10 +3149,14 @@ async function loadPlatformSubscription() {
   }
   if (_tpayMsg) {
     const isOk = _tpayMsg === 'success';
+    const platSubType = localStorage.getItem('_alliby_platsub_type') || '';
+    if (isOk) localStorage.removeItem('_alliby_platsub_type');
     const note = document.createElement('div');
     note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;${isOk ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b'}`;
     note.textContent = isOk
-      ? 'Карта привязана! Первый месяц бесплатно — подписка активируется через несколько секунд.'
+      ? (platSubType === 'trial'
+          ? 'Карта привязана — первый месяц бесплатно. Подписка активируется через несколько секунд.'
+          : 'Оплата прошла — подписка активируется через несколько секунд.')
       : '✕ Оплата не завершена — банк отклонил платёж.';
     el.prepend(note);
     _tpayMsg = null;
@@ -3246,6 +3250,7 @@ async function initTrialPayment() {
       method: 'POST',
       body: JSON.stringify({ type: 'trial', consent_given: consentGiven }),
     });
+    localStorage.setItem('_alliby_platsub_type', 'trial');
     window.location.href = data.payment_url;
   } catch(e) {
     if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
@@ -3268,6 +3273,7 @@ async function initPaidPayment() {
       method: 'POST',
       body: JSON.stringify({ type: 'monthly', plan: _selectedPlatPlan, consent_given: consentGiven }),
     });
+    localStorage.setItem('_alliby_platsub_type', 'paid');
     window.location.href = data.payment_url;
   } catch(e) {
     if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
