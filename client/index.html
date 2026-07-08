@@ -5799,7 +5799,7 @@ async function buySubDirect(id) {
   );
 }
 
-function openSubDetailModal(id) {
+async function openSubDetailModal(id) {
   const s = subPlans[id];
   if (!s) return;
   document.getElementById('msd-name').textContent  = s.name;
@@ -5807,15 +5807,55 @@ function openSubDetailModal(id) {
   const descEl = document.getElementById('msd-desc');
   descEl.textContent   = s.description || '';
   descEl.style.display = s.description ? 'block' : 'none';
+  document.getElementById('msd-conds').innerHTML = '';
+
+  const isServices = S.direction === 'services';
+  document.getElementById('msd-buy-btn').onclick = isServices
+    ? () => buySubDirect(s.id)
+    : () => { closeModal('m-sub-detail'); addSubToCart(s.id); showGeoToast('Добавлено в корзину'); };
+  const giftBtn = document.getElementById('msd-gift-btn');
+  giftBtn.style.display = isServices ? 'none' : '';
+  giftBtn.onclick = () => { closeModal('m-sub-detail'); openGiftConfirm(s.id); };
+  openModal('m-sub-detail');
 
   const ic = (path) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
   const row = (icon, lbl, val) => `<div class="cond-row"><span class="cond-icon">${icon}</span><span class="cond-lbl">${esc(lbl)}</span><span class="cond-val">${val}</span></div>`;
   const rows = [];
 
-  if (s.coverage_rules && s.coverage_rules.type !== 'all') {
+  // Состав — resolve real names for specific items/categories
+  const cr = s.coverage_rules || {};
+  if (cr.type === 'include_items' && cr.item_ids?.length) {
+    let itemNames = cr.item_ids.join(', ');
+    try {
+      const ids = cr.item_ids.map(encodeURIComponent).join(',');
+      const items = await req(`/rest/v1/menu_items?id=in.(${ids})&select=name&order=name.asc`);
+      if (items.length) itemNames = items.map(i => esc(i.name)).join(', ');
+    } catch {}
     rows.push(row(
       ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'),
-      'Состав', esc(fmtCoverage(s.coverage_rules))
+      'Состав', itemNames
+    ));
+  } else if (cr.type === 'include_categories' && cr.category_ids?.length) {
+    let catNames = '';
+    try {
+      const ids = cr.category_ids.map(encodeURIComponent).join(',');
+      const cats = await req(`/rest/v1/store_categories?id=in.(${ids})&select=name&order=name.asc`);
+      if (cats.length) catNames = cats.map(c => esc(c.name)).join(', ');
+    } catch {}
+    if (catNames) rows.push(row(
+      ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'),
+      'Состав', catNames
+    ));
+  } else if (cr.type === 'exclude_items' && cr.item_ids?.length) {
+    let itemNames = '';
+    try {
+      const ids = cr.item_ids.map(encodeURIComponent).join(',');
+      const items = await req(`/rest/v1/menu_items?id=in.(${ids})&select=name&order=name.asc`);
+      if (items.length) itemNames = items.map(i => esc(i.name)).join(', ');
+    } catch {}
+    rows.push(row(
+      ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'),
+      'Состав', 'Весь ассортимент' + (itemNames ? `, кроме: ${itemNames}` : '')
     ));
   }
 
@@ -5855,22 +5895,13 @@ function openSubDetailModal(id) {
   }
 
   const ul = s.usage_limits || {};
-  if (ul.daily_limit) rows.push(row(ic('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'), 'В день', 'до ' + ul.daily_limit + ' исп.'));
+  if (ul.daily_limit)        rows.push(row(ic('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'), 'В день', 'до ' + ul.daily_limit + ' исп.'));
   if (ul.min_interval_hours) rows.push(row(ic('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'), 'Интервал', 'не чаще раза в ' + ul.min_interval_hours + ' ч.'));
-  if (ul.min_order_amount) rows.push(row(ic('<path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>'), 'Мин. заказ', ul.min_order_amount + ' ₽'));
+  if (ul.min_order_amount)   rows.push(row(ic('<path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>'), 'Мин. заказ', ul.min_order_amount + ' ₽'));
 
   document.getElementById('msd-conds').innerHTML = rows.length
     ? `<div class="cond-title">Условия</div>${rows.join('')}`
     : '';
-
-  const isServices = S.direction === 'services';
-  document.getElementById('msd-buy-btn').onclick = isServices
-    ? () => buySubDirect(s.id)
-    : () => { closeModal('m-sub-detail'); addSubToCart(s.id); showGeoToast('Добавлено в корзину'); };
-  const giftBtn = document.getElementById('msd-gift-btn');
-  giftBtn.style.display = isServices ? 'none' : '';
-  giftBtn.onclick = () => { closeModal('m-sub-detail'); openGiftConfirm(s.id); };
-  openModal('m-sub-detail');
 }
 
 function openBuyModal(id, name, price, days, uses) {
