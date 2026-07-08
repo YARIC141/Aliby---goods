@@ -4273,15 +4273,17 @@ async function uploadMenuPhoto(input) {
       <span style="color:#fff;font-size:13px">Загрузка…</span>
     </div>`;
 
-  const filename = 'mi_' + Date.now() + file.name.slice(file.name.lastIndexOf('.'));
   try {
-    const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('prefix', 'menu');
+    const r = await fetch(`${SB_URL}/functions/v1/upload-media`, {
       method: 'POST',
-      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': file.type },
-      body: file,
+      headers: { Authorization: 'Bearer ' + S.session.access_token },
+      body: form,
     });
-    if (!r.ok) { const e = await r.json(); throw e; }
-    const url = `${SB_URL}/storage/v1/object/public/menu-photos/${filename}`;
+    if (!r.ok) throw new Error(await r.text());
+    const { url } = await r.json();
     document.getElementById('mmi-image-url').value = url;
     document.getElementById('mmi-delete-photo-btn').style.display = 'inline-flex';
     preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
@@ -4290,21 +4292,15 @@ async function uploadMenuPhoto(input) {
     preview.innerHTML = '';
     if (hint) { hint.textContent = 'Ошибка загрузки'; preview.appendChild(hint); }
     URL.revokeObjectURL(localUrl);
-    alert('Ошибка загрузки фото: ' + (e.message || JSON.stringify(e)));
+    alert('Ошибка загрузки фото: ' + (e.message || e));
   }
 }
 
 async function deletePhoto() {
   const url = document.getElementById('mmi-image-url').value;
-  if (!url) return;
-  const filename = url.split('/menu-photos/').pop();
-  if (!confirm(`Удалить фото?`)) return;
+  if (!url || !confirm('Удалить фото?')) return;
   try {
-    await fetch(`${SB_URL}/storage/v1/object/menu-photos`, {
-      method: 'DELETE',
-      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefixes: [filename] }),
-    });
+    await _deleteMediaUrl(url);
     document.getElementById('mmi-image-url').value = '';
     document.getElementById('mmi-delete-photo-btn').style.display = 'none';
     const preview = document.getElementById('mmi-preview');
@@ -4312,6 +4308,26 @@ async function deletePhoto() {
     if (hint) { hint.textContent = 'Нажмите чтобы выбрать фото'; preview.innerHTML = ''; preview.appendChild(hint); }
     else preview.innerHTML = '<span style="color:var(--fg-4);font-size:13px">Нажмите чтобы выбрать фото</span>';
   } catch(e) { alert('Ошибка: ' + (e.message || '')); }
+}
+
+async function _deleteMediaUrl(url) {
+  if (url.includes('s3.ru1.storage.beget.cloud')) {
+    const bucket = '7e1578c73dcc-alliby-media';
+    const key = url.split(bucket + '/').pop();
+    await fetch(`${SB_URL}/functions/v1/upload-media`, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+  } else {
+    // legacy Supabase Storage
+    const filename = url.split('/menu-photos/').pop();
+    await fetch(`${SB_URL}/storage/v1/object/menu-photos`, {
+      method: 'DELETE',
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prefixes: [filename] }),
+    });
+  }
 }
 
 // ─── STORE PHOTO CROP ───
@@ -4420,20 +4436,16 @@ async function confirmStoreCrop() {
     );
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
     if (!blob || blob.size === 0) throw new Error('Canvas не вернул изображение');
-    console.log('Store photo blob:', blob.type, blob.size, 'bytes');
-    const filename = 'store_' + Date.now() + '.jpg';
-    const r = await fetch(`${SB_URL}/storage/v1/object/menu-photos/${filename}`, {
+    const form = new FormData();
+    form.append('file', blob, 'store.jpg');
+    form.append('prefix', 'store');
+    const r = await fetch(`${SB_URL}/functions/v1/upload-media`, {
       method: 'POST',
-      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': blob.type || 'image/jpeg' },
-      body: blob,
+      headers: { Authorization: 'Bearer ' + S.session.access_token },
+      body: form,
     });
-    if (!r.ok) {
-      const text = await r.text();
-      console.error('Storage error body:', text);
-      let parsed; try { parsed = JSON.parse(text); } catch { parsed = { message: text }; }
-      throw parsed;
-    }
-    const url = `${SB_URL}/storage/v1/object/public/menu-photos/${filename}`;
+    if (!r.ok) throw new Error(await r.text());
+    const { url } = await r.json();
     document.getElementById('ms-image-url').value = url;
     _restoreStoreImgPreview(url);
     if (_scpCleanup) { _scpCleanup(); _scpCleanup = null; }
@@ -4450,13 +4462,8 @@ function cancelStoreCrop() {
 async function deleteStorePhoto() {
   const url = document.getElementById('ms-image-url').value;
   if (!url || !confirm('Удалить фото?')) return;
-  const filename = url.split('/menu-photos/').pop();
   try {
-    await fetch(`${SB_URL}/storage/v1/object/menu-photos`, {
-      method: 'DELETE',
-      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prefixes: [filename] }),
-    });
+    await _deleteMediaUrl(url);
     document.getElementById('ms-image-url').value = '';
     _restoreStoreImgPreview('');
   } catch(e) { alert('Ошибка: ' + (e.message || '')); }
@@ -5720,13 +5727,8 @@ async function confirmAction() {
             body: JSON.stringify({ archived_at: new Date().toISOString(), is_visible: false }),
           });
           const items = await req(`/rest/v1/menu_items?store_id=eq.${id}&image_url=not.is.null&select=id,image_url`);
-          const prefixes = items.filter(i => i.image_url?.includes('/menu-photos/')).map(i => i.image_url.split('/menu-photos/').pop());
-          if (prefixes.length) {
-            await fetch(`${SB_URL}/storage/v1/object/menu-photos`, {
-              method: 'DELETE',
-              headers: { apikey: SB_ANON, Authorization: 'Bearer ' + S.session.access_token, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prefixes }),
-            });
+          await Promise.allSettled(items.map(i => _deleteMediaUrl(i.image_url)));
+          if (items.length) {
             await req(`/rest/v1/menu_items?store_id=eq.${id}`, {
               method: 'PATCH',
               body: JSON.stringify({ image_url: null }),
