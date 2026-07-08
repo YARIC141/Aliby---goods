@@ -223,12 +223,12 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 #nearby-slider::-moz-range-track{background:transparent}
 .btn-green-p{background:linear-gradient(145deg,#16a34a,#22c55e)!important;color:#fff!important;border-color:transparent!important;box-shadow:none!important}
 .btn-yellow-p{background:linear-gradient(145deg,#f5a800,#ffd000)!important;color:#1a1200!important;border-color:transparent!important;box-shadow:none!important}
-.sl-panel{width:280px;flex-shrink:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;background:transparent;transition:width .25s ease,max-height .25s ease}
+.sl-panel{width:280px;flex-shrink:0;min-height:0;overflow:hidden;border-right:1px solid var(--line-soft);display:flex;flex-direction:column;background:var(--bg);transition:width .25s ease,max-height .25s ease}
 .map-layout.no-map .map-area{flex:0;min-width:0;width:0;overflow:hidden}
 .map-layout.no-map .sl-panel{flex:1;width:auto;border-right:none}
 .sl-search{padding:10px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-search input{padding:7px 10px;border-radius:var(--r-2)}
-.sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line-soft);flex-shrink:0;background:var(--bg-1)}
+.sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-cats:empty{display:none}
 .sl-cats .chip{padding:5px 12px;font-size:14px}
 #sl-filters{display:flex;flex-direction:column;flex-shrink:0}
@@ -3127,21 +3127,21 @@ function renderMapCategoryChips() {
   if (!S.mapCat.size) { try { localStorage.removeItem('alliby_cat_' + S.direction); } catch(e) {} }
   const sorted = [...catsMap.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
   el.innerHTML = '';
-  const mkChip = (label, active, onClick) => {
-    const btn = document.createElement('button');
-    btn.className = 'chip' + (active ? ' active' : '');
-    btn.innerHTML = label;
-    btn.addEventListener('click', onClick);
-    el.appendChild(btn);
-  };
-  mkChip('Все', S.mapCat.size === 0, () => {
+  const all = document.createElement('button');
+  all.className = 'chip' + (S.mapCat.size === 0 ? ' active' : '');
+  all.textContent = 'Все';
+  all.addEventListener('click', () => {
     S.mapCat.clear();
     try { localStorage.removeItem('alliby_cat_' + S.direction); } catch(e) {}
     renderMapCategoryChips();
     applyMapFilter();
   });
+  el.appendChild(all);
   sorted.forEach(([id, cat]) => {
-    mkChip(svgIco('tag', 11) + ' ' + esc(stripEmoji(cat.name)), S.mapCat.has(id), () => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (S.mapCat.has(id) ? ' active' : '');
+    b.innerHTML = `${svgIco('tag',11)} ${esc(stripEmoji(cat.name))}`;
+    b.addEventListener('click', () => {
       if (S.mapCat.has(id)) S.mapCat.delete(id); else S.mapCat.add(id);
       try {
         if (S.mapCat.size) localStorage.setItem('alliby_cat_' + S.direction, JSON.stringify([...S.mapCat]));
@@ -3150,6 +3150,7 @@ function renderMapCategoryChips() {
       renderMapCategoryChips();
       applyMapFilter();
     });
+    el.appendChild(b);
   });
 }
 
