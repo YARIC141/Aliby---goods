@@ -2012,7 +2012,7 @@ function fmtDate(d) {
 }
 function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; }
 const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
-const subStMap  = { pending:'Ожидает', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
+const subStMap  = { pending:'Оформляется', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
 
 // ─── DIRECTION ───
 function applyScreenAccent(screenId) {
