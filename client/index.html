@@ -1468,19 +1468,22 @@ document.addEventListener('deviceready',function(){
       <h3 id="mu-name">Абонемент</h3>
       <button class="modal-x" onclick="closeModal('m-usub')">✕</button>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div id="mu-store" class="txt-muted" style="font-size:13px"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div id="mu-store" style="font-size:13px;color:var(--fg-3)"></div>
       <span id="mu-badge" class="badge"></span>
     </div>
-    <div class="grid2" style="gap:8px;margin-bottom:14px">
-      <div class="card"><div class="lbl">С</div><strong id="mu-start" style="font-size:14px"></strong></div>
-      <div class="card"><div class="lbl">До</div><strong id="mu-exp" style="font-size:14px"></strong></div>
-      <div class="card"><div class="lbl">Осталось</div><strong id="mu-uses" style="font-size:18px"></strong></div>
-      <div class="card"><div class="lbl">Использовано</div><strong id="mu-used" style="font-size:14px"></strong></div>
+    <div class="grid2" style="gap:8px;margin-bottom:16px">
+      <div class="card" style="text-align:center">
+        <div class="lbl">Осталось</div>
+        <strong id="mu-uses" style="font-size:22px"></strong>
+      </div>
+      <div class="card" style="text-align:center">
+        <div class="lbl">Действует до</div>
+        <strong id="mu-exp" style="font-size:16px"></strong>
+      </div>
     </div>
-    <div id="mu-desc" style="margin-bottom:14px;color:var(--fg-sec);font-size:13px;line-height:1.5"></div>
-    <div class="sec-title">Условия</div>
-    <div id="mu-conditions" style="margin-bottom:14px"></div>
+    <div id="mu-desc" style="margin-bottom:14px;color:var(--fg-3);font-size:13px;line-height:1.5;display:none"></div>
+    <div id="mu-conditions" style="margin-bottom:16px"></div>
     <div class="sec-title">История списаний</div>
     <div id="mu-redemptions"><div class="loading">Загрузка…</div></div>
   </div>
@@ -5476,11 +5479,9 @@ async function openSubModal(id) {
   document.getElementById('mu-store').textContent = '';
   const badge = document.getElementById('mu-badge');
   badge.textContent = ''; badge.className = 'badge';
-  document.getElementById('mu-start').textContent = '…';
   document.getElementById('mu-exp').textContent = '…';
   document.getElementById('mu-uses').textContent = '…';
-  document.getElementById('mu-used').textContent = '…';
-  document.getElementById('mu-desc').textContent = '';
+  document.getElementById('mu-desc').style.display = 'none';
   document.getElementById('mu-conditions').innerHTML = '';
   document.getElementById('mu-redemptions').innerHTML = SK.orderCards(2);
   try {
@@ -5495,24 +5496,74 @@ async function openSubModal(id) {
     document.getElementById('mu-store').textContent = plan.stores?.name || '';
     badge.textContent = subStMap[us.status] || us.status;
     badge.className = `badge b-${us.status}`;
-    document.getElementById('mu-start').textContent = fmtShortDate(us.start_date);
     document.getElementById('mu-exp').textContent = fmtShortDate(us.end_date);
     document.getElementById('mu-uses').textContent = us.remaining_uses ?? '∞';
+    const descEl = document.getElementById('mu-desc');
+    descEl.textContent   = plan.description || '';
+    descEl.style.display = plan.description ? 'block' : 'none';
+
+    const ic = (path) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+    const row = (icon, lbl, val) => `<div class="cond-row"><span class="cond-icon">${icon}</span><span class="cond-lbl">${esc(lbl)}</span><span class="cond-val">${val}</span></div>`;
+    const rows = [];
+
+    // Товар — resolve real item/category names
+    const cr = plan.coverage_rules || {};
+    if (cr.type === 'include_items' && cr.item_ids?.length) {
+      let names = '…';
+      try {
+        const ids = cr.item_ids.map(encodeURIComponent).join(',');
+        const items = await req(`/rest/v1/menu_items?id=in.(${ids})&select=name&order=name.asc`);
+        if (items.length) names = items.map(i => esc(i.name)).join(', ');
+      } catch {}
+      rows.push(row(ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'), 'Товар', names));
+    } else if (cr.type === 'include_categories' && cr.category_ids?.length) {
+      let names = '';
+      try {
+        const ids = cr.category_ids.map(encodeURIComponent).join(',');
+        const cats = await req(`/rest/v1/store_categories?id=in.(${ids})&select=name&order=name.asc`);
+        if (cats.length) names = cats.map(c => esc(c.name)).join(', ');
+      } catch {}
+      if (names) rows.push(row(ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'), 'Товар', names));
+    } else if (cr.type === 'exclude_items' && cr.item_ids?.length) {
+      let names = '';
+      try {
+        const ids = cr.item_ids.map(encodeURIComponent).join(',');
+        const items = await req(`/rest/v1/menu_items?id=in.(${ids})&select=name&order=name.asc`);
+        if (items.length) names = items.map(i => esc(i.name)).join(', ');
+      } catch {}
+      rows.push(row(ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'), 'Товар', 'Весь ассортимент' + (names ? `, кроме: ${names}` : '')));
+    }
+
+    const tr = plan.time_rules || {};
+    if (tr.weekdays && tr.weekdays.length < 7) {
+      rows.push(row(ic('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'), 'Дни', esc(fmtWeekdays(tr.weekdays))));
+    }
+    if (tr.time_start) {
+      rows.push(row(ic('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'), 'Время действия', esc(tr.time_start + '–' + tr.time_end)));
+    }
+
+    // Срок действия — concrete end date for purchased subscription
+    if (us.end_date) {
+      const d = new Date(us.end_date);
+      const until = 'до ' + d.getDate() + '.' + String(d.getMonth() + 1).padStart(2, '0');
+      rows.push(row(ic('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h4m0 0h4m-4 0v-2m0 2v2"/>'), 'Срок действия', until));
+    }
+
     const total = plan.total_uses || 0;
-    document.getElementById('mu-used').textContent = total > 0 ? total - (us.remaining_uses ?? 0) : '∞';
-    document.getElementById('mu-desc').textContent = plan.description || '';
-    const conds = [];
-    conds.push(`<div class="cart-row"><span class="lbl">Покрытие</span><span>${fmtCoverage(plan.coverage_rules)}</span></div>`);
-    const ipu = plan.items_per_use ?? 1;
-    conds.push(`<div class="cart-row"><span class="lbl">За 1 списание</span><span>до ${ipu} шт.</span></div>`);
-    const tr = plan.time_rules;
-    if (tr?.weekdays) conds.push(`<div class="cart-row"><span class="lbl">Дни</span><span>${fmtWeekdays(tr.weekdays)}</span></div>`);
-    if (tr?.time_start) conds.push(`<div class="cart-row"><span class="lbl">Время</span><span>${tr.time_start}–${tr.time_end}</span></div>`);
-    const ul = plan.usage_limits;
-    if (ul?.daily_limit) conds.push(`<div class="cart-row"><span class="lbl">В день</span><span>до ${ul.daily_limit} исп.</span></div>`);
-    if (ul?.min_interval_hours) conds.push(`<div class="cart-row"><span class="lbl">Интервал</span><span>не чаще раза в ${ul.min_interval_hours} ч.</span></div>`);
-    if (ul?.min_order_amount) conds.push(`<div class="cart-row"><span class="lbl">Мин. заказ</span><span>${ul.min_order_amount} ₽</span></div>`);
-    document.getElementById('mu-conditions').innerHTML = conds.join('');
+    if (total > 0) {
+      rows.push(row(ic('<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>'), 'Кол-во', total));
+      rows.push(row(ic('<path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>'), 'Цена за единицу', Math.round(plan.price / total) + ' ₽'));
+    }
+
+    const ul = plan.usage_limits || {};
+    if (ul.daily_limit)        rows.push(row(ic('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'), 'В день', 'до ' + ul.daily_limit + ' исп.'));
+    if (ul.min_interval_hours) rows.push(row(ic('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'), 'Интервал', 'не чаще раза в ' + ul.min_interval_hours + ' ч.'));
+    if (ul.min_order_amount)   rows.push(row(ic('<path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>'), 'Мин. заказ', ul.min_order_amount + ' ₽'));
+
+    document.getElementById('mu-conditions').innerHTML = rows.length
+      ? `<div class="cond-title">Условия</div>${rows.join('')}`
+      : '';
+
     document.getElementById('mu-redemptions').innerHTML = redemptions.length
       ? redemptions.map(x => `<div class="cart-row"><div><div>${fmtDate(x.redeemed_at)}</div><div class="txt-muted">Заказ: ${x.order_id?.slice(0,8)||'—'}</div></div><strong>−${x.amount_discounted} ₽</strong></div>`).join('')
       : '<div class="empty">Списаний нет</div>';
@@ -5825,7 +5876,7 @@ async function openSubDetailModal(id) {
   // Состав — resolve real names for specific items/categories
   const cr = s.coverage_rules || {};
   if (cr.type === 'include_items' && cr.item_ids?.length) {
-    let itemNames = cr.item_ids.join(', ');
+    let itemNames = '…';
     try {
       const ids = cr.item_ids.map(encodeURIComponent).join(',');
       const items = await req(`/rest/v1/menu_items?id=in.(${ids})&select=name&order=name.asc`);
@@ -5833,7 +5884,7 @@ async function openSubDetailModal(id) {
     } catch {}
     rows.push(row(
       ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'),
-      'Состав', itemNames
+      'Товар', itemNames
     ));
   } else if (cr.type === 'include_categories' && cr.category_ids?.length) {
     let catNames = '';
@@ -5844,7 +5895,7 @@ async function openSubDetailModal(id) {
     } catch {}
     if (catNames) rows.push(row(
       ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'),
-      'Состав', catNames
+      'Товар', catNames
     ));
   } else if (cr.type === 'exclude_items' && cr.item_ids?.length) {
     let itemNames = '';
@@ -5855,7 +5906,7 @@ async function openSubDetailModal(id) {
     } catch {}
     rows.push(row(
       ic('<path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>'),
-      'Состав', 'Весь ассортимент' + (itemNames ? `, кроме: ${itemNames}` : '')
+      'Товар', 'Весь ассортимент' + (itemNames ? `, кроме: ${itemNames}` : '')
     ));
   }
 
@@ -5872,11 +5923,6 @@ async function openSubDetailModal(id) {
       'Время действия', esc(tr.time_start + '–' + tr.time_end)
     ));
   }
-
-  rows.push(row(
-    ic('<line x1="12" y1="2" x2="12" y2="22"/><path d="m20 16-4-4 4-4M4 8l4 4-4 4M16 4l-4 4-4-4M8 20l4-4 4 4"/>'),
-    'Заморозка', 'Не предусмотрена'
-  ));
 
   rows.push(row(
     ic('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h4m0 0h4m-4 0v-2m0 2v2"/>'),
