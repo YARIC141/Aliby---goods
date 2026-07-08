@@ -2380,6 +2380,7 @@ function _updateThemeIcon(dark) {
 
 function goTo(id, opts = {}) {
   if (id === 'menu') id = 'store';
+  if (id === 'store' && !S.store) id = 'map';
   if (id === 'bookings')     { _calenabsTab = 'bk';  id = 'calenabs'; }
   if (id === 'subscriptions'){ _calenabsTab = 'sub'; id = 'calenabs'; }
   if (id === 'orders')       { _calenabsTab = 'ord'; id = 'calenabs'; }
