@@ -2443,12 +2443,15 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.screen-tip')) document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
 });
 function syncStoreNavBtn() {
-  document.querySelectorAll('[data-nav="store"]').forEach(b => b.classList.toggle('store-active', !!S.store));
+  document.querySelectorAll('[data-nav="store"]').forEach(b => {
+    b.classList.toggle('store-active', !!S.store);
+    if (!S.store) b.classList.remove('active');
+  });
 }
 
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
   if (b.dataset.nav === 'store' && !S.store) {
-    showGeoToast('Сначала выберите заведение');
+    showGeoToast('Выберите заведение');
     return;
   }
   goTo(b.dataset.nav);
