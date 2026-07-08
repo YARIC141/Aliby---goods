@@ -453,7 +453,8 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="sn-btn" data-nav="qr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Аналитика и реклама</button>
     <button class="sn-btn" data-nav="scan"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg> Сканер QR</button>
     <button class="sn-btn" data-nav="orders"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg> Заказы и записи<span class="sn-badge" id="sn-orders-badge" style="display:none">0</span></button>
-    <button class="sn-btn" data-nav="profile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> Профиль</button>
+    <button class="sn-btn" data-nav="employees"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg> Сотрудники</button>
+    <button class="sn-btn" data-nav="subscription"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Подписка</button>
   </div>
   <div class="sn-footer">
     <div class="sn-user" id="sn-email"></div>
@@ -531,11 +532,11 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div id="screen-stores" class="screen">
   <div class="ph">
     <h2>Заведения<span class="screen-help" data-info="Управление заведениями. Добавляйте и редактируйте адрес, часы работы, цвет метки на карте.">?</span></h2>
-    <button class="btn btn-p btn-sm" onclick="openStoreModal()">+ Добавить</button>
   </div>
   <div class="pb">
     <div class="toolbar">
       <input type="search" placeholder="Поиск по названию…" oninput="filterStoreCards(this.value)">
+      <button class="btn btn-p btn-sm" onclick="openStoreModal()">+ Добавить</button>
     </div>
     <div id="stores-list"><div class="loading">Загрузка…</div></div>
   </div>
@@ -567,7 +568,6 @@ tr.row-click:hover td{background:var(--bg-2)}
 <div id="screen-menu" class="screen">
   <div class="ph">
     <h2>Товары и Услуги<span class="screen-help" data-info="Каталог товаров, услуг и абонементов заведения.">?</span></h2>
-    <button class="btn btn-p btn-sm" id="menu-add-btn" onclick="openMenuItemModal()">+ Добавить</button>
   </div>
   <div class="pb">
     <div class="tab-nav">
@@ -583,6 +583,7 @@ tr.row-click:hover td{background:var(--bg-2)}
           <option value="">Все категории</option>
         </select>
         <input type="search" placeholder="Поиск…" id="mi-search" oninput="loadMenuItems()">
+        <button class="btn btn-p btn-sm" id="menu-add-btn" onclick="openMenuItemModal()">+ Добавить</button>
       </div>
       <div id="mi-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
       <div class="txt-muted" style="margin-top:8px">GET /rest/v1/menu_items</div>
@@ -592,6 +593,7 @@ tr.row-click:hover td{background:var(--bg-2)}
         <select id="sub-store-filter" onchange="loadSubscriptions()">
           <option value="">Все заведения</option>
         </select>
+        <button class="btn btn-p btn-sm" id="menu-add-sub-btn" onclick="openSubModal()">+ Добавить</button>
       </div>
       <div id="sub-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
       <div class="txt-muted" style="margin-top:8px">GET /rest/v1/subscriptions</div>
@@ -738,35 +740,6 @@ tr.row-click:hover td{background:var(--bg-2)}
       </div>
     </div>
 
-    <div class="sec" id="p-sec-stores-subs">
-      <div class="sec-title">Заведения и подписки</div>
-      <button class="btn btn-full" id="p-stores-subs-btn" onclick="openStoresSubsModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
-        <span id="p-stores-subs-summary" style="font-size:13px;color:var(--fg-2)">Загрузка…</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-      <!-- legacy anchor for loadPlatformSubscription compat -->
-      <div id="p-platsub-inner" style="display:none"></div>
-    </div>
-
-    <div class="sec" id="p-sec-employees">
-      <div class="sec-title">Сотрудники</div>
-      <button class="btn btn-full" onclick="openEmployeesModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
-        <span style="font-size:13px;color:var(--fg-2)">Управление сотрудниками</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-    </div>
-
-    <div class="sec" id="p-pay-sec" style="display:none">
-      <div class="sec-title">Интернет-эквайринг<span class="hint" data-tip="Клиенты будут перенаправляться на страницу оплаты выбранного провайдера. Ключи хранятся только у вас.">?</span></div>
-      <button class="btn btn-full" onclick="openPaymentProfileModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
-        <div style="text-align:left">
-          <div style="font-size:13px;color:var(--fg)" id="pp-summary-provider">— Не настроено —</div>
-          <div style="font-size:12px;margin-top:2px" id="pp-summary-mode"></div>
-        </div>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
-    </div>
-
     <div class="sec" id="p-sec-pwd">
       <div class="sec-title">Сменить пароль</div>
       <div class="row">
@@ -824,6 +797,43 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
+<!-- ════════════════ SUBSCRIPTION ════════════════ -->
+<div id="screen-subscription" class="screen">
+  <div class="ph"><h2>Подписка<span class="screen-help" data-info="Подписка Alliby Business: управление заведениями, статус, интернет-эквайринг.">?</span></h2></div>
+  <div class="pb">
+    <div id="p-stores-subs" style="display:flex;flex-direction:column;gap:0">
+      <div style="color:var(--fg-4);font-size:13px;padding:8px 0">Загрузка…</div>
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn btn-full" id="btn-add-store" onclick="onAddStoreBtnClick()"
+        style="display:flex;align-items:center;justify-content:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Добавить заведение
+      </button>
+    </div>
+    <div class="sec" id="p-pay-sec" style="display:none">
+      <div class="sec-title">Интернет-эквайринг<span class="hint" data-tip="Клиенты будут перенаправляться на страницу оплаты выбранного провайдера. Ключи хранятся только у вас.">?</span></div>
+      <button class="btn btn-full" onclick="openPaymentProfileModal()" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px">
+        <div style="text-align:left">
+          <div style="font-size:13px;color:var(--fg)" id="pp-summary-provider">— Не настроено —</div>
+          <div style="font-size:12px;margin-top:2px" id="pp-summary-mode"></div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ EMPLOYEES ════════════════ -->
+<div id="screen-employees" class="screen">
+  <div class="ph">
+    <h2>Сотрудники<span class="screen-help" data-info="Управление сотрудниками: добавление, редактирование, доступ к заведениям.">?</span></h2>
+    <button class="btn btn-p btn-sm" onclick="openAddEmployeeModal()">+ Добавить</button>
+  </div>
+  <div class="pb">
+    <div id="emp-list" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
 
 <!-- ════════════════ CITIES ════════════════ -->
 <div id="screen-cities" class="screen">
@@ -1063,15 +1073,16 @@ tr.row-click:hover td{background:var(--bg-2)}
     <button class="bn-btn" data-nav="stores"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/><path d="M3 9l3-6h12l3 6"/><rect x="9" y="14" width="6" height="7"/></svg></span>Заведения</button>
     <button class="bn-btn" data-nav="menu"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg></span>Товары и<br>Услуги</button>
     <button class="bn-btn" data-nav="qr"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Аналитика<br>и реклама</button>
-    <button class="bn-btn" data-nav="scan"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>Сканер<br>QR</button>
+    <button class="bn-btn" data-nav="employees"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>Сотруд-<br>ники</button>
     <button class="bn-btn ord-has-badge" data-nav="orders"><span class="ico" style="position:relative"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span class="bn-nav-badge" id="bn-orders-badge">0</span></span>Заказы и<br>записи</button>
-    <button class="bn-btn" data-nav="profile"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>Подписка</button>
+    <button class="bn-btn" data-nav="subscription"><span class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>Подписка</button>
   </div>
 </div>
 <div id="nav-info-popup"></div>
 
 <!-- ════════════════ PH ACTIONS (theme + profile, top-right) ════════════════ -->
 <div id="ph-actions">
+  <button class="ph-icon-btn" onclick="goTo('scan')" title="Сканер QR"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
   <button class="ph-icon-btn" id="ph-theme-btn" onclick="toggleThemeBtn()" title="Тема"></button>
   <button class="ph-icon-btn" onclick="goTo('profile')" title="Профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></button>
 </div>
@@ -1081,19 +1092,6 @@ tr.row-click:hover td{background:var(--bg-2)}
 
 <!-- ════════════════ MODALS ════════════════ -->
 
-<!-- ════════════════ EMPLOYEES ════════════════ -->
-<div class="overlay" id="m-employees">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-hd">
-      <h3>Сотрудники</h3>
-      <button class="modal-x" onclick="closeModal('m-employees')">✕</button>
-    </div>
-    <div id="emp-list" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="modal-ft">
-      <button class="btn btn-p" onclick="openAddEmployeeModal()">+ Добавить сотрудника</button>
-    </div>
-  </div>
-</div>
 
 <!-- ════════════════ ADD EMPLOYEE ════════════════ -->
 <div class="overlay" id="m-add-employee">
@@ -1187,25 +1185,6 @@ tr.row-click:hover td{background:var(--bg-2)}
   </div>
 </div>
 
-<!-- Stores & subscriptions management modal -->
-<div class="overlay" id="m-stores-subs">
-  <div class="modal" style="max-width:440px;display:flex;flex-direction:column;max-height:88vh">
-    <div class="modal-hd">
-      <h3>Заведения и подписки</h3>
-      <button class="modal-x" onclick="closeModal('m-stores-subs')">✕</button>
-    </div>
-    <div id="p-stores-subs" style="flex:1;overflow-y:auto;padding-bottom:4px">
-      <div style="color:var(--fg-4);font-size:13px;padding:8px 0">Загрузка…</div>
-    </div>
-    <div style="padding:14px 0 2px;border-top:1px solid var(--line-soft);margin-top:6px">
-      <button class="btn btn-full" id="btn-add-store" onclick="onAddStoreBtnClick()"
-        style="display:flex;align-items:center;justify-content:center;gap:6px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Добавить заведение
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- No main subscription — info modal -->
 <div class="overlay" id="m-no-main-sub">
@@ -2016,7 +1995,7 @@ function goTo(id, opts = {}) {
   document.querySelectorAll(`[data-nav="${id}"]`).forEach(b => b.classList.add('active'));
   if ((prevId === 'qr' || prevId === 'scan') && id !== prevId) stopQrCamera();
   if (prevId === 'schedule' && id !== 'schedule') schedRealtimeDisconnect();
-  ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,scan:loadScanScreen,profile:loadProfile,schedule:loadScheduleScreen,cities:loadCitiesScreen})[id]?.();
+  ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,scan:loadScanScreen,profile:loadProfile,schedule:loadScheduleScreen,cities:loadCitiesScreen,subscription:loadSubscriptionScreen,employees:loadEmployeesScreen})[id]?.();
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -2376,10 +2355,16 @@ async function loadProfile() {
   const legalSec = document.getElementById('p-sec-legal');
   if (legalSec) legalSec.style.display = S.profile?.role === 'employee' ? 'none' : '';
   applyRoleRestrictions();
-  if (S.profile?.role !== 'employee') {
-    await loadStoreSubscriptions();
-    await loadPaymentProfile();
-  }
+}
+
+async function loadSubscriptionScreen() {
+  if (S.profile?.role === 'employee') return;
+  await loadStoreSubscriptions();
+  await loadPaymentProfile();
+}
+
+async function loadEmployeesScreen() {
+  await loadEmployees();
 }
 
 function _updatePpSummary() {
@@ -2827,8 +2812,7 @@ function _pollForActiveSub(attemptsLeft) {
 }
 
 function openStoresSubsModal() {
-  openModal('m-stores-subs');
-  loadStoreSubscriptions();
+  goTo('subscription');
 }
 
 async function loadStoreSubscriptions() {
@@ -3918,8 +3902,6 @@ function setAdminMenuTab(tab) {
   document.querySelectorAll('[data-menu-tab]').forEach(b => b.classList.toggle('active', b.dataset.menuTab === tab));
   document.getElementById('menu-tab-items')?.classList.toggle('active', tab === 'items');
   document.getElementById('menu-tab-subs')?.classList.toggle('active', tab === 'subs');
-  const addBtn = document.getElementById('menu-add-btn');
-  if (addBtn) addBtn.onclick = tab === 'items' ? () => openMenuItemModal() : () => openSubModal();
   if (tab === 'items') loadMenuItems();
   else loadSubscriptions();
 }
@@ -5785,8 +5767,7 @@ function _buildEmpLogin(storeName, fullName, phone) {
 }
 
 async function openEmployeesModal() {
-  openModal('m-employees');
-  await loadEmployees();
+  goTo('employees');
 }
 
 function _renderEmpList(emps) {
@@ -5963,10 +5944,10 @@ async function deleteEmployee(empId, empName) {
     S.session = savedSession;
     document.getElementById('sn-email').textContent = savedSession.user?.email || '';
     refreshSession().then(async ok => {
-      if (ok === true) { _proceedAdmin(tpay ? 'profile' : 'stores'); }
+      if (ok === true) { _proceedAdmin(tpay ? 'subscription' : 'stores'); }
       else if (ok === null) {
         // Network error — let admin in with stale session, retry when online
-        _proceedAdmin(tpay ? 'profile' : 'stores');
+        _proceedAdmin(tpay ? 'subscription' : 'stores');
         window.addEventListener('online', () => {
           refreshSession().then(r => {
             if (r === false) { localStorage.removeItem('alliby_admin_s'); S.session = null; goTo('auth'); }
@@ -5976,7 +5957,7 @@ async function deleteEmployee(empId, empName) {
     });
   } else {
     setSession(savedSession);
-    _proceedAdmin(tpay ? 'profile' : 'stores');
+    _proceedAdmin(tpay ? 'subscription' : 'stores');
   }
 })();
 
