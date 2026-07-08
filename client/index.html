@@ -230,7 +230,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-search input{padding:7px 10px;border-radius:var(--r-2)}
 .sl-cats{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
 .sl-cats:empty{display:none}
-.sl-cats .chip{padding:5px 12px;font-size:14px}
+.sl-cats .chip,.cat-bar .chip{}
 #sl-filters{display:flex;flex-direction:column;flex-shrink:0}
 .sl-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none;touch-action:pan-y}
 .sl-item{padding:12px 14px;border-bottom:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;transition:background var(--t-fast)}
@@ -321,8 +321,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .menu-toolbar label{display:flex;align-items:center;gap:4px;font:400 14px/1 var(--font-sans);color:var(--fg-2);white-space:nowrap;cursor:pointer}
 .menu-toolbar label input{width:auto}
 .cat-bar{display:flex;flex-wrap:wrap;gap:6px;padding:8px 16px;border-bottom:1px solid var(--line-soft);flex-shrink:0}
-.cat-bar .chip{padding:5px 12px;font-size:14px}
-.chip{padding:6px 15px;border:1px solid var(--line);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:var(--r-pill);cursor:pointer;font:500 16px/1 var(--font-sans);white-space:nowrap;font-family:var(--font-sans);color:var(--fg-2);transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast);display:inline-flex;align-items:center;gap:4px}
+.chip{padding:5px 12px;border:1px solid var(--line);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:var(--r-pill);cursor:pointer;font:500 14px/1 var(--font-sans);white-space:nowrap;font-family:var(--font-sans);color:var(--fg-2);transition:background var(--t-fast),border-color var(--t-fast),color var(--t-fast);display:inline-flex;align-items:center;gap:4px}
 .chip:hover{background:var(--bg-2)}
 .chip.active{background:var(--accent);color:#fff;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
 .items-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
@@ -501,16 +500,12 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .dir-tab[data-dir=goods].active{color:#35a862;border-bottom-color:#35a862}
 .dir-tab[data-dir=services].active{color:#78b4e0;border-bottom-color:#78b4e0}
 
-/* ── SUB STORE CHIPS ── */
-.sub-store-chip{position:relative;display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r-pill);border:1.5px solid var(--line);background:var(--glass-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font:500 13px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;transition:all var(--t-fast);white-space:nowrap}
 .ord-notif-dot{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:#e53e3e;border:2px solid var(--bg);display:none;pointer-events:none}
 .ord-notif-dot.on{display:block}
 .nav-badge{position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);border:2px solid var(--bg);display:none;pointer-events:none;font:700 10px/1 var(--font-sans);color:#fff;padding:0 4px;align-items:center;justify-content:center;box-sizing:border-box}
 .nav-badge.on{display:flex}
 .sn-badge{display:none;min-width:17px;height:17px;border-radius:9px;background:var(--accent);font:700 10px/1 var(--font-sans);color:#fff;padding:0 4px;align-items:center;justify-content:center;box-sizing:border-box;flex-shrink:0}
 .sn-badge.on{display:inline-flex}
-.sub-store-chip:hover:not(.active){border-color:var(--fg-3);background:var(--bg-2)}
-.sub-store-chip.active{background:var(--accent);color:#fff;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
 /* ── STORE SCHEDULE CALENDAR ── */
 .sched-cal-wrap{border-radius:var(--r-2);overflow:hidden;border:1px solid var(--border)}
 .sched-cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
@@ -1224,14 +1219,14 @@ document.addEventListener('deviceready',function(){
       </select>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;padding:6px 16px 4px;flex-shrink:0">
-      <button class="sub-store-chip active" data-ord-status="all" onclick="setOrderFilter('all')">Все<span class="ord-notif-dot"></span></button>
-      <button class="sub-store-chip" data-ord-status="paid" onclick="setOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
-      <button class="sub-store-chip" data-ord-status="in_progress" onclick="setOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
-      <button class="sub-store-chip" data-ord-status="looking_for_courier" onclick="setOrderFilter('looking_for_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-search"/></svg>Ищем курьера<span class="ord-notif-dot"></span></button>
-      <button class="sub-store-chip" data-ord-status="on_the_way" onclick="setOrderFilter('on_the_way')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-bicycle"/></svg>Едет<span class="ord-notif-dot"></span></button>
-      <button class="sub-store-chip" data-ord-status="ready" onclick="setOrderFilter('ready')">Готов<span class="ord-notif-dot"></span></button>
-      <button class="sub-store-chip" data-ord-status="issued" onclick="setOrderFilter('issued')">Выдан</button>
-      <button class="sub-store-chip" data-ord-status="cancelled" onclick="setOrderFilter('cancelled')">Отменён</button>
+      <button class="chip active" data-ord-status="all" onclick="setOrderFilter('all')">Все<span class="ord-notif-dot"></span></button>
+      <button class="chip" data-ord-status="paid" onclick="setOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
+      <button class="chip" data-ord-status="in_progress" onclick="setOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
+      <button class="chip" data-ord-status="looking_for_courier" onclick="setOrderFilter('looking_for_courier')"><svg class="ico" width="11" height="11"><use href="#i-search"/></svg>Ищем курьера<span class="ord-notif-dot"></span></button>
+      <button class="chip" data-ord-status="on_the_way" onclick="setOrderFilter('on_the_way')"><svg class="ico" width="11" height="11"><use href="#i-bicycle"/></svg>Едет<span class="ord-notif-dot"></span></button>
+      <button class="chip" data-ord-status="ready" onclick="setOrderFilter('ready')">Готов<span class="ord-notif-dot"></span></button>
+      <button class="chip" data-ord-status="issued" onclick="setOrderFilter('issued')">Выдан</button>
+      <button class="chip" data-ord-status="cancelled" onclick="setOrderFilter('cancelled')">Отменён</button>
     </div>
     <div id="active-orders-content" style="flex:1;overflow-y:auto;overscroll-behavior-y:none"><div class="empty" style="padding:32px 0">Нет активных заказов</div></div>
   </div>
@@ -1251,10 +1246,10 @@ document.addEventListener('deviceready',function(){
         </table>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
-        <button class="sub-store-chip active" data-mbk-status="all"       onclick="setMbkStatusFilter('all')">Все</button>
-        <button class="sub-store-chip"        data-mbk-status="booked"    onclick="setMbkStatusFilter('booked')">Активна</button>
-        <button class="sub-store-chip"        data-mbk-status="completed" onclick="setMbkStatusFilter('completed')">Завершена</button>
-        <button class="sub-store-chip"        data-mbk-status="cancelled" onclick="setMbkStatusFilter('cancelled')">Отменена</button>
+        <button class="chip active" data-mbk-status="all"       onclick="setMbkStatusFilter('all')">Все</button>
+        <button class="chip"        data-mbk-status="booked"    onclick="setMbkStatusFilter('booked')">Активна</button>
+        <button class="chip"        data-mbk-status="completed" onclick="setMbkStatusFilter('completed')">Завершена</button>
+        <button class="chip"        data-mbk-status="cancelled" onclick="setMbkStatusFilter('cancelled')">Отменена</button>
       </div>
     </div>
     <!-- список за день — скроллится -->
@@ -1274,9 +1269,9 @@ document.addEventListener('deviceready',function(){
     <div class="pb">
       <input id="sub-search" type="search" placeholder="Поиск…" oninput="filterSubs()" style="margin-bottom:12px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-        <button class="sub-store-chip active" data-sub-filter="all" onclick="setSubFilter('all')">Все</button>
-        <button class="sub-store-chip" data-sub-filter="active" onclick="setSubFilter('active')">Активные</button>
-        <button class="sub-store-chip" data-sub-filter="gifts" onclick="setSubFilter('gifts')">Подарки</button>
+        <button class="chip active" data-sub-filter="all" onclick="setSubFilter('all')">Все</button>
+        <button class="chip" data-sub-filter="active" onclick="setSubFilter('active')">Активные</button>
+        <button class="chip" data-sub-filter="gifts" onclick="setSubFilter('gifts')">Подарки</button>
       </div>
       <div id="sub-unified-list"></div>
       <div id="sub-gift-activate" style="display:none;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
@@ -3930,7 +3925,7 @@ async function loadCategories() {
 }
 
 function updateCatActive() {
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cid === S.menuCatId));
+  document.querySelectorAll('#cat-bar .chip').forEach(c => c.classList.toggle('active', c.dataset.cid === S.menuCatId));
 }
 
 function _menuCacheKey(id) { return 'alliby_menu_v2_' + id; }
@@ -5622,7 +5617,7 @@ async function loadSubStore() {
   }
 
   el.innerHTML = `<div id="sub-store-chips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">
-    ${stores.map(st => `<button class="sub-store-chip${st.id === selId ? ' active' : ''}" data-sid="${esc(st.id)}" onclick="selectSubStore('${esc(st.id)}')">${st.store_categories?.icon ? st.store_categories.icon + ' ' : ''}${esc(st.name)}</button>`).join('')}
+    ${stores.map(st => `<button class="chip${st.id === selId ? ' active' : ''}" data-sid="${esc(st.id)}" onclick="selectSubStore('${esc(st.id)}')">${st.store_categories?.icon ? st.store_categories.icon + ' ' : ''}${esc(st.name)}</button>`).join('')}
   </div>
   <div id="sub-store-subs">${SK.subCards(2)}</div>`;
 
@@ -5631,7 +5626,7 @@ async function loadSubStore() {
 
 async function selectSubStore(storeId) {
   saveSubStoreCache(S.direction, storeId);
-  document.querySelectorAll('#sub-store-chips .sub-store-chip').forEach(c => {
+  document.querySelectorAll('#sub-store-chips .chip').forEach(c => {
     c.classList.toggle('active', c.dataset.sid === storeId);
   });
   await loadSubsForSelectedStore(storeId);
