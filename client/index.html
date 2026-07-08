@@ -2012,7 +2012,13 @@ function fmtDate(d) {
 }
 function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; }
 const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
-const subStMap  = { pending:'Оформляется', active:'Активен', expired:'Истёк', cancelled:'Отменён' };
+const subStMap  = { active:'Активен', expired:'Истёк' };
+function fmtSubStatus(us) {
+  const today = new Date().toISOString().split('T')[0];
+  if (us.status === 'expired' || (us.end_date && us.end_date < today)) return { label:'Истёк', cls:'b-expired' };
+  if (us.remaining_uses !== null && us.remaining_uses !== undefined && us.remaining_uses === 0) return { label:'Потрачен', cls:'b-sub-pending' };
+  return { label:'Активен', cls:'b-active' };
+}
 
 // ─── DIRECTION ───
 function applyScreenAccent(screenId) {
@@ -5421,7 +5427,7 @@ function renderUserSub(us) {
   return `<div class="usub-card" onclick="openSubModal('${us.id}')">
     <div class="usub-hd">
       <span class="usub-name">${esc(plan?.name || 'Абонемент')}</span>
-      <span class="badge b-${us.status}">${subStMap[us.status] || us.status}</span>
+      <span class="badge ${fmtSubStatus(us).cls}">${fmtSubStatus(us).label}</span>
     </div>
     <div class="usub-stats">
       <div class="usub-stat"><span class="lbl">Осталось исп.</span><strong>${us.remaining_uses ?? '∞'}</strong></div>
@@ -5494,8 +5500,9 @@ async function openSubModal(id) {
     const plan = us.subscriptions || {};
     document.getElementById('mu-name').textContent = plan.name || 'Абонемент';
     document.getElementById('mu-store').textContent = plan.stores?.name || '';
-    badge.textContent = subStMap[us.status] || us.status;
-    badge.className = `badge b-${us.status}`;
+    const st = fmtSubStatus(us);
+    badge.textContent = st.label;
+    badge.className = `badge ${st.cls}`;
     document.getElementById('mu-exp').textContent = fmtShortDate(us.end_date);
     document.getElementById('mu-uses').textContent = us.remaining_uses ?? '∞';
     const descEl = document.getElementById('mu-desc');
