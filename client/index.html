@@ -1605,7 +1605,7 @@ document.addEventListener('deviceready',function(){
     <div id="mod-items"></div>
     <div id="mod-total" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
       <span style="font:500 14px/1 var(--font-sans)">Итого</span>
-      <span id="mod-total-val" style="font:700 18px/1 var(--font-display)"></span>
+      <span id="mod-total-val" style="font:700 18px/1 var(--font-sans)"></span>
     </div>
     <div id="mod-order-extra"></div>
   </div>
@@ -4717,7 +4717,7 @@ function openActiveOrderDetail(orderId) {
   const delivRow = o.is_delivery && o.delivery_fee
     ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)">
         <div><div style="font:400 14px/1.3 var(--font-sans);display:flex;align-items:center;gap:5px">${svgIco('bicycle',14)}Доставка</div></div>
-        <div style="font:500 15px/1 var(--font-display)">${Number(o.delivery_fee).toFixed(0)} ₽</div>
+        <div style="font:500 15px/1 var(--font-sans)">${Number(o.delivery_fee).toFixed(0)} ₽</div>
       </div>`
     : '';
   document.getElementById('mod-items').innerHTML = items.length
@@ -4729,7 +4729,7 @@ function openActiveOrderDetail(orderId) {
             <div style="font:400 14px/1.3 var(--font-sans)">${esc(name)}</div>
             <div class="txt-muted">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</div>
           </div>
-          <div style="font:500 15px/1 var(--font-display)">${line.toFixed(0)} ₽</div>
+          <div style="font:500 15px/1 var(--font-sans)">${line.toFixed(0)} ₽</div>
         </div>`;
       }).join('') + delivRow
     : '<div class="txt-muted" style="padding:8px 0">Позиции не найдены</div>';
@@ -6531,7 +6531,7 @@ function _renderAlibi(el, uid, redemptions, orders) {
                 <div class="txt-muted">${itemCount} поз.</div>
               </div>
               <div style="text-align:right;flex-shrink:0">
-                <div style="font:600 16px/1 var(--font-display)">${amount.toFixed(0)} ₽</div>
+                <div style="font:600 16px/1 var(--font-sans)">${amount.toFixed(0)} ₽</div>
                 <div style="font-size:12px;margin-top:4px;color:${statusColor}">${statusTxt}</div>
               </div>
             </div>
@@ -6585,7 +6585,7 @@ function openOrderDetail(idx) {
   const delivRowH = order.is_delivery && order.delivery_fee
     ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)">
         <div><div style="font:400 14px/1.3 var(--font-sans);display:flex;align-items:center;gap:5px">${svgIco('bicycle',14)}Доставка</div></div>
-        <div style="font:500 15px/1 var(--font-display)">${Number(order.delivery_fee).toFixed(0)} ₽</div>
+        <div style="font:500 15px/1 var(--font-sans)">${Number(order.delivery_fee).toFixed(0)} ₽</div>
       </div>`
     : '';
   document.getElementById('mod-items').innerHTML = items.length
@@ -6597,7 +6597,7 @@ function openOrderDetail(idx) {
             <div style="font:400 14px/1.3 var(--font-sans)">${esc(name)}</div>
             <div class="txt-muted">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</div>
           </div>
-          <div style="font:500 15px/1 var(--font-display)">${line.toFixed(0)} ₽</div>
+          <div style="font:500 15px/1 var(--font-sans)">${line.toFixed(0)} ₽</div>
         </div>`;
       }).join('') + delivRowH
     : '<div class="txt-muted" style="padding:8px 0">Позиции не найдены</div>';
@@ -6689,7 +6689,7 @@ function renderSavingsChart(redemptions, totalSaved) {
   return `<div class="card" style="margin-bottom:14px;padding:14px">
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
       <div>
-        <div style="font:400 22px/1 var(--font-display);color:var(--ok)">−${totalSaved.toFixed(0)} ₽</div>
+        <div style="font:400 22px/1 var(--font-sans);color:var(--ok)">−${totalSaved.toFixed(0)} ₽</div>
         <div class="txt-muted" style="margin-top:2px">сэкономлено · ${count} исп.</div>
       </div>
     </div>
