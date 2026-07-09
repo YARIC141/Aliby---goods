@@ -2475,6 +2475,7 @@ function goTo(id, opts = {}) {
   if (id === 'subscriptions'){ _calenabsTab = 'sub'; id = 'calenabs'; }
   if (id === 'orders')       { _calenabsTab = 'ord'; id = 'calenabs'; }
   syncStoreNavBtn();
+  syncCartNavBtn();
   const _GUEST_OK = ['map', 'store', 'cart', 'auth'];
   if (!_GUEST_OK.includes(id) && !S.session && !_initQuickRestore) { _pendingNavAfterAuth = id; goTo('auth'); return; }
   document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
@@ -2538,6 +2539,12 @@ function syncStoreNavBtn() {
     b.classList.toggle('store-active', !!S.store);
     if (!S.store) b.classList.remove('active');
   });
+}
+function syncCartNavBtn() {
+  const hasItems = S.cart.length > 0
+    || S.subCart.some(c => (c.direction || 'food') === S.direction)
+    || S.giftSubCart.some(c => (c.direction || 'food') === S.direction);
+  document.querySelectorAll('[data-nav="cart"]').forEach(b => b.classList.toggle('cart-active', hasItems));
 }
 
 document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
@@ -4542,9 +4549,7 @@ function updateCartCount() {
   if (cb) { const u = S.cart.length + subN; cb.textContent = u; cb.classList.toggle('on', u > 0); }
   const sb = document.getElementById('ca-badge-sub');
   if (sb) { sb.textContent = subN || ''; sb.classList.toggle('on', subN > 0); }
-  document.querySelectorAll('[data-nav="cart"]').forEach(btn => {
-    btn.classList.toggle('cart-active', total > 0);
-  });
+  syncCartNavBtn();
 }
 
 // ─── REALTIME ───
