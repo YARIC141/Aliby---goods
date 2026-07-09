@@ -3984,9 +3984,9 @@ async function saveStore() {
   const restore = btnLoad(btn);
   const id   = document.getElementById('ms-id').value;
 
-  // Fetch actual store count — S.stores may not be loaded if user came via profile/subscription modal
+  // Fetch actual store count — S.stores starts as [] and may be unloaded when coming from subscription screen
   let current = S.stores?.length;
-  if (current == null) {
+  if (!current) {
     try {
       const arr = await req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&select=id`);
       current = arr?.length ?? 0;
