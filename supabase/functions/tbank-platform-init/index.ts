@@ -182,17 +182,17 @@ Deno.serve(async (req: Request) => {
   if (type === 'monthly') {
     const todayStr = new Date().toISOString().split('T')[0]
 
-    // Block if there's an active sub that still has auto-renew on (user hasn't cancelled)
+    // Block only if there is an active uncancelled trial (regular paid subs can always be stacked)
     const { data: activeSubs } = await serviceClient
       .from('platform_subscriptions')
-      .select('id, auto_renew')
+      .select('id, is_trial, auto_renew')
       .eq('user_id', user.id)
       .in('status', ['active', 'grace'])
       .gte('end_date', todayStr)
       .limit(1)
     const activeSub = activeSubs?.[0] || null
-    if (activeSub && activeSub.auto_renew !== false) {
-      return jsonResponse({ error: 'Already has active subscription' }, 409)
+    if (activeSub?.is_trial && activeSub.auto_renew !== false) {
+      return jsonResponse({ error: 'Active trial — cancel it first' }, 409)
     }
 
     await serviceClient

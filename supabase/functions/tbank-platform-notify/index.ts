@@ -65,7 +65,8 @@ Deno.serve(async (req: Request) => {
 
   if (status === 'CONFIRMED' && success) {
     // ── CRITICAL: activate the subscription and update profile end date ──────
-    const updates: Record<string, unknown> = { status: 'active', auto_renew: true }
+    // Only trial subscriptions have auto-renewal; regular paid plans do not
+    const updates: Record<string, unknown> = { status: 'active', auto_renew: sub?.is_trial ? true : false }
     if (rebillId) updates.rebill_id = rebillId
     await fetch(`${baseUrl}?${filter}`, {
       method:  'PATCH',
