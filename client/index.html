@@ -4255,6 +4255,7 @@ function itemFallbackImg(item, alt) {
 
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
+  if (S.storeSubActive === false) return '';
   if (S.direction === 'services') {
     if (_schedulePreselect) {
       return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();bookWithPreselect(this,itemCache.get('${item.id}'))">Записаться ${_schedulePreselect.start}</button>`;
@@ -4432,7 +4433,7 @@ function openItemDetail(id) {
   }
 
   const btn = document.getElementById('mi-cart-btn');
-  if (S.store?.accepts_online_payment === false) {
+  if (S.storeSubActive === false || S.store?.accepts_online_payment === false) {
     btn.style.display = 'none';
   } else {
     btn.style.display = '';
@@ -5816,9 +5817,11 @@ function renderSubItemCard(sub) {
       <div class="item-desc">${sub.duration_days} дн. · ${sub.total_uses === 0 ? 'безлимит' : sub.total_uses + ' исп.'} · до ${ipu} шт./списание</div>
       ${sub.description ? `<div class="item-desc" style="margin-bottom:4px">${esc(sub.description)}</div>` : ''}
       <div class="item-price"><span class="price-val">${sub.price} ₽</span></div>
-      ${inCart
-        ? `<button class="btn btn-sm" style="opacity:.65" onclick="removeFromSubCart('${sub.id}')">${svgIco('check',12)} В корзине</button>`
-        : `<button class="btn btn-p btn-sm" onclick="addSubToCart('${sub.id}')">В корзину</button>`}
+      ${S.storeSubActive !== false
+        ? (inCart
+          ? `<button class="btn btn-sm" style="opacity:.65" onclick="removeFromSubCart('${sub.id}')">${svgIco('check',12)} В корзине</button>`
+          : `<button class="btn btn-p btn-sm" onclick="addSubToCart('${sub.id}')">В корзину</button>`)
+        : ''}
     </div>
   </div>`;
 }
@@ -7581,7 +7584,7 @@ function selectBookingSlot(start, end) {
   document.querySelectorAll('.booking-slot').forEach(b =>
     b.classList.toggle('active', b.dataset.start === start && b.dataset.end === end));
   document.getElementById('mbs-book-btn').disabled = false;
-  document.getElementById('mbs-pay-btn').disabled = false;
+  if (S.storeSubActive !== false) document.getElementById('mbs-pay-btn').disabled = false;
 }
 
 async function confirmBooking(payNow) {
