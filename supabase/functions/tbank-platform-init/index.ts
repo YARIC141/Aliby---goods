@@ -337,7 +337,7 @@ Deno.serve(async (req: Request) => {
         end_date:               endDt.toISOString().split('T')[0],
         amount_paid:            amountRub,
         monthly_amount_kopecks: amount,
-        auto_renew:             true,
+        auto_renew:             false,
       })
       .select().single()
 
