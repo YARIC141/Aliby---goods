@@ -556,10 +556,10 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 #bg-fluid{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:none;pointer-events:none}
 html.bg-fluid #bg-fluid{display:block}
 html.bg-fluid body,html.dark.bg-fluid body{background-image:none}
-.bp-o{fill:oklch(0.74 0.17 55/.26)}
-.bp-b{fill:oklch(0.68 0.12 220/.26)}
-html.dark .bp-o{fill:oklch(0.74 0.17 55/.20)}
-html.dark .bp-b{fill:oklch(0.60 0.12 220/.20)}
+.bp-o{fill:oklch(0.74 0.17 55/.32)}
+.bp-b{fill:oklch(0.68 0.12 220/.32)}
+html.dark .bp-o{fill:oklch(0.74 0.17 55/.24)}
+html.dark .bp-b{fill:oklch(0.60 0.12 220/.24)}
 html.no-ornament #bg-ornament{display:none}
 html.bg-custom body,html.dark.bg-custom body{background-image:var(--bg-custom-img)!important;background-size:cover;background-position:center;background-attachment:fixed}
 html.bg-custom #bg-fluid{display:none}
@@ -794,22 +794,25 @@ document.addEventListener('deviceready',function(){
 <body>
 
 <svg id="bg-fluid" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <!-- blue top-right: центры при x=72–79, мобильный экран видит x≈27–73, фигуры "вылезают" из правого края -->
   <g class="bp-b">
-    <rect x="-27.5" y="-6" width="55" height="12" rx="6" transform="translate(88,2) rotate(-42)"/>
-    <rect x="-20" y="-6" width="40" height="12" rx="6" transform="translate(96,19) rotate(-42)"/>
-    <rect x="-15" y="-5" width="30" height="10" rx="5" transform="translate(87,32) rotate(-42)"/>
-    <circle cx="62" cy="22" r="4.5"/>
+    <rect x="-29" y="-6.5" width="58" height="13" rx="6.5" transform="translate(72,4) rotate(-42)"/>
+    <rect x="-22" y="-6.5" width="44" height="13" rx="6.5" transform="translate(79,20) rotate(-42)"/>
+    <rect x="-16" y="-5.5" width="32" height="11" rx="5.5" transform="translate(68,33) rotate(-42)"/>
+    <circle cx="50" cy="26" r="5"/>
   </g>
+  <!-- orange bottom-left: зеркально -->
   <g class="bp-o">
-    <rect x="-25" y="-6" width="50" height="12" rx="6" transform="translate(4,81) rotate(-42)"/>
-    <rect x="-20" y="-6" width="40" height="12" rx="6" transform="translate(15,95) rotate(-42)"/>
-    <rect x="-16" y="-5" width="32" height="10" rx="5" transform="translate(23,107) rotate(-42)"/>
-    <circle cx="24" cy="73" r="4.5"/>
+    <rect x="-29" y="-6.5" width="58" height="13" rx="6.5" transform="translate(28,96) rotate(-42)"/>
+    <rect x="-22" y="-6.5" width="44" height="13" rx="6.5" transform="translate(21,80) rotate(-42)"/>
+    <rect x="-16" y="-5.5" width="32" height="11" rx="5.5" transform="translate(32,67) rotate(-42)"/>
+    <circle cx="50" cy="74" r="5"/>
   </g>
+  <!-- blue bottom-centre: выходит снизу -->
   <g class="bp-b">
-    <rect x="-32.5" y="-5.5" width="65" height="11" rx="5.5" transform="translate(51,102) rotate(-42)"/>
-    <rect x="-12.5" y="-4.5" width="25" height="9" rx="4.5" transform="translate(86,95) rotate(-42)"/>
-    <circle cx="95" cy="91" r="4"/>
+    <rect x="-35" y="-6" width="70" height="12" rx="6" transform="translate(50,104) rotate(-42)"/>
+    <rect x="-14" y="-5" width="28" height="10" rx="5" transform="translate(68,97) rotate(-42)"/>
+    <circle cx="78" cy="92" r="4"/>
   </g>
 </svg>
 
