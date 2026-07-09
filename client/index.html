@@ -6952,7 +6952,7 @@ window.addEventListener('hashchange', () => {
   // Only quick-restore guest-safe screens — protected screens (home, calenabs, profile, alibi)
   // redirect to auth when S.session is still null, which looks like a logout to the user.
   const _quickNav = _hasTpay ? null : localStorage.getItem('alliby_nav');
-  const _quickScreens = ['map','store','cart','home','calenabs','profile','alibi'];
+  const _quickScreens = ['map','store','menu','cart','home','calenabs','profile','alibi'];
   if (_quickNav && _quickScreens.includes(_quickNav)) {
     try {
       const _qd = localStorage.getItem('alliby_dir');
