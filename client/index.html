@@ -6535,8 +6535,11 @@ async function restoreNav() {
     if (ssc) { const d = JSON.parse(ssc); S.subCart = d.subs || []; S.giftSubCart = d.gifts || []; [...S.subCart, ...S.giftSubCart].forEach(c => { subPlans[c.sub.id] = c.sub; }); updateCartCount(); }
   } catch(e) {}
   try {
-    const ss = localStorage.getItem('alliby_store');
-    if (ss) { S.store = JSON.parse(ss); syncStoreNavBtn(); }
+    const _navForStore = localStorage.getItem('alliby_nav');
+    if (['store','menu','cart'].includes(_navForStore)) {
+      const ss = localStorage.getItem('alliby_store');
+      if (ss) { S.store = JSON.parse(ss); syncStoreNavBtn(); }
+    }
   } catch(e) {}
   try {
     try { const _mc2 = localStorage.getItem('alliby_cat_' + S.direction); const _mp2 = _mc2 ? JSON.parse(_mc2) : []; S.mapCat = new Set(Array.isArray(_mp2) ? _mp2 : [_mp2]); } catch { S.mapCat = new Set(); }
@@ -6953,6 +6956,7 @@ window.addEventListener('hashchange', () => {
   // redirect to auth when S.session is still null, which looks like a logout to the user.
   const _quickNav = _hasTpay ? null : localStorage.getItem('alliby_nav');
   const _quickScreens = ['map','store','menu','cart','home','calenabs','profile','alibi'];
+  const _storeScreens = new Set(['store','menu','cart']);
   if (_quickNav && _quickScreens.includes(_quickNav)) {
     try {
       const _qd = localStorage.getItem('alliby_dir');
@@ -6962,8 +6966,10 @@ window.addEventListener('hashchange', () => {
         applyDirectionAccents(_qd);
         updateDirectionLabels(_qd);
       }
-      const _qs = localStorage.getItem('alliby_store');
-      if (_qs) { S.store = JSON.parse(_qs); syncStoreNavBtn(); }
+      if (_storeScreens.has(_quickNav)) {
+        const _qs = localStorage.getItem('alliby_store');
+        if (_qs) { S.store = JSON.parse(_qs); syncStoreNavBtn(); }
+      }
     } catch(e) {}
     _initQuickRestore = true;
     goTo(_quickNav);
