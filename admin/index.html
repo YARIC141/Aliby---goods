@@ -1307,10 +1307,10 @@ html.bg-custom #bg-fluid{display:none}
 <div class="overlay" id="m-add-store-plan">
   <div class="modal" style="max-width:400px">
     <div class="modal-hd">
-      <h3>Добавить заведение</h3>
+      <h3 id="add-store-plan-title">Добавить заведение</h3>
       <button class="modal-x" onclick="closeModal('m-add-store-plan')">✕</button>
     </div>
-    <p style="font-size:14px;color:var(--fg-3);margin-bottom:14px">Чтобы добавить новое заведение, необходимо приобрести подписку на дополнительное заведение. Выберите тариф:</p>
+    <p id="add-store-plan-desc" style="font-size:14px;color:var(--fg-3);margin-bottom:14px">Чтобы добавить новое заведение, необходимо приобрести подписку на дополнительное заведение. Выберите тариф:</p>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
       <button class="plan-card" onclick="selectAddStorePlan('monthly')">
         <div>
@@ -3155,14 +3155,14 @@ function _renderStoreSubCard(store, sub, isFirst) {
   const renewSubBtn = (isFirst && isActive && sub && !isTrial) ? `
     <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
       onclick="startRegularSubscription()">
-      Выбрать тариф →
+      Приобрести подписку
     </button>` : '';
 
   // Show for additional stores whenever sub is not pending (allow stacking active periods too)
   const payBtn = (!isFirst && store && sub?.status !== 'pending') ? `
     <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
       onclick="openStoreSubPayModal('${storeId}')">
-      ${!sub ? 'Активировать подписку' : 'Продлить подписку'}
+      Приобрести подписку этого доп. заведения
     </button>` : '';
 
   const provider   = S.profile?.payment_provider || 'none';
@@ -3567,6 +3567,11 @@ function onAddStoreBtnClick() {
     openModal('m-no-main-sub');
     return;
   }
+  _payingForStoreId = null;
+  const titleEl = document.getElementById('add-store-plan-title');
+  const descEl  = document.getElementById('add-store-plan-desc');
+  if (titleEl) titleEl.textContent = 'Добавить заведение';
+  if (descEl)  descEl.textContent  = 'Чтобы добавить новое заведение, необходимо приобрести подписку на дополнительное заведение. Выберите тариф:';
   openModal('m-add-store-plan');
 }
 
@@ -3596,7 +3601,11 @@ function openAddStorePayModal() {
 function openStoreSubPayModal(storeId) {
   if (!_activePlatSub) { openModal('m-no-main-sub'); return; }
   _payingForStoreId = storeId;
-  selectAddStorePlan('monthly');
+  const titleEl = document.getElementById('add-store-plan-title');
+  const descEl  = document.getElementById('add-store-plan-desc');
+  if (titleEl) titleEl.textContent = 'Подписка доп. заведения';
+  if (descEl)  descEl.textContent  = 'Выберите тариф для дополнительного заведения:';
+  openModal('m-add-store-plan');
 }
 
 async function confirmAddStorePay() {
