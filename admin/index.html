@@ -4048,13 +4048,11 @@ async function saveStore() {
       });
       storeId = created?.[0]?.id;
       // Link an unused per-store subscription slot (plan_type=store, store_id=null) to this new store.
-      // Never touches platform subscriptions (which also have store_id=null).
+      // Awaited so loadStoreSubscriptions sees the updated store_id.
       if (storeId && current >= 1) {
-        req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.store&store_id=is.null&status=in.(active,grace)&order=created_at.asc&limit=1`)
-          .then(slots => {
-            const slot = (slots || [])[0];
-            if (slot) req(`/rest/v1/platform_subscriptions?id=eq.${slot.id}`, { method:'PATCH', body: JSON.stringify({ store_id: storeId }) }).catch(() => {});
-          }).catch(() => {});
+        const slots = await req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.store&store_id=is.null&status=in.(active,grace)&order=created_at.asc&limit=1`).catch(() => []);
+        const slot = (slots || [])[0];
+        if (slot) await req(`/rest/v1/platform_subscriptions?id=eq.${slot.id}`, { method:'PATCH', body: JSON.stringify({ store_id: storeId }) }).catch(() => {});
       }
     }
     if (storeId && !isNaN(lat) && !isNaN(lng)) {
@@ -4063,7 +4061,7 @@ async function saveStore() {
         body: JSON.stringify({ p_store_id: storeId, p_lng: lng, p_lat: lat, p_color: color }),
       });
     }
-    restore(); closeModal('m-store'); loadStores();
+    restore(); closeModal('m-store'); loadStores(); loadStoreSubscriptions();
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
 }
 
