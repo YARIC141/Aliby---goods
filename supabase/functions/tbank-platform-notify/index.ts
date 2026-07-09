@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
         }),
       ])
     } else {
-      const updates: Record<string, unknown> = { status: 'active' }
+      const updates: Record<string, unknown> = { status: 'active', auto_renew: true }
       if (rebillId) updates.rebill_id = rebillId
       await fetch(`${baseUrl}?${filter}`, {
         method:  'PATCH',
