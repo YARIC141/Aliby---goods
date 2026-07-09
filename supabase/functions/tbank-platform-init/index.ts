@@ -190,8 +190,8 @@ Deno.serve(async (req: Request) => {
 
     const activeSub = activeSubs?.[0] || null
 
-    // Block if there's an active sub that isn't a cancelled trial
-    if (activeSub && !(activeSub.is_trial && activeSub.auto_renew === false)) {
+    // Block only if there's an active sub with auto-renew still on (user hasn't cancelled)
+    if (activeSub && activeSub.auto_renew !== false) {
       return jsonResponse({ error: 'Already has active subscription' }, 409)
     }
 

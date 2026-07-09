@@ -3489,9 +3489,10 @@ async function startRegularSubscription() {
     if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Оплатить 1 600 ₽ →'; }
     const noticeEl = document.getElementById('platsub-paid-trial-notice');
     if (noticeEl) {
-      if (_activePlatSub?.is_trial && _activePlatSub.auto_renew === false) {
-        const trialEnd = new Date(_activePlatSub.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-        noticeEl.textContent = `Оплата спишется сейчас. Подписка начнёт действовать с ${trialEnd} — после окончания пробного периода.`;
+      if (_activePlatSub && _activePlatSub.auto_renew === false) {
+        const endFmt = new Date(_activePlatSub.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+        const label  = _activePlatSub.is_trial ? 'пробного периода' : 'текущего периода';
+        noticeEl.textContent = `Оплата спишется сейчас. Подписка начнёт действовать с ${endFmt} — после окончания ${label}.`;
         noticeEl.style.display = '';
       } else {
         noticeEl.style.display = 'none';
