@@ -836,11 +836,16 @@ html.bg-custom #bg-fluid{display:none}
     <div id="p-stores-subs" style="display:flex;flex-direction:column;gap:0">
       <div style="color:var(--fg-4);font-size:13px;padding:8px 0">Загрузка…</div>
     </div>
-    <div style="margin-top:8px">
+    <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-full" id="btn-add-store" onclick="onAddStoreBtnClick()"
         style="display:flex;align-items:center;justify-content:center;gap:6px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Добавить заведение
+      </button>
+      <button class="btn btn-full" onclick="openSubHistory()"
+        style="display:flex;align-items:center;justify-content:center;gap:6px;color:var(--fg-3)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        История операций
       </button>
     </div>
     <div class="sec" id="p-pay-sec" style="display:none">
@@ -1373,6 +1378,22 @@ html.bg-custom #bg-fluid{display:none}
       <button class="btn btn-full" onclick="closeModal('m-platsub-paid')">Отмена</button>
     </div>
     <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:8px">Безопасная оплата · Т-Банк · SSL</p>
+  </div>
+</div>
+
+<!-- Subscription history modal -->
+<div class="overlay" id="m-sub-history">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd">
+      <h3>История операций</h3>
+      <button class="modal-x" onclick="closeModal('m-sub-history')">✕</button>
+    </div>
+    <div id="sub-history-list" style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto">
+      <div style="color:var(--fg-4);font-size:13px;text-align:center;padding:20px 0">Загрузка…</div>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-full" onclick="closeModal('m-sub-history')">Закрыть</button>
+    </div>
   </div>
 </div>
 
@@ -3245,6 +3266,57 @@ async function toggleAutoRenew(subId, newValue, isTrial) {
     });
     await Promise.all([loadStoreSubscriptions(), loadStores()]);
   } catch(e) { showToast('Ошибка: ' + (e.message || '')); }
+}
+
+async function openSubHistory() {
+  openModal('m-sub-history');
+  const el = document.getElementById('sub-history-list');
+  if (!el || !S.session) return;
+  try {
+    const subs = await req(
+      `/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.desc&limit=50`
+    );
+    if (!subs.length) {
+      el.innerHTML = `<div style="color:var(--fg-4);font-size:13px;text-align:center;padding:20px 0">Операций нет</div>`;
+      return;
+    }
+
+    const _statusLabel = { active:'Активна', expired:'Истекла', cancelled:'Отменена', pending:'В обработке', failed:'Ошибка', grace:'Ошибка оплаты' };
+    const _statusColor = { active:'var(--ok)', expired:'var(--fg-4)', cancelled:'var(--err)', pending:'var(--warn)', failed:'var(--err)', grace:'#f97316' };
+    const _planLabel   = { monthly:'1 мес', '3months':'3 мес', '6months':'6 мес', yearly:'12 мес' };
+
+    el.innerHTML = subs.map(s => {
+      const createdFmt = new Date(s.created_at).toLocaleString('ru-RU', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const startFmt   = new Date(s.start_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
+      const endFmt     = new Date(s.end_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
+      const statusLbl  = _statusLabel[s.status] || s.status;
+      const statusClr  = _statusColor[s.status] || 'var(--fg-4)';
+
+      let typeLabel = '', typeColor = 'var(--accent)';
+      if (s.is_trial)             { typeLabel = 'Пробный период'; typeColor = '#16a34a'; }
+      else if (s.plan_type === 'store') { typeLabel = 'Доп. заведение'; typeColor = '#f97316'; }
+      else                        { typeLabel = `Подписка · ${_planLabel[s.plan] || s.plan}`; }
+
+      const amountLine = s.amount_paid > 0
+        ? `<span style="font:600 13px/1 var(--font-sans);color:var(--fg)">${s.amount_paid.toLocaleString('ru-RU')} ₽</span>`
+        : `<span style="font:400 12px/1 var(--font-sans);color:#16a34a">Бесплатно</span>`;
+
+      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);background:var(--bg)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <span style="font:600 13px/1.2 var(--font-sans);color:${typeColor}">${typeLabel}</span>
+          <span style="font:600 11px/1 var(--font-sans);color:${statusClr}">${statusLbl}</span>
+        </div>
+        <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:4px">${startFmt} — ${endFmt}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          ${amountLine}
+          <span style="font:400 11px/1 var(--font-sans);color:var(--fg-4)">${createdFmt}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    const el2 = document.getElementById('sub-history-list');
+    if (el2) el2.innerHTML = `<div style="color:var(--err);font-size:13px;text-align:center;padding:12px">Ошибка загрузки</div>`;
+  }
 }
 
 async function loadPlatformSubscription() {
