@@ -7227,15 +7227,18 @@ async function _sha256(text) {
 let _contractNext = null;
 let _profileReady = null;
 
+function _contractCacheKey(type, version) { return `alliby_contract_${type}_${version}`; }
+
 async function requireContract(type, next) {
   if (!S.session) { next(); return; }
   try {
     if (_profileReady) { try { await _profileReady; } catch {} }
     const contract = type === 'buyer' ? BUYER_CONTRACT : null;
     if (!contract) { next(); return; }
+    if (localStorage.getItem(_contractCacheKey(type, contract.version))) { next(); return; }
     const uid = S.session.user.id;
     const sigs = await req(`/rest/v1/contract_signatures?user_id=eq.${uid}&contract=eq.${type}&version=eq.${contract.version}&select=id&limit=1`);
-    if (sigs.length) { next(); return; }
+    if (sigs.length) { localStorage.setItem(_contractCacheKey(type, contract.version), '1'); next(); return; }
   } catch(e) { next(); return; } // при ошибке не блокируем
   _contractNext = next;
   const scroll = document.getElementById('mc' + (type === 'buyer' ? 'b' : 's') + '-scroll');
@@ -7287,6 +7290,7 @@ async function signContract(type) {
       method: 'POST',
       body: JSON.stringify({ contract: type, version: contract.version, doc_hash: hash, accept_text: acceptText, signer_name: signerName || null, user_agent: navigator.userAgent }),
     });
+    try { localStorage.setItem(_contractCacheKey(type, contract.version), '1'); } catch {}
     closeModal('m-contract-' + type);
     const next = _contractNext;
     _contractNext = null;
