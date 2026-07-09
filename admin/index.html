@@ -133,7 +133,7 @@ svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stro
 /* ── ANALYTICS ── */
 .analytics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px}
 .a-card{background:var(--glass);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px 12px;text-align:center}
-.a-val{font:400 22px/1 var(--font-display);color:var(--fg)}
+.a-val{font:600 22px/1 var(--font-sans);color:var(--fg)}
 .a-lbl{font:400 11px/1 var(--font-sans);color:var(--fg-3);margin-top:4px}
 .a-item{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line-soft);font:400 13px/1 var(--font-sans)}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -1310,14 +1310,14 @@ html.bg-custom #bg-fluid{display:none}
           <div style="font:600 15px/1 var(--font-sans)">На месяц</div>
           <div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:4px">Рекуррентно · каждые 30 дней</div>
         </div>
-        <div style="font:700 20px/1 var(--font-display);color:var(--brand-ice-deep)">500 ₽</div>
+        <div style="font:700 20px/1 var(--font-sans);color:var(--brand-ice-deep)">500 ₽</div>
       </button>
       <button class="plan-card highlight" onclick="selectAddStorePlan('yearly')">
         <div>
           <div style="font:600 15px/1 var(--font-sans)">На год</div>
           <div style="font:400 12px/1.4 var(--font-sans);margin-top:4px;opacity:.8">365 дней · экономия 1 000 ₽</div>
         </div>
-        <div style="font:700 20px/1 var(--font-display)">5 000 ₽</div>
+        <div style="font:700 20px/1 var(--font-sans)">5 000 ₽</div>
       </button>
     </div>
     <button class="btn btn-d btn-full" onclick="closeModal('m-add-store-plan')">Отмена</button>
@@ -1332,7 +1332,7 @@ html.bg-custom #bg-fluid{display:none}
       <button class="modal-x" onclick="closeModal('m-platsub-plans')">✕</button>
     </div>
     <div style="background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:16px;margin-bottom:16px">
-      <div style="font:700 28px/1 var(--font-display);color:var(--brand-ice-deep);margin-bottom:4px">Бесплатно<span style="font:400 14px/1 var(--font-sans);color:var(--fg-3)"> · 1 месяц</span></div>
+      <div style="font:700 28px/1 var(--font-sans);color:var(--brand-ice-deep);margin-bottom:4px">Бесплатно<span style="font:400 14px/1 var(--font-sans);color:var(--fg-3)"> · 1 месяц</span></div>
       <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-3);margin-top:6px">Первый месяц бесплатно. После пробного периода — 1 600 ₽/мес с автоматическим продлением.</div>
     </div>
     <ul style="list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--fg-2)">
@@ -1383,7 +1383,7 @@ html.bg-custom #bg-fluid{display:none}
       <button class="modal-x" onclick="closeModal('m-add-store-pay')">✕</button>
     </div>
     <div style="background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;margin-bottom:14px">
-      <div id="add-store-pay-amount" style="font:700 24px/1 var(--font-display);color:var(--brand-ice-deep)">500 ₽</div>
+      <div id="add-store-pay-amount" style="font:700 24px/1 var(--font-sans);color:var(--brand-ice-deep)">500 ₽</div>
       <div id="add-store-pay-desc" style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:5px">Дополнительное заведение · 30 дней</div>
       <div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:4px">Списывается немедленно с привязанной карты.</div>
     </div>
@@ -3342,7 +3342,7 @@ function _renderPlatPlans() {
       background:${_selectedPlatPlan === p.id ? 'color-mix(in srgb,var(--accent) 9%,var(--bg-2))' : 'var(--bg-2)'};
       transition:border-color .15s,background .15s">
       <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em">${p.label}</div>
-      <div style="font:700 22px/1 var(--font-display);color:var(--fg);margin-bottom:1px">${p.perMonth.toLocaleString('ru-RU')} ₽</div>
+      <div style="font:700 22px/1 var(--font-sans);color:var(--fg);margin-bottom:1px">${p.perMonth.toLocaleString('ru-RU')} ₽</div>
       <div style="font:400 11px/1 var(--font-sans);color:var(--fg-4)">/мес · ${p.total.toLocaleString('ru-RU')} ₽ итого</div>
       <div style="font:600 11px/1.3 var(--font-sans);color:var(--accent);margin-top:5px;min-height:14px">${p.save > 0 ? '−' + p.save.toLocaleString('ru-RU') + ' ₽' : ''}</div>
     </div>`).join('');
@@ -4791,7 +4791,7 @@ function renderOrderCard(o) {
         <div style="margin-top:5px">${delivBadge}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font:600 16px/1 var(--font-display)">${Number(o.total_amount).toFixed(0)} ₽</div>
+        <div style="font:600 16px/1 var(--font-sans)">${Number(o.total_amount).toFixed(0)} ₽</div>
         <div style="display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;font-size:11px;border:1px solid ${color};color:${color}">${label}</div>
       </div>
     </div>
@@ -4838,7 +4838,7 @@ function openOrderModal(orderId) {
         <span style="color:var(--fg-3);white-space:nowrap">${Number(o.delivery_fee).toFixed(0)} ₽</span>
       </div>` : ''}
     </div>
-    <div style="display:flex;justify-content:space-between;font:600 15px/1 var(--font-display)">
+    <div style="display:flex;justify-content:space-between;font:600 15px/1 var(--font-sans)">
       <span>Итого</span><span>${Number(o.total_amount).toFixed(0)} ₽</span>
     </div>
     ${o.estimated_ready_at ? `<div style="margin-top:8px;font-size:13px;color:var(--warn);display:flex;align-items:center;gap:4px">${svgIco('clock',13)} Готов к ${fmtTime(o.estimated_ready_at)}</div>` : ''}
