@@ -3150,7 +3150,7 @@ function _renderStoreSubCard(store, sub, isFirst) {
       Выбрать тариф →
     </button>` : '';
   const cancelAutoRenewBtn = (isActive && sub && !isTrial && sub.auto_renew) ? `
-    <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:var(--fg-3)"
+    <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:var(--err)"
       onclick="toggleAutoRenew('${sub.id}',false,false)">
       Отменить автопродление
     </button>` : '';
