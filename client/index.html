@@ -3868,6 +3868,7 @@ function applyStoreGate() {
   if (banner)     banner.style.display     = active ? 'none' : '';
   if (subPayBtn)  subPayBtn.style.display  = active ? '' : 'none';
   if (giftPayBtn) giftPayBtn.style.display = active ? '' : 'none';
+  refreshSubCardViews();
 }
 
 function renderSubCard(s) {
@@ -6017,11 +6018,14 @@ async function openSubDetailModal(id) {
   document.getElementById('msd-conds').innerHTML = '';
 
   const isServices = S.direction === 'services';
-  document.getElementById('msd-buy-btn').onclick = isServices
+  const canBuyNow = S.storeSubActive !== false;
+  const buyBtn = document.getElementById('msd-buy-btn');
+  buyBtn.style.display = canBuyNow ? '' : 'none';
+  buyBtn.onclick = isServices
     ? () => buySubDirect(s.id)
     : () => { closeModal('m-sub-detail'); addSubToCart(s.id); showGeoToast('Добавлено в корзину'); };
   const giftBtn = document.getElementById('msd-gift-btn');
-  giftBtn.style.display = isServices ? 'none' : '';
+  giftBtn.style.display = (!isServices && canBuyNow) ? '' : 'none';
   giftBtn.onclick = () => { closeModal('m-sub-detail'); openGiftConfirm(s.id); };
   openModal('m-sub-detail');
 
