@@ -3121,7 +3121,7 @@ function _renderStoreSubCard(store, sub, isFirst) {
       if (isTrial) {
         costLine = sub.auto_renew
           ? `Пробный до ${endFmt} · далее <b>1 600 ₽/мес</b>`
-          : `До ${endFmt} · подписка отменена`;
+          : `До ${endFmt}`;
       } else {
         costLine = sub.auto_renew
           ? `<b>${amount.toLocaleString('ru-RU')} ₽${periodTxt}</b> · автоплатёж до ${endFmt}`
