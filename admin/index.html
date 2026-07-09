@@ -6021,6 +6021,18 @@ async function confirmAction() {
         cat:   `/rest/v1/categories?id=eq.${id}`,
         mi:    `/rest/v1/menu_items?id=eq.${id}`,
       };
+      if (type === 'store') {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const activeSubs = await req(
+          `/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.store&store_id=eq.${id}&status=in.(active,grace)&end_date=gte.${todayStr}&select=id&limit=1`
+        ).catch(() => []);
+        if (activeSubs?.length) {
+          closeModal('m-confirm');
+          S.pendingConfirm = null;
+          showAdminToast('Нельзя удалить — у заведения есть активная подписка. Дождитесь окончания периода.');
+          return;
+        }
+      }
       try {
         await req(paths[type], { method:'DELETE' });
       } catch(e) {
@@ -6036,6 +6048,16 @@ async function confirmAction() {
           return;
         }
         if (type === 'store' && (e.code === '23503' || (e.message || '').includes('_fkey'))) {
+          const todayStr2 = new Date().toISOString().split('T')[0];
+          const activeSubs2 = await req(
+            `/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&plan_type=eq.store&store_id=eq.${id}&status=in.(active,grace)&end_date=gte.${todayStr2}&select=id&limit=1`
+          ).catch(() => []);
+          if (activeSubs2?.length) {
+            closeModal('m-confirm');
+            S.pendingConfirm = null;
+            showAdminToast('Нельзя удалить — у заведения есть активная подписка. Дождитесь окончания периода.');
+            return;
+          }
           await req(`/rest/v1/stores?id=eq.${id}`, {
             method: 'PATCH',
             body: JSON.stringify({ archived_at: new Date().toISOString(), is_visible: false }),
