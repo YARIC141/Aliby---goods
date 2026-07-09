@@ -3658,7 +3658,7 @@ async function confirmAddStorePay() {
     });
     window.location.href = data.payment_url;
   } catch(e) {
-    if (errEl) { errEl.textContent = 'Ошибка: ' + (e.message || 'Попробуйте ещё раз'); errEl.style.display = 'block'; }
+    if (errEl) { errEl.textContent = e.error || e.message || 'Попробуйте ещё раз'; errEl.style.display = 'block'; }
     restoreAddStore();
   }
 }

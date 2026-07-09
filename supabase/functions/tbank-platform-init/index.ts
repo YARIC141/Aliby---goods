@@ -343,6 +343,17 @@ Deno.serve(async (req: Request) => {
     }
     const endDt = new Date(storeStartDate)
     endDt.setDate(endDt.getDate() + days - 1)
+
+    // Store sub must not outlast the main platform subscription
+    const mainSubEndStr = profile?.subscription_end_date
+    const storeEndStr   = endDt.toISOString().split('T')[0]
+    if (mainSubEndStr && storeEndStr > mainSubEndStr) {
+      const fmt = (s: string) => { const [y,m,d] = s.split('-'); return `${d}.${m}.${y}` }
+      return jsonResponse({
+        error: `Период подписки доп. заведения (до ${fmt(storeEndStr)}) превышает дату окончания основной подписки (до ${fmt(mainSubEndStr)}). Сначала продлите основную подписку.`,
+      }, 409)
+    }
+
     const orderId = `store_${user.id.slice(0, 8)}_${Date.now()}`
 
     const { data: storeSub, error: storeSubErr } = await serviceClient
