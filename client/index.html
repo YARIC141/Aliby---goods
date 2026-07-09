@@ -122,6 +122,8 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 .bn-btn.active{color:var(--accent)}
 .bn-btn[data-nav="store"],.sn-btn[data-nav="store"]{opacity:0.4;transition:opacity var(--t-fast)}
 .bn-btn[data-nav="store"].store-active,.sn-btn[data-nav="store"].store-active{opacity:1}
+.bn-btn[data-nav="cart"],.sn-btn[data-nav="cart"]{opacity:0.4;pointer-events:none;transition:opacity var(--t-fast)}
+.bn-btn[data-nav="cart"].cart-active,.sn-btn[data-nav="cart"].cart-active{opacity:1;pointer-events:auto}
 .screen-tip{font:400 13px/1.5 var(--font-sans);color:var(--fg-3);background:var(--bg-2);border-left:3px solid var(--accent,#e8743b);padding:0 14px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;flex-shrink:0}
 .screen-tip.open{max-height:120px;padding:10px 14px}
 
@@ -4540,10 +4542,8 @@ function updateCartCount() {
   if (cb) { const u = S.cart.length + subN; cb.textContent = u; cb.classList.toggle('on', u > 0); }
   const sb = document.getElementById('ca-badge-sub');
   if (sb) { sb.textContent = subN || ''; sb.classList.toggle('on', subN > 0); }
-  // Dim cart nav buttons when cart is empty
   document.querySelectorAll('[data-nav="cart"]').forEach(btn => {
-    btn.style.opacity = total > 0 ? '' : '0.35';
-    btn.style.pointerEvents = total > 0 ? '' : 'none';
+    btn.classList.toggle('cart-active', total > 0);
   });
 }
 
