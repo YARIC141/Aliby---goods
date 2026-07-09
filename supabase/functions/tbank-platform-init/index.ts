@@ -322,7 +322,7 @@ Deno.serve(async (req: Request) => {
 
     // Create pending per-store subscription record
     const now   = new Date()
-    const endDt = new Date(now); endDt.setDate(endDt.getDate() + days)
+    const endDt = new Date(now); endDt.setDate(endDt.getDate() + days - 1)
     const orderId = `store_${user.id.slice(0, 8)}_${Date.now()}`
 
     const { data: storeSub, error: storeSubErr } = await serviceClient
