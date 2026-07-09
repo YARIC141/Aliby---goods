@@ -3000,7 +3000,7 @@ async function loadStoreSubscriptions() {
   try {
     const [subs, stores] = await Promise.all([
       req(`/rest/v1/platform_subscriptions?user_id=eq.${S.session.user.id}&order=created_at.asc`),
-      req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&order=name.asc&select=id,name,is_visible`),
+      req(`/rest/v1/stores?owner_user_id=eq.${S.session.user.id}&order=created_at.asc&select=id,name,is_visible`),
     ]);
 
     const now      = new Date();
@@ -3122,10 +3122,13 @@ function _renderStoreSubCard(store, sub, isFirst) {
         costLine = sub.auto_renew
           ? `Пробный до ${endFmt} · далее <b>1 600 ₽/мес</b>`
           : `До ${endFmt}`;
-      } else {
+      } else if (isFirst) {
         costLine = sub.auto_renew
           ? `<b>${amount.toLocaleString('ru-RU')} ₽${periodTxt}</b> · автоплатёж до ${endFmt}`
           : `Активна до <b>${endFmt}</b>`;
+      } else {
+        const startFmt = new Date(sub.start_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
+        costLine = `${startFmt} — <b>${endFmt}</b>`;
       }
     } else if (isGrace) {
       costLine = `Ошибка оплаты · ${amount.toLocaleString('ru-RU')} ₽${periodTxt}`;
@@ -3181,7 +3184,10 @@ function _renderStoreSubCard(store, sub, isFirst) {
 
   return `<div class="card" style="padding:12px 14px;margin-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div style="font:600 13px/1 var(--font-sans)">${storeName}</div>
+      <div>
+        <div style="font:600 13px/1 var(--font-sans)">${storeName}</div>
+        <div style="font:400 11px/1 var(--font-sans);color:var(--fg-4);margin-top:3px">${isFirst ? 'Основное заведение' : 'Дополнительное заведение'}</div>
+      </div>
       <div style="display:flex;align-items:center;gap:6px">${badge}</div>
     </div>
     ${subInfo}
