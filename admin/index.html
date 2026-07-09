@@ -1361,6 +1361,7 @@ html.bg-custom #bg-fluid{display:none}
       <h3>Оформить подписку</h3>
       <button class="modal-x" onclick="closeModal('m-platsub-paid')">✕</button>
     </div>
+    <div id="platsub-paid-trial-notice" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:var(--r-2);background:color-mix(in srgb,var(--accent) 8%,var(--bg-2));border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);font:400 13px/1.4 var(--font-sans);color:var(--fg-2)"></div>
     <div id="platsub-paid-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px"></div>
     <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;font-size:12px;color:var(--fg-3);line-height:1.4;cursor:pointer">
       <input type="checkbox" id="platsub-paid-consent-cb" onchange="document.getElementById('platsub-paid-btn').disabled=!this.checked" style="margin-top:2px;width:auto;flex-shrink:0">
@@ -3113,6 +3114,10 @@ function _renderStoreSubCard(store, sub, isFirst) {
       onclick="toggleAutoRenew('${sub.id}',false,true)">
       Отменить подписку
     </button>` : '';
+  const trialActiveBanner = (isActive && sub && isTrial && sub.auto_renew) ? `
+    <div style="font-size:12px;color:var(--fg-3);margin-top:8px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2);border:1px solid var(--line-soft);line-height:1.4">
+      Чтобы оформить подписку, нужно прекратить пробный период. Новая подписка начнётся автоматически после его завершения.
+    </div>` : '';
   const trialCancelledBtn = (isActive && sub && isTrial && !sub.auto_renew) ? `
     <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
       onclick="startRegularSubscription()">
@@ -3149,6 +3154,7 @@ function _renderStoreSubCard(store, sub, isFirst) {
     </div>
     ${subInfo}
     ${autoRenewToggle}
+    ${trialActiveBanner}
     ${trialCancelledBtn}
     ${payBtn}
     ${payModeRow}
@@ -3392,6 +3398,16 @@ async function startRegularSubscription() {
     if (cbx) { cbx.checked = false; }
     const payBtn = document.getElementById('platsub-paid-btn');
     if (payBtn) { payBtn.disabled = true; payBtn.textContent = 'Оплатить 1 600 ₽ →'; }
+    const noticeEl = document.getElementById('platsub-paid-trial-notice');
+    if (noticeEl) {
+      if (_activePlatSub?.is_trial && _activePlatSub.auto_renew === false) {
+        const trialEnd = new Date(_activePlatSub.end_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+        noticeEl.textContent = `Оплата спишется сейчас. Подписка начнёт действовать с ${trialEnd} — после окончания пробного периода.`;
+        noticeEl.style.display = '';
+      } else {
+        noticeEl.style.display = 'none';
+      }
+    }
     _renderPlatPlans();
     openModal('m-platsub-paid');
   });

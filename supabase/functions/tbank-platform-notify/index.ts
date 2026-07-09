@@ -59,20 +59,44 @@ Deno.serve(async (req: Request) => {
   const filter  = `tbank_payment_id=eq.${paymentId}&status=eq.pending`
 
   // Fetch the pending subscription first
-  const subResp = await fetch(`${baseUrl}?${filter}&select=id,user_id,plan,plan_type,amount_paid,is_trial`, { headers })
+  const subResp = await fetch(`${baseUrl}?${filter}&select=id,user_id,plan,plan_type,amount_paid,is_trial,extends_sub_id,end_date,monthly_amount_kopecks`, { headers })
   const subArr  = await subResp.json().catch(() => [])
   const sub     = Array.isArray(subArr) ? subArr[0] : null
 
   if (status === 'CONFIRMED' && success) {
     // ── CRITICAL: activate the subscription immediately ──────────────────────
-    const updates: Record<string, unknown> = { status: 'active' }
-    if (rebillId) updates.rebill_id = rebillId
-
-    await fetch(`${baseUrl}?${filter}`, {
-      method:  'PATCH',
-      headers: { ...headers, Prefer: 'return=minimal' },
-      body:    JSON.stringify(updates),
-    })
+    if (sub?.extends_sub_id) {
+      // Extension of a cancelled trial: update the original record, expire the payment vehicle
+      await Promise.all([
+        fetch(`${baseUrl}?id=eq.${sub.extends_sub_id}`, {
+          method:  'PATCH',
+          headers: { ...headers, Prefer: 'return=minimal' },
+          body: JSON.stringify({
+            is_trial:               false,
+            end_date:               sub.end_date,
+            plan:                   sub.plan,
+            status:                 'active',
+            auto_renew:             false,
+            amount_paid:            sub.amount_paid,
+            monthly_amount_kopecks: sub.monthly_amount_kopecks,
+            ...(rebillId ? { rebill_id: rebillId } : {}),
+          }),
+        }),
+        fetch(`${baseUrl}?${filter}`, {
+          method:  'PATCH',
+          headers: { ...headers, Prefer: 'return=minimal' },
+          body:    JSON.stringify({ status: 'expired' }),
+        }),
+      ])
+    } else {
+      const updates: Record<string, unknown> = { status: 'active' }
+      if (rebillId) updates.rebill_id = rebillId
+      await fetch(`${baseUrl}?${filter}`, {
+        method:  'PATCH',
+        headers: { ...headers, Prefer: 'return=minimal' },
+        body:    JSON.stringify(updates),
+      })
+    }
 
     // ── NON-CRITICAL: refund + analytics — fire-and-forget ───────────────────
     ;(async () => {

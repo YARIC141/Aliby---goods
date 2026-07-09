@@ -180,14 +180,18 @@ Deno.serve(async (req: Request) => {
 
   // ── MONTHLY: paid subscription (1/3/6/12 months) ─────────────────────────────
   if (type === 'monthly') {
-    const { data: existing } = await serviceClient
+    const { data: activeSubs } = await serviceClient
       .from('platform_subscriptions')
-      .select('id')
+      .select('id, status, end_date, is_trial, auto_renew')
       .eq('user_id', user.id)
       .in('status', ['active', 'grace'])
       .gte('end_date', new Date().toISOString().split('T')[0])
       .limit(1)
-    if (existing?.length) {
+
+    const activeSub = activeSubs?.[0] || null
+
+    // Block if there's an active sub that isn't a cancelled trial
+    if (activeSub && !(activeSub.is_trial && activeSub.auto_renew === false)) {
       return jsonResponse({ error: 'Already has active subscription' }, 409)
     }
 
@@ -199,8 +203,10 @@ Deno.serve(async (req: Request) => {
     const planId  = (typeof addStorePlan === 'string' && PAID_PLAN_MAP[addStorePlan]) ? addStorePlan : '1m'
     const planCfg = PAID_PLAN_MAP[planId]
 
-    const now     = new Date()
-    const endDate = new Date(now)
+    const now = new Date()
+    // If extending a cancelled trial, new period starts from trial's end_date
+    const baseDate = activeSub ? new Date(activeSub.end_date) : now
+    const endDate  = new Date(baseDate)
     endDate.setDate(endDate.getDate() + planCfg.days)
     const orderId = `sub_${user.id.slice(0, 8)}_${Date.now()}`
 
@@ -217,6 +223,7 @@ Deno.serve(async (req: Request) => {
         auto_renew:             false,
         monthly_amount_kopecks: planCfg.amtKop,
         extra_stores:           0,
+        extends_sub_id:         activeSub?.id ?? null,
       })
       .select().single()
 
@@ -264,9 +271,16 @@ Deno.serve(async (req: Request) => {
 
     await trackEvent(serviceClient, 'subscription_paid_started', user.id, {
       subscription_id: sub.id, plan: planId, amount: planCfg.amtRub, order_id: orderId,
+      extends_sub_id: activeSub?.id ?? null,
     }, `sub_${sub.id}`)
 
-    return jsonResponse({ payment_url: tData.PaymentURL, payment_id: tData.PaymentId, subscription_id: sub.id })
+    return jsonResponse({
+      payment_url:    tData.PaymentURL,
+      payment_id:     tData.PaymentId,
+      subscription_id: sub.id,
+      extends_from:   activeSub?.end_date ?? null,
+      new_end_date:   endDate.toISOString().split('T')[0],
+    })
   }
 
   // ── ADD STORE: T-Bank Init → redirect (same flow as main subscription) ─────
