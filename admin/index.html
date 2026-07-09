@@ -3756,7 +3756,6 @@ function _renderStoresList(stores) {
             <div style="display:flex;flex-direction:column;gap:4px">
               <button class="btn btn-sm" title="Редактировать" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();openStoreModal(${sd})">${svgIco('edit',14)}</button>
               <button class="btn btn-sm" title="Расписание" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();openSchedule(${sd})">${svgIco('calendar',14)}</button>
-              <button class="btn btn-sm btn-d" title="Удалить" style="display:inline-flex;align-items:center;justify-content:center;padding:0;width:30px;height:30px" onclick="event.stopPropagation();confirmDelete('store','${s.id}','${esc(s.name)}')">${svgIco('trash',14)}</button>
             </div>
           </div>`}
         </div>
