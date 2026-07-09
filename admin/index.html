@@ -3149,6 +3149,11 @@ function _renderStoreSubCard(store, sub, isFirst) {
       onclick="startRegularSubscription()">
       Выбрать тариф →
     </button>` : '';
+  const cancelAutoRenewBtn = (isActive && sub && !isTrial && sub.auto_renew) ? `
+    <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:var(--fg-3)"
+      onclick="toggleAutoRenew('${sub.id}',false,false)">
+      Отменить автопродление
+    </button>` : '';
 
   const payBtn = (!isFirst && store && (!sub || isExpired)) ? `
     <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
@@ -3180,6 +3185,7 @@ function _renderStoreSubCard(store, sub, isFirst) {
     </div>
     ${subInfo}
     ${autoRenewToggle}
+    ${cancelAutoRenewBtn}
     ${trialActiveBanner}
     ${trialCancelledBtn}
     ${payBtn}
