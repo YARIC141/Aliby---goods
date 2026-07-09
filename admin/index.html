@@ -840,7 +840,7 @@ html.bg-custom #bg-fluid{display:none}
       <button class="btn btn-full" id="btn-add-store" onclick="onAddStoreBtnClick()"
         style="display:flex;align-items:center;justify-content:center;gap:6px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Добавить заведение
+        Приобрести подписку на дополнительное заведение
       </button>
     </div>
     <div class="sec" id="p-pay-sec" style="display:none;margin-top:20px">
@@ -3024,6 +3024,11 @@ async function loadStoreSubscriptions() {
       html += _renderStoreSubCard(store, storeSub, false);
     });
 
+    // ── Unlinked store subscriptions (purchased but no store created yet) ─
+    const unlinkedStoreSubs = subs.filter(s =>
+      s.plan_type === 'store' && !s.store_id && ['active','grace'].includes(s.status) && s.end_date >= todayStr
+    );
+    unlinkedStoreSubs.forEach(sub => { html += _renderUnlinkedStoreSubCard(sub); });
 
     // ── No-subscription banner if needed ──────────────────────────────────
     if (!mainSub) {
@@ -3197,6 +3202,39 @@ function _renderStoreSubCard(store, sub, isFirst) {
     ${trialCancelledBtn}
     ${payBtn}
     ${payModeRow}
+  </div>`;
+}
+
+function _renderUnlinkedStoreSubCard(sub) {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isActive = ['active','grace'].includes(sub.status) && sub.end_date >= todayStr;
+  const isGrace  = sub.status === 'grace';
+
+  let badge = '';
+  if (isGrace)       badge = `<span class="platsub-status-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;font-size:10px">Ошибка оплаты</span>`;
+  else if (isActive) badge = `<span class="platsub-status-badge active" style="font-size:10px">Активна</span>`;
+
+  const _planPeriod = { 'monthly': '/мес', '3months': '/3 мес', '6months': '/6 мес', 'yearly': '/год' };
+  const endFmt   = new Date(sub.end_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
+  const startFmt = new Date(sub.start_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
+  const subInfo  = isActive
+    ? `<div style="font-size:12px;color:var(--fg-3);margin-top:4px">${startFmt} — <b>${endFmt}</b></div>`
+    : '';
+
+  const addBtn = isActive ? `
+    <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
+      onclick="openStoreModal()">Добавить заведение</button>` : '';
+
+  return `<div class="card" style="padding:12px 14px;margin-bottom:8px;border:1px dashed var(--line-soft)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div>
+        <div style="font:600 13px/1 var(--font-sans)">Подписка на доп. заведение</div>
+        <div style="font:400 11px/1 var(--font-sans);color:var(--fg-4);margin-top:3px">Не привязана к заведению</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">${badge}</div>
+    </div>
+    ${subInfo}
+    ${addBtn}
   </div>`;
 }
 
