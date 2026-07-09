@@ -3298,16 +3298,26 @@ async function openSubHistory() {
       return;
     }
 
-    const _statusLabel = { active:'Активна', expired:'Истекла', cancelled:'Отменена', pending:'В обработке', failed:'Ошибка', grace:'Ошибка оплаты' };
-    const _statusColor = { active:'var(--ok)', expired:'var(--fg-4)', cancelled:'var(--err)', pending:'var(--warn)', failed:'var(--err)', grace:'#f97316' };
-    const _planLabel   = { monthly:'1 мес', '3months':'3 мес', '6months':'6 мес', yearly:'12 мес' };
+    const _planLabel = { monthly:'1 мес', '3months':'3 мес', '6months':'6 мес', yearly:'12 мес' };
+    const todayStr   = new Date().toISOString().split('T')[0];
 
-    el.innerHTML = subs.map(s => {
+    // Status based on actual period, not DB status field (expired vehicle records show correctly)
+    const _computeStatus = (s) => {
+      if (s.status === 'pending') return ['В обработке', 'var(--warn)'];
+      if (s.status === 'failed')  return ['Ошибка платежа', 'var(--err)'];
+      if (s.end_date >= todayStr) return ['Активна', 'var(--ok)'];
+      return ['Истекла', 'var(--fg-4)'];
+    };
+
+    // Filter out old-style expired payment vehicles (extends_sub_id set, status=expired)
+    // to avoid duplicate entries; the original record already reflects the full period
+    const displaySubs = subs.filter(s => !(s.status === 'expired' && s.extends_sub_id));
+
+    el.innerHTML = displaySubs.map(s => {
       const createdFmt = new Date(s.created_at).toLocaleString('ru-RU', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
       const startFmt   = new Date(s.start_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
       const endFmt     = new Date(s.end_date).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' });
-      const statusLbl  = _statusLabel[s.status] || s.status;
-      const statusClr  = _statusColor[s.status] || 'var(--fg-4)';
+      const [statusLbl, statusClr] = _computeStatus(s);
 
       let typeLabel = '', typeColor = 'var(--accent)';
       if (s.is_trial)             { typeLabel = 'Пробный период'; typeColor = '#16a34a'; }

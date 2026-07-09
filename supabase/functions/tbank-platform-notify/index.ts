@@ -59,43 +59,33 @@ Deno.serve(async (req: Request) => {
   const filter  = `tbank_payment_id=eq.${paymentId}&status=eq.pending`
 
   // Fetch the pending subscription first
-  const subResp = await fetch(`${baseUrl}?${filter}&select=id,user_id,plan,plan_type,amount_paid,is_trial,extends_sub_id,end_date,monthly_amount_kopecks`, { headers })
+  const subResp = await fetch(`${baseUrl}?${filter}&select=id,user_id,plan,plan_type,amount_paid,is_trial,end_date,monthly_amount_kopecks`, { headers })
   const subArr  = await subResp.json().catch(() => [])
   const sub     = Array.isArray(subArr) ? subArr[0] : null
 
   if (status === 'CONFIRMED' && success) {
-    // ── CRITICAL: activate the subscription immediately ──────────────────────
-    if (sub?.extends_sub_id) {
-      // Extension of a cancelled trial: update the original record, expire the payment vehicle
-      await Promise.all([
-        fetch(`${baseUrl}?id=eq.${sub.extends_sub_id}`, {
+    // ── CRITICAL: activate the subscription and update profile end date ──────
+    const updates: Record<string, unknown> = { status: 'active', auto_renew: true }
+    if (rebillId) updates.rebill_id = rebillId
+    await fetch(`${baseUrl}?${filter}`, {
+      method:  'PATCH',
+      headers: { ...headers, Prefer: 'return=minimal' },
+      body:    JSON.stringify(updates),
+    })
+
+    // Update profiles.subscription_end_date if this period extends further
+    if (sub?.end_date && sub?.user_id) {
+      const profileUrl  = `${supabaseUrl}/rest/v1/profiles`
+      const profileResp = await fetch(`${profileUrl}?id=eq.${sub.user_id}&select=subscription_end_date`, { headers })
+      const profileArr  = await profileResp.json().catch(() => [])
+      const currentEnd  = profileArr?.[0]?.subscription_end_date
+      if (!currentEnd || sub.end_date > currentEnd) {
+        await fetch(`${profileUrl}?id=eq.${sub.user_id}`, {
           method:  'PATCH',
           headers: { ...headers, Prefer: 'return=minimal' },
-          body: JSON.stringify({
-            is_trial:               false,
-            end_date:               sub.end_date,
-            plan:                   sub.plan,
-            status:                 'active',
-            auto_renew:             false,
-            amount_paid:            sub.amount_paid,
-            monthly_amount_kopecks: sub.monthly_amount_kopecks,
-            ...(rebillId ? { rebill_id: rebillId } : {}),
-          }),
-        }),
-        fetch(`${baseUrl}?${filter}`, {
-          method:  'PATCH',
-          headers: { ...headers, Prefer: 'return=minimal' },
-          body:    JSON.stringify({ status: 'expired' }),
-        }),
-      ])
-    } else {
-      const updates: Record<string, unknown> = { status: 'active', auto_renew: true }
-      if (rebillId) updates.rebill_id = rebillId
-      await fetch(`${baseUrl}?${filter}`, {
-        method:  'PATCH',
-        headers: { ...headers, Prefer: 'return=minimal' },
-        body:    JSON.stringify(updates),
-      })
+          body:    JSON.stringify({ subscription_end_date: sub.end_date }),
+        })
+      }
     }
 
     // ── NON-CRITICAL: refund + analytics — fire-and-forget ───────────────────

@@ -69,7 +69,7 @@ Deno.serve(async (req: Request) => {
   if (authError || !user) return jsonResponse({ error: 'Unauthorized' }, 401)
 
   const { data: profile } = await serviceClient
-    .from('profiles').select('role').eq('id', user.id).single()
+    .from('profiles').select('role, subscription_end_date').eq('id', user.id).single()
   if (profile?.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403)
 
   // ── TRIAL: 1 ₽ card binding ──────────────────────────────────────────────
@@ -92,9 +92,9 @@ Deno.serve(async (req: Request) => {
       .update({ status: 'failed' })
       .eq('user_id', user.id).eq('status', 'pending')
 
-    const now     = new Date()
-    const endDate = new Date(now)
-    endDate.setDate(endDate.getDate() + 30)
+    const now      = new Date()
+    const endDate  = new Date(now)
+    endDate.setDate(endDate.getDate() + 29) // 30 days inclusive: day 1 → day 30
     const orderId = `trial_${user.id.slice(0, 8)}_${Date.now()}`
 
     const { data: sub, error: subError } = await serviceClient
@@ -180,17 +180,17 @@ Deno.serve(async (req: Request) => {
 
   // ── MONTHLY: paid subscription (1/3/6/12 months) ─────────────────────────────
   if (type === 'monthly') {
+    const todayStr = new Date().toISOString().split('T')[0]
+
+    // Block if there's an active sub that still has auto-renew on (user hasn't cancelled)
     const { data: activeSubs } = await serviceClient
       .from('platform_subscriptions')
-      .select('id, status, end_date, is_trial, auto_renew')
+      .select('id, auto_renew')
       .eq('user_id', user.id)
       .in('status', ['active', 'grace'])
-      .gte('end_date', new Date().toISOString().split('T')[0])
+      .gte('end_date', todayStr)
       .limit(1)
-
     const activeSub = activeSubs?.[0] || null
-
-    // Block only if there's an active sub with auto-renew still on (user hasn't cancelled)
     if (activeSub && activeSub.auto_renew !== false) {
       return jsonResponse({ error: 'Already has active subscription' }, 409)
     }
@@ -204,10 +204,18 @@ Deno.serve(async (req: Request) => {
     const planCfg = PAID_PLAN_MAP[planId]
 
     const now = new Date()
-    // If extending a cancelled trial, new period starts from trial's end_date
-    const baseDate = activeSub ? new Date(activeSub.end_date) : now
-    const endDate  = new Date(baseDate)
-    endDate.setDate(endDate.getDate() + planCfg.days)
+    // Start the new period the day after the current subscription ends (if still active)
+    const existingEnd = profile?.subscription_end_date
+    let startDate: Date
+    if (existingEnd && existingEnd >= todayStr) {
+      startDate = new Date(existingEnd)
+      startDate.setDate(startDate.getDate() + 1)
+    } else {
+      startDate = new Date(now)
+    }
+    // Inclusive end: start + days - 1 (e.g. 30 days: day 1 → day 30, next period starts day 31)
+    const endDate = new Date(startDate)
+    endDate.setDate(endDate.getDate() + planCfg.days - 1)
     const orderId = `sub_${user.id.slice(0, 8)}_${Date.now()}`
 
     const { data: sub, error: subError } = await serviceClient
@@ -216,14 +224,13 @@ Deno.serve(async (req: Request) => {
         user_id:                user.id,
         plan:                   planCfg.planVal,
         status:                 'pending',
-        start_date:             now.toISOString().split('T')[0],
+        start_date:             startDate.toISOString().split('T')[0],
         end_date:               endDate.toISOString().split('T')[0],
         amount_paid:            planCfg.amtRub,
         is_trial:               false,
         auto_renew:             false,
         monthly_amount_kopecks: planCfg.amtKop,
         extra_stores:           0,
-        extends_sub_id:         activeSub?.id ?? null,
       })
       .select().single()
 
@@ -278,7 +285,6 @@ Deno.serve(async (req: Request) => {
       payment_url:    tData.PaymentURL,
       payment_id:     tData.PaymentId,
       subscription_id: sub.id,
-      extends_from:   activeSub?.end_date ?? null,
       new_end_date:   endDate.toISOString().split('T')[0],
     })
   }
