@@ -3020,7 +3020,13 @@ async function loadStoreSubscriptions() {
 
     // ── Additional stores (linked) ────────────────────────────────────────
     stores.slice(1).forEach(store => {
-      const storeSub = subs.find(s => s.store_id === store.id && ['active','grace','cancelled','expired'].includes(s.status));
+      // Pick active/grace sub with latest end_date (stacked periods); fall back to cancelled/expired
+      const storeSubs = subs.filter(s => s.store_id === store.id);
+      const activeStoreSub = storeSubs
+        .filter(s => ['active','grace'].includes(s.status) && s.end_date >= todayStr)
+        .sort((a, b) => (a.end_date > b.end_date ? -1 : 1))[0];
+      const storeSub = activeStoreSub
+        || storeSubs.filter(s => ['cancelled','expired'].includes(s.status)).sort((a, b) => (a.end_date > b.end_date ? -1 : 1))[0];
       html += _renderStoreSubCard(store, storeSub, false);
     });
 
