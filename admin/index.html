@@ -3149,13 +3149,14 @@ function _renderStoreSubCard(store, sub, isFirst) {
       onclick="startRegularSubscription()">
       Выбрать тариф →
     </button>` : '';
-  const renewSubBtn = (isActive && sub && !isTrial) ? `
+  const renewSubBtn = (isFirst && isActive && sub && !isTrial) ? `
     <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
       onclick="startRegularSubscription()">
       Выбрать тариф →
     </button>` : '';
 
-  const payBtn = (!isFirst && store && (!sub || isExpired)) ? `
+  // Show for additional stores whenever sub is not pending (allow stacking active periods too)
+  const payBtn = (!isFirst && store && sub?.status !== 'pending') ? `
     <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
       onclick="openStoreSubPayModal('${storeId}')">
       ${!sub ? 'Активировать подписку' : 'Продлить подписку'}

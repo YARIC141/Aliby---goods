@@ -320,9 +320,29 @@ Deno.serve(async (req: Request) => {
       .eq('plan_type', 'store')
       .eq('status', 'pending')
 
-    // Create pending per-store subscription record
-    const now   = new Date()
-    const endDt = new Date(now); endDt.setDate(endDt.getDate() + days - 1)
+    // Stack period from store's current subscription end_date (if still active)
+    const now = new Date()
+    const todayStr2 = now.toISOString().split('T')[0]
+    let storeStartDate: Date = new Date(now)
+    if (bodyStoreId) {
+      const { data: curStoreSub } = await serviceClient
+        .from('platform_subscriptions')
+        .select('end_date')
+        .eq('user_id', user.id)
+        .eq('plan_type', 'store')
+        .eq('store_id', bodyStoreId)
+        .in('status', ['active', 'grace'])
+        .gte('end_date', todayStr2)
+        .order('end_date', { ascending: false })
+        .limit(1)
+      const curEnd = curStoreSub?.[0]?.end_date
+      if (curEnd && curEnd >= todayStr2) {
+        storeStartDate = new Date(curEnd)
+        storeStartDate.setDate(storeStartDate.getDate() + 1)
+      }
+    }
+    const endDt = new Date(storeStartDate)
+    endDt.setDate(endDt.getDate() + days - 1)
     const orderId = `store_${user.id.slice(0, 8)}_${Date.now()}`
 
     const { data: storeSub, error: storeSubErr } = await serviceClient
@@ -333,7 +353,7 @@ Deno.serve(async (req: Request) => {
         plan:                   isYearly ? 'yearly' : 'monthly',
         plan_type:              'store',
         status:                 'pending',
-        start_date:             now.toISOString().split('T')[0],
+        start_date:             storeStartDate.toISOString().split('T')[0],
         end_date:               endDt.toISOString().split('T')[0],
         amount_paid:            amountRub,
         monthly_amount_kopecks: amount,
