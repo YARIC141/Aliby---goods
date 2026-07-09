@@ -3108,10 +3108,15 @@ function _renderStoreSubCard(store, sub, isFirst) {
     if (costLine) subInfo = `<div style="font-size:12px;color:var(--fg-3);margin-top:4px">${costLine}</div>`;
   }
 
-  const autoRenewToggle = (isActive && sub && isTrial) ? `
-    <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:${sub.auto_renew ? 'var(--err)' : 'var(--accent)'}"
-      onclick="toggleAutoRenew('${sub.id}',${!sub.auto_renew},true)">
-      ${sub.auto_renew ? 'Отменить подписку' : 'Возобновить подписку'}
+  const autoRenewToggle = (isActive && sub && isTrial && sub.auto_renew) ? `
+    <button class="btn btn-sm" style="font-size:11px;margin-top:6px;color:var(--err)"
+      onclick="toggleAutoRenew('${sub.id}',false,true)">
+      Отменить подписку
+    </button>` : '';
+  const trialCancelledBtn = (isActive && sub && isTrial && !sub.auto_renew) ? `
+    <button class="btn btn-sm btn-p" style="font-size:11px;margin-top:6px"
+      onclick="startRegularSubscription()">
+      Выбрать тариф →
     </button>` : '';
 
   const payBtn = (!isFirst && store && (!sub || isExpired)) ? `
@@ -3144,6 +3149,7 @@ function _renderStoreSubCard(store, sub, isFirst) {
     </div>
     ${subInfo}
     ${autoRenewToggle}
+    ${trialCancelledBtn}
     ${payBtn}
     ${payModeRow}
   </div>`;
@@ -3222,7 +3228,7 @@ async function toggleStorePaymentMode(enableReal, el) {
 async function toggleAutoRenew(subId, newValue, isTrial) {
   if (!newValue) {
     const msg = isTrial
-      ? 'Отменить подписку? После пробного периода списания не будет, подписка завершится.'
+      ? 'Отменить подписку? Все платные функции останутся доступны до конца пробного периода — списания не будет.'
       : 'Отключить автоплатёж? Подписка продолжит действовать до конца оплаченного периода, затем отключится.';
     if (!confirm(msg)) return;
   }
