@@ -5627,7 +5627,7 @@ async function onAdminReady() {
 function applyRoleRestrictions() {
   if (S.profile?.role !== 'employee') return;
   // Скрыть навигацию недоступных разделов
-  ['stores'].forEach(nav => {
+  ['stores', 'subscription'].forEach(nav => {
     document.querySelector(`[data-nav="${nav}"]`)?.style.setProperty('display','none','important');
   });
   // Скрыть секции профиля
