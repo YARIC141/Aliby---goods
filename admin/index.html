@@ -5655,15 +5655,44 @@ function applyRoleRestrictions() {
   if (schedEditBtn) schedEditBtn.style.display = 'none';
   const schedNavBtn = document.getElementById('sn-btn-schedule');
   if (schedNavBtn) schedNavBtn.style.display = '';
+  // Уточнить роль для мастеров
+  if (S.profile?.is_master) {
+    const roleEl = document.querySelector('.sn-role');
+    if (roleEl) roleEl.textContent = 'Мастер';
+  }
 }
 
 async function openEmployeeSchedule() {
   const storeId = S.profile?.employee_store_id;
   if (!storeId) return;
+  if (S.profile?.is_master) { openMasterSchedule(storeId); return; }
   try {
     const rows = await req(`/rest/v1/stores?id=eq.${storeId}&select=id,name&limit=1`);
     if (rows?.[0]) openSchedule(rows[0]);
   } catch(e) { alert('Не удалось загрузить расписание'); }
+}
+
+function openMasterSchedule(storeId) {
+  _sched.storeId   = storeId;
+  _sched.isMaster  = true;
+  _sched.storeName = S.profile?.full_name || 'Мастер';
+  const now = new Date();
+  _sched.year   = now.getFullYear();
+  _sched.month  = now.getMonth();
+  _sched.editMode = false;
+  _sched.selectedDays.clear();
+  _sched.selectedTplId = null;
+  _sched.dayData   = {};
+  _sched.templates = [];
+  document.getElementById('sched-store-name').textContent = 'Моё расписание';
+  document.getElementById('sched-edit-btn').style.display    = 'none';
+  document.getElementById('sched-tpl-panel').style.display   = 'none';
+  document.getElementById('sched-day-view').style.display    = 'none';
+  const closeDayBtn = document.getElementById('sched-close-day-btn');
+  if (closeDayBtn) closeDayBtn.style.display = 'none';
+  goTo('schedule');
+  loadSchedMonth();
+  schedRealtimeConnect();
 }
 
 // ─── SUBSCRIPTIONS ───
@@ -7120,6 +7149,7 @@ const _sched = {
   bookingDone: {},
   templates: [],
   openDate: null,
+  isMaster: false,
 };
 
 function _fmtD(d) {
@@ -7129,6 +7159,7 @@ function _fmtD(d) {
 function openSchedule(store) {
   _sched.storeId   = store.id;
   _sched.storeName = store.name;
+  _sched.isMaster  = false;
   const now = new Date();
   _sched.year   = now.getFullYear();
   _sched.month  = now.getMonth();
@@ -7167,15 +7198,41 @@ async function loadSchedMonth() {
   _sched.bookingCounts = {};
   _sched.bookingDone = {};
   try {
-    const [schedRows, bkRows] = await Promise.all([
-      req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`),
-      req(`/rest/v1/bookings?store_id=eq.${_sched.storeId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date,status`),
-    ]);
-    schedRows.forEach(r => { _sched.dayData[r.date] = r.slots; });
-    bkRows.forEach(r => {
-      _sched.bookingCounts[r.slot_date] = (_sched.bookingCounts[r.slot_date] || 0) + 1;
-      if (r.status === 'completed') _sched.bookingDone[r.slot_date] = (_sched.bookingDone[r.slot_date] || 0) + 1;
-    });
+    if (_sched.isMaster) {
+      const masterId = S.profile.id;
+      const [masterScheds, bkRows] = await Promise.all([
+        req(`/rest/v1/master_schedules?master_id=eq.${masterId}&select=day_of_week,start_time,end_time`),
+        req(`/rest/v1/bookings?master_id=eq.${masterId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date,status`),
+      ]);
+      // Раскладываем недельный паттерн по датам месяца
+      const schedMap = {};
+      masterScheds.forEach(s => { schedMap[s.day_of_week] = s; });
+      const daysInMonth = lastDay.getDate();
+      const mm = String(_sched.month + 1).padStart(2, '0');
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dd = String(d).padStart(2, '0');
+        const dateStr = `${_sched.year}-${mm}-${dd}`;
+        const dbDow = (new Date(_sched.year, _sched.month, d).getDay() + 6) % 7; // 0=Пн
+        if (schedMap[dbDow]) {
+          const s = schedMap[dbDow];
+          _sched.dayData[dateStr] = [{ start: s.start_time.slice(0,5), end: s.end_time.slice(0,5) }];
+        }
+      }
+      bkRows.forEach(r => {
+        _sched.bookingCounts[r.slot_date] = (_sched.bookingCounts[r.slot_date] || 0) + 1;
+        if (r.status === 'completed') _sched.bookingDone[r.slot_date] = (_sched.bookingDone[r.slot_date] || 0) + 1;
+      });
+    } else {
+      const [schedRows, bkRows] = await Promise.all([
+        req(`/rest/v1/store_schedules?store_id=eq.${_sched.storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`),
+        req(`/rest/v1/bookings?store_id=eq.${_sched.storeId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date,status`),
+      ]);
+      schedRows.forEach(r => { _sched.dayData[r.date] = r.slots; });
+      bkRows.forEach(r => {
+        _sched.bookingCounts[r.slot_date] = (_sched.bookingCounts[r.slot_date] || 0) + 1;
+        if (r.status === 'completed') _sched.bookingDone[r.slot_date] = (_sched.bookingDone[r.slot_date] || 0) + 1;
+      });
+    }
   } catch(e) {}
   renderSchedCalendar();
 }
@@ -7324,7 +7381,10 @@ async function renderDayBookings(dateStr) {
   const bkEl = document.getElementById('sched-day-bookings');
   if (!bkEl) return;
   try {
-    const bks = await req(`/rest/v1/bookings?store_id=eq.${_sched.storeId}&slot_date=eq.${dateStr}&select=*,menu_items(name,price)&order=slot_start.asc`);
+    const bkFilter = _sched.isMaster
+      ? `master_id=eq.${S.profile.id}&slot_date=eq.${dateStr}`
+      : `store_id=eq.${_sched.storeId}&slot_date=eq.${dateStr}`;
+    const bks = await req(`/rest/v1/bookings?${bkFilter}&select=*,menu_items(name,price)&order=slot_start.asc`);
 
     // Fetch profiles separately (no FK from bookings.user_id to public.profiles)
     const uids = [...new Set(bks.map(b => b.user_id).filter(Boolean))];
