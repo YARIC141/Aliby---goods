@@ -5169,8 +5169,8 @@ function adminRealtimeConnect() {
         // Postgres change event — handle both event name variants
         if (msg.event === 'postgres_changes' || msg.event === '*') {
           const data = msg.payload?.data ?? msg.payload;
-          const type = (data?.type || '').toUpperCase();
-          const record = data?.record;
+          const type = (data?.eventType || data?.type || '').toUpperCase();
+          const record = data?.new ?? data?.record;
           const newStatus = record?.status;
           const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready']);
           if (type === 'INSERT') {
@@ -5566,8 +5566,8 @@ function globalBookingsRealtimeConnect() {
         const msg = JSON.parse(e.data);
         if (msg.event === 'postgres_changes' || msg.event === '*') {
           const data = msg.payload?.data ?? msg.payload;
-          const type = (data?.type||'').toUpperCase();
-          const record = data?.record;
+          const type = (data?.eventType || data?.type || '').toUpperCase();
+          const record = data?.new ?? data?.record;
           if (type === 'INSERT' && record?.id) {
             _newBookingIds.add(record.id);
             updateNavBadge();
@@ -7944,8 +7944,8 @@ function schedRealtimeConnect() {
         const msg = JSON.parse(e.data);
         if (msg.event === 'postgres_changes' || msg.event === '*') {
           const data   = msg.payload?.data ?? msg.payload;
-          const type   = (data?.type || '').toUpperCase();
-          const record = data?.record ?? data?.new ?? {};
+          const type   = (data?.eventType || data?.type || '').toUpperCase();
+          const record = data?.new ?? data?.record ?? {};
           if (type === 'INSERT' || type === 'UPDATE') {
             const bookDate = record.slot_date;
             if (bookDate && _sched.openDate === bookDate) {

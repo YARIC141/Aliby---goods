@@ -4707,7 +4707,8 @@ function realtimeSubscribeOrders(userId) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.event === 'postgres_changes') {
-          const record = msg.payload?.data?.record || msg.payload?.record;
+          const data = msg.payload?.data ?? msg.payload;
+          const record = data?.new ?? data?.record;
           if (record) _onRealtimeOrder(record);
         }
       } catch {}
@@ -4750,8 +4751,8 @@ function realtimeSubscribeBookings(userId) {
         const msg = JSON.parse(e.data);
         if (msg.event === 'postgres_changes') {
           const data   = msg.payload?.data ?? msg.payload;
-          const type   = (data?.type || '').toUpperCase();
-          const record = data?.record;
+          const type   = (data?.eventType || data?.type || '').toUpperCase();
+          const record = data?.new ?? data?.record;
           if (record) _onRealtimeBooking(record, type);
         }
       } catch {}
