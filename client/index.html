@@ -7787,29 +7787,19 @@ function _buildSlotMasterMap() {
   const today = todayInCity();
   const durMin = Math.max((_booking.item?.duration_minutes) || (_booking.item?.preparation_time) || 30, 5);
   const _nowMin = () => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); };
-  // Генерируем 60 дней — покрывает и store_schedules, и мастеров без store_schedules
-  const cur = new Date(today + 'T12:00:00');
-  for (let i = 0; i < 60; i++, cur.setDate(cur.getDate() + 1)) {
-    const ds = _fmtD(cur);
-    const dbDow = (cur.getDay() + 6) % 7; // 0=Пн
-    const nowMin = ds === today ? _nowMin() : 0;
-    const storeWindows = _booking.schedData[ds];
+  // Только даты из расписания заведения — слоты = пересечение с часами мастера
+  for (const [ds, storeWindows] of Object.entries(_booking.schedData)) {
     _booking.slotMasterMap[ds] = {};
+    const dbDow = (new Date(ds + 'T12:00:00').getDay() + 6) % 7; // 0=Пн
+    const nowMin = ds === today ? _nowMin() : 0;
     for (const master of _booking.masters) {
       const daySched = (_booking.masterScheds[master.id] || []).find(r => r.day_of_week === dbDow);
       if (!daySched) continue;
-      let windows;
-      if (storeWindows?.length) {
-        // Пересекаем часы мастера с окнами заведения
-        const ms = _timeToMin(daySched.start_time), me = _timeToMin(daySched.end_time);
-        windows = [];
-        for (const w of storeWindows) {
-          const ws = Math.max(_timeToMin(w.start), ms), we = Math.min(_timeToMin(w.end), me);
-          if (we > ws) windows.push({ start: _minToTime(ws), end: _minToTime(we) });
-        }
-      } else {
-        // Расписания заведения нет — используем часы мастера как есть
-        windows = [{ start: daySched.start_time.slice(0, 5), end: daySched.end_time.slice(0, 5) }];
+      const ms = _timeToMin(daySched.start_time), me = _timeToMin(daySched.end_time);
+      const windows = [];
+      for (const w of (storeWindows || [])) {
+        const ws = Math.max(_timeToMin(w.start), ms), we = Math.min(_timeToMin(w.end), me);
+        if (we > ws) windows.push({ start: _minToTime(ws), end: _minToTime(we) });
       }
       const masterBookedDay = (_booking.masterBooked[master.id] || {})[ds] || [];
       for (const slot of getAvailableSlots(windows, masterBookedDay, durMin, nowMin)) {
