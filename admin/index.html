@@ -3055,6 +3055,13 @@ async function loadStoreSubscriptions() {
       const isOk = _tpayMsg === 'success';
       _tpayMsg = null;
       if (isOk) {
+        // Restore pending store creation after payment for add_store sub
+        const pendingStore = (() => { try { return JSON.parse(localStorage.getItem('aliby_pending_store') || 'null'); } catch { return null; } })();
+        if (pendingStore) {
+          localStorage.removeItem('aliby_pending_store');
+          setTimeout(() => { goTo('stores'); openStoreModal(pendingStore); }, 400);
+          return;
+        }
         if (!mainSub) { _pollForActiveSub(8); return; }
       } else {
         const note = document.createElement('div');
@@ -4017,6 +4024,25 @@ async function saveStore() {
       }
       if (current >= limit) {
         restore();
+        // Save form data so we can restore it after payment redirect
+        try {
+          localStorage.setItem('aliby_pending_store', JSON.stringify({
+            name:                  document.getElementById('ms-name').value,
+            address:               document.getElementById('ms-address').value,
+            latitude:              document.getElementById('ms-lat').value || null,
+            longitude:             document.getElementById('ms-lng').value || null,
+            city:                  document.getElementById('ms-city').value,
+            phone:                 document.getElementById('ms-phone').value || null,
+            working_hours:         document.getElementById('ms-hours').value || null,
+            direction:             document.getElementById('ms-dir').value || 'food',
+            store_category_id:     document.getElementById('ms-sc').value || null,
+            avg_order_amount:      document.getElementById('ms-avg').value || null,
+            image_url:             document.getElementById('ms-image-url').value || null,
+            delivery_enabled:      document.getElementById('ms-delivery-enabled')?.checked ?? false,
+            accepts_online_payment:document.getElementById('ms-online-payment')?.checked ?? true,
+            _loc: { marker_color: document.getElementById('ms-color').value || '#e8430a' },
+          }));
+        } catch {}
         closeModal('m-store');
         openModal('m-add-store-plan');
         return;
