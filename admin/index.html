@@ -1791,6 +1791,10 @@ html.bg-custom #bg-fluid{display:none}
         <label id="mmi-prep-label">Время приготовления (мин) <span class="hint" data-tip="Сколько времени занимает приготовление / подготовка / оказание услуги">?</span></label>
         <input type="number" min="0" step="1" id="mmi-prep-time" placeholder="0" value="0">
       </div>
+      <div class="fg">
+        <label>Длительность услуги (мин) <span class="hint" data-tip="Для записи к мастеру: сколько минут занимает процедура. Оставьте пустым для товаров">?</span></label>
+        <input type="number" min="1" step="1" id="mmi-duration" placeholder="Не задана">
+      </div>
       <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px">
         <input type="checkbox" id="mmi-avail" checked style="width:auto">
         <label for="mmi-avail">В наличии <span class="hint" data-tip="Снимите галочку, чтобы временно скрыть позицию от клиентов">?</span></label>
@@ -4450,6 +4454,7 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-allergens').value = item?.allergens       || '';
   document.getElementById('mmi-price').value     = item?.price           || '';
   document.getElementById('mmi-prep-time').value = item?.preparation_time ?? 0;
+  document.getElementById('mmi-duration').value   = item?.duration_minutes || '';
   document.getElementById('mmi-avail').checked    = item ? item.is_available : true;
   document.getElementById('mmi-image-url').value = item?.image_url       || '';
   document.getElementById('mmi-store').value    = item?.store_id    || '';
@@ -4794,6 +4799,7 @@ async function saveMenuItem() {
     allergens:        document.getElementById('mmi-allergens').value || null,
     price:            parseFloat(document.getElementById('mmi-price').value),
     preparation_time: parseInt(document.getElementById('mmi-prep-time').value, 10) || 0,
+    duration_minutes: parseInt(document.getElementById('mmi-duration').value, 10) || null,
     is_available:     document.getElementById('mmi-avail').checked,
     image_url:        document.getElementById('mmi-image-url').value || null,
   };
@@ -6121,19 +6127,24 @@ async function openEmployeesModal() {
 function _renderEmpList(emps) {
   const el = document.getElementById('emp-list');
   if (!el) return;
+  S._cachedEmps = emps;
   if (!emps.length) { el.innerHTML = '<div class="empty" style="padding:12px 0">Сотрудников нет</div>'; return; }
   const storeMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.name]));
   el.innerHTML = emps.map(e => {
     const storeName = storeMap[e.employee_store_id] || '—';
+    const masterBadge = e.is_master
+      ? `<span style="font-size:10px;font-weight:700;background:var(--accent);color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">Мастер</span>`
+      : '';
     return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <div style="flex:1;min-width:0">
-            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.full_name||'')}</div>
+            <div style="font:600 14px/1.2 var(--font-sans);margin-bottom:2px">${esc(e.full_name||'')}${masterBadge}</div>
             <div style="font-size:12px;color:var(--fg-3);margin-bottom:2px">${esc(storeName)}${e.phone ? ' · ' + esc(e.phone) : ''}</div>
             <div style="font-size:12px;color:var(--fg-3);font-family:monospace">login: ${esc(e.employee_login||'—')} · pwd: ${esc(e.employee_password||'—')}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button class="btn btn-sm" title="Сбросить пароль" onclick="openResetEmpPwd('${e.id}','${esc(e.full_name||'')}')">${svgIco('key',13)}</button>
+            <button class="btn btn-sm${e.is_master ? ' btn-p' : ''}" title="Настройки мастера" onclick="openMasterModal('${e.id}')" style="font-size:11px;padding:3px 8px">Мастер</button>
             <button class="btn btn-sm btn-d" title="Удалить" onclick="deleteEmployee('${e.id}','${esc(e.full_name||'')}')">${svgIco('trash',13)}</button>
           </div>
         </div>
@@ -6152,7 +6163,7 @@ async function loadEmployees() {
   } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>'; }
   try {
     const emps = await req(
-      `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc`
+      `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password,is_master&order=full_name.asc`
     );
     try { localStorage.setItem(cacheKey, JSON.stringify(emps)); } catch(ex) {}
     _renderEmpList(emps);
@@ -6250,6 +6261,159 @@ async function deleteEmployee(empId, empName) {
     await req('/functions/v1/manage-employee', { method: 'DELETE', body: JSON.stringify({ employee_id: empId }) });
     await loadEmployees();
   } catch(e) { alert('Ошибка удаления: ' + (e.message || e)); }
+}
+
+// ─── MASTERS ───
+let _masterData = { empId: null, items: [] };
+const _MASTER_DAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+function onMasterToggle(checked) {
+  document.getElementById('master-profile-section').style.display = checked ? '' : 'none';
+}
+
+async function openMasterModal(empId) {
+  const emp = (S._cachedEmps || []).find(e => e.id === empId) || {};
+  document.getElementById('master-modal-title').textContent = `Мастер: ${emp.full_name || ''}`;
+  document.getElementById('master-emp-id').value = empId;
+  document.getElementById('master-err').style.display = 'none';
+  document.getElementById('master-toggle').checked = false;
+  document.getElementById('master-bio').value = '';
+  document.getElementById('master-photo-url').value = '';
+  document.getElementById('master-profile-section').style.display = 'none';
+  document.getElementById('master-sched-grid').innerHTML = '<div class="txt-muted" style="font-size:13px">Загрузка…</div>';
+  document.getElementById('master-services-list').innerHTML = '<div class="txt-muted" style="font-size:13px">Загрузка…</div>';
+  openModal('m-master');
+
+  try {
+    const [profiles, schedules, masterSvcs] = await Promise.all([
+      req(`/rest/v1/profiles?id=eq.${empId}&select=is_master,master_bio,master_photo_url,employee_store_id`),
+      req(`/rest/v1/master_schedules?master_id=eq.${empId}&order=day_of_week.asc`),
+      req(`/rest/v1/master_services?master_id=eq.${empId}&select=*`),
+    ]);
+    const profile = profiles?.[0];
+    const storeId = profile?.employee_store_id;
+    const menuItems = storeId
+      ? await req(`/rest/v1/menu_items?store_id=eq.${storeId}&order=name.asc&select=id,name,duration_minutes,price`)
+      : [];
+    _masterData = { empId, items: menuItems };
+
+    const isMaster = profile?.is_master || false;
+    document.getElementById('master-toggle').checked = isMaster;
+    document.getElementById('master-bio').value = profile?.master_bio || '';
+    document.getElementById('master-photo-url').value = profile?.master_photo_url || '';
+    document.getElementById('master-profile-section').style.display = isMaster ? '' : 'none';
+    _renderMasterSchedGrid(schedules);
+    _renderMasterServicesList(menuItems, masterSvcs);
+  } catch(e) {
+    document.getElementById('master-sched-grid').innerHTML = '<div class="txt-muted" style="font-size:13px">Ошибка загрузки</div>';
+    document.getElementById('master-services-list').innerHTML = '';
+  }
+}
+
+function _renderMasterSchedGrid(schedules) {
+  const el = document.getElementById('master-sched-grid');
+  const sm = {};
+  (schedules || []).forEach(s => { sm[s.day_of_week] = s; });
+  el.innerHTML = _MASTER_DAYS.map((name, i) => {
+    const s = sm[i];
+    return `<div style="display:grid;grid-template-columns:20px 28px 1fr 1fr;align-items:center;gap:6px;padding:3px 0">
+      <input type="checkbox" id="msched-on-${i}" style="width:auto;margin:0" ${s ? 'checked' : ''}
+        onchange="document.getElementById('msched-times-${i}').style.opacity=this.checked?'1':'.4'">
+      <span style="font-size:13px;color:var(--fg-2)">${name}</span>
+      <div id="msched-times-${i}" style="display:contents;opacity:${s ? '1' : '.4'}">
+        <input type="time" id="msched-start-${i}" value="${s?.start_time?.slice(0,5) || '09:00'}"
+          style="padding:4px 6px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+        <input type="time" id="msched-end-${i}" value="${s?.end_time?.slice(0,5) || '18:00'}"
+          style="padding:4px 6px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _renderMasterServicesList(items, masterSvcs) {
+  const el = document.getElementById('master-services-list');
+  if (!items || !items.length) {
+    el.innerHTML = '<div class="txt-muted" style="font-size:13px">Нет позиций в меню заведения</div>';
+    return;
+  }
+  const svcMap = {};
+  (masterSvcs || []).forEach(s => { svcMap[s.service_id] = s; });
+  el.innerHTML = items.map(item => {
+    const svc = svcMap[item.id];
+    const checked = !!svc;
+    const price = svc?.price ?? item.price ?? '';
+    const durHint = item.duration_minutes
+      ? `<span style="font-size:11px;color:var(--fg-3)">${item.duration_minutes} мин</span>`
+      : `<span style="font-size:11px;color:var(--warn)">Нет длительности — задайте в Меню</span>`;
+    return `<div style="display:grid;grid-template-columns:20px 1fr auto;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--bg-2)">
+      <input type="checkbox" id="msvc-on-${item.id}" style="width:auto;margin:0" ${checked ? 'checked' : ''}
+        onchange="document.getElementById('msvc-price-${item.id}').disabled=!this.checked">
+      <div>
+        <div style="font-size:13px;font-weight:600;line-height:1.2">${esc(item.name)}</div>
+        ${durHint}
+      </div>
+      <input type="number" id="msvc-price-${item.id}" step="1" min="0" value="${price}"
+        placeholder="₽" ${!checked ? 'disabled' : ''}
+        style="width:74px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px;text-align:right">
+    </div>`;
+  }).join('');
+}
+
+async function saveMaster() {
+  const btn = document.getElementById('master-save-btn');
+  const restore = btnLoad(btn);
+  const errEl = document.getElementById('master-err');
+  errEl.style.display = 'none';
+  const empId = document.getElementById('master-emp-id').value;
+  const isMaster = document.getElementById('master-toggle').checked;
+  try {
+    await req(`/rest/v1/profiles?id=eq.${empId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        is_master:        isMaster,
+        master_bio:       isMaster ? (document.getElementById('master-bio').value.trim() || null) : null,
+        master_photo_url: isMaster ? (document.getElementById('master-photo-url').value.trim() || null) : null,
+      }),
+    });
+
+    // Always delete old schedule/services and re-insert
+    await req(`/rest/v1/master_schedules?master_id=eq.${empId}`, { method: 'DELETE' });
+    await req(`/rest/v1/master_services?master_id=eq.${empId}`, { method: 'DELETE' });
+
+    if (isMaster) {
+      const schedRows = [];
+      for (let i = 0; i < 7; i++) {
+        if (document.getElementById(`msched-on-${i}`)?.checked) {
+          schedRows.push({
+            master_id: empId, day_of_week: i,
+            start_time: document.getElementById(`msched-start-${i}`).value,
+            end_time:   document.getElementById(`msched-end-${i}`).value,
+          });
+        }
+      }
+      if (schedRows.length) {
+        await req('/rest/v1/master_schedules', { method: 'POST', body: JSON.stringify(schedRows) });
+      }
+      const svcRows = (_masterData.items || [])
+        .filter(item => document.getElementById(`msvc-on-${item.id}`)?.checked)
+        .map(item => ({
+          master_id: empId, service_id: item.id,
+          price: parseFloat(document.getElementById(`msvc-price-${item.id}`).value) || 0,
+        }));
+      if (svcRows.length) {
+        await req('/rest/v1/master_services', { method: 'POST', body: JSON.stringify(svcRows) });
+      }
+    }
+
+    restore();
+    closeModal('m-master');
+    showAdminToast(isMaster ? 'Настройки мастера сохранены' : 'Роль мастера снята');
+    await loadEmployees();
+  } catch(e) {
+    restore();
+    errEl.textContent = e.error || e.message || 'Ошибка сохранения';
+    errEl.style.display = 'block';
+  }
 }
 
 // ─── INIT ───
@@ -7920,6 +8084,57 @@ if ('serviceWorker' in navigator) {
   <span style="font-size:13px">Доступна новая версия приложения</span>
   <button onclick="window.location.reload()" style="background:rgba(255,255,255,.25);border:none;color:#fff;font-size:13px;font-weight:500;padding:4px 14px;border-radius:6px;cursor:pointer">Обновить</button>
   <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 2px">×</button>
+</div>
+
+<!-- ════════════════ MASTER MODAL ════════════════ -->
+<div class="overlay" id="m-master" onclick="if(event.target===this)closeModal('m-master')">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3 id="master-modal-title">Настройки мастера</h3>
+      <button class="modal-x" onclick="closeModal('m-master')">✕</button>
+    </div>
+    <input type="hidden" id="master-emp-id">
+
+    <!-- Toggle is_master -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line-soft);margin-bottom:14px">
+      <label for="master-toggle" style="font:600 14px/1 var(--font-sans);cursor:pointer">Является мастером</label>
+      <label class="tog">
+        <input type="checkbox" id="master-toggle" onchange="onMasterToggle(this.checked)">
+        <span class="tog-sl"></span>
+      </label>
+    </div>
+
+    <!-- Profile + schedule + services (visible when is_master=true) -->
+    <div id="master-profile-section" style="display:none">
+      <div class="fg">
+        <label>Описание мастера</label>
+        <textarea id="master-bio" rows="3" placeholder="Опыт работы, специализация, сертификаты…" style="resize:vertical"></textarea>
+      </div>
+      <div class="fg">
+        <label>Фото (URL)</label>
+        <input type="url" id="master-photo-url" placeholder="https://…">
+      </div>
+
+      <div style="font:600 13px/1 var(--font-sans);margin:16px 0 8px">Расписание</div>
+      <div id="master-sched-grid" style="display:flex;flex-direction:column;gap:4px">
+        <div class="txt-muted" style="font-size:13px">Загрузка…</div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+        <span style="font:600 13px/1 var(--font-sans)">Услуги</span>
+        <span style="font-size:11px;color:var(--fg-3)">Выберите и укажите цену</span>
+      </div>
+      <div id="master-services-list" style="display:flex;flex-direction:column;gap:6px">
+        <div class="txt-muted" style="font-size:13px">Загрузка…</div>
+      </div>
+    </div>
+
+    <div id="master-err" class="alert alert-e" style="display:none;margin-top:12px"></div>
+    <div class="modal-ft" style="margin-top:16px">
+      <button class="btn" onclick="closeModal('m-master')">Отмена</button>
+      <button class="btn btn-p" id="master-save-btn" onclick="saveMaster()">Сохранить</button>
+    </div>
+  </div>
 </div>
 
 <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--bg);border-top:1px solid var(--line);padding:12px 16px;flex-wrap:wrap;align-items:center;gap:12px">
