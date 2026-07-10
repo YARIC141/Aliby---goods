@@ -1178,6 +1178,11 @@ document.addEventListener('deviceready',function(){
     </div>
     <div id="ca-sched-wrap" class="pb" style="display:none">
       <div id="ca-sched-store-lbl" style="font:600 12px/1 var(--font-sans);color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px"></div>
+      <div id="ca-sched-master-row" style="display:none;margin-bottom:12px">
+        <select id="ca-sched-master-sel" onchange="setCaSchedMaster(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
+          <option value="">Любой мастер</option>
+        </select>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <button class="btn btn-sm" onclick="caSchedPrevMonth()">←</button>
         <span id="ca-sched-month-label" style="font:600 15px/1 var(--font-sans)"></span>
@@ -2282,7 +2287,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 
 let _calenabsTab = 'ord';
 let _schedulePreselect = null;
-const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null };
+const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', masters: [], masterScheds: {} };
 
 function switchCalenabsTab(tab) {
   _calenabsTab = tab;
@@ -2337,30 +2342,73 @@ async function loadCaScheduleScreen() {
     _caSched.schedData = {};
     _caSched.bookedData = {};
     _caSched.openDate = null;
+    _caSched.masterId = '';
+    _caSched.masters = [];
+    _caSched.masterScheds = {};
     const now = new Date();
     _caSched.year = now.getFullYear();
     _caSched.month = now.getMonth();
+    // Загружаем мастеров с их недельным расписанием
+    try {
+      const masters = await req(`/rest/v1/profiles?employee_store_id=eq.${store.id}&is_master=eq.true&select=id,full_name,master_schedules(day_of_week,start_time,end_time)&order=full_name.asc`);
+      _caSched.masters = masters || [];
+      masters.forEach(m => { _caSched.masterScheds[m.id] = m.master_schedules || []; });
+      const sel = document.getElementById('ca-sched-master-sel');
+      const row = document.getElementById('ca-sched-master-row');
+      if (sel && row) {
+        sel.innerHTML = '<option value="">Любой мастер</option>'
+          + masters.map(m => `<option value="${m.id}">${esc(m.full_name || 'Мастер')}</option>`).join('');
+        sel.value = '';
+        row.style.display = masters.length ? '' : 'none';
+      }
+    } catch {}
   }
   await _loadCaSchedMonth();
 }
 
+function setCaSchedMaster(masterId) {
+  _caSched.masterId = masterId;
+  _caSched.openDate = null;
+  document.getElementById('ca-sched-day-view').style.display = 'none';
+  _loadCaSchedMonth();
+}
+
 async function _loadCaSchedMonth() {
-  const { year, month, storeId } = _caSched;
+  const { year, month, storeId, masterId } = _caSched;
   const pad = n => String(n).padStart(2, '0');
   const from = `${year}-${pad(month + 1)}-01`;
   const lastDay = new Date(year, month + 1, 0).getDate();
   const to = `${year}-${pad(month + 1)}-${pad(lastDay)}`;
+  _caSched.schedData = {};
+  _caSched.bookedData = {};
   try {
-    const [schedRows, bkRows] = await Promise.all([
-      req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`),
-      req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date,slot_start,slot_end`),
-    ]);
-    _caSched.schedData = {};
-    _caSched.bookedData = {};
-    schedRows.forEach(r => { _caSched.schedData[r.date] = r.slots; });
-    bkRows.forEach(r => {
-      (_caSched.bookedData[r.slot_date] = _caSched.bookedData[r.slot_date] || []).push(r);
-    });
+    if (masterId) {
+      // Раскладываем недельный паттерн мастера по датам
+      const mScheds = _caSched.masterScheds[masterId] || [];
+      const dayMap = {};
+      mScheds.forEach(s => { dayMap[s.day_of_week] = s; });
+      for (let d = 1; d <= lastDay; d++) {
+        const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
+        const dbDow = (new Date(year, month, d).getDay() + 6) % 7; // 0=Пн
+        if (dayMap[dbDow]) {
+          const s = dayMap[dbDow];
+          _caSched.schedData[ds] = [{ start: s.start_time.slice(0, 5), end: s.end_time.slice(0, 5) }];
+        }
+      }
+      const bkRows = await req(`/rest/v1/bookings?master_id=eq.${masterId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date,slot_start,slot_end`);
+      bkRows.forEach(r => {
+        (_caSched.bookedData[r.slot_date] = _caSched.bookedData[r.slot_date] || []).push(r);
+      });
+    } else {
+      const [schedRows, bkRows] = await Promise.all([
+        req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`),
+        req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=gte.${from}&slot_date=lte.${to}&status=neq.cancelled&select=slot_date,slot_start,slot_end`),
+      ]);
+      schedRows.forEach(r => { _caSched.schedData[r.date] = r.slots; });
+      bkRows.forEach(r => {
+        (_caSched.bookedData[r.slot_date] = _caSched.bookedData[r.slot_date] || []).push(r);
+      });
+    }
   } catch (e) {}
   renderCaSchedCalendar();
 }
@@ -2460,7 +2508,7 @@ function caSchedNextMonth() {
 }
 
 function selectCaSchedSlot(date, start, end) {
-  _schedulePreselect = { date, start, end };
+  _schedulePreselect = { date, start, end, masterId: _caSched.masterId || null };
   const DOW = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const MON = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
   const d = new Date(date + 'T00:00:00');
@@ -2478,7 +2526,7 @@ function clearPreselect() {
 async function bookWithPreselect(btn, item) {
   if (!item || !_schedulePreselect) { openBookingSlotModal(item); return; }
   // Services with masters must go through the full booking modal (master selection required)
-  if (item.duration_minutes) { openBookingSlotModal(item); return; }
+  if (item.duration_minutes) { openBookingSlotModal(item, null, _schedulePreselect.masterId || null); return; }
   const { date, start } = _schedulePreselect;
   const prepMin = (item.preparation_time >= 5) ? item.preparation_time : 30;
   const end = _minToTime(_timeToMin(start) + prepMin);
