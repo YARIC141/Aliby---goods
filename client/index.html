@@ -1104,6 +1104,7 @@ document.addEventListener('deviceready',function(){
   <!-- Services tabs (only shown when direction=services) -->
   <div id="svc-tab-bar" style="display:none;flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)" class="cart-tabs">
     <button class="cart-tab active" id="svc-tab-services" onclick="switchSvcTab('services')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-goods"/></svg>Услуги</button>
+    <button class="cart-tab" id="svc-tab-masters" onclick="switchSvcTab('masters')"><svg class="ico" width="16" height="16" style="margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Мастера</button>
     <button class="cart-tab" id="svc-tab-sched" onclick="switchSvcTab('sched')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
   </div>
   <!-- Услуги pane -->
@@ -1158,6 +1159,16 @@ document.addEventListener('deviceready',function(){
 
   </div>
   </div><!-- /svc-pane-services -->
+
+  <!-- Мастера pane -->
+  <div id="svc-pane-masters" style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none">
+    <div class="pb">
+      <div id="masters-list" style="display:flex;flex-direction:column;gap:12px;padding-top:4px">
+        <div class="loading">Загрузка…</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Запись pane (store schedule for services direction) -->
   <div id="svc-pane-sched" style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none">
     <div id="ca-sched-no-store" style="text-align:center;padding:48px 16px 32px;color:var(--muted);font-size:14px">
@@ -1506,6 +1517,30 @@ document.addEventListener('deviceready',function(){
 
 <!-- Booking success popup -->
 <div id="m-bk-success" onclick="closeBkSuccess()"><div class="bks-card" onclick="event.stopPropagation()"><div class="bks-check"><svg viewBox="0 0 24 24"><polyline points="4 13 9 18 20 7"/></svg></div><p class="bks-title" id="bks-title">Запись создана!</p><p class="bks-sub" id="bks-sub-text"></p><button class="btn" style="width:100%" onclick="closeBkSuccess()">Готово</button></div></div>
+
+<!-- Master profile modal -->
+<div class="overlay" id="m-master-profile" onclick="if(event.target===this)closeModal('m-master-profile')">
+  <div class="modal" style="padding:0;overflow:hidden">
+    <div id="mmp-photo-hero" style="width:100%;height:180px;background:var(--bg-2);position:relative;flex-shrink:0;overflow:hidden">
+      <button class="modal-x" onclick="closeModal('m-master-profile')" style="position:absolute;top:10px;right:10px;z-index:2;background:rgba(0,0,0,.35);color:#fff;border-radius:50%">✕</button>
+      <div id="mmp-avatar-fallback" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;font-weight:700;color:var(--fg-4)"></div>
+    </div>
+    <div style="padding:22px">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px">
+        <div style="flex:1">
+          <h3 id="mmp-name" style="font:400 24px/1.1 var(--font-display);margin:0 0 4px"></h3>
+          <div id="mmp-store-name" style="font-size:12px;color:var(--fg-3)"></div>
+        </div>
+      </div>
+      <div id="mmp-bio" style="font-size:14px;line-height:1.65;color:var(--fg-2);margin-bottom:18px;display:none"></div>
+      <div id="mmp-services-wrap" style="display:none">
+        <div style="font:600 13px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Услуги</div>
+        <div id="mmp-services" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div id="mmp-loading" style="text-align:center;padding:16px 0;color:var(--muted);font-size:13px">Загрузка…</div>
+    </div>
+  </div>
+</div>
 
 <!-- Booking slot selection modal -->
 <div class="overlay" id="m-book-slot">
@@ -2267,12 +2302,15 @@ function _calenabsIsActive() { return document.getElementById('screen-calenabs')
 let _svcTab = 'services';
 function switchSvcTab(tab) {
   _svcTab = tab;
-  const isServices = tab === 'services';
-  document.getElementById('svc-pane-services').style.display = isServices ? '' : 'none';
-  document.getElementById('svc-pane-sched').style.display    = isServices ? 'none' : 'flex';
-  document.getElementById('svc-tab-services')?.classList.toggle('active', isServices);
-  document.getElementById('svc-tab-sched')?.classList.toggle('active', !isServices);
-  if (!isServices) loadCaScheduleScreen();
+  const isSvc = tab === 'services', isMst = tab === 'masters', isSched = tab === 'sched';
+  document.getElementById('svc-pane-services').style.display = isSvc  ? '' : 'none';
+  document.getElementById('svc-pane-masters').style.display  = isMst  ? 'flex' : 'none';
+  document.getElementById('svc-pane-sched').style.display    = isSched ? 'flex' : 'none';
+  document.getElementById('svc-tab-services')?.classList.toggle('active', isSvc);
+  document.getElementById('svc-tab-masters')?.classList.toggle('active', isMst);
+  document.getElementById('svc-tab-sched')?.classList.toggle('active', isSched);
+  if (isSched) loadCaScheduleScreen();
+  if (isMst)   loadStoreMasters();
 }
 function _storeSchedIsActive() {
   return document.getElementById('screen-store')?.classList.contains('active')
@@ -3816,9 +3854,13 @@ async function loadStore() {
   if (S.direction === 'services') {
     _svcTab = 'services';
     document.getElementById('svc-pane-services').style.display = '';
+    document.getElementById('svc-pane-masters').style.display  = 'none';
     document.getElementById('svc-pane-sched').style.display    = 'none';
     document.getElementById('svc-tab-services')?.classList.add('active');
+    document.getElementById('svc-tab-masters')?.classList.remove('active');
     document.getElementById('svc-tab-sched')?.classList.remove('active');
+    // Сброс кеша мастеров при смене заведения
+    _mastersCache = null;
   }
   const _titleEl = document.getElementById('store-items-title');
   if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги' }[S.direction] || 'Товары и Услуги';
@@ -7506,6 +7548,142 @@ function _fmtD(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 // ─── BOOKINGS ───
+// ─── STORE MASTERS LIST ───
+let _mastersCache = null;
+
+async function loadStoreMasters() {
+  const el = document.getElementById('masters-list');
+  if (!el) return;
+  const storeId = S.store?.id;
+  if (!storeId) {
+    el.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:14px">Откройте заведение, чтобы увидеть мастеров</div>';
+    return;
+  }
+  if (!_mastersCache || _mastersCache.storeId !== storeId) {
+    el.innerHTML = '<div class="loading">Загрузка…</div>';
+    try {
+      const masters = await req(`/rest/v1/profiles?employee_store_id=eq.${storeId}&is_master=eq.true&select=id,full_name,master_bio,master_photo_url&order=full_name.asc`);
+      _mastersCache = { storeId, masters };
+    } catch(e) {
+      el.innerHTML = '<div class="loading">Ошибка загрузки</div>';
+      return;
+    }
+  }
+  const { masters } = _mastersCache;
+  if (!masters.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:14px">В этом заведении пока нет мастеров</div>';
+    return;
+  }
+  el.innerHTML = masters.map(m => {
+    const initials = (m.full_name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    const photoHtml = m.master_photo_url
+      ? `<img src="${esc(m.master_photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+      : `<span style="font-size:22px;font-weight:700;color:var(--fg-3)">${initials}</span>`;
+    const bioPreview = m.master_bio ? m.master_bio.slice(0, 90) + (m.master_bio.length > 90 ? '…' : '') : '';
+    return `<div onclick="openMasterProfile('${m.id}')"
+      style="display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line-soft);border-radius:var(--r-3);background:var(--glass);cursor:pointer;transition:background var(--t-fast)"
+      onmouseenter="this.style.background='var(--bg-2)'" onmouseleave="this.style.background='var(--glass)'">
+      <div style="width:54px;height:54px;border-radius:50%;background:var(--bg-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--line-soft)">${photoHtml}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font:600 15px/1.2 var(--font-sans);margin-bottom:4px">${esc(m.full_name||'—')}</div>
+        ${bioPreview ? `<div style="font-size:13px;color:var(--fg-3);line-height:1.4">${esc(bioPreview)}</div>` : ''}
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--fg-4)"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
+}
+
+async function openMasterProfile(masterId) {
+  const modal = document.getElementById('m-master-profile');
+  const nameEl    = document.getElementById('mmp-name');
+  const bioEl     = document.getElementById('mmp-bio');
+  const photoHero = document.getElementById('mmp-photo-hero');
+  const avatarFb  = document.getElementById('mmp-avatar-fallback');
+  const svcsWrap  = document.getElementById('mmp-services-wrap');
+  const svcsEl    = document.getElementById('mmp-services');
+  const loadingEl = document.getElementById('mmp-loading');
+  const storeNameEl = document.getElementById('mmp-store-name');
+
+  // Find master in cache
+  const master = _mastersCache?.masters.find(m => m.id === masterId) || {};
+  const initials = (master.full_name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+
+  nameEl.textContent = master.full_name || '—';
+  storeNameEl.textContent = S.store?.name || '';
+  bioEl.style.display = 'none';
+  svcsWrap.style.display = 'none';
+  loadingEl.style.display = '';
+  svcsEl.innerHTML = '';
+
+  // Photo hero
+  const existingImg = photoHero.querySelector('img');
+  if (existingImg) existingImg.remove();
+  avatarFb.textContent = initials;
+  if (master.master_photo_url) {
+    const img = document.createElement('img');
+    img.src = master.master_photo_url;
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+    img.onload = () => { avatarFb.style.display = 'none'; };
+    img.onerror = () => { img.remove(); avatarFb.style.display = ''; };
+    avatarFb.style.display = 'none';
+    photoHero.appendChild(img);
+  } else {
+    avatarFb.style.display = '';
+  }
+
+  openModal('m-master-profile');
+
+  if (master.master_bio) {
+    bioEl.textContent = master.master_bio;
+    bioEl.style.display = '';
+  }
+
+  try {
+    const svcs = await req(`/rest/v1/master_services?master_id=eq.${masterId}&select=price,menu_items(id,name,duration_minutes,preparation_time,image_url,store_id,is_available,description)`);
+    loadingEl.style.display = 'none';
+    if (svcs.length) {
+      svcsEl.innerHTML = svcs.map(s => {
+        const item = s.menu_items;
+        if (!item) return '';
+        const durLabel = item.duration_minutes
+          ? `<span style="font-size:12px;color:var(--fg-3)">${item.duration_minutes} мин</span>`
+          : '';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--bg-2)">
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px/1.2 var(--font-sans)">${esc(item.name)}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:3px">${durLabel}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font:700 16px/1 var(--font-sans);color:var(--accent)">${Number(s.price)} ₽</div>
+            <button class="btn btn-p btn-sm" style="margin-top:6px;font-size:12px"
+              onclick="event.stopPropagation();bookFromMasterProfile('${item.id}','${masterId}')">
+              Записаться
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+      svcsWrap.style.display = '';
+    }
+  } catch(e) {
+    loadingEl.style.display = 'none';
+  }
+}
+
+async function bookFromMasterProfile(itemId, masterId) {
+  closeModal('m-master-profile');
+  // Get item from cache or fetch
+  let item = itemCache.get(itemId);
+  if (!item) {
+    try {
+      const rows = await req(`/rest/v1/menu_items?id=eq.${itemId}&select=*`);
+      item = rows?.[0];
+      if (item) itemCache.set(itemId, item);
+    } catch(e) {}
+  }
+  if (!item) return;
+  openBookingSlotModal(item, null, masterId);
+}
+
 let _booking = {
   item: null, currentDate: null, selectedSlot: null,
   schedData: {}, bookedData: {}, rescheduleId: null,
@@ -7575,7 +7753,7 @@ function _buildSlotMasterMap() {
   }
 }
 
-async function openBookingSlotModal(item, rescheduleId = null) {
+async function openBookingSlotModal(item, rescheduleId = null, preselectedMasterId = null) {
   if (!S.session) { _pendingNavAfterAuth = 'store'; goTo('auth'); return; }
   if (!item) return;
   _booking.item = item;
@@ -7583,7 +7761,7 @@ async function openBookingSlotModal(item, rescheduleId = null) {
   _booking.currentDate = null;
   _booking.selectedSlot = null;
   _booking.autoMasterId = null;
-  _booking.selectedMasterId = '';
+  _booking.selectedMasterId = preselectedMasterId || '';
   _booking.schedData = {};
   _booking.bookedData = {};
   _booking.masters = [];
@@ -7631,9 +7809,10 @@ async function openBookingSlotModal(item, rescheduleId = null) {
       });
       _buildSlotMasterMap();
       const sel = document.getElementById('mbs-master-select');
-      sel.value = '';
       sel.innerHTML = `<option value="">Любой мастер</option>` +
         profiles.map(m => `<option value="${m.id}">${esc(m.full_name||'—')}</option>`).join('');
+      // Pre-select master if passed from master profile
+      sel.value = _booking.selectedMasterId || '';
       document.getElementById('mbs-master-filter').style.display = '';
       // Update service info with min price
       const minPrice = Math.min(...masterSvcs.map(s => Number(s.price)));
@@ -7653,7 +7832,7 @@ async function openBookingSlotModal(item, rescheduleId = null) {
   const _nowForSlots = () => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); };
   let firstAvail;
   if (_booking.masters.length > 0) {
-    firstAvail = dates.find(ds => Object.keys(_booking.slotMasterMap[ds] || {}).length > 0);
+    firstAvail = dates.find(ds => _hasMasterSlots(ds, _booking.selectedMasterId));
   } else {
     const prepMin = Math.max(item.preparation_time || 30, 5);
     firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
