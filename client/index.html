@@ -1514,7 +1514,13 @@ document.addEventListener('deviceready',function(){
       <h3 id="mbs-title">Выберите время</h3>
       <button class="modal-x" onclick="closeModal('m-book-slot')">✕</button>
     </div>
-    <div id="mbs-service-info" style="font:400 13px/1 var(--font-sans);color:var(--muted);margin-bottom:12px"></div>
+    <div id="mbs-service-info" style="font:400 13px/1 var(--font-sans);color:var(--muted);margin-bottom:10px"></div>
+    <div id="mbs-master-filter" style="display:none;margin-bottom:10px">
+      <select id="mbs-master-select" onchange="onBookingMasterChange(this.value)"
+        style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
+        <option value="">Любой мастер</option>
+      </select>
+    </div>
     <div id="mbs-loading" style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Загрузка расписания…</div>
     <div id="mbs-main" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -1523,6 +1529,13 @@ document.addEventListener('deviceready',function(){
         <button class="btn btn-sm" id="mbs-next-btn" onclick="bookingNextDay()">→</button>
       </div>
       <div id="mbs-slots" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px"></div>
+      <div id="mbs-master-pick" style="display:none;margin-bottom:12px">
+        <div style="font:600 11px/1 var(--font-sans);color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Выберите мастера</div>
+        <div id="mbs-master-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      </div>
+      <div id="mbs-master-chosen" style="display:none;margin-bottom:12px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2);font-size:13px;color:var(--fg-2)">
+        Мастер: <strong id="mbs-master-chosen-name"></strong>
+      </div>
     </div>
     <div id="mbs-no-sched" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Расписание не задано</div>
     <div class="modal-ft" style="flex-wrap:wrap">
@@ -2421,6 +2434,8 @@ function clearPreselect() {
 
 async function bookWithPreselect(btn, item) {
   if (!item || !_schedulePreselect) { openBookingSlotModal(item); return; }
+  // Services with masters must go through the full booking modal (master selection required)
+  if (item.duration_minutes) { openBookingSlotModal(item); return; }
   const { date, start } = _schedulePreselect;
   const prepMin = (item.preparation_time >= 5) ? item.preparation_time : 30;
   const end = _minToTime(_timeToMin(start) + prepMin);
@@ -7494,6 +7509,13 @@ function _fmtD(d) {
 let _booking = {
   item: null, currentDate: null, selectedSlot: null,
   schedData: {}, bookedData: {}, rescheduleId: null,
+  masters: [],         // profiles offering this service
+  masterScheds: {},    // masterId → [{day_of_week, start_time, end_time}]
+  masterBooked: {},    // masterId → date → [{slot_start, slot_end}]
+  masterPrices: {},    // masterId → price
+  slotMasterMap: {},   // date → slotStart → {end, masterIds:[]}
+  selectedMasterId: '',
+  autoMasterId: null,
 };
 let _myBk = {
   year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {}, openDate: null,
@@ -7524,6 +7546,35 @@ function getAvailableSlots(windows, booked, prepMin, nowMin = 0) {
   return res;
 }
 
+function _buildSlotMasterMap() {
+  _booking.slotMasterMap = {};
+  const today = todayInCity();
+  const durMin = Math.max((_booking.item?.duration_minutes) || (_booking.item?.preparation_time) || 30, 5);
+  const _nowMin = () => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); };
+  for (const [ds, storeWindows] of Object.entries(_booking.schedData)) {
+    _booking.slotMasterMap[ds] = {};
+    const jsDow = new Date(ds + 'T12:00:00').getDay(); // 0=Sun
+    const dbDow = (jsDow + 6) % 7;                      // 0=Mon…6=Sun
+    const nowMin = ds === today ? _nowMin() : 0;
+    for (const master of _booking.masters) {
+      const daySched = (_booking.masterScheds[master.id] || []).find(r => r.day_of_week === dbDow);
+      if (!daySched) continue;
+      const ms = _timeToMin(daySched.start_time), me = _timeToMin(daySched.end_time);
+      const intersected = [];
+      for (const w of (storeWindows || [])) {
+        const ws = Math.max(_timeToMin(w.start), ms), we = Math.min(_timeToMin(w.end), me);
+        if (we > ws) intersected.push({ start: _minToTime(ws), end: _minToTime(we) });
+      }
+      const masterBookedDay = (_booking.masterBooked[master.id] || {})[ds] || [];
+      for (const slot of getAvailableSlots(intersected, masterBookedDay, durMin, nowMin)) {
+        if (!_booking.slotMasterMap[ds][slot.start])
+          _booking.slotMasterMap[ds][slot.start] = { end: slot.end, masterIds: [] };
+        _booking.slotMasterMap[ds][slot.start].masterIds.push(master.id);
+      }
+    }
+  }
+}
+
 async function openBookingSlotModal(item, rescheduleId = null) {
   if (!S.session) { _pendingNavAfterAuth = 'store'; goTo('auth'); return; }
   if (!item) return;
@@ -7531,13 +7582,21 @@ async function openBookingSlotModal(item, rescheduleId = null) {
   _booking.rescheduleId = rescheduleId || null;
   _booking.currentDate = null;
   _booking.selectedSlot = null;
+  _booking.autoMasterId = null;
+  _booking.selectedMasterId = '';
   _booking.schedData = {};
   _booking.bookedData = {};
+  _booking.masters = [];
+  _booking.masterScheds = {};
+  _booking.masterBooked = {};
+  _booking.masterPrices = {};
+  _booking.slotMasterMap = {};
   document.getElementById('mbs-title').textContent = rescheduleId ? 'Перенос записи' : 'Выберите время';
-  document.getElementById('mbs-service-info').textContent = `${item.name} · ${item.price} ₽ · ${item.preparation_time || '?'} мин`;
+  document.getElementById('mbs-service-info').textContent = `${item.name} · ${item.price} ₽${item.duration_minutes ? ' · ' + item.duration_minutes + ' мин' : (item.preparation_time ? ' · ' + item.preparation_time + ' мин' : '')}`;
   document.getElementById('mbs-loading').style.display = '';
   document.getElementById('mbs-main').style.display = 'none';
   document.getElementById('mbs-no-sched').style.display = 'none';
+  document.getElementById('mbs-master-filter').style.display = 'none';
   document.getElementById('mbs-book-btn').disabled = true;
   document.getElementById('mbs-pay-btn').disabled = true;
   openModal('m-book-slot');
@@ -7547,24 +7606,66 @@ async function openBookingSlotModal(item, rescheduleId = null) {
   const endDate = _fmtD(new Date(nowInCity().getTime() + 60 * 24 * 60 * 60 * 1000));
   const rscExclude = rescheduleId ? `&id=neq.${rescheduleId}` : '';
   try {
-    const [schedRows, bkRows] = await Promise.all([
+    const [schedRows, masterSvcs] = await Promise.all([
       req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${today}&date=lte.${endDate}&select=date,slots`),
-      req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=gte.${today}&slot_date=lte.${endDate}&status=neq.cancelled${rscExclude}&select=slot_date,slot_start,slot_end`),
+      req(`/rest/v1/master_services?service_id=eq.${item.id}&select=master_id,price`),
     ]);
     schedRows.forEach(r => { _booking.schedData[r.date] = r.slots; });
-    bkRows.forEach(r => {
-      if (!_booking.bookedData[r.slot_date]) _booking.bookedData[r.slot_date] = [];
-      _booking.bookedData[r.slot_date].push(r);
-    });
+    const masterIds = masterSvcs.map(s => s.master_id);
+    if (masterIds.length > 0) {
+      masterSvcs.forEach(s => { _booking.masterPrices[s.master_id] = s.price; });
+      const [profiles, mScheds, mBookings] = await Promise.all([
+        req(`/rest/v1/profiles?id=in.(${masterIds.join(',')})&is_master=eq.true&select=id,full_name,master_bio,master_photo_url`),
+        req(`/rest/v1/master_schedules?master_id=in.(${masterIds.join(',')})&select=*`),
+        req(`/rest/v1/bookings?master_id=in.(${masterIds.join(',')})&slot_date=gte.${today}&slot_date=lte.${endDate}&status=neq.cancelled${rscExclude}&select=master_id,slot_date,slot_start,slot_end`),
+      ]);
+      _booking.masters = profiles;
+      mScheds.forEach(s => {
+        if (!_booking.masterScheds[s.master_id]) _booking.masterScheds[s.master_id] = [];
+        _booking.masterScheds[s.master_id].push(s);
+      });
+      mBookings.forEach(b => {
+        if (!_booking.masterBooked[b.master_id]) _booking.masterBooked[b.master_id] = {};
+        if (!_booking.masterBooked[b.master_id][b.slot_date]) _booking.masterBooked[b.master_id][b.slot_date] = [];
+        _booking.masterBooked[b.master_id][b.slot_date].push(b);
+      });
+      _buildSlotMasterMap();
+      const sel = document.getElementById('mbs-master-select');
+      sel.value = '';
+      sel.innerHTML = `<option value="">Любой мастер</option>` +
+        profiles.map(m => `<option value="${m.id}">${esc(m.full_name||'—')}</option>`).join('');
+      document.getElementById('mbs-master-filter').style.display = '';
+      // Update service info with min price
+      const minPrice = Math.min(...masterSvcs.map(s => Number(s.price)));
+      const priceLabel = masterSvcs.length > 1 ? `от ${minPrice} ₽` : `${masterSvcs[0].price} ₽`;
+      const durLabel = item.duration_minutes ? ` · ${item.duration_minutes} мин` : '';
+      document.getElementById('mbs-service-info').textContent = `${item.name} · ${priceLabel}${durLabel}`;
+    } else {
+      const bkRows = await req(`/rest/v1/bookings?store_id=eq.${storeId}&slot_date=gte.${today}&slot_date=lte.${endDate}&status=neq.cancelled${rscExclude}&select=slot_date,slot_start,slot_end`);
+      bkRows.forEach(r => {
+        if (!_booking.bookedData[r.slot_date]) _booking.bookedData[r.slot_date] = [];
+        _booking.bookedData[r.slot_date].push(r);
+      });
+    }
   } catch(e) {}
   document.getElementById('mbs-loading').style.display = 'none';
-  const prepMin = item.preparation_time >= 5 ? item.preparation_time : 5;
-  const _nowForSlots = () => { const n = nowInCity(); return n.getHours() * 60 + n.getMinutes(); };
   const dates = Object.keys(_booking.schedData).sort();
-  const firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
+  const _nowForSlots = () => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); };
+  let firstAvail;
+  if (_booking.masters.length > 0) {
+    firstAvail = dates.find(ds => Object.keys(_booking.slotMasterMap[ds] || {}).length > 0);
+  } else {
+    const prepMin = Math.max(item.preparation_time || 30, 5);
+    firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
+  }
   if (!firstAvail) { document.getElementById('mbs-no-sched').style.display = ''; return; }
   _booking.currentDate = firstAvail;
   renderBookingDateView();
+}
+
+function _hasMasterSlots(ds, masterId) {
+  const slotMap = _booking.slotMasterMap[ds] || {};
+  return Object.values(slotMap).some(info => !masterId || info.masterIds.includes(masterId));
 }
 
 function renderBookingDateView() {
@@ -7575,11 +7676,28 @@ function renderBookingDateView() {
   const DOW = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('mbs-date-label').textContent = `${DOW[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
-  const prepMin = _booking.item?.preparation_time || 30;
-  const _bkNowMin = ds === todayInCity() ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
-  const slots = getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, _bkNowMin);
+  // Reset slot-level master UI on date change
+  document.getElementById('mbs-master-pick').style.display = 'none';
+  document.getElementById('mbs-master-chosen').style.display = 'none';
+  _booking.autoMasterId = null;
+  _booking.selectedSlot = null;
+  document.getElementById('mbs-book-btn').disabled = true;
+  document.getElementById('mbs-pay-btn').disabled = true;
+  let slots;
+  if (_booking.masters.length > 0) {
+    const slotMap = _booking.slotMasterMap[ds] || {};
+    const smid = _booking.selectedMasterId;
+    slots = Object.entries(slotMap)
+      .filter(([, info]) => !smid || info.masterIds.includes(smid))
+      .sort(([a], [b]) => a < b ? -1 : 1)
+      .map(([start, info]) => ({ start, end: info.end }));
+  } else {
+    const prepMin = Math.max(_booking.item?.preparation_time || 30, 5);
+    const _bkNowMin = ds === todayInCity() ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
+    slots = getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, _bkNowMin);
+  }
   document.getElementById('mbs-slots').innerHTML = slots.length
-    ? slots.map(s => `<button class="booking-slot${_booking.selectedSlot?.start===s.start?' active':''}" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start} — ${s.end}</button>`).join('')
+    ? slots.map(s => `<button class="booking-slot" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start}</button>`).join('')
     : `<span style="color:var(--muted);font-size:13px">Нет доступных слотов</span>`;
   const dates = Object.keys(_booking.schedData).sort();
   const idx = dates.indexOf(ds);
@@ -7590,31 +7708,87 @@ function renderBookingDateView() {
 function bookingPrevDay() {
   const dates = Object.keys(_booking.schedData).sort();
   const idx = dates.indexOf(_booking.currentDate);
-  if (idx > 0) { _booking.currentDate = dates[idx-1]; _booking.selectedSlot = null; document.getElementById('mbs-book-btn').disabled = true; document.getElementById('mbs-pay-btn').disabled = true; renderBookingDateView(); }
+  if (idx > 0) { _booking.currentDate = dates[idx-1]; renderBookingDateView(); }
 }
 function bookingNextDay() {
   const dates = Object.keys(_booking.schedData).sort();
   const idx = dates.indexOf(_booking.currentDate);
-  if (idx < dates.length-1) { _booking.currentDate = dates[idx+1]; _booking.selectedSlot = null; document.getElementById('mbs-book-btn').disabled = true; document.getElementById('mbs-pay-btn').disabled = true; renderBookingDateView(); }
+  if (idx < dates.length-1) { _booking.currentDate = dates[idx+1]; renderBookingDateView(); }
+}
+
+function onBookingMasterChange(masterId) {
+  _booking.selectedMasterId = masterId;
+  _booking.selectedSlot = null;
+  _booking.autoMasterId = null;
+  document.getElementById('mbs-master-pick').style.display = 'none';
+  document.getElementById('mbs-master-chosen').style.display = 'none';
+  document.getElementById('mbs-book-btn').disabled = true;
+  document.getElementById('mbs-pay-btn').disabled = true;
+  const dates = Object.keys(_booking.schedData).sort();
+  const firstAvail = dates.find(ds => _hasMasterSlots(ds, masterId));
+  if (!firstAvail) {
+    document.getElementById('mbs-main').style.display = 'none';
+    document.getElementById('mbs-no-sched').style.display = '';
+    return;
+  }
+  document.getElementById('mbs-no-sched').style.display = 'none';
+  _booking.currentDate = firstAvail;
+  renderBookingDateView();
 }
 
 function selectBookingSlot(start, end) {
   _booking.selectedSlot = { start, end };
-  document.querySelectorAll('.booking-slot').forEach(b =>
-    b.classList.toggle('active', b.dataset.start === start && b.dataset.end === end));
+  _booking.autoMasterId = null;
+  document.querySelectorAll('#mbs-slots .booking-slot').forEach(b =>
+    b.classList.toggle('active', b.dataset.start === start));
+  document.getElementById('mbs-master-pick').style.display = 'none';
+  document.getElementById('mbs-master-chosen').style.display = 'none';
+  if (_booking.masters.length > 0) {
+    const slotInfo = _booking.slotMasterMap[_booking.currentDate]?.[start];
+    let availIds = (slotInfo?.masterIds || []).slice();
+    if (_booking.selectedMasterId) availIds = availIds.filter(id => id === _booking.selectedMasterId);
+    const availMasters = availIds.map(id => _booking.masters.find(m => m.id === id)).filter(Boolean);
+    if (!availMasters.length) return;
+    if (availMasters.length === 1) {
+      _booking.autoMasterId = availMasters[0].id;
+      document.getElementById('mbs-master-chosen-name').textContent = availMasters[0].full_name || '—';
+      document.getElementById('mbs-master-chosen').style.display = '';
+    } else {
+      document.getElementById('mbs-master-chips').innerHTML = availMasters
+        .map(m => `<button class="booking-slot" data-master="${m.id}" onclick="selectBookingMaster('${m.id}')">${esc(m.full_name||'—')}</button>`)
+        .join('');
+      document.getElementById('mbs-master-pick').style.display = '';
+      return; // wait for master pick
+    }
+  }
+  document.getElementById('mbs-book-btn').disabled = false;
+  if (S.storeSubActive !== false) document.getElementById('mbs-pay-btn').disabled = false;
+}
+
+function selectBookingMaster(masterId) {
+  _booking.autoMasterId = masterId;
+  const master = _booking.masters.find(m => m.id === masterId);
+  document.querySelectorAll('#mbs-master-chips .booking-slot').forEach(b =>
+    b.classList.toggle('active', b.dataset.master === masterId));
+  document.getElementById('mbs-master-chosen-name').textContent = master?.full_name || '—';
+  document.getElementById('mbs-master-chosen').style.display = '';
   document.getElementById('mbs-book-btn').disabled = false;
   if (S.storeSubActive !== false) document.getElementById('mbs-pay-btn').disabled = false;
 }
 
 async function confirmBooking(payNow) {
   if (!S.session || !_booking.item || !_booking.currentDate || !_booking.selectedSlot) return;
+  if (_booking.masters.length > 0 && !_booking.autoMasterId) { showGeoToast('Выберите мастера'); return; }
   const storeId = S.store?.id || _booking.item.store_id;
+  const masterPrice = _booking.autoMasterId != null ? _booking.masterPrices[_booking.autoMasterId] : null;
   const bookingData = {
     user_id: S.session.user.id, store_id: storeId,
     menu_item_id: _booking.item.id, slot_date: _booking.currentDate,
     slot_start: _booking.selectedSlot.start + ':00',
     slot_end:   _booking.selectedSlot.end   + ':00',
-    status: 'booked', total_price: _booking.item.price,
+    status: 'booked',
+    total_price: masterPrice != null ? masterPrice : _booking.item.price,
+    ...(_booking.autoMasterId ? { master_id: _booking.autoMasterId } : {}),
   };
   if (!payNow) {
     const btn = document.getElementById('mbs-book-btn');
