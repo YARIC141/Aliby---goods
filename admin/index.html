@@ -675,9 +675,11 @@ html.bg-custom #bg-fluid{display:none}
   <div class="ph">
     <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
     <h2 id="sched-store-name">Расписание<span class="screen-help" data-info="Шаблон рабочего расписания заведения по дням недели. Задайте временные слоты — они будут доступны клиентам для записи.">?</span></h2>
-    <button class="btn btn-sm" id="sched-edit-btn" onclick="toggleSchedEditMode()">Редактировать</button>
   </div>
   <div class="pb">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button class="btn btn-sm" id="sched-edit-btn" onclick="toggleSchedEditMode()">Редактировать</button>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:14px">
       <button class="btn btn-sm" onclick="schedPrevMonth()">←</button>
       <span id="sched-month-label" style="font:600 15px/1 var(--font-sans);letter-spacing:0.01em"></span>
