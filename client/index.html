@@ -1307,6 +1307,11 @@ document.addEventListener('deviceready',function(){
         <button class="chip"        data-mbk-status="completed" onclick="setMbkStatusFilter('completed')">Завершена</button>
         <button class="chip"        data-mbk-status="cancelled" onclick="setMbkStatusFilter('cancelled')">Отменена</button>
       </div>
+      <div id="mbk-master-filter" style="display:none;margin-top:10px">
+        <select id="mbk-master-select" onchange="setMbkMasterFilter(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
+          <option value="">Любой мастер</option>
+        </select>
+      </div>
     </div>
     <!-- список за день — скроллится -->
     <div id="mbk-scroll-area" class="sl-list" style="padding:0 20px">
@@ -7699,9 +7704,14 @@ let _myBk = {
   year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {}, openDate: null,
 };
 let _mbkStatusFilter = 'all';
+let _mbkMasterFilter = '';
 function setMbkStatusFilter(s) {
   _mbkStatusFilter = s;
   document.querySelectorAll('[data-mbk-status]').forEach(el => el.classList.toggle('active', el.dataset.mbkStatus === s));
+  if (_myBk.openDate) renderMyBookingsDay(_myBk.openDate);
+}
+function setMbkMasterFilter(v) {
+  _mbkMasterFilter = v;
   if (_myBk.openDate) renderMyBookingsDay(_myBk.openDate);
 }
 let _rescheduleTarget = null;
@@ -8075,10 +8085,27 @@ async function loadBookingsScreen() {
   try {
     const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&select=*,stores(name,address),menu_items(name,price,preparation_time)&order=slot_date.asc,slot_start.asc`);
     _myBk.byDate = {};
+    _myBk.masterMap = {};
     rows.forEach(r => {
       if (!_myBk.byDate[r.slot_date]) _myBk.byDate[r.slot_date] = [];
       _myBk.byDate[r.slot_date].push(r);
     });
+    // Подгружаем имена мастеров
+    const masterIds = [...new Set(rows.map(r => r.master_id).filter(Boolean))];
+    if (masterIds.length) {
+      try {
+        const profs = await req(`/rest/v1/profiles?id=in.(${masterIds.join(',')})&select=id,full_name`);
+        profs.forEach(p => { _myBk.masterMap[p.id] = p.full_name || 'Мастер'; });
+      } catch {}
+    }
+    _mbkMasterFilter = '';
+    const sel = document.getElementById('mbk-master-select');
+    const filterEl = document.getElementById('mbk-master-filter');
+    if (sel && filterEl) {
+      sel.innerHTML = '<option value="">Любой мастер</option>'
+        + masterIds.map(id => `<option value="${id}">${esc(_myBk.masterMap[id] || 'Мастер')}</option>`).join('');
+      filterEl.style.display = masterIds.length ? '' : 'none';
+    }
   } catch(e) {}
   renderMyBookingsCalendar();
 }
@@ -8144,7 +8171,9 @@ function renderMyBookingsDay(ds) {
   const active    = all.filter(b => b.status !== 'cancelled');
   const cancelled = all.filter(b => b.status === 'cancelled');
   const sorted    = [...active, ...cancelled];
-  const filtered  = _mbkStatusFilter === 'all' ? sorted : sorted.filter(b => b.status === _mbkStatusFilter);
+  const filtered  = sorted
+    .filter(b => _mbkStatusFilter === 'all' || b.status === _mbkStatusFilter)
+    .filter(b => !_mbkMasterFilter || b.master_id === _mbkMasterFilter);
   if (!filtered.length) {
     bkEl.innerHTML = `<div style="color:var(--fg-3);font-size:14px;padding:16px 0">${all.length ? 'Нет записей с выбранным статусом' : 'Нет записей за этот день'}</div>`;
     return;
@@ -8176,6 +8205,7 @@ function renderMyBookingsDay(ds) {
           ${statusBadge}
         </div>
         ${b.stores?.address ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-4);margin-top:4px;display:flex;align-items:center;gap:3px">${svgIco('pin',11)}${esc(b.stores.address)}</div>` : ''}
+        ${b.master_id && _myBk.masterMap?.[b.master_id] ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-3);margin-top:4px">👤 ${esc(_myBk.masterMap[b.master_id])}</div>` : ''}
       </div>
       ${!completed && !isCancelled && !isPastBk ? `<div class="bk-item-actions">
         ${!paid ? `<button class="btn btn-sm btn-p" onclick="payExistingBooking('${b.id}')">Оплатить</button>` : ''}
