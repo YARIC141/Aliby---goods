@@ -6159,8 +6159,10 @@ function _renderEmpList(emps) {
   S._cachedEmps = emps;
   if (!emps.length) { el.innerHTML = '<div class="empty" style="padding:12px 0">Сотрудников нет</div>'; return; }
   const storeMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.name]));
+  const storeDirMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.direction]));
   el.innerHTML = emps.map(e => {
     const storeName = storeMap[e.employee_store_id] || '—';
+    const isSvcStore = storeDirMap[e.employee_store_id] === 'services';
     const masterBadge = e.is_master
       ? `<span style="font-size:10px;font-weight:700;background:var(--accent);color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">Мастер</span>`
       : '';
@@ -6173,7 +6175,7 @@ function _renderEmpList(emps) {
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button class="btn btn-sm" title="Сбросить пароль" onclick="openResetEmpPwd('${e.id}','${esc(e.full_name||'')}')">${svgIco('key',13)}</button>
-            <button class="btn btn-sm${e.is_master ? ' btn-p' : ''}" title="Настройки мастера" onclick="openMasterModal('${e.id}')" style="font-size:11px;padding:3px 8px">Мастер</button>
+            ${isSvcStore ? `<button class="btn btn-sm${e.is_master ? ' btn-p' : ''}" title="Настройки мастера" onclick="openMasterModal('${e.id}')" style="font-size:11px;padding:3px 8px">Мастер</button>` : ''}
             <button class="btn btn-sm btn-d" title="Удалить" onclick="deleteEmployee('${e.id}','${esc(e.full_name||'')}')">${svgIco('trash',13)}</button>
           </div>
         </div>
