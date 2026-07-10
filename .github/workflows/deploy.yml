@@ -29,6 +29,11 @@ jobs:
           rsync -az --delete -e "ssh -p 2222" admin/  root@${{ secrets.VPS_HOST }}:/var/www/alliby/admin/
           rsync -az --delete -e "ssh -p 2222" site/   root@${{ secrets.VPS_HOST }}:/var/www/alliby/site/
 
+      - name: Apply database migrations
+        run: |
+          cat supabase/migrations/20240101000071_profiles_booking_client_read.sql | \
+            ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
+
       - name: Deploy Edge Functions
         run: |
           rsync -az --delete -e "ssh -p 2222" supabase/functions/ root@${{ secrets.VPS_HOST }}:/root/supabase/volumes/functions/
