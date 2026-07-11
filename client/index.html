@@ -2696,7 +2696,15 @@ function rentCalcTotal() {
   if (isTimeUnit && _rentStartDate) {
     const ts = document.getElementById('mrent-time-start')?.value;
     const te = document.getElementById('mrent-time-end')?.value;
-    if (!ts || !te || te <= ts) return;
+    const hint = document.getElementById('mrent-time-hint');
+    if (!ts || !te) return;
+    if (te <= ts) {
+      if (hint) { hint.textContent = 'Время окончания должно быть позже времени начала'; hint.style.color = 'var(--err)'; }
+      document.getElementById('mrent-total-row').style.display = 'none';
+      document.getElementById('mrent-add-cart-btn').style.display = 'none';
+      return;
+    }
+    if (hint) { hint.textContent = 'Выберите время начала и окончания в пределах рабочего дня'; hint.style.color = 'var(--fg-3)'; }
     _rentStartTime = ts;
     _rentEndTime   = te;
     startDT = new Date(`${_rentStartDate}T${ts}`);
