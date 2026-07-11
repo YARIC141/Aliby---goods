@@ -3610,6 +3610,7 @@ function setSession(d) {
     realtimeSubscribeOrders(uid);
     realtimeSubscribeBookings(uid);
     realtimeSubscribeRent(uid);
+    realtimeSubscribeSubs(uid);
     const _cp = _readProfileCache(uid); if (_cp) S.profile = _cp;
     _profileReady = req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) { S.profile = p[0]; _writeProfileCache(uid, p[0]); } }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
@@ -5087,6 +5088,7 @@ function updateCartCount() {
 let _rtWs = null, _rtRef = 0, _rtHb = null;
 let _rtBkWs = null, _rtBkRef = 0, _rtBkHb = null;
 let _rtRentWs = null, _rtRentRef = 0, _rtRentHb = null;
+let _rtSubWs  = null, _rtSubRef  = 0, _rtSubHb  = null;
 let _bkNotifCount = 0;
 let _orderNotifCount = 0;
 function _updateBkBadge() {
@@ -5146,6 +5148,8 @@ function realtimeUnsubscribe() {
   if (_rtBkWs) { try { _rtBkWs.close(); } catch {} _rtBkWs = null; }
   clearInterval(_rtRentHb);
   if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
+  clearInterval(_rtSubHb);
+  if (_rtSubWs)  { try { _rtSubWs.close();  } catch {} _rtSubWs  = null; }
 }
 
 function realtimeSubscribeBookings(userId) {
@@ -5183,6 +5187,63 @@ function realtimeSubscribeBookings(userId) {
     };
     ws.onclose = ws.onerror = () => { clearInterval(_rtBkHb); _rtBkWs = null; };
   } catch {}
+}
+
+function realtimeSubscribeSubs(userId) {
+  clearInterval(_rtSubHb);
+  if (_rtSubWs) { try { _rtSubWs.close(); } catch {} _rtSubWs = null; }
+  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
+  try {
+    const ws = new WebSocket(wsUrl);
+    _rtSubWs = ws;
+    ws.onopen = () => {
+      _rtSubRef = 0;
+      ws.send(JSON.stringify({
+        topic: 'realtime:client-sub-watch',
+        event: 'phx_join',
+        payload: {
+          config: { postgres_changes: [{ event: '*', schema: 'public', table: 'user_subscriptions', filter: 'user_id=eq.' + userId }] },
+          access_token: S.session?.access_token
+        },
+        ref: String(++_rtSubRef)
+      }));
+      _rtSubHb = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtSubRef) }));
+      }, 25000);
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === 'postgres_changes') {
+          const data   = msg.payload?.data ?? msg.payload;
+          const type   = (data?.eventType || data?.type || '').toUpperCase();
+          const record = data?.new ?? data?.record;
+          if (record || type === 'DELETE') _onRealtimeSub(record ?? data?.old, type);
+        }
+      } catch {}
+    };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtSubHb); _rtSubWs = null; };
+  } catch {}
+}
+
+function _onRealtimeSub(record, type) {
+  if (!record) return;
+  const isVisible = _calenabsIsActive() && _calenabsTab === 'sub';
+  const isGift = record.gift_status != null;
+  const arr = isGift ? _subsAllData.gifts : _subsAllData.user;
+  const idx = arr.findIndex(s => s.id === record.id);
+  if (type === 'DELETE') {
+    if (idx >= 0) arr.splice(idx, 1);
+  } else if (idx >= 0) {
+    arr[idx] = { ...arr[idx], ...record };
+  } else {
+    // INSERT: no join data yet — reload to get subscriptions(*) embed
+    if (isVisible) loadMySubscriptions();
+    return;
+  }
+  const uid = S.session?.user?.id;
+  if (uid) { try { localStorage.setItem(`alliby_subs_${uid}`, JSON.stringify(_subsAllData)); } catch {} }
+  if (isVisible) renderSubUnifiedList();
 }
 
 function realtimeSubscribeRent(userId) {
@@ -5333,6 +5394,7 @@ document.addEventListener('visibilitychange', () => {
   if (!_rtWs || _rtWs.readyState !== WebSocket.OPEN) realtimeSubscribeOrders(uid);
   if (!_rtBkWs || _rtBkWs.readyState !== WebSocket.OPEN) realtimeSubscribeBookings(uid);
   if (!_rtRentWs || _rtRentWs.readyState !== WebSocket.OPEN) realtimeSubscribeRent(uid);
+  if (!_rtSubWs  || _rtSubWs.readyState  !== WebSocket.OPEN) realtimeSubscribeSubs(uid);
   if (_calenabsIsActive()) {
     if (_calenabsTab === 'ord') loadActiveOrders();
     else if (_calenabsTab === 'bk') loadBookingsScreen();
