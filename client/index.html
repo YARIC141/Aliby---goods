@@ -1348,16 +1348,7 @@ document.addEventListener('deviceready',function(){
   </div>
   <!-- Rent pane -->
   <div id="ca-pane-rent" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-    <div class="pb" style="padding-bottom:0;flex-shrink:0">
-      <select id="rent-store-sel" onchange="loadRentCatalog()" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer;margin-bottom:10px">
-        <option value="">Все заведения</option>
-      </select>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="chip" id="rent-mine-chip" onclick="setRentView(_rentView==='mine'?'catalog':'mine')">Мои аренды</button>
-      </div>
-    </div>
-    <div id="ca-rent-catalog" style="flex:1;overflow-y:auto;overscroll-behavior-y:none;padding:0 16px 16px"></div>
-    <div id="ca-rent-mine"    style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none;padding:0 16px 16px"></div>
+    <div id="ca-rent-mine" style="flex:1;overflow-y:auto;overscroll-behavior-y:none;padding:0 16px 16px"></div>
   </div>
   <!-- Subscriptions pane -->
   <div id="ca-pane-sub" style="display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden">
@@ -2411,7 +2402,6 @@ const RENT_STATUS_COLOR = { pending:'var(--warn)', active:'var(--ok)', completed
 
 if (!S.rentCart) S.rentCart = [];
 
-let _rentView = 'catalog';
 let _rentItem = null;      // item currently being booked
 let _rentQty  = 1;
 let _rentCal  = { year: new Date().getFullYear(), month: new Date().getMonth() };
@@ -2422,64 +2412,10 @@ let _rentStartTime = null;
 let _rentEndTime   = null;
 
 // ── Tab helpers ──────────────────────────────────────────────
-function setRentView(view) {
-  _rentView = view;
-  const chip = document.getElementById('rent-mine-chip');
-  if (chip) chip.classList.toggle('active', view === 'mine');
-  document.getElementById('ca-rent-catalog').style.display = view === 'catalog' ? '' : 'none';
-  document.getElementById('ca-rent-mine').style.display    = view === 'mine'    ? '' : 'none';
-  if (view === 'mine') loadMyRentReservations();
+function loadRentTab() {
+  loadMyRentReservations();
 }
 
-async function loadRentTab() {
-  // fill store filter
-  const sel = document.getElementById('rent-store-sel');
-  if (sel && sel.options.length === 1 && S.allStores?.length) {
-    S.allStores.forEach(s => {
-      const o = document.createElement('option');
-      o.value = s.id; o.textContent = s.name;
-      sel.appendChild(o);
-    });
-  }
-  setRentView(_rentView);
-  if (_rentView === 'catalog') loadRentCatalog();
-}
-
-async function loadRentCatalog() {
-  const el = document.getElementById('ca-rent-catalog');
-  if (!el) return;
-  el.innerHTML = '<div class="loading">Загрузка…</div>';
-  try {
-    const storeId = document.getElementById('rent-store-sel')?.value || null;
-    let url = '/rest/v1/menu_items?is_rent=eq.true&is_available=eq.true&select=id,name,description,price,image_url,rent_period_unit,rent_period_step,total_quantity,quantity_available,store_id,stores(name)&order=name.asc';
-    if (storeId) url += `&store_id=eq.${storeId}`;
-    const items = await req(url);
-    if (!items.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет предметов для аренды</div>'; return; }
-    el.innerHTML = items.map(item => {
-      cacheItem(item);
-      const unitLabel = RENT_UNIT_RU[item.rent_period_unit] || '';
-      const step = item.rent_period_step > 1 ? item.rent_period_step + ' ' : '';
-      const avail = item.quantity_available ?? item.total_quantity ?? 0;
-      const availColor = avail > 0 ? 'var(--ok)' : 'var(--err)';
-      return `<div class="card" style="margin-bottom:10px;padding:12px 14px;cursor:pointer" onclick="openRentModal('${item.id}')">
-        <div style="display:flex;gap:10px;align-items:flex-start">
-          ${item.image_url ? `<img src="${esc(item.image_url)}" style="width:56px;height:56px;border-radius:var(--r-2);object-fit:cover;flex-shrink:0">` : ''}
-          <div style="flex:1;min-width:0">
-            <div style="font:600 14px/1.3 var(--font-sans);margin-bottom:2px">${esc(item.name)}</div>
-            ${item.description ? `<div style="font-size:12px;color:var(--fg-3);margin-bottom:4px">${esc(item.description)}</div>` : ''}
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="font:600 14px/1 var(--font-sans)">${Number(item.price).toFixed(0)} ₽/${step}${unitLabel}</span>
-              <span style="font-size:12px;color:${availColor}">Доступно: ${avail} шт.</span>
-            </div>
-            ${item.stores?.name ? `<div style="font-size:11px;color:var(--fg-4);margin-top:3px">${esc(item.stores.name)}</div>` : ''}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
-  }
-}
 
 async function loadMyRentReservations() {
   const el = document.getElementById('ca-rent-mine');
