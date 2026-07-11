@@ -1353,8 +1353,7 @@ document.addEventListener('deviceready',function(){
         <option value="">Все заведения</option>
       </select>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="chip active" data-rent-view="catalog" onclick="setRentView('catalog')">Доступна аренда</button>
-        <button class="chip"        data-rent-view="mine"    onclick="setRentView('mine')">Мои аренды</button>
+        <button class="chip" id="rent-mine-chip" onclick="setRentView(_rentView==='mine'?'catalog':'mine')">Мои аренды</button>
       </div>
     </div>
     <div id="ca-rent-catalog" style="flex:1;overflow-y:auto;overscroll-behavior-y:none;padding:0 16px 16px"></div>
@@ -2425,8 +2424,8 @@ let _rentEndTime   = null;
 // ── Tab helpers ──────────────────────────────────────────────
 function setRentView(view) {
   _rentView = view;
-  document.querySelectorAll('[data-rent-view]').forEach(b =>
-    b.classList.toggle('active', b.dataset.rentView === view));
+  const chip = document.getElementById('rent-mine-chip');
+  if (chip) chip.classList.toggle('active', view === 'mine');
   document.getElementById('ca-rent-catalog').style.display = view === 'catalog' ? '' : 'none';
   document.getElementById('ca-rent-mine').style.display    = view === 'mine'    ? '' : 'none';
   if (view === 'mine') loadMyRentReservations();
