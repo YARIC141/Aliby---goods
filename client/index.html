@@ -2760,7 +2760,11 @@ async function rentCalNext() {
 
 function rentAddToCart() {
   const item = _rentItem;
-  if (!item || !item._pendingStart || !item._pendingEnd) return;
+  if (!item) return;
+  if (!item._pendingStart || !item._pendingEnd) {
+    alert('Выберите период аренды');
+    return;
+  }
   S.rentCart.push({
     item_id:     item.id,
     store_id:    item.store_id,
@@ -2768,18 +2772,15 @@ function rentAddToCart() {
     quantity:    _rentQty,
     start_at:    item._pendingStart,
     end_at:      item._pendingEnd,
-    total_price: item._pendingTotal,
+    total_price: item._pendingTotal || 0,
     unit:        item.rent_period_unit,
     step:        item.rent_period_step,
   });
   closeModal('m-rent');
-  showToast?.('Добавлено в корзину');
   renderRentCartSection();
   updateCartCount();
-  // Refresh available count
   item.quantity_available = Math.max(0, (item.quantity_available ?? item.total_quantity ?? 1) - _rentQty);
-  // Reload catalog to reflect new availability
-  if (_rentView === 'catalog') loadRentCatalog();
+  goTo('cart');
 }
 
 let _svcTab = 'services';
@@ -3122,7 +3123,8 @@ function syncStoreNavBtn() {
 function syncCartNavBtn() {
   const hasItems = S.cart.length > 0
     || S.subCart.some(c => (c.direction || 'food') === S.direction)
-    || S.giftSubCart.some(c => (c.direction || 'food') === S.direction);
+    || S.giftSubCart.some(c => (c.direction || 'food') === S.direction)
+    || (S.rentCart?.length > 0);
   document.querySelectorAll('[data-nav="cart"]').forEach(b => b.classList.toggle('cart-active', hasItems));
 }
 
@@ -6035,7 +6037,9 @@ async function renderCart() {
   const body = document.getElementById('cart-body');
   const foot = document.getElementById('cart-foot');
   if (!S.cart.length) {
-    body.innerHTML = `<div class="empty">${S.subCart.filter(c=>(c.direction||'food')===S.direction).length ? 'Блюда не добавлены' : 'Корзина пуста'}</div>`;
+    const hasSubItems = S.subCart.filter(c=>(c.direction||'food')===S.direction).length > 0;
+    const hasRentItems = S.rentCart?.length > 0;
+    body.innerHTML = `<div class="empty">${hasSubItems || hasRentItems ? 'Товары не добавлены' : 'Корзина пуста'}</div>`;
     foot.style.display = 'none';
     return;
   }
