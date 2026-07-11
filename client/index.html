@@ -4840,6 +4840,9 @@ function itemFallbackImg(item, alt) {
 
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
+  if (item.is_rent) {
+    return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openRentModal('${item.id}')">Арендовать</button>`;
+  }
   if (S.direction === 'services') {
     if (_schedulePreselect) {
       return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();bookWithPreselect(this,itemCache.get('${item.id}'))">Записаться ${_schedulePreselect.start}</button>`;
@@ -5023,7 +5026,10 @@ function openItemDetail(id) {
   } else {
     btn.style.display = '';
     btn.disabled = !item.is_available;
-    if (S.direction === 'services' && item.is_available) {
+    if (item.is_rent && item.is_available) {
+      btn.textContent = 'Арендовать';
+      btn.onclick = () => { closeModal('m-item'); openRentModal(item.id); };
+    } else if (S.direction === 'services' && item.is_available) {
       btn.textContent = 'Записаться';
       btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
     } else {
