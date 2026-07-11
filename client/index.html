@@ -2739,7 +2739,7 @@ function rentCalcTotal() {
       `${periods} × ${stepLabel}${unitLabel} × ${_rentQty} шт × ${price.toFixed(0)} ₽`;
   }
   const addBtn = document.getElementById('mrent-add-cart-btn');
-  if (addBtn) addBtn.style.display = '';
+  if (addBtn) addBtn.style.display = S.storeSubActive === false ? 'none' : '';
 
   // store for add-to-cart
   _rentItem._pendingStart = startDT?.toISOString();
@@ -4458,10 +4458,12 @@ function applyStoreGate() {
   const banner     = document.getElementById('store-inactive-banner');
   const subPayBtn  = document.querySelector('#sub-cart-sect .btn-p');
   const giftPayBtn = document.querySelector('#gift-sub-cart-sect .btn-p');
+  const rentPayBtn = document.getElementById('rent-cart-pay-btn');
   if (payBtn)     payBtn.style.display     = active ? '' : 'none';
   if (banner)     banner.style.display     = active ? 'none' : '';
   if (subPayBtn)  subPayBtn.style.display  = active ? '' : 'none';
   if (giftPayBtn) giftPayBtn.style.display = active ? '' : 'none';
+  if (rentPayBtn) rentPayBtn.style.display = active ? '' : 'none';
   refreshSubCardViews();
 }
 
@@ -4851,6 +4853,7 @@ function itemFallbackImg(item, alt) {
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
   if (item.is_rent) {
+    if (S.storeSubActive === false) return '';
     return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openRentModal('${item.id}')">Арендовать</button>`;
   }
   if (S.direction === 'services') {
