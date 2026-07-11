@@ -2434,10 +2434,10 @@ async function loadMyRentReservations() {
       const s = new Date(r.start_at), e = new Date(r.end_at);
       const sStr = s.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       const eStr = e.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      return `<div class="card" style="margin-bottom:10px;padding:12px 14px">
+      return `<div class="card" data-rent-id="${r.id}" style="margin-bottom:10px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
-          <span style="font-size:11px;color:${sc};border:1px solid currentColor;border-radius:4px;padding:2px 5px;flex-shrink:0;margin-left:6px">${sl}</span>
+          <span data-rent-status style="font-size:11px;color:${sc};border:1px solid currentColor;border-radius:4px;padding:2px 5px;flex-shrink:0;margin-left:6px">${sl}</span>
         </div>
         <div style="font-size:12px;color:var(--fg-3)">${esc(store.name || '')}</div>
         <div style="font-size:13px;color:var(--fg-2);margin-top:4px">${sStr} – ${eStr}</div>
@@ -3609,6 +3609,7 @@ function setSession(d) {
   if (uid) {
     realtimeSubscribeOrders(uid);
     realtimeSubscribeBookings(uid);
+    realtimeSubscribeRent(uid);
     const _cp = _readProfileCache(uid); if (_cp) S.profile = _cp;
     _profileReady = req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) { S.profile = p[0]; _writeProfileCache(uid, p[0]); } }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
@@ -5085,6 +5086,7 @@ function updateCartCount() {
 // ─── REALTIME ───
 let _rtWs = null, _rtRef = 0, _rtHb = null;
 let _rtBkWs = null, _rtBkRef = 0, _rtBkHb = null;
+let _rtRentWs = null, _rtRentRef = 0, _rtRentHb = null;
 let _bkNotifCount = 0;
 let _orderNotifCount = 0;
 function _updateBkBadge() {
@@ -5142,6 +5144,8 @@ function realtimeUnsubscribe() {
   if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
   clearInterval(_rtBkHb);
   if (_rtBkWs) { try { _rtBkWs.close(); } catch {} _rtBkWs = null; }
+  clearInterval(_rtRentHb);
+  if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
 }
 
 function realtimeSubscribeBookings(userId) {
@@ -5179,6 +5183,56 @@ function realtimeSubscribeBookings(userId) {
     };
     ws.onclose = ws.onerror = () => { clearInterval(_rtBkHb); _rtBkWs = null; };
   } catch {}
+}
+
+function realtimeSubscribeRent(userId) {
+  clearInterval(_rtRentHb);
+  if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
+  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
+  try {
+    const ws = new WebSocket(wsUrl);
+    _rtRentWs = ws;
+    ws.onopen = () => {
+      _rtRentRef = 0;
+      ws.send(JSON.stringify({
+        topic: 'realtime:client-rent-watch',
+        event: 'phx_join',
+        payload: {
+          config: { postgres_changes: [{ event: '*', schema: 'public', table: 'rent_reservations', filter: 'user_id=eq.' + userId }] },
+          access_token: S.session?.access_token
+        },
+        ref: String(++_rtRentRef)
+      }));
+      _rtRentHb = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtRentRef) }));
+      }, 25000);
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.event === 'postgres_changes') {
+          const data   = msg.payload?.data ?? msg.payload;
+          const type   = (data?.eventType || data?.type || '').toUpperCase();
+          const record = data?.new ?? data?.record;
+          if (record) _onRealtimeRent(record, type);
+        }
+      } catch {}
+    };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtRentHb); _rtRentWs = null; };
+  } catch {}
+}
+
+function _onRealtimeRent(record, type) {
+  const isVisible = _calenabsIsActive() && _calenabsTab === 'rent';
+  const card = document.querySelector(`[data-rent-id="${record.id}"]`);
+  if (card) {
+    const sc = RENT_STATUS_COLOR[record.status] || 'var(--fg-3)';
+    const sl = RENT_STATUS_RU[record.status] || record.status;
+    const badge = card.querySelector('[data-rent-status]');
+    if (badge) { badge.style.color = sc; badge.textContent = sl; }
+  } else if (isVisible) {
+    loadMyRentReservations();
+  }
 }
 
 function _onRealtimeBooking(record, type) {
@@ -5278,6 +5332,7 @@ document.addEventListener('visibilitychange', () => {
   const uid = S.session.user.id;
   if (!_rtWs || _rtWs.readyState !== WebSocket.OPEN) realtimeSubscribeOrders(uid);
   if (!_rtBkWs || _rtBkWs.readyState !== WebSocket.OPEN) realtimeSubscribeBookings(uid);
+  if (!_rtRentWs || _rtRentWs.readyState !== WebSocket.OPEN) realtimeSubscribeRent(uid);
   if (_calenabsIsActive()) {
     if (_calenabsTab === 'ord') loadActiveOrders();
     else if (_calenabsTab === 'bk') loadBookingsScreen();
