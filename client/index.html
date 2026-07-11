@@ -538,6 +538,11 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .dz-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;border:2px solid rgba(0,0,0,.15)}
 .dz-legend-in{font-weight:700;color:var(--ok);white-space:nowrap}
 .sched-day.bk-full{color:var(--fg-4);cursor:default}
+.sched-day--off{color:var(--fg-4);cursor:default;opacity:.4}
+.sched-day--free{cursor:pointer}
+.sched-day--free:hover{background:var(--bg-2)}
+.sched-day--booked{background:var(--accent);color:var(--accent-fg);font-weight:700;border-radius:4px}
+.sched-day--range{background:color-mix(in oklch,var(--accent) 18%,var(--bg))}
 .slot-chip{display:inline-flex;align-items:center;padding:5px 11px;border-radius:var(--r-pill);font:500 12px/1 var(--font-sans);border:1px solid var(--border);white-space:nowrap}
 .slot-chip.free{background:var(--bg-1);color:var(--fg-2)}
 .slot-chip.mine{background:oklch(0.92 0.11 85);color:oklch(0.38 0.11 72);border-color:oklch(0.76 0.14 84)}
@@ -1239,6 +1244,16 @@ document.addEventListener('deviceready',function(){
           <button class="btn btn-p btn-full" onclick="checkoutGiftSubs()">Купить подарочные абонементы</button>
         </div>
       </div>
+      <div id="rent-cart-sect" style="display:none;border-bottom:2px solid var(--border);flex-shrink:0">
+        <div style="padding:10px 16px 4px;font-size:16px;font-weight:600;background:var(--bg-muted);display:flex;align-items:center;gap:6px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v4M16 4v4M3 12h18"/><circle cx="12" cy="17" r="1.5"/></svg>
+          Аренда
+        </div>
+        <div id="rent-cart-list"></div>
+        <div style="padding:8px 16px 12px">
+          <button class="btn btn-p btn-full" id="rent-cart-pay-btn" onclick="checkoutRent()">Оформить аренду</button>
+        </div>
+      </div>
       <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
       <div class="cart-foot" id="cart-foot" style="display:none">
         <div class="cart-row"><span>Подытог</span><span id="c-subtotal">0 ₽</span></div>
@@ -1271,6 +1286,7 @@ document.addEventListener('deviceready',function(){
     <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
     <button class="cart-tab" id="ca-tab-bk" onclick="switchCalenabsTab('bk')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Записи<span class="tab-badge" id="ca-badge-bk"></span></button>
     <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-ticket"/></svg>Абонементы<span class="tab-badge" id="ca-badge-sub"></span></button>
+    <button class="cart-tab" id="ca-tab-rent" onclick="switchCalenabsTab('rent')"><svg class="ico" width="16" height="16" style="margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v4M16 4v4M3 12h18"/><circle cx="12" cy="17" r="1.5"/></svg>Аренда</button>
   </div>
   <!-- История заказов pane -->
   <div id="ca-pane-ord" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
@@ -1330,6 +1346,20 @@ document.addEventListener('deviceready',function(){
       </div>
     </div>
   </div>
+  <!-- Rent pane -->
+  <div id="ca-pane-rent" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+    <div class="pb" style="padding-bottom:0;flex-shrink:0">
+      <select id="rent-store-sel" onchange="loadRentCatalog()" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer;margin-bottom:10px">
+        <option value="">Все заведения</option>
+      </select>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="chip active" data-rent-view="catalog" onclick="setRentView('catalog')">Доступна аренда</button>
+        <button class="chip"        data-rent-view="mine"    onclick="setRentView('mine')">Мои аренды</button>
+      </div>
+    </div>
+    <div id="ca-rent-catalog" style="flex:1;overflow-y:auto;overscroll-behavior-y:none;padding:0 16px 16px"></div>
+    <div id="ca-rent-mine"    style="display:none;flex:1;overflow-y:auto;overscroll-behavior-y:none;padding:0 16px 16px"></div>
+  </div>
   <!-- Subscriptions pane -->
   <div id="ca-pane-sub" style="display:none;flex:1;flex-direction:column;min-height:0;overflow:hidden">
     <div class="pb">
@@ -1347,6 +1377,70 @@ document.addEventListener('deviceready',function(){
         <div style="display:flex;gap:8px">
           <input id="gift-activate-input" type="text" placeholder="ID абонемента…" style="flex:1;min-width:0">
           <button class="btn btn-p" id="gift-activate-btn" onclick="activateGift()">Активировать</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ RENT BOOKING MODAL ════════════════ -->
+<div class="overlay" id="m-rent">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3 id="mrent-name" style="font-size:16px"></h3>
+      <button class="modal-x" onclick="closeModal('m-rent')">✕</button>
+    </div>
+    <div id="mrent-body">
+      <!-- Step 1: quantity -->
+      <div id="mrent-step1">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font:500 13px/1 var(--font-sans);color:var(--fg-2)">Доступно: <b id="mrent-avail-now"></b> шт.</span>
+          <span style="font:500 13px/1 var(--font-sans);color:var(--fg-2)" id="mrent-unit-hint"></span>
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Количество</label>
+          <div class="qty-ctrl" style="width:max-content">
+            <button class="qty-btn" onclick="rentQtyChange(-1)">−</button>
+            <span class="qty-val" id="mrent-qty-val">1</span>
+            <button class="qty-btn" onclick="rentQtyChange(1)">+</button>
+          </div>
+        </div>
+        <button class="btn btn-p btn-full" onclick="rentGoCalendar()">Выбрать дату</button>
+      </div>
+      <!-- Step 2: calendar -->
+      <div id="mrent-step2" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <button class="btn btn-sm" onclick="rentCalPrev()">←</button>
+          <span id="mrent-cal-label" style="font:600 15px/1 var(--font-sans)"></span>
+          <button class="btn btn-sm" onclick="rentCalNext()">→</button>
+        </div>
+        <div class="sched-cal-wrap" style="margin-bottom:10px">
+          <table class="sched-cal-table">
+            <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+            <tbody id="mrent-cal-body"></tbody>
+          </table>
+        </div>
+        <div id="mrent-time-row" style="display:none;margin-bottom:12px">
+          <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Время аренды</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="flex:1">
+              <label style="font-size:11px;color:var(--fg-3)">С</label>
+              <input type="time" id="mrent-time-start" style="width:100%" oninput="rentCalcTotal()">
+            </div>
+            <div style="flex:1">
+              <label style="font-size:11px;color:var(--fg-3)">До</label>
+              <input type="time" id="mrent-time-end" style="width:100%" oninput="rentCalcTotal()">
+            </div>
+          </div>
+          <div id="mrent-time-hint" style="font-size:12px;color:var(--fg-3);margin-top:4px"></div>
+        </div>
+        <div id="mrent-total-row" style="display:none;background:var(--bg-2);border-radius:var(--r-2);padding:10px 12px;margin-bottom:12px;font:500 14px/1.4 var(--font-sans)">
+          <div>Итого: <b id="mrent-total-price"></b></div>
+          <div id="mrent-total-period" style="font-size:12px;color:var(--fg-3);margin-top:2px"></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" style="flex:0 0 auto" onclick="rentBackToQty()">← Кол-во</button>
+          <button class="btn btn-p" id="mrent-add-cart-btn" style="flex:1;display:none" onclick="rentAddToCart()">В корзину</button>
         </div>
       </div>
     </div>
@@ -2023,7 +2117,7 @@ const DEFAULT_FEATURES = {
 // ─── STATE ───
 const S = {
   session: null, profile: null, store: null, storeSubActive: true,
-  cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [],
+  cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [], rentCart: [],
   menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
   map: null, mapMarkers: [], homeMarker: null, mapFitted: false, allStores: [], mapCat: new Set(),
   nearbyMeters: null, geoLat: null, geoLng: null, deliveryFilter: false,
@@ -2292,14 +2386,14 @@ const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(),
 function switchCalenabsTab(tab) {
   _calenabsTab = tab;
   try { localStorage.setItem('alliby_calenabs_tab', tab); } catch(e) {}
-  document.getElementById('ca-pane-ord').style.display = tab === 'ord' ? 'flex' : 'none';
-  document.getElementById('ca-pane-bk').style.display  = tab === 'bk'  ? 'flex' : 'none';
-  document.getElementById('ca-pane-sub').style.display = tab === 'sub' ? 'flex' : 'none';
-  document.getElementById('ca-tab-ord')?.classList.toggle('active', tab === 'ord');
-  document.getElementById('ca-tab-bk')?.classList.toggle('active',  tab === 'bk');
-  document.getElementById('ca-tab-sub')?.classList.toggle('active', tab === 'sub');
+  ['ord','bk','sub','rent'].forEach(t => {
+    const pane = document.getElementById('ca-pane-' + t);
+    if (pane) pane.style.display = t === tab ? 'flex' : 'none';
+    document.getElementById('ca-tab-' + t)?.classList.toggle('active', t === tab);
+  });
   if (tab === 'bk')  { _bkNotifCount = 0; _updateBkBadge(); loadBookingsScreen(); }
   else if (tab === 'sub') loadMySubscriptions();
+  else if (tab === 'rent') loadRentTab();
   else if (tab === 'ord') {
     _orderNotifCount = 0; _updateBkBadge();
     const _firstNotif = _ORD_STATUS_PRIORITY.find(s => _ordNotif.has(s));
@@ -2308,6 +2402,377 @@ function switchCalenabsTab(tab) {
 }
 function loadCalenabsScreen() { switchCalenabsTab(_calenabsTab); }
 function _calenabsIsActive() { return document.getElementById('screen-calenabs')?.classList.contains('active'); }
+
+// ══════════════════════════════════════════════════════════════
+// RENT FEATURE
+// ══════════════════════════════════════════════════════════════
+const RENT_UNIT_RU = { minute:'мин', hour:'ч', day:'д', week:'нед', month:'мес' };
+const RENT_STATUS_RU = { pending:'Ожидает', active:'Активна', completed:'Возвращено', cancelled:'Отменена' };
+const RENT_STATUS_COLOR = { pending:'var(--warn)', active:'var(--ok)', completed:'var(--fg-3)', cancelled:'var(--err)' };
+
+if (!S.rentCart) S.rentCart = [];
+
+let _rentView = 'catalog';
+let _rentItem = null;      // item currently being booked
+let _rentQty  = 1;
+let _rentCal  = { year: new Date().getFullYear(), month: new Date().getMonth() };
+let _rentDaysAvail = {};   // { 'YYYY-MM-DD': availableCount }
+let _rentStartDate = null; // 'YYYY-MM-DD'
+let _rentEndDate   = null; // 'YYYY-MM-DD' (for day/week/month) or null
+let _rentStartTime = null;
+let _rentEndTime   = null;
+
+// ── Tab helpers ──────────────────────────────────────────────
+function setRentView(view) {
+  _rentView = view;
+  document.querySelectorAll('[data-rent-view]').forEach(b =>
+    b.classList.toggle('active', b.dataset.rentView === view));
+  document.getElementById('ca-rent-catalog').style.display = view === 'catalog' ? '' : 'none';
+  document.getElementById('ca-rent-mine').style.display    = view === 'mine'    ? '' : 'none';
+  if (view === 'mine') loadMyRentReservations();
+}
+
+async function loadRentTab() {
+  // fill store filter
+  const sel = document.getElementById('rent-store-sel');
+  if (sel && sel.options.length === 1 && S.allStores?.length) {
+    S.allStores.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.name;
+      sel.appendChild(o);
+    });
+  }
+  setRentView(_rentView);
+  if (_rentView === 'catalog') loadRentCatalog();
+}
+
+async function loadRentCatalog() {
+  const el = document.getElementById('ca-rent-catalog');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    const storeId = document.getElementById('rent-store-sel')?.value || null;
+    let url = '/rest/v1/menu_items?is_rent=eq.true&is_available=eq.true&select=id,name,description,price,image_url,rent_period_unit,rent_period_step,total_quantity,quantity_available,store_id,stores(name)&order=name.asc';
+    if (storeId) url += `&store_id=eq.${storeId}`;
+    const items = await req(url);
+    if (!items.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет предметов для аренды</div>'; return; }
+    el.innerHTML = items.map(item => {
+      cacheItem(item);
+      const unitLabel = RENT_UNIT_RU[item.rent_period_unit] || '';
+      const step = item.rent_period_step > 1 ? item.rent_period_step + ' ' : '';
+      const avail = item.quantity_available ?? item.total_quantity ?? 0;
+      const availColor = avail > 0 ? 'var(--ok)' : 'var(--err)';
+      return `<div class="card" style="margin-bottom:10px;padding:12px 14px;cursor:pointer" onclick="openRentModal('${item.id}')">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          ${item.image_url ? `<img src="${esc(item.image_url)}" style="width:56px;height:56px;border-radius:var(--r-2);object-fit:cover;flex-shrink:0">` : ''}
+          <div style="flex:1;min-width:0">
+            <div style="font:600 14px/1.3 var(--font-sans);margin-bottom:2px">${esc(item.name)}</div>
+            ${item.description ? `<div style="font-size:12px;color:var(--fg-3);margin-bottom:4px">${esc(item.description)}</div>` : ''}
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font:600 14px/1 var(--font-sans)">${Number(item.price).toFixed(0)} ₽/${step}${unitLabel}</span>
+              <span style="font-size:12px;color:${availColor}">Доступно: ${avail} шт.</span>
+            </div>
+            ${item.stores?.name ? `<div style="font-size:11px;color:var(--fg-4);margin-top:3px">${esc(item.stores.name)}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+  }
+}
+
+async function loadMyRentReservations() {
+  const el = document.getElementById('ca-rent-mine');
+  if (!el) return;
+  const uid = S.session?.user?.id;
+  if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
+  el.innerHTML = '<div class="loading">Загрузка…</div>';
+  try {
+    const rows = await req(`/rest/v1/rent_reservations?user_id=eq.${uid}&select=id,start_at,end_at,quantity,total_price,status,menu_items(name),stores(name)&order=created_at.desc&limit=50`);
+    if (!rows.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет аренд</div>'; return; }
+    el.innerHTML = rows.map(r => {
+      const item = r.menu_items || {};
+      const store = r.stores || {};
+      const sc = RENT_STATUS_COLOR[r.status] || 'var(--fg-3)';
+      const sl = RENT_STATUS_RU[r.status] || r.status;
+      const s = new Date(r.start_at), e = new Date(r.end_at);
+      const sStr = s.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const eStr = e.toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return `<div class="card" style="margin-bottom:10px;padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
+          <span style="font-size:11px;color:${sc};border:1px solid currentColor;border-radius:4px;padding:2px 5px;flex-shrink:0;margin-left:6px">${sl}</span>
+        </div>
+        <div style="font-size:12px;color:var(--fg-3)">${esc(store.name || '')}</div>
+        <div style="font-size:13px;color:var(--fg-2);margin-top:4px">${sStr} – ${eStr}</div>
+        <div style="font-size:13px;margin-top:2px">${r.quantity} шт · <b>${Number(r.total_price).toFixed(0)} ₽</b></div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+  }
+}
+
+// ── Rent modal ───────────────────────────────────────────────
+function openRentModal(itemId) {
+  const item = itemCache.get(itemId);
+  if (!item) return;
+  _rentItem = item;
+  _rentQty  = 1;
+  _rentStartDate = null;
+  _rentEndDate   = null;
+  _rentDaysAvail = {};
+  _rentCal = { year: new Date().getFullYear(), month: new Date().getMonth() };
+
+  document.getElementById('mrent-name').textContent = item.name;
+  const avail = item.quantity_available ?? item.total_quantity ?? 0;
+  document.getElementById('mrent-avail-now').textContent = avail;
+  const step = item.rent_period_step > 1 ? item.rent_period_step + ' ' : '';
+  const unitLabel = RENT_UNIT_RU[item.rent_period_unit] || '';
+  document.getElementById('mrent-unit-hint').textContent = `Шаг: ${step}${unitLabel}`;
+  document.getElementById('mrent-qty-val').textContent = _rentQty;
+  document.getElementById('mrent-step1').style.display  = '';
+  document.getElementById('mrent-step2').style.display  = 'none';
+  openModal('m-rent');
+}
+
+function rentQtyChange(d) {
+  const item = _rentItem;
+  if (!item) return;
+  const maxAvail = item.quantity_available ?? item.total_quantity ?? 1;
+  _rentQty = Math.min(Math.max(1, _rentQty + d), maxAvail);
+  document.getElementById('mrent-qty-val').textContent = _rentQty;
+}
+
+async function rentGoCalendar() {
+  if (!_rentItem) return;
+  document.getElementById('mrent-step1').style.display = 'none';
+  document.getElementById('mrent-step2').style.display = '';
+  document.getElementById('mrent-total-row').style.display = 'none';
+  document.getElementById('mrent-add-cart-btn').style.display = 'none';
+  _rentStartDate = null;
+  _rentEndDate   = null;
+  await _rentLoadCalMonth();
+}
+
+function rentBackToQty() {
+  document.getElementById('mrent-step1').style.display = '';
+  document.getElementById('mrent-step2').style.display = 'none';
+}
+
+async function _rentLoadCalMonth() {
+  const { year, month } = _rentCal;
+  const label = new Date(year, month, 1).toLocaleString('ru-RU',{month:'long',year:'numeric'});
+  const el = document.getElementById('mrent-cal-label');
+  if (el) el.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+  // Load availability from RPC
+  try {
+    const rows = await req(`/rest/v1/rpc/get_rent_days_availability`, {
+      method: 'POST',
+      body: JSON.stringify({ p_item_id: _rentItem.id, p_year: year, p_month: month + 1 }),
+    });
+    _rentDaysAvail = {};
+    (rows || []).forEach(r => { _rentDaysAvail[r.day] = r.available; });
+  } catch(e) { _rentDaysAvail = {}; }
+  _rentRenderCal();
+}
+
+function _rentRenderCal() {
+  const { year, month } = _rentCal;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const firstDay = new Date(year, month, 1);
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  let dow = (firstDay.getDay() + 6) % 7; // Mon=0
+  let html = '<tr>';
+  for (let i = 0; i < dow; i++) html += '<td></td>';
+  for (let d = 1; d <= totalDays; d++) {
+    const date = new Date(year, month, d);
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const avail = _rentDaysAvail[dateStr] ?? 0;
+    const isPast = date < today;
+    const hasEnough = avail >= _rentQty;
+    const isStart = dateStr === _rentStartDate;
+    const isEnd   = dateStr === _rentEndDate;
+    const inRange = _rentStartDate && _rentEndDate && dateStr > _rentStartDate && dateStr < _rentEndDate;
+    let cls = 'sched-day';
+    if (isPast || !hasEnough) cls += ' sched-day--off';
+    else if (isStart || isEnd) cls += ' sched-day--booked';
+    else if (inRange) cls += ' sched-day--range';
+    else cls += ' sched-day--free';
+    const onclick = (!isPast && hasEnough) ? `onclick="rentPickDay('${dateStr}')"` : '';
+    html += `<td class="${cls}" ${onclick}>${d}`;
+    if (!isPast && hasEnough && avail < ((_rentItem?.total_quantity) || 99)) {
+      html += `<span style="font-size:8px;display:block;color:var(--fg-3)">${avail}</span>`;
+    }
+    html += '</td>';
+    if ((dow + d) % 7 === 0 && d < totalDays) html += '</tr><tr>';
+    dow = dow; // keep track implicitly
+  }
+  // pad last row
+  const filled = (dow + totalDays) % 7;
+  if (filled !== 0) for (let i = filled; i < 7; i++) html += '<td></td>';
+  html += '</tr>';
+  const body = document.getElementById('mrent-cal-body');
+  if (body) body.innerHTML = html;
+}
+
+function rentPickDay(dateStr) {
+  const unit = _rentItem?.rent_period_unit;
+  const isTimeUnit = unit === 'minute' || unit === 'hour';
+
+  if (isTimeUnit) {
+    // Single day pick → show time range
+    _rentStartDate = dateStr;
+    _rentEndDate   = null;
+    _rentRenderCal();
+    _rentShowTimeRow(dateStr);
+  } else {
+    // Date range: first click = start, second = end
+    if (!_rentStartDate || _rentEndDate || dateStr < _rentStartDate) {
+      _rentStartDate = dateStr;
+      _rentEndDate   = null;
+      document.getElementById('mrent-total-row').style.display = 'none';
+      document.getElementById('mrent-add-cart-btn').style.display = 'none';
+    } else if (dateStr === _rentStartDate) {
+      _rentStartDate = null;
+    } else {
+      // Snap end date to step boundary
+      _rentEndDate = _rentSnapEndDate(dateStr);
+    }
+    _rentRenderCal();
+    if (_rentStartDate && _rentEndDate) rentCalcTotal();
+  }
+}
+
+function _rentSnapEndDate(endStr) {
+  const unit = _rentItem?.rent_period_unit || 'day';
+  const step = _rentItem?.rent_period_step || 1;
+  const start = new Date(_rentStartDate + 'T00:00:00');
+  const end   = new Date(endStr + 'T00:00:00');
+  const diffMs = end - start;
+  let diffUnits;
+  const MS = { day: 86400000, week: 604800000 };
+  if (unit === 'day')  diffUnits = Math.round(diffMs / MS.day);
+  else if (unit === 'week')  diffUnits = Math.round(diffMs / MS.week);
+  else if (unit === 'month') {
+    const sy = start.getFullYear(), sm = start.getMonth();
+    const ey = end.getFullYear(),   em = end.getMonth();
+    diffUnits = (ey - sy) * 12 + (em - sm);
+  } else diffUnits = 1;
+  const periods = Math.max(1, Math.ceil(diffUnits / step));
+  const snapped = new Date(start);
+  if (unit === 'day')   snapped.setDate(start.getDate() + periods * step);
+  else if (unit === 'week') snapped.setDate(start.getDate() + periods * step * 7);
+  else if (unit === 'month') snapped.setMonth(start.getMonth() + periods * step);
+  const y = snapped.getFullYear(), m = String(snapped.getMonth()+1).padStart(2,'0'), d = String(snapped.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+function _rentShowTimeRow(dateStr) {
+  const store = S.allStores?.find(s => s.id === _rentItem?.store_id);
+  const sched = store?.schedule || store?.working_hours || '';
+  const timeRow = document.getElementById('mrent-time-row');
+  const hint = document.getElementById('mrent-time-hint');
+  if (timeRow) timeRow.style.display = '';
+  // Default times from schedule if available, else 09:00-21:00
+  const defStart = '09:00', defEnd = '21:00';
+  document.getElementById('mrent-time-start').value = defStart;
+  document.getElementById('mrent-time-end').value   = defEnd;
+  if (hint) hint.textContent = 'Выберите время начала и окончания в пределах рабочего дня';
+  rentCalcTotal();
+}
+
+function rentCalcTotal() {
+  const item = _rentItem;
+  if (!item) return;
+  const unit = item.rent_period_unit;
+  const step = item.rent_period_step || 1;
+  const price = Number(item.price) || 0;
+  const isTimeUnit = unit === 'minute' || unit === 'hour';
+
+  let periods = 0, startDT, endDT;
+
+  if (isTimeUnit && _rentStartDate) {
+    const ts = document.getElementById('mrent-time-start')?.value;
+    const te = document.getElementById('mrent-time-end')?.value;
+    if (!ts || !te || te <= ts) return;
+    _rentStartTime = ts;
+    _rentEndTime   = te;
+    startDT = new Date(`${_rentStartDate}T${ts}`);
+    endDT   = new Date(`${_rentStartDate}T${te}`);
+    const diffMin = (endDT - startDT) / 60000;
+    periods = unit === 'minute'
+      ? Math.floor(diffMin / step)
+      : Math.floor(diffMin / 60 / step);
+  } else if (!isTimeUnit && _rentStartDate && _rentEndDate) {
+    startDT = new Date(_rentStartDate + 'T00:00:00');
+    endDT   = new Date(_rentEndDate   + 'T00:00:00');
+    const diffMs = endDT - startDT;
+    if (unit === 'day')   periods = Math.round(diffMs / 86400000 / step);
+    else if (unit === 'week')  periods = Math.round(diffMs / 604800000 / step);
+    else if (unit === 'month') {
+      const sy = startDT.getFullYear(), sm = startDT.getMonth();
+      const ey = endDT.getFullYear(),   em = endDT.getMonth();
+      periods = Math.round(((ey - sy) * 12 + (em - sm)) / step);
+    }
+  }
+
+  if (periods <= 0) return;
+
+  const total = price * periods * _rentQty;
+  const totalRow = document.getElementById('mrent-total-row');
+  if (totalRow) {
+    totalRow.style.display = '';
+    document.getElementById('mrent-total-price').textContent = `${total.toFixed(0)} ₽`;
+    const stepLabel = step > 1 ? `${step} ` : '';
+    const unitLabel = RENT_UNIT_RU[unit] || unit;
+    document.getElementById('mrent-total-period').textContent =
+      `${periods} × ${stepLabel}${unitLabel} × ${_rentQty} шт × ${price.toFixed(0)} ₽`;
+  }
+  const addBtn = document.getElementById('mrent-add-cart-btn');
+  if (addBtn) addBtn.style.display = '';
+
+  // store for add-to-cart
+  _rentItem._pendingStart = startDT?.toISOString();
+  _rentItem._pendingEnd   = endDT?.toISOString();
+  _rentItem._pendingTotal = total;
+}
+
+async function rentCalPrev() {
+  _rentCal.month--;
+  if (_rentCal.month < 0) { _rentCal.month = 11; _rentCal.year--; }
+  await _rentLoadCalMonth();
+}
+async function rentCalNext() {
+  _rentCal.month++;
+  if (_rentCal.month > 11) { _rentCal.month = 0; _rentCal.year++; }
+  await _rentLoadCalMonth();
+}
+
+function rentAddToCart() {
+  const item = _rentItem;
+  if (!item || !item._pendingStart || !item._pendingEnd) return;
+  S.rentCart.push({
+    item_id:     item.id,
+    store_id:    item.store_id,
+    name:        item.name,
+    quantity:    _rentQty,
+    start_at:    item._pendingStart,
+    end_at:      item._pendingEnd,
+    total_price: item._pendingTotal,
+    unit:        item.rent_period_unit,
+    step:        item.rent_period_step,
+  });
+  closeModal('m-rent');
+  showToast?.('Добавлено в корзину');
+  renderRentCartSection();
+  updateCartCount();
+  // Refresh available count
+  item.quantity_available = Math.max(0, (item.quantity_available ?? item.total_quantity ?? 1) - _rentQty);
+  // Reload catalog to reflect new availability
+  if (_rentView === 'catalog') loadRentCatalog();
+}
 
 let _svcTab = 'services';
 function switchSvcTab(tab) {
@@ -4650,7 +5115,8 @@ function updateCartCount() {
   const n = S.cart.reduce((s, c) => s + c.qty, 0);
   const subN = S.subCart.filter(c => (c.direction || 'food') === S.direction).length
              + S.giftSubCart.filter(c => (c.direction || 'food') === S.direction).length;
-  const total = n + subN;
+  const rentN = S.rentCart?.length || 0;
+  const total = n + subN + rentN;
   const sc = document.getElementById('sn-cart-cnt');
   if (sc) { sc.textContent = total > 0 ? total : ''; sc.classList.toggle('on', total > 0); }
   const mc = document.getElementById('menu-cart-cnt');
@@ -5539,6 +6005,7 @@ async function renderCart() {
     || S.giftSubCart.some(c => (c.direction || 'food') === S.direction);
   renderSubCartSection();
   renderGiftCartSection();
+  renderRentCartSection();
   // Если данные по абонементам не загружены — подгружаем (например, после обновления страницы)
   const cartStoreId = S.store?.id || S.cartStoreId;
   if (cartStoreId) {
@@ -6042,6 +6509,67 @@ function renderSubCartSection() {
       <button class="qty-btn" onclick="removeFromSubCart('${sub.id}')" title="Убрать">✕</button>
     </div>`
   ).join('');
+}
+
+function renderRentCartSection() {
+  const sect = document.getElementById('rent-cart-sect');
+  const list = document.getElementById('rent-cart-list');
+  if (!sect) return;
+  if (!S.rentCart?.length) { sect.style.display = 'none'; return; }
+  sect.style.display = 'block';
+  list.innerHTML = S.rentCart.map((r, i) => {
+    const s = new Date(r.start_at), e = new Date(r.end_at);
+    const fmtOpts = { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' };
+    const period = `${s.toLocaleString('ru-RU', fmtOpts)} – ${e.toLocaleString('ru-RU', fmtOpts)}`;
+    return `<div class="cart-item">
+      <div class="ci-info">
+        <div class="ci-name">${esc(r.name)}</div>
+        <div style="font-size:12px;color:var(--fg-3)">${period}</div>
+        <div class="ci-price">${r.quantity} шт · ${Number(r.total_price).toFixed(0)} ₽</div>
+      </div>
+      <button class="qty-btn" onclick="removeFromRentCart(${i})" title="Убрать">✕</button>
+    </div>`;
+  }).join('');
+}
+function removeFromRentCart(i) {
+  S.rentCart.splice(i, 1);
+  renderRentCartSection();
+  updateCartCount();
+}
+async function checkoutRent() {
+  const uid = S.session?.user?.id;
+  if (!uid) { alert('Войдите в аккаунт'); return; }
+  if (!S.rentCart?.length) return;
+  const btn = document.getElementById('rent-cart-pay-btn');
+  const restore = btn ? btnLoad(btn) : () => {};
+  try {
+    for (const r of S.rentCart) {
+      await req('/rest/v1/rent_reservations', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id:     r.item_id,
+          store_id:    r.store_id,
+          user_id:     uid,
+          start_at:    r.start_at,
+          end_at:      r.end_at,
+          quantity:    r.quantity,
+          total_price: r.total_price,
+          status:      'pending',
+        }),
+        headers: { Prefer: 'return=minimal' },
+      });
+    }
+    S.rentCart = [];
+    renderRentCartSection();
+    updateCartCount();
+    showToast?.('Заявка на аренду отправлена');
+    switchCalenabsTab('rent');
+    goTo('calenabs');
+  } catch(e) {
+    alert('Ошибка: ' + (e.message || ''));
+  } finally {
+    restore?.();
+  }
 }
 
 function renderGiftCartSection() {
