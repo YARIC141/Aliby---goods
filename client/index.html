@@ -6580,7 +6580,7 @@ async function checkoutRent() {
     S.rentCart = [];
     renderRentCartSection();
     updateCartCount();
-    showToast?.('Заявка на аренду отправлена');
+    showGeoToast('Заявка на аренду отправлена');
     switchCalenabsTab('rent');
     goTo('calenabs');
   } catch(e) {
