@@ -35,6 +35,9 @@ jobs:
             ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
           cat supabase/migrations/20240101000072_rent.sql | \
             ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
+          cat supabase/migrations/20240101000073_rent_grants.sql | \
+            ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
+          ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker restart supabase-rest 2>/dev/null || docker restart rest 2>/dev/null || true"
 
       - name: Deploy Edge Functions
         run: |
