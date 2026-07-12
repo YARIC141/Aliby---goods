@@ -1383,10 +1383,11 @@ document.addEventListener('deviceready',function(){
     <div id="mrent-body">
       <!-- Step 1: quantity -->
       <div id="mrent-step1">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <span style="font:500 13px/1 var(--font-sans);color:var(--fg-2)">Доступно: <b id="mrent-avail-now"></b> шт.</span>
           <span style="font:500 13px/1 var(--font-sans);color:var(--fg-2)" id="mrent-unit-hint"></span>
         </div>
+        <div id="mrent-price-hint" style="font:400 13px/1.4 var(--font-sans);color:var(--fg-2);margin-bottom:12px"></div>
         <div style="margin-bottom:16px">
           <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Количество</label>
           <div class="qty-ctrl" style="width:max-content">
@@ -2462,12 +2463,20 @@ function openRentModal(itemId) {
   _rentCal = { year: new Date().getFullYear(), month: new Date().getMonth() };
 
   document.getElementById('mrent-name').textContent = item.name;
-  const avail = item.quantity_available ?? item.total_quantity ?? 0;
-  document.getElementById('mrent-avail-now').textContent = avail;
+  document.getElementById('mrent-avail-now').textContent = item.total_quantity ?? item.quantity_available ?? 0;
   const step = item.rent_period_step > 1 ? item.rent_period_step + ' ' : '';
   const unitLabel = RENT_UNIT_RU[item.rent_period_unit] || '';
   document.getElementById('mrent-unit-hint').textContent = `Шаг: ${step}${unitLabel}`;
   document.getElementById('mrent-qty-val').textContent = _rentQty;
+  const _prules = item.item_price_rules || [];
+  const _minP   = _prules.length ? Math.min(..._prules.map(r => Number(r.price))) : null;
+  const priceHintEl = document.getElementById('mrent-price-hint');
+  if (priceHintEl) {
+    if (_minP !== null && _minP < Number(item.price))
+      priceHintEl.innerHTML = `<span style="font-size:11px;color:var(--fg-3)">от </span><b>${_minP} ₽</b> / ${step}${unitLabel}`;
+    else
+      priceHintEl.innerHTML = `<b>${Number(item.price).toFixed(0)} ₽</b> / ${step}${unitLabel}`;
+  }
   document.getElementById('mrent-step1').style.display  = '';
   document.getElementById('mrent-step2').style.display  = 'none';
   openModal('m-rent');
@@ -2476,9 +2485,11 @@ function openRentModal(itemId) {
 function rentQtyChange(d) {
   const item = _rentItem;
   if (!item) return;
-  const maxAvail = item.quantity_available ?? item.total_quantity ?? 1;
-  _rentQty = Math.min(Math.max(1, _rentQty + d), maxAvail);
+  const maxQty = item.total_quantity ?? 99;
+  _rentQty = Math.max(1, Math.min(_rentQty + d, maxQty));
   document.getElementById('mrent-qty-val').textContent = _rentQty;
+  if (_rentSlotA !== null && _rentSlotB !== null) rentCalcTotal();
+  else if (_rentStartDate && _rentEndDate) rentCalcTotal();
 }
 
 async function rentGoCalendar() {
@@ -2756,15 +2767,36 @@ function _rentClickSlot(idx) {
   rentCalcTotal();
 }
 
+function _timeToMin(t) {
+  if (!t) return null;
+  const p = t.split(':');
+  return parseInt(p[0]) * 60 + parseInt(p[1]);
+}
+
+function _getRulePrice(item, dateStr, slotTimeStr) {
+  const rules = item.item_price_rules || [];
+  if (!rules.length) return Number(item.price);
+  const dow      = new Date(dateStr + 'T00:00:00').getDay();
+  const slotMin  = _timeToMin(slotTimeStr);
+  const matching = rules.filter(r => {
+    if (r.days && !r.days.includes(dow)) return false;
+    const fromMin = r.time_from ? _timeToMin(r.time_from) : 0;
+    const toMin   = r.time_to   ? _timeToMin(r.time_to)   : 1440;
+    return slotMin >= fromMin && slotMin < toMin;
+  });
+  if (!matching.length) return Number(item.price);
+  matching.sort((a, b) => ((a.priority ?? 0) - (b.priority ?? 0)) || (a.price - b.price));
+  return Number(matching[0].price);
+}
+
 function rentCalcTotal() {
   const item = _rentItem;
   if (!item) return;
   const unit = item.rent_period_unit;
   const step = item.rent_period_step || 1;
-  const price = Number(item.price) || 0;
   const isTimeUnit = unit === 'minute' || unit === 'hour';
 
-  let periods = 0, startDT, endDT;
+  let periods = 0, startDT, endDT, total = 0, priceDesc = '';
 
   if (isTimeUnit && _rentStartDate) {
     if (_rentSlotA === null || _rentSlotB === null) return;
@@ -2781,34 +2813,42 @@ function rentCalcTotal() {
     _rentEndTime   = `${endH}:${endM}`;
     startDT = new Date(`${_rentStartDate}T${_rentStartTime}`);
     endDT   = new Date(`${_rentStartDate}T${_rentEndTime}`);
-    const diffMin = (endDT - startDT) / 60000;
-    periods = unit === 'minute'
-      ? Math.floor(diffMin / step)
-      : Math.floor(diffMin / 60 / step);
+    periods = _rentSlotB - _rentSlotA + 1;
+    const slotPrices = Array.from({ length: periods }, (_, k) =>
+      _getRulePrice(item, _rentStartDate, _rentSlots[_rentSlotA + k].slot_time)
+    );
+    total = slotPrices.reduce((a, b) => a + b, 0) * _rentQty;
+    const uniq = [...new Set(slotPrices)];
+    const stepLabel = step > 1 ? `${step} ` : '';
+    const unitLabel = RENT_UNIT_RU[unit] || unit;
+    priceDesc = uniq.length === 1
+      ? `${periods} × ${stepLabel}${unitLabel} × ${_rentQty} шт × ${uniq[0].toFixed(0)} ₽`
+      : `${periods} слот${periods < 2 ? '' : periods < 5 ? 'а' : 'ов'} × ${_rentQty} шт`;
   } else if (!isTimeUnit && _rentStartDate && _rentEndDate) {
     startDT = new Date(_rentStartDate + 'T00:00:00');
     endDT   = new Date(_rentEndDate   + 'T00:00:00');
     const diffMs = endDT - startDT;
-    if (unit === 'day')   periods = Math.round(diffMs / 86400000 / step);
+    if (unit === 'day')        periods = Math.round(diffMs / 86400000 / step);
     else if (unit === 'week')  periods = Math.round(diffMs / 604800000 / step);
     else if (unit === 'month') {
       const sy = startDT.getFullYear(), sm = startDT.getMonth();
       const ey = endDT.getFullYear(),   em = endDT.getMonth();
       periods = Math.round(((ey - sy) * 12 + (em - sm)) / step);
     }
+    const effectivePrice = _getRulePrice(item, _rentStartDate, '00:00');
+    total = effectivePrice * periods * _rentQty;
+    const stepLabel = step > 1 ? `${step} ` : '';
+    const unitLabel = RENT_UNIT_RU[unit] || unit;
+    priceDesc = `${periods} × ${stepLabel}${unitLabel} × ${_rentQty} шт × ${effectivePrice.toFixed(0)} ₽`;
   }
 
   if (periods <= 0) return;
 
-  const total = price * periods * _rentQty;
   const totalRow = document.getElementById('mrent-total-row');
   if (totalRow) {
     totalRow.style.display = '';
     document.getElementById('mrent-total-price').textContent = `${total.toFixed(0)} ₽`;
-    const stepLabel = step > 1 ? `${step} ` : '';
-    const unitLabel = RENT_UNIT_RU[unit] || unit;
-    document.getElementById('mrent-total-period').textContent =
-      `${periods} × ${stepLabel}${unitLabel} × ${_rentQty} шт × ${price.toFixed(0)} ₽`;
+    document.getElementById('mrent-total-period').textContent = priceDesc;
   }
   const addBtn  = document.getElementById('mrent-add-cart-btn');
   const bookBtn = document.getElementById('mrent-book-btn');
@@ -4917,7 +4957,7 @@ async function loadMenuItems() {
   // New store or category change — reset state
   _allMenuItems = [];
   const catFilter = catId ? `&category_id=eq.${catId}` : '';
-  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}${catFilter}&is_visible=eq.true&order=name.asc&select=*,item_price_rules(price)`, loading: false, storeId, catId, hasMore: false };
+  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}${catFilter}&is_visible=eq.true&order=name.asc&select=*,item_price_rules(price,days,time_from,time_to,priority)`, loading: false, storeId, catId, hasMore: false };
 
   // Skeleton first (sync) — cache replaces it in the same frame, no visible flash
   el.innerHTML = SK.itemCards(6);
