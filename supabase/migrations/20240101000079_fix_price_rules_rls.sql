@@ -5,7 +5,7 @@
 
 CREATE OR REPLACE FUNCTION public._owns_store_id(p_store_id UUID)
 RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
-  SELECT EXISTS (SELECT 1 FROM stores WHERE id = p_store_id AND owner_id = auth.uid());
+  SELECT EXISTS (SELECT 1 FROM stores WHERE id = p_store_id AND owner_user_id = auth.uid());
 $$;
 
 GRANT EXECUTE ON FUNCTION public._owns_store_id TO authenticated;

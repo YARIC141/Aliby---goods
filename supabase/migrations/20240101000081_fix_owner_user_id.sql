@@ -1,6 +1,11 @@
--- Migration 080: RPC for saving item price rules
--- Replaces direct REST INSERT (which hit RLS auth.uid() issues) with a
--- SECURITY DEFINER function that verifies ownership via menu_items→stores.
+-- Migration 081: Fix owner column name (owner_id → owner_user_id) in
+-- _owns_store_id() and save_item_price_rules() created in 079/080.
+
+CREATE OR REPLACE FUNCTION public._owns_store_id(p_store_id UUID)
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM stores WHERE id = p_store_id AND owner_user_id = auth.uid());
+$$;
+
 CREATE OR REPLACE FUNCTION public.save_item_price_rules(
   p_item_id UUID,
   p_rules   JSONB
@@ -43,5 +48,3 @@ BEGIN
   END IF;
 END;
 $$;
-
-GRANT EXECUTE ON FUNCTION public.save_item_price_rules TO authenticated;
