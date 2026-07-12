@@ -6504,8 +6504,17 @@ function cancelMapEdit() {
 }
 
 // ─── CONFIRM DELETE ───
-function confirmDelete(type, id, name) {
-  document.getElementById('confirm-text').textContent = `Удалить «${name}»?`;
+async function confirmDelete(type, id, name) {
+  let text = `Удалить «${name}»?`;
+  if (type === 'cat') {
+    try {
+      const items = await req(`/rest/v1/menu_items?category_id=eq.${id}&select=id`);
+      if (items.length > 0) {
+        text += ` ${items.length} товар${items.length === 1 ? '' : items.length < 5 ? 'а' : 'ов'} потеряет категорию.`;
+      }
+    } catch {}
+  }
+  document.getElementById('confirm-text').textContent = text;
   S.pendingConfirm = { type, id };
   openModal('m-confirm');
 }
@@ -6587,7 +6596,7 @@ async function confirmAction() {
     S.pendingConfirm = null;
     const reloaders = { store: loadStores, cat: loadCategories, mi: loadMenuItems, sub: loadSubscriptions };
     reloaders[type]?.();
-  } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
+  } catch(e) { showAdminToast('Ошибка удаления: ' + (e.message || '')); }
 }
 
 async function restoreStore(id) {
