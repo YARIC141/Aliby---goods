@@ -3217,8 +3217,8 @@ function selectCaSchedSlot(date, start, end) {
   const MON = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
   const d = new Date(date + 'T00:00:00');
   document.getElementById('preselect-label').textContent = `Выбрано: ${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} в ${start}`;
+  switchSvcTab('services');
   document.getElementById('preselect-banner').style.display = 'flex';
-  goTo('store');
 }
 
 function clearPreselect() {
