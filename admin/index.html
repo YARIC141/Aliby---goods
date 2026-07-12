@@ -1868,7 +1868,8 @@ html.bg-custom #bg-fluid{display:none}
       </div>
       <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:4px">
         <input type="checkbox" id="mmi-price-rules-toggle" style="width:auto" onchange="togglePriceRulesSection(this.checked)">
-        <label for="mmi-price-rules-toggle">Правила для цены <span class="hint" data-tip="Разные цены по дням недели или времени суток. На карточке товара будет показана минимальная цена «от N ₽»">?</span></label>
+        <label for="mmi-price-rules-toggle">Правила для цены</label>
+        <span class="hint" data-tip="Разные цены по дням недели или времени суток. На карточке товара будет показана минимальная цена «от N ₽»">?</span>
       </div>
       <div id="mmi-price-rules-section" style="display:none;grid-column:1/-1;border:1px solid var(--line);border-radius:var(--r-2);padding:12px">
         <div id="mmi-price-rules-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
@@ -4545,7 +4546,7 @@ function _renderPriceRules() {
   if (!_editPriceRules.length) { el.innerHTML = ''; return; }
   el.innerHTML = _editPriceRules.map((r, i) => {
     const priceErr = !r.price || r.price <= 0;
-    const dayChecks = [0,1,2,3,4,5,6].map(d => {
+    const dayChecks = [1,2,3,4,5,6,0].map(d => {
       const ch = (!r.days || r.days.includes(d)) ? 'checked' : '';
       return `<label style="display:flex;align-items:center;gap:2px;font-size:12px;cursor:pointer">
         <input type="checkbox" style="width:auto;margin:0" ${ch} onchange="_priceRuleDay(${i},${d},this.checked)"> ${_PRICE_RULE_DAY_LABELS[d]}
