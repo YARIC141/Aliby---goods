@@ -32,16 +32,112 @@ jobs:
       - name: Apply database migrations
         run: |
           rsync -az -e "ssh -p 2222 -i ~/.ssh/id_ed25519" supabase/migrations/ root@${{ secrets.VPS_HOST }}:/tmp/alliby-mig/
-          ssh -p 2222 root@${{ secrets.VPS_HOST }} "
-            for f in \$(ls /tmp/alliby-mig/*.sql | sort); do
-              base=\$(basename \"\$f\")
-              num=\$(echo \"\$base\" | sed 's/20240101000//;s/_.*//')
-              if [ \"\$num\" -eq \"\$num\" ] 2>/dev/null && [ \"\$num\" -ge 71 ]; then
-                echo \">> \$base\"
-                cat \"\$f\" | docker exec -i supabase-db psql -U postgres -d postgres
+          ssh -p 2222 root@${{ secrets.VPS_HOST }} "cat > /tmp/init_mig_tracking.sql" << 'INITSQL'
+          CREATE TABLE IF NOT EXISTS public._migrations (
+            name       TEXT PRIMARY KEY,
+            applied_at TIMESTAMPTZ DEFAULT now()
+          );
+          INSERT INTO public._migrations(name) VALUES
+            ('20240101000001_create_tables.sql'),
+            ('20240101000002_rls_policies.sql'),
+            ('20240101000003_functions_triggers.sql'),
+            ('20240101000004_indexes.sql'),
+            ('20240101000005_storage.sql'),
+            ('20240101000006_subscription_discount.sql'),
+            ('20240101000007_maps_markers.sql'),
+            ('20240101000007a_vector_map_schema.sql'),
+            ('20240101000008_vector_map_addresses.sql'),
+            ('20240101000009_marker_color.sql'),
+            ('20240101000010_fix_tile_srid.sql'),
+            ('20240101000011_app_config.sql'),
+            ('20240101000012_store_categories.sql'),
+            ('20240101000013_tile_zoom_optimize.sql'),
+            ('20240101000014_user_sub_direct_insert.sql'),
+            ('20240101000015_subscription_description.sql'),
+            ('20240101000016_fix_redeem_ambiguity.sql'),
+            ('20240101000017_subscription_items_per_use.sql'),
+            ('20240101000018_push_subscriptions.sql'),
+            ('20240101000019_order_user_email.sql'),
+            ('20240101000020_gift_subscriptions.sql'),
+            ('20240101000021_contract_signatures.sql'),
+            ('20240101000022_platform_subscriptions.sql'),
+            ('20240101000023_store_subscription_gate.sql'),
+            ('20240101000024_rls_owner_isolation.sql'),
+            ('20240101000025_tbank_platform_payments.sql'),
+            ('20240101000026_profiles_phone.sql'),
+            ('20240101000027_subscription_stock.sql'),
+            ('20240101000028_store_avg_order_and_cart_flag.sql'),
+            ('20240101000029_store_direction.sql'),
+            ('20240101000030_order_in_progress.sql'),
+            ('20240101000031_preparation_time.sql'),
+            ('20240101000032_store_schedule.sql'),
+            ('20240101000033_bookings.sql'),
+            ('20240101000034_city_column.sql'),
+            ('20240101000035_storage_owner_upload.sql'),
+            ('20240101000035_payment_acquiring.sql'),
+            ('20240101000036_store_image_url.sql'),
+            ('20240101000037_analytics_events.sql'),
+            ('20240101000038_profiles_address.sql'),
+            ('20240101000039_cities_table.sql'),
+            ('20240101000040_analytics_events_rls.sql'),
+            ('20240101000041_analytics_rpc.sql'),
+            ('20240101000042_recurring_subscription.sql'),
+            ('20240101000043_store_subscriptions.sql'),
+            ('20240101000044_email_notify_cron.sql'),
+            ('20240101000045_fix_sub_owner_ids.sql'),
+            ('20240101000046_plan_type.sql'),
+            ('20240101000047_employee_role.sql'),
+            ('20240101000048_employee_role_patch.sql'),
+            ('20240101000049_native_push.sql'),
+            ('20240101000050_booking_push_trigger.sql'),
+            ('20240101000051_fix_gift_stock_trigger.sql'),
+            ('20240101000052_legal_data.sql'),
+            ('20240101000053_passport_required.sql'),
+            ('20240101000054_upgrade_to_seller.sql'),
+            ('20240101000054_remove_passport_required.sql'),
+            ('20240101000055_owner_isolation.sql'),
+            ('20240101000056_fix_profiles_rls_recursion.sql'),
+            ('20240101000057_grant_anon_map_rpcs.sql'),
+            ('20240101000058_push_per_platform.sql'),
+            ('20240101000059_promo_notifications.sql'),
+            ('20240101000060_promo_consent.sql'),
+            ('20240101000061_orders_delivery_columns.sql'),
+            ('20240101000062_store_notif_subs.sql'),
+            ('20240101000063_contract_signer_name.sql'),
+            ('20240101000064_booking_created_push.sql'),
+            ('20240101000065_push_token_unique_per_device.sql'),
+            ('20240101000066_reset_promo_consent.sql'),
+            ('20240101000067_drop_pending_subscriptions.sql'),
+            ('20240101000068_extends_sub_id.sql'),
+            ('20240101000069_subscription_end_date.sql'),
+            ('20240101000070_masters.sql'),
+            ('20240101000071_profiles_booking_client_read.sql'),
+            ('20240101000072_rent.sql'),
+            ('20240101000073_rent_grants.sql'),
+            ('20240101000074_rent_payment_status.sql'),
+            ('20240101000075_rent_slots_rpc.sql'),
+            ('20240101000076_fix_rent_slots_rpc.sql'),
+            ('20240101000077_fix_rent_slots_rpc_cast.sql')
+          ON CONFLICT DO NOTHING;
+          INITSQL
+          ssh -p 2222 root@${{ secrets.VPS_HOST }} bash -s << 'APPLY'
+          cat /tmp/init_mig_tracking.sql | docker exec -i supabase-db psql -U postgres -d postgres
+          for f in $(ls /tmp/alliby-mig/*.sql | sort); do
+            base=$(basename "$f")
+            applied=$(docker exec supabase-db psql -U postgres -d postgres -tAc "SELECT COUNT(*) FROM public._migrations WHERE name='$base'" | tr -d '[:space:]')
+            if [ "$applied" = "0" ]; then
+              echo ">> $base"
+              if cat "$f" | docker exec -i supabase-db psql -U postgres -d postgres; then
+                docker exec supabase-db psql -U postgres -d postgres -c "INSERT INTO public._migrations(name) VALUES ('$base') ON CONFLICT DO NOTHING"
+              else
+                echo "!! FAILED: $base" >&2
+                exit 1
               fi
-            done
-          "
+            else
+              echo "-- Skip $base"
+            fi
+          done
+          APPLY
           ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker restart supabase-rest 2>/dev/null || docker restart rest 2>/dev/null || true"
 
       - name: Deploy Edge Functions
