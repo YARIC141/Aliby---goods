@@ -2982,6 +2982,7 @@ async function rentPayNow() {
 let _svcTab = 'services';
 function switchSvcTab(tab) {
   _svcTab = tab;
+  try { localStorage.setItem('alliby_svc_tab', tab); } catch(e) {}
   const isSvc = tab === 'services', isMst = tab === 'masters', isSched = tab === 'sched';
   document.getElementById('svc-pane-services').style.display = isSvc  ? '' : 'none';
   document.getElementById('svc-pane-masters').style.display  = isMst  ? 'flex' : 'none';
@@ -4578,15 +4579,28 @@ async function loadStore() {
   const svcTabBar = document.getElementById('svc-tab-bar');
   if (svcTabBar) svcTabBar.style.display = S.direction === 'services' ? '' : 'none';
   if (S.direction === 'services') {
-    _svcTab = 'services';
-    document.getElementById('svc-pane-services').style.display = '';
-    document.getElementById('svc-pane-masters').style.display  = 'none';
-    document.getElementById('svc-pane-sched').style.display    = 'none';
-    document.getElementById('svc-tab-services')?.classList.add('active');
-    document.getElementById('svc-tab-masters')?.classList.remove('active');
-    document.getElementById('svc-tab-sched')?.classList.remove('active');
-    // Сброс кеша мастеров при смене заведения
-    _mastersCache = null;
+    const _prevSvcStore = localStorage.getItem('alliby_svc_store');
+    if (_prevSvcStore !== st.id) {
+      // Store changed — reset tab to default and clear masters cache
+      _svcTab = 'services';
+      _mastersCache = null;
+      try { localStorage.setItem('alliby_svc_store', st.id); localStorage.setItem('alliby_svc_tab', 'services'); } catch(e) {}
+    } else {
+      // Same store (page refresh or re-navigation) — restore saved tab
+      try {
+        const _saved = localStorage.getItem('alliby_svc_tab');
+        if (_saved && ['services','masters','sched'].includes(_saved)) _svcTab = _saved;
+      } catch(e) {}
+    }
+    const _isSvc = _svcTab === 'services', _isMst = _svcTab === 'masters', _isSched = _svcTab === 'sched';
+    document.getElementById('svc-pane-services').style.display = _isSvc  ? '' : 'none';
+    document.getElementById('svc-pane-masters').style.display  = _isMst  ? 'flex' : 'none';
+    document.getElementById('svc-pane-sched').style.display    = _isSched ? 'flex' : 'none';
+    document.getElementById('svc-tab-services')?.classList.toggle('active', _isSvc);
+    document.getElementById('svc-tab-masters')?.classList.toggle('active', _isMst);
+    document.getElementById('svc-tab-sched')?.classList.toggle('active', _isSched);
+    if (_isSched) loadCaScheduleScreen();
+    if (_isMst)   loadStoreMasters();
   }
   const _titleEl = document.getElementById('store-items-title');
   if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги' }[S.direction] || 'Товары и Услуги';
