@@ -4648,22 +4648,21 @@ function removePriceRule(idx) {
   _renderPriceRules();
 }
 
-async function _savePriceRules(itemId, storeId) {
-  await req(`/rest/v1/item_price_rules?item_id=eq.${itemId}`, { method: 'DELETE' });
-  if (!document.getElementById('mmi-price-rules-toggle')?.checked || !_editPriceRules.length) return;
-  const rows = _editPriceRules.map((r, i) => ({
-    item_id:   itemId,
-    store_id:  storeId,
-    price:     r.price,
-    label:     r.label  || null,
-    days:      r.days   || null,
-    time_from: r.time_from || null,
-    time_to:   r.time_to   || null,
-    priority:  i,
-  }));
-  await req('/rest/v1/item_price_rules', {
-    method: 'POST', body: JSON.stringify(rows),
-    headers: { Prefer: 'return=minimal' },
+async function _savePriceRules(itemId) {
+  const active = document.getElementById('mmi-price-rules-toggle')?.checked && _editPriceRules.length > 0;
+  const rules = active
+    ? _editPriceRules.map((r, i) => ({
+        price:     r.price,
+        label:     r.label     || null,
+        days:      r.days      || null,
+        time_from: r.time_from || null,
+        time_to:   r.time_to   || null,
+        priority:  i,
+      }))
+    : [];
+  await req('/rest/v1/rpc/save_item_price_rules', {
+    method: 'POST',
+    body: JSON.stringify({ p_item_id: itemId, p_rules: rules }),
   });
 }
 
@@ -5079,7 +5078,7 @@ async function saveMenuItem() {
     }
     if (savedId) {
       await _saveOptGroupsForItem(savedId);
-      await _savePriceRules(savedId, body.store_id);
+      await _savePriceRules(savedId);
     }
     clearTimeout(timer);
     closeModal('m-mi'); restore(); loadMenuItems();
