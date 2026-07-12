@@ -495,12 +495,17 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .recent-store-cat{font:400 12px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px}
 
 /* ── DIRECTION TABS ── */
-.dir-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
-.dir-tab{flex:1;padding:11px 4px;border:none;background:none;cursor:pointer;font:500 16px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);white-space:nowrap}
+.dir-tabs{display:flex;flex-direction:column;flex-shrink:0}
+.dir-row{display:flex;border-bottom:1px solid var(--line-soft)}
+.dir-tab{flex:1;padding:9px 4px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);white-space:nowrap;display:flex;align-items:center;justify-content:center}
 .dir-tab:hover{color:var(--fg)}
+.dir-tab:not(.active) .dir-tab-lbl{display:none}
+.dir-tab-lbl{margin-left:4px}
 .dir-tab[data-dir=food].active{color:var(--brand-ember);border-bottom-color:var(--brand-ember)}
 .dir-tab[data-dir=goods].active{color:#35a862;border-bottom-color:#35a862}
 .dir-tab[data-dir=services].active{color:#78b4e0;border-bottom-color:#78b4e0}
+.dir-tab[data-dir=sport].active{color:#ef4444;border-bottom-color:#ef4444}
+.dir-tab[data-dir=entertainment].active{color:#eab308;border-bottom-color:#eab308}
 
 .ord-notif-dot{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:#e53e3e;border:2px solid var(--bg);display:none;pointer-events:none}
 .ord-notif-dot.on{display:block}
@@ -843,6 +848,8 @@ document.addEventListener('deviceready',function(){
 <symbol id="i-food" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></symbol>
 <symbol id="i-goods" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></symbol>
 <symbol id="i-services" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></symbol>
+<symbol id="i-sport" viewBox="0 0 24 24"><rect x="1.5" y="8" width="3" height="8" rx="1"/><rect x="4.5" y="10" width="2" height="4" rx="0.5"/><line x1="6.5" y1="12" x2="17.5" y2="12"/><rect x="17.5" y="10" width="2" height="4" rx="0.5"/><rect x="19.5" y="8" width="3" height="8" rx="1"/></symbol>
+<symbol id="i-entertain" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
 <symbol id="i-gift" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></symbol>
 <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6"/><path d="M2 15a3 3 0 000 6h20a3 3 0 000-6"/><path d="M2 9h20v6H2z"/><line x1="9" y1="9" x2="9" y2="15"/></symbol>
 <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
@@ -1021,9 +1028,15 @@ document.addEventListener('deviceready',function(){
 
     <div class="sl-panel">
       <div class="dir-tabs" id="dir-tabs">
-        <button class="dir-tab active" data-dir="food" onclick="setDirection('food')"><svg class="ico" width="16" height="16" style="margin-right:5px"><use href="#i-food"/></svg>Еда</button>
-        <button class="dir-tab" data-dir="goods" onclick="setDirection('goods')"><svg class="ico" width="16" height="16" style="margin-right:5px"><use href="#i-goods"/></svg>Товары</button>
-        <button class="dir-tab" data-dir="services" onclick="setDirection('services')"><svg class="ico" width="16" height="16" style="margin-right:5px"><use href="#i-services"/></svg>Услуги</button>
+        <div class="dir-row">
+          <button class="dir-tab active" data-dir="food" onclick="setDirection('food')"><svg class="ico" width="16" height="16"><use href="#i-food"/></svg><span class="dir-tab-lbl">Еда</span></button>
+          <button class="dir-tab" data-dir="goods" onclick="setDirection('goods')"><svg class="ico" width="16" height="16"><use href="#i-goods"/></svg><span class="dir-tab-lbl">Товары</span></button>
+          <button class="dir-tab" data-dir="services" onclick="setDirection('services')"><svg class="ico" width="16" height="16"><use href="#i-services"/></svg><span class="dir-tab-lbl">Услуги</span></button>
+        </div>
+        <div class="dir-row">
+          <button class="dir-tab" data-dir="sport" onclick="setDirection('sport')"><svg class="ico" width="16" height="16"><use href="#i-sport"/></svg><span class="dir-tab-lbl">Спорт</span></button>
+          <button class="dir-tab" data-dir="entertainment" onclick="setDirection('entertainment')"><svg class="ico" width="16" height="16"><use href="#i-entertain"/></svg><span class="dir-tab-lbl">Развлечения</span></button>
+        </div>
       </div>
       <div id="sl-filters">
         <div class="sl-search">
@@ -2108,7 +2121,7 @@ const S = {
   navHistory: [], navIdx: -1,
   features: { ...DEFAULT_FEATURES },
   direction: 'food',
-  _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null} },
+  _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null}, sport: {items:[],storeId:null}, entertainment: {items:[],storeId:null} },
   deliveryMode: null, deliveryFee: 0,
   userAddrLat: null, userAddrLng: null,
   cityData: null,
@@ -2118,9 +2131,9 @@ const S = {
 const subPlans = {}; // cache of subscription plan objects keyed by id
 
 // Last store selected per direction on the Subscriptions screen
-const _subStoreCache = { food: null, goods: null, services: null };
+const _subStoreCache = { food: null, goods: null, services: null, sport: null, entertainment: null };
 (function() {
-  for (const d of ['food','goods','services']) {
+  for (const d of ['food','goods','services','sport','entertainment']) {
     try { _subStoreCache[d] = localStorage.getItem('alliby_sub_store_' + d) || null; } catch {}
   }
 })();
@@ -2129,25 +2142,32 @@ function saveSubStoreCache(dir, id) {
   try { localStorage.setItem('alliby_sub_store_' + dir, id); } catch {}
 }
 
-const DIR_COLORS  = { food: '#e8743b', goods: '#35a862', services: '#78b4e0' };
-const ACCENT_DEEPS = { food: '#c4541e', goods: '#1f8a4f', services: '#4a90c2' };
-const ACCENT_GLOWS = { food: 'rgba(232,116,59,.45)', goods: 'rgba(52,168,98,.45)', services: 'rgba(120,180,224,.45)' };
+const DIR_COLORS  = { food: '#e8743b', goods: '#35a862', services: '#78b4e0', sport: '#ef4444', entertainment: '#eab308' };
+const ACCENT_DEEPS = { food: '#c4541e', goods: '#1f8a4f', services: '#4a90c2', sport: '#bf2828', entertainment: '#b08e00' };
+const ACCENT_GLOWS = { food: 'rgba(232,116,59,.45)', goods: 'rgba(52,168,98,.45)', services: 'rgba(120,180,224,.45)', sport: 'rgba(239,68,68,.45)', entertainment: 'rgba(234,179,8,.45)' };
 const CTA_COLORS = {
-  food:     { from:'#4a90c2', to:'#78b4e0', glow:'rgba(120,180,224,.45)' },
-  goods:    { from:'#4a90c2', to:'#78b4e0', glow:'rgba(120,180,224,.45)' },
-  services: { from:'#c4541e', to:'#e8743b', glow:'rgba(232,116,59,.45)' },
+  food:          { from:'#4a90c2', to:'#78b4e0', glow:'rgba(120,180,224,.45)' },
+  goods:         { from:'#4a90c2', to:'#78b4e0', glow:'rgba(120,180,224,.45)' },
+  services:      { from:'#c4541e', to:'#e8743b', glow:'rgba(232,116,59,.45)' },
+  sport:         { from:'#bf2828', to:'#ef4444', glow:'rgba(239,68,68,.45)' },
+  entertainment: { from:'#b08e00', to:'#eab308', glow:'rgba(234,179,8,.45)' },
 };
 const BG_ORBS = {
-  food:     { orb1:'rgba(232,116,59,.52)', sub:'rgba(232,116,59,.18)', dk:'rgba(232,116,59,.44)' },
-  goods:    { orb1:'rgba(52,168,98,.52)',  sub:'rgba(52,168,98,.18)',  dk:'rgba(52,168,98,.44)' },
-  services: { orb1:'rgba(120,180,224,.52)',sub:'rgba(120,180,224,.18)',dk:'rgba(120,180,224,.44)' },
+  food:          { orb1:'rgba(232,116,59,.52)', sub:'rgba(232,116,59,.18)', dk:'rgba(232,116,59,.44)' },
+  goods:         { orb1:'rgba(52,168,98,.52)',  sub:'rgba(52,168,98,.18)',  dk:'rgba(52,168,98,.44)' },
+  services:      { orb1:'rgba(120,180,224,.52)',sub:'rgba(120,180,224,.18)',dk:'rgba(120,180,224,.44)' },
+  sport:         { orb1:'rgba(239,68,68,.52)',  sub:'rgba(239,68,68,.18)',  dk:'rgba(239,68,68,.44)' },
+  entertainment: { orb1:'rgba(234,179,8,.52)',  sub:'rgba(234,179,8,.18)',  dk:'rgba(234,179,8,.44)' },
 };
 const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
+const _SVC_DIRS = new Set(['services','sport','entertainment']);
 
 const HEADER_TINTS = {
-  food:     'rgba(232,116,59,.52)',
-  goods:    'rgba(52,168,98,.44)',
-  services: 'rgba(37,99,235,.46)',
+  food:          'rgba(232,116,59,.52)',
+  goods:         'rgba(52,168,98,.44)',
+  services:      'rgba(37,99,235,.46)',
+  sport:         'rgba(239,68,68,.46)',
+  entertainment: 'rgba(234,179,8,.46)',
 };
 function applyDirectionAccents(dir) {
   const r = document.documentElement;
@@ -2288,11 +2308,11 @@ function setDirection(dir) {
 }
 
 function updateDirectionLabels(dir) {
-  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги<br>и запись' }[dir] || 'Меню';
+  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги<br>и запись', sport: 'Спорт<br>и запись', entertainment: 'Развлечения<br>и запись' }[dir] || 'Меню';
   document.querySelectorAll('.nav-store-lbl').forEach(el => { el.innerHTML = storeLbl; });
   const svcTabBar = document.getElementById('svc-tab-bar');
-  if (svcTabBar) svcTabBar.style.display = dir === 'services' ? '' : 'none';
-  if (dir !== 'services') {
+  if (svcTabBar) svcTabBar.style.display = _SVC_DIRS.has(dir) ? '' : 'none';
+  if (!_SVC_DIRS.has(dir)) {
     document.getElementById('svc-pane-sched')?.style.setProperty('display', 'none');
     document.getElementById('svc-tab-services')?.classList.add('active');
     document.getElementById('svc-tab-sched')?.classList.remove('active');
@@ -2302,7 +2322,7 @@ function updateDirectionLabels(dir) {
 function updateMenuSearchPlaceholder() {
   const el = document.getElementById('m-search');
   if (!el) return;
-  el.placeholder = { food: 'Поиск блюда…', goods: 'Поиск товара…', services: 'Поиск услуги…' }[S.direction] || 'Поиск…';
+  el.placeholder = { food: 'Поиск блюда…', goods: 'Поиск товара…', services: 'Поиск услуги…', sport: 'Поиск услуги…', entertainment: 'Поиск услуги…' }[S.direction] || 'Поиск…';
 }
 
 function openDirection(dir) {
@@ -3000,7 +3020,7 @@ function _storeSchedIsActive() {
 
 async function loadCaScheduleScreen() {
   const store = S.store;
-  if (!store || store.direction !== 'services') {
+  if (!store || !_SVC_DIRS.has(store.direction)) {
     document.getElementById('ca-sched-no-store').style.display = '';
     document.getElementById('ca-sched-wrap').style.display = 'none';
     return;
@@ -4160,7 +4180,7 @@ function renderStoreList(stores) {
   stores.forEach(st => {
     const d = document.createElement('div');
     d.className = 'sl-item' + (S.store?.id === st.id ? ' sel' : '');
-    const schedLabel = st.direction === 'services' ? `${svgIco('calendar',13)} Календарь записей` : `${svgIco('clock',13)} График работы`;
+    const schedLabel = _SVC_DIRS.has(st.direction) ? `${svgIco('calendar',13)} Календарь записей` : `${svgIco('clock',13)} График работы`;
     const thumb = st.image_url ? `<img src="${esc(st.image_url)}" style="width:52px;height:52px;object-fit:cover;border-radius:var(--r-2);flex-shrink:0;border:1px solid var(--line-soft)">` : '';
     const delInfo = getDeliveryInfo(st);
     const delBadge = delInfo ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${delInfo.inZone?'#16a34a':'#ef4444'};color:#fff;vertical-align:middle;margin-left:4px">${svgIco('bicycle',11)}</span>` : '';
@@ -4560,7 +4580,7 @@ async function loadStore() {
   trackEvent('menu_open', st.id);
   if (st.delivery_enabled && st.id) loadStoreZones(st.id);
   if (st.direction && st.direction !== S.direction) {
-    const dirLabel = {food:'Еда',goods:'Товары',services:'Услуги'}[S.direction] || S.direction;
+    const dirLabel = {food:'Еда',goods:'Товары',services:'Услуги',sport:'Спорт',entertainment:'Развлечения'}[S.direction] || S.direction;
     document.getElementById('store-ph-name').textContent = dirLabel;
     ['st-cuisine','st-addr','st-hours','st-phone'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
     const db = document.getElementById('st-delivery-badge'); if (db) db.style.display = 'none';
@@ -4577,8 +4597,8 @@ async function loadStore() {
   updateMenuSearchPlaceholder();
   // Show services tab bar and reset to services pane
   const svcTabBar = document.getElementById('svc-tab-bar');
-  if (svcTabBar) svcTabBar.style.display = S.direction === 'services' ? '' : 'none';
-  if (S.direction === 'services') {
+  if (svcTabBar) svcTabBar.style.display = _SVC_DIRS.has(S.direction) ? '' : 'none';
+  if (_SVC_DIRS.has(S.direction)) {
     const _prevSvcStore = localStorage.getItem('alliby_svc_store');
     if (_prevSvcStore !== st.id) {
       // Store changed — reset tab to default and clear masters cache
@@ -4603,14 +4623,14 @@ async function loadStore() {
     if (_isMst)   loadStoreMasters();
   }
   const _titleEl = document.getElementById('store-items-title');
-  if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги' }[S.direction] || 'Товары и Услуги';
+  if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги', sport: 'Услуги и аренда', entertainment: 'Услуги и аренда' }[S.direction] || 'Товары и Услуги';
   const _phNameEl = document.getElementById('store-ph-name');
   _phNameEl.textContent = st.name;
   document.getElementById('st-addr').textContent   = st.address || '';
   document.getElementById('st-hours').textContent  = st.working_hours || '';
   document.getElementById('st-phone').textContent  = st.phone || '';
   const delBadgeEl = document.getElementById('st-delivery-badge');
-  if (delBadgeEl) delBadgeEl.style.display = (st.delivery_enabled && st.direction !== 'services') ? '' : 'none';
+  if (delBadgeEl) delBadgeEl.style.display = (st.delivery_enabled && !_SVC_DIRS.has(st.direction)) ? '' : 'none';
   const clLink = document.getElementById('st-complaint-link'); if (clLink) clLink.style.display = '';
   const legalSec = document.getElementById('store-legal-sec');
   const legalBody = document.getElementById('store-legal-body');
@@ -4641,7 +4661,7 @@ async function loadStore() {
   const cuEl = document.getElementById('st-cuisine');
   if (cuEl) { cuEl.style.display = 'flex'; cuEl.style.alignItems = 'center'; cuEl.style.gap = '4px'; cuEl.innerHTML = sc ? `${svgIco('tag',12)} ${esc(stripEmoji(sc.name))}` : ''; }
   const schedBtn = document.getElementById('st-sched-btn');
-  if (schedBtn) { schedBtn.style.display = ''; schedBtn.innerHTML = st.direction === 'services' ? `${svgIco('calendar',13)} Календарь записей` : `${svgIco('clock',13)} График работы`; }
+  if (schedBtn) { schedBtn.style.display = ''; schedBtn.innerHTML = _SVC_DIRS.has(st.direction) ? `${svgIco('calendar',13)} Календарь записей` : `${svgIco('clock',13)} График работы`; }
   document.getElementById('store-subs').innerHTML = SK.subCards(2);
   document.getElementById('menu-items').innerHTML = SK.itemCards(6);
   // Reset category chip when entering a different store
@@ -4698,7 +4718,7 @@ function renderSubCard(s) {
       : (inCart
           ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">${svgIco('check',12)} В корзине</button>`
           : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`)}
-    ${!canBuy || outOfStock || S.direction === 'services' ? '' : (inGift
+    ${!canBuy || outOfStock || _SVC_DIRS.has(S.direction) ? '' : (inGift
       ? `<button class="btn btn-sm btn-full" style="margin-top:4px;opacity:.65" onclick="event.stopPropagation();removeFromGiftCart('${s.id}')">${svgIco('gift',12)} В корзине</button>`
       : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftConfirm('${s.id}')">Приобрести в подарок</button>`)}
   </div>`;
@@ -5067,10 +5087,10 @@ function itemFallbackImg(item, alt) {
 
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
-  if (item.is_rent) {
+  if (item.is_rent && (S.direction === 'sport' || S.direction === 'entertainment')) {
     return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openRentModal('${item.id}')">Арендовать</button>`;
   }
-  if (S.direction === 'services') {
+  if (_SVC_DIRS.has(S.direction)) {
     if (_schedulePreselect) {
       return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();bookWithPreselect(this,itemCache.get('${item.id}'))">Записаться ${_schedulePreselect.start}</button>`;
     }
@@ -5213,7 +5233,7 @@ function openItemDetail(id) {
   document.getElementById('mi-name').textContent = item.name;
   document.getElementById('mi-img').innerHTML = itemFallbackImg(item);
   const descEl = document.getElementById('mi-desc');
-  const prepLabel = { food: 'Время приготовления', goods: 'Время подготовки', services: 'Время на услугу' }[S.direction] || 'Время';
+  const prepLabel = { food: 'Время приготовления', goods: 'Время подготовки', services: 'Время на услугу', sport: 'Время на услугу', entertainment: 'Время на услугу' }[S.direction] || 'Время';
   descEl.innerHTML = [
     item.description ? `<span>${esc(item.description)}</span>` : '',
     item.preparation_time > 0 ? `<span style="color:var(--fg-4)">⏱ ${prepLabel}: ${item.preparation_time} мин</span>` : '',
@@ -5258,10 +5278,10 @@ function openItemDetail(id) {
   } else {
     btn.style.display = '';
     btn.disabled = !item.is_available;
-    if (item.is_rent && item.is_available) {
+    if (item.is_rent && item.is_available && (S.direction === 'sport' || S.direction === 'entertainment')) {
       btn.textContent = 'Арендовать';
       btn.onclick = () => { closeModal('m-item'); openRentModal(item.id); };
-    } else if (S.direction === 'services' && item.is_available) {
+    } else if (_SVC_DIRS.has(S.direction) && item.is_available) {
       btn.textContent = 'Записаться';
       btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
     } else {
@@ -7016,7 +7036,7 @@ async function openSubDetailModal(id) {
   descEl.style.display = s.description ? 'block' : 'none';
   document.getElementById('msd-conds').innerHTML = '';
 
-  const isServices = S.direction === 'services';
+  const isServices = _SVC_DIRS.has(S.direction);
   const canBuyNow = S.storeSubActive !== false;
   const buyBtn = document.getElementById('msd-buy-btn');
   buyBtn.style.display = canBuyNow ? '' : 'none';
@@ -7520,7 +7540,7 @@ async function restoreNav() {
   } catch(e) {}
   // restore all direction carts
   try {
-    for (const dir of ['food','goods','services']) {
+    for (const dir of ['food','goods','services','sport','entertainment']) {
       const sc = localStorage.getItem(`alliby_cart_${dir}`);
       if (sc) { const d = JSON.parse(sc); S._carts[dir] = { items: d.items || [], storeId: d.storeId || null }; }
     }
@@ -7576,13 +7596,15 @@ setTimeout(hideSplash, 500);
 
 // ─── HOME ───
 const DIR_META = {
-  food:     { label: 'Еда',    color: '#e8743b' },
-  goods:    { label: 'Товары', color: '#35a862' },
-  services: { label: 'Услуги', color: '#78b4e0' },
+  food:          { label: 'Еда',         color: '#e8743b' },
+  goods:         { label: 'Товары',      color: '#35a862' },
+  services:      { label: 'Услуги',      color: '#78b4e0' },
+  sport:         { label: 'Спорт',       color: '#ef4444' },
+  entertainment: { label: 'Развлечения', color: '#eab308' },
 };
 
 function _renderRecentStores(el, unique) {
-  const byDir = { food: [], goods: [], services: [] };
+  const byDir = { food: [], goods: [], services: [], sport: [], entertainment: [] };
   for (const e of unique) { const d = e.store?.direction; if (d && byDir[d] && byDir[d].length < 4) byDir[d].push(e); }
   const hasAny = Object.values(byDir).some(a => a.length > 0);
   if (!hasAny) { el.innerHTML = ''; return; }
@@ -9273,7 +9295,7 @@ function openStoreSchedule(st) {
   _stSched.month = now.getMonth();
   _stSched.dayData = {};
   _stSched.openDate = null;
-  const title = st.direction === 'services' ? 'Календарь записей' : 'График работы';
+  const title = _SVC_DIRS.has(st.direction) ? 'Календарь записей' : 'График работы';
   document.getElementById('mss-title').textContent = `${title} — ${esc(st.name)}`;
   document.getElementById('mss-day-view').style.display = 'none';
   openModal('m-store-sched');
