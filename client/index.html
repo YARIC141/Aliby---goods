@@ -1166,6 +1166,10 @@ document.addEventListener('deviceready',function(){
     </div>
 
     <div class="sec-title" id="store-items-title" style="margin:16px 0 4px">Товары и Услуги</div>
+    <div id="fg-tab-bar" style="display:none;margin:0 -20px 4px;padding:0 16px;border-bottom:1px solid var(--line-soft)" class="cart-tabs">
+      <button class="cart-tab active" id="fg-tab-items" onclick="switchFgTab('items')"><span id="fg-lbl-items">Товары</span></button>
+      <button class="cart-tab" id="fg-tab-rental" onclick="switchFgTab('rental')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
+    </div>
     <div class="cat-bar" id="cat-bar" style="margin:0 -20px">
     </div>
 
@@ -2324,6 +2328,8 @@ function updateDirectionLabels(dir) {
   document.querySelectorAll('.nav-store-lbl').forEach(el => { el.innerHTML = storeLbl; });
   const svcTabBar = document.getElementById('svc-tab-bar');
   if (svcTabBar) svcTabBar.style.display = _SVC_DIRS.has(dir) ? '' : 'none';
+  const fgTabBar = document.getElementById('fg-tab-bar');
+  if (fgTabBar) fgTabBar.style.display = (dir === 'food' || dir === 'goods') ? '' : 'none';
   const isSport = dir === 'sport';
   const svcLbl = document.getElementById('svc-lbl-services');
   const mstLbl = document.getElementById('svc-lbl-masters');
@@ -3030,6 +3036,49 @@ function switchSvcTab(tab) {
   if (isSched) loadCaScheduleScreen();
   if (isMst)   loadStoreMasters();
 }
+// Separate tab bar for food/goods stores: "Товары/Меню" vs "Запись" (rental items only).
+// Kept independent of _svcTab/svc-tab-bar — that one is gated to _SVC_DIRS and also drives
+// delivery-toggle visibility, which food/goods must keep unaffected.
+let _fgTab = 'items';
+let _rentalItems = null, _rentalItemsStoreId = null;
+async function switchFgTab(tab) {
+  _fgTab = tab;
+  document.getElementById('fg-tab-items')?.classList.toggle('active', tab === 'items');
+  document.getElementById('fg-tab-rental')?.classList.toggle('active', tab === 'rental');
+  const catBar = document.getElementById('cat-bar');
+  const toolbar = document.querySelector('.menu-toolbar');
+  if (catBar)  catBar.style.display  = tab === 'rental' ? 'none' : '';
+  if (toolbar) toolbar.style.display = tab === 'rental' ? 'none' : '';
+  const el = document.getElementById('menu-items');
+  if (!el) return;
+  if (tab === 'items') {
+    _renderMenuGrid(el, _allMenuItems);
+    return;
+  }
+  // "Запись": rental items only. _allMenuItems is a paginated, category-scoped slice of the
+  // catalog (not the full item set), so this needs its own unpaginated fetch by item_type.
+  _detachCliObserver();
+  const storeId = S.store?.id;
+  if (!storeId) return;
+  if (_rentalItemsStoreId === storeId && _rentalItems) {
+    el.innerHTML = _rentalItems.length ? _rentalItems.map(renderItemCard).join('') : '<div class="empty">Нет позиций для записи</div>';
+    updateCartCount();
+    return;
+  }
+  el.innerHTML = SK.itemCards(3);
+  try {
+    const items = await req(`/rest/v1/menu_items?store_id=eq.${storeId}&item_type=eq.rental&is_visible=eq.true&order=name.asc&select=*`);
+    if (S.store?.id !== storeId || _fgTab !== 'rental') return; // store/tab changed while awaiting
+    items.forEach(it => cacheItem(it));
+    _rentalItems = items;
+    _rentalItemsStoreId = storeId;
+    el.innerHTML = items.length ? items.map(renderItemCard).join('') : '<div class="empty">Нет позиций для записи</div>';
+    updateCartCount();
+  } catch (e) {
+    el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
+  }
+}
+
 function _storeSchedIsActive() {
   return document.getElementById('screen-store')?.classList.contains('active')
       && document.getElementById('svc-pane-sched')?.style.display !== 'none';
@@ -4639,6 +4688,16 @@ async function loadStore() {
     if (_isSched) loadCaScheduleScreen();
     if (_isMst)   loadStoreMasters();
   }
+  // "Товары/Меню" vs "Запись" (rental items) tab bar — food/goods only, independent of
+  // svc-tab-bar so delivery/pickup (also gated on food/goods) stays unaffected.
+  const fgTabBar = document.getElementById('fg-tab-bar');
+  const _isFg = S.direction === 'food' || S.direction === 'goods';
+  if (fgTabBar) fgTabBar.style.display = _isFg ? '' : 'none';
+  if (_isFg) {
+    const fgLbl = document.getElementById('fg-lbl-items');
+    if (fgLbl) fgLbl.textContent = S.direction === 'food' ? 'Меню' : 'Товары';
+  }
+  switchFgTab('items');
   const _titleEl = document.getElementById('store-items-title');
   if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги', sport: 'Услуги и аренда', entertainment: 'Услуги и аренда' }[S.direction] || 'Товары и Услуги';
   const _phNameEl = document.getElementById('store-ph-name');
