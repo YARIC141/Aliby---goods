@@ -4544,43 +4544,97 @@ function _renderPriceRules() {
   if (!el) return;
   if (!_editPriceRules.length) { el.innerHTML = ''; return; }
   el.innerHTML = _editPriceRules.map((r, i) => {
+    const priceErr = !r.price || r.price <= 0;
     const dayChecks = [0,1,2,3,4,5,6].map(d => {
       const ch = (!r.days || r.days.includes(d)) ? 'checked' : '';
       return `<label style="display:flex;align-items:center;gap:2px;font-size:12px;cursor:pointer">
         <input type="checkbox" style="width:auto;margin:0" ${ch} onchange="_priceRuleDay(${i},${d},this.checked)"> ${_PRICE_RULE_DAY_LABELS[d]}
       </label>`;
     }).join('');
-    return `<div style="border:1px solid var(--line);border-radius:var(--r-2);padding:10px;display:flex;flex-direction:column;gap:8px">
+    return `<div style="border:1px solid var(--line);border-radius:var(--r-2);padding:10px;display:flex;flex-direction:column;gap:8px" id="prl-row-${i}">
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-        <input type="number" step="0.01" min="0" value="${r.price||''}" placeholder="Цена ₽"
-          style="width:88px;flex-shrink:0" oninput="_editPriceRules[${i}].price=parseFloat(this.value)||0">
+        <div style="flex-shrink:0">
+          <input type="number" step="0.01" min="0.01" value="${r.price > 0 ? r.price : ''}" placeholder="Цена ₽ *"
+            id="prl-price-${i}" style="width:88px;${priceErr ? 'border-color:var(--err)' : ''}"
+            oninput="_editPriceRules[${i}].price=parseFloat(this.value)||0;_validatePriceRulePrice(${i})">
+          <div id="prl-price-err-${i}" style="font-size:10px;color:var(--err);margin-top:2px;${priceErr ? '' : 'display:none'}">Укажите цену</div>
+        </div>
         <input type="text" value="${esc(r.label||'')}" placeholder="Название (необяз.)"
           style="flex:1;min-width:100px" oninput="_editPriceRules[${i}].label=this.value||null">
         <button class="btn btn-sm btn-d" type="button" style="padding:0 8px;flex-shrink:0" onclick="removePriceRule(${i})">✕</button>
       </div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--fg-3)">Время:</span>
-        <input type="time" value="${r.time_from||''}" style="width:92px"
-          onchange="_editPriceRules[${i}].time_from=this.value||null">
+        <input type="time" value="${r.time_from||''}" id="prl-from-${i}" style="width:92px"
+          onchange="_editPriceRules[${i}].time_from=this.value||null;_validatePriceRuleTime(${i})">
         <span style="font-size:12px;color:var(--fg-3)">–</span>
-        <input type="time" value="${r.time_to||''}" style="width:92px"
-          onchange="_editPriceRules[${i}].time_to=this.value||null">
+        <input type="time" value="${r.time_to||''}" id="prl-to-${i}" style="width:92px"
+          onchange="_editPriceRules[${i}].time_to=this.value||null;_validatePriceRuleTime(${i})">
+        <span id="prl-time-err-${i}" style="font-size:10px;color:var(--err);display:none"></span>
       </div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--fg-3)">Дни:</span>
         ${dayChecks}
+        <span id="prl-day-err-${i}" style="font-size:10px;color:var(--err);display:none">Выберите хотя бы один день</span>
       </div>
     </div>`;
   }).join('');
+}
+
+function _validatePriceRulePrice(i) {
+  const inp = document.getElementById(`prl-price-${i}`);
+  const err = document.getElementById(`prl-price-err-${i}`);
+  if (!inp || !err) return;
+  const bad = !_editPriceRules[i]?.price || _editPriceRules[i].price <= 0;
+  inp.style.borderColor = bad ? 'var(--err)' : '';
+  err.style.display = bad ? '' : 'none';
+}
+
+function _validatePriceRuleTime(i) {
+  const fromEl = document.getElementById(`prl-from-${i}`);
+  const toEl   = document.getElementById(`prl-to-${i}`);
+  const errEl  = document.getElementById(`prl-time-err-${i}`);
+  if (!fromEl || !toEl || !errEl) return;
+  const from = fromEl.value, to = toEl.value;
+  let msg = '';
+  if (from && !to)             msg = 'Укажите время «до»';
+  else if (!from && to)        msg = 'Укажите время «от»';
+  else if (from && to && from >= to) msg = '«От» должно быть раньше «до»';
+  fromEl.style.borderColor = msg ? 'var(--err)' : '';
+  toEl.style.borderColor   = msg ? 'var(--err)' : '';
+  errEl.textContent  = msg;
+  errEl.style.display = msg ? '' : 'none';
+}
+
+function _getPriceRulesErrors() {
+  for (let i = 0; i < _editPriceRules.length; i++) {
+    const r = _editPriceRules[i];
+    const n = i + 1;
+    if (!r.price || r.price <= 0)
+      return `Правило ${n}: укажите цену больше 0`;
+    if ((r.time_from && !r.time_to) || (!r.time_from && r.time_to))
+      return `Правило ${n}: укажите оба времени или ни одного`;
+    if (r.time_from && r.time_to && r.time_from >= r.time_to)
+      return `Правило ${n}: время «от» должно быть раньше «до»`;
+    if (r.days !== null && r.days.length === 0)
+      return `Правило ${n}: выберите хотя бы один день`;
+  }
+  return null;
 }
 
 function _priceRuleDay(ruleIdx, day, checked) {
   const r = _editPriceRules[ruleIdx];
   if (!r) return;
   if (!r.days) r.days = [0,1,2,3,4,5,6];
-  if (checked) { if (!r.days.includes(day)) r.days.push(day); }
-  else r.days = r.days.filter(d => d !== day);
-  if (r.days.length === 7) r.days = null;
+  if (!checked) {
+    if (r.days.length <= 1) { _renderPriceRules(); return; } // не снимаем последний день
+    r.days = r.days.filter(d => d !== day);
+  } else {
+    if (!r.days.includes(day)) r.days.push(day);
+    if (r.days.length === 7) r.days = null;
+  }
+  const errEl = document.getElementById(`prl-day-err-${ruleIdx}`);
+  if (errEl) errEl.style.display = (r.days !== null && r.days.length === 0) ? '' : 'none';
 }
 
 function addPriceRule() {
@@ -4979,6 +5033,10 @@ async function deleteStorePhoto() {
 async function saveMenuItem() {
   const btn = document.getElementById('mmi-save-btn');
   const restore = btnLoad(btn);
+  if (document.getElementById('mmi-price-rules-toggle')?.checked && _editPriceRules.length) {
+    const rulesErr = _getPriceRulesErrors();
+    if (rulesErr) { restore(); showAdminToast(rulesErr); return; }
+  }
   const id = document.getElementById('mmi-id').value;
   const body = {
     store_id:    document.getElementById('mmi-store').value,
