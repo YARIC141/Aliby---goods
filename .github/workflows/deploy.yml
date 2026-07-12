@@ -31,9 +31,17 @@ jobs:
 
       - name: Apply database migrations
         run: |
-          for f in $(ls supabase/migrations/*.sql | sort); do
-            cat "$f" | ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
-          done
+          rsync -az -e "ssh -p 2222 -i ~/.ssh/id_ed25519" supabase/migrations/ root@${{ secrets.VPS_HOST }}:/tmp/alliby-mig/
+          ssh -p 2222 root@${{ secrets.VPS_HOST }} "
+            for f in \$(ls /tmp/alliby-mig/*.sql | sort); do
+              base=\$(basename \"\$f\")
+              num=\$(echo \"\$base\" | sed 's/20240101000//;s/_.*//')
+              if [ \"\$num\" -eq \"\$num\" ] 2>/dev/null && [ \"\$num\" -ge 71 ]; then
+                echo \">> \$base\"
+                cat \"\$f\" | docker exec -i supabase-db psql -U postgres -d postgres
+              fi
+            done
+          "
           ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker restart supabase-rest 2>/dev/null || docker restart rest 2>/dev/null || true"
 
       - name: Deploy Edge Functions
