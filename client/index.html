@@ -1411,18 +1411,9 @@ document.addEventListener('deviceready',function(){
           </table>
         </div>
         <div id="mrent-time-row" style="display:none;margin-bottom:12px">
-          <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Время аренды</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div style="flex:1">
-              <label style="font-size:11px;color:var(--fg-3)">С</label>
-              <input type="time" id="mrent-time-start" style="width:100%" oninput="rentCalcTotal()">
-            </div>
-            <div style="flex:1">
-              <label style="font-size:11px;color:var(--fg-3)">До</label>
-              <input type="time" id="mrent-time-end" style="width:100%" oninput="rentCalcTotal()">
-            </div>
-          </div>
-          <div id="mrent-time-hint" style="font-size:12px;color:var(--fg-3);margin-top:4px"></div>
+          <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Выберите слоты</label>
+          <div id="mrent-slots-grid" style="display:flex;flex-wrap:wrap;gap:5px;max-height:220px;overflow-y:auto"></div>
+          <div id="mrent-time-hint" style="font-size:12px;color:var(--fg-3);margin-top:6px"></div>
         </div>
         <div id="mrent-total-row" style="display:none;background:var(--bg-2);border-radius:var(--r-2);padding:10px 12px;margin-bottom:12px;font:500 14px/1.4 var(--font-sans)">
           <div>Итого: <b id="mrent-total-price"></b></div>
@@ -2412,6 +2403,9 @@ let _rentStartDate = null; // 'YYYY-MM-DD'
 let _rentEndDate   = null; // 'YYYY-MM-DD' (for day/week/month) or null
 let _rentStartTime = null;
 let _rentEndTime   = null;
+let _rentSlots     = [];   // [{ slot_time:'HH:MM', available:N }] for time-unit rentals
+let _rentSlotA     = null; // index of first selected slot
+let _rentSlotB     = null; // index of last selected slot (inclusive, >= _rentSlotA)
 
 // ── Tab helpers ──────────────────────────────────────────────
 function loadRentTab() {
@@ -2459,7 +2453,12 @@ function openRentModal(itemId) {
   _rentQty  = 1;
   _rentStartDate = null;
   _rentEndDate   = null;
+  _rentStartTime = null;
+  _rentEndTime   = null;
   _rentDaysAvail = {};
+  _rentSlots     = [];
+  _rentSlotA     = null;
+  _rentSlotB     = null;
   _rentCal = { year: new Date().getFullYear(), month: new Date().getMonth() };
 
   document.getElementById('mrent-name').textContent = item.name;
@@ -2559,11 +2558,16 @@ function rentPickDay(dateStr) {
   const isTimeUnit = unit === 'minute' || unit === 'hour';
 
   if (isTimeUnit) {
-    // Single day pick → show time range
+    // Single day pick → show slot grid
     _rentStartDate = dateStr;
     _rentEndDate   = null;
+    _rentSlotA     = null;
+    _rentSlotB     = null;
+    _rentStartTime = null;
+    _rentEndTime   = null;
+    document.getElementById('mrent-total-row').style.display = 'none';
     _rentRenderCal();
-    _rentShowTimeRow(dateStr);
+    _rentShowSlots(dateStr);
   } else {
     // Date range: first click = start, second = end
     if (!_rentStartDate || _rentEndDate || dateStr < _rentStartDate) {
@@ -2606,17 +2610,142 @@ function _rentSnapEndDate(endStr) {
   return `${y}-${m}-${d}`;
 }
 
-function _rentShowTimeRow(dateStr) {
-  const store = S.allStores?.find(s => s.id === _rentItem?.store_id);
-  const sched = store?.schedule || store?.working_hours || '';
+function _parseStoreHours(store) {
+  const text = store?.working_hours || '';
+  const m = text.match(/(\d{1,2}:\d{2})\s*[-–—]\s*(\d{1,2}:\d{2})/);
+  if (m) {
+    const open  = m[1].padStart(5, '0');
+    const close = m[2].padStart(5, '0');
+    if (open < close) return { open, close };
+  }
+  return { open: '09:00', close: '21:00' };
+}
+
+async function _rentShowSlots(dateStr) {
+  const item  = _rentItem;
+  if (!item) return;
+  const store = S.allStores?.find(s => s.id === item.store_id);
+  const { open, close } = _parseStoreHours(store);
+  const unit    = item.rent_period_unit;
+  const stepMin = unit === 'hour' ? (item.rent_period_step || 1) * 60 : (item.rent_period_step || 1);
+
   const timeRow = document.getElementById('mrent-time-row');
-  const hint = document.getElementById('mrent-time-hint');
+  const grid    = document.getElementById('mrent-slots-grid');
+  const hint    = document.getElementById('mrent-time-hint');
   if (timeRow) timeRow.style.display = '';
-  // Default times from schedule if available, else 09:00-21:00
-  const defStart = '09:00', defEnd = '21:00';
-  document.getElementById('mrent-time-start').value = defStart;
-  document.getElementById('mrent-time-end').value   = defEnd;
-  if (hint) hint.textContent = 'Выберите время начала и окончания в пределах рабочего дня';
+  if (grid)    grid.innerHTML = '<span style="font-size:12px;color:var(--fg-3)">Загрузка…</span>';
+  if (hint)    hint.textContent = '';
+
+  try {
+    const rows = await req('/rest/v1/rpc/get_rent_slots_availability', {
+      method: 'POST',
+      body: JSON.stringify({ p_item_id: item.id, p_date: dateStr, p_open: open, p_close: close, p_step_min: stepMin }),
+    });
+    _rentSlots = rows || [];
+  } catch {
+    _rentSlots = [];
+    if (hint) hint.textContent = 'Ошибка загрузки слотов';
+  }
+  _rentRenderSlots();
+}
+
+function _rentRenderSlots() {
+  const grid = document.getElementById('mrent-slots-grid');
+  const hint = document.getElementById('mrent-time-hint');
+  if (!grid) return;
+  if (!_rentSlots.length) { grid.innerHTML = '<span style="font-size:12px;color:var(--fg-3)">Нет доступных слотов</span>'; return; }
+
+  const qty = _rentQty || 1;
+  grid.innerHTML = _rentSlots.map((sl, i) => {
+    const inRange  = _rentSlotA !== null && _rentSlotB !== null && i >= _rentSlotA && i <= _rentSlotB;
+    const isEdge   = i === _rentSlotA || i === _rentSlotB;
+    const avail    = sl.available;
+    const disabled = avail < qty;
+    // Check if all slots in a potential range are available (only highlight selection if valid)
+    let bg, color, border;
+    if (isEdge)         { bg = 'var(--accent)';  color = '#fff';            border = 'transparent'; }
+    else if (inRange)   { bg = 'var(--accent-2,rgba(232,116,59,.18))'; color = 'var(--accent)'; border = 'var(--accent)'; }
+    else if (disabled)  { bg = 'var(--bg-2)';    color = 'var(--fg-4)';    border = 'var(--line)'; }
+    else                { bg = 'var(--bg-2)';    color = 'var(--fg)';      border = 'var(--line)'; }
+    const availHint = !disabled && avail < (_rentItem?.total_quantity || 99)
+      ? `<span style="font-size:9px;display:block;color:${color === '#fff' ? 'rgba(255,255,255,.75)' : 'var(--fg-3)'}">${avail}</span>`
+      : '';
+    return `<button onclick="_rentClickSlot(${i})" ${disabled ? 'disabled' : ''}
+      style="padding:5px 8px;font-size:12px;line-height:1.2;border:1px solid ${border};background:${bg};color:${color};border-radius:var(--r-2);cursor:${disabled ? 'not-allowed' : 'pointer'};opacity:${disabled ? '.4' : '1'};min-width:54px;text-align:center">
+      ${esc(sl.slot_time)}${availHint}
+    </button>`;
+  }).join('');
+
+  if (_rentSlotA !== null && _rentSlotB !== null) {
+    const startT = _rentSlots[_rentSlotA].slot_time;
+    const endSl  = _rentSlots[_rentSlotB];
+    // end time = last slot's start + step
+    const [h, m] = endSl.slot_time.split(':').map(Number);
+    const item   = _rentItem;
+    const stepMin = item.rent_period_unit === 'hour' ? (item.rent_period_step || 1) * 60 : (item.rent_period_step || 1);
+    const endMin  = h * 60 + m + stepMin;
+    const endT    = String(Math.floor(endMin / 60)).padStart(2, '0') + ':' + String(endMin % 60).padStart(2, '0');
+    const count   = _rentSlotB - _rentSlotA + 1;
+    if (hint) hint.textContent = `${startT} – ${endT} · ${count} слот${count === 1 ? '' : count < 5 ? 'а' : 'ов'}`;
+  } else if (_rentSlotA !== null) {
+    if (hint) hint.textContent = 'Выберите конечный слот';
+  } else {
+    if (hint) hint.textContent = 'Нажмите на начальный слот';
+  }
+}
+
+function _rentHideActionBtns() {
+  ['mrent-add-cart-btn','mrent-book-btn','mrent-pay-btn'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  const tr = document.getElementById('mrent-total-row'); if (tr) tr.style.display = 'none';
+}
+
+function _rentClickSlot(idx) {
+  const sl = _rentSlots[idx];
+  if (!sl || sl.available < (_rentQty || 1)) return;
+
+  if (_rentSlotA === null || _rentSlotB !== null) {
+    // Start new selection
+    _rentSlotA = idx;
+    _rentSlotB = null;
+    _rentStartTime = null;
+    _rentEndTime   = null;
+    _rentHideActionBtns();
+    _rentRenderSlots();
+    return;
+  }
+
+  if (idx < _rentSlotA) {
+    // Clicked before start → restart
+    _rentSlotA = idx;
+    _rentSlotB = null;
+    _rentHideActionBtns();
+    _rentRenderSlots();
+    return;
+  }
+
+  if (idx === _rentSlotA) {
+    // Deselect
+    _rentSlotA = null;
+    _rentSlotB = null;
+    _rentHideActionBtns();
+    _rentRenderSlots();
+    return;
+  }
+
+  // Validate: all slots in range must have enough availability
+  const qty = _rentQty || 1;
+  for (let i = _rentSlotA; i <= idx; i++) {
+    if (_rentSlots[i].available < qty) {
+      const hint = document.getElementById('mrent-time-hint');
+      if (hint) { hint.textContent = `Слот ${_rentSlots[i].slot_time} недоступен для ${qty} шт.`; hint.style.color = 'var(--err)'; }
+      return;
+    }
+  }
+
+  _rentSlotB = idx;
+  _rentRenderSlots();
   rentCalcTotal();
 }
 
@@ -2631,21 +2760,20 @@ function rentCalcTotal() {
   let periods = 0, startDT, endDT;
 
   if (isTimeUnit && _rentStartDate) {
-    const ts = document.getElementById('mrent-time-start')?.value;
-    const te = document.getElementById('mrent-time-end')?.value;
-    const hint = document.getElementById('mrent-time-hint');
-    if (!ts || !te) return;
-    if (te <= ts) {
-      if (hint) { hint.textContent = 'Время окончания должно быть позже времени начала'; hint.style.color = 'var(--err)'; }
-      document.getElementById('mrent-total-row').style.display = 'none';
-      document.getElementById('mrent-add-cart-btn').style.display = 'none';
-      return;
-    }
-    if (hint) { hint.textContent = 'Выберите время начала и окончания в пределах рабочего дня'; hint.style.color = 'var(--fg-3)'; }
-    _rentStartTime = ts;
-    _rentEndTime   = te;
-    startDT = new Date(`${_rentStartDate}T${ts}`);
-    endDT   = new Date(`${_rentStartDate}T${te}`);
+    if (_rentSlotA === null || _rentSlotB === null) return;
+    const stepMin = unit === 'hour' ? step * 60 : step;
+    const startSlot = _rentSlots[_rentSlotA];
+    const endSlot   = _rentSlots[_rentSlotB];
+    if (!startSlot || !endSlot) return;
+    const [sh, sm] = startSlot.slot_time.split(':').map(Number);
+    const [eh, em] = endSlot.slot_time.split(':').map(Number);
+    const endMinutes = eh * 60 + em + stepMin;
+    const endH = String(Math.floor(endMinutes / 60)).padStart(2, '0');
+    const endM = String(endMinutes % 60).padStart(2, '0');
+    _rentStartTime = startSlot.slot_time;
+    _rentEndTime   = `${endH}:${endM}`;
+    startDT = new Date(`${_rentStartDate}T${_rentStartTime}`);
+    endDT   = new Date(`${_rentStartDate}T${_rentEndTime}`);
     const diffMin = (endDT - startDT) / 60000;
     periods = unit === 'minute'
       ? Math.floor(diffMin / step)
