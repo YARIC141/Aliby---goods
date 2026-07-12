@@ -105,10 +105,16 @@ Deno.serve(async (req: Request) => {
     // Убеждаемся что удаляем именно сотрудника (не другого админа)
     const { data: emp } = await serviceClient
       .from('profiles').select('role').eq('id', body.employee_id).single()
-    if (emp?.role !== 'employee') return jsonResponse({ error: 'Not an employee' }, 400)
+    if (emp && emp.role !== 'employee') return jsonResponse({ error: 'Not an employee' }, 400)
 
-    const { error } = await serviceClient.auth.admin.deleteUser(body.employee_id)
-    if (error) return jsonResponse({ error: error.message }, 500)
+    // Удаляем auth-пользователя; игнорируем 404 (уже удалён)
+    const { error: authErr } = await serviceClient.auth.admin.deleteUser(body.employee_id)
+    if (authErr && !authErr.message.toLowerCase().includes('not found')) {
+      return jsonResponse({ error: authErr.message }, 500)
+    }
+
+    // Явно удаляем профиль (нет CASCADE с auth.users → profiles)
+    await serviceClient.from('profiles').delete().eq('id', body.employee_id)
 
     return jsonResponse({ ok: true })
   }
