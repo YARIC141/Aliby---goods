@@ -2656,23 +2656,28 @@ function _rentRenderSlots() {
   if (!_rentSlots.length) { grid.innerHTML = '<span style="font-size:12px;color:var(--fg-3)">Нет доступных слотов</span>'; return; }
 
   const qty = _rentQty || 1;
+  const _slotStepMin = _rentItem?.rent_period_unit === 'hour'
+    ? (_rentItem?.rent_period_step || 1) * 60
+    : (_rentItem?.rent_period_step || 1);
   grid.innerHTML = _rentSlots.map((sl, i) => {
     const inRange  = _rentSlotA !== null && _rentSlotB !== null && i >= _rentSlotA && i <= _rentSlotB;
     const isEdge   = i === _rentSlotA || i === _rentSlotB;
     const avail    = sl.available;
     const disabled = avail < qty;
-    // Check if all slots in a potential range are available (only highlight selection if valid)
     let bg, color, border;
     if (isEdge)         { bg = 'var(--accent)';  color = '#fff';            border = 'transparent'; }
     else if (inRange)   { bg = 'var(--accent-2,rgba(232,116,59,.18))'; color = 'var(--accent)'; border = 'var(--accent)'; }
     else if (disabled)  { bg = 'var(--bg-2)';    color = 'var(--fg-4)';    border = 'var(--line)'; }
     else                { bg = 'var(--bg-2)';    color = 'var(--fg)';      border = 'var(--line)'; }
+    const [sh, sm] = sl.slot_time.split(':').map(Number);
+    const endRaw = sh * 60 + sm + _slotStepMin;
+    const endTime = String(Math.floor(endRaw / 60)).padStart(2,'0') + ':' + String(endRaw % 60).padStart(2,'0');
     const availHint = !disabled && avail < (_rentItem?.total_quantity || 99)
       ? `<span style="font-size:9px;display:block;color:${color === '#fff' ? 'rgba(255,255,255,.75)' : 'var(--fg-3)'}">${avail}</span>`
       : '';
     return `<button onclick="_rentClickSlot(${i})" ${disabled ? 'disabled' : ''}
       style="padding:5px 8px;font-size:12px;line-height:1.2;border:1px solid ${border};background:${bg};color:${color};border-radius:var(--r-2);cursor:${disabled ? 'not-allowed' : 'pointer'};opacity:${disabled ? '.4' : '1'};min-width:54px;text-align:center">
-      ${esc(sl.slot_time)}${availHint}
+      ${esc(sl.slot_time)}<span style="font-size:10px;display:block;opacity:.7">–${endTime}</span>${availHint}
     </button>`;
   }).join('');
 
@@ -2811,8 +2816,8 @@ function rentCalcTotal() {
     if (bookBtn) bookBtn.style.display = '';
     if (payBtn)  payBtn.style.display  = S.storeSubActive !== false ? '' : 'none';
   } else {
-    if (addBtn)  addBtn.style.display  = S.storeSubActive === false ? 'none' : '';
-    if (bookBtn) bookBtn.style.display = 'none';
+    if (addBtn)  addBtn.style.display  = S.storeSubActive !== false ? '' : 'none';
+    if (bookBtn) bookBtn.style.display = '';
     if (payBtn)  payBtn.style.display  = 'none';
   }
 
