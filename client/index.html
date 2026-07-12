@@ -4917,7 +4917,7 @@ async function loadMenuItems() {
   // New store or category change — reset state
   _allMenuItems = [];
   const catFilter = catId ? `&category_id=eq.${catId}` : '';
-  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}${catFilter}&is_visible=eq.true&order=name.asc`, loading: false, storeId, catId, hasMore: false };
+  _menuCliState = { offset: 0, baseUrl: `/rest/v1/menu_items?store_id=eq.${storeId}${catFilter}&is_visible=eq.true&order=name.asc&select=*,item_price_rules(price)`, loading: false, storeId, catId, hasMore: false };
 
   // Skeleton first (sync) — cache replaces it in the same frame, no visible flash
   el.innerHTML = SK.itemCards(6);
@@ -5047,9 +5047,14 @@ function renderItemCard(item) {
   const best = getBestDisc(item);
   const hint = !best ? getBestUnownedDiscForItem(item) : null;
   const discPrice = best ? Math.max(0, item.price - best.disc) : null;
+  const _rules = item.item_price_rules || [];
+  const _minRulePrice = _rules.length ? Math.min(..._rules.map(r => r.price)) : null;
+  const _fromPrice = _minRulePrice !== null && _minRulePrice < item.price ? _minRulePrice : null;
   const priceHtml = best
     ? `<span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.price} ₽</span>`
-    : `<span class="price-val">${item.price} ₽</span>`;
+    : _fromPrice !== null
+      ? `<span class="price-val"><span style="font-size:11px;color:var(--fg-3)">от </span>${_fromPrice} ₽</span>`
+      : `<span class="price-val">${item.price} ₽</span>`;
   const subNoteHtml = best
     ? `<span class="sub-note">По абонементу «${esc(best.sub.name)}»</span>`
     : hint

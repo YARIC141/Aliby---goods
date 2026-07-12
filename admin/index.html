@@ -1866,6 +1866,14 @@ html.bg-custom #bg-fluid{display:none}
           </div>
         </div>
       </div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:4px">
+        <input type="checkbox" id="mmi-price-rules-toggle" style="width:auto" onchange="togglePriceRulesSection(this.checked)">
+        <label for="mmi-price-rules-toggle">Правила для цены <span class="hint" data-tip="Разные цены по дням недели или времени суток. На карточке товара будет показана минимальная цена «от N ₽»">?</span></label>
+      </div>
+      <div id="mmi-price-rules-section" style="display:none;grid-column:1/-1;border:1px solid var(--line);border-radius:var(--r-2);padding:12px">
+        <div id="mmi-price-rules-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
+        <button class="btn btn-sm" type="button" onclick="addPriceRule()">+ Правило</button>
+      </div>
       <div style="margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:oklch(from var(--err) l c h / .08);border:1px solid oklch(from var(--err) l c h / .3);font:400 12px/1.6 var(--font-sans);color:var(--fg-2)">
         <strong style="color:var(--err)">⛔ Запрещённые товары</strong><br>
         На платформе запрещено размещать:<br>
@@ -4522,6 +4530,88 @@ function updatePrepTimeLabel() {
   if (el) el.firstChild.textContent = (labels[dir] || labels.food) + ' ';
 }
 
+// ─── ITEM PRICE RULES ───
+let _editPriceRules = [];
+const _PRICE_RULE_DAY_LABELS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+function togglePriceRulesSection(show) {
+  document.getElementById('mmi-price-rules-section').style.display = show ? '' : 'none';
+  if (show && !_editPriceRules.length) addPriceRule();
+}
+
+function _renderPriceRules() {
+  const el = document.getElementById('mmi-price-rules-list');
+  if (!el) return;
+  if (!_editPriceRules.length) { el.innerHTML = ''; return; }
+  el.innerHTML = _editPriceRules.map((r, i) => {
+    const dayChecks = [0,1,2,3,4,5,6].map(d => {
+      const ch = (!r.days || r.days.includes(d)) ? 'checked' : '';
+      return `<label style="display:flex;align-items:center;gap:2px;font-size:12px;cursor:pointer">
+        <input type="checkbox" style="width:auto;margin:0" ${ch} onchange="_priceRuleDay(${i},${d},this.checked)"> ${_PRICE_RULE_DAY_LABELS[d]}
+      </label>`;
+    }).join('');
+    return `<div style="border:1px solid var(--line);border-radius:var(--r-2);padding:10px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="number" step="0.01" min="0" value="${r.price||''}" placeholder="Цена ₽"
+          style="width:88px;flex-shrink:0" oninput="_editPriceRules[${i}].price=parseFloat(this.value)||0">
+        <input type="text" value="${esc(r.label||'')}" placeholder="Название (необяз.)"
+          style="flex:1;min-width:100px" oninput="_editPriceRules[${i}].label=this.value||null">
+        <button class="btn btn-sm btn-d" type="button" style="padding:0 8px;flex-shrink:0" onclick="removePriceRule(${i})">✕</button>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--fg-3)">Время:</span>
+        <input type="time" value="${r.time_from||''}" style="width:92px"
+          onchange="_editPriceRules[${i}].time_from=this.value||null">
+        <span style="font-size:12px;color:var(--fg-3)">–</span>
+        <input type="time" value="${r.time_to||''}" style="width:92px"
+          onchange="_editPriceRules[${i}].time_to=this.value||null">
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--fg-3)">Дни:</span>
+        ${dayChecks}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _priceRuleDay(ruleIdx, day, checked) {
+  const r = _editPriceRules[ruleIdx];
+  if (!r) return;
+  if (!r.days) r.days = [0,1,2,3,4,5,6];
+  if (checked) { if (!r.days.includes(day)) r.days.push(day); }
+  else r.days = r.days.filter(d => d !== day);
+  if (r.days.length === 7) r.days = null;
+}
+
+function addPriceRule() {
+  _editPriceRules.push({ price: 0, label: null, days: null, time_from: null, time_to: null });
+  _renderPriceRules();
+}
+
+function removePriceRule(idx) {
+  _editPriceRules.splice(idx, 1);
+  _renderPriceRules();
+}
+
+async function _savePriceRules(itemId, storeId) {
+  await req(`/rest/v1/item_price_rules?item_id=eq.${itemId}`, { method: 'DELETE' });
+  if (!document.getElementById('mmi-price-rules-toggle')?.checked || !_editPriceRules.length) return;
+  const rows = _editPriceRules.map((r, i) => ({
+    item_id:   itemId,
+    store_id:  storeId,
+    price:     r.price,
+    label:     r.label  || null,
+    days:      r.days   || null,
+    time_from: r.time_from || null,
+    time_to:   r.time_to   || null,
+    priority:  i,
+  }));
+  await req('/rest/v1/item_price_rules', {
+    method: 'POST', body: JSON.stringify(rows),
+    headers: { Prefer: 'return=minimal' },
+  });
+}
+
 let _miModalSeq = 0;
 function openMenuItemModal(item) {
   document.getElementById('mmi-title').textContent = item ? 'Редактировать позицию' : 'Новая позиция';
@@ -4569,8 +4659,23 @@ function openMenuItemModal(item) {
   hideNewCatRow();
   _editOptGroups = [];
   _renderMmiOptGroups();
+  // Price rules
+  _editPriceRules = [];
+  document.getElementById('mmi-price-rules-toggle').checked = false;
+  document.getElementById('mmi-price-rules-section').style.display = 'none';
+  document.getElementById('mmi-price-rules-list').innerHTML = '';
   openModal('m-mi');
-  if (item?.id) _loadOptGroupsForItem(item.id);
+  if (item?.id) {
+    _loadOptGroupsForItem(item.id);
+    req(`/rest/v1/item_price_rules?item_id=eq.${item.id}&order=priority.asc`).then(rules => {
+      _editPriceRules = rules || [];
+      if (_editPriceRules.length) {
+        document.getElementById('mmi-price-rules-toggle').checked = true;
+        document.getElementById('mmi-price-rules-section').style.display = '';
+        _renderPriceRules();
+      }
+    }).catch(() => {});
+  }
 }
 
 // ─── MENU ITEM OPTION GROUPS ───
@@ -4913,7 +5018,10 @@ async function saveMenuItem() {
       });
       savedId = Array.isArray(created) ? created[0]?.id : created?.id;
     }
-    if (savedId) await _saveOptGroupsForItem(savedId);
+    if (savedId) {
+      await _saveOptGroupsForItem(savedId);
+      await _savePriceRules(savedId, body.store_id);
+    }
     clearTimeout(timer);
     closeModal('m-mi'); restore(); loadMenuItems();
   } catch(e) { clearTimeout(timer); restore(); if (e.name !== 'AbortError') alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
