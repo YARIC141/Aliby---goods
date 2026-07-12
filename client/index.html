@@ -1662,10 +1662,11 @@ document.addEventListener('deviceready',function(){
     <div id="mbs-master-filter" style="display:none;margin-bottom:10px">
       <select id="mbs-master-select" onchange="onBookingMasterChange(this.value)"
         style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
-        <option value="">Любой мастер</option>
+        <option value="" disabled selected>Выберите мастера</option>
       </select>
     </div>
     <div id="mbs-loading" style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Загрузка расписания…</div>
+    <div id="mbs-pick-master-hint" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Сначала выберите мастера — свободное время покажем для него</div>
     <div id="mbs-main" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <button class="btn btn-sm" id="mbs-prev-btn" onclick="bookingPrevDay()">←</button>
@@ -1673,10 +1674,6 @@ document.addEventListener('deviceready',function(){
         <button class="btn btn-sm" id="mbs-next-btn" onclick="bookingNextDay()">→</button>
       </div>
       <div id="mbs-slots" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px"></div>
-      <div id="mbs-master-pick" style="display:none;margin-bottom:12px">
-        <div style="font:600 11px/1 var(--font-sans);color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Выберите мастера</div>
-        <div id="mbs-master-chips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-      </div>
       <div id="mbs-master-chosen" style="display:none;margin-bottom:12px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2);font-size:13px;color:var(--fg-2)">
         Мастер: <strong id="mbs-master-chosen-name"></strong>
       </div>
@@ -8752,6 +8749,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   document.getElementById('mbs-loading').style.display = '';
   document.getElementById('mbs-main').style.display = 'none';
   document.getElementById('mbs-no-sched').style.display = 'none';
+  document.getElementById('mbs-pick-master-hint').style.display = 'none';
   document.getElementById('mbs-master-filter').style.display = 'none';
   document.getElementById('mbs-book-btn').disabled = true;
   document.getElementById('mbs-pay-btn').disabled = true;
@@ -8787,7 +8785,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
       });
       _buildSlotMasterMap();
       const sel = document.getElementById('mbs-master-select');
-      sel.innerHTML = `<option value="">Любой мастер</option>` +
+      sel.innerHTML = `<option value="" disabled${_booking.selectedMasterId ? '' : ' selected'}>Выберите мастера</option>` +
         profiles.map(m => `<option value="${m.id}">${esc(m.full_name||'—')}</option>`).join('');
       // Pre-select master if passed from master profile
       sel.value = _booking.selectedMasterId || '';
@@ -8806,15 +8804,16 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
     }
   } catch(e) {}
   document.getElementById('mbs-loading').style.display = 'none';
+  if (_booking.masters.length > 0) {
+    // Master/trainer must be picked first — the calendar is shown only once one is chosen
+    // (either right here, if pre-selected e.g. from a master's profile, or via the dropdown).
+    onBookingMasterChange(_booking.selectedMasterId || '');
+    return;
+  }
   const dates = Object.keys(_booking.schedData).sort();
   const _nowForSlots = () => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); };
-  let firstAvail;
-  if (_booking.masters.length > 0) {
-    firstAvail = dates.find(ds => _hasMasterSlots(ds, _booking.selectedMasterId));
-  } else {
-    const prepMin = Math.max(item.preparation_time || 30, 5);
-    firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
-  }
+  const prepMin = Math.max(item.preparation_time || 30, 5);
+  const firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
   if (!firstAvail) { document.getElementById('mbs-no-sched').style.display = ''; return; }
   _booking.currentDate = firstAvail;
   renderBookingDateView();
@@ -8834,7 +8833,6 @@ function renderBookingDateView() {
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   document.getElementById('mbs-date-label').textContent = `${DOW[new Date(y,m-1,d).getDay()]}, ${d} ${MON[m-1]} ${y}`;
   // Reset slot-level master UI on date change
-  document.getElementById('mbs-master-pick').style.display = 'none';
   document.getElementById('mbs-master-chosen').style.display = 'none';
   _booking.autoMasterId = null;
   _booking.selectedSlot = null;
@@ -8877,10 +8875,16 @@ function onBookingMasterChange(masterId) {
   _booking.selectedMasterId = masterId;
   _booking.selectedSlot = null;
   _booking.autoMasterId = null;
-  document.getElementById('mbs-master-pick').style.display = 'none';
   document.getElementById('mbs-master-chosen').style.display = 'none';
   document.getElementById('mbs-book-btn').disabled = true;
   document.getElementById('mbs-pay-btn').disabled = true;
+  if (!masterId) {
+    document.getElementById('mbs-main').style.display = 'none';
+    document.getElementById('mbs-no-sched').style.display = 'none';
+    document.getElementById('mbs-pick-master-hint').style.display = '';
+    return;
+  }
+  document.getElementById('mbs-pick-master-hint').style.display = 'none';
   const dates = Object.keys(_booking.schedData).sort();
   const firstAvail = dates.find(ds => _hasMasterSlots(ds, masterId));
   if (!firstAvail) {
@@ -8898,32 +8902,18 @@ function selectBookingSlot(start, end) {
   _booking.autoMasterId = null;
   document.querySelectorAll('#mbs-slots .booking-slot').forEach(b =>
     b.classList.toggle('active', b.dataset.start === start));
-  document.getElementById('mbs-master-pick').style.display = 'none';
   document.getElementById('mbs-master-chosen').style.display = 'none';
   if (_booking.masters.length > 0) {
+    // A master was already required and chosen before the calendar was shown
+    // (openBookingSlotModal / onBookingMasterChange), so slots here are already
+    // scoped to _booking.selectedMasterId — just confirm it's still available.
     const slotInfo = _booking.slotMasterMap[_booking.currentDate]?.[start];
-    let availIds = (slotInfo?.masterIds || []).slice();
-    if (_booking.selectedMasterId) availIds = availIds.filter(id => id === _booking.selectedMasterId);
-    const availMasters = availIds.map(id => _booking.masters.find(m => m.id === id)).filter(Boolean);
-    if (!availMasters.length) return;
-    // Always require an explicit click, even when only one master is available for the slot.
-    document.getElementById('mbs-master-chips').innerHTML = availMasters
-      .map(m => `<button class="booking-slot" data-master="${m.id}" onclick="selectBookingMaster('${m.id}')">${esc(m.full_name||'—')}</button>`)
-      .join('');
-    document.getElementById('mbs-master-pick').style.display = '';
-    return; // wait for master pick
+    if (!slotInfo?.masterIds?.includes(_booking.selectedMasterId)) return;
+    _booking.autoMasterId = _booking.selectedMasterId;
+    const master = _booking.masters.find(m => m.id === _booking.selectedMasterId);
+    document.getElementById('mbs-master-chosen-name').textContent = master?.full_name || '—';
+    document.getElementById('mbs-master-chosen').style.display = '';
   }
-  document.getElementById('mbs-book-btn').disabled = false;
-  if (S.storeSubActive !== false) document.getElementById('mbs-pay-btn').disabled = false;
-}
-
-function selectBookingMaster(masterId) {
-  _booking.autoMasterId = masterId;
-  const master = _booking.masters.find(m => m.id === masterId);
-  document.querySelectorAll('#mbs-master-chips .booking-slot').forEach(b =>
-    b.classList.toggle('active', b.dataset.master === masterId));
-  document.getElementById('mbs-master-chosen-name').textContent = master?.full_name || '—';
-  document.getElementById('mbs-master-chosen').style.display = '';
   document.getElementById('mbs-book-btn').disabled = false;
   if (S.storeSubActive !== false) document.getElementById('mbs-pay-btn').disabled = false;
 }
