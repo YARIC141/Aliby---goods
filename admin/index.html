@@ -6737,9 +6737,11 @@ function _renderEmpList(emps) {
   const storeDirMap = Object.fromEntries((S.stores || []).map(s => [s.id, s.direction]));
   el.innerHTML = emps.map(e => {
     const storeName = storeMap[e.employee_store_id] || '—';
-    const isSvcStore = storeDirMap[e.employee_store_id] === 'services';
+    const storeDir = storeDirMap[e.employee_store_id];
+    const isSvcStore = ['services','sport','entertainment'].includes(storeDir);
+    const roleLabel = storeDir === 'sport' ? 'Тренер' : 'Мастер';
     const masterBadge = e.is_master
-      ? `<span style="font-size:10px;font-weight:700;background:var(--accent);color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">Мастер</span>`
+      ? `<span style="font-size:10px;font-weight:700;background:var(--accent);color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">${roleLabel}</span>`
       : '';
     return `<div class="card" style="margin-bottom:8px;padding:10px 12px">
         <div style="display:flex;gap:10px;align-items:flex-start">
@@ -6750,7 +6752,7 @@ function _renderEmpList(emps) {
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
             <button class="btn btn-sm" title="Сбросить пароль" onclick="openResetEmpPwd('${e.id}','${esc(e.full_name||'')}')">${svgIco('key',13)}</button>
-            ${isSvcStore ? `<button class="btn btn-sm${e.is_master ? ' btn-p' : ''}" title="Настройки мастера" onclick="openMasterModal('${e.id}')" style="font-size:11px;padding:3px 8px">Мастер</button>` : ''}
+            ${isSvcStore ? `<button class="btn btn-sm${e.is_master ? ' btn-p' : ''}" title="Настройки ${roleLabel.toLowerCase()}а" onclick="openMasterModal('${e.id}')" style="font-size:11px;padding:3px 8px">${roleLabel}</button>` : ''}
             <button class="btn btn-sm btn-d" title="Удалить" onclick="deleteEmployee('${e.id}','${esc(e.full_name||'')}')">${svgIco('trash',13)}</button>
           </div>
         </div>
@@ -6879,7 +6881,16 @@ function onMasterToggle(checked) {
 
 async function openMasterModal(empId) {
   const emp = (S._cachedEmps || []).find(e => e.id === empId) || {};
-  document.getElementById('master-modal-title').textContent = `Мастер: ${emp.full_name || ''}`;
+  const storeDir = (S.stores || []).find(s => s.id === emp.employee_store_id)?.direction;
+  const isSport = storeDir === 'sport';
+  const roleNom = isSport ? 'Тренер' : 'Мастер';
+  const roleGen = isSport ? 'тренера' : 'мастера';
+  const roleSoj = isSport ? 'тренером' : 'мастером';
+  document.getElementById('master-modal-title').textContent = `${roleNom}: ${emp.full_name || ''}`;
+  const toggleLbl = document.getElementById('master-toggle-label');
+  if (toggleLbl) toggleLbl.textContent = `Является ${roleSoj}`;
+  const bioLbl = document.getElementById('master-bio-label');
+  if (bioLbl) bioLbl.textContent = `Описание ${roleGen}`;
   document.getElementById('master-emp-id').value = empId;
   document.getElementById('master-err').style.display = 'none';
   document.getElementById('master-toggle').checked = false;
@@ -8734,7 +8745,7 @@ if ('serviceWorker' in navigator) {
 
     <!-- Toggle is_master -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line-soft);margin-bottom:14px">
-      <label for="master-toggle" style="font:600 14px/1 var(--font-sans);cursor:pointer">Является мастером</label>
+      <label id="master-toggle-label" for="master-toggle" style="font:600 14px/1 var(--font-sans);cursor:pointer">Является мастером</label>
       <label class="tog">
         <input type="checkbox" id="master-toggle" onchange="onMasterToggle(this.checked)">
         <span class="tog-sl"></span>
@@ -8744,7 +8755,7 @@ if ('serviceWorker' in navigator) {
     <!-- Profile + schedule + services (visible when is_master=true) -->
     <div id="master-profile-section" style="display:none">
       <div class="fg">
-        <label>Описание мастера</label>
+        <label id="master-bio-label">Описание мастера</label>
         <textarea id="master-bio" rows="3" placeholder="Опыт работы, специализация, сертификаты…" style="resize:vertical"></textarea>
       </div>
       <div class="fg">

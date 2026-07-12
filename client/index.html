@@ -1129,8 +1129,8 @@ document.addEventListener('deviceready',function(){
   <div class="screen-tip"></div>
   <!-- Services tabs (only shown when direction=services) -->
   <div id="svc-tab-bar" style="display:none;flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)" class="cart-tabs">
-    <button class="cart-tab active" id="svc-tab-services" onclick="switchSvcTab('services')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-goods"/></svg>Услуги</button>
-    <button class="cart-tab" id="svc-tab-masters" onclick="switchSvcTab('masters')"><svg class="ico" width="16" height="16" style="margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Мастера</button>
+    <button class="cart-tab active" id="svc-tab-services" onclick="switchSvcTab('services')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-goods"/></svg><span id="svc-lbl-services">Услуги</span></button>
+    <button class="cart-tab" id="svc-tab-masters" onclick="switchSvcTab('masters')"><svg class="ico" width="16" height="16" style="margin-right:4px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span id="svc-lbl-masters">Мастера</span></button>
     <button class="cart-tab" id="svc-tab-sched" onclick="switchSvcTab('sched')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
   </div>
   <!-- Услуги pane -->
@@ -2320,6 +2320,11 @@ function updateDirectionLabels(dir) {
   document.querySelectorAll('.nav-store-lbl').forEach(el => { el.innerHTML = storeLbl; });
   const svcTabBar = document.getElementById('svc-tab-bar');
   if (svcTabBar) svcTabBar.style.display = _SVC_DIRS.has(dir) ? '' : 'none';
+  const isSport = dir === 'sport';
+  const svcLbl = document.getElementById('svc-lbl-services');
+  const mstLbl = document.getElementById('svc-lbl-masters');
+  if (svcLbl) svcLbl.textContent = isSport ? 'Активности' : 'Услуги';
+  if (mstLbl) mstLbl.textContent = isSport ? 'Тренеры' : 'Мастера';
   if (!_SVC_DIRS.has(dir)) {
     document.getElementById('svc-pane-sched')?.style.setProperty('display', 'none');
     document.getElementById('svc-tab-services')?.classList.add('active');
