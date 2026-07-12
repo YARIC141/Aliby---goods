@@ -5416,6 +5416,11 @@ async function loadRentTabMonth() {
     } catch {}
   }
   renderRentTabCalendar();
+  if (_rentTab.storeId && !_rentTab.openDate) {
+    const today = _fmtD(new Date());
+    if (today.startsWith(`${_rentTab.year}-${String(_rentTab.month + 1).padStart(2,'0')}`))
+      onRentCalDayClick(today);
+  }
 }
 
 function renderRentTabCalendar() {
@@ -5718,6 +5723,11 @@ async function loadBkTabMonth() {
     } catch {}
   }
   renderBkTabCalendar();
+  if (_bkTab.storeId && !_bkTab.openDate) {
+    const today = _fmtD(new Date());
+    if (today.startsWith(`${_bkTab.year}-${String(_bkTab.month + 1).padStart(2,'0')}`))
+      onBkTabDayClick(today);
+  }
 }
 
 function renderBkTabCalendar() {
