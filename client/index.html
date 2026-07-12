@@ -484,6 +484,8 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .home-tile-install::before{background:var(--brand-ice)}
 .home-tile-goods::before{background:#35a862}
 .home-tile-services::before{background:#78b4e0}
+.home-tile-sport::before{background:#ef4444}
+.home-tile-entertainment::before{background:#eab308}
 .recent-dir-block{margin-bottom:20px}
 .recent-dir-label{display:flex;align-items:center;gap:6px;font:700 12px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;padding-bottom:8px;border-bottom:2px solid}
 .recent-store-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
@@ -495,9 +497,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .recent-store-cat{font:400 12px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px}
 
 /* ── DIRECTION TABS ── */
-.dir-tabs{display:flex;flex-direction:column;flex-shrink:0}
-.dir-row{display:flex;border-bottom:1px solid var(--line-soft)}
-.dir-tab{flex:1;padding:9px 4px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);white-space:nowrap;display:flex;align-items:center;justify-content:center}
+.dir-tabs{display:flex;border-bottom:1px solid var(--line-soft);flex-shrink:0}
+.dir-tab{flex:0 0 auto;padding:9px 10px;border:none;background:none;cursor:pointer;font:500 14px/1 var(--font-sans);color:var(--fg-3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color var(--t-fast),border-color var(--t-fast);white-space:nowrap;display:flex;align-items:center;justify-content:center}
+.dir-tab.active{flex:1}
 .dir-tab:hover{color:var(--fg)}
 .dir-tab:not(.active) .dir-tab-lbl{display:none}
 .dir-tab-lbl{margin-left:4px}
@@ -845,11 +847,11 @@ document.addEventListener('deviceready',function(){
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
 <defs>
 <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0116 0z"/><circle cx="12" cy="10" r="3"/></symbol>
-<symbol id="i-food" viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></symbol>
+<symbol id="i-food" viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></symbol>
 <symbol id="i-goods" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></symbol>
 <symbol id="i-services" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></symbol>
-<symbol id="i-sport" viewBox="0 0 24 24"><rect x="1.5" y="8" width="3" height="8" rx="1"/><rect x="4.5" y="10" width="2" height="4" rx="0.5"/><line x1="6.5" y1="12" x2="17.5" y2="12"/><rect x="17.5" y="10" width="2" height="4" rx="0.5"/><rect x="19.5" y="8" width="3" height="8" rx="1"/></symbol>
-<symbol id="i-entertain" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+<symbol id="i-sport" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7.5l2.5 1.8-1 3.2h-3l-1-3.2z"/><line x1="12" y1="2" x2="12" y2="7.5"/><line x1="21.5" y1="8" x2="14.5" y2="9.3"/><line x1="18.5" y1="20.5" x2="13.5" y2="12.5"/><line x1="5.5" y1="20.5" x2="10.5" y2="12.5"/><line x1="2.5" y1="8" x2="9.5" y2="9.3"/></symbol>
+<symbol id="i-entertain" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="17" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="7" cy="17" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="1.5" fill="currentColor"/></symbol>
 <symbol id="i-gift" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></symbol>
 <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6"/><path d="M2 15a3 3 0 000 6h20a3 3 0 000-6"/><path d="M2 9h20v6H2z"/><line x1="9" y1="9" x2="9" y2="15"/></symbol>
 <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></symbol>
@@ -1001,6 +1003,16 @@ document.addEventListener('deviceready',function(){
       <div class="ht-name">Товары</div>
       <div class="ht-desc">Магазины и шоурумы</div>
     </div>
+    <div class="home-tile home-tile-sport" onclick="openDirection('sport')">
+      <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-sport"/></svg></div>
+      <div class="ht-name">Спорт</div>
+      <div class="ht-desc">Спорт и аренда</div>
+    </div>
+    <div class="home-tile home-tile-entertainment" onclick="openDirection('entertainment')">
+      <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-entertain"/></svg></div>
+      <div class="ht-name">Развлечения</div>
+      <div class="ht-desc">Досуг и активности</div>
+    </div>
     <div id="home-install-tile" class="home-tile home-tile-install" style="display:none" onclick="triggerPwaInstall()"><div class="ht-icon">📲</div><div class="ht-name">Установить</div><div class="ht-desc">На главный экран</div></div>
     <div id="home-recent" style="grid-column:1/-1"></div>
   </div>
@@ -1028,15 +1040,11 @@ document.addEventListener('deviceready',function(){
 
     <div class="sl-panel">
       <div class="dir-tabs" id="dir-tabs">
-        <div class="dir-row">
-          <button class="dir-tab active" data-dir="food" onclick="setDirection('food')"><svg class="ico" width="16" height="16"><use href="#i-food"/></svg><span class="dir-tab-lbl">Еда</span></button>
-          <button class="dir-tab" data-dir="goods" onclick="setDirection('goods')"><svg class="ico" width="16" height="16"><use href="#i-goods"/></svg><span class="dir-tab-lbl">Товары</span></button>
-          <button class="dir-tab" data-dir="services" onclick="setDirection('services')"><svg class="ico" width="16" height="16"><use href="#i-services"/></svg><span class="dir-tab-lbl">Услуги</span></button>
-        </div>
-        <div class="dir-row">
-          <button class="dir-tab" data-dir="sport" onclick="setDirection('sport')"><svg class="ico" width="16" height="16"><use href="#i-sport"/></svg><span class="dir-tab-lbl">Спорт</span></button>
-          <button class="dir-tab" data-dir="entertainment" onclick="setDirection('entertainment')"><svg class="ico" width="16" height="16"><use href="#i-entertain"/></svg><span class="dir-tab-lbl">Развлечения</span></button>
-        </div>
+        <button class="dir-tab active" data-dir="food" onclick="setDirection('food')"><svg class="ico" width="16" height="16"><use href="#i-food"/></svg><span class="dir-tab-lbl">Еда</span></button>
+        <button class="dir-tab" data-dir="goods" onclick="setDirection('goods')"><svg class="ico" width="16" height="16"><use href="#i-goods"/></svg><span class="dir-tab-lbl">Товары</span></button>
+        <button class="dir-tab" data-dir="services" onclick="setDirection('services')"><svg class="ico" width="16" height="16"><use href="#i-services"/></svg><span class="dir-tab-lbl">Услуги</span></button>
+        <button class="dir-tab" data-dir="sport" onclick="setDirection('sport')"><svg class="ico" width="16" height="16"><use href="#i-sport"/></svg><span class="dir-tab-lbl">Спорт</span></button>
+        <button class="dir-tab" data-dir="entertainment" onclick="setDirection('entertainment')"><svg class="ico" width="16" height="16"><use href="#i-entertain"/></svg><span class="dir-tab-lbl">Развлечения</span></button>
       </div>
       <div id="sl-filters">
         <div class="sl-search">
