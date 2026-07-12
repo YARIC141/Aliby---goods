@@ -1839,16 +1839,20 @@ html.bg-custom #bg-fluid{display:none}
         <input type="number" min="0" step="1" id="mmi-prep-time" placeholder="0" value="0">
       </div>
       <div class="fg">
-        <label>Длительность услуги (мин) <span class="hint" data-tip="Для записи к мастеру: сколько минут занимает процедура. Оставьте пустым для товаров">?</span></label>
+        <label>Тип позиции * <span class="hint" data-tip="Товар — обычная покупка в корзину. Услуга — запись на время, можно назначить мастера. Аренда — сдаётся на выбранный клиентом период">?</span></label>
+        <select id="mmi-item-type" onchange="onMmiItemTypeChange()">
+          <option value="product">Товар</option>
+          <option value="service">Услуга</option>
+          <option value="rental">Аренда</option>
+        </select>
+      </div>
+      <div class="fg" id="mmi-duration-field">
+        <label>Длительность услуги (мин) <span class="hint" data-tip="Для записи к мастеру: сколько минут занимает процедура">?</span></label>
         <input type="number" min="1" step="1" id="mmi-duration" placeholder="Не задана">
       </div>
       <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px">
         <input type="checkbox" id="mmi-avail" checked style="width:auto">
         <label for="mmi-avail">В наличии <span class="hint" data-tip="Снимите галочку, чтобы временно скрыть позицию от клиентов">?</span></label>
-      </div>
-      <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:4px">
-        <input type="checkbox" id="mmi-is-rent" style="width:auto" onchange="document.getElementById('mmi-rent-fields').style.display=this.checked?'':'none'">
-        <label for="mmi-is-rent">Аренда <span class="hint" data-tip="Включите, чтобы предмет сдавался в аренду на выбранный клиентом период">?</span></label>
       </div>
       <div id="mmi-rent-fields" style="display:none;grid-column:1/-1;border:1px solid var(--line);border-radius:var(--r-2);padding:12px;gap:10px;display:none">
         <div class="grid2" style="gap:10px">
@@ -4445,9 +4449,10 @@ function _menuItemCard(i, isEmp, showCat) {
           <button class="btn btn-sm" onclick="event.stopPropagation();openMenuItemModal(${sd})">Ред.</button>
           <button class="btn btn-sm btn-d" onclick="event.stopPropagation();confirmDelete('mi','${i.id}','${esc(i.name)}')">Удал.</button>
         </div>`;
-  const subtitle = showCat
+  const typeLabel = i.item_type === 'service' ? ' · Услуга' : i.item_type === 'rental' ? ' · Аренда' : '';
+  const subtitle = (showCat
     ? `${esc(i.categories?.name || '—')} · ${i.price} ₽`
-    : `${i.price} ₽`;
+    : `${i.price} ₽`) + typeLabel;
   return `<div class="card" style="margin-bottom:6px;padding:10px 12px${vis ? '' : ';opacity:0.45'}">
       <div style="display:flex;gap:10px;align-items:flex-start">
         ${thumb}
@@ -4762,6 +4767,12 @@ async function _savePriceRules(itemId) {
   });
 }
 
+function onMmiItemTypeChange() {
+  const type = document.getElementById('mmi-item-type').value;
+  document.getElementById('mmi-duration-field').style.display = type === 'service' ? '' : 'none';
+  document.getElementById('mmi-rent-fields').style.display   = type === 'rental'  ? '' : 'none';
+}
+
 let _miModalSeq = 0;
 function openMenuItemModal(item) {
   document.getElementById('mmi-title').textContent = item ? 'Редактировать позицию' : 'Новая позиция';
@@ -4773,9 +4784,8 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-prep-time').value = item?.preparation_time ?? 0;
   document.getElementById('mmi-duration').value   = item?.duration_minutes || '';
   document.getElementById('mmi-avail').checked    = item ? item.is_available : true;
-  const isRent = item?.is_rent || false;
-  document.getElementById('mmi-is-rent').checked   = isRent;
-  document.getElementById('mmi-rent-fields').style.display = isRent ? '' : 'none';
+  document.getElementById('mmi-item-type').value  = item?.item_type || 'product';
+  onMmiItemTypeChange();
   document.getElementById('mmi-rent-unit').value   = item?.rent_period_unit  || 'hour';
   document.getElementById('mmi-rent-step').value   = item?.rent_period_step  || '';
   document.getElementById('mmi-total-qty').value   = item?.total_quantity    || '';
@@ -5134,6 +5144,7 @@ async function saveMenuItem() {
     if (rulesErr) { restore(); showAdminToast(rulesErr); return; }
   }
   const id = document.getElementById('mmi-id').value;
+  const itemType = document.getElementById('mmi-item-type').value;
   const body = {
     store_id:    document.getElementById('mmi-store').value,
     category_id: document.getElementById('mmi-cat').value   || null,
@@ -5142,15 +5153,15 @@ async function saveMenuItem() {
     allergens:        document.getElementById('mmi-allergens').value || null,
     price:            parseFloat(document.getElementById('mmi-price').value),
     preparation_time: parseInt(document.getElementById('mmi-prep-time').value, 10) || 0,
-    duration_minutes: parseInt(document.getElementById('mmi-duration').value, 10) || null,
+    item_type:        itemType,
+    duration_minutes: itemType === 'service' ? (parseInt(document.getElementById('mmi-duration').value, 10) || null) : null,
     is_available:     document.getElementById('mmi-avail').checked,
     image_url:        document.getElementById('mmi-image-url').value || null,
-    is_rent:          document.getElementById('mmi-is-rent').checked,
-    rent_period_unit: document.getElementById('mmi-is-rent').checked ? (document.getElementById('mmi-rent-unit').value || null) : null,
-    rent_period_step: document.getElementById('mmi-is-rent').checked ? (parseInt(document.getElementById('mmi-rent-step').value, 10) || 1) : null,
-    total_quantity:   document.getElementById('mmi-is-rent').checked ? (parseInt(document.getElementById('mmi-total-qty').value, 10) || null) : null,
+    rent_period_unit: itemType === 'rental' ? (document.getElementById('mmi-rent-unit').value || null) : null,
+    rent_period_step: itemType === 'rental' ? (parseInt(document.getElementById('mmi-rent-step').value, 10) || 1) : null,
+    total_quantity:   itemType === 'rental' ? (parseInt(document.getElementById('mmi-total-qty').value, 10) || null) : null,
     quantity_available: (() => {
-      if (!document.getElementById('mmi-is-rent').checked) return null;
+      if (itemType !== 'rental') return null;
       const qa = document.getElementById('mmi-avail-qty').value;
       if (qa !== '') return parseInt(qa, 10);
       const tq = parseInt(document.getElementById('mmi-total-qty').value, 10);
