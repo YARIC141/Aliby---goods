@@ -1428,9 +1428,11 @@ document.addEventListener('deviceready',function(){
           <div>Итого: <b id="mrent-total-price"></b></div>
           <div id="mrent-total-period" style="font-size:12px;color:var(--fg-3);margin-top:2px"></div>
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" style="flex:0 0 auto" onclick="rentBackToQty()">← Кол-во</button>
           <button class="btn btn-p" id="mrent-add-cart-btn" style="flex:1;display:none" onclick="rentAddToCart()">В корзину</button>
+          <button class="btn" id="mrent-book-btn" style="flex:1;display:none" onclick="rentBookNow()">Забронировать</button>
+          <button class="btn btn-p" id="mrent-pay-btn" style="flex:1;display:none" onclick="rentPayNow()">Оплатить</button>
         </div>
       </div>
     </div>
@@ -2673,8 +2675,18 @@ function rentCalcTotal() {
     document.getElementById('mrent-total-period').textContent =
       `${periods} × ${stepLabel}${unitLabel} × ${_rentQty} шт × ${price.toFixed(0)} ₽`;
   }
-  const addBtn = document.getElementById('mrent-add-cart-btn');
-  if (addBtn) addBtn.style.display = S.storeSubActive === false ? 'none' : '';
+  const addBtn  = document.getElementById('mrent-add-cart-btn');
+  const bookBtn = document.getElementById('mrent-book-btn');
+  const payBtn  = document.getElementById('mrent-pay-btn');
+  if (isTimeUnit) {
+    if (addBtn)  addBtn.style.display  = 'none';
+    if (bookBtn) bookBtn.style.display = '';
+    if (payBtn)  payBtn.style.display  = S.storeSubActive !== false ? '' : 'none';
+  } else {
+    if (addBtn)  addBtn.style.display  = S.storeSubActive === false ? 'none' : '';
+    if (bookBtn) bookBtn.style.display = 'none';
+    if (payBtn)  payBtn.style.display  = 'none';
+  }
 
   // store for add-to-cart
   _rentItem._pendingStart = startDT?.toISOString();
@@ -2716,6 +2728,80 @@ function rentAddToCart() {
   updateCartCount();
   item.quantity_available = Math.max(0, (item.quantity_available ?? item.total_quantity ?? 1) - _rentQty);
   goTo('cart');
+}
+
+async function rentBookNow() {
+  const item = _rentItem;
+  if (!item?._pendingStart || !item?._pendingEnd) return;
+  const uid = S.session?.user?.id;
+  if (!uid) { showGeoToast('Войдите в аккаунт'); return; }
+  const btn = document.getElementById('mrent-book-btn');
+  const restore = btn ? btnLoad(btn) : () => {};
+  try {
+    await req('/rest/v1/rent_reservations', {
+      method: 'POST',
+      body: JSON.stringify({
+        item_id:     item.id,
+        store_id:    item.store_id,
+        user_id:     uid,
+        start_at:    item._pendingStart,
+        end_at:      item._pendingEnd,
+        quantity:    _rentQty,
+        total_price: item._pendingTotal || 0,
+        status:      'pending',
+      }),
+      headers: { Prefer: 'return=minimal' },
+    });
+    item.quantity_available = Math.max(0, (item.quantity_available ?? item.total_quantity ?? 1) - _rentQty);
+    closeModal('m-rent');
+    showGeoToast('Аренда забронирована');
+    switchCalenabsTab('rent');
+    goTo('calenabs');
+  } catch(e) {
+    showGeoToast('Ошибка: ' + (e.message || 'попробуйте ещё раз'));
+  } finally {
+    restore?.();
+  }
+}
+
+async function rentPayNow() {
+  const item = _rentItem;
+  if (!item?._pendingStart || !item?._pendingEnd) return;
+  const uid = S.session?.user?.id;
+  if (!uid) { showGeoToast('Войдите в аккаунт'); return; }
+  const btn = document.getElementById('mrent-pay-btn');
+  const restore = btn ? btnLoad(btn) : () => {};
+  try {
+    const [row] = await req('/rest/v1/rent_reservations', {
+      method: 'POST',
+      body: JSON.stringify({
+        item_id:     item.id,
+        store_id:    item.store_id,
+        user_id:     uid,
+        start_at:    item._pendingStart,
+        end_at:      item._pendingEnd,
+        quantity:    _rentQty,
+        total_price: item._pendingTotal || 0,
+        status:      'pending',
+      }),
+      headers: { Prefer: 'return=representation' },
+    });
+    item.quantity_available = Math.max(0, (item.quantity_available ?? item.total_quantity ?? 1) - _rentQty);
+    const result = await req('/functions/v1/tbank-init-rent', {
+      method: 'POST',
+      body: JSON.stringify({ reservation_id: row.id }),
+    });
+    if (result.payment_url) {
+      closeModal('m-rent');
+      window.location.href = result.payment_url;
+    } else {
+      showGeoToast('Ошибка оплаты: неожиданный ответ');
+    }
+  } catch(e) {
+    showGeoToast('Ошибка: ' + (e.message || 'попробуйте ещё раз'));
+  } finally {
+    restore?.();
+  }
 }
 
 let _svcTab = 'services';
