@@ -2659,7 +2659,13 @@ function _rentRenderSlots() {
   const _slotStepMin = _rentItem?.rent_period_unit === 'hour'
     ? (_rentItem?.rent_period_step || 1) * 60
     : (_rentItem?.rent_period_step || 1);
+  const _todayStr = new Date().toISOString().slice(0, 10);
+  const _nowMin   = _rentStartDate === _todayStr
+    ? new Date().getHours() * 60 + new Date().getMinutes()
+    : -1;
   grid.innerHTML = _rentSlots.map((sl, i) => {
+    const [sh, sm] = sl.slot_time.split(':').map(Number);
+    if (sh * 60 + sm < _nowMin) return '';
     const inRange  = _rentSlotA !== null && _rentSlotB !== null && i >= _rentSlotA && i <= _rentSlotB;
     const isEdge   = i === _rentSlotA || i === _rentSlotB;
     const avail    = sl.available;
@@ -2669,7 +2675,6 @@ function _rentRenderSlots() {
     else if (inRange)   { bg = 'var(--accent-2,rgba(232,116,59,.18))'; color = 'var(--accent)'; border = 'var(--accent)'; }
     else if (disabled)  { bg = 'var(--bg-2)';    color = 'var(--fg-4)';    border = 'var(--line)'; }
     else                { bg = 'var(--bg-2)';    color = 'var(--fg)';      border = 'var(--line)'; }
-    const [sh, sm] = sl.slot_time.split(':').map(Number);
     const endRaw = sh * 60 + sm + _slotStepMin;
     const endTime = String(Math.floor(endRaw / 60)).padStart(2,'0') + ':' + String(endRaw % 60).padStart(2,'0');
     const availHint = !disabled && avail < (_rentItem?.total_quantity || 99)
