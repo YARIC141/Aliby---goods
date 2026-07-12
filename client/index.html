@@ -7868,10 +7868,11 @@ async function navigateDeepLink() {
   try {
     const rows = await req(`/rest/v1/stores?id=eq.${id}&select=*,store_categories(name,icon)&limit=1`);
     if (rows?.[0]) {
-      S.store = rows[0];
+      const _ds = rows[0];
+      if (_ds.direction && DIR_COLORS[_ds.direction]) setDirection(_ds.direction);
+      S.store = _ds;  // re-assert after setDirection (which may overwrite S.store from cart)
       syncStoreNavBtn();
       try { localStorage.setItem('alliby_store', JSON.stringify(S.store)); } catch(e) {}
-      if (S.store.direction && DIR_COLORS[S.store.direction]) setDirection(S.store.direction);
       goTo('menu');
       return true;
     }
@@ -7885,7 +7886,7 @@ async function navigateDeepLink() {
 window.addEventListener('hashchange', () => {
   const hash = new URLSearchParams((window.location.hash || '').replace('#', ''));
   const storeId = hash.get('store');
-  if (!storeId || !S.session) return;
+  if (!storeId) return;
   deepStoreId = storeId;
   navigateDeepLink();
 });
