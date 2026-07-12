@@ -2709,47 +2709,44 @@ function _rentHideActionBtns() {
 function _rentClickSlot(idx) {
   const sl = _rentSlots[idx];
   if (!sl || sl.available < (_rentQty || 1)) return;
-
-  if (_rentSlotA === null || _rentSlotB !== null) {
-    // Start new selection
-    _rentSlotA = idx;
-    _rentSlotB = null;
-    _rentStartTime = null;
-    _rentEndTime   = null;
-    _rentHideActionBtns();
-    _rentRenderSlots();
-    return;
-  }
-
-  if (idx < _rentSlotA) {
-    // Clicked before start → restart
-    _rentSlotA = idx;
-    _rentSlotB = null;
-    _rentHideActionBtns();
-    _rentRenderSlots();
-    return;
-  }
-
-  if (idx === _rentSlotA) {
-    // Deselect
-    _rentSlotA = null;
-    _rentSlotB = null;
-    _rentHideActionBtns();
-    _rentRenderSlots();
-    return;
-  }
-
-  // Validate: all slots in range must have enough availability
   const qty = _rentQty || 1;
-  for (let i = _rentSlotA; i <= idx; i++) {
-    if (_rentSlots[i].available < qty) {
-      const hint = document.getElementById('mrent-time-hint');
-      if (hint) { hint.textContent = `Слот ${_rentSlots[i].slot_time} недоступен для ${qty} шт.`; hint.style.color = 'var(--err)'; }
-      return;
-    }
+
+  // Tap on the start of current selection → deselect
+  if (_rentSlotA === idx && _rentSlotB !== null) {
+    _rentSlotA = null; _rentSlotB = null;
+    _rentStartTime = null; _rentEndTime = null;
+    _rentHideActionBtns();
+    _rentRenderSlots();
+    return;
   }
 
-  _rentSlotB = idx;
+  // Have a multi-slot range → restart from new slot
+  if (_rentSlotA !== null && _rentSlotB !== null && _rentSlotA !== _rentSlotB) {
+    _rentSlotA = idx; _rentSlotB = idx;
+    _rentStartTime = null; _rentEndTime = null;
+    _rentRenderSlots();
+    rentCalcTotal();
+    return;
+  }
+
+  // Extend single selection forward
+  if (_rentSlotA !== null && idx > _rentSlotA) {
+    for (let i = _rentSlotA; i <= idx; i++) {
+      if (_rentSlots[i].available < qty) {
+        const hint = document.getElementById('mrent-time-hint');
+        if (hint) { hint.textContent = `Слот ${_rentSlots[i].slot_time} недоступен для ${qty} шт.`; hint.style.color = 'var(--err)'; }
+        return;
+      }
+    }
+    _rentSlotB = idx;
+    _rentRenderSlots();
+    rentCalcTotal();
+    return;
+  }
+
+  // First click or click before current start → single-slot selection (A=B=idx)
+  _rentSlotA = idx; _rentSlotB = idx;
+  _rentStartTime = null; _rentEndTime = null;
   _rentRenderSlots();
   rentCalcTotal();
 }
