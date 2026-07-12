@@ -31,12 +31,9 @@ jobs:
 
       - name: Apply database migrations
         run: |
-          cat supabase/migrations/20240101000071_profiles_booking_client_read.sql | \
-            ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
-          cat supabase/migrations/20240101000072_rent.sql | \
-            ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
-          cat supabase/migrations/20240101000073_rent_grants.sql | \
-            ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
+          for f in $(ls supabase/migrations/*.sql | sort); do
+            cat "$f" | ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker exec -i supabase-db psql -U postgres -d postgres"
+          done
           ssh -p 2222 root@${{ secrets.VPS_HOST }} "docker restart supabase-rest 2>/dev/null || docker restart rest 2>/dev/null || true"
 
       - name: Deploy Edge Functions
