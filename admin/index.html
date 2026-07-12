@@ -2196,10 +2196,19 @@ function filterStoreCards(q) {
 
 // ─── NAV ───
 const _adminRestorableScreens = new Set(['stores','menu','orders','profile','schedule','subscription','employees','map','categories']);
+let _curScreen = null;
+const _screenAnimTimers = new Map(); // screenId → pending cleanup timeout handle
+
+function _resetScreenStyle(el) {
+  ['position','top','left','width','height','zIndex','animation'].forEach(p => el.style[p] = '');
+}
 
 function goTo(id, opts = {}) {
   if (id !== 'auth' && !S.session) { goTo('auth'); return; }
-  const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
+  // Track the current screen explicitly rather than querying '.screen.active' — during/after an
+  // interrupted slide transition more than one screen can carry the 'active' class at once, which
+  // made a stray querySelector() match resolve prevId to the wrong (stuck) screen.
+  const prevId = _curScreen;
   if (!opts.fromSwipe) {
     S.navHistory = S.navHistory.slice(0, S.navIdx + 1);
     if (S.navHistory[S.navHistory.length - 1] !== id) { S.navHistory.push(id); S.navIdx++; }
@@ -2210,6 +2219,17 @@ function goTo(id, opts = {}) {
   if ((prevId === 'qr' || prevId === 'scan') && id !== prevId) stopQrCamera();
   if (prevId === 'schedule' && id !== 'schedule') schedRealtimeDisconnect();
   ({stores:loadStores,categories:loadCategories,menu:loadMenuScreen,orders:loadOrders,map:loadMapAdmin,qr:loadQrScreen,scan:loadScanScreen,profile:loadProfile,schedule:loadScheduleScreen,cities:loadCitiesScreen,subscription:loadSubscriptionScreen,employees:loadEmployeesScreen})[id]?.();
+  // Defensively hide any screen left stuck active from an earlier interrupted transition —
+  // only prevId (mid-transition) and id (incoming) are allowed to stay active.
+  document.querySelectorAll('.screen.active').forEach(s => {
+    const sid = s.id.replace('screen-', '');
+    if (sid !== prevId && sid !== id) {
+      const t = _screenAnimTimers.get(sid);
+      if (t) { clearTimeout(t); _screenAnimTimers.delete(sid); }
+      s.classList.remove('active');
+      _resetScreenStyle(s);
+    }
+  });
   if (opts.dir && prevId && prevId !== id) {
     document.getElementById('screen-' + id)?.classList.add('active');
     animateScreenChange(prevId, id, opts.dir);
@@ -2217,21 +2237,31 @@ function goTo(id, opts = {}) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById('screen-' + id)?.classList.add('active');
   }
+  _curScreen = id;
 }
 
 function animateScreenChange(fromId, toId, dir) {
   const fromEl = document.getElementById('screen-' + fromId);
   const toEl   = document.getElementById('screen-' + toId);
   if (!fromEl || !toEl) return;
+  // Cancel any pending cleanup for these two screens from an overlapping prior transition, and
+  // clear leftover inline styles immediately so they can't fight the transition we're starting now.
+  [fromId, toId].forEach(sid => {
+    const t = _screenAnimTimers.get(sid);
+    if (t) { clearTimeout(t); _screenAnimTimers.delete(sid); }
+  });
+  _resetScreenStyle(toEl);
   const D = 280;
   Object.assign(fromEl.style, {position:'absolute',top:'0',left:'0',width:'100%',height:'100%',zIndex:'50',
     animation:`${dir==='back'?'navSlideOutRight':'navSlideOutLeft'} ${D}ms ease forwards`});
   toEl.style.animation = `${dir==='back'?'navSlideInLeft':'navSlideInRight'} ${D}ms ease forwards`;
-  setTimeout(() => {
+  const _animTimer = setTimeout(() => {
     fromEl.classList.remove('active');
-    ['position','top','left','width','height','zIndex','animation'].forEach(p => fromEl.style[p]='');
+    _resetScreenStyle(fromEl);
+    _screenAnimTimers.delete(fromId);
     toEl.style.animation = '';
   }, D + 10);
+  _screenAnimTimers.set(fromId, _animTimer);
 }
 
 let _navInfoTimer;
@@ -7095,6 +7125,7 @@ async function saveMaster() {
     } else {
       document.getElementById('screen-auth').classList.add('active');
     }
+    _curScreen = 'auth';
     await loadAppConfig();
     return;
   }
