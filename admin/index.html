@@ -3869,7 +3869,8 @@ async function loadStores() {
 }
 
 function fillStoreSelects() {
-  const opts = S.stores.filter(s => !s.archived_at).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  const stores = S.stores.filter(s => !s.archived_at);
+  const opts = stores.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
   ['cat-store-filter','mi-store-filter','ord-store-filter','bk-store-filter','rent-store-filter','sub-store-filter','mc-store','mmi-store','msub-store','an-store-filter'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -3878,6 +3879,15 @@ function fillStoreSelects() {
     el.innerHTML = prefix + opts;
     el.value = current;
   });
+  if (stores.length === 1) {
+    ['ord-store-filter','bk-store-filter','rent-store-filter'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.value) {
+        el.value = stores[0].id;
+        el.dispatchEvent(new Event('change'));
+      }
+    });
+  }
 }
 
 async function openStoreModal(store) {
