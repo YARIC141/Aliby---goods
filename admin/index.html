@@ -5906,6 +5906,7 @@ async function onAdminReady() {
   adminRealtimeConnect();
   globalBookingsRealtimeConnect();
   _refreshActivePlatSub();
+  loadStores();
   try {
     const profs = await req(`/rest/v1/profiles?id=eq.${S.session.user.id}&select=*&limit=1`);
     if (profs[0]) { S.profile = profs[0]; applyRoleRestrictions(); }
