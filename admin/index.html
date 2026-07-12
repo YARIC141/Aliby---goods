@@ -6185,7 +6185,8 @@ async function _prefetchAdmin() {
       try { localStorage.setItem(`admin_subs_${uid}`, JSON.stringify(subs)); } catch {}
     })(),
     isEmp ? Promise.resolve() : (async () => {
-      const emps = await req('/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc');
+      const empSf = storeIds ? `&employee_store_id=in.(${storeIds})` : '&employee_store_id=eq.00000000-0000-0000-0000-000000000000';
+      const emps = await req(`/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password&order=full_name.asc${empSf}`);
       try { localStorage.setItem(`admin_emps_${uid}`, JSON.stringify(emps)); } catch {}
     })(),
     (async () => {
@@ -6781,8 +6782,11 @@ async function loadEmployees() {
     else el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>';
   } catch(e) { el.innerHTML = '<div class="txt-muted" style="padding:12px 0">Загрузка…</div>'; }
   try {
+    const isEmp = S.profile?.role === 'employee';
+    const storeIds = S.stores?.map(s => s.id).join(',');
+    const sf = isEmp ? `&employee_store_id=eq.${S.profile?.employee_store_id}` : (storeIds ? `&employee_store_id=in.(${storeIds})` : '&employee_store_id=eq.00000000-0000-0000-0000-000000000000');
     const emps = await req(
-      `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password,is_master&order=full_name.asc`
+      `/rest/v1/profiles?role=eq.employee&select=id,full_name,phone,employee_store_id,employee_login,employee_password,is_master&order=full_name.asc${sf}`
     );
     try { localStorage.setItem(cacheKey, JSON.stringify(emps)); } catch(ex) {}
     _renderEmpList(emps);
