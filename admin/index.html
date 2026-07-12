@@ -5494,6 +5494,12 @@ function _setOrdDot(ok) {
   if (dot) dot.style.background = ok ? '#22c55e' : '#ef4444';
 }
 
+function _myStoreIds() {
+  const ids = new Set((S.stores || []).map(s => s.id));
+  if (S.profile?.employee_store_id) ids.add(S.profile.employee_store_id);
+  return ids;
+}
+
 function adminRealtimeConnect() {
   if (_adminRtWs && _adminRtWs.readyState < 2) return; // already connected/connecting
   if (_adminRtWs) { try { _adminRtWs.close(); } catch {} _adminRtWs = null; }
@@ -5537,6 +5543,9 @@ function adminRealtimeConnect() {
           const data = msg.payload?.data ?? msg.payload;
           const type = (data?.eventType || data?.type || '').toUpperCase();
           const record = data?.new ?? data?.record;
+          // No server-side store filter on this channel (admin may own multiple stores) —
+          // gate client-side so platform-owner RLS visibility doesn't leak other tenants' orders.
+          if (!record?.store_id || !_myStoreIds().has(record.store_id)) return;
           const newStatus = record?.status;
           const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready']);
           if (type === 'INSERT') {
@@ -6142,6 +6151,9 @@ function globalBookingsRealtimeConnect() {
           const data = msg.payload?.data ?? msg.payload;
           const type = (data?.eventType || data?.type || '').toUpperCase();
           const record = data?.new ?? data?.record;
+          // No server-side store filter on this channel (admin may own multiple stores) —
+          // gate client-side so platform-owner RLS visibility doesn't leak other tenants' bookings.
+          if (!record?.store_id || !_myStoreIds().has(record.store_id)) return;
           if (type === 'INSERT' && record?.id) {
             _newBookingIds.add(record.id);
             updateNavBadge();
@@ -7574,8 +7586,19 @@ async function handleQrResult(userId) {
   status.textContent = 'QR считан, загрузка абонементов…';
   results.innerHTML  = '<div class="loading">Загрузка…</div>';
   try {
+    const isEmp = S.profile?.role === 'employee';
+    const storeIds = isEmp ? (S.profile?.employee_store_id || '') : (S.stores?.map(s => s.id).join(',') || '');
+    if (!storeIds) {
+      results.innerHTML = '<div class="empty">Нет доступных заведений</div>';
+      status.textContent = '';
+      return;
+    }
+    // subscriptions!inner + subscriptions.store_id filter restricts results to subscriptions
+    // sold by stores this admin/employee owns — otherwise the platform-owner account (whose
+    // RLS grants it visibility into every tenant's user_subscriptions) would see every store's
+    // subscriptions and redemption history for whichever customer's QR gets scanned.
     const subs = await req(
-      `/rest/v1/user_subscriptions?user_id=eq.${userId}&status=eq.active&select=id,remaining_uses,end_date,subscriptions(id,name,price,total_uses,store_id,stores(id,name))&order=purchase_date.desc`
+      `/rest/v1/user_subscriptions?user_id=eq.${userId}&status=eq.active&select=id,remaining_uses,end_date,subscriptions!inner(id,name,price,total_uses,store_id,stores(id,name))&subscriptions.store_id=in.(${storeIds})&order=purchase_date.desc`
     );
     if (!subs.length) {
       results.innerHTML = '<div class="empty">У клиента нет активных абонементов</div>';
