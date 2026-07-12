@@ -3870,7 +3870,7 @@ async function loadStores() {
 
 function fillStoreSelects() {
   const opts = S.stores.filter(s => !s.archived_at).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
-  ['cat-store-filter','mi-store-filter','ord-store-filter','bk-store-filter','sub-store-filter','mc-store','mmi-store','msub-store','an-store-filter'].forEach(id => {
+  ['cat-store-filter','mi-store-filter','ord-store-filter','bk-store-filter','rent-store-filter','sub-store-filter','mc-store','mmi-store','msub-store','an-store-filter'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const current = el.value;
@@ -5325,7 +5325,6 @@ function switchAdminTab(tab) {
     _bkTab.storeId = document.getElementById('bk-store-filter')?.value || null;
     loadBkTabMonth();
   } else if (tab === 'rent') {
-    _fillRentStoreFilter();
     _rentTab.storeId = document.getElementById('rent-store-filter')?.value || null;
     loadRentTabMonth();
   }
