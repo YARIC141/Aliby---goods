@@ -1668,11 +1668,18 @@ document.addEventListener('deviceready',function(){
     <div id="mbs-loading" style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Загрузка расписания…</div>
     <div id="mbs-pick-master-hint" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Сначала выберите мастера — свободное время покажем для него</div>
     <div id="mbs-main" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <button class="btn btn-sm" id="mbs-prev-btn" onclick="bookingPrevDay()">←</button>
-        <span id="mbs-date-label" style="font:600 14px/1.3 var(--font-sans);text-align:center"></span>
-        <button class="btn btn-sm" id="mbs-next-btn" onclick="bookingNextDay()">→</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button class="btn btn-sm" onclick="bookingCalPrevMonth()">←</button>
+        <span id="mbs-cal-label" style="font:600 15px/1 var(--font-sans)"></span>
+        <button class="btn btn-sm" onclick="bookingCalNextMonth()">→</button>
       </div>
+      <div class="sched-cal-wrap" style="margin-bottom:14px">
+        <table class="sched-cal-table">
+          <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+          <tbody id="mbs-cal-body"></tbody>
+        </table>
+      </div>
+      <div id="mbs-date-label" style="font:600 14px/1.3 var(--font-sans);margin-bottom:8px"></div>
       <div id="mbs-slots" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px"></div>
       <div id="mbs-master-chosen" style="display:none;margin-bottom:12px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2);font-size:13px;color:var(--fg-2)">
         Мастер: <strong id="mbs-master-chosen-name"></strong>
@@ -8664,6 +8671,7 @@ let _booking = {
   slotMasterMap: {},   // date → slotStart → {end, masterIds:[]}
   selectedMasterId: '',
   autoMasterId: null,
+  calYear: nowInCity().getFullYear(), calMonth: nowInCity().getMonth(),
 };
 let _myBk = {
   year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {}, openDate: null,
@@ -8744,6 +8752,8 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   _booking.masterBooked = {};
   _booking.masterPrices = {};
   _booking.slotMasterMap = {};
+  _booking.calYear = nowInCity().getFullYear();
+  _booking.calMonth = nowInCity().getMonth();
   document.getElementById('mbs-title').textContent = rescheduleId ? 'Перенос записи' : 'Выберите время';
   document.getElementById('mbs-service-info').textContent = `${item.name} · ${item.price} ₽${item.duration_minutes ? ' · ' + item.duration_minutes + ' мин' : (item.preparation_time ? ' · ' + item.preparation_time + ' мин' : '')}`;
   document.getElementById('mbs-loading').style.display = '';
@@ -8816,12 +8826,70 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   const firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
   if (!firstAvail) { document.getElementById('mbs-no-sched').style.display = ''; return; }
   _booking.currentDate = firstAvail;
+  _syncBookingCalToCurrentDate();
   renderBookingDateView();
 }
 
 function _hasMasterSlots(ds, masterId) {
   const slotMap = _booking.slotMasterMap[ds] || {};
   return Object.values(slotMap).some(info => !masterId || info.masterIds.includes(masterId));
+}
+
+const _BOOKING_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+function _bookingDayAvailCount(ds) {
+  if (ds < todayInCity()) return 0;
+  if (_booking.masters.length > 0) {
+    const slotMap = _booking.slotMasterMap[ds] || {};
+    const smid = _booking.selectedMasterId;
+    return Object.values(slotMap).filter(info => !smid || info.masterIds.includes(smid)).length;
+  }
+  const prepMin = Math.max(_booking.item?.preparation_time || 30, 5);
+  const nowMin = ds === todayInCity() ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
+  return getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, nowMin).length;
+}
+
+function _renderBookingCal() {
+  const { calYear: year, calMonth: month } = _booking;
+  document.getElementById('mbs-cal-label').textContent = `${_BOOKING_MONTHS[month]} ${year}`;
+  const firstDay = new Date(year, month, 1);
+  const lastDate = new Date(year, month + 1, 0).getDate();
+  const today = todayInCity();
+  let dow = firstDay.getDay(); dow = dow === 0 ? 6 : dow - 1;
+  const tbody = document.getElementById('mbs-cal-body');
+  tbody.innerHTML = '';
+  let row = document.createElement('tr');
+  for (let i = 0; i < dow; i++) { const td = document.createElement('td'); td.className = 'sched-day empty'; row.appendChild(td); }
+  for (let d = 1; d <= lastDate; d++) {
+    const pad = n => String(n).padStart(2, '0');
+    const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
+    const availCount = _bookingDayAvailCount(ds);
+    const hasAny = availCount > 0;
+    const isToday = ds === today;
+    const isSelected = ds === _booking.currentDate;
+    const td = document.createElement('td');
+    td.className = `sched-day${!hasAny ? ' empty' : ''}${isToday ? ' today' : ''}${hasAny ? ' has-sched' : ''}${isSelected ? ' selected' : ''}`;
+    const badge = hasAny ? `<span class="sched-bk-cnt">${availCount}</span>` : '';
+    td.innerHTML = `<span class="sd-n">${d}</span>${badge}`;
+    if (hasAny) td.onclick = () => { _booking.currentDate = ds; renderBookingDateView(); };
+    row.appendChild(td);
+    if (new Date(year, month, d).getDay() === 0) { tbody.appendChild(row); row = document.createElement('tr'); }
+  }
+  if (row.children.length > 0) {
+    while (row.children.length < 7) { const td = document.createElement('td'); td.className = 'sched-day empty'; row.appendChild(td); }
+    tbody.appendChild(row);
+  }
+}
+
+function bookingCalPrevMonth() {
+  _booking.calMonth--;
+  if (_booking.calMonth < 0) { _booking.calMonth = 11; _booking.calYear--; }
+  _renderBookingCal();
+}
+function bookingCalNextMonth() {
+  _booking.calMonth++;
+  if (_booking.calMonth > 11) { _booking.calMonth = 0; _booking.calYear++; }
+  _renderBookingCal();
 }
 
 function renderBookingDateView() {
@@ -8854,21 +8922,13 @@ function renderBookingDateView() {
   document.getElementById('mbs-slots').innerHTML = slots.length
     ? slots.map(s => `<button class="booking-slot" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start}</button>`).join('')
     : `<span style="color:var(--muted);font-size:13px">Нет доступных слотов</span>`;
-  const dates = Object.keys(_booking.schedData).sort();
-  const idx = dates.indexOf(ds);
-  document.getElementById('mbs-prev-btn').disabled = idx <= 0;
-  document.getElementById('mbs-next-btn').disabled = idx >= dates.length - 1;
+  _renderBookingCal();
 }
 
-function bookingPrevDay() {
-  const dates = Object.keys(_booking.schedData).sort();
-  const idx = dates.indexOf(_booking.currentDate);
-  if (idx > 0) { _booking.currentDate = dates[idx-1]; renderBookingDateView(); }
-}
-function bookingNextDay() {
-  const dates = Object.keys(_booking.schedData).sort();
-  const idx = dates.indexOf(_booking.currentDate);
-  if (idx < dates.length-1) { _booking.currentDate = dates[idx+1]; renderBookingDateView(); }
+function _syncBookingCalToCurrentDate() {
+  if (!_booking.currentDate) return;
+  const [y, m] = _booking.currentDate.split('-').map(Number);
+  _booking.calYear = y; _booking.calMonth = m - 1;
 }
 
 function onBookingMasterChange(masterId) {
@@ -8894,6 +8954,7 @@ function onBookingMasterChange(masterId) {
   }
   document.getElementById('mbs-no-sched').style.display = 'none';
   _booking.currentDate = firstAvail;
+  _syncBookingCalToCurrentDate();
   renderBookingDateView();
 }
 
