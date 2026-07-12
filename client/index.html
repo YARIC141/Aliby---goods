@@ -2676,8 +2676,8 @@ function _rentRenderSlots() {
       ? `<span style="font-size:9px;display:block;color:${color === '#fff' ? 'rgba(255,255,255,.75)' : 'var(--fg-3)'}">${avail}</span>`
       : '';
     return `<button onclick="_rentClickSlot(${i})" ${disabled ? 'disabled' : ''}
-      style="padding:5px 8px;font-size:12px;line-height:1.2;border:1px solid ${border};background:${bg};color:${color};border-radius:var(--r-2);cursor:${disabled ? 'not-allowed' : 'pointer'};opacity:${disabled ? '.4' : '1'};min-width:54px;text-align:center">
-      ${esc(sl.slot_time)}<span style="font-size:10px;display:block;opacity:.7">–${endTime}</span>${availHint}
+      style="padding:5px 8px;font-size:12px;line-height:1.2;border:1px solid ${border};background:${bg};color:${color};border-radius:var(--r-2);cursor:${disabled ? 'not-allowed' : 'pointer'};opacity:${disabled ? '.4' : '1'};text-align:center;white-space:nowrap">
+      ${esc(sl.slot_time)}–${endTime}${availHint}
     </button>`;
   }).join('');
 
