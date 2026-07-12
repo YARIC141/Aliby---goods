@@ -4586,6 +4586,7 @@ async function loadStore() {
   // Reset category chip when entering a different store
   if (S._lastMenuStoreId !== st.id) { S.menuCatId = ''; S._lastMenuStoreId = st.id; }
   // Всё в фоне — UI рисуется из кэша немедленно, сеть не блокирует
+  S.storeSubActive = undefined; // сброс до завершения проверки, чтобы кэш-рендер не блокировал кнопки
   loadCategories();   // показывает кэш сразу, фоном обновляет
   loadMenuItems();    // показывает кэш сразу, фоном обновляет
   // Сетевые запросы без await — не блокируют рендер
@@ -4616,6 +4617,8 @@ function applyStoreGate() {
   if (giftPayBtn) giftPayBtn.style.display = active ? '' : 'none';
   if (rentPayBtn) rentPayBtn.style.display = active ? '' : 'none';
   refreshSubCardViews();
+  // Re-render action buttons on visible item cards (storeSubActive affects Арендовать / В корзину)
+  document.querySelectorAll('.item-card[data-id]').forEach(c => updateItemCardInPlace(c.dataset.id));
 }
 
 function renderSubCard(s) {

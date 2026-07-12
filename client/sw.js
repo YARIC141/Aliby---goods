@@ -1,5 +1,5 @@
-// v31
-const APP_CACHE  = 'alliby-app-v16';
+// v32
+const APP_CACHE  = 'alliby-app-v17';
 const API_CACHE  = 'alliby-api-v1';
 const IMG_CACHE  = 'alliby-img-v1';
 const MAX_IMG    = 200;
@@ -93,6 +93,12 @@ self.addEventListener('fetch', e => {
         return fetch(e.request).then(resp => {
           if (resp.ok) cache.put(e.request, resp.clone());
           return resp;
+        }).catch(async () => {
+          // Network failed and no cache — return any cached shell as fallback
+          const fallback = await caches.match('/') || await caches.match('/index.html');
+          return fallback || new Response('<html><body style="font:16px sans-serif;padding:32px">Нет соединения. Обновите страницу.</body></html>', {
+            status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          });
         });
       })
     );
