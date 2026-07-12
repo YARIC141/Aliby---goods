@@ -958,18 +958,36 @@ html.bg-custom #bg-fluid{display:none}
   <div id="obt-rent-pane" style="display:none;flex-direction:column;flex:1;overflow:hidden">
     <div class="pb">
       <div class="toolbar" style="margin-bottom:12px">
-        <select id="rent-store-filter" onchange="loadRentReservations()">
-          <option value="">Все заведения</option>
+        <select id="rent-store-filter" onchange="onRentStoreChange()">
+          <option value="">Выберите заведение</option>
         </select>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;margin-bottom:12px">
+        <button class="btn btn-sm" onclick="rentCalPrevMonth()">←</button>
+        <span id="rent-month-label" style="font:600 15px/1 var(--font-sans);letter-spacing:0.01em"></span>
+        <button class="btn btn-sm" onclick="rentCalNextMonth()">→</button>
+      </div>
+      <div class="sched-cal-wrap">
+        <table class="sched-cal-table">
+          <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
+          <tbody id="rent-cal-body"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
         <button class="ord-chip active" data-rent-status="all"       onclick="setRentStatusFilter('all')">Все</button>
         <button class="ord-chip"        data-rent-status="pending"   onclick="setRentStatusFilter('pending')">Ожидает</button>
         <button class="ord-chip"        data-rent-status="active"    onclick="setRentStatusFilter('active')">Активна</button>
         <button class="ord-chip"        data-rent-status="completed" onclick="setRentStatusFilter('completed')">Возвращено</button>
         <button class="ord-chip"        data-rent-status="cancelled" onclick="setRentStatusFilter('cancelled')">Отменена</button>
       </div>
-      <div id="rent-list"><div class="txt-muted" style="padding:16px 0">Загрузка…</div></div>
+      <div id="rent-cal-placeholder" style="text-align:center;color:var(--fg-4);font-size:14px;padding:36px 0">Выберите заведение и дату</div>
+      <div id="rent-day-view" style="display:none;margin-top:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div id="rent-day-title" style="font:600 15px/1 var(--font-sans)"></div>
+          <button class="btn btn-sm" onclick="closeRentDayView()">✕</button>
+        </div>
+        <div id="rent-day-list"></div>
+      </div>
     </div>
   </div>
   <div id="obt-bookings-pane" style="display:none;flex-direction:column;flex:1;overflow:hidden">
@@ -5308,12 +5326,24 @@ function switchAdminTab(tab) {
     loadBkTabMonth();
   } else if (tab === 'rent') {
     _fillRentStoreFilter();
-    loadRentReservations();
+    _rentTab.storeId = document.getElementById('rent-store-filter')?.value || null;
+    loadRentTabMonth();
   }
 }
 
 // ── RENT RESERVATIONS ──
-let _rentStatusFilter = 'all';
+const RENT_UNIT_LABEL   = { minute:'мин', hour:'ч', day:'д', week:'нед', month:'мес' };
+const RENT_STATUS_LABEL = { pending:'Ожидает', active:'Активна', completed:'Возвращено', cancelled:'Отменена' };
+const RENT_STATUS_COLOR = { pending:'var(--warn)', active:'var(--ok)', completed:'var(--fg-3)', cancelled:'var(--err)' };
+
+const _rentTab = {
+  storeId: null,
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+  openDate: null,
+  counts: {},
+  statusFilter: 'all',
+};
 
 function _fillRentStoreFilter() {
   const sel = document.getElementById('rent-store-filter');
@@ -5329,33 +5359,125 @@ function _fillRentStoreFilter() {
   }
 }
 
-function setRentStatusFilter(status) {
-  _rentStatusFilter = status;
-  document.querySelectorAll('[data-rent-status]').forEach(b =>
-    b.classList.toggle('active', b.dataset.rentStatus === status));
-  loadRentReservations();
+function onRentStoreChange() {
+  _rentTab.storeId = document.getElementById('rent-store-filter')?.value || null;
+  closeRentDayView();
+  loadRentTabMonth();
 }
 
-const RENT_UNIT_LABEL = { minute:'мин', hour:'ч', day:'д', week:'нед', month:'мес' };
-const RENT_STATUS_LABEL = { pending:'Ожидает', active:'Активна', completed:'Возвращено', cancelled:'Отменена' };
-const RENT_STATUS_COLOR = { pending:'var(--warn)', active:'var(--ok)', completed:'var(--fg-3)', cancelled:'var(--err)' };
+function setRentStatusFilter(status) {
+  _rentTab.statusFilter = status;
+  document.querySelectorAll('[data-rent-status]').forEach(b =>
+    b.classList.toggle('active', b.dataset.rentStatus === status));
+  if (_rentTab.openDate) renderRentDayView(_rentTab.openDate);
+}
 
-async function loadRentReservations() {
-  const el = document.getElementById('rent-list');
-  if (!el) return;
-  el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+function rentCalPrevMonth() {
+  if (_rentTab.month === 0) { _rentTab.month = 11; _rentTab.year--; } else _rentTab.month--;
+  closeRentDayView();
+  loadRentTabMonth();
+}
+
+function rentCalNextMonth() {
+  if (_rentTab.month === 11) { _rentTab.month = 0; _rentTab.year++; } else _rentTab.month++;
+  closeRentDayView();
+  loadRentTabMonth();
+}
+
+function closeRentDayView() {
+  document.getElementById('rent-day-view').style.display = 'none';
+  document.getElementById('rent-cal-placeholder').style.display = '';
+  _rentTab.openDate = null;
+}
+
+async function loadRentTabMonth() {
+  const y = _rentTab.year, mo = _rentTab.month;
+  const mm = String(mo + 1).padStart(2, '0');
+  const lastDay = new Date(y, mo + 1, 0).getDate();
+  const from = new Date(`${y}-${mm}-01T00:00:00`).toISOString();
+  const to   = new Date(`${y}-${mm}-${String(lastDay).padStart(2,'0')}T23:59:59`).toISOString();
+  _rentTab.counts = {};
+  if (_rentTab.storeId) {
+    try {
+      const rows = await req(`/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=gte.${from}&start_at=lte.${to}&status=neq.cancelled&select=start_at`);
+      rows.forEach(r => {
+        const d = new Date(r.start_at).toLocaleDateString('en-CA');
+        _rentTab.counts[d] = (_rentTab.counts[d] || 0) + 1;
+      });
+    } catch {}
+  }
+  renderRentTabCalendar();
+}
+
+function renderRentTabCalendar() {
+  const MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const lbl = document.getElementById('rent-month-label');
+  if (lbl) lbl.textContent = `${MONTHS[_rentTab.month]} ${_rentTab.year}`;
+  const calEl = document.getElementById('rent-cal-body');
+  if (!calEl) return;
+  const today = _fmtD(new Date());
+  const y = _rentTab.year, mo = _rentTab.month;
+  const mm = String(mo + 1).padStart(2, '0');
+  const firstDow = new Date(y, mo, 1).getDay();
+  const offset = firstDow === 0 ? 6 : firstDow - 1;
+  const daysInMonth = new Date(y, mo + 1, 0).getDate();
+  const prevMonthDays = new Date(y, mo, 0).getDate();
+  const cells = [];
+  for (let i = offset - 1; i >= 0; i--)
+    cells.push({ d: prevMonthDays - i, cls: 'sched-day empty', ds: null });
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dd = String(d).padStart(2, '0');
+    const ds = `${y}-${mm}-${dd}`;
+    let cls = 'sched-day';
+    if (ds === today) cls += ' today';
+    if (ds === _rentTab.openDate) cls += ' selected';
+    cells.push({ d, cls, ds });
+  }
+  while (cells.length % 7 !== 0) cells.push({ d: '', cls: 'sched-day empty', ds: null });
+  let html = '';
+  cells.forEach((c, i) => {
+    if (i % 7 === 0) html += '<tr>';
+    const clickable = c.ds && _rentTab.storeId;
+    const onclick = clickable ? ` onclick="onRentCalDayClick('${c.ds}')"` : '';
+    const cnt = c.ds ? (_rentTab.counts[c.ds] || 0) : 0;
+    const badge = cnt > 0 ? `<span class="sched-bk-cnt">${cnt}</span>` : '';
+    html += `<td class="${c.cls}"${onclick}><span class="sd-n">${c.d}</span>${badge}</td>`;
+    if (i % 7 === 6) html += '</tr>';
+  });
+  calEl.innerHTML = html;
+}
+
+function onRentCalDayClick(dateStr) {
+  if (!_rentTab.storeId) return;
+  _rentTab.openDate = dateStr;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dow = new Date(y, m - 1, d).getDay();
+  const DAY = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+  const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('rent-day-title').textContent = `${DAY[dow]}, ${d} ${MON[m-1]} ${y}`;
+  document.getElementById('rent-cal-placeholder').style.display = 'none';
+  document.getElementById('rent-day-view').style.display = '';
+  renderRentTabCalendar();
+  renderRentDayView(dateStr);
+  setTimeout(() => document.getElementById('rent-day-view')?.scrollIntoView({ behavior:'smooth', block:'start' }), 80);
+}
+
+async function renderRentDayView(dateStr) {
+  const el = document.getElementById('rent-day-list');
+  if (!el || !_rentTab.storeId) return;
+  el.innerHTML = '<div class="txt-muted" style="font-size:13px">Загрузка…</div>';
+  const dayStart = new Date(dateStr + 'T00:00:00').toISOString();
+  const dayEnd   = new Date(dateStr + 'T23:59:59').toISOString();
   try {
-    const storeId = S.profile?.role === 'employee'
-      ? S.profile.employee_store_id
-      : (document.getElementById('rent-store-filter')?.value || null);
-    let url = '/rest/v1/rent_reservations?select=id,start_at,end_at,quantity,total_price,status,notes,created_at,menu_items(name,rent_period_unit,rent_period_step),profiles(full_name,phone)&order=created_at.desc&limit=80';
-    if (storeId) url += `&store_id=eq.${storeId}`;
-    if (_rentStatusFilter !== 'all') url += `&status=eq.${_rentStatusFilter}`;
+    let url = `/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=gte.${dayStart}&start_at=lte.${dayEnd}&select=id,start_at,end_at,quantity,total_price,status,notes,menu_items(name,rent_period_unit,rent_period_step),profiles(full_name,phone)&order=start_at.asc`;
+    if (_rentTab.statusFilter !== 'all') url += `&status=eq.${_rentTab.statusFilter}`;
     const rows = await req(url);
-    if (!rows.length) { el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Нет аренд</div>'; return; }
+    _rentTab.counts[dateStr] = rows.filter(r => r.status !== 'cancelled').length;
+    renderRentTabCalendar();
+    if (!rows.length) { el.innerHTML = '<div class="txt-muted" style="font-size:13px;padding:8px 0">Аренд нет</div>'; return; }
     el.innerHTML = rows.map(r => _renderRentRow(r)).join('');
-  } catch(e) {
-    el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Ошибка загрузки</div>';
+  } catch {
+    el.innerHTML = '<div class="txt-muted" style="font-size:13px">Ошибка загрузки</div>';
   }
 }
 
@@ -5401,7 +5523,8 @@ function _renderRentRow(r) {
 async function updateRentStatus(id, status) {
   try {
     await req(`/rest/v1/rent_reservations?id=eq.${id}`, { method:'PATCH', body: JSON.stringify({ status }) });
-    loadRentReservations();
+    if (_rentTab.openDate) renderRentDayView(_rentTab.openDate);
+    else loadRentTabMonth();
   } catch(e) { showAdminToast('Ошибка: ' + (e.message || '')); }
 }
 
