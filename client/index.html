@@ -8906,17 +8906,12 @@ function selectBookingSlot(start, end) {
     if (_booking.selectedMasterId) availIds = availIds.filter(id => id === _booking.selectedMasterId);
     const availMasters = availIds.map(id => _booking.masters.find(m => m.id === id)).filter(Boolean);
     if (!availMasters.length) return;
-    if (availMasters.length === 1) {
-      _booking.autoMasterId = availMasters[0].id;
-      document.getElementById('mbs-master-chosen-name').textContent = availMasters[0].full_name || '—';
-      document.getElementById('mbs-master-chosen').style.display = '';
-    } else {
-      document.getElementById('mbs-master-chips').innerHTML = availMasters
-        .map(m => `<button class="booking-slot" data-master="${m.id}" onclick="selectBookingMaster('${m.id}')">${esc(m.full_name||'—')}</button>`)
-        .join('');
-      document.getElementById('mbs-master-pick').style.display = '';
-      return; // wait for master pick
-    }
+    // Always require an explicit click, even when only one master is available for the slot.
+    document.getElementById('mbs-master-chips').innerHTML = availMasters
+      .map(m => `<button class="booking-slot" data-master="${m.id}" onclick="selectBookingMaster('${m.id}')">${esc(m.full_name||'—')}</button>`)
+      .join('');
+    document.getElementById('mbs-master-pick').style.display = '';
+    return; // wait for master pick
   }
   document.getElementById('mbs-book-btn').disabled = false;
   if (S.storeSubActive !== false) document.getElementById('mbs-pay-btn').disabled = false;
