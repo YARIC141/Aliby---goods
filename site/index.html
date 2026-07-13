@@ -97,13 +97,12 @@ nav{
 .nav-drop:hover .nav-drop-menu{opacity:1;visibility:visible;transform:translateX(-50%) translateY(2px)}
 .nav-drop-menu a{padding:9px 12px;border-radius:var(--r-2);font:600 13px/1.2 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:background .14s,color .14s}
 .nav-drop-menu a:hover{background:var(--bg-2);color:var(--fg)}
-.nav-cta{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:9px 20px;border-radius:var(--r-pill);
-  background:var(--brand);color:#fff;font:600 14px/1 var(--font-sans);
-  text-decoration:none;transition:background .18s,transform .14s;white-space:nowrap;
-}
-.nav-cta:hover{background:var(--brand-deep);transform:translateY(-1px)}
+.nav-play-badge{display:inline-flex;align-items:center;transition:transform .14s}
+.nav-play-badge img{height:40px;width:auto;display:block}
+.nav-play-badge:hover{transform:translateY(-1px)}
+.cta-play-badge{display:inline-flex;align-items:center;transition:transform .14s}
+.cta-play-badge img{height:54px;width:auto;display:block}
+.cta-play-badge:hover{transform:translateY(-2px)}
 @media(max-width:720px){.nav-links .nav-link,.nav-drop{display:none}}
 
 /* ── PAGE HERO ── */
@@ -917,9 +916,8 @@ html[data-theme="light"] .icon-moon{display:flex}
     <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
   </button>
-  <a class="nav-cta" href="https://alliby.ru/">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-    Открыть приложение
+  <a class="nav-play-badge" href="https://play.google.com/store/apps/details?id=ru.alliby.app" target="_blank" rel="noopener" aria-label="Скачать в Google Play">
+    <img src="https://play.google.com/intl/ru_ru/badges/static/images/badges/ru_badge_web_generic.png" alt="Доступно в Google Play" height="40">
   </a>
 </nav>
 
@@ -1109,9 +1107,8 @@ html[data-theme="light"] .icon-moon{display:flex}
   <h2 class="cta-h2">Начните пользоваться Alliby</h2>
   <p class="cta-sub">Клиентам — найти место и заказать за минуту. Бизнесу — подключить заведение и принимать заказы онлайн.</p>
   <div class="cta-btns">
-    <a class="btn-primary" href="https://alliby.ru/">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
-      Открыть Alliby
+    <a class="cta-play-badge" href="https://play.google.com/store/apps/details?id=ru.alliby.app" target="_blank" rel="noopener" aria-label="Скачать в Google Play">
+      <img src="https://play.google.com/intl/ru_ru/badges/static/images/badges/ru_badge_web_generic.png" alt="Доступно в Google Play" height="54">
     </a>
     <a class="btn-blue" href="#pricing" onclick="goToBusinessTerms();return false">
       Alliby для бизнеса
