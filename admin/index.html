@@ -5899,8 +5899,9 @@ function _renderAnalytics(d, month, year) {
   if (!d) { document.getElementById('an-content').innerHTML = '<div class="txt-muted" style="padding:16px 0">Нет данных</div>'; return; }
   const daysInMonth = new Date(year, month, 0).getDate();
 
+  const _anQtyUnit = { service: 'зап.', rental: 'аренд.' };
   const topOrdersHtml = Array.isArray(d.top_items) && d.top_items.length
-    ? d.top_items.map((it, i) => `<div class="an-top-row"><span class="an-top-rank">${i+1}</span><span class="an-top-name">${esc(it.name)}</span><span class="an-top-val">${it.qty} шт</span></div>`).join('')
+    ? d.top_items.map((it, i) => `<div class="an-top-row"><span class="an-top-rank">${i+1}</span><span class="an-top-name">${esc(it.name)}</span><span class="an-top-val">${it.qty} ${_anQtyUnit[it.item_type] || 'шт'}</span></div>`).join('')
     : '<div class="txt-muted" style="font-size:12px;padding:6px 0">Нет данных</div>';
 
   const topClicksHtml = Array.isArray(d.top_clicked_items) && d.top_clicked_items.length
@@ -5910,9 +5911,13 @@ function _renderAnalytics(d, month, year) {
   document.getElementById('an-content').innerHTML = `
     <div class="an-cards">
       <div class="an-card"><div class="an-card-val">${_anFmt(d.revenue)} ₽</div><div class="an-card-lbl">Выручка</div></div>
-      <div class="an-card"><div class="an-card-val">${d.order_count || 0}</div><div class="an-card-lbl">Заказов</div></div>
       <div class="an-card"><div class="an-card-val">${_anFmt(d.avg_check)} ₽</div><div class="an-card-lbl">Средний чек</div></div>
       <div class="an-card"><div class="an-card-val">${d.sub_redemptions || 0}</div><div class="an-card-lbl">Списаний абонем.</div></div>
+    </div>
+    <div class="an-cards">
+      <div class="an-card"><div class="an-card-val">${d.orders_count || 0}</div><div class="an-card-lbl">Заказов${d.orders_revenue ? ' · ' + _anFmt(d.orders_revenue) + ' ₽' : ''}</div></div>
+      <div class="an-card"><div class="an-card-val">${d.bookings_count || 0}</div><div class="an-card-lbl">Записей${d.bookings_revenue ? ' · ' + _anFmt(d.bookings_revenue) + ' ₽' : ''}</div></div>
+      <div class="an-card"><div class="an-card-val">${d.rent_count || 0}</div><div class="an-card-lbl">Аренд${d.rent_revenue ? ' · ' + _anFmt(d.rent_revenue) + ' ₽' : ''}</div></div>
     </div>
     <div class="an-cards">
       <div class="an-card"><div class="an-card-val">${d.clicks_store || 0}</div><div class="an-card-lbl">Открытий на карте</div></div>
@@ -5923,7 +5928,7 @@ function _renderAnalytics(d, month, year) {
       <canvas id="an-chart" height="110" style="width:100%;display:block"></canvas>
     </div>
     <div class="an-section">
-      <div class="an-section-title">Топ позиций по заказам</div>
+      <div class="an-section-title">Топ позиций по заказам, записям и аренде</div>
       ${topOrdersHtml}
     </div>
     <div class="an-section">
