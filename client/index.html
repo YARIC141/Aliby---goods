@@ -300,21 +300,24 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 /* ── STORE ── */
 #svc-pane-services{display:flex;flex-direction:column;flex:1;min-height:0}
 .store-hero{display:flex;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
-.store-logo{position:relative;width:96px;height:96px;border:1px solid var(--line-soft);border-radius:var(--r-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;color:var(--fg-4);font-size:14px;background:var(--bg-2)}
+.store-hero-media{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.store-logo{position:relative;width:140px;height:140px;border:1px solid var(--line-soft);border-radius:var(--r-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;color:var(--fg-4);font-size:14px;background:var(--bg-2)}
 .store-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.store-legal-btn{background:none;border:none;cursor:pointer;font:400 10.5px/1.3 var(--font-sans);color:var(--fg-4);text-decoration:underline;text-underline-offset:2px;padding:0;text-align:center;max-width:140px}
 .store-meta h2{font:400 34px/1 var(--font-display);letter-spacing:-0.01em;margin-bottom:4px}
 .store-meta .cuisine{font:400 14px/1 var(--font-sans);color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
 .store-meta .meta-line{font:400 14px/1.5 var(--font-sans);color:var(--fg-2);margin-bottom:2px}
 .store-action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 @media(max-width:480px){
   .store-hero{gap:12px;margin-bottom:14px;padding-bottom:12px}
-  .store-logo{width:64px;height:64px}
+  .store-logo{width:96px;height:96px}
+  .store-legal-btn{font-size:9.5px;max-width:96px}
   .store-meta h2{font-size:24px}
   .store-meta .cuisine{margin-bottom:6px}
   .store-meta .meta-line{font-size:12.5px}
   .store-action-row{gap:6px;margin-top:6px}
   .store-action-row .btn{padding:6px 9px}
-  #st-sched-btn .st-action-txt,#st-notif-btn .st-action-txt{display:none}
+  #st-sched-btn .st-action-txt{display:none}
 }
 .subs-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;touch-action:pan-x}
 .subs-col{display:flex;flex-direction:column;gap:10px}
@@ -349,6 +352,10 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .item-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);margin-bottom:2px}
 .item-name.sub-on{color:var(--ok)}
 .item-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3);margin-bottom:6px}
+@media(max-width:600px){
+  .item-img{height:auto;aspect-ratio:1/1}
+  .item-card .item-card-desc{display:none}
+}
 .item-price{display:flex;flex-direction:row;align-items:flex-end;gap:6px;margin-bottom:6px}
 .item-actions{margin-top:auto;padding-top:8px;display:flex;justify-content:flex-end}
 .price-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto}
@@ -1163,7 +1170,10 @@ document.addEventListener('deviceready',function(){
   <div class="pb" style="flex:1;min-height:0;overflow-y:auto;overscroll-behavior-y:none">
 
     <div class="store-hero">
-      <div class="store-logo" id="store-logo">Фото</div>
+      <div class="store-hero-media">
+        <div class="store-logo" id="store-logo">Фото</div>
+        <button id="store-legal-btn" class="store-legal-btn" style="display:none" onclick="toggleStoreLegal()">Реквизиты продавца</button>
+      </div>
       <div class="store-meta" style="flex:1">
         <div class="cuisine" id="st-cuisine"></div>
         <div class="meta-line" id="st-addr"></div>
@@ -1172,16 +1182,12 @@ document.addEventListener('deviceready',function(){
         <div class="store-action-row">
           <button id="st-delivery-badge" class="btn btn-sm" style="display:none" onclick="openDzViewer(S.store)"><svg class="ico" width="13" height="13"><use href="#i-bicycle"/></svg><span class="st-action-txt">Доставка · Зоны →</span></button>
           <button class="btn btn-sm" id="st-sched-btn" title="График работы" onclick="openStoreSchedule(S.store)"></button>
-          <button id="st-notif-btn" class="btn btn-sm" title="Уведомления" onclick="toggleStoreNotif()" style="display:none"></button>
         </div>
         <a id="st-complaint-link" href="#" onclick="openStoreComplaint();return false" style="display:none;margin-top:10px;font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:underline;text-underline-offset:3px;white-space:nowrap">Пожаловаться на заведение</a>
       </div>
     </div>
 
-    <div id="store-legal-sec" style="display:none;margin-bottom:12px">
-      <button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none';this.querySelector('.sl-arrow').textContent=this.nextElementSibling.style.display===''?'▲':'▼'" style="background:none;border:none;cursor:pointer;font:400 12px/1 var(--font-sans);color:var(--fg-4);padding:4px 0;display:flex;align-items:center;gap:4px">Реквизиты продавца <span class="sl-arrow">▼</span></button>
-      <div id="store-legal-body" style="display:none;margin-top:6px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-1);border:1px solid var(--line-soft);font:400 12px/1.7 var(--font-sans);color:var(--fg-3)"></div>
-    </div>
+    <div id="store-legal-body" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-1);border:1px solid var(--line-soft);font:400 12px/1.7 var(--font-sans);color:var(--fg-3)"></div>
 
     <div id="store-subs-sec" class="sec" style="position:sticky;top:0;z-index:5;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);margin:0 -20px;padding:10px 20px 12px;border-bottom:1px solid var(--line-soft)">
       <div class="sec-title">Абонементы</div>
@@ -4609,15 +4615,12 @@ function _invalidateApiCache(keyword) {
 async function loadStoreNotifState(storeId) {
   S._storeNotifSub = null;
   const uid = S.session?.user?.id;
-  const phBtn   = document.getElementById('store-bell-btn');
-  const metaBtn = document.getElementById('st-notif-btn');
+  const phBtn = document.getElementById('store-bell-btn');
   if (!uid) {
-    if (phBtn)   phBtn.style.display   = 'none';
-    if (metaBtn) metaBtn.style.display = 'none';
+    if (phBtn) phBtn.style.display = 'none';
     return;
   }
-  if (phBtn)   phBtn.style.display   = '';
-  if (metaBtn) metaBtn.style.display = '';
+  if (phBtn) phBtn.style.display = '';
   _updateStoreNotifUI(null);
   try {
     const rows = await req(`/rest/v1/store_notif_subs?user_id=eq.${uid}&store_id=eq.${storeId}&select=subscribed`);
@@ -4635,12 +4638,15 @@ function _updateStoreNotifUI(subscribed) {
     phBtn.title = isOn ? 'Отписаться от уведомлений' : 'Подписаться на уведомления';
     phBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="${isOn ? '#i-megaphone' : '#i-megaphone-off'}"/></svg>`;
   }
-  const metaBtn = document.getElementById('st-notif-btn');
-  if (metaBtn) {
-    metaBtn.innerHTML = `${svgIco(isOn ? 'megaphone' : 'megaphone-off', 13)} <span class="st-action-txt">${isOn ? 'Подписан' : 'Подписаться'}</span>`;
-    metaBtn.title = isOn ? 'Подписан на уведомления' : 'Подписаться на уведомления';
-    metaBtn.style.color = isOn ? 'var(--accent)' : '';
-  }
+}
+
+function toggleStoreLegal() {
+  const body = document.getElementById('store-legal-body');
+  const btn = document.getElementById('store-legal-btn');
+  if (!body) return;
+  const opening = body.style.display === 'none';
+  body.style.display = opening ? '' : 'none';
+  if (btn) btn.textContent = 'Реквизиты продавца' + (opening ? ' ▲' : '');
 }
 
 async function toggleStoreNotif() {
@@ -4713,12 +4719,13 @@ async function loadStore() {
     const db = document.getElementById('st-delivery-badge'); if (db) db.style.display = 'none';
     const sb = document.getElementById('st-sched-btn'); if (sb) { sb.textContent = ''; sb.style.display = 'none'; }
     const cl = document.getElementById('st-complaint-link'); if (cl) cl.style.display = 'none';
-    const ls = document.getElementById('store-legal-sec'); if (ls) ls.style.display = 'none';
+    const lb = document.getElementById('store-legal-btn'); if (lb) lb.style.display = 'none';
+    const lbody = document.getElementById('store-legal-body'); if (lbody) lbody.style.display = 'none';
     document.getElementById('store-logo').textContent = '';
     const subs = document.getElementById('store-subs'); if (subs) subs.innerHTML = '';
     const mi = document.getElementById('menu-items');
     if (mi) mi.innerHTML = `<div class="empty" style="grid-column:1/-1;padding:40px 0"><div style="margin-bottom:14px;opacity:.6">${svgIco('pin',40)}</div>Выберите заведение для направления «${dirLabel}»<button class="btn btn-p btn-full" style="margin-top:16px" onclick="goTo('map')">Открыть карту →</button></div>`;
-    ['store-bell-btn','st-notif-btn','store-share-btn'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    ['store-bell-btn','store-share-btn'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     return;
   }
   { const _shb = document.getElementById('store-share-btn'); if (_shb) _shb.style.display = ''; }
@@ -4770,23 +4777,23 @@ async function loadStore() {
   const delBadgeEl = document.getElementById('st-delivery-badge');
   if (delBadgeEl) delBadgeEl.style.display = (st.delivery_enabled && !_SVC_DIRS.has(st.direction)) ? '' : 'none';
   const clLink = document.getElementById('st-complaint-link'); if (clLink) clLink.style.display = '';
-  const legalSec = document.getElementById('store-legal-sec');
+  const legalBtn = document.getElementById('store-legal-btn');
   const legalBody = document.getElementById('store-legal-body');
-  if (legalSec) legalSec.style.display = 'none';
-  if (st.owner_user_id && legalSec && legalBody && st.owner_user_id !== 'aea8c549-2d24-4532-84ae-a184d4413538') {
+  if (legalBtn) legalBtn.style.display = 'none';
+  if (legalBody) { legalBody.style.display = 'none'; legalBody.innerHTML = ''; }
+  if (st.owner_user_id && legalBtn && legalBody && st.owner_user_id !== 'aea8c549-2d24-4532-84ae-a184d4413538') {
     req('/rest/v1/rpc/get_store_legal_info', {
       method: 'POST', body: JSON.stringify({ p_store_id: st.id }),
     }).then(rows => {
       const legal = Array.isArray(rows) ? rows[0] : rows;
       if (!legal || (!legal.legal_name && !legal.inn && !legal.ogrn)) return;
-      legalBody.style.display = 'none';
-      legalSec.querySelector('.sl-arrow').textContent = '▼';
       legalBody.innerHTML = [
         legal.legal_name ? `<div>${esc(legal.legal_name)}</div>` : '',
         legal.inn  ? `<div>ИНН: ${esc(legal.inn)}</div>` : '',
         legal.ogrn ? `<div>ОГРН/ОГРНИП: ${esc(legal.ogrn)}</div>` : '',
       ].join('');
-      legalSec.style.display = '';
+      legalBtn.textContent = 'Реквизиты продавца';
+      legalBtn.style.display = '';
     }).catch(() => {});
   }
   const logoEl = document.getElementById('store-logo');
@@ -5281,7 +5288,7 @@ function renderItemCard(item) {
     <div class="item-img">${imgHtml}</div>
     <div class="item-body">
       <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
-      ${item.description ? `<div class="item-desc">${esc(item.description)}</div>` : ''}
+      ${item.description ? `<div class="item-desc item-card-desc">${esc(item.description)}</div>` : ''}
       ${item.allergens ? `<div class="item-desc" style="color:var(--warn,#e8a020)">⚠ Аллергены: ${esc(item.allergens)}</div>` : ''}
       ${item.preparation_time > 0 ? `<div class="item-desc" style="color:var(--fg-4)">⏱ ${item.preparation_time} мин</div>` : ''}
       <div class="item-price">${subNoteHtml}<div class="price-wrap">${priceHtml}</div></div>
