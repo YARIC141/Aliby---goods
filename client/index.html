@@ -464,9 +464,8 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 /* ── CONTRACT MODAL ── */
 .contract-scroll{max-height:46vh;overflow-y:auto;border:1px solid var(--line);border-radius:var(--r-2);padding:14px 16px;background:var(--bg-2);font:400 13px/1.65 var(--font-sans)}
 .contract-accept{margin-top:14px;padding:12px 14px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--glass)}
-.contract-accept label{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font:400 14px/1.5 var(--font-sans)}
-.contract-accept label span{flex:1;min-width:0}
-.contract-accept input[type=checkbox]{width:18px;height:18px;margin-top:2px;flex-shrink:0;accent-color:var(--accent)}
+.contract-accept label{position:relative;display:block;padding-left:28px;cursor:pointer;font:400 14px/1.5 var(--font-sans)}
+.contract-accept input[type=checkbox]{position:absolute;left:0;top:2px;width:18px;height:18px;margin:0;accent-color:var(--accent)}
 
 /* ── HOME TILES ── */
 .home-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;flex:1;overflow-y:auto;overscroll-behavior-y:none;align-content:start}
@@ -952,9 +951,9 @@ document.addEventListener('deviceready',function(){
       <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
       <div class="fg"><label>Имя и фамилия</label><input type="text" id="reg-name" placeholder="Иван Иванов" autocomplete="name"></div>
       <div class="fg"><label>Пароль (мин. 6 символов)</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
-      <label style="display:flex;align-items:flex-start;gap:8px;width:100%;font-size:12px;color:var(--fg-3);margin-bottom:8px;cursor:pointer;box-sizing:border-box">
-        <input type="checkbox" id="reg-pd-check" onchange="document.getElementById('reg-btn').disabled=!this.checked" style="margin-top:2px;flex-shrink:0">
-        <span style="flex:1 1 0%;min-width:0;overflow-wrap:break-word">Мне исполнилось 14 лет. Даю согласие на <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">обработку персональных данных</a> и принимаю <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательское соглашение</a></span>
+      <label style="position:relative;display:block;padding-left:26px;font-size:12px;color:var(--fg-3);margin-bottom:8px;cursor:pointer">
+        <input type="checkbox" id="reg-pd-check" onchange="document.getElementById('reg-btn').disabled=!this.checked" style="position:absolute;left:0;top:2px;margin:0">
+        Мне исполнилось 14 лет. Даю согласие на <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">обработку персональных данных</a> и принимаю <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательское соглашение</a>
       </label>
       <button class="btn btn-p btn-full" id="reg-btn" onclick="doRegister()" disabled>Зарегистрироваться</button>
     </div>
