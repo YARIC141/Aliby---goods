@@ -426,7 +426,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .modal-hd h3{font:400 24px/1.1 var(--font-display);margin:0}
 .modal-x{background:none;border:none;cursor:pointer;font-size:22px;line-height:1;color:var(--fg-3);width:32px;height:32px;border-radius:var(--r-1);display:flex;align-items:center;justify-content:center;transition:background var(--t-fast)}
 .modal-x:hover{background:var(--bg-2);color:var(--fg)}
-.modal-ft{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.modal-ft{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--line-soft)}
 .cond-title{font:600 16px/1.4 var(--font-sans);color:var(--fg);margin-bottom:4px}
 .cond-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft)}
 .cond-row:last-child{border-bottom:none}
@@ -4153,19 +4153,14 @@ async function loadMapStores() {
     if ((_isFirst || _needGeo) && !S.geoLat) {
       const geoBanner = document.getElementById('geo-locate-banner');
       if (S.userAddrLat != null) {
-        // Coordinates already known from city auto-detection — apply immediately
+        // Coordinates already known from city auto-detection — center map, but keep "Рядом" filter off by default
         S.geoLat = S.userAddrLat; S.geoLng = S.userAddrLng;
-        S.nearbyMeters = 300;
-        document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
         if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 16, duration: 600 });
       } else {
-        // Show banner, try geo silently — re-filters when result arrives
+        // Show banner, try geo silently — just centers the map when result arrives, filter stays off
         if (geoBanner) geoBanner.style.display = 'flex';
         window.AllibyBridge.requestLocation().then(pos => {
           S.geoLat = pos.lat; S.geoLng = pos.lng;
-          S.nearbyMeters = 300;
-          document.getElementById('nearby-btn')?.classList.add('btn-nearby-p');
-          applyMapFilter();
           if (S.map) S.map.flyTo({ center: [S.geoLng, S.geoLat], zoom: 16, duration: 600 });
         }).catch(() => {}).finally(() => {
           if (geoBanner) geoBanner.style.display = 'none';
