@@ -711,39 +711,43 @@ window.AllibyBridge={
     if(!_isNative()||!_P().PushNotifications||_pushInited)return;
     _pushInited=true;
     var PN=_P().PushNotifications;
+    // Listeners MUST be attached before register() — the native side can emit
+    // 'registration' immediately (e.g. an already-cached token), and Capacitor does
+    // not replay events fired before a listener existed, so registering the listener
+    // after calling register() can silently miss the token forever.
+    PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
+    PN.addListener('pushNotificationReceived',function(n){
+      var data=n.data||{};
+      if(data.type==='promo')_savePromoNotif(n.title,n.body,data.store_id||null);
+      _showNativeToast(n.title,n.body);
+    });
+    PN.addListener('pushNotificationActionPerformed',function(a){
+      var n=a.notification;
+      var data=n.data||{};
+      // show toast when user taps notification while app was in background
+      if(n.title||n.body)setTimeout(function(){_showNativeToast(n.title,n.body);},350);
+      if(typeof goTo==='function'){
+        if(data.type==='promo'){
+          _savePromoNotif(n.title,n.body,data.store_id||null);
+          if(data.store_id){setTimeout(function(){_openPromoStore(data.store_id);},400);}
+          else{setTimeout(function(){openPromoNotifs();},400);}
+          return;
+        }
+        var _isOrd=data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued'||data.type==='order_cancelled';
+        var _isBk=data.type==='booking_created'||data.type==='booking_confirmed'||data.type==='booking_cancelled';
+        if(_isOrd&&data.order_id){
+          setTimeout(function(){openOrderById(data.order_id);},400);
+        }else if(_isBk&&data.booking_id){
+          setTimeout(function(){openBookingById(data.booking_id);},400);
+        }else if(_isOrd||_isBk){
+          var _onCal=document.getElementById('screen-calenabs')?.classList.contains('active');
+          if(!_onCal)goTo('calenabs');
+        }
+      }
+    });
     PN.requestPermissions().then(function(perm){
       if(perm.receive!=='granted')return;
       PN.register();
-      PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
-      PN.addListener('pushNotificationReceived',function(n){
-        var data=n.data||{};
-        if(data.type==='promo')_savePromoNotif(n.title,n.body,data.store_id||null);
-        _showNativeToast(n.title,n.body);
-      });
-      PN.addListener('pushNotificationActionPerformed',function(a){
-        var n=a.notification;
-        var data=n.data||{};
-        // show toast when user taps notification while app was in background
-        if(n.title||n.body)setTimeout(function(){_showNativeToast(n.title,n.body);},350);
-        if(typeof goTo==='function'){
-          if(data.type==='promo'){
-            _savePromoNotif(n.title,n.body,data.store_id||null);
-            if(data.store_id){setTimeout(function(){_openPromoStore(data.store_id);},400);}
-            else{setTimeout(function(){openPromoNotifs();},400);}
-            return;
-          }
-          var _isOrd=data.type==='order_in_progress'||data.type==='order_ready'||data.type==='order_issued'||data.type==='order_cancelled';
-          var _isBk=data.type==='booking_created'||data.type==='booking_confirmed'||data.type==='booking_cancelled';
-          if(_isOrd&&data.order_id){
-            setTimeout(function(){openOrderById(data.order_id);},400);
-          }else if(_isBk&&data.booking_id){
-            setTimeout(function(){openBookingById(data.booking_id);},400);
-          }else if(_isOrd||_isBk){
-            var _onCal=document.getElementById('screen-calenabs')?.classList.contains('active');
-            if(!_onCal)goTo('calenabs');
-          }
-        }
-      });
     }).catch(function(){});
   },
 
@@ -4035,6 +4039,11 @@ function setSession(d) {
     window.AllibyBridge?.registerPush(uid);
     _registerWebPush(uid);
     _syncPromoNotifications(uid);
+    // Quick-restore may have rendered the store screen before the session was known
+    // (loadStoreNotifState hid the bell because uid wasn't available yet) — re-sync now.
+    if (S.store?.id && document.getElementById('screen-store')?.classList.contains('active')) {
+      loadStoreNotifState(S.store.id);
+    }
   }
   _updatePromoNotifBadge();
   if (typeof _promoStoreOnLoad !== 'undefined' && _promoStoreOnLoad) {
