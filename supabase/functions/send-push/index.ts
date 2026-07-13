@@ -100,7 +100,14 @@ async function sendFcm(
     }
   )
   const result = await resp.json()
-  if (!resp.ok) throw new Error(JSON.stringify(result))
+  if (!resp.ok) {
+    const fcmErrorCode = result?.error?.details?.find(
+      (d: { '@type'?: string; errorCode?: string }) => d.errorCode
+    )?.errorCode
+    const err = new Error(JSON.stringify(result)) as Error & { fcmErrorCode?: string }
+    err.fcmErrorCode = fcmErrorCode
+    throw err
+  }
   return result
 }
 
@@ -172,6 +179,22 @@ Deno.serve(async (req: Request) => {
       status: 200, headers: { 'Content-Type': 'application/json' },
     })
   } catch (err) {
+    // FCM says this token will never work again (app uninstalled / data cleared / token
+    // rotated) — delete it so the app re-registers a fresh one on next launch instead of
+    // every future push for this user silently failing against the same dead token.
+    const fcmErrorCode = (err as { fcmErrorCode?: string }).fcmErrorCode
+    if (fcmErrorCode === 'UNREGISTERED') {
+      await serviceClient
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', user_id)
+        .eq('app', 'client')
+        .eq('platform', 'android')
+      console.warn('FCM token unregistered, deleted stale subscription for user', user_id)
+      return new Response(JSON.stringify({ skipped: 'stale_token_removed' }), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      })
+    }
     console.error('FCM send error:', err)
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500, headers: { 'Content-Type': 'application/json' },
