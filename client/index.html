@@ -533,6 +533,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-bk-cancelled{position:absolute;bottom:3px;left:4px;font:700 9px/14px var(--font-sans);background:#e53935;color:#fff;border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.has-rent{background:color-mix(in oklch,var(--info) 16%,var(--bg))}
 .sched-day.has-rent:hover:not(.selected){background:color-mix(in oklch,var(--info) 26%,var(--bg))}
+.sched-day.has-sched.has-rent{background:linear-gradient(135deg,color-mix(in oklch,var(--accent) 13%,var(--bg)) 50%,color-mix(in oklch,var(--info) 16%,var(--bg)) 50%)}
 .sched-rent-dot{position:absolute;bottom:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--info);pointer-events:none}
 #m-dz-viewer{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
 #m-dz-viewer.open{transform:none}
@@ -9232,6 +9233,7 @@ function renderMyBookingsCalendar() {
       if (_myBk.rentByDate[ds]?.some(r => r.status !== 'cancelled')) cls += ' has-rent';
     } else {
       if (_myBk.byDate[ds]?.some(b => b.status !== 'cancelled')) cls += ' has-sched';
+      if (_mbkStatusFilter === 'all' && _myBk.rentByDate[ds]?.some(r => r.status !== 'cancelled')) cls += ' has-rent';
     }
     cells.push({ d, cls, ds });
   }
@@ -9244,6 +9246,7 @@ function renderMyBookingsCalendar() {
     const selected = c.ds && c.ds === _myBk.openDate ? ' selected' : '';
     const dayBks = c.ds ? (_myBk.byDate[c.ds] || []) : [];
     const isRentMode = _mbkStatusFilter === 'rental';
+    const isAllMode  = _mbkStatusFilter === 'all';
     const dayRents   = c.ds ? (_myBk.rentByDate[c.ds] || []) : [];
     const cnt        = isRentMode ? dayRents.filter(r => r.status !== 'cancelled').length   : dayBks.filter(b => b.status !== 'cancelled').length;
     const done       = isRentMode ? dayRents.filter(r => r.status === 'completed').length    : dayBks.filter(b => b.status === 'completed').length;
@@ -9251,7 +9254,7 @@ function renderMyBookingsCalendar() {
     const badgeTotal     = cnt       > 0 ? `<span class="sched-bk-cnt">${cnt}</span>`           : '';
     const badgeDone      = done      > 0 ? `<span class="sched-bk-done">${done}</span>`         : '';
     const badgeCancelled = cancelled > 0 ? `<span class="sched-bk-cancelled">${cancelled}</span>` : '';
-    const badgeRent      = isRentMode && cnt > 0 ? `<span class="sched-rent-dot"></span>` : '';
+    const badgeRent      = (isRentMode || isAllMode) && dayRents.some(r => r.status !== 'cancelled') ? `<span class="sched-rent-dot"></span>` : '';
     html += `<td class="${c.cls}${selected}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}>${badgeDone}<span class="sd-n">${c.d}</span>${badgeTotal}${badgeCancelled}${badgeRent}</td>`;
     if (i % 7 === 6) html += '</tr>';
   });
@@ -9283,7 +9286,8 @@ function renderMyBookingsDay(ds) {
   const filtered  = sorted
     .filter(b => _mbkStatusFilter === 'all' || b.status === _mbkStatusFilter)
     .filter(b => !_mbkMasterFilter || b.master_id === _mbkMasterFilter);
-  if (!filtered.length) {
+  const rentHtml = _mbkStatusFilter === 'all' ? _rentDayItemsHtml(ds) : '';
+  if (!filtered.length && !rentHtml) {
     bkEl.innerHTML = `<div style="color:var(--fg-3);font-size:14px;padding:16px 0">${all.length ? 'Нет записей с выбранным статусом' : 'Нет записей за этот день'}</div>`;
     return;
   }
@@ -9322,16 +9326,17 @@ function renderMyBookingsDay(ds) {
         <button class="btn btn-sm btn-d" onclick="cancelBooking('${b.id}')">Отменить</button>
       </div>` : ''}
     </div>`;
-  }).join('');
+  }).join('') + rentHtml;
 }
 
 function renderMyRentDay(ds, bkEl) {
+  const html = _rentDayItemsHtml(ds);
+  bkEl.innerHTML = html || '<div style="color:var(--fg-3);font-size:14px;padding:16px 0">Нет аренд за этот день</div>';
+}
+
+function _rentDayItemsHtml(ds) {
   const all = (_myBk.rentByDate[ds] || []).slice().sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
-  if (!all.length) {
-    bkEl.innerHTML = '<div style="color:var(--fg-3);font-size:14px;padding:16px 0">Нет аренд за этот день</div>';
-    return;
-  }
-  bkEl.innerHTML = all.map(r => {
+  return all.map(r => {
     const item  = r.menu_items || {};
     const store = r.stores || {};
     const sc = RENT_STATUS_COLOR[r.status] || 'var(--fg-3)';
