@@ -530,47 +530,24 @@ footer{
   .btn-primary,.btn-blue{justify-content:center}
 }
 
-/* ── COMPARISON TABLE ── */
-.ct-wrap{
-  display:grid;grid-template-columns:1fr 1fr;gap:18px;
-  max-width:1100px;margin:40px auto 0;
+/* ── AUDIENCE GATE ── */
+.audience-gate{max-width:520px;margin:44px auto 0;text-align:center;position:relative}
+.ag-question{font:400 20px/1.3 var(--font-display);color:var(--fg);margin-bottom:22px}
+.ag-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.ag-btn{
+  flex:1;min-width:160px;max-width:220px;padding:18px 28px;border-radius:var(--r-4);border:none;cursor:pointer;
+  font:700 17px/1 var(--font-sans);color:#fff;
+  transition:transform .16s,box-shadow .16s;
 }
-.ct-col{
-  display:flex;flex-direction:column;text-decoration:none;
-  border-radius:var(--r-4);overflow:hidden;
-  border:1px solid var(--line);
-  transition:transform .2s,box-shadow .2s;
-  background:var(--glass-card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-}
-.ct-col.ct-client:hover{transform:translateY(-3px);border-color:rgba(232,116,59,.5);box-shadow:0 16px 40px rgba(232,116,59,.16)}
-.ct-col.ct-biz:hover{transform:translateY(-3px);border-color:rgba(120,180,224,.5);box-shadow:0 16px 40px rgba(120,180,224,.16)}
-.ct-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
-.ct-client .ct-head{background:rgba(232,116,59,.11)}
-.ct-biz .ct-head{background:rgba(120,180,224,.11)}
-.ct-lbl{font:700 14px/1 var(--font-sans);letter-spacing:.05em;text-transform:uppercase}
-.ct-client .ct-lbl{color:var(--brand)}
-.ct-biz .ct-lbl{color:var(--blue)}
-.ct-cta{font:600 13px/1 var(--font-sans)}
-.ct-client .ct-cta{color:var(--brand)}
-.ct-biz .ct-cta{color:var(--blue)}
-.ct-list{list-style:none;display:flex;flex-direction:column;gap:0;flex:1}
-.ct-group-hd{padding:9px 20px 6px;font:700 11px/1 var(--font-sans);letter-spacing:.07em;text-transform:uppercase}
-.ct-group-hd.ct-free{color:#22c55e;background:rgba(34,197,94,.04)}
-.ct-group-hd.ct-paid{color:#facc15;background:rgba(250,204,21,.05)}
-.ct-feat-placeholder{}
-.ct-feat.ct-free{background:rgba(34,197,94,.04)}
-.ct-feat.ct-paid{background:rgba(250,204,21,.07);color:#facc15}
-.ct-feat::before{content:'✔';font:700 16px/1 var(--font-sans);color:#22c55e;flex-shrink:0}
-.ct-feat.ct-paid::before{color:#facc15}
-.ct-client .ct-feat.ct-free{color:var(--fg)}
-.ct-biz .ct-feat.ct-free{color:var(--fg)}
-.ct-feat{display:flex;align-items:flex-start;gap:10px;padding:9px 20px;font:400 16px/1.45 var(--font-sans);text-align:left}
-.ct-footer{display:flex;gap:12px;padding:11px 20px;border-top:1px solid var(--line)}
-.ct-legend{display:inline-flex;align-items:center;gap:6px;font:500 12px/1 var(--font-sans)}
-.ct-legend::before{content:'';width:7px;height:7px;border-radius:50%}
-.ct-legend.ct-free{color:#22c55e}.ct-legend.ct-free::before{background:#22c55e}
-.ct-legend.ct-paid{color:#facc15}.ct-legend.ct-paid::before{background:#facc15}
-@media(max-width:700px){.ct-wrap{grid-template-columns:1fr}}
+.ag-btn:hover{transform:translateY(-2px)}
+.ag-btn.ag-client{background:var(--blue);box-shadow:0 10px 30px rgba(120,180,224,.3)}
+.ag-btn.ag-client:hover{background:var(--blue-deep);box-shadow:0 14px 36px rgba(120,180,224,.4)}
+.ag-btn.ag-business{background:var(--brand);box-shadow:0 10px 30px rgba(232,116,59,.3)}
+.ag-btn.ag-business:hover{background:var(--brand-deep);box-shadow:0 14px 36px rgba(232,116,59,.4)}
+@media(max-width:480px){.ag-btns{flex-direction:column;align-items:stretch}.ag-btn{max-width:none}}
+.seg.section-focus{animation:section-pulse 1.6s ease-out}
+@keyframes section-pulse{0%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),.6)}100%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),0)}}
+.pricing-teaser{text-align:center}
 
 /* ── LIGHT THEME ── */
 html[data-theme="light"]{
@@ -936,59 +913,15 @@ html[data-theme="light"] .icon-moon{display:flex}
 
 <!-- PAGE HERO -->
 <header id="page-hero" data-comment-anchor="721818a54a-header">
-  <h1 class="ph-h1" data-comment-anchor="d425043386-h1">Без комиссий <span class="em-orange">для бизнеса</span> и сервисных сборов для клиентов</h1>
-  <p class="ph-sub" data-comment-anchor="a45b823ee0-p">Alliby — призван помочь малому бизнесу давая ему все инструменты крупного без необходимости больших финансовых вложений.</p>
-  
+  <h1 class="ph-h1" data-comment-anchor="d425043386-h1">Один сервис — <span class="em-blue">для клиентов</span> и <span class="em-orange">для бизнеса</span></h1>
+  <p class="ph-sub" data-comment-anchor="a45b823ee0-p">Клиентам — карта заведений, заказы, записи и аренда без сервисных сборов. Бизнесу — все инструменты крупных сетей без комиссий и лишних вложений.</p>
 
-  <div class="ct-wrap">
-    <a class="ct-col ct-client" href="#directions-clients">
-      <div class="ct-head">
-        <span class="ct-lbl">Для клиента</span>
-        <span class="ct-cta">Подробнее →</span>
-      </div>
-      <u<ul class="ct-list">
-        <li class="ct-group-hd ct-free">Бесплатно</li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span>Поиск заведений на карте — находи кафе, магазины и мастеров рядом</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Еда, Услуги и Товары — три направления в одном приложении</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"/></svg><span>Онлайн-заказ — собери корзину и оплати картой прямо в приложении</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg><span>Самовывоз и доставка — выбирай удобный способ получения заказа</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M9 14l2 2 4-4"/></svg><span>Запись на услуги онлайн — выбирай свободный слот без звонков</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg><span>Отслеживание заказа — следи за статусом готовности в реальном времени</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg><span>Абонементы со скидкой — покупай пакеты посещений по выгодной цене</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="18" x2="18" y2="18"/><line x1="14" y1="21" x2="21" y2="21"/></svg><span>Личный QR для списания — показывай код на кассе для активации абонемента</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>История экономии — смотри, сколько уже сэкономил с Alliby</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="5" y="2" width="14" height="20" rx="2.5"/><line x1="10" y1="18" x2="14" y2="18"/></svg><span>PWA — сохрани на главный экран, работает как приложение</span></li>
-      </ul>
-      <div class="ct-footer">
-        <span class="ct-legend ct-free">Всё бесплатно</span>
-      </div>
-    </a>
-    <a class="ct-col ct-biz" href="#directions-business">
-      <div class="ct-head">
-        <span class="ct-lbl">Для бизнеса</span>
-        <span class="ct-cta">Подробнее →</span>
-      </div>
-      <u<ul class="ct-list">
-        <li class="ct-group-hd ct-free">Бесплатно</li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 21V8l9-5 9 5v13"/><path d="M3 21h18"/><rect x="9" y="13" width="6" height="8"/></svg><span>Заведение на карте — добавь заведение и клиенты найдут тебя рядом</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span>Меню, цены, описание — создай каталог с фото, ценами и временем готовки</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>QR-меню для офлайн — распечатай QR и клиент увидит актуальное меню</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg><span>Расписание мастеров — открывай слоты и принимай онлайн-записи</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><path d="M9 14l2 2 4-4"/></svg><span>Записи клиентов онлайн — клиенты записываются сами, без звонков тебе</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 12h4l2 6 4-14 2 8h6"/><circle cx="19" cy="5" r="3"/></svg><span>Управление статусами заказов — веди заказ от оплаты до выдачи</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg><span>Абонементы и акции — выпускай пакеты скидок для постоянных клиентов</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="21" y2="14"/><line x1="14" y1="18" x2="18" y2="18"/><line x1="14" y1="21" x2="21" y2="21"/></svg><span>QR-сканер абонементов — списывай абонемент клиента за одно касание</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><span>Сотрудники — передавай управление заведением сотрудникам</span></li>
-        <li class="ct-feat ct-free"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Аналитика — следи за выручкой, популярными позициями и просмотрами</span></li>
-        <li class="ct-group-hd ct-paid">По подписке</li>
-        <li class="ct-feat ct-paid"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>Интернет-заказ и оплата — принимай заказы и оплату картой онлайн</span></li>
-        <li class="ct-feat ct-paid"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.85"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg><span>Доставка собственными силами или наёмным курьером — настрой зоны и цены доставки</span></li>
-      </ul>
-      <div class="ct-footer">
-        <span class="ct-legend ct-free">Бесплатно</span>
-        <span class="ct-legend ct-paid">По подписке</span>
-      </div>
-    </a>
+  <div class="audience-gate">
+    <div class="ag-question">Ты клиент или представитель бизнеса?</div>
+    <div class="ag-btns">
+      <button class="ag-btn ag-client" onclick="scrollToAudience('client')">Клиент</button>
+      <button class="ag-btn ag-business" onclick="scrollToAudience('business')">Бизнес</button>
+    </div>
   </div>
 </header>
 
@@ -1155,13 +1088,89 @@ html[data-theme="light"] .icon-moon{display:flex}
       </div>
     </div>
 
-    <p class="seg-note" style="text-align:center;margin:24px auto 0;max-width:680px;color:var(--fg-3);font-size:14px;line-height:1.6">Вне зависимости от направления вам доступны одни и те же инструменты: приём и статусы заказов в реальном времени, сотрудники и мастера с личным графиком, конструктор абонементов с гибкими правилами покрытия, приём онлайн-оплат через интернет-эквайринг, push-уведомления клиентской базе и аналитика по заведению.</p>
+    <p class="seg-note" style="text-align:center;margin:24px auto 0;max-width:680px;color:var(--fg-3);font-size:14px;line-height:1.6">Вне зависимости от направления вам доступны одни и те же инструменты: приём и статусы заказов в реальном времени, сотрудники и мастера с личным графиком, конструктор абонементов с гибкими правилами покрытия, приём онлайн-оплат через интернет-эквайринг, push-уведомления клиентской базе и аналитика по заведению. Управляйте хоть одним заведением, хоть сетью из одного аккаунта — администратор, повар, тренер или курьер получают доступ бесплатно, платите только за сам бизнес-аккаунт.</p>
   </div>
 </section>
 
+<!-- CTA -->
+<section id="cta" data-comment-anchor="1ec500a78a-section">
+  <h2 class="cta-h2">Начните пользоваться Alliby</h2>
+  <p class="cta-sub">Клиентам — найти место и заказать за минуту. Бизнесу — подключить заведение и принимать заказы онлайн.</p>
+  <div class="cta-btns">
+    <a class="btn-primary" href="https://alliby.ru/">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
+      Открыть Alliby
+    </a>
+    <a class="btn-blue" href="https://admin.alliby.ru/">
+      Подключить заведение
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ════════════════ КОМАНДА ════════════════ -->
+<section class="seg" id="team" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby Team</span>
+      <h2 class="seg-h2">Наша <em>команда</em></h2>
+      <p class="seg-sub">Люди, которые делают Alliby — от исследования клиентов до кода, тестирования и права.</p>
+    </div>
+    <div class="team-grid">
+      <div class="team-card">
+        <image-slot id="team-yaroslav" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Копылов Ярослав Денисович</div>
+        <div class="team-role">Основатель</div>
+        <p class="team-bio">Сформулировал идею Alliby и ведёт продукт: стратегия, партнёрства и развитие платформы для клиентов и бизнеса.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-marketing" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Шевченко Олеся</div>
+        <div class="team-role">Маркетинг и исследование клиентов</div>
+        <p class="team-bio">Изучает потребности заведений и клиентов, выстраивает позиционирование и проверяет продуктовые гипотезы на реальной аудитории.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-uxui" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Капитонова Екатерина</div>
+        <div class="team-role">UX/UI дизайнер</div>
+        <p class="team-bio">Проектирует интерфейсы и пользовательский опыт: от исследования сценариев до готовых макетов клиентского приложения и админ-панели.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-frontend" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Дмитрий Орлов</div>
+        <div class="team-role">Frontend-разработчик</div>
+        <p class="team-bio">Отвечает за интерфейсы клиентского приложения и админ-панели — быстрые, отзывчивые и удобные на любом устройстве.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-backend" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Игорь Лебедев</div>
+        <div class="team-role">Backend-разработчик</div>
+        <p class="team-bio">Проектирует серверную часть, API и интеграции с эквайрингом, обеспечивает надёжность и скорость платформы.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-qa" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Голованов Максим</div>
+        <div class="team-role">Testing инженер</div>
+        <p class="team-bio">Проверяет каждую функцию до релиза, следит за качеством и стабильностью продукта во всех сценариях.</p>
+      </div>
+      <div class="team-card">
+        <image-slot id="team-legal" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
+        <div class="team-name">Елена Васильева</div>
+        <div class="team-role">Юрист</div>
+        <p class="team-bio">Сопровождает договоры, обработку данных и комплаенс, чтобы сервис работал прозрачно и в рамках закона.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
 <!-- ════════════════ ТАРИФЫ ════════════════ -->
 <section class="seg" id="pricing" data-comment-anchor="25a3f20101-section">
   <div class="seg-inner" data-comment-anchor="c5cd839b4b-div">
+    <div class="pricing-teaser" id="pricing-teaser">
+      <button class="btn-blue" onclick="togglePricing()">Узнать условия для бизнеса</button>
+    </div>
+    <div id="pricing-content" style="display:none">
     <div class="seg-head">
       <span class="seg-eyebrow"><span class="sc-dot"></span>Тарифы для бизнеса</span>
       <h2 class="seg-h2" data-comment-anchor="cfb740d159-h2">Почти всё — <em>бесплатно</em></h2>
@@ -1247,81 +1256,11 @@ html[data-theme="light"] .icon-moon{display:flex}
         <span>Для подписки требуется подключённый интернет-эквайринг для приёма онлайн-оплат. Мы помогаем подключить и настроить его — вам не нужно разбираться в этом самостоятельно.</span>
       </div>
     </div>
+    </div><!-- /#pricing-content -->
   </div>
 </section>
 
-<!-- CTA -->
-<section id="cta" data-comment-anchor="1ec500a78a-section">
-  <h2 class="cta-h2">Начните пользоваться Alliby</h2>
-  <p class="cta-sub">Клиентам — найти место и заказать за минуту. Бизнесу — подключить заведение и принимать заказы онлайн.</p>
-  <div class="cta-btns">
-    <a class="btn-primary" href="https://alliby.ru/">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
-      Открыть Alliby
-    </a>
-    <a class="btn-blue" href="https://admin.alliby.ru/">
-      Подключить заведение
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-    </a>
-  </div>
-</section>
 
-<!-- ════════════════ КОМАНДА ════════════════ -->
-<section class="seg" id="team" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
-  <div class="seg-inner">
-    <div class="seg-head">
-      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby Team</span>
-      <h2 class="seg-h2">Наша <em>команда</em></h2>
-      <p class="seg-sub">Люди, которые делают Alliby — от исследования клиентов до кода, тестирования и права.</p>
-    </div>
-    <div class="team-grid">
-      <div class="team-card">
-        <image-slot id="team-yaroslav" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
-        <div class="team-name">Копылов Ярослав Денисович</div>
-        <div class="team-role">Основатель</div>
-        <p class="team-bio">Сформулировал идею Alliby и ведёт продукт: стратегия, партнёрства и развитие платформы для клиентов и бизнеса.</p>
-      </div>
-      <div class="team-card">
-        <image-slot id="team-marketing" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
-        <div class="team-name">Шевченко Олеся</div>
-        <div class="team-role">Маркетинг и исследование клиентов</div>
-        <p class="team-bio">Изучает потребности заведений и клиентов, выстраивает позиционирование и проверяет продуктовые гипотезы на реальной аудитории.</p>
-      </div>
-      <div class="team-card">
-        <image-slot id="team-uxui" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
-        <div class="team-name">Капитонова Екатерина</div>
-        <div class="team-role">UX/UI дизайнер</div>
-        <p class="team-bio">Проектирует интерфейсы и пользовательский опыт: от исследования сценариев до готовых макетов клиентского приложения и админ-панели.</p>
-      </div>
-      <div class="team-card">
-        <image-slot id="team-frontend" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
-        <div class="team-name">Дмитрий Орлов</div>
-        <div class="team-role">Frontend-разработчик</div>
-        <p class="team-bio">Отвечает за интерфейсы клиентского приложения и админ-панели — быстрые, отзывчивые и удобные на любом устройстве.</p>
-      </div>
-      <div class="team-card">
-        <image-slot id="team-backend" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
-        <div class="team-name">Игорь Лебедев</div>
-        <div class="team-role">Backend-разработчик</div>
-        <p class="team-bio">Проектирует серверную часть, API и интеграции с эквайрингом, обеспечивает надёжность и скорость платформы.</p>
-      </div>
-      <div class="team-card">
-        <image-slot id="team-qa" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
-        <div class="team-name">Голованов Максим</div>
-        <div class="team-role">Testing инженер</div>
-        <p class="team-bio">Проверяет каждую функцию до релиза, следит за качеством и стабильностью продукта во всех сценариях.</p>
-      </div>
-      <div class="team-card">
-        <image-slot id="team-legal" class="team-photo" shape="circle" placeholder="Фото"></image-slot>
-        <div class="team-name">Елена Васильева</div>
-        <div class="team-role">Юрист</div>
-        <p class="team-bio">Сопровождает договоры, обработку данных и комплаенс, чтобы сервис работал прозрачно и в рамках закона.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
 <footer>
   <a class="footer-logo" href="/">Alli<span>by</span></a>
   <div class="footer-nav">
@@ -1561,17 +1500,19 @@ var SCENARIOS = {
         'Меню, категории и фото в направлении «Еда»; зона доставки радиусом 1,5 км с фиксированной ценой + самовывоз',
         'Столики — позиции типа «Аренда» в разделе «Запись», бронь на обед за 10 минут до прихода',
         'Повар Руслан и курьер Алишер — сотрудники с доступом только к заказам своей точки, без видимости выручки и эквайринга',
+        'Второе заведение «Шаверма Хаус 2» — управляется из того же аккаунта, сотрудники видят только свою точку',
         'Абонемент «Бизнес-ланч» — скидка на комбо с 12 до 15 часов в будни',
       ],
       story: [
         'Заказ Марины появляется у Тимура мгновенно — realtime-уведомление «Новый заказ!». Каждый видит свой этап: Руслан — состав и приоритет на кухне, Алишер — адрес при доставке, Тимур — полную картину целиком.',
         'На доставке Тимур ещё и зарабатывает: цену в зоне 1,5 км он поставил 200 ₽, а штатному Алишеру платит 100 ₽ за рейс — 100 ₽ чистой разницы с каждого заказа. При 25 доставках в день это 2 500 ₽ ежедневно, которые раньше забирал бы себе агрегатор в виде комиссии.',
         'Когда понадобилась новая печь для лаваша за 60 000 ₽, Тимур не пошёл в банк — выпустил абонемент «10 шаурма за 3 500 ₽» вместо обычных 5 000 ₽, ограниченным тиражом в 20 штук, и собрал 70 000 ₽ авансом от своих же постоянных клиентов, без процентов и кредитной истории.',
+        'Когда дело пошло, Тимур открыл вторую точку — управляет обеими из одного аккаунта Alliby, просто переключаясь между заведениями. Администратор Настя, повар Руслан и курьер Алишер — все на бесплатных сотрудничьих аккаунтах: платить нужно только за сам бизнес-аккаунт с онлайн-оплатой и доставкой, а не за каждого человека в команде.',
         'В «Аналитике» видно, что доставка приносит 60% выручки, а «Бизнес-ланч» уже купили 40 человек за первую неделю — абонемент окупил себя сразу.',
       ],
       stats: [
         { v: '2 500 ₽/день', l: 'дополнительная прибыль на разнице цены доставки и стоимости курьера' },
-        { v: '70 000 ₽', l: 'собрано на новую печь через ограниченный абонемент, без банка' },
+        { v: '0 ₽', l: 'стоит доступ для администратора, повара и курьера — платит только владелец' },
       ],
     },
   },
@@ -1776,6 +1717,22 @@ function openScenario(key, audience) {
 function closeScenario() {
   document.getElementById('scenario-modal').classList.remove('open');
   document.body.style.overflow = '';
+}
+function scrollToAudience(type) {
+  var id = type === 'client' ? 'directions-clients' : 'directions-business';
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.classList.add('section-focus');
+  setTimeout(function(){ el.classList.remove('section-focus'); }, 1600);
+}
+function togglePricing() {
+  var content = document.getElementById('pricing-content');
+  var teaser = document.getElementById('pricing-teaser');
+  if (!content || !teaser) return;
+  content.style.display = '';
+  teaser.style.display = 'none';
+  content.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeScenario();
