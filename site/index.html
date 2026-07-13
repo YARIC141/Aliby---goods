@@ -1101,8 +1101,8 @@ html[data-theme="light"] .icon-moon{display:flex}
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
       Открыть Alliby
     </a>
-    <a class="btn-blue" href="https://admin.alliby.ru/">
-      Подключить заведение
+    <a class="btn-blue" href="#pricing" onclick="goToBusinessTerms();return false">
+      Alliby для бизнеса
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
     </a>
   </div>
@@ -1255,6 +1255,13 @@ html[data-theme="light"] .icon-moon{display:flex}
         <strong>Нужен интернет-эквайринг</strong>
         <span>Для подписки требуется подключённый интернет-эквайринг для приёма онлайн-оплат. Мы помогаем подключить и настроить его — вам не нужно разбираться в этом самостоятельно.</span>
       </div>
+    </div>
+
+    <div style="text-align:center;margin-top:32px">
+      <a class="btn-blue" href="https://admin.alliby.ru/">
+        Открыть Alliby для бизнеса
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </a>
     </div>
     </div><!-- /#pricing-content -->
   </div>
@@ -1733,6 +1740,11 @@ function togglePricing() {
   content.style.display = '';
   teaser.style.display = 'none';
   content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function goToBusinessTerms() {
+  togglePricing();
+  var pricing = document.getElementById('pricing');
+  if (pricing) pricing.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeScenario();
