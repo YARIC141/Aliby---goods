@@ -29,7 +29,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: reservation } = await serviceClient
     .from("rent_reservations")
-    .select("id, store_id, user_id, total_price, payment_status")
+    .select("id, store_id, user_id, total_price, payment_status, payment_group_id")
     .eq("id", String(OrderId))
     .maybeSingle()
 
@@ -63,10 +63,11 @@ Deno.serve(async (req: Request) => {
   const successStatuses = new Set(["CONFIRMED", "AUTHORIZED"])
   if (!successStatuses.has(String(Status))) return OK
 
+  const groupId = reservation.payment_group_id || reservation.id
   await serviceClient
     .from("rent_reservations")
     .update({ payment_status: "paid" })
-    .eq("id", String(OrderId))
+    .or(`id.eq.${groupId},payment_group_id.eq.${groupId}`)
 
   return OK
 })

@@ -1281,7 +1281,7 @@ document.addEventListener('deviceready',function(){
         </div>
         <div id="rent-cart-list"></div>
         <div style="padding:8px 16px 12px">
-          <button class="btn btn-p btn-full" id="rent-cart-pay-btn" onclick="checkoutRent()">Оформить аренду</button>
+          <button class="btn btn-p btn-full" id="rent-cart-pay-btn" onclick="checkoutRent()">Оплатить аренду</button>
         </div>
       </div>
       <div class="cart-body" id="cart-body"><div class="empty">Корзина пуста</div></div>
@@ -7018,31 +7018,41 @@ async function checkoutRent() {
   if (!S.rentCart?.length) return;
   const btn = document.getElementById('rent-cart-pay-btn');
   const restore = btn ? btnLoad(btn) : () => {};
+  let createdIds = [];
   try {
-    for (const r of S.rentCart) {
-      await req('/rest/v1/rent_reservations', {
-        method: 'POST',
-        body: JSON.stringify({
-          item_id:     r.item_id,
-          store_id:    r.store_id,
-          user_id:     uid,
-          start_at:    r.start_at,
-          end_at:      r.end_at,
-          quantity:    r.quantity,
-          total_price: r.total_price,
-          status:      'pending',
-        }),
-        headers: { Prefer: 'return=minimal' },
-      });
-    }
+    const rows = await req('/rest/v1/rent_reservations', {
+      method: 'POST',
+      body: JSON.stringify(S.rentCart.map(r => ({
+        item_id:     r.item_id,
+        store_id:    r.store_id,
+        user_id:     uid,
+        start_at:    r.start_at,
+        end_at:      r.end_at,
+        quantity:    r.quantity,
+        total_price: r.total_price,
+        status:      'pending',
+      }))),
+      headers: { Prefer: 'return=representation' },
+    });
+    createdIds = (rows || []).map(r => r.id);
+    const result = await req('/functions/v1/tbank-init-rent-cart', {
+      method: 'POST',
+      body: JSON.stringify({ reservation_ids: createdIds }),
+    });
+    if (!result.payment_url) throw { message: result.error || 'нет ссылки на оплату' };
     S.rentCart = [];
     renderRentCartSection();
     updateCartCount();
-    showGeoToast('Заявка на аренду отправлена');
-    switchCalenabsTab('rent');
-    goTo('calenabs');
+    window.location.href = result.payment_url;
   } catch(e) {
-    alert('Ошибка: ' + (e.message || ''));
+    if (createdIds.length) {
+      try {
+        await req(`/rest/v1/rent_reservations?id=in.(${createdIds.join(',')})&user_id=eq.${uid}`, {
+          method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }),
+        });
+      } catch {}
+    }
+    showGeoToast('Ошибка оплаты: ' + (e?.error || e?.message || ''));
   } finally {
     restore?.();
   }
