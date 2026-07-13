@@ -531,6 +531,10 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-sans);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-bk-done{position:absolute;top:3px;left:4px;font:700 9px/14px var(--font-sans);background:var(--ok);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-bk-cancelled{position:absolute;bottom:3px;left:4px;font:700 9px/14px var(--font-sans);background:#e53935;color:#fff;border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
+.sched-day.has-rent{background:color-mix(in oklch,var(--info) 16%,var(--bg))}
+.sched-day.has-rent:hover:not(.selected){background:color-mix(in oklch,var(--info) 26%,var(--bg))}
+.sched-day.has-sched.has-rent{background:linear-gradient(135deg,color-mix(in oklch,var(--accent) 13%,var(--bg)) 50%,color-mix(in oklch,var(--info) 16%,var(--bg)) 50%)}
+.sched-rent-dot{position:absolute;bottom:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--info);pointer-events:none}
 #m-dz-viewer{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
 #m-dz-viewer.open{transform:none}
 #dz-viewer-map-wrap{flex:1;min-height:0;position:relative}
@@ -1353,6 +1357,7 @@ document.addEventListener('deviceready',function(){
         <button class="chip"        data-mbk-status="booked"    onclick="setMbkStatusFilter('booked')">Активна</button>
         <button class="chip"        data-mbk-status="completed" onclick="setMbkStatusFilter('completed')">Завершена</button>
         <button class="chip"        data-mbk-status="cancelled" onclick="setMbkStatusFilter('cancelled')">Отменена</button>
+        <button class="chip"        data-mbk-status="rental"    onclick="setMbkStatusFilter('rental')">Аренда</button>
       </div>
       <div id="mbk-master-filter" style="display:none;margin-top:10px">
         <select id="mbk-master-select" onchange="setMbkMasterFilter(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
@@ -8734,7 +8739,7 @@ let _booking = {
   calYear: nowInCity().getFullYear(), calMonth: nowInCity().getMonth(),
 };
 let _myBk = {
-  year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {}, openDate: null,
+  year: nowInCity().getFullYear(), month: nowInCity().getMonth(), byDate: {}, rentByDate: {}, openDate: null,
 };
 let _mbkStatusFilter = 'all';
 let _mbkMasterFilter = '';
@@ -9181,6 +9186,19 @@ async function loadBookingsScreen() {
       filterEl.style.display = masterIds.length ? '' : 'none';
     }
   } catch(e) {}
+  _myBk.rentByDate = {};
+  try {
+    const rentRows = await req(`/rest/v1/rent_reservations?user_id=eq.${S.session.user.id}&start_at=lte.${lastDay}T23:59:59&end_at=gte.${firstDay}T00:00:00&select=id,start_at,end_at,quantity,total_price,status,menu_items(name),stores(name)&order=start_at.asc`);
+    rentRows.forEach(r => {
+      const sd = r.start_at.slice(0, 10) < firstDay ? firstDay : r.start_at.slice(0, 10);
+      const ed = r.end_at.slice(0, 10) > lastDay ? lastDay : r.end_at.slice(0, 10);
+      for (let d = new Date(sd + 'T00:00:00'); d <= new Date(ed + 'T00:00:00'); d.setDate(d.getDate() + 1)) {
+        const ds = d.toISOString().slice(0, 10);
+        if (!_myBk.rentByDate[ds]) _myBk.rentByDate[ds] = [];
+        _myBk.rentByDate[ds].push(r);
+      }
+    });
+  } catch(e) {}
   renderMyBookingsCalendar();
 }
 
@@ -9202,6 +9220,7 @@ function renderMyBookingsCalendar() {
     let cls = 'sched-day';
     if (ds === today) cls += ' today';
     if (_myBk.byDate[ds]?.some(b => b.status !== 'cancelled')) cls += ' has-sched';
+    if (_myBk.rentByDate[ds]?.some(r => r.status !== 'cancelled')) cls += ' has-rent';
     cells.push({ d, cls, ds });
   }
   const trailing = (7 - (cells.length % 7)) % 7;
@@ -9218,7 +9237,9 @@ function renderMyBookingsCalendar() {
     const badgeTotal     = cnt       > 0 ? `<span class="sched-bk-cnt">${cnt}</span>`           : '';
     const badgeDone      = done      > 0 ? `<span class="sched-bk-done">${done}</span>`         : '';
     const badgeCancelled = cancelled > 0 ? `<span class="sched-bk-cancelled">${cancelled}</span>` : '';
-    html += `<td class="${c.cls}${selected}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}>${badgeDone}<span class="sd-n">${c.d}</span>${badgeTotal}${badgeCancelled}</td>`;
+    const hasActiveRent  = c.ds && (_myBk.rentByDate[c.ds] || []).some(r => r.status !== 'cancelled');
+    const badgeRent      = hasActiveRent ? `<span class="sched-rent-dot"></span>` : '';
+    html += `<td class="${c.cls}${selected}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}>${badgeDone}<span class="sd-n">${c.d}</span>${badgeTotal}${badgeCancelled}${badgeRent}</td>`;
     if (i % 7 === 6) html += '</tr>';
   });
   document.getElementById('mbk-calendar').innerHTML = html;
@@ -9241,6 +9262,7 @@ function openMyBookingsDay(ds) {
 function renderMyBookingsDay(ds) {
   const bkEl = document.getElementById('mbk-day-bookings');
   if (!bkEl) return;
+  if (_mbkStatusFilter === 'rental') { renderMyRentDay(ds, bkEl); return; }
   const all = _myBk.byDate[ds] || [];
   const active    = all.filter(b => b.status !== 'cancelled');
   const cancelled = all.filter(b => b.status === 'cancelled');
@@ -9286,6 +9308,35 @@ function renderMyBookingsDay(ds) {
         <button class="btn btn-sm" onclick="openRescheduleInfo('${b.id}','${b.menu_item_id}')">Перенести</button>
         <button class="btn btn-sm btn-d" onclick="cancelBooking('${b.id}')">Отменить</button>
       </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderMyRentDay(ds, bkEl) {
+  const all = (_myBk.rentByDate[ds] || []).slice().sort((a, b) => new Date(a.start_at) - new Date(b.start_at));
+  if (!all.length) {
+    bkEl.innerHTML = '<div style="color:var(--fg-3);font-size:14px;padding:16px 0">Нет аренд за этот день</div>';
+    return;
+  }
+  bkEl.innerHTML = all.map(r => {
+    const item  = r.menu_items || {};
+    const store = r.stores || {};
+    const sc = RENT_STATUS_COLOR[r.status] || 'var(--fg-3)';
+    const sl = RENT_STATUS_RU[r.status] || r.status;
+    const s = new Date(r.start_at), e = new Date(r.end_at);
+    const sStr = s.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const eStr = e.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    const dimmed = r.status === 'cancelled';
+    return `<div class="bk-item" style="${dimmed ? 'opacity:.5' : ''}">
+      <div class="bk-item-main">
+        <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
+        <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:3px">${esc(store.name || '')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:5px;font:400 13px/1 var(--font-sans)">
+          <span>${sStr} – ${eStr}</span>
+          <span style="color:var(--accent)">${Number(r.total_price || 0).toFixed(0)} ₽</span>
+          <span style="color:${sc}">${esc(sl)}</span>
+        </div>
+      </div>
     </div>`;
   }).join('');
 }
