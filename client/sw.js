@@ -1,4 +1,4 @@
-// v32
+// v33
 const APP_CACHE  = 'alliby-app-v17';
 const API_CACHE  = 'alliby-api-v1';
 const IMG_CACHE  = 'alliby-img-v1';
@@ -44,25 +44,28 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // ── Supabase REST GET: stale-while-revalidate with 30s TTL ──────────────
+  // ── Supabase REST GET: cache-first within 30s TTL, network-first once stale ──
   // Covers /rest/v1/stores, /rest/v1/menu_items, /rest/v1/store_categories, etc.
   // Mutations (POST/PATCH/DELETE) and auth are not cached.
   // promo_notifications excluded: client PATCHes read_at, stale GET would re-show cleared items.
-  // Background revalidation fires only when cached response is older than SW_API_TTL.
+  // Past SW_API_TTL this request itself waits for the network (falling back to the stale
+  // cache only if the fetch fails) — otherwise changed fields (e.g. accepts_online_payment)
+  // only ever reach the cache for some *future* request and the page never sees them.
   const SW_API_TTL = 30000;
   if (e.request.method === 'GET' && e.request.url.includes('/rest/v1/') && !e.request.url.includes('promo_notifications')) {
     e.respondWith(
-      caches.open(API_CACHE).then(cache =>
-        cache.match(e.request).then(cached => {
-          const age = cached ? Date.now() - new Date(cached.headers.get('date') || 0).getTime() : Infinity;
-          const networkFetch = fetch(e.request.clone()).then(resp => {
-            if (resp.ok) { cache.put(e.request, resp.clone()); trimApiCache(); }
-            return resp;
-          }).catch(() => null);
-          if (cached && age < SW_API_TTL) return cached; // свежий — не ревалидировать
-          return cached || networkFetch;
-        })
-      )
+      caches.open(API_CACHE).then(async cache => {
+        const cached = await cache.match(e.request);
+        const age = cached ? Date.now() - new Date(cached.headers.get('date') || 0).getTime() : Infinity;
+        if (cached && age < SW_API_TTL) return cached; // свежий — отдаём сразу, без сети
+        try {
+          const resp = await fetch(e.request.clone());
+          if (resp.ok) { cache.put(e.request, resp.clone()); trimApiCache(); }
+          return resp;
+        } catch (err) {
+          return cached || Response.error();
+        }
+      })
     );
     return;
   }
