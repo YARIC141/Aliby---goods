@@ -6960,6 +6960,8 @@ async function openMasterModal(empId) {
   document.getElementById('master-toggle').checked = false;
   document.getElementById('master-bio').value = '';
   document.getElementById('master-photo-url').value = '';
+  document.getElementById('master-photo-preview').innerHTML = '<span id="master-photo-hint" style="color:var(--fg-4);font-size:13px;pointer-events:none">Нажмите чтобы выбрать фото</span>';
+  document.getElementById('master-delete-photo-btn').style.display = 'none';
   document.getElementById('master-profile-section').style.display = 'none';
   document.getElementById('master-sched-grid').innerHTML = '<div class="txt-muted" style="font-size:13px">Загрузка…</div>';
   document.getElementById('master-services-list').innerHTML = '<div class="txt-muted" style="font-size:13px">Загрузка…</div>';
@@ -6982,6 +6984,10 @@ async function openMasterModal(empId) {
     document.getElementById('master-toggle').checked = isMaster;
     document.getElementById('master-bio').value = profile?.master_bio || '';
     document.getElementById('master-photo-url').value = profile?.master_photo_url || '';
+    if (profile?.master_photo_url) {
+      document.getElementById('master-photo-preview').innerHTML = `<img src="${esc(profile.master_photo_url)}" style="width:100%;height:100%;object-fit:cover">`;
+      document.getElementById('master-delete-photo-btn').style.display = 'inline-flex';
+    }
     document.getElementById('master-profile-section').style.display = isMaster ? '' : 'none';
     _renderMasterSchedGrid(schedules);
     _renderMasterServicesList(menuItems, masterSvcs);
@@ -7038,6 +7044,54 @@ function _renderMasterServicesList(items, masterSvcs) {
         style="width:74px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px;text-align:right">
     </div>`;
   }).join('');
+}
+
+async function uploadMasterPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  if (file.size > 5 * 1024 * 1024) { alert('Файл слишком большой. Максимум 5 МБ.'); return; }
+  const preview = document.getElementById('master-photo-preview');
+  const hint = document.getElementById('master-photo-hint');
+
+  const localUrl = URL.createObjectURL(file);
+  preview.innerHTML = `<img src="${localUrl}" style="width:100%;height:100%;object-fit:cover">
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center">
+      <span style="color:#fff;font-size:13px">Загрузка…</span>
+    </div>`;
+
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('prefix', 'masters');
+    const r = await fetch(`${SB_URL}/functions/v1/upload-media`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + S.session.access_token },
+      body: form,
+    });
+    if (!r.ok) throw new Error(await r.text());
+    const { url } = await r.json();
+    document.getElementById('master-photo-url').value = url;
+    document.getElementById('master-delete-photo-btn').style.display = 'inline-flex';
+    preview.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+    URL.revokeObjectURL(localUrl);
+  } catch(e) {
+    preview.innerHTML = '';
+    if (hint) { hint.textContent = 'Ошибка загрузки'; preview.appendChild(hint); }
+    URL.revokeObjectURL(localUrl);
+    alert('Ошибка загрузки фото: ' + (e.message || e));
+  }
+}
+
+async function deleteMasterPhoto() {
+  const url = document.getElementById('master-photo-url').value;
+  if (!url || !confirm('Удалить фото?')) return;
+  try {
+    await _deleteMediaUrl(url);
+    document.getElementById('master-photo-url').value = '';
+    document.getElementById('master-delete-photo-btn').style.display = 'none';
+    document.getElementById('master-photo-preview').innerHTML = '<span id="master-photo-hint" style="color:var(--fg-4);font-size:13px">Нажмите чтобы выбрать фото</span>';
+  } catch(e) { alert('Ошибка: ' + (e.message || '')); }
 }
 
 async function saveMaster() {
@@ -8843,8 +8897,13 @@ if ('serviceWorker' in navigator) {
         <textarea id="master-bio" rows="3" placeholder="Опыт работы, специализация, сертификаты…" style="resize:vertical"></textarea>
       </div>
       <div class="fg">
-        <label>Фото (URL)</label>
-        <input type="url" id="master-photo-url" placeholder="https://…">
+        <label>Фото</label>
+        <div id="master-photo-preview" style="width:100%;height:140px;border:2px dashed var(--line);border-radius:var(--r-2);display:flex;align-items:center;justify-content:center;margin-bottom:8px;overflow:hidden;background:var(--bg-2);cursor:pointer;position:relative" onclick="document.getElementById('master-photo-file').click()">
+          <span id="master-photo-hint" style="color:var(--fg-4);font-size:13px;pointer-events:none">Нажмите чтобы выбрать фото</span>
+        </div>
+        <input type="file" id="master-photo-file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadMasterPhoto(this)">
+        <input type="hidden" id="master-photo-url">
+        <button type="button" class="btn btn-sm btn-d" id="master-delete-photo-btn" style="display:none;margin-top:6px" onclick="deleteMasterPhoto()">Удалить фото</button>
       </div>
 
       <div style="font:600 13px/1 var(--font-sans);margin:16px 0 8px">Расписание</div>
