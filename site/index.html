@@ -547,7 +547,6 @@ footer{
 @media(max-width:480px){.ag-btns{flex-direction:column;align-items:stretch}.ag-btn{max-width:none}}
 .seg.section-focus{animation:section-pulse 1.6s ease-out}
 @keyframes section-pulse{0%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),.6)}100%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),0)}}
-.pricing-teaser{text-align:center}
 
 /* ── LIGHT THEME ── */
 html[data-theme="light"]{
@@ -795,6 +794,16 @@ html[data-theme="light"] .icon-moon{display:flex}
 .dir-scenario-link{display:inline-flex;align-items:center;gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font:700 13px/1 var(--font-sans);color:var(--accent)}
 .dir-scenario-link svg{transition:transform .16s}
 .dir-card:hover .dir-scenario-link svg{transform:translateX(3px)}
+.dir-chevron{display:none}
+@media(max-width:720px){
+  .dir-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0}
+  .dir-chevron{display:block;flex-shrink:0;color:var(--fg-3);transition:transform .2s}
+  .dir-card.dir-open .dir-chevron{transform:rotate(180deg);color:var(--accent)}
+  .dir-card .dir-lede,.dir-card .dir-list,.dir-card .dir-scenario-link{display:none}
+  .dir-card.dir-open .dir-lede{display:block;margin-top:14px}
+  .dir-card.dir-open .dir-list{display:flex}
+  .dir-card.dir-open .dir-scenario-link{display:inline-flex}
+}
 
 .scenario-modal{position:fixed;inset:0;z-index:200;display:none;align-items:flex-start;justify-content:center;padding:64px 20px;overflow-y:auto;background:rgba(10,9,7,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .scenario-modal.open{display:flex}
@@ -942,9 +951,9 @@ html[data-theme="light"] .icon-moon{display:flex}
     </div>
 
     <div class="dir-grid">
-      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="openScenario('food','client')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v7a2 2 0 002 2v11M7 2v7M11 2v7"/><path d="M17 2c-1.5 0-3 1.5-3 4v6h3v10"/></svg></div>
-        <div class="dir-title">Еда</div>
+        <div class="dir-title">Еда<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Голод — самая частая причина открыть телефон. Закрываем её за пару касаний.</p>
         <ul class="dir-list">
           <li>Смотрите меню, собираете корзину и оплачиваете картой прямо в приложении</li>
@@ -952,12 +961,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Бронируете столик заранее в разделе «Запись» — приходите, а место уже держат</li>
           <li>Абонемент даёт скидку на каждый следующий заказ в любимом заведении</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('food','client')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="openScenario('goods','client')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
-        <div class="dir-title">Товары</div>
+        <div class="dir-title">Товары<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">От аптеки до техномаркета — заказ без похода в магазин.</p>
         <ul class="dir-list">
           <li>Смотрите каталог с ценами и остатками, оформляете заказ онлайн</li>
@@ -965,12 +974,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Арендуете технику и инвентарь на нужный срок — от часа до месяца — в том же разделе «Запись»</li>
           <li>Абонемент — постоянная скидка на покупки в конкретном магазине</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('goods','client')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="openScenario('services','client')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 15l1.8 1.8L15 13"/></svg></div>
-        <div class="dir-title">Услуги</div>
+        <div class="dir-title">Услуги<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Барбершоп, салон красоты, мастерская — запись, которая не путается.</p>
         <ul class="dir-list">
           <li>Выбираете услугу и своего мастера — запись всегда идёт к конкретному специалисту</li>
@@ -978,12 +987,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Оплачиваете онлайн сразу при записи или на месте — как удобнее</li>
           <li>Переносите или отменяете запись в одно касание, абонемент — на услуги или категории</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('services','client')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="openScenario('sport','client')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M4 8l3-3 2 2-3 3-2-2zM15 19l3-3 2 2-3 3-2-2zM3 21l3-3M18 6l3-3"/></svg></div>
-        <div class="dir-title">Спорт и образование</div>
+        <div class="dir-title">Спорт и образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Зал, корт, персональный тренер — прогресс без звонков администратору.</p>
         <ul class="dir-list">
           <li>Записываетесь на тренировку к своему тренеру — специалист выбирается до оплаты</li>
@@ -991,12 +1000,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Все тренировки и аренды видны в одном календаре «Алиби» — с отметкой на сегодня</li>
           <li>Абонемент на месяц — безлимитные посещения без доплаты за каждое занятие</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','client')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="openScenario('entertainment','client')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="16" cy="12" r="1"/><circle cx="18.5" cy="14.5" r="1"/></svg></div>
-        <div class="dir-title">Развлечения</div>
+        <div class="dir-title">Развлечения<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Компьютерный клуб, квеструм, караоке, каток — в одном заведении сразу всё.</p>
         <ul class="dir-list">
           <li>Арендуете оборудование, комнату или площадку почасово — от игрового ПК до квеструма</li>
@@ -1004,7 +1013,7 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Покупаете снэки и напитки прямо в приложении, не отходя от игры</li>
           <li>Абонемент на безлимитный доступ окупается за пару визитов</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('entertainment','client')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
     </div>
 
@@ -1022,9 +1031,9 @@ html[data-theme="light"] .icon-moon{display:flex}
     </div>
 
     <div class="dir-grid">
-      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="openScenario('food','business')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v7a2 2 0 002 2v11M7 2v7M11 2v7"/><path d="M17 2c-1.5 0-3 1.5-3 4v6h3v10"/></svg></div>
-        <div class="dir-title">Еда</div>
+        <div class="dir-title">Еда<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Рестораны, кофейни, бары — от меню до курьера.</p>
         <ul class="dir-list">
           <li>Ведите меню с фото, ценами и категориями — позиции можно пометить как товар, услугу или аренду</li>
@@ -1032,12 +1041,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Принимайте заказы в реальном времени: новый → готовится → ищем курьера → в пути → выдан</li>
           <li>Включите бронирование столиков, не отвлекая линию на звонки, и запускайте абонементы для постоянных гостей</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('food','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="openScenario('goods','business')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
-        <div class="dir-title">Товары</div>
+        <div class="dir-title">Товары<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Магазины и точки продаж — каталог, который продаёт и сдаёт в аренду.</p>
         <ul class="dir-list">
           <li>Каталог с остатками, вариантами и ценовыми правилами по дням и времени суток</li>
@@ -1045,12 +1054,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Сдавайте оборудование и инвентарь в аренду прямо из каталога — без отдельного сервиса</li>
           <li>QR-код с каталогом для покупателей в зале, абонементы на накопительную скидку</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('goods','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="openScenario('services','business')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 15l1.8 1.8L15 13"/></svg></div>
-        <div class="dir-title">Услуги</div>
+        <div class="dir-title">Услуги<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Салоны, мастерские, студии — расписание, которое не путается.</p>
         <ul class="dir-list">
           <li>Добавляйте мастеров, назначайте им услуги и личный график работы по дням недели</li>
@@ -1058,12 +1067,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Клиент всегда выбирает мастера сам — меньше путаницы, меньше отмен</li>
           <li>Продавайте абонементы на конкретные услуги или категории с гибкой скидкой</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('services','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="openScenario('sport','business')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M4 8l3-3 2 2-3 3-2-2zM15 19l3-3 2 2-3 3-2-2zM3 21l3-3M18 6l3-3"/></svg></div>
-        <div class="dir-title">Спорт и образование</div>
+        <div class="dir-title">Спорт и образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Фитнес-клубы, залы, корты, секции — расписание тренеров и загрузка зала.</p>
         <ul class="dir-list">
           <li>Ведите профили тренеров: услуги, личное расписание, загрузка по дням</li>
@@ -1071,12 +1080,12 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Абонементы на безлимитные посещения — стабильная выручка вперёд</li>
           <li>Полный контроль над бронированиями и отменами по вашим правилам</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="openScenario('entertainment','business')" role="button" tabindex="0">
+      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="16" cy="12" r="1"/><circle cx="18.5" cy="14.5" r="1"/></svg></div>
-        <div class="dir-title">Развлечения</div>
+        <div class="dir-title">Развлечения<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Компьютерные клубы, квесты, VR — самый гибкий формат каталога.</p>
         <ul class="dir-list">
           <li>Один каталог: товары, почасовая аренда оборудования и запись на инструктажи — в одном заведении</li>
@@ -1084,7 +1093,7 @@ html[data-theme="light"] .icon-moon{display:flex}
           <li>Назначайте инструкторов на мастер-классы и ведите их расписание</li>
           <li>Абонементы на безлимитный доступ, QR-сканер для быстрого списания на входе</li>
         </ul>
-        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('entertainment','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
     </div>
 
@@ -1167,9 +1176,6 @@ html[data-theme="light"] .icon-moon{display:flex}
 <!-- ════════════════ ТАРИФЫ ════════════════ -->
 <section class="seg" id="pricing" data-comment-anchor="25a3f20101-section">
   <div class="seg-inner" data-comment-anchor="c5cd839b4b-div">
-    <div class="pricing-teaser" id="pricing-teaser">
-      <button class="btn-blue" onclick="togglePricing()">Узнать условия для бизнеса</button>
-    </div>
     <div id="pricing-content" style="display:none">
     <div class="seg-head">
       <span class="seg-eyebrow"><span class="sc-dot"></span>Тарифы для бизнеса</span>
@@ -1696,6 +1702,13 @@ var SCENARIOS = {
   },
 };
 
+function handleDirCardClick(el, key, audience) {
+  if (window.matchMedia('(max-width: 720px)').matches) {
+    el.classList.toggle('dir-open');
+  } else {
+    openScenario(key, audience);
+  }
+}
 function openScenario(key, audience) {
   var dir = SCENARIOS[key];
   var s = dir && dir[audience];
@@ -1735,10 +1748,8 @@ function scrollToAudience(type) {
 }
 function togglePricing() {
   var content = document.getElementById('pricing-content');
-  var teaser = document.getElementById('pricing-teaser');
-  if (!content || !teaser) return;
+  if (!content) return;
   content.style.display = '';
-  teaser.style.display = 'none';
   content.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function goToBusinessTerms() {
