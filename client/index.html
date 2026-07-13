@@ -3092,8 +3092,8 @@ function switchSvcTab(tab) {
   if (isMst)   loadStoreMasters();
 }
 // Separate tab bar for food/goods stores: "Товары/Меню" vs "Запись" (rental items only).
-// Kept independent of _svcTab/svc-tab-bar — that one is gated to _SVC_DIRS and also drives
-// delivery-toggle visibility, which food/goods must keep unaffected.
+// Kept independent of _svcTab/svc-tab-bar — that one is gated to _SVC_DIRS. Delivery
+// availability is direction-independent (store.delivery_enabled) and unaffected by either bar.
 let _fgTab = 'items';
 let _rentalItems = null, _rentalItemsStoreId = null;
 async function switchFgTab(tab) {
@@ -4767,7 +4767,8 @@ async function loadStore() {
     if (_isMst)   loadStoreMasters();
   }
   // "Товары/Меню" vs "Запись" (rental items) tab bar — food/goods only, independent of
-  // svc-tab-bar so delivery/pickup (also gated on food/goods) stays unaffected.
+  // svc-tab-bar. Delivery/pickup availability is a separate, direction-independent flag
+  // (store.delivery_enabled) and isn't affected by which tab bar is shown.
   const fgTabBar = document.getElementById('fg-tab-bar');
   const _isFg = S.direction === 'food' || S.direction === 'goods';
   if (fgTabBar) fgTabBar.style.display = _isFg ? '' : 'none';
@@ -4784,7 +4785,7 @@ async function loadStore() {
   document.getElementById('st-hours').textContent  = st.working_hours || '';
   document.getElementById('st-phone').textContent  = st.phone || '';
   const delBadgeEl = document.getElementById('st-delivery-badge');
-  if (delBadgeEl) delBadgeEl.style.display = (st.delivery_enabled && !_SVC_DIRS.has(st.direction)) ? '' : 'none';
+  if (delBadgeEl) delBadgeEl.style.display = st.delivery_enabled ? '' : 'none';
   const clLink = document.getElementById('st-complaint-link'); if (clLink) clLink.style.display = '';
   const legalBtn = document.getElementById('store-legal-btn');
   const legalBody = document.getElementById('store-legal-body');
@@ -6496,8 +6497,7 @@ function renderDeliveryToggle() {
   const wrap = document.getElementById('delivery-toggle-wrap');
   if (!wrap) return;
   const store = getCartStore();
-  const dir = store?.direction || S.direction;
-  const show = !!(store?.delivery_enabled && (dir === 'food' || dir === 'goods') && S.cart.length);
+  const show = !!(store?.delivery_enabled && S.cart.length);
   wrap.style.display = show ? '' : 'none';
   if (!show) { const dr = document.getElementById('c-delivery-row'); if (dr) dr.style.display = 'none'; return; }
   const isDelivery = S.deliveryMode === 'delivery';

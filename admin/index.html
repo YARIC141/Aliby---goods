@@ -4062,12 +4062,7 @@ async function cancelPickMode() {
 function onMsDeliveryChange() {}
 
 
-function onMsDirChange() {
-  const dir = document.getElementById('ms-dir')?.value;
-  const noDelivery = dir === 'services' || dir === 'sport' || dir === 'entertainment';
-  const sec = document.getElementById('ms-delivery-section');
-  if (sec) sec.style.display = noDelivery ? 'none' : '';
-}
+function onMsDirChange() {}
 
 let _msEditStore = null;
 
@@ -4177,7 +4172,7 @@ async function saveStore() {
     store_category_id:  document.getElementById('ms-sc').value || null,
     avg_order_amount:   document.getElementById('ms-avg').value !== '' ? parseInt(document.getElementById('ms-avg').value) : null,
     image_url:          document.getElementById('ms-image-url').value || null,
-    delivery_enabled:         !['services','sport','entertainment'].includes(document.getElementById('ms-dir')?.value) && !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
+    delivery_enabled:         !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
     accepts_online_payment:   document.getElementById('ms-online-payment')?.checked ?? true,
   };
   try {
