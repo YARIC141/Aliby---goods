@@ -4839,6 +4839,19 @@ async function loadStore() {
     } catch(e) { S.storeSubActive = true; }
     applyStoreGate();
   })();
+  // S.store may have come from a stale map-list snapshot (localStorage/SW cache) — re-fetch
+  // it directly so fields like accepts_online_payment reflect the current admin config,
+  // not whatever was cached when the store list was last written.
+  (async () => {
+    try {
+      const rows = await req(`/rest/v1/stores?id=eq.${st.id}&select=*,store_categories(name,icon)`);
+      const fresh = rows?.[0];
+      if (fresh && S.store?.id === st.id) {
+        S.store = { ...S.store, ...fresh };
+        applyStoreGate();
+      }
+    } catch(e) {}
+  })();
   loadStoreSubs();
   loadMenuUserSubs().then(() => { if (S.menuUserSubs?.length) loadMenuItems(); });
   loadStoreNotifState(st.id);
