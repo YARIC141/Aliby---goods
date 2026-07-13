@@ -1433,6 +1433,7 @@ document.addEventListener('deviceready',function(){
           <span id="mrent-cal-label" style="font:600 15px/1 var(--font-sans)"></span>
           <button class="btn btn-sm" onclick="rentCalNext()">→</button>
         </div>
+        <div id="mrent-day-hint" style="display:none;font-size:13px;font-weight:500;margin-bottom:6px">Выберите день начала и день конца периода</div>
         <div class="sched-cal-wrap" style="margin-bottom:10px">
           <table class="sched-cal-table">
             <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
@@ -2563,6 +2564,10 @@ async function rentGoCalendar() {
   document.getElementById('mrent-add-cart-btn').style.display = 'none';
   _rentStartDate = null;
   _rentEndDate   = null;
+  const unit = _rentItem.rent_period_unit;
+  const isTimeUnit = unit === 'minute' || unit === 'hour';
+  const dayHint = document.getElementById('mrent-day-hint');
+  if (dayHint) dayHint.style.display = isTimeUnit ? 'none' : '';
   await _rentLoadCalMonth();
 }
 
