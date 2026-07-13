@@ -2337,7 +2337,7 @@ function setDirection(dir) {
 }
 
 function updateDirectionLabels(dir) {
-  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги<br>и запись', sport: 'Спорт<br>и запись', entertainment: 'Развлечения<br>и запись' }[dir] || 'Меню';
+  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги<br>и запись', sport: 'Тренировки', entertainment: 'Развлечения<br>и запись' }[dir] || 'Меню';
   document.querySelectorAll('.nav-store-lbl').forEach(el => { el.innerHTML = storeLbl; });
   const svcTabBar = document.getElementById('svc-tab-bar');
   if (svcTabBar) svcTabBar.style.display = _SVC_DIRS.has(dir) ? '' : 'none';
@@ -2431,7 +2431,13 @@ function switchCalenabsTab(tab) {
     if (pane) pane.style.display = t === tab ? 'flex' : 'none';
     document.getElementById('ca-tab-' + t)?.classList.toggle('active', t === tab);
   });
-  if (tab === 'bk')  { _bkNotifCount = 0; _updateBkBadge(); loadBookingsScreen(); }
+  if (tab === 'bk')  {
+    _bkNotifCount = 0; _updateBkBadge();
+    _myBk.year = nowInCity().getFullYear();
+    _myBk.month = nowInCity().getMonth();
+    _myBk.openDate = todayInCity();
+    loadBookingsScreen();
+  }
   else if (tab === 'sub') loadMySubscriptions();
   else if (tab === 'rent') loadRentTab();
   else if (tab === 'ord') {
@@ -9230,6 +9236,7 @@ async function loadBookingsScreen() {
     });
   } catch(e) {}
   renderMyBookingsCalendar();
+  if (_myBk.openDate) _showMyBookingsDay(_myBk.openDate);
 }
 
 function renderMyBookingsCalendar() {
@@ -9285,6 +9292,10 @@ function openMyBookingsDay(ds) {
   if (_myBk.openDate === ds) { closeMyBookingsDay(); return; }
   _myBk.openDate = ds;
   renderMyBookingsCalendar();
+  _showMyBookingsDay(ds);
+}
+
+function _showMyBookingsDay(ds) {
   const [y, m, d] = ds.split('-').map(Number);
   const DOW = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
