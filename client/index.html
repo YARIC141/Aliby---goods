@@ -533,7 +533,6 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-bk-cancelled{position:absolute;bottom:3px;left:4px;font:700 9px/14px var(--font-sans);background:#e53935;color:#fff;border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.has-rent{background:color-mix(in oklch,var(--info) 16%,var(--bg))}
 .sched-day.has-rent:hover:not(.selected){background:color-mix(in oklch,var(--info) 26%,var(--bg))}
-.sched-day.has-sched.has-rent{background:linear-gradient(135deg,color-mix(in oklch,var(--accent) 13%,var(--bg)) 50%,color-mix(in oklch,var(--info) 16%,var(--bg)) 50%)}
 .sched-rent-dot{position:absolute;bottom:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--info);pointer-events:none}
 #m-dz-viewer{position:fixed;inset:0;z-index:900;display:flex;flex-direction:column;background:var(--bg);transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
 #m-dz-viewer.open{transform:none}
@@ -8755,6 +8754,7 @@ let _mbkMasterFilter = '';
 function setMbkStatusFilter(s) {
   _mbkStatusFilter = s;
   document.querySelectorAll('[data-mbk-status]').forEach(el => el.classList.toggle('active', el.dataset.mbkStatus === s));
+  renderMyBookingsCalendar();
   if (_myBk.openDate) renderMyBookingsDay(_myBk.openDate);
 }
 function setMbkMasterFilter(v) {
@@ -9228,8 +9228,11 @@ function renderMyBookingsCalendar() {
     const ds = `${_myBk.year}-${mm}-${dd}`;
     let cls = 'sched-day';
     if (ds === today) cls += ' today';
-    if (_myBk.byDate[ds]?.some(b => b.status !== 'cancelled')) cls += ' has-sched';
-    if (_myBk.rentByDate[ds]?.some(r => r.status !== 'cancelled')) cls += ' has-rent';
+    if (_mbkStatusFilter === 'rental') {
+      if (_myBk.rentByDate[ds]?.some(r => r.status !== 'cancelled')) cls += ' has-rent';
+    } else {
+      if (_myBk.byDate[ds]?.some(b => b.status !== 'cancelled')) cls += ' has-sched';
+    }
     cells.push({ d, cls, ds });
   }
   const trailing = (7 - (cells.length % 7)) % 7;
@@ -9240,14 +9243,15 @@ function renderMyBookingsCalendar() {
     if (i % 7 === 0) html += '<tr>';
     const selected = c.ds && c.ds === _myBk.openDate ? ' selected' : '';
     const dayBks = c.ds ? (_myBk.byDate[c.ds] || []) : [];
-    const cnt        = dayBks.filter(b => b.status !== 'cancelled').length;
-    const done       = dayBks.filter(b => b.status === 'completed').length;
-    const cancelled  = dayBks.filter(b => b.status === 'cancelled').length;
+    const isRentMode = _mbkStatusFilter === 'rental';
+    const dayRents   = c.ds ? (_myBk.rentByDate[c.ds] || []) : [];
+    const cnt        = isRentMode ? dayRents.filter(r => r.status !== 'cancelled').length   : dayBks.filter(b => b.status !== 'cancelled').length;
+    const done       = isRentMode ? dayRents.filter(r => r.status === 'completed').length    : dayBks.filter(b => b.status === 'completed').length;
+    const cancelled  = isRentMode ? dayRents.filter(r => r.status === 'cancelled').length    : dayBks.filter(b => b.status === 'cancelled').length;
     const badgeTotal     = cnt       > 0 ? `<span class="sched-bk-cnt">${cnt}</span>`           : '';
     const badgeDone      = done      > 0 ? `<span class="sched-bk-done">${done}</span>`         : '';
     const badgeCancelled = cancelled > 0 ? `<span class="sched-bk-cancelled">${cancelled}</span>` : '';
-    const hasActiveRent  = c.ds && (_myBk.rentByDate[c.ds] || []).some(r => r.status !== 'cancelled');
-    const badgeRent      = hasActiveRent ? `<span class="sched-rent-dot"></span>` : '';
+    const badgeRent      = isRentMode && cnt > 0 ? `<span class="sched-rent-dot"></span>` : '';
     html += `<td class="${c.cls}${selected}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}>${badgeDone}<span class="sd-n">${c.d}</span>${badgeTotal}${badgeCancelled}${badgeRent}</td>`;
     if (i % 7 === 6) html += '</tr>';
   });
