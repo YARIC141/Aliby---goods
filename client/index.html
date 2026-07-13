@@ -351,6 +351,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .item-body{padding:10px;flex:1;display:flex;flex-direction:column}
 .item-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);margin-bottom:2px}
 .item-name.sub-on{color:var(--ok)}
+.item-name.sub-hint-on{color:var(--warn)}
 .item-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3);margin-bottom:6px}
 @media(max-width:600px){
   .item-img{height:auto;aspect-ratio:1/1}
@@ -360,7 +361,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .item-actions{margin-top:auto;padding-top:8px;display:flex;justify-content:flex-end}
 .price-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:auto}
 .sub-note{font:400 11px/1.3 var(--font-sans);color:var(--fg-3);padding-left:4px;flex:1}
-.sub-hint{color:var(--fg-4);font-style:italic}
+.sub-hint{color:var(--warn);font-style:italic}
 .price-val{font:400 19px/1 var(--font-sans);color:var(--fg)}
 .price-orig{font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:line-through}
 .price-sub{font:400 19px/1 var(--font-sans);color:var(--ok)}
@@ -5287,7 +5288,7 @@ function renderItemCard(item) {
   return `<div class="item-card" data-id="${item.id}" onclick="openItemDetail('${item.id}')">
     <div class="item-img">${imgHtml}</div>
     <div class="item-body">
-      <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
+      <div class="item-name${best ? ' sub-on' : hint ? ' sub-hint-on' : ''}">${esc(item.name)}</div>
       ${item.description ? `<div class="item-desc item-card-desc">${esc(item.description)}</div>` : ''}
       ${item.allergens ? `<div class="item-desc" style="color:var(--warn,#e8a020)">⚠ Аллергены: ${esc(item.allergens)}</div>` : ''}
       ${item.preparation_time > 0 ? `<div class="item-desc" style="color:var(--fg-4)">⏱ ${item.preparation_time} мин</div>` : ''}
