@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alliby — пять направлений, один сервис</title>
+<meta name="description" content="Alliby: еда, товары, услуги, тренировки и развлечения — что может сделать клиент и что может настроить бизнес в каждом направлении.">
+<meta name="theme-color" content="#e8743b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;1,6..12,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --font-display:'Instrument Serif',Georgia,serif;
+  --font-sans:'Nunito Sans',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --brand:#e8743b;--brand-deep:#c4541e;
+  --blue:#78b4e0;--blue-deep:#4a90c2;
+  --green:#35a862;--green-deep:#21793f;
+  --red:#ef4444;--red-deep:#b91c1c;
+  --gold:#eab308;--gold-deep:#a16207;
+  --bg:#0f0e0c;--bg-1:#181614;--bg-2:#211f1c;--bg-3:#2a2724;
+  --fg:#f4f0eb;--fg-2:#c8c0b4;--fg-3:#8a8178;--fg-4:#524e48;
+  --line:rgba(255,255,255,.08);
+  --r-2:10px;--r-3:14px;--r-4:20px;--r-pill:999px;
+  --glass-card:rgba(14,12,10,.10);
+}
+
+html{scroll-behavior:smooth}
+body{font-family:var(--font-sans);font-size:16px;color:var(--fg);background-color:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+#page-wrap{position:relative;z-index:1}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,80px);height:64px;background:rgba(15,14,12,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+.nav-logo{font:400 22px/1 var(--font-display);color:var(--fg);text-decoration:none;letter-spacing:-.01em}
+.nav-logo span{color:var(--brand)}
+.nav-links{display:flex;align-items:center;gap:22px}
+.nav-link{font:600 14px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s}
+.nav-link:hover{color:var(--fg)}
+.nav-cta{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:var(--r-pill);background:var(--brand);color:#fff;font:600 14px/1 var(--font-sans);text-decoration:none;transition:background .18s,transform .14s;white-space:nowrap}
+.nav-cta:hover{background:var(--brand-deep);transform:translateY(-1px)}
+@media(max-width:720px){.nav-links{display:none}}
+
+/* ── HERO ── */
+#page-hero{padding:150px clamp(20px,5vw,80px) 70px;text-align:center;position:relative;overflow:hidden}
+#page-hero::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 50% -10%, rgba(232,116,59,.14) 0%, transparent 60%)}
+.ph-tag{display:inline-block;position:relative;font:600 11px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:20px}
+.ph-h1{position:relative;font:400 clamp(34px,6vw,62px)/1.1 var(--font-display);letter-spacing:-.02em;max-width:880px;margin:0 auto 22px;text-wrap:balance}
+.ph-h1 em{font-style:italic;color:var(--brand)}
+.ph-sub{position:relative;font:400 clamp(16px,2vw,19px)/1.65 var(--font-sans);color:var(--fg-2);max-width:720px;margin:0 auto 40px}
+
+/* ── COLOR LEGEND ── */
+.legend{position:relative;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.legend-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--line);font:700 13px/1 var(--font-sans);color:var(--fg-2)}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+
+/* ── THEMED SECTION ── */
+.seg{padding:88px clamp(20px,5vw,80px);position:relative;scroll-margin-top:64px}
+.seg-inner{max-width:1180px;margin:0 auto;position:relative;z-index:1}
+.seg::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 45% at 50% -5%, rgba(var(--accent-rgb),.10) 0%, transparent 60%)}
+#for-business{background:rgba(0,0,0,.18);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+
+.seg-head{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:20px}
+.seg-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:var(--r-pill);margin-bottom:20px;background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.28);font:700 12px/1 var(--font-sans);letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.seg-eyebrow .sc-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.seg-h2{font:400 clamp(28px,4.5vw,46px)/1.12 var(--font-display);letter-spacing:-.02em;max-width:720px;margin-bottom:16px;text-wrap:balance}
+.seg-h2 em{font-style:italic;color:var(--accent)}
+.seg-sub{font:400 17px/1.65 var(--font-sans);color:var(--fg-2);max-width:640px;margin-bottom:8px}
+.seg-note{font:400 14px/1.6 var(--font-sans);color:var(--fg-3);max-width:680px;margin:18px auto 0;text-wrap:pretty}
+
+/* ── DIRECTION CARDS ── */
+.dir-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:48px}
+@media(max-width:720px){.dir-grid{grid-template-columns:1fr}}
+.dir-card{background:var(--glass-card);border:1px solid var(--line);border-radius:var(--r-4);padding:28px;transition:border-color .2s,transform .2s,box-shadow .2s;display:flex;flex-direction:column}
+.dir-card:hover{transform:translateY(-3px);border-color:rgba(var(--accent-rgb),.45);box-shadow:0 16px 40px rgba(var(--accent-rgb),.14)}
+.dir-icon{width:48px;height:48px;border-radius:var(--r-3);display:flex;align-items:center;justify-content:center;margin-bottom:18px;background:rgba(var(--accent-rgb),.14);color:var(--accent);flex-shrink:0}
+.dir-title{font:700 19px/1.2 var(--font-sans);margin-bottom:6px;color:var(--fg)}
+.dir-lede{font:400 13.5px/1.5 var(--font-sans);color:var(--fg-3);margin-bottom:18px}
+.dir-list{list-style:none;display:flex;flex-direction:column;gap:11px;margin-top:auto}
+.dir-list li{display:flex;align-items:flex-start;gap:9px;font:400 14px/1.5 var(--font-sans);color:var(--fg-2)}
+.dir-list li::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:7px;flex-shrink:0}
+.dir-card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.dir-scenario-link{display:inline-flex;align-items:center;gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);font:700 13px/1 var(--font-sans);color:var(--accent)}
+.dir-scenario-link svg{transition:transform .16s}
+.dir-card:hover .dir-scenario-link svg{transform:translateX(3px)}
+
+/* ── SCENARIO MODAL ── */
+.scenario-modal{position:fixed;inset:0;z-index:200;display:none;align-items:flex-start;justify-content:center;padding:64px 20px;overflow-y:auto;background:rgba(10,9,7,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.scenario-modal.open{display:flex}
+.scenario-panel{position:relative;width:100%;max-width:720px;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-4);padding:clamp(28px,4vw,48px);box-shadow:0 30px 90px rgba(0,0,0,.55)}
+.scenario-close{position:absolute;top:18px;right:18px;width:36px;height:36px;border-radius:50%;background:var(--bg-2);border:1px solid var(--line);color:var(--fg-2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .16s,color .16s}
+.scenario-close:hover{background:var(--bg-3);color:var(--fg)}
+.scenario-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:var(--r-pill);margin-bottom:18px;background:rgba(var(--accent-rgb),.14);border:1px solid rgba(var(--accent-rgb),.3);font:700 12px/1 var(--font-sans);letter-spacing:.05em;text-transform:uppercase;color:rgb(var(--accent-rgb))}
+.scenario-title{font:400 clamp(24px,3.5vw,32px)/1.2 var(--font-display);letter-spacing:-.01em;margin-bottom:6px;text-wrap:balance}
+.scenario-sub{font:400 14px/1.5 var(--font-sans);color:var(--fg-3);margin-bottom:24px}
+.scenario-body p{font:400 15.5px/1.7 var(--font-sans);color:var(--fg-2);margin-bottom:16px}
+.scenario-body p:last-child{margin-bottom:0}
+.scenario-body strong{color:var(--fg);font-weight:700}
+@media(max-width:600px){.scenario-modal{padding:24px 12px}}
+
+/* ── BRIDGE ── */
+.bridge{max-width:720px;margin:0 auto;text-align:center;position:relative;z-index:1}
+.bridge-tag{font:600 11px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:16px;display:block}
+.bridge-h{font:400 clamp(24px,3.5vw,34px)/1.25 var(--font-display);letter-spacing:-.01em;margin-bottom:14px;text-wrap:balance}
+.bridge-h em{font-style:italic;color:var(--brand)}
+.bridge-p{font:400 16px/1.65 var(--font-sans);color:var(--fg-2)}
+
+/* ── PRICING (unchanged block reuses these) ── */
+.sc-dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.tiers{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:900px;margin:0 auto 40px}
+.tier{background:var(--glass-card);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:30px 28px;border:1px solid var(--line);border-radius:var(--r-4)}
+.tier-label{display:inline-flex;align-items:center;gap:8px;font:700 12px/1 var(--font-sans);letter-spacing:.05em;text-transform:uppercase;margin-bottom:18px}
+.tier.free .tier-label{color:var(--fg-2)}
+.tier.paid .tier-label{color:var(--accent)}
+.tier-label .pill{font-size:10px;padding:3px 8px;border-radius:var(--r-pill);letter-spacing:.02em}
+.tier.free .pill{background:rgba(255,255,255,.08);color:var(--fg-2)}
+.tier.paid .pill{background:rgba(var(--accent-rgb),.16);color:var(--accent)}
+.tier ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+.tier li{display:flex;gap:11px;font:400 14px/1.5 var(--font-sans);color:var(--fg-2)}
+.tier li svg{flex-shrink:0;margin-top:2px}
+.tier.free li svg{color:var(--fg-3)}
+.tier.paid li svg{color:var(--accent)}
+.tier li strong{color:var(--fg);font-weight:700}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:760px;margin:0 auto}
+.plan{background:var(--glass-card);border:1px solid var(--line);border-radius:var(--r-4);padding:26px;display:flex;flex-direction:column}
+.plan.featured{border-color:rgba(var(--accent-rgb),.5);box-shadow:0 18px 50px rgba(var(--accent-rgb),.14)}
+.plan-badge{display:inline-block;background:var(--accent);color:#0f0e0c;font:700 11px/1 var(--font-sans);letter-spacing:.03em;text-transform:uppercase;padding:5px 11px;border-radius:var(--r-pill);margin-bottom:14px;width:max-content}
+.plan-name{font:400 22px/1.1 var(--font-display);color:var(--fg);margin-bottom:8px}
+.plan-price{display:flex;align-items:baseline;gap:7px;margin-bottom:6px}
+.plan-price .amt{font:400 46px/1 var(--font-display);color:var(--accent);letter-spacing:-.01em}
+.plan-price .per{font:500 14px/1 var(--font-sans);color:var(--fg-3)}
+.plan-save{font:600 13px/1.4 var(--font-sans);color:var(--accent);margin-bottom:18px;min-height:18px}
+.plan-incl{list-style:none;display:flex;flex-direction:column;gap:9px;padding-top:18px;border-top:1px solid var(--line);margin-top:auto}
+.plan-incl li{display:flex;gap:10px;font:400 13.5px/1.45 var(--font-sans);color:var(--fg-2)}
+.plan-incl li svg{color:var(--accent);flex-shrink:0;margin-top:2px}
+.acq{display:flex;gap:14px;align-items:flex-start;max-width:760px;margin:32px auto 0;padding:20px 24px;border-radius:var(--r-3);background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.22)}
+.acq svg{color:var(--accent);flex-shrink:0;margin-top:1px}
+.acq-text strong{display:block;font:700 14px/1.4 var(--font-sans);color:var(--fg);margin-bottom:3px}
+.acq-text span{font:400 13.5px/1.55 var(--font-sans);color:var(--fg-2)}
+@media(max-width:720px){.tiers,.plans{grid-template-columns:1fr}}
+
+/* ── CTA ── */
+#cta{padding:100px clamp(20px,5vw,80px);text-align:center}
+.cta-h2{font:400 clamp(30px,5vw,48px)/1.12 var(--font-display);letter-spacing:-.02em;margin-bottom:16px}
+.cta-sub{font:400 18px/1.6 var(--font-sans);color:var(--fg-2);max-width:500px;margin:0 auto 40px}
+.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-primary{display:inline-flex;align-items:center;gap:9px;padding:15px 28px;border-radius:var(--r-pill);background:var(--brand);color:#fff;font:700 15px/1 var(--font-sans);text-decoration:none;transition:background .18s,transform .16s,box-shadow .18s}
+.btn-primary:hover{background:var(--brand-deep);transform:translateY(-2px);box-shadow:0 8px 32px rgba(232,116,59,.45)}
+.btn-blue{display:inline-flex;align-items:center;gap:9px;padding:15px 28px;border-radius:var(--r-pill);background:rgba(120,180,224,.12);border:1px solid rgba(120,180,224,.4);color:var(--blue);font:700 15px/1 var(--font-sans);text-decoration:none;transition:background .18s,transform .16s,color .18s}
+.btn-blue:hover{background:rgba(120,180,224,.2);color:#fff;transform:translateY(-2px)}
+
+/* ── FOOTER ── */
+footer{display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;padding:36px clamp(20px,5vw,80px);border-top:1px solid var(--line)}
+.footer-logo{font:400 20px/1 var(--font-display);color:var(--fg-2);text-decoration:none}
+.footer-logo span{color:var(--brand)}
+.footer-copy{font:400 13px/1 var(--font-sans);color:var(--fg-3)}
+.footer-nav{display:flex;gap:24px;flex-wrap:wrap}
+.footer-nav a{font:400 13px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s}
+.footer-nav a:hover{color:var(--fg)}
+
+/* ── PROTOTYPE BANNER ── */
+.proto-banner{position:relative;z-index:2;background:linear-gradient(90deg,rgba(232,116,59,.16),rgba(120,180,224,.16));border-bottom:1px solid var(--line);padding:10px clamp(20px,5vw,80px);text-align:center;font:600 12.5px/1.4 var(--font-sans);color:var(--fg-2)}
+.proto-banner b{color:var(--fg)}
+</style>
+</head>
+<body>
+
+<div class="proto-banner">🎨 Черновик страницы — <b>не опубликован</b>, лежит только в «новый site ui» для ревью</div>
+
+<div id="page-wrap">
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#page-hero">Alli<span>by</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="#for-clients">Для клиентов</a>
+    <a class="nav-link" href="#for-business">Для бизнеса</a>
+    <a class="nav-link" href="#pricing">Тарифы</a>
+  </div>
+  <a class="nav-cta" href="https://alliby.ru/">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    Открыть приложение
+  </a>
+</nav>
+
+<!-- HERO -->
+<header id="page-hero">
+  <span class="ph-tag">Одна платформа · пять направлений</span>
+  <h1 class="ph-h1">Не «сайт для заказа еды». <em>Витрина, запись и аренда</em> — в одном приложении, для любого бизнеса</h1>
+  <p class="ph-sub">Кофейня, магазин техники, барбершоп, фитнес-клуб или компьютерный клуб — Alliby одинаково хорошо продаёт товары, принимает записи и сдаёт в аренду. Клиент решает, что ему нужно сейчас, — приложение подстраивается под сценарий, а не наоборот.</p>
+  <div class="legend">
+    <span class="legend-pill"><span class="legend-dot" style="background:var(--brand)"></span>Еда</span>
+    <span class="legend-pill"><span class="legend-dot" style="background:var(--green)"></span>Товары</span>
+    <span class="legend-pill"><span class="legend-dot" style="background:var(--blue)"></span>Услуги</span>
+    <span class="legend-pill"><span class="legend-dot" style="background:var(--red)"></span>Тренировки</span>
+    <span class="legend-pill"><span class="legend-dot" style="background:var(--gold)"></span>Развлечения</span>
+  </div>
+</header>
+
+<!-- ════════════════ ДЛЯ КЛИЕНТОВ ════════════════ -->
+<section class="seg" id="for-clients" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Для клиентов</span>
+      <h2 class="seg-h2">Что бы вам ни было нужно — <em>Alliby уже умеет это</em></h2>
+      <p class="seg-sub">Пять направлений, один и тот же простой сценарий: нашли на карте, выбрали, что нужно — купить, забронировать или арендовать — и всё, дальше приложение ведёт вас за руку.</p>
+    </div>
+
+    <div class="dir-grid">
+      <!-- Еда -->
+      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="openScenario('food')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v7a2 2 0 002 2v11M7 2v7M11 2v7"/><path d="M17 2c-1.5 0-3 1.5-3 4v6h3v10"/></svg></div>
+        <div class="dir-title">Еда</div>
+        <p class="dir-lede">Голод — самая частая причина открыть телефон. Закрываем её за пару касаний.</p>
+        <ul class="dir-list">
+          <li>Смотрите меню, собираете корзину и оплачиваете картой прямо в приложении</li>
+          <li>Выбираете самовывоз или доставку — статус обновляется в реальном времени: готовится → ищем курьера → в пути → готово</li>
+          <li>Бронируете столик заранее в разделе «Запись» — приходите, а место уже держат</li>
+          <li>Абонемент даёт скидку на каждый следующий заказ в любимом заведении</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Товары -->
+      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="openScenario('goods')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+        <div class="dir-title">Товары</div>
+        <p class="dir-lede">От аптеки до техномаркета — заказ без похода в магазин.</p>
+        <ul class="dir-list">
+          <li>Смотрите каталог с ценами и остатками, оформляете заказ онлайн</li>
+          <li>Забираете сами или получаете доставку до двери</li>
+          <li>Арендуете технику и инвентарь на нужный срок — от часа до месяца — в том же разделе «Запись»</li>
+          <li>Абонемент — постоянная скидка на покупки в конкретном магазине</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Услуги -->
+      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="openScenario('services')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 15l1.8 1.8L15 13"/></svg></div>
+        <div class="dir-title">Услуги</div>
+        <p class="dir-lede">Барбершоп, салон красоты, мастерская — запись, которая не путается.</p>
+        <ul class="dir-list">
+          <li>Выбираете услугу и своего мастера — запись всегда идёт к конкретному специалисту</li>
+          <li>Свободные слоты показываются с учётом графика мастера и часов работы заведения</li>
+          <li>Оплачиваете онлайн сразу при записи или на месте — как удобнее</li>
+          <li>Переносите или отменяете запись в одно касание, абонемент — на услуги или категории</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Тренировки -->
+      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="openScenario('sport')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M4 8l3-3 2 2-3 3-2-2zM15 19l3-3 2 2-3 3-2-2zM3 21l3-3M18 6l3-3"/></svg></div>
+        <div class="dir-title">Тренировки</div>
+        <p class="dir-lede">Зал, корт, персональный тренер — прогресс без звонков администратору.</p>
+        <ul class="dir-list">
+          <li>Записываетесь на тренировку к своему тренеру — специалист выбирается до оплаты</li>
+          <li>Арендуете зал, корт или инвентарь на нужное время</li>
+          <li>Все тренировки и аренды видны в одном календаре «Алиби» — с отметкой на сегодня</li>
+          <li>Абонемент на месяц — безлимитные посещения без доплаты за каждое занятие</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Развлечения -->
+      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="openScenario('entertainment')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="16" cy="12" r="1"/><circle cx="18.5" cy="14.5" r="1"/></svg></div>
+        <div class="dir-title">Развлечения</div>
+        <p class="dir-lede">Компьютерный клуб, квеструм, караоке, каток — в одном заведении сразу всё.</p>
+        <ul class="dir-list">
+          <li>Арендуете оборудование, комнату или площадку почасово — от игрового ПК до квеструма</li>
+          <li>Записываетесь на мастер-класс или инструктаж с выбором инструктора</li>
+          <li>Покупаете снэки и напитки прямо в приложении, не отходя от игры</li>
+          <li>Абонемент на безлимитный доступ окупается за пару визитов</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+    </div>
+
+    <p class="seg-note">Одно и то же заведение может совмещать всё сразу: столик в кофейне бронируется как «аренда», настольная игра сдаётся напрокат, а мастер-класс по латте-арту — по записи с выбором бариста. Тип позиции — товар, услуга или аренда — настраивается для каждой карточки отдельно, независимо от направления.</p>
+  </div>
+</section>
+
+<!-- BRIDGE -->
+<section class="seg" style="padding-top:70px;padding-bottom:70px">
+  <div class="bridge">
+    <span class="bridge-tag">А теперь взгляд с другой стороны</span>
+    <h2 class="bridge-h">То же самое, только <em>для вашего заведения</em></h2>
+    <p class="bridge-p">Всё, что клиент делает в приложении за секунды, — вы настраиваете один раз в панели администратора. Без разработчиков и без отдельных сервисов на каждый сценарий.</p>
+  </div>
+</section>
+
+<!-- ════════════════ ДЛЯ БИЗНЕСА ════════════════ -->
+<section class="seg" id="for-business" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Для бизнеса</span>
+      <h2 class="seg-h2">Один кабинет — <em>любое направление</em></h2>
+      <p class="seg-sub">Каждая позиция каталога — товар, услуга или аренда — переключается независимо от направления заведения. Настройте под свой формат: доставка, запись, прокат или всё сразу.</p>
+    </div>
+
+    <div class="dir-grid">
+      <!-- Еда -->
+      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="openScenario('food')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v7a2 2 0 002 2v11M7 2v7M11 2v7"/><path d="M17 2c-1.5 0-3 1.5-3 4v6h3v10"/></svg></div>
+        <div class="dir-title">Еда</div>
+        <p class="dir-lede">Рестораны, кофейни, бары — от меню до курьера.</p>
+        <ul class="dir-list">
+          <li>Ведите меню с фото, ценами и категориями — позиции можно пометить как товар, услугу или аренду</li>
+          <li>Настройте зоны доставки по радиусу или полигону со своей стоимостью — или работайте только на самовывоз</li>
+          <li>Принимайте заказы в реальном времени: новый → готовится → ищем курьера → в пути → выдан</li>
+          <li>Включите бронирование столиков, не отвлекая линию на звонки, и запускайте абонементы для постоянных гостей</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Товары -->
+      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="openScenario('goods')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+        <div class="dir-title">Товары</div>
+        <p class="dir-lede">Магазины и точки продаж — каталог, который продаёт и сдаёт в аренду.</p>
+        <ul class="dir-list">
+          <li>Каталог с остатками, вариантами и ценовыми правилами по дням и времени суток</li>
+          <li>Доставка или самовывоз переключается одной настройкой</li>
+          <li>Сдавайте оборудование и инвентарь в аренду прямо из каталога — без отдельного сервиса</li>
+          <li>QR-код с каталогом для покупателей в зале, абонементы на накопительную скидку</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Услуги -->
+      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="openScenario('services')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 15l1.8 1.8L15 13"/></svg></div>
+        <div class="dir-title">Услуги</div>
+        <p class="dir-lede">Салоны, мастерские, студии — расписание, которое не путается.</p>
+        <ul class="dir-list">
+          <li>Добавляйте мастеров, назначайте им услуги и личный график работы по дням недели</li>
+          <li>Календарь записей с фильтром по мастеру и статусу — всё заведение видно на одном экране</li>
+          <li>Клиент всегда выбирает мастера сам — меньше путаницы, меньше отмен</li>
+          <li>Продавайте абонементы на конкретные услуги или категории с гибкой скидкой</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Тренировки -->
+      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="openScenario('sport')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5l11 11M4 8l3-3 2 2-3 3-2-2zM15 19l3-3 2 2-3 3-2-2zM3 21l3-3M18 6l3-3"/></svg></div>
+        <div class="dir-title">Тренировки</div>
+        <p class="dir-lede">Фитнес-клубы, залы, корты — расписание тренеров и загрузка зала.</p>
+        <ul class="dir-list">
+          <li>Ведите профили тренеров: услуги, личное расписание, загрузка по дням</li>
+          <li>Сдавайте в аренду зал, корты и инвентарь почасово с учётом графика заведения</li>
+          <li>Абонементы на безлимитные посещения — стабильная выручка вперёд</li>
+          <li>Полный контроль над бронированиями и отменами по вашим правилам</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <!-- Развлечения -->
+      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="openScenario('entertainment')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="16" cy="12" r="1"/><circle cx="18.5" cy="14.5" r="1"/></svg></div>
+        <div class="dir-title">Развлечения</div>
+        <p class="dir-lede">Компьютерные клубы, квесты, VR — самый гибкий формат каталога.</p>
+        <ul class="dir-list">
+          <li>Один каталог: товары, почасовая аренда оборудования и запись на инструктажи — в одном заведении</li>
+          <li>Гибкая аренда — любое количество единиц техники, комнат или столов со своим прайсом за час</li>
+          <li>Назначайте инструкторов на мастер-классы и ведите их расписание</li>
+          <li>Абонементы на безлимитный доступ, QR-сканер для быстрого списания на входе</li>
+        </ul>
+        <span class="dir-scenario-link">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+    </div>
+
+    <p class="seg-note">Вне зависимости от направления вам доступны одни и те же инструменты: приём и статусы заказов в реальном времени, сотрудники и мастера с личным графиком, конструктор абонементов с гибкими правилами покрытия, приём онлайн-оплат через интернет-эквайринг, push-уведомления клиентской базе и аналитика по заведению — управлять можно из одного аккаунта хоть одним заведением, хоть сетью.</p>
+  </div>
+</section>
+
+<!-- ════════════════ ТАРИФЫ (без изменений) ════════════════ -->
+<section class="seg" id="pricing">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Тарифы для бизнеса</span>
+      <h2 class="seg-h2">Почти всё — <em>бесплатно</em></h2>
+      <p class="seg-sub">Заводите заведения, ведите меню, расписание, записи и абонементы без оплаты. Подписка нужна только для приёма заказов и оплат через интернет и доставки.</p>
+    </div>
+
+    <div class="tiers">
+      <div class="tier free">
+        <div class="tier-label"><span style="color:#1f9d57">Бесплатно</span> <span class="pill">всегда</span></div>
+        <ul>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Отображение заведения на карте</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Меню, цены, описание товаров и услуг</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>QR меню или списка услуг для офлайн использования</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>График работы и расписание мастеров</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Заказы и записи онлайн</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Создание абонементов и акций</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>QR для списания абонементов</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Доступ к клиентской базе для уведомлений</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Добавление сотрудников</li>
+          <li style="color: rgb(31, 157, 87)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Аналитика по заведению</li>
+        </ul>
+      </div>
+      <div class="tier paid">
+        <div class="tier-label">По подписке <span class="pill">Alliby Бизнес</span></div>
+        <ul>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"></circle><circle cx="18" cy="20" r="1.5"></circle><path d="M3 4h2l2.4 12.4a1 1 0 001 .8h8.8a1 1 0 001-.8L20 8H6"></path></svg><span><strong>Интернет-заказ и онлайн-оплата</strong> — клиенты заказывают и платят картой прямо в приложении</span></li>
+          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"></rect><path d="M16 8h4l3 3v5h-7V8z"></path><circle cx="5.5" cy="18.5" r="2"></circle><circle cx="18.5" cy="18.5" r="2"></circle></svg><span><strong>Доставка</strong> — приём и обработка заказов с доставкой</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="plan featured" style="max-width:760px;margin:0 auto 12px;border-color:rgba(245,196,10,.55);box-shadow:0 18px 50px rgba(245,196,10,.13)">
+      <div class="plan-badge" style="background:#f5c40a;color:#0f0e0c">Попробуй бесплатно</div>
+      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+        <div>
+          <div class="plan-name">Первый месяц</div>
+          <div class="plan-price"><span class="amt" style="font-size:30px;font-style:italic">Бесплатно</span></div>
+        </div>
+        <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-3);padding-bottom:4px">После пробного периода — 1&nbsp;600&nbsp;₽/мес с автопродлением.<br>Отмена в любой момент.</div>
+      </div>
+    </div>
+
+    <div class="plans">
+      <div class="plan">
+        <div class="plan-name">1 месяц</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">1 600 ₽</span><span class="per">/мес</span></div>
+        <div class="plan-save" style="min-height:18px"></div>
+        <ul class="plan-incl">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Итого 1 600 ₽ · 19 200 ₽/год</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <div class="plan-name">3 месяца</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">1 460 ₽</span><span class="per">/мес</span></div>
+        <div class="plan-save">−420 ₽ vs помесячно</div>
+        <ul class="plan-incl">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Итого 4 380 ₽ · 17 520 ₽/год</li>
+        </ul>
+      </div>
+      <div class="plan">
+        <div class="plan-name">6 месяцев</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">1 280 ₽</span><span class="per">/мес</span></div>
+        <div class="plan-save">−1 920 ₽ vs помесячно</div>
+        <ul class="plan-incl">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Итого 7 680 ₽ · 15 360 ₽/год</li>
+        </ul>
+      </div>
+      <div class="plan featured">
+        <div class="plan-badge">Выгоднее всего</div>
+        <div class="plan-name">12 месяцев</div>
+        <div class="plan-price"><span class="amt" style="font-size:34px;font-style:italic">930 ₽</span><span class="per">/мес</span></div>
+        <div class="plan-save">−8 040 ₽ vs помесячно</div>
+        <ul class="plan-incl">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Итого 11 160 ₽/год</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="acq" style="--accent:var(--brand);--accent-rgb:232,116,59">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+      <div class="acq-text">
+        <strong>Нужен интернет-эквайринг</strong>
+        <span>Для подписки требуется подключённый интернет-эквайринг для приёма онлайн-оплат. Мы помогаем подключить и настроить его — вам не нужно разбираться в этом самостоятельно.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <h2 class="cta-h2">Начните пользоваться Alliby</h2>
+  <p class="cta-sub">Клиентам — найти место и получить нужное за минуту. Бизнесу — подключить заведение и принимать заказы, записи и аренды онлайн.</p>
+  <div class="cta-btns">
+    <a class="btn-primary" href="https://alliby.ru/">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"></path></svg>
+      Открыть Alliby
+    </a>
+    <a class="btn-blue" href="https://admin.alliby.ru/">
+      Подключить заведение
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a class="footer-logo" href="#page-hero">Alli<span>by</span></a>
+  <div class="footer-nav">
+    <a href="#for-clients">Для клиентов</a>
+    <a href="#for-business">Для бизнеса</a>
+    <a href="#pricing">Тарифы</a>
+    <a href="https://alliby.ru/">Приложение</a>
+  </div>
+  <span class="footer-copy">Черновик страницы «Направления» · не опубликован на site.alliby.ru</span>
+</footer>
+
+</div><!-- #page-wrap -->
+
+<!-- SCENARIO MODAL -->
+<div class="scenario-modal" id="scenario-modal" onclick="if(event.target===this)closeScenario()">
+  <div class="scenario-panel" role="dialog" aria-modal="true" aria-labelledby="scenario-title">
+    <button class="scenario-close" onclick="closeScenario()" aria-label="Закрыть">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+    </button>
+    <span class="scenario-eyebrow" id="scenario-eyebrow"></span>
+    <h3 class="scenario-title" id="scenario-title"></h3>
+    <p class="scenario-sub" id="scenario-sub"></p>
+    <div class="scenario-body" id="scenario-body"></div>
+  </div>
+</div>
+
+<script>
+const SCENARIOS = {
+  food: {
+    accentRgb: '232,116,59',
+    eyebrow: 'Еда · сценарий владельца',
+    title: 'Шаурмичная «Шаверма Хаус»',
+    sub: 'Три столика, свой повар, свой курьер — заведение, которое использует буквально всё',
+    body: [
+      'Тимур открыл «Шаверма Хаус» — точку на три столика возле остановки. Готовит сам, но на кухне ему помогает повар Руслан, а развозит заказы штатный курьер Алишер: своих курьеров Тимур предпочитает агрегаторам — дешевле и надёжнее.',
+      'В админке Тимур завёл заведение в направлении «Еда», загрузил меню — шаурма классик, острая, комбо с колой — расставил категории и фото. Настроил зону доставки радиусом полтора километра с фиксированной ценой и отдельно включил самовывоз.',
+      'Добавил двух сотрудников: Руслану — доступ только к заказам своей точки, Алишеру — тот же доступ, но с фокусом на статус «в пути». Оба входят по личному логину, не видя ничего чужого — <strong>Alliby разграничивает доступ по заведению</strong>.',
+      'Столики Тимур тоже завёл в приложение — как позиции с типом «Аренда» в разделе «Запись»: гость бронирует стол на обед за 10 минут до прихода и не толкается у входа в час пик. Отдельно запустил абонемент «Бизнес-ланч» — скидка на комбо с 12 до 15 часов в будни, чтобы окрестные офисы обедали у него, а не у конкурентов.',
+      '<strong>Один день из жизни точки.</strong> Клиентка Марина находит «Шаверма Хаус» на карте в 200 метрах, заказывает шаурму острую и колу, оплачивает картой прямо в приложении. У Тимура в админке — мгновенное уведомление «Новый заказ!» через realtime-канал.',
+      'Марина выбрала доставку — Тимур меняет статус на «Готовится», Руслан заворачивает шаурму, статус переключается на «Ищем курьера», потом на «В пути», когда Алишер забирает заказ, и на «Доставлен», когда довозит. Марина видит каждый шаг вживую, без звонков «а где мой заказ».',
+      'На следующий день коллега Марины бронирует столик на обед через «Запись» — приходит в час пик, когда все столики заняты, а его место уже держат.',
+      'В конце недели Тимур открывает «Аналитику»: доставка приносит 60% выручки, бронь столиков почти обнулила очереди в обед, а абонемент «Бизнес-ланч» уже купили 40 человек — окупил себя за первую неделю.',
+    ],
+  },
+  goods: {
+    accentRgb: '53,168,98',
+    eyebrow: 'Товары · сценарий владельца',
+    title: 'Шоурум мебели «Уют»',
+    sub: 'Один каталог, который одновременно продаёт и сдаёт в аренду',
+    body: [
+      'Виктория держит шоурум мебели «Уют» — диваны, столы, предметы для дома. В админке завела направление «Товары», добавила каталог с фото и ценами по категориям: диваны, столы, декор.',
+      'Часть позиций отметила типом «Аренда» — те же диваны и стулья сдаёт напрокат для фотосессий и мероприятий на сутки или на неделю, с отдельной посуточной ценой прямо в том же каталоге, без второго сервиса.',
+      'Настроила доставку по городу полигоном — форма города неправильная, радиус тут не подходит — с расчётом стоимости по зоне, плюс самовывоз из шоурума. Запустила абонемент «Клуб дизайнера» — скидка на весь ассортимент для интерьерных студий, которые заказывают часто.',
+      'Клиент Дмитрий делает ремонт, находит «Уют» на карте, заказывает диван с доставкой на субботу — оплачивает сразу онлайн. Через неделю у него мероприятие — там же арендует комплект стульев на один день через «Запись», не покупая их насовсем.',
+      'Виктория видит оба заказа в одном списке: доставку обрабатывает как обычный заказ, а аренду отслеживает в отдельном календаре — видно, когда стулья должны вернуться на склад.',
+      'В «Аналитике» Виктория сверяет, что аренда даёт стабильный доход между сезонами распродаж, а абонемент удерживает трёх постоянных дизайн-студий.',
+    ],
+  },
+  services: {
+    accentRgb: '120,180,224',
+    eyebrow: 'Услуги · сценарий владельца',
+    title: 'Бьюти-салон «Ева»',
+    sub: 'Запись, которая всегда идёт к конкретному мастеру — без путаницы',
+    body: [
+      'Ева держит бьюти-салон на двоих мастеров — сама делает маникюр, а её коллега Алина стрижёт и красит. В админке Ева завела направление «Услуги», добавила позиции — маникюр, стрижка, окрашивание — с длительностью и ценой для каждой.',
+      'Добавила Алину сотрудником-мастером, назначила ей услуги «стрижка» и «окрашивание», выставила личный график: вторник–суббота, 10:00–19:00. Себе — маникюр по своему графику, с перерывом на обед.',
+      '<strong>Ключевое правило Alliby:</strong> клиент выбирает мастера сам, всегда явным кликом — даже если свободен только один специалист. Это исключает путаницу, когда человек приходит «к любому», а получает не того мастера.',
+      'Клиентка Ольга открывает приложение, выбирает «Маникюр», видит, что свободна только Ева — кликает по её карточке, попадает в календарь со слотами по расписанию Евы, бронирует четверг на 15:00 и оплачивает сразу онлайн.',
+      'Ева запустила абонемент «Уход на месяц» — четыре визита к конкретным услугам по одной цене. При визите с абонементом на кассе сканируют QR — списание визита происходит автоматически, без ручного учёта.',
+      'Если у Ольги планы меняются — она сама переносит запись в приложении (правила: за 15 минут после записи или за 24 часа до визита), не дозваниваясь до салона.',
+      'В «Аналитике» Ева видит загрузку каждого мастера по дням и разницу выручки от абонементов против разовых визитов.',
+    ],
+  },
+  sport: {
+    accentRgb: '239,68,68',
+    eyebrow: 'Тренировки · сценарий владельца',
+    title: 'Клуб настольного тенниса «Топ-спин»',
+    sub: 'Персональные тренировки и аренда столов в одном заведении',
+    body: [
+      'Андрей — тренер и владелец клуба настольного тенниса «Топ-спин»: три стола, зал с раздевалкой. В админке завёл направление «Тренировки», добавил позицию «Персональная тренировка» на 60 минут и назначил себя мастером с личным расписанием — будни, 9:00–21:00.',
+      'Отдельно завёл столы как позиции типа «Аренда» — почасовая аренда для тех, кто хочет просто поиграть без тренера, с ценой за час и количеством одновременно доступных столов.',
+      'Клиент Кирилл хочет подтянуть подачу — открывает приложение, выбирает «Персональная тренировка», кликает по карточке Андрея (выбор тренера всегда явный, даже если он единственный), видит календарь со свободными окнами по его графику, бронирует четверг вечером и оплачивает сразу.',
+      'В выходные Кирилл приходит с друзьями просто поиграть — бронирует стол на два часа через ту же «Запись», без тренера. Андрей запустил абонемент «Безлимит на месяц» — полностью покрывает аренду столов, стабильный доход для тех, кто ходит регулярно.',
+      'Все свои тренировки и аренды Кирилл видит в одном экране «Алиби» — календарь сразу открывается на сегодняшнем дне, а отдельный фильтр «Аренда» показывает только брони столов, если нужно разделить.',
+    ],
+  },
+  entertainment: {
+    accentRgb: '234,179,8',
+    eyebrow: 'Развлечения · сценарий владельца',
+    title: 'Клуб настольного тенниса «Топ-спин Lounge»',
+    sub: 'Тот же зал, только в режиме отдыха, а не тренировок',
+    body: [
+      'По выходным «Топ-спин» Андрея превращается в место для отдыха, а не только тренировок — здесь включается направление «Развлечения». Компании арендуют столы на вечер без тренера, парами и группами.',
+      'Андрей завёл в каталог снэки и напитки — воду, изотоники, батончики — как обычные товары, чтобы гости не уходили за угол в магазин. По воскресеньям проводит мастер-класс «Основы тенниса для начинающих» — отдельная услуга с записью, где инструктора тоже выбирают явным кликом, только формат — групповой урок для новичков, а не индивидуальная тренировка.',
+      'Компания из шести человек бронирует сразу три стола на вечер пятницы через «Запись», по пути заказывает в приложении напитки навынос. Андрей видит в одном списке и аренду столов, и заказ на снэки — не переключаясь между сервисами.',
+      'Абонемент «Клубная карта» даёт безлимитный доступ к столам по будням — окупается после двух-трёх визитов, и Андрей использует его, чтобы заполнить обычно пустые дневные часы.',
+      '<strong>Это тот случай</strong>, когда один и тот же зал работает и как секция для тренировок, и как площадка для отдыха — просто через разные направления в одном приложении, без второго сервиса и второй кассы.',
+    ],
+  },
+};
+
+function openScenario(key) {
+  const s = SCENARIOS[key];
+  if (!s) return;
+  const modal = document.getElementById('scenario-modal');
+  modal.style.setProperty('--accent-rgb', s.accentRgb);
+  document.getElementById('scenario-eyebrow').textContent = s.eyebrow;
+  document.getElementById('scenario-title').textContent = s.title;
+  document.getElementById('scenario-sub').textContent = s.sub;
+  document.getElementById('scenario-body').innerHTML = s.body.map(p => `<p>${p}</p>`).join('');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeScenario() {
+  document.getElementById('scenario-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeScenario();
+  if ((e.key === 'Enter' || e.key === ' ') && document.activeElement?.classList.contains('dir-card')) {
+    e.preventDefault();
+    document.activeElement.click();
+  }
+});
+</script>
+</body>
+</html>
