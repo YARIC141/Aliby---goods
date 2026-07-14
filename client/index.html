@@ -1334,7 +1334,7 @@ document.addEventListener('deviceready',function(){
 
 <!-- ════════════════ CALENDAR & SUBSCRIPTIONS ════════════════ -->
 <div id="screen-calenabs" class="screen">
-  <div class="ph"><h2>Алиби<span class="screen-help" data-info="Ваши заказы, записи и абонементы в одном месте">?</span></h2></div>
+  <div class="ph"><h2>Алиби<span id="cal-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Ваши заказы, записи и абонементы в одном месте">?</span></h2></div>
   <div class="screen-tip"></div>
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
     <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
@@ -5581,6 +5581,14 @@ function _updateBkBadge() {
   window.AllibyBridge?.setBadge(total);
 }
 
+function _setClientRtDot() {
+  const dot = document.getElementById('cal-rt-dot');
+  if (!dot) return;
+  const ok = _rtWs?.readyState === WebSocket.OPEN && _rtBkWs?.readyState === WebSocket.OPEN &&
+             _rtSubWs?.readyState === WebSocket.OPEN && _rtRentWs?.readyState === WebSocket.OPEN;
+  dot.style.background = ok ? '#22c55e' : '#ef4444';
+}
+
 function realtimeSubscribeOrders(userId) {
   realtimeUnsubscribe();
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
@@ -5601,6 +5609,7 @@ function realtimeSubscribeOrders(userId) {
       _rtHb = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtRef) }));
       }, 25000);
+      _setClientRtDot();
     };
     ws.onmessage = (e) => {
       try {
@@ -5612,7 +5621,7 @@ function realtimeSubscribeOrders(userId) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtHb); _rtWs = null; };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtHb); _rtWs = null; _setClientRtDot(); };
   } catch {}
 }
 
@@ -5625,6 +5634,7 @@ function realtimeUnsubscribe() {
   if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
   clearInterval(_rtSubHb);
   if (_rtSubWs)  { try { _rtSubWs.close();  } catch {} _rtSubWs  = null; }
+  _setClientRtDot();
 }
 
 function realtimeSubscribeBookings(userId) {
@@ -5648,6 +5658,7 @@ function realtimeSubscribeBookings(userId) {
       _rtBkHb = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtBkRef) }));
       }, 25000);
+      _setClientRtDot();
     };
     ws.onmessage = (e) => {
       try {
@@ -5660,7 +5671,7 @@ function realtimeSubscribeBookings(userId) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtBkHb); _rtBkWs = null; };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtBkHb); _rtBkWs = null; _setClientRtDot(); };
   } catch {}
 }
 
@@ -5685,6 +5696,7 @@ function realtimeSubscribeSubs(userId) {
       _rtSubHb = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtSubRef) }));
       }, 25000);
+      _setClientRtDot();
     };
     ws.onmessage = (e) => {
       try {
@@ -5697,7 +5709,7 @@ function realtimeSubscribeSubs(userId) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtSubHb); _rtSubWs = null; };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtSubHb); _rtSubWs = null; _setClientRtDot(); };
   } catch {}
 }
 
@@ -5742,6 +5754,7 @@ function realtimeSubscribeRent(userId) {
       _rtRentHb = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtRentRef) }));
       }, 25000);
+      _setClientRtDot();
     };
     ws.onmessage = (e) => {
       try {
@@ -5754,7 +5767,7 @@ function realtimeSubscribeRent(userId) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtRentHb); _rtRentWs = null; };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtRentHb); _rtRentWs = null; _setClientRtDot(); };
   } catch {}
 }
 
