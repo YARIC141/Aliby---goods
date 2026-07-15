@@ -26,6 +26,8 @@
   --font-sans:'Nunito Sans',ui-sans-serif,system-ui,-apple-system,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,monospace;
   --r-1:6px;--r-2:10px;--r-3:14px;--r-4:20px;--r-pill:999px;
+  --r-sm:var(--r-1);--r-md:var(--r-2);
+  --shadow-pin:0 2px 8px rgba(0,0,0,.4);--shadow-pin-sm:0 1px 4px rgba(0,0,0,.3);
   --ease-out:cubic-bezier(.2,.7,.3,1);--t-fast:160ms;--t-med:280ms;--t-slow:480ms;
   --brand-ice:oklch(0.78 0.10 220);--brand-ice-deep:oklch(0.55 0.10 220);
   --brand-ember:oklch(0.74 0.17 55);
@@ -185,10 +187,11 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .alert{padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);margin-bottom:10px;font:400 13px/1.4 var(--font-sans)}
 .alert-e{background:oklch(from var(--err) l c h / .1);border-color:oklch(from var(--err) l c h / .35);color:var(--err)}
 .alert-ok{background:oklch(from var(--ok) l c h / .1);border-color:oklch(from var(--ok) l c h / .35);color:var(--ok)}
+.alert-w{background:oklch(from var(--warn) l c h / .1);border-color:oklch(from var(--warn) l c h / .35);color:var(--warn)}
 .lbl{font:500 11px/1 var(--font-sans);text-transform:uppercase;letter-spacing:.07em;color:var(--fg-4)}
 hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .txt-sm{font:400 12px/1.4 var(--font-sans);color:var(--fg-3)}
-.txt-muted{font:400 10.5px/1.4 var(--font-sans);color:var(--fg-4)}
+.txt-muted{font:400 11px/1.4 var(--font-sans);color:var(--fg-4)}
 .card{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--glass)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:600px){.grid2{grid-template-columns:1fr}}
@@ -229,7 +232,7 @@ tr:hover td{background:var(--bg-1)}
 .map-admin{flex:1;position:relative;overflow:hidden;cursor:crosshair}
 .admin-map-gl{position:absolute;inset:0;width:100%;height:100%}
 .admin-store-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateX(-50%)}
-.admin-store-pin .p-dot{width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.admin-store-pin .p-dot{width:16px;height:16px;border-radius:50%;border:2.5px solid #fff;box-shadow:var(--shadow-pin)}
 .admin-store-pin .p-lbl{background:rgba(0,0,0,.72);color:#fff;font:500 10px/1 var(--font-sans);padding:3px 7px;border-radius:var(--r-1);white-space:nowrap;margin-top:2px}
 
 /* ── AUTH ── */
@@ -258,7 +261,7 @@ tr:hover td{background:var(--bg-1)}
 .weekdays label input{width:auto}
 
 /* ── IMAGE UPLOAD ── */
-.img-preview{width:100%;height:100px;border:1px dashed var(--line);border-radius:var(--r-2);display:flex;align-items:center;justify-content:center;margin-bottom:8px;overflow:hidden;background:var(--bg-2);font:400 12px/1 var(--font-sans);color:var(--fg-4)}
+.img-preview{width:100%;height:100px;border:1px dashed var(--line);border-radius:var(--r-2);display:flex;align-items:center;justify-content:center;margin-bottom:8px;overflow:hidden;background:var(--bg-2);font:400 12px/1 var(--font-sans);color:var(--fg-3)}
 .img-preview img{max-width:100%;max-height:100%;object-fit:contain}
 
 /* ── ITEM PICKER ── */
@@ -370,9 +373,9 @@ tr.row-click:hover td{background:var(--bg-2)}
 .dze-zone-price{width:68px;font:500 12px/1 var(--font-sans);border:none;background:transparent;color:var(--accent);text-align:right;padding:0}
 .dze-zone-price:focus{outline:none}
 .dze-type-btn{font:500 10px/1 var(--font-sans);padding:2px 6px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg-2);cursor:pointer;white-space:nowrap;color:var(--fg-2)}
-.dze-vmarker{width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.dze-cmarker{width:16px;height:16px;border-radius:50%;background:var(--accent);opacity:.8;cursor:move;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.dze-rmarker{width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid #f97316;cursor:ew-resize;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.dze-vmarker{width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid var(--accent);cursor:grab;box-shadow:var(--shadow-pin-sm)}
+.dze-cmarker{width:16px;height:16px;border-radius:50%;background:var(--accent);opacity:.8;cursor:move;box-shadow:var(--shadow-pin-sm)}
+.dze-rmarker{width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid #f97316;cursor:ew-resize;box-shadow:var(--shadow-pin-sm)}
 /* ── BG FLUID ── */
 #bg-fluid{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:none;pointer-events:none}
 html.bg-fluid #bg-fluid{display:block}
@@ -1449,7 +1452,7 @@ html.bg-custom #bg-fluid{display:none}
       <div id="add-store-pay-desc" style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-top:5px">Дополнительное заведение · 30 дней</div>
       <div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:4px">Разовый платёж · автоматического продления нет.</div>
     </div>
-    <div style="background:#fefce8;border:1px solid #fde047;border-radius:var(--r-2);padding:10px 12px;margin-bottom:12px;font-size:12px;color:#854d0e">
+    <div style="background:oklch(from var(--warn) l c h / .1);border:1px solid oklch(from var(--warn) l c h / .35);border-radius:var(--r-2);padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--warn)">
       При возникновении проблем с оплатой на десктопе попробуйте оплатить со смартфона
     </div>
     <div id="add-store-pay-err" style="display:none;color:var(--err);font-size:13px;margin-bottom:8px"></div>
@@ -1486,20 +1489,20 @@ html.bg-custom #bg-fluid{display:none}
     <div id="pp-fields" style="display:none">
       <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:2px">Тестовые ключи</div>
       <div class="fg" style="margin-bottom:8px">
-        <label><span id="pp-key-test-label">Terminal Key</span> <span id="pp-key-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <label><span id="pp-key-test-label">Terminal Key</span> <span id="pp-key-test-set-badge" style="display:none;font-size:11px;color:var(--ok);font-weight:400">✓ сохранён</span></label>
         <input type="text" id="pp-terminal-key-test" placeholder="Введите тестовый ключ" autocomplete="off">
       </div>
       <div class="fg" style="margin-bottom:12px">
-        <label><span id="pp-secret-test-label">Секретный ключ</span> <span id="pp-secret-test-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <label><span id="pp-secret-test-label">Секретный ключ</span> <span id="pp-secret-test-set-badge" style="display:none;font-size:11px;color:var(--ok);font-weight:400">✓ сохранён</span></label>
         <input type="password" id="pp-secret-key-test" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
       </div>
       <div style="font:600 11px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;padding-top:10px;border-top:1px solid var(--line-soft)">Боевые ключи</div>
       <div class="fg" style="margin-bottom:8px">
-        <label><span id="pp-key-label">Terminal Key</span> <span id="pp-key-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <label><span id="pp-key-label">Terminal Key</span> <span id="pp-key-set-badge" style="display:none;font-size:11px;color:var(--ok);font-weight:400">✓ сохранён</span></label>
         <input type="text" id="pp-terminal-key" placeholder="Введите ключ" autocomplete="off">
       </div>
       <div class="fg" style="margin-bottom:8px">
-        <label><span id="pp-secret-label">Секретный ключ</span> <span id="pp-secret-set-badge" style="display:none;font-size:11px;color:#16a34a;font-weight:400">✓ сохранён</span></label>
+        <label><span id="pp-secret-label">Секретный ключ</span> <span id="pp-secret-set-badge" style="display:none;font-size:11px;color:var(--ok);font-weight:400">✓ сохранён</span></label>
         <input type="password" id="pp-secret-key" placeholder="Оставьте пустым чтобы не менять" autocomplete="new-password">
       </div>
       <div id="pp-hint" style="padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);font:400 12px/1.5 var(--font-sans);color:var(--fg-3);margin-bottom:10px"></div>
@@ -3104,7 +3107,7 @@ function _pollForActiveSub(attemptsLeft) {
         _pollForActiveSub(attemptsLeft - 1);
       } else {
         // Timeout — show manual refresh prompt
-        if (el) el.innerHTML = '<div style="padding:14px;background:#fef9c3;border-radius:8px;font-size:13px;color:#854d0e">Оплата прошла успешно. Если подписка не отображается — обновите страницу.</div>';
+        if (el) el.innerHTML = '<div style="padding:14px;background:oklch(from var(--warn) l c h / .1);border-radius:8px;font-size:13px;color:var(--warn)">Оплата прошла успешно. Если подписка не отображается — обновите страницу.</div>';
       }
     } catch(e) {
       if (attemptsLeft > 1) _pollForActiveSub(attemptsLeft - 1);
@@ -3181,7 +3184,7 @@ async function loadStoreSubscriptions() {
         if (!mainSub) { _pollForActiveSub(8); return; }
       } else {
         const note = document.createElement('div');
-        note.style.cssText = 'padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;background:#fee2e2;color:#991b1b';
+        note.style.cssText = 'padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px;background:oklch(from var(--err) l c h / .1);color:var(--err)';
         note.textContent = '✕ Оплата не завершена.';
         el.prepend(note);
       }
@@ -3234,9 +3237,9 @@ function _renderStoreSubCard(store, sub, isFirst) {
   const isExpired= sub?.status === 'expired' || (!isActive && sub);
 
   let badge = '';
-  if (isFirst && !sub)      badge = `<span class="platsub-status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:10px">Бесплатно</span>`;
-  else if (isTrial && isActive) badge = `<span class="platsub-status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:10px">Пробный</span>`;
-  else if (isGrace)         badge = `<span class="platsub-status-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;font-size:10px">Ошибка оплаты</span>`;
+  if (isFirst && !sub)      badge = `<span class="platsub-status-badge" style="background:oklch(from var(--ok) l c h / .1);color:var(--ok);border:1px solid oklch(from var(--ok) l c h / .35);font-size:10px">Бесплатно</span>`;
+  else if (isTrial && isActive) badge = `<span class="platsub-status-badge" style="background:oklch(from var(--ok) l c h / .1);color:var(--ok);border:1px solid oklch(from var(--ok) l c h / .35);font-size:10px">Пробный</span>`;
+  else if (isGrace)         badge = `<span class="platsub-status-badge" style="background:oklch(from var(--warn) l c h / .1);color:var(--warn);border:1px solid oklch(from var(--warn) l c h / .35);font-size:10px">Ошибка оплаты</span>`;
   else if (isActive)        badge = `<span class="platsub-status-badge active" style="font-size:10px">Активна</span>`;
   else if (isCancel)        badge = `<span class="platsub-status-badge inactive" style="font-size:10px">Отменена</span>`;
   else if (isExpired)       badge = `<span class="platsub-status-badge inactive" style="font-size:10px">Истекла</span>`;
@@ -3340,7 +3343,7 @@ function _renderUnlinkedStoreSubCard(sub) {
   const isGrace  = sub.status === 'grace';
 
   let badge = '';
-  if (isGrace)       badge = `<span class="platsub-status-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;font-size:10px">Ошибка оплаты</span>`;
+  if (isGrace)       badge = `<span class="platsub-status-badge" style="background:oklch(from var(--warn) l c h / .1);color:var(--warn);border:1px solid oklch(from var(--warn) l c h / .35);font-size:10px">Ошибка оплаты</span>`;
   else if (isActive) badge = `<span class="platsub-status-badge active" style="font-size:10px">Активна</span>`;
 
   const _planPeriod = { 'monthly': '/мес', '3months': '/3 мес', '6months': '/6 мес', 'yearly': '/год' };
@@ -3488,13 +3491,13 @@ async function openSubHistory() {
       const [statusLbl, statusClr] = _computeStatus(s);
 
       let typeLabel = '', typeColor = 'var(--accent)';
-      if (s.is_trial)             { typeLabel = 'Пробный период'; typeColor = '#16a34a'; }
+      if (s.is_trial)             { typeLabel = 'Пробный период'; typeColor = 'var(--ok)'; }
       else if (s.plan_type === 'store') { typeLabel = 'Доп. заведение'; typeColor = '#f97316'; }
       else                        { typeLabel = `Подписка · ${_planLabel[s.plan] || s.plan}`; }
 
       const amountLine = s.amount_paid > 0
         ? `<span style="font:600 13px/1 var(--font-sans);color:var(--fg)">${s.amount_paid.toLocaleString('ru-RU')} ₽</span>`
-        : `<span style="font:400 12px/1 var(--font-sans);color:#16a34a">Бесплатно</span>`;
+        : `<span style="font:400 12px/1 var(--font-sans);color:var(--ok)">Бесплатно</span>`;
 
       return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);background:var(--bg)">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
@@ -3537,10 +3540,10 @@ async function loadPlatformSubscription() {
       const periodLabel = _pp[active.plan] || '/мес';
 
       let statusBadge = `<span class="platsub-status-badge active">Активна</span>`;
-      if (isTrial)  statusBadge = `<span class="platsub-status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0">Пробный период</span>`;
-      if (isGrace)  statusBadge = `<span class="platsub-status-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a">Ошибка оплаты</span>`;
+      if (isTrial)  statusBadge = `<span class="platsub-status-badge" style="background:oklch(from var(--ok) l c h / .1);color:var(--ok);border:1px solid oklch(from var(--ok) l c h / .35)">Пробный период</span>`;
+      if (isGrace)  statusBadge = `<span class="platsub-status-badge" style="background:oklch(from var(--warn) l c h / .1);color:var(--warn);border:1px solid oklch(from var(--warn) l c h / .35)">Ошибка оплаты</span>`;
 
-      const trialNote  = isTrial ? `<div style="font:400 11px/1.4 var(--font-sans);color:#16a34a;margin-top:3px">Первый месяц бесплатно — карта привязана, далее 1 600 ₽/мес</div>` : '';
+      const trialNote  = isTrial ? `<div style="font:400 11px/1.4 var(--font-sans);color:var(--ok);margin-top:3px">Первый месяц бесплатно — карта привязана, далее 1 600 ₽/мес</div>` : '';
       const graceNote  = isGrace ? `<div style="font:400 11px/1.4 var(--font-sans);color:#b45309;margin-top:3px">Не удалось списать — повторная попытка через ${active.retry_count ? (3 - active.retry_count) : 3} д.</div>` : '';
       const renewNote  = (!isTrial && !isGrace && active.auto_renew) ? `<div style="font:400 11px/1.4 var(--font-sans);color:var(--fg-4);margin-top:3px">Следующее списание: ${endFmt} — ${chargeAmt.toLocaleString('ru-RU')} ₽</div>` : '';
 
@@ -3585,7 +3588,7 @@ async function loadPlatformSubscription() {
     const platSubType = localStorage.getItem('_alliby_platsub_type') || '';
     if (isOk) localStorage.removeItem('_alliby_platsub_type');
     const note = document.createElement('div');
-    note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;${isOk ? 'background:#d1fae5;color:#065f46' : 'background:#fee2e2;color:#991b1b'}`;
+    note.style.cssText = `padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;${isOk ? 'background:oklch(from var(--ok) l c h / .1);color:var(--ok)' : 'background:oklch(from var(--err) l c h / .1);color:var(--err)'}`;
     note.textContent = isOk
       ? (platSubType === 'trial'
           ? 'Карта привязана — первый месяц бесплатно. Подписка активируется через несколько секунд.'
@@ -3864,7 +3867,7 @@ function _renderStoresList(stores) {
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
               <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></span>
               <strong style="font:600 14px/1.2 var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</strong>
-              ${arc ? `<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:#fee2e2;color:#b91c1c;white-space:nowrap">удалить нельзя</span>` : ''}
+              ${arc ? `<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:oklch(from var(--err) l c h / .1);color:var(--err);white-space:nowrap">удалить нельзя</span>` : ''}
               ${dirLabel ? `<span style="font-size:11px;padding:1px 6px;border-radius:4px;background:var(--bg-2);color:var(--fg-3)">${dirLabel}</span>` : ''}
               ${cat ? `<span class="txt-muted" style="font-size:12px;white-space:nowrap">${cat}</span>` : ''}
             </div>
@@ -8241,7 +8244,7 @@ function dzeInitMap() {
   _dze.map.on('load', () => {
     if (_dze.storeLat != null && _dze.storeLng != null) {
       const el = document.createElement('div');
-      el.style.cssText = 'width:38px;height:38px;border-radius:50%;background:#fff;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.4);color:var(--accent);cursor:default';
+      el.style.cssText = 'width:38px;height:38px;border-radius:50%;background:#fff;border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-pin);color:var(--accent);cursor:default';
       el.innerHTML = svgIco('store', 18);
       el.title = _dze.storeName || 'Заведение';
       new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat([_dze.storeLng, _dze.storeLat]).addTo(_dze.map);
