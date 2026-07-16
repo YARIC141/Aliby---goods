@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<script>if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#14b8a6">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -105,6 +106,27 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .badge{display:inline-block;padding:3px 9px;border-radius:var(--r-pill);font:600 12px/1.4 var(--font-sans)}
 .badge-warn{background:oklch(from var(--warn) l c h / .15);color:var(--warn)}
 .badge-info{background:oklch(from var(--info) l c h / .15);color:var(--info)}
+.badge-ok{background:oklch(from var(--ok) l c h / .15);color:var(--ok)}
+.badge-err{background:oklch(from var(--err) l c h / .15);color:var(--err)}
+
+/* ── BOTTOM NAV / MAIN TABS ── */
+.bottom-nav{display:flex;border-top:1px solid var(--line-soft);background:var(--glass);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;border:none;background:none;cursor:pointer;color:var(--fg-3);font:500 11px/1 var(--font-sans)}
+.bn-btn .ic{font-size:20px;line-height:1}
+.bn-btn.active{color:var(--accent)}
+.main-pane{display:none}
+.main-pane.active{display:block}
+
+/* ── STATS / HISTORY ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--glass);text-align:center}
+.stat-card .v{font:600 24px/1.1 var(--font-sans);color:var(--fg)}
+.stat-card .l{font-size:12px;color:var(--fg-3);margin-top:4px}
+.hist-item{border:1px solid var(--line-soft);border-radius:var(--r-2);padding:12px;margin-bottom:8px}
+.hist-item .row1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hist-item .store{font:600 14px/1.2 var(--font-sans)}
+.hist-item .addr{font-size:12px;color:var(--fg-3);margin:4px 0}
+.hist-item .date{font-size:11px;color:var(--fg-3)}
 
 .order-addr{display:flex;gap:8px;margin-bottom:10px}
 .order-addr .dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0}
@@ -198,24 +220,70 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
   <div id="screen-main" class="screen">
     <div class="ph">
       <h2>Alliby Carry</h2>
-      <button class="icon-btn" onclick="openProfileModal()" title="Профиль">👤</button>
+      <div style="display:flex;gap:8px">
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn" title="Тема">🌙</button>
+        <button class="icon-btn" onclick="openProfileModal()" title="Профиль">👤</button>
+      </div>
     </div>
     <div class="screen-body">
-      <div class="card">
-        <div class="shift-row">
-          <div>
-            <div class="lbl">На смене</div>
-            <div class="hint">Присылаем вашу геопозицию, пока включено</div>
+
+      <div id="pane-orders" class="main-pane active">
+        <div class="card">
+          <div class="shift-row">
+            <div>
+              <div class="lbl">На смене</div>
+              <div class="hint">Присылаем вашу геопозицию, пока включено</div>
+            </div>
+            <label class="toggle-sw">
+              <input type="checkbox" id="shift-toggle" onchange="onShiftToggle(this.checked)">
+              <span class="toggle-track"></span>
+            </label>
           </div>
-          <label class="toggle-sw">
-            <input type="checkbox" id="shift-toggle" onchange="onShiftToggle(this.checked)">
-            <span class="toggle-track"></span>
-          </label>
+          <div id="shift-status" style="font-size:12px;color:var(--fg-3)"></div>
         </div>
-        <div id="shift-status" style="font-size:12px;color:var(--fg-3)"></div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--fg-3)">Доход сегодня</span>
+            <span id="today-earn-val" style="font:600 18px/1 var(--font-sans)">—</span>
+          </div>
+        </div>
+
+        <div id="order-card-wrap"></div>
       </div>
 
-      <div id="order-card-wrap"></div>
+      <div id="pane-history" class="main-pane">
+        <div class="tab-nav" id="hist-period-tabs">
+          <button class="tab-btn active" data-period="today" onclick="setHistPeriod('today')">Сегодня</button>
+          <button class="tab-btn" data-period="week" onclick="setHistPeriod('week')">Неделя</button>
+          <button class="tab-btn" data-period="month" onclick="setHistPeriod('month')">Месяц</button>
+          <button class="tab-btn" data-period="all" onclick="setHistPeriod('all')">Все</button>
+        </div>
+        <div id="hist-list"></div>
+        <button class="btn btn-full" id="hist-more-btn" style="display:none" onclick="loadMoreHistory()">Показать ещё</button>
+      </div>
+
+      <div id="pane-stats" class="main-pane">
+        <div class="tab-nav" id="stats-period-tabs">
+          <button class="tab-btn active" data-period="today" onclick="setStatsPeriod('today')">Сегодня</button>
+          <button class="tab-btn" data-period="week" onclick="setStatsPeriod('week')">Неделя</button>
+          <button class="tab-btn" data-period="month" onclick="setStatsPeriod('month')">Месяц</button>
+          <button class="tab-btn" data-period="all" onclick="setStatsPeriod('all')">Все</button>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="v" id="stat-count">—</div><div class="l">Доставок</div></div>
+          <div class="stat-card"><div class="v" id="stat-earned">—</div><div class="l">Заработано, ₽</div></div>
+          <div class="stat-card"><div class="v" id="stat-avg">—</div><div class="l">Средний чек, ₽</div></div>
+          <div class="stat-card"><div class="v" id="stat-cancelled">—</div><div class="l">Отменено</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--fg-3);text-align:center">Учитываются только доставки с авто-подбором курьера. Заказы режима «свой курьер» не входят в заработок — оплата по ним договаривается напрямую с магазином.</div>
+      </div>
+
+    </div>
+    <div class="bottom-nav">
+      <button class="bn-btn active" data-main-tab="orders" onclick="showMainTab('orders')"><span class="ic">🚴</span>Заказы</button>
+      <button class="bn-btn" data-main-tab="history" onclick="showMainTab('history')"><span class="ic">📋</span>История</button>
+      <button class="bn-btn" data-main-tab="stats" onclick="showMainTab('stats')"><span class="ic">📊</span>Статистика</button>
     </div>
   </div>
 
@@ -228,6 +296,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
       <h3>Профиль</h3>
       <button class="modal-x" onclick="closeModal('m-profile')">✕</button>
     </div>
+    <div id="pf-status-alert" class="alert" style="display:none"></div>
     <div id="err-profile" class="alert alert-e" style="display:none"></div>
     <div class="fg"><label>Имя и фамилия</label><input type="text" id="pf-name"></div>
     <div class="fg"><label>Телефон</label><input type="tel" id="pf-phone"></div>
@@ -310,7 +379,8 @@ window.AllibyBridge={
 
 document.addEventListener('deviceready',function(){
   var SB=_P().StatusBar;
-  if(SB){SB.setStyle({style:'LIGHT'});SB.setBackgroundColor({color:'#14b8a6'});}
+  var dark=document.documentElement.classList.contains('dark');
+  if(SB){SB.setStyle({style:'LIGHT'});SB.setBackgroundColor({color:dark?'#0f0f0f':'#14b8a6'});}
   if(typeof S!=='undefined'&&S.session&&S.session.user&&S.session.user.id){
     window.AllibyBridge.registerPush(S.session.user.id);
   }
@@ -337,6 +407,19 @@ function btnLoad(el, label = 'Сохранение…') {
 }
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── THEME ───
+function toggleTheme() {
+  const dark = !document.documentElement.classList.contains('dark');
+  document.documentElement.classList.toggle('dark', dark);
+  try { localStorage.setItem('alliby_theme', dark ? 'dark' : 'light'); } catch(e) {}
+  _updateThemeIcon(dark);
+  window.AllibyBridge?.setTheme(dark);
+}
+function _updateThemeIcon(dark) {
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = dark ? '☀️' : '🌙';
+}
 
 async function req(path, opts = {}, _retried = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
@@ -509,6 +592,15 @@ function openProfileModal() {
   document.getElementById('pf-city').value   = S.profile?.courier_city || '';
   document.getElementById('pf-reward').value = S.profile?.courier_min_reward ?? '';
   document.getElementById('err-profile').style.display = 'none';
+  const statusEl = document.getElementById('pf-status-alert');
+  if (S.profile?.courier_banned) {
+    statusEl.className = 'alert alert-e';
+    statusEl.textContent = 'Аккаунт заблокирован' + (S.profile.courier_ban_reason ? ': ' + S.profile.courier_ban_reason : '');
+  } else {
+    statusEl.className = 'alert alert-ok';
+    statusEl.textContent = 'Аккаунт активен';
+  }
+  statusEl.style.display = 'block';
   openModal('m-profile');
 }
 
@@ -543,12 +635,112 @@ let _shiftInterval = null;
 
 function initMainScreen() {
   goToMain();
+  _updateThemeIcon(document.documentElement.classList.contains('dark'));
   const onShift = localStorage.getItem('carry_on_shift') === '1';
   document.getElementById('shift-toggle').checked = onShift;
   updateShiftStatus(onShift);
   if (onShift) startShiftPing();
   loadActiveOrder();
+  loadTodayEarnings();
   realtimeSubscribeMyOrders(S.session.user.id);
+}
+
+// ─── MAIN TABS (Заказы / История / Статистика) ───
+function showMainTab(tab) {
+  document.querySelectorAll('.bn-btn').forEach(b => b.classList.toggle('active', b.dataset.mainTab === tab));
+  document.querySelectorAll('.main-pane').forEach(p => p.classList.remove('active'));
+  document.getElementById('pane-' + tab).classList.add('active');
+  if (tab === 'history') loadHistory(true);
+  if (tab === 'stats') loadStats();
+}
+
+function _periodStartISO(period) {
+  const d = new Date();
+  if (period === 'today') { d.setHours(0, 0, 0, 0); }
+  else if (period === 'week') { d.setDate(d.getDate() - 7); }
+  else if (period === 'month') { d.setDate(d.getDate() - 30); }
+  else return null;
+  return d.toISOString();
+}
+
+async function loadTodayEarnings() {
+  const start = _periodStartISO('today');
+  try {
+    const rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=eq.issued&order_time=gte.${encodeURIComponent(start)}&select=carry_courier_reward&limit=1000`);
+    const earned = rows.reduce((s, r) => s + (Number(r.carry_courier_reward) || 0), 0);
+    document.getElementById('today-earn-val').textContent = earned.toFixed(0) + ' ₽';
+  } catch(e) { document.getElementById('today-earn-val').textContent = '—'; }
+}
+
+// ─── HISTORY ───
+let _histPeriod = 'today', _histOffset = 0;
+const HIST_PAGE = 20;
+
+function setHistPeriod(p) {
+  _histPeriod = p;
+  document.querySelectorAll('#hist-period-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.period === p));
+  loadHistory(true);
+}
+
+async function loadHistory(reset) {
+  if (reset) { _histOffset = 0; document.getElementById('hist-list').innerHTML = ''; }
+  const start = _periodStartISO(_histPeriod);
+  let path = `/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(issued,cancelled)&select=id,status,carry_courier_reward,order_time,delivery_address,stores(name)&order=order_time.desc&limit=${HIST_PAGE}&offset=${_histOffset}`;
+  if (start) path += `&order_time=gte.${encodeURIComponent(start)}`;
+  let rows = [];
+  try { rows = await req(path); } catch(e) { rows = []; }
+  const list = document.getElementById('hist-list');
+  if (reset && rows.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="ico">📋</div>Пока нет завершённых заказов за этот период</div>`;
+  } else {
+    rows.forEach(o => list.insertAdjacentHTML('beforeend', _histItemHtml(o)));
+  }
+  _histOffset += rows.length;
+  document.getElementById('hist-more-btn').style.display = rows.length === HIST_PAGE ? '' : 'none';
+}
+function loadMoreHistory() { loadHistory(false); }
+
+function _histItemHtml(o) {
+  const store = o.stores || {};
+  const date = new Date(o.order_time).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const isIssued = o.status === 'issued';
+  const rewardTxt = o.carry_courier_reward != null ? `${Number(o.carry_courier_reward).toFixed(0)} ₽` : '—';
+  return `<div class="hist-item">
+    <div class="row1">
+      <span class="store">${esc(store.name || 'Магазин')}</span>
+      <span class="badge ${isIssued ? 'badge-ok' : 'badge-err'}">${isIssued ? 'Доставлен' : 'Отменён'}</span>
+    </div>
+    <div class="addr">${esc(o.delivery_address || '')}</div>
+    <div class="row1">
+      <span class="date">${date}</span>
+      <span style="font:600 14px/1 var(--font-sans)">${rewardTxt}</span>
+    </div>
+  </div>`;
+}
+
+// ─── STATS ───
+let _statsPeriod = 'today';
+
+function setStatsPeriod(p) {
+  _statsPeriod = p;
+  document.querySelectorAll('#stats-period-tabs .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.period === p));
+  loadStats();
+}
+
+async function loadStats() {
+  const start = _periodStartISO(_statsPeriod);
+  let path = `/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(issued,cancelled)&select=status,carry_courier_reward&limit=10000`;
+  if (start) path += `&order_time=gte.${encodeURIComponent(start)}`;
+  let rows = [];
+  try { rows = await req(path); } catch(e) { rows = []; }
+  const issued = rows.filter(r => r.status === 'issued');
+  const cancelled = rows.filter(r => r.status === 'cancelled').length;
+  const earned = issued.reduce((s, r) => s + (Number(r.carry_courier_reward) || 0), 0);
+  const count = issued.length;
+  document.getElementById('stat-count').textContent = count;
+  document.getElementById('stat-earned').textContent = earned.toFixed(0);
+  document.getElementById('stat-avg').textContent = count ? (earned / count).toFixed(0) : '0';
+  document.getElementById('stat-cancelled').textContent = cancelled;
 }
 
 function updateShiftStatus(on) {
@@ -585,6 +777,13 @@ async function loadActiveOrder() {
   try {
     const rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,carry_courier_reward,stores(name,address,phone)&order=carry_dispatched_at.desc&limit=1`);
     S.activeOrder = rows?.[0] || null;
+    if (S.activeOrder) {
+      try {
+        S.activeOrder.customerPhone = await req('/rest/v1/rpc/get_order_customer_phone', {
+          method: 'POST', body: JSON.stringify({ p_order_id: S.activeOrder.id }),
+        });
+      } catch(e) { S.activeOrder.customerPhone = null; }
+    }
   } catch(e) { S.activeOrder = null; }
   renderOrderCard();
 }
@@ -622,6 +821,7 @@ function renderOrderCard() {
           <div class="l">Доставить</div>
           ${esc(o.delivery_address || '')}
           ${o.delivery_address ? `<br><a href="${_mapsLink(o.delivery_address)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
+          ${o.customerPhone ? `<br><a href="tel:${esc(o.customerPhone)}">📞 Позвонить клиенту</a>` : ''}
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:6px">
@@ -644,6 +844,7 @@ async function markDelivered(orderId) {
   try {
     await req('/rest/v1/rpc/courier_mark_delivered', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
     await loadActiveOrder();
+    await loadTodayEarnings();
   } catch(e) { alert(e.message || 'Ошибка'); }
 }
 
