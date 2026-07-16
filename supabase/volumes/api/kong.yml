@@ -51,6 +51,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -85,6 +86,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -119,6 +121,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -153,6 +156,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -187,6 +191,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -221,6 +226,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -257,6 +263,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -314,6 +321,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -367,6 +375,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -422,6 +431,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -475,6 +485,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -536,6 +547,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -589,6 +601,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -625,6 +638,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
@@ -747,6 +761,7 @@ services:
           origins:
             - https://alliby.ru
             - https://admin.alliby.ru
+            - https://carry.alliby.ru
             - https://yaric141.github.io
             - http://localhost:54321
             - http://localhost:3000
