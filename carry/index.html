@@ -231,8 +231,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
     <div class="ph">
       <h2>Alliby Carry</h2>
       <div style="display:flex;gap:8px">
-        <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn" title="Тема">🌙</button>
-        <button class="icon-btn" onclick="openProfileModal()" title="Профиль">👤</button>
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn" title="Тема"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
+        <button class="icon-btn" onclick="openProfileModal()" title="Профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></button>
       </div>
     </div>
     <div class="screen-body">
@@ -291,9 +291,9 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 
     </div>
     <div class="bottom-nav">
-      <button class="bn-btn active" data-main-tab="orders" onclick="showMainTab('orders')"><span class="ic">🚴</span>Заказы</button>
-      <button class="bn-btn" data-main-tab="history" onclick="showMainTab('history')"><span class="ic">📋</span>История</button>
-      <button class="bn-btn" data-main-tab="stats" onclick="showMainTab('stats')"><span class="ic">📊</span>Статистика</button>
+      <button class="bn-btn active" data-main-tab="orders" onclick="showMainTab('orders')"><span class="ic"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></span>Заказы</button>
+      <button class="bn-btn" data-main-tab="history" onclick="showMainTab('history')"><span class="ic"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>История</button>
+      <button class="bn-btn" data-main-tab="stats" onclick="showMainTab('stats')"><span class="ic"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="20" x2="21" y2="20"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="9"/></svg></span>Статистика</button>
     </div>
   </div>
 
@@ -428,7 +428,10 @@ function toggleTheme() {
 }
 function _updateThemeIcon(dark) {
   const btn = document.getElementById('theme-toggle-btn');
-  if (btn) btn.textContent = dark ? '☀️' : '🌙';
+  if (!btn) return;
+  btn.innerHTML = dark
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
 }
 
 async function req(path, opts = {}, _retried = false) {
@@ -701,7 +704,7 @@ async function loadHistory(reset) {
   try { rows = await req(path); } catch(e) { rows = []; }
   const list = document.getElementById('hist-list');
   if (reset && rows.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="ico">📋</div>Пока нет завершённых заказов за этот период</div>`;
+    list.innerHTML = `<div class="empty-state"><div class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>Пока нет завершённых заказов за этот период</div>`;
   } else {
     rows.forEach(o => list.insertAdjacentHTML('beforeend', _histItemHtml(o)));
   }
@@ -804,7 +807,7 @@ function renderOrderCard() {
   const wrap = document.getElementById('order-card-wrap');
   const o = S.activeOrder;
   if (!o) {
-    wrap.innerHTML = `<div class="empty-state"><div class="ico">🚴</div>Нет активного заказа.<br>Ожидайте — как только появится подходящий заказ, он придёт сюда.</div>`;
+    wrap.innerHTML = `<div class="empty-state"><div class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>Нет активного заказа.<br>Ожидайте — как только появится подходящий заказ, он придёт сюда.</div>`;
     return;
   }
   const isLooking = o.status === 'looking_for_courier';
@@ -822,7 +825,7 @@ function renderOrderCard() {
           <div class="l">Забрать</div>
           ${esc(store.name || '')}<br>${esc(store.address || '')}
           ${store.address ? `<br><a href="${_mapsLink(store.address)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
-          ${store.phone ? `<br><a href="tel:${esc(store.phone)}">${esc(store.phone)}</a>` : ''}
+          ${store.phone ? `<br><a href="tel:${esc(store.phone)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>${esc(store.phone)}</a>` : ''}
         </div>
       </div>
       <div class="order-addr">
@@ -831,7 +834,7 @@ function renderOrderCard() {
           <div class="l">Доставить</div>
           ${esc(o.delivery_address || '')}
           ${o.delivery_address ? `<br><a href="${_mapsLink(o.delivery_address)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
-          ${o.customerPhone ? `<br><a href="tel:${esc(o.customerPhone)}">📞 Позвонить клиенту</a>` : ''}
+          ${o.customerPhone ? `<br><a href="tel:${esc(o.customerPhone)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>Позвонить клиенту</a>` : ''}
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:6px">
@@ -934,6 +937,52 @@ function hideSplash() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
+
+// ─── PULL TO REFRESH (adapted from client/index.html) ───
+(function() {
+  let startY = 0, startX = 0, dy = 0, tracking = false;
+  const THRESH = 72;
+  const INIT_ZONE = 80;
+
+  const pill = document.createElement('div');
+  pill.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-56px);width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:900;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .15s;pointer-events:none';
+  pill.textContent = '↓';
+  document.body.appendChild(pill);
+
+  function scrollTop() {
+    const pb = document.querySelector('.screen.active .screen-body');
+    return !pb || pb.scrollTop === 0;
+  }
+
+  document.addEventListener('touchstart', e => {
+    if (!scrollTop()) return;
+    const pb = document.querySelector('.screen.active .screen-body');
+    const zoneTop = pb ? pb.getBoundingClientRect().top : 0;
+    const t = e.touches[0];
+    if (t.clientY < zoneTop || t.clientY > zoneTop + INIT_ZONE) return;
+    startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!tracking) return;
+    const t = e.touches[0];
+    const rawDy = t.clientY - startY;
+    const rawDx = Math.abs(t.clientX - startX);
+    if (rawDx > rawDy && rawDy < THRESH / 4) { tracking = false; return; }
+    dy = Math.max(0, rawDy);
+    const p = Math.min(dy / THRESH, 1);
+    pill.style.transform = `translateX(-50%) translateY(${Math.round((p - 1) * 56)}px)`;
+    pill.textContent = dy >= THRESH ? '↺' : '↓';
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!tracking) return;
+    tracking = false;
+    pill.style.transform = 'translateX(-50%) translateY(-56px)';
+    pill.textContent = '↓';
+    if (dy >= THRESH) window.location.reload();
+  });
+})();
 </script>
 </body>
 </html>
