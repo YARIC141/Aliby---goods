@@ -85,7 +85,7 @@ Deno.serve(async (req: Request) => {
       try {
         const kv       = ups.key_version ?? 1
         const password = await decryptPaymentKey(secretEnc, kv)
-        const expected = await calcToken({ ...rest, Token: receivedToken, OrderId, Status, PaymentId, Success }, password)
+        const expected = await calcToken({ ...rest, OrderId, Status, PaymentId, Success }, password)
         if (receivedToken !== expected) return ok()
       } catch { /* decryption failed — skip verification */ }
     }

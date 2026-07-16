@@ -8747,6 +8747,20 @@ async function handlePaymentReturn(overrideSearch) {
     return true;
   }
 
+  // T-Bank real payment return (rentals)
+  if (tpay === 'rent_success') {
+    history.replaceState({}, '', window.location.pathname);
+    _calenabsTab = 'rent'; goTo('calenabs');
+    setTimeout(() => showOrderConfirm(null, false, 'Аренда оплачена!'), 400);
+    return true;
+  }
+  if (tpay === 'rent_fail') {
+    history.replaceState({}, '', window.location.pathname);
+    _calenabsTab = 'rent'; goTo('calenabs');
+    setTimeout(() => showGeoToast('Оплата не прошла. Попробуйте ещё раз.'), 400);
+    return true;
+  }
+
   return false;
 }
 
