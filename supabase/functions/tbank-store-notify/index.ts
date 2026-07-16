@@ -83,6 +83,20 @@ Deno.serve(async (req: Request) => {
     return OK
   }
 
+  // Atomically claim the intent so a duplicate/concurrent webhook delivery for the
+  // same payment can't create a second order — T-Bank may deliver the same
+  // notification more than once (or send both AUTHORIZED and CONFIRMED for the
+  // same payment), and a plain "select then later delete" isn't race-safe.
+  const { data: claimed } = await serviceClient
+    .from("payment_intents")
+    .update({ claimed_at: new Date().toISOString() })
+    .eq("id", String(OrderId))
+    .is("claimed_at", null)
+    .select("id")
+    .maybeSingle()
+
+  if (!claimed) return OK // already claimed by a concurrent/duplicate delivery
+
   // Create order from intent
   const { data: order, error: orderError } = await serviceClient
     .from("orders")
@@ -100,7 +114,10 @@ Deno.serve(async (req: Request) => {
     })
     .select("id").single()
 
-  if (orderError || !order) return OK // T-Bank повторит попытку
+  if (orderError || !order) {
+    await serviceClient.from("payment_intents").update({ claimed_at: null }).eq("id", String(OrderId))
+    return OK // T-Bank повторит попытку
+  }
 
   const items = intent.items as { menu_item_id: string; quantity: number; price_at_time: number }[]
   const { error: itemsError } = await serviceClient.from("order_items").insert(
@@ -108,6 +125,7 @@ Deno.serve(async (req: Request) => {
   )
   if (itemsError) {
     await serviceClient.from("orders").delete().eq("id", order.id)
+    await serviceClient.from("payment_intents").update({ claimed_at: null }).eq("id", String(OrderId))
     return OK // T-Bank повторит попытку
   }
 

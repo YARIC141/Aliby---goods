@@ -58,6 +58,19 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: true, order_status: 'cancelled' })
   }
 
+  // Atomically claim the intent so a duplicate/concurrent call for the same
+  // payment can't create a second order — a plain "select then later delete"
+  // isn't race-safe against two near-simultaneous requests.
+  const { data: claimed } = await serviceClient
+    .from('payment_intents')
+    .update({ claimed_at: new Date().toISOString() })
+    .eq('id', intent.id)
+    .is('claimed_at', null)
+    .select('id')
+    .maybeSingle()
+
+  if (!claimed) return jsonResponse({ error: 'Payment already processed' }, 409)
+
   // Create the real order from intent data
   const { data: order, error: orderError } = await serviceClient
     .from('orders')
@@ -75,7 +88,10 @@ Deno.serve(async (req: Request) => {
     })
     .select('id').single()
 
-  if (orderError || !order) return jsonResponse({ error: 'Failed to create order' }, 500)
+  if (orderError || !order) {
+    await serviceClient.from('payment_intents').update({ claimed_at: null }).eq('id', intent.id)
+    return jsonResponse({ error: 'Failed to create order' }, 500)
+  }
 
   const items = intent.items as { menu_item_id: string; quantity: number; price_at_time: number }[]
   const { error: itemsError } = await serviceClient.from('order_items').insert(
@@ -83,6 +99,7 @@ Deno.serve(async (req: Request) => {
   )
   if (itemsError) {
     await serviceClient.from('orders').delete().eq('id', order.id)
+    await serviceClient.from('payment_intents').update({ claimed_at: null }).eq('id', intent.id)
     return jsonResponse({ error: 'Failed to create order items' }, 500)
   }
 
