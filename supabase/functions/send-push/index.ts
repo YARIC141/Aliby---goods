@@ -116,7 +116,9 @@ async function sendFcm(
 type Tpl = (d: Record<string, string>) => { title: string; body: string }
 
 const PUSH_TEMPLATES: Record<string, Tpl> = {
-  order_in_progress: () => ({ title: '🍳 Готовим ваш заказ',    body: 'Заказ принят в работу'                  }),
+  order_in_progress:         () => ({ title: '🍳 Готовим ваш заказ',  body: 'Заказ принят в работу'             }),
+  order_looking_for_courier: () => ({ title: '🔍 Ищем курьера',       body: 'Уже подбираем курьера для доставки' }),
+  order_on_the_way:          () => ({ title: '🚴 Курьер уже едет',    body: 'Ваш заказ в пути'                  }),
   order_ready:       () => ({ title: '✅ Заказ готов!',          body: 'Можно забирать'                          }),
   order_issued:      () => ({ title: 'Заказ выдан',              body: 'Спасибо что выбрали нас!'               }),
   order_cancelled:   () => ({ title: 'Заказ отменён',            body: 'Обратитесь в заведение за деталями'     }),
@@ -124,6 +126,7 @@ const PUSH_TEMPLATES: Record<string, Tpl> = {
   booking_confirmed: () => ({ title: '📅 Запись подтверждена',   body: 'Оплата прошла, запись подтверждена'     }),
   booking_cancelled: () => ({ title: 'Запись отменена',          body: 'Слот был освобождён'                    }),
   subscription_low:  (d) => ({ title: '⚠️ Абонемент заканчивается', body: `Осталось ${d.remaining} посещений`  }),
+  carry_order_assigned: () => ({ title: '🚴 Новый заказ',          body: 'Вам назначена доставка'                 }),
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -144,13 +147,14 @@ Deno.serve(async (req: Request) => {
   let payload: {
     user_id?: string
     type?: string
+    app?: string
     title?: string
     body?: string
     data?: Record<string, string>
   }
   try { payload = await req.json() } catch { return new Response('Bad JSON', { status: 400 }) }
 
-  const { user_id, type, data = {} } = payload
+  const { user_id, type, app = 'client', data = {} } = payload
   if (!user_id || !type) return new Response('user_id and type are required', { status: 400 })
 
   // Только FCM (native Android / iOS) — заказы не нужны на PWA
@@ -158,7 +162,7 @@ Deno.serve(async (req: Request) => {
     .from('push_subscriptions')
     .select('device_token')
     .eq('user_id', user_id)
-    .eq('app', 'client')
+    .eq('app', app)
     .eq('platform', 'android')
     .maybeSingle()
 
@@ -188,7 +192,7 @@ Deno.serve(async (req: Request) => {
         .from('push_subscriptions')
         .delete()
         .eq('user_id', user_id)
-        .eq('app', 'client')
+        .eq('app', app)
         .eq('platform', 'android')
       console.warn('FCM token unregistered, deleted stale subscription for user', user_id)
       return new Response(JSON.stringify({ skipped: 'stale_token_removed' }), {
