@@ -34,10 +34,10 @@ Deno.serve(async (req: Request) => {
   const { data: { user }, error: authError } = await userClient.auth.getUser()
   if (authError || !user) return jsonResponse({ error: "Unauthorized" }, 401)
 
-  let body: { reservation_id?: string }
+  let body: { reservation_id?: string; applied_user_subscription_id?: string }
   try { body = await req.json() } catch { return jsonResponse({ error: "Invalid JSON body" }, 400) }
 
-  const { reservation_id } = body
+  const { reservation_id, applied_user_subscription_id } = body
   if (!reservation_id) return jsonResponse({ error: "reservation_id is required" }, 400)
 
   const serviceClient = createClient(
@@ -47,7 +47,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: reservation } = await serviceClient
     .from("rent_reservations")
-    .select("id, user_id, store_id, total_price, item_id, start_at, end_at, status, payment_status")
+    .select("id, user_id, store_id, total_price, item_id, start_at, end_at, status, payment_status, menu_items(id, category_id)")
     .eq("id", reservation_id)
     .maybeSingle()
 
@@ -62,6 +62,61 @@ Deno.serve(async (req: Request) => {
   const { data: storeData } = await serviceClient
     .from("stores").select("owner_user_id").eq("id", reservation.store_id).maybeSingle()
   if (!storeData) return jsonResponse({ error: "Store not found" }, 404)
+
+  // Pay in full with a 100%-discount subscription — no acquiring involved.
+  if (applied_user_subscription_id) {
+    const { data: us } = await serviceClient
+      .from("user_subscriptions")
+      .select("id, user_id, status, remaining_uses, subscriptions(store_id, discount_type, discount_value, coverage_rules)")
+      .eq("id", applied_user_subscription_id)
+      .maybeSingle()
+
+    const sub = us?.subscriptions as unknown as {
+      store_id: string; discount_type: string; discount_value: number
+      coverage_rules: { type: string; category_ids?: string[]; item_ids?: string[]; exclude_items?: string[] } | null
+    } | null
+
+    const item = reservation.menu_items as unknown as { id: string; category_id: string | null } | null
+
+    const covered = (() => {
+      const r = sub?.coverage_rules ?? { type: "all" }
+      if (!item) return false
+      switch (r.type) {
+        case "all": return true
+        case "include_categories":
+          return !!(item.category_id && r.category_ids?.includes(item.category_id) && !r.exclude_items?.includes(item.id))
+        case "include_items":
+          return !!r.item_ids?.includes(item.id)
+        case "exclude_items":
+          return !r.exclude_items?.includes(item.id)
+        default: return false
+      }
+    })()
+
+    const eligible = us && us.user_id === user.id && us.status === "active" && us.remaining_uses !== 0 &&
+      sub && sub.store_id === reservation.store_id &&
+      sub.discount_type === "percent" && Number(sub.discount_value) >= 100 && covered
+
+    if (!eligible) return jsonResponse({ error: "Абонемент не подходит для оплаты этой аренды" }, 400)
+
+    const { error: payErr } = await serviceClient
+      .from("rent_reservations")
+      .update({ payment_status: "paid" })
+      .eq("id", reservation_id)
+    if (payErr) return jsonResponse({ error: "Failed to mark reservation paid: " + payErr.message }, 500)
+
+    await serviceClient.from("subscription_redemptions").insert({
+      user_subscription_id: applied_user_subscription_id, amount_discounted: amount,
+    })
+    if (us!.remaining_uses !== null) {
+      await serviceClient
+        .from("user_subscriptions")
+        .update({ remaining_uses: us!.remaining_uses - 1 })
+        .eq("id", applied_user_subscription_id)
+    }
+
+    return jsonResponse({ free: true, amount: 0 })
+  }
 
   const today = new Date().toISOString().split("T")[0]
   const { data: activeSubs } = await serviceClient

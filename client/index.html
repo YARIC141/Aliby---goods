@@ -2294,6 +2294,14 @@ async function req(path, opts = {}, _retried = false) {
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+// External payment gateway URLs must open in the system browser on native (Capacitor
+// WebView blocks/loses navigation to foreign origins and would kill the app bridge);
+// on web, a normal same-tab redirect is fine.
+function goToPaymentUrl(url) {
+  const isNat = window.Capacitor?.isNativePlatform?.() ?? false;
+  if (isNat) window.open(url, '_system');
+  else window.location.href = url;
+}
 function btnLoad(el, label = 'Сохранение…') {
   if (!el) return () => {};
   const prev = el.innerHTML;
@@ -3032,7 +3040,7 @@ async function rentBookNow() {
     switchCalenabsTab('rent');
     goTo('calenabs');
   } catch(e) {
-    showGeoToast('Ошибка: ' + (e.message || 'попробуйте ещё раз'));
+    showGeoToast('Ошибка: ' + (e?.error || e?.message || 'попробуйте ещё раз'));
   } finally {
     restore?.();
   }
@@ -3043,6 +3051,15 @@ async function rentPayNow() {
   if (!item?._pendingStart || !item?._pendingEnd) return;
   const uid = S.session?.user?.id;
   if (!uid) { showGeoToast('Войдите в аккаунт'); return; }
+
+  let appliedSubId = null;
+  const fullSubs = getApplicableSubs(item, item._pendingTotal || 0).filter(x =>
+    x.sub.discount_type === 'percent' && Number(x.sub.discount_value) >= 100 && x.us.remaining_uses !== 0);
+  if (fullSubs.length > 0) {
+    const useSub = confirm(`У вас есть абонемент «${fullSubs[0].sub.name}».\nОК — списать по абонементу (бесплатно)\nОтмена — оплатить картой`);
+    if (useSub) appliedSubId = fullSubs[0].us.id;
+  }
+
   const btn = document.getElementById('mrent-pay-btn');
   const restore = btn ? btnLoad(btn) : () => {};
   try {
@@ -3063,16 +3080,24 @@ async function rentPayNow() {
     item.quantity_available = Math.max(0, (item.quantity_available ?? item.total_quantity ?? 1) - _rentQty);
     const result = await req('/functions/v1/tbank-init-rent', {
       method: 'POST',
-      body: JSON.stringify({ reservation_id: row.id }),
+      body: JSON.stringify({
+        reservation_id: row.id,
+        ...(appliedSubId ? { applied_user_subscription_id: appliedSubId } : {}),
+      }),
     });
-    if (result.payment_url) {
+    if (result.free) {
       closeModal('m-rent');
-      window.location.href = result.payment_url;
+      showGeoToast('Оплачено абонементом');
+      switchCalenabsTab('rent');
+      goTo('calenabs');
+    } else if (result.payment_url) {
+      closeModal('m-rent');
+      goToPaymentUrl(result.payment_url);
     } else {
       showGeoToast('Ошибка оплаты: неожиданный ответ');
     }
   } catch(e) {
-    showGeoToast('Ошибка: ' + (e.message || 'попробуйте ещё раз'));
+    showGeoToast('Ошибка: ' + (e?.error || e?.message || 'попробуйте ещё раз'));
   } finally {
     restore?.();
   }
@@ -4968,10 +4993,10 @@ function calcSubDisc(price, sub) {
   return Math.min(Number(sub.discount_value), Number(price));
 }
 
-function getApplicableSubs(item) {
+function getApplicableSubs(item, amount = item.price) {
   return S.menuUserSubs
     .filter(us => us.subscriptions && subCoversItem(us.subscriptions, item))
-    .map(us => ({ us, sub: us.subscriptions, disc: calcSubDisc(item.price, us.subscriptions) }));
+    .map(us => ({ us, sub: us.subscriptions, disc: calcSubDisc(amount, us.subscriptions) }));
 }
 
 function getBestDisc(item) {
@@ -7128,7 +7153,7 @@ async function checkoutRent() {
     S.rentCart = [];
     renderRentCartSection();
     updateCartCount();
-    window.location.href = result.payment_url;
+    goToPaymentUrl(result.payment_url);
   } catch(e) {
     if (createdIds.length) {
       try {
@@ -7171,7 +7196,7 @@ async function _initSubPayment(subIds, isGift, pendingPayment, amountText, order
       body: JSON.stringify({ subscription_ids: subIds, is_gift: isGift }),
     });
     if (result.payment_url) {
-      window.location.href = result.payment_url;
+      goToPaymentUrl(result.payment_url);
       return;
     }
     // Unexpected 200 without payment_url
@@ -9251,7 +9276,7 @@ async function confirmBooking(payNow) {
     });
     if (result.payment_url) {
       closeModal('m-book-slot');
-      window.location.href = result.payment_url;
+      goToPaymentUrl(result.payment_url);
     } else {
       throw new Error(result.error || 'no payment_url');
     }
@@ -9481,7 +9506,7 @@ async function payExistingBooking(id) {
       body: JSON.stringify({ booking_id: id }),
     });
     if (result.payment_url) {
-      window.location.href = result.payment_url;
+      goToPaymentUrl(result.payment_url);
     } else {
       showGeoToast('Ошибка: ' + (result.error || 'нет ссылки на оплату'));
     }
