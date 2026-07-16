@@ -6299,7 +6299,9 @@ function updateMapAddrBtn() {
   }
 }
 
-const _DZ_FRESH = 30 * 60 * 1000;
+const _DZ_FRESH = 3 * 60 * 1000; // was 30min — that let a store's freshly-edited zone
+// prices show as stale (sometimes 0/free) for up to half an hour on customers who'd
+// already browsed the store; no server-side signal exists to invalidate this early.
 const _dzCache = {};
 function _readDzCache(id) {
   try { const r = localStorage.getItem('alliby_dz_' + id); if (!r) return null; const d = JSON.parse(r); return (Date.now() - (d.ts || 0)) < _DZ_FRESH ? d.zones : null; } catch { return null; }
@@ -7706,7 +7708,16 @@ function confirmAddrPick() {
   S.userAddrLat = _addrPickResult.lat;
   S.userAddrLng = _addrPickResult.lng;
   try { localStorage.setItem('alliby_addr_lat', String(_addrPickResult.lat)); localStorage.setItem('alliby_addr_lng', String(_addrPickResult.lng)); } catch {}
-  if (S.profile) S.profile.address = _addrPickResult.text;
+  if (S.profile) {
+    S.profile.address = _addrPickResult.text;
+    S.profile.address_lat = _addrPickResult.lat;
+    S.profile.address_lng = _addrPickResult.lng;
+    // Keep the cached profile blob (read on next load before the fresh fetch resolves)
+    // in sync too — updateAddress() (profile screen) already does this; this picker
+    // was updating S.profile in memory only, so a reload could briefly show the old
+    // address/city again despite the DB and localStorage coords already being correct.
+    if (S.session?.user?.id) _writeProfileCache(S.session.user.id, S.profile);
+  }
   // update city from map geocoding
   const detectedCity = _addrPickResult.city || '';
   if (detectedCity && detectedCity !== S.city) {
