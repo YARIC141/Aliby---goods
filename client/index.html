@@ -4089,6 +4089,13 @@ async function _enableWebPush() {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Declared here (not near requireContract() below, which also uses it) because setSession()
+// is called synchronously from the init() IIFE near the bottom of this script, before a
+// `let` declared further down would leave the temporal dead zone — referencing it there
+// threw "Cannot access '_profileReady' before initialization" and aborted init() entirely,
+// silently breaking session/store restore on every reload.
+let _profileReady = null;
+
 function setSession(d) {
   S.session = d;
   localStorage.setItem('alliby_s', JSON.stringify(d));
@@ -8531,7 +8538,6 @@ async function _sha256(text) {
 }
 
 let _contractNext = null;
-let _profileReady = null;
 
 function _contractCacheKey(type, version) { return `alliby_contract_${type}_${version}`; }
 
