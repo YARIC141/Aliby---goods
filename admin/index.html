@@ -1689,6 +1689,32 @@ html.bg-custom #bg-fluid{display:none}
       <div id="ms-dz-wrap">
         <button id="ms-dze-btn" class="btn btn-sm" style="display:none;width:100%;margin-top:2px" onclick="openDzeFromEdit()">Настроить зоны доставки →</button>
       </div>
+      <div id="ms-courier-section" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line-soft)">
+        <label style="display:block;font-size:12px;color:var(--fg-3);margin-bottom:6px">Поиск курьера<span class="hint" data-tip="Кто выполняет доставку заказов этого заведения">?</span></label>
+        <select id="ms-courier-mode" onchange="onMsCourierModeChange()" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px;margin-bottom:10px">
+          <option value="manual">Вручную (как сейчас)</option>
+          <option value="own_courier">Свой курьер</option>
+          <option value="carry">Alliby Carry</option>
+        </select>
+
+        <div id="ms-own-courier-wrap" style="display:none">
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <input type="text" id="ms-courier-search" placeholder="Телефон курьера (+7…)" style="flex:1;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-1);background:var(--bg-input);font-size:13px;color:var(--fg)">
+            <button class="btn btn-sm btn-p" type="button" onclick="msAddOwnCourier()">Добавить</button>
+          </div>
+          <div id="ms-own-courier-list" style="display:flex;flex-direction:column;gap:4px"></div>
+        </div>
+
+        <div id="ms-carry-wrap" style="display:none">
+          <label style="font-size:12px;color:var(--fg-3);display:block;margin-bottom:4px">Режим отбора</label>
+          <select id="ms-carry-bid-mode" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px;margin-bottom:10px">
+            <option value="auction">Аукцион — минимальная ставка курьера</option>
+            <option value="first_found">Полная цена — ближайшему свободному</option>
+          </select>
+          <label style="font-size:12px;color:var(--fg-3);display:block;margin-bottom:4px">Радиус поиска, м</label>
+          <input type="number" id="ms-carry-radius" min="100" step="100" value="3000" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-1);background:var(--bg-input);font-size:13px;color:var(--fg)">
+        </div>
+      </div>
     </div>
     <div style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
       <div>
@@ -3972,6 +3998,23 @@ async function openStoreModal(store) {
   }
   const dzeBtnEl = document.getElementById('ms-dze-btn');
   if (dzeBtnEl) dzeBtnEl.style.display = store?.id ? '' : 'none';
+  const courierSecEl = document.getElementById('ms-courier-section');
+  if (courierSecEl) {
+    courierSecEl.style.display = store?.id ? '' : 'none';
+    if (store?.id) {
+      document.getElementById('ms-courier-mode').value    = store.delivery_courier_mode    || 'manual';
+      document.getElementById('ms-carry-bid-mode').value  = store.delivery_carry_bid_mode  || 'auction';
+      document.getElementById('ms-carry-radius').value    = store.delivery_search_radius_m || 3000;
+      onMsCourierModeChange();
+      msLoadOwnCouriers(store.id);
+    } else {
+      document.getElementById('ms-courier-mode').value   = 'manual';
+      document.getElementById('ms-carry-bid-mode').value = 'auction';
+      document.getElementById('ms-carry-radius').value   = 3000;
+      _msOwnCouriers = [];
+      onMsCourierModeChange();
+    }
+  }
   const opEl = document.getElementById('ms-online-payment');
   if (opEl) opEl.checked = store?.accepts_online_payment !== false;
   _msEditStore = store || null;
@@ -4063,6 +4106,65 @@ async function cancelPickMode() {
 }
 
 function onMsDeliveryChange() {}
+
+// ─── Courier mode (Alliby Carry) ───
+function onMsCourierModeChange() {
+  const mode = document.getElementById('ms-courier-mode').value;
+  document.getElementById('ms-own-courier-wrap').style.display = mode === 'own_courier' ? '' : 'none';
+  document.getElementById('ms-carry-wrap').style.display       = mode === 'carry'       ? '' : 'none';
+}
+
+let _msOwnCouriers = [];
+async function msLoadOwnCouriers(storeId) {
+  const listEl = document.getElementById('ms-own-courier-list');
+  listEl.innerHTML = '<div style="font-size:12px;color:var(--fg-4)">Загрузка…</div>';
+  try {
+    const rows = await req(`/rest/v1/store_couriers?store_id=eq.${storeId}&select=courier_id,profiles(id,full_name,phone)`);
+    _msOwnCouriers = (rows || []).map(r => r.profiles).filter(Boolean);
+  } catch(e) { _msOwnCouriers = []; }
+  renderMsOwnCourierList();
+}
+
+function renderMsOwnCourierList() {
+  const listEl = document.getElementById('ms-own-courier-list');
+  if (!_msOwnCouriers.length) { listEl.innerHTML = '<div style="font-size:12px;color:var(--fg-4)">Список пуст</div>'; return; }
+  listEl.innerHTML = _msOwnCouriers.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border:1px solid var(--line-soft);border-radius:var(--r-1);font-size:13px">
+      <span>${esc(c.full_name || 'Без имени')} · ${esc(c.phone || '—')}</span>
+      <button class="btn btn-sm btn-d" style="padding:3px 8px" onclick="msRemoveOwnCourier('${c.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function msAddOwnCourier() {
+  const storeId = document.getElementById('ms-id').value;
+  const phoneEl = document.getElementById('ms-courier-search');
+  const phone = phoneEl.value.trim();
+  if (!storeId || !phone) return;
+  try {
+    const rows = await req(`/rest/v1/profiles?role=eq.courier&phone=eq.${encodeURIComponent(phone)}&select=id,full_name,phone`);
+    const courier = rows?.[0];
+    if (!courier) { showAdminToast('Курьер с таким телефоном не найден'); return; }
+    if (_msOwnCouriers.some(c => c.id === courier.id)) { showAdminToast('Уже в списке'); return; }
+    await req('/rest/v1/store_couriers', {
+      method: 'POST', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ store_id: storeId, courier_id: courier.id }),
+    });
+    phoneEl.value = '';
+    _msOwnCouriers.push(courier);
+    renderMsOwnCourierList();
+  } catch(e) { showAdminToast('Ошибка: ' + (e.message || 'попробуйте ещё раз')); }
+}
+
+async function msRemoveOwnCourier(courierId) {
+  const storeId = document.getElementById('ms-id').value;
+  if (!storeId) return;
+  try {
+    await req(`/rest/v1/store_couriers?store_id=eq.${storeId}&courier_id=eq.${courierId}`, { method: 'DELETE' });
+    _msOwnCouriers = _msOwnCouriers.filter(c => c.id !== courierId);
+    renderMsOwnCourierList();
+  } catch(e) { showAdminToast('Ошибка при удалении'); }
+}
 
 
 function onMsDirChange() {}
@@ -4177,6 +4279,11 @@ async function saveStore() {
     image_url:          document.getElementById('ms-image-url').value || null,
     delivery_enabled:         !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
     accepts_online_payment:   document.getElementById('ms-online-payment')?.checked ?? true,
+    delivery_courier_mode:    document.getElementById('ms-courier-mode')?.value || 'manual',
+    delivery_carry_bid_mode:  document.getElementById('ms-courier-mode')?.value === 'carry'
+      ? (document.getElementById('ms-carry-bid-mode')?.value || 'auction') : null,
+    delivery_search_radius_m: document.getElementById('ms-courier-mode')?.value === 'carry'
+      ? (parseInt(document.getElementById('ms-carry-radius')?.value) || 3000) : null,
   };
   try {
     let storeId = id;
