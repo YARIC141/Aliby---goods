@@ -1471,8 +1471,13 @@ document.addEventListener('deviceready',function(){
           <div id="mrent-time-hint" style="font-size:12px;color:var(--fg-3);margin-top:6px"></div>
         </div>
         <div id="mrent-total-row" style="display:none;background:var(--bg-2);border-radius:var(--r-2);padding:10px 12px;margin-bottom:12px;font:500 14px/1.4 var(--font-sans)">
+          <div id="mrent-subtotal-row" style="display:none;font-size:13px;font-weight:400;color:var(--fg-3);text-decoration:line-through"></div>
           <div>Итого: <b id="mrent-total-price"></b></div>
           <div id="mrent-total-period" style="font-size:12px;color:var(--fg-3);margin-top:2px"></div>
+          <label id="mrent-sub-toggle-row" style="display:none;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font:400 13px/1.4 var(--font-sans);color:var(--fg-2);cursor:pointer">
+            <input type="checkbox" id="mrent-sub-toggle" onchange="rentToggleSub(this.checked)" style="width:16px;height:16px;flex-shrink:0;accent-color:var(--accent)">
+            <span id="mrent-sub-toggle-label"></span>
+          </label>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn" style="flex:0 0 auto" onclick="rentBackToQty()">← Кол-во</button>
@@ -2512,6 +2517,8 @@ let _rentEndTime   = null;
 let _rentSlots     = [];   // [{ slot_time:'HH:MM', available:N }] for time-unit rentals
 let _rentSlotA     = null; // index of first selected slot
 let _rentSlotB     = null; // index of last selected slot (inclusive, >= _rentSlotA)
+let _rentFullSub   = null; // best {us, sub, disc} 100%-discount subscription applicable to current item, or null
+let _rentUseSub    = true; // whether the pay button should redeem _rentFullSub
 
 // ── Tab helpers ──────────────────────────────────────────────
 function loadRentTab() {
@@ -2563,6 +2570,8 @@ function openRentModal(itemId) {
   _rentSlots     = [];
   _rentSlotA     = null;
   _rentSlotB     = null;
+  _rentFullSub   = null;
+  _rentUseSub    = true;
   _rentCal = { year: new Date().getFullYear(), month: new Date().getMonth() };
 
   document.getElementById('mrent-name').textContent = item.name;
@@ -2951,10 +2960,28 @@ function rentCalcTotal() {
 
   if (periods <= 0) return;
 
+  const fullSubs = getApplicableSubs(item, total).filter(x =>
+    x.sub.discount_type === 'percent' && Number(x.sub.discount_value) >= 100 && x.us.remaining_uses !== 0);
+  _rentFullSub = fullSubs[0] || null;
+  const finalTotal = (_rentFullSub && _rentUseSub) ? 0 : total;
+
   const totalRow = document.getElementById('mrent-total-row');
   if (totalRow) {
     totalRow.style.display = '';
-    document.getElementById('mrent-total-price').textContent = `${total.toFixed(0)} ₽`;
+    const subtotalRow = document.getElementById('mrent-subtotal-row');
+    const toggleRow   = document.getElementById('mrent-sub-toggle-row');
+    if (_rentFullSub) {
+      subtotalRow.style.display = '';
+      subtotalRow.textContent = `Подытог: ${total.toFixed(0)} ₽`;
+      toggleRow.style.display = 'flex';
+      document.getElementById('mrent-sub-toggle').checked = _rentUseSub;
+      document.getElementById('mrent-sub-toggle-label').textContent =
+        `Списать по абонементу «${_rentFullSub.sub.name}» — бесплатно`;
+    } else {
+      subtotalRow.style.display = 'none';
+      toggleRow.style.display = 'none';
+    }
+    document.getElementById('mrent-total-price').textContent = `${finalTotal.toFixed(0)} ₽`;
     document.getElementById('mrent-total-period').textContent = priceDesc;
   }
   const addBtn  = document.getElementById('mrent-add-cart-btn');
@@ -2964,6 +2991,7 @@ function rentCalcTotal() {
     if (addBtn)  addBtn.style.display  = 'none';
     if (bookBtn) bookBtn.style.display = '';
     if (payBtn)  payBtn.style.display  = S.storeSubActive !== false ? '' : 'none';
+    if (payBtn)  payBtn.textContent    = (_rentFullSub && _rentUseSub) ? 'Оплатить абонементом' : 'Оплатить';
   } else {
     if (addBtn)  addBtn.style.display  = S.storeSubActive !== false ? '' : 'none';
     if (bookBtn) bookBtn.style.display = '';
@@ -2974,6 +3002,11 @@ function rentCalcTotal() {
   _rentItem._pendingStart = startDT?.toISOString();
   _rentItem._pendingEnd   = endDT?.toISOString();
   _rentItem._pendingTotal = total;
+}
+
+function rentToggleSub(checked) {
+  _rentUseSub = checked;
+  rentCalcTotal();
 }
 
 async function rentCalPrev() {
@@ -3052,13 +3085,7 @@ async function rentPayNow() {
   const uid = S.session?.user?.id;
   if (!uid) { showGeoToast('Войдите в аккаунт'); return; }
 
-  let appliedSubId = null;
-  const fullSubs = getApplicableSubs(item, item._pendingTotal || 0).filter(x =>
-    x.sub.discount_type === 'percent' && Number(x.sub.discount_value) >= 100 && x.us.remaining_uses !== 0);
-  if (fullSubs.length > 0) {
-    const useSub = confirm(`У вас есть абонемент «${fullSubs[0].sub.name}».\nОК — списать по абонементу (бесплатно)\nОтмена — оплатить картой`);
-    if (useSub) appliedSubId = fullSubs[0].us.id;
-  }
+  const appliedSubId = (_rentFullSub && _rentUseSub) ? _rentFullSub.us.id : null;
 
   const btn = document.getElementById('mrent-pay-btn');
   const restore = btn ? btnLoad(btn) : () => {};
