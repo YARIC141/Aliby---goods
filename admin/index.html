@@ -1691,11 +1691,12 @@ html.bg-custom #bg-fluid{display:none}
       </div>
       <div id="ms-courier-section" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line-soft)">
         <label style="display:block;font-size:12px;color:var(--fg-3);margin-bottom:6px">Поиск курьера<span class="hint" data-tip="Кто выполняет доставку заказов этого заведения">?</span></label>
-        <select id="ms-courier-mode" onchange="onMsCourierModeChange()" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px;margin-bottom:10px">
+        <select id="ms-courier-mode" onchange="onMsCourierModeChange()" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px;margin-bottom:8px">
           <option value="manual">Вручную (как сейчас)</option>
           <option value="own_courier">Свой курьер</option>
           <option value="carry">Alliby Carry</option>
         </select>
+        <div id="ms-courier-mode-desc" style="font-size:12px;line-height:1.5;color:var(--fg-3);background:var(--bg-2);border-radius:var(--r-2);padding:8px 10px;margin-bottom:12px"></div>
 
         <div id="ms-own-courier-wrap" style="display:none">
           <div style="display:flex;gap:6px;margin-bottom:8px">
@@ -1707,11 +1708,12 @@ html.bg-custom #bg-fluid{display:none}
 
         <div id="ms-carry-wrap" style="display:none">
           <label style="font-size:12px;color:var(--fg-3);display:block;margin-bottom:4px">Режим отбора</label>
-          <select id="ms-carry-bid-mode" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px;margin-bottom:10px">
+          <select id="ms-carry-bid-mode" onchange="onMsCarryBidModeChange()" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px;margin-bottom:8px">
             <option value="auction">Аукцион — минимальная ставка курьера</option>
             <option value="first_found">Полная цена — ближайшему свободному</option>
           </select>
-          <label style="font-size:12px;color:var(--fg-3);display:block;margin-bottom:4px">Радиус поиска, м</label>
+          <div id="ms-carry-bidmode-desc" style="font-size:12px;line-height:1.5;color:var(--fg-3);background:var(--bg-2);border-radius:var(--r-2);padding:8px 10px;margin-bottom:12px"></div>
+          <label style="font-size:12px;color:var(--fg-3);display:block;margin-bottom:4px">Радиус поиска, м<span class="hint" data-tip="В каком радиусе от заведения искать свободных курьеров Alliby Carry. Не действует в режиме «Свой курьер» — там всегда назначается ближайший из вашего списка, независимо от расстояния.">?</span></label>
           <input type="number" id="ms-carry-radius" min="100" step="100" value="3000" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-1);background:var(--bg-input);font-size:13px;color:var(--fg)">
         </div>
       </div>
@@ -4108,10 +4110,29 @@ async function cancelPickMode() {
 function onMsDeliveryChange() {}
 
 // ─── Courier mode (Alliby Carry) ───
+const _COURIER_MODE_DESC = {
+  manual: 'Как сегодня: курьера вы ищете сами (по телефону, в мессенджере и т.д.) и вручную переводите заказ по статусам «Ищем курьера» → «Едет к вам» → «Выдан» в этом же экране. Alliby Carry в этом режиме не участвует вообще.',
+  own_courier: 'Заказ автоматически уходит ближайшему курьеру из вашего собственного списка ниже — независимо от того, занят он другим заказом или нет: если занят, просто встаёт к нему в очередь. Радиус поиска и минимальная ставка курьера тут не проверяются — это ваш доверенный список. Стоимость доставки курьеру не проходит через Alliby — вы договариваетесь с ним сами, приложение только находит и назначает.',
+  carry: 'Заказ автоматически предлагается свободным курьерам-фрилансерам города через Alliby Carry — кто именно получит заказ, определяется выбранным ниже режимом отбора.',
+};
+const _CARRY_BIDMODE_DESC = {
+  auction: 'Среди свободных курьеров в радиусе поиска, чья минимальная ставка не превышает вашу цену доставки для этой зоны, заказ получает тот, кто запросил меньше всего. Курьер получает именно свою ставку — разницу с полной ценой доставки оставляете себе.',
+  first_found: 'Заказ получает ближайший свободный курьер, чья минимальная ставка не превышает цену доставки (без сравнения ставок между собой). Курьер получает полную стоимость доставки, указанную для зоны.',
+};
+
 function onMsCourierModeChange() {
   const mode = document.getElementById('ms-courier-mode').value;
   document.getElementById('ms-own-courier-wrap').style.display = mode === 'own_courier' ? '' : 'none';
   document.getElementById('ms-carry-wrap').style.display       = mode === 'carry'       ? '' : 'none';
+  const descEl = document.getElementById('ms-courier-mode-desc');
+  if (descEl) descEl.textContent = _COURIER_MODE_DESC[mode] || '';
+  if (mode === 'carry') onMsCarryBidModeChange();
+}
+
+function onMsCarryBidModeChange() {
+  const bidMode = document.getElementById('ms-carry-bid-mode').value;
+  const descEl = document.getElementById('ms-carry-bidmode-desc');
+  if (descEl) descEl.textContent = _CARRY_BIDMODE_DESC[bidMode] || '';
 }
 
 let _msOwnCouriers = [];
