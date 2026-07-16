@@ -5477,12 +5477,13 @@ function renderOrderCard(o) {
     else if (o.status === 'in_progress' &&  o.is_delivery) { lbl = 'Ищем курьера'; ns = 'looking_for_courier'; icon = svgIco('search',12)+' '; }
     else if (o.status === 'in_progress' && !o.is_delivery) { lbl = 'Готов';         ns = 'ready'; }
     else if (o.status === 'looking_for_courier')   { lbl = 'Едет к вам';      ns = 'on_the_way';          icon = svgIco('bicycle',12)+' '; }
-    else if (o.status === 'on_the_way')            { lbl = 'Выдан ✓';         ns = 'issued'; }
+    else if (o.status === 'on_the_way' && !o.carry_courier_id) { lbl = 'Выдан ✓'; ns = 'issued'; }
     else if (o.status === 'ready')                 { lbl = 'Выдан ✓';         ns = 'issued'; }
     if (ns) actionBtns = `<div style="margin-top:8px;display:flex;gap:6px">
       <button class="btn btn-sm ${danger ? 'btn-d' : 'btn-p'}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px"
         onclick="event.stopPropagation();quickAdvance('${o.id}','${ns}')">${icon}${lbl}</button>
     </div>`;
+    else if (o.status === 'on_the_way' && o.carry_courier_id) actionBtns = `<div style="margin-top:8px;font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:4px">${svgIco('bicycle',12)} Ожидает подтверждения от курьера</div>`;
   }
   return `<div class="card" style="margin-bottom:8px;cursor:pointer;padding:12px 14px;${delivBorder}" onclick="openOrderModal('${esc(o.id)}')">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -5569,6 +5570,9 @@ function openOrderModal(orderId) {
   } else if (o.status === 'looking_for_courier') {
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
       <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('on_the_way')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('bicycle',13)} Едет к вам</button>`;
+  } else if (o.status === 'on_the_way' && o.carry_courier_id) {
+    ft.innerHTML = `<button class="btn btn-full" onclick="closeModal('m-order')">Закрыть</button>
+      <div style="width:100%;margin-top:8px;font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:4px;justify-content:center">${svgIco('bicycle',12)} Финальный статус «Выдан» проставит курьер в приложении Alliby Carry</div>`;
   } else if (o.status === 'on_the_way') {
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
       <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('issued')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('check-circle',13)} Выдан</button>`;
