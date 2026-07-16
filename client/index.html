@@ -4268,7 +4268,7 @@ async function loadMapStores() {
     renderMapCategoryChips();
     applyMapFilter();
     if (!cached?.length) fitMapToAllStores(); // already fitted above if cache was present
-    if (document.getElementById('screen-cart')?.classList.contains('active')) renderDeliveryToggle();
+    if (document.getElementById('screen-cart')?.classList.contains('active')) updateCartTotals();
   } catch(e) {
     if (!cached?.length) el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
   }
@@ -6611,12 +6611,27 @@ function renderDeliveryToggle() {
   const show = !!(store?.delivery_enabled && S.cart.length);
   wrap.style.display = show ? '' : 'none';
   if (!show) { const dr = document.getElementById('c-delivery-row'); if (dr) dr.style.display = 'none'; return; }
+  const di = getDeliveryInfo(store);
+  // A restored/cached S.deliveryFee can drift from the store's live zone prices (e.g.
+  // saved before zones existed, or before the store changed them) — resync it here
+  // rather than trusting the stale value, so checkout never silently undercharges
+  // delivery. Only when zones have actually finished loading (_dzCache has a real
+  // entry) — otherwise this fires on every load before the async zone fetch resolves
+  // and would wrongly reset a still-valid delivery selection.
+  if (S.deliveryMode === 'delivery' && _dzCache[store.id] !== undefined) {
+    if (di?.inZone) {
+      S.deliveryFee = di.price;
+    } else {
+      S.deliveryMode = null;
+      S.deliveryFee = 0;
+      showGeoToast('Зона доставки изменилась — выберите способ получения заново');
+    }
+  }
   const isDelivery = S.deliveryMode === 'delivery';
   const pu = document.getElementById('del-pickup-btn');
   const dv = document.getElementById('del-delivery-btn');
   if (pu) pu.style.opacity  = isDelivery ? '0.45' : '1';
   if (dv) dv.style.opacity  = isDelivery ? '1'    : '0.45';
-  const di = getDeliveryInfo(store);
   const priceLbl = document.getElementById('del-price-lbl');
   if (priceLbl) priceLbl.textContent = di ? (di.inZone ? `${di.price} ₽` : '(недоступно)') : '';
   const dr = document.getElementById('c-delivery-row');
@@ -6635,6 +6650,7 @@ function renderDeliveryToggle() {
 
 // ─── CART ───
 function updateCartTotals() {
+  renderDeliveryToggle(); // resync S.deliveryFee against live zone data before totalling
   const full = S.cart.reduce((s, c) => {
     const optExtra = (c.options || []).reduce((os, o) => os + (o.price_add || 0), 0);
     return s + (c.item.price + optExtra) * c.qty;
@@ -6662,7 +6678,6 @@ function updateCartTotals() {
   document.getElementById('c-total').textContent = (discounted + fee) + ' ₽';
   const feeEl = document.getElementById('c-delivery-fee');
   if (feeEl) feeEl.textContent = fee + ' ₽';
-  renderDeliveryToggle();
 }
 
 function cartToggleSub(checked) {
