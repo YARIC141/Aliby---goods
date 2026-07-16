@@ -7592,6 +7592,14 @@ async function updateAddress() {
     });
     S.userAddrLat = lat;
     S.userAddrLng = lng;
+    // loadUserAddr() prioritizes this cache over a fresh profile fetch on next load —
+    // must stay in sync with the just-saved address, or the next session silently
+    // reverts to the old coordinates (this is what broke delivery-zone checks after
+    // editing the address here instead of via the map picker, which already did this).
+    try {
+      if (lat != null && lng != null) { localStorage.setItem('alliby_addr_lat', String(lat)); localStorage.setItem('alliby_addr_lng', String(lng)); }
+      else { localStorage.removeItem('alliby_addr_lat'); localStorage.removeItem('alliby_addr_lng'); }
+    } catch {}
     if (S.profile) { S.profile.address = address; S.profile.address_lat = lat; S.profile.address_lng = lng; _writeProfileCache(S.session.user.id, S.profile); }
     _invalidateApiCache('profiles');
     updateMapAddrBtn();
