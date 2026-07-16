@@ -145,6 +145,15 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
 /* ── PAGE STRUCTURE ── */
 .ph{padding:10px 16px;padding-right:96px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:10px;flex-shrink:0;min-height:64px;box-sizing:border-box;background:linear-gradient(135deg,var(--header-tint,transparent) 0%,var(--glass-ui) 100%);transition:background .3s var(--ease-out)}
 .ph h2{font:400 34px/1.1 var(--font-display);letter-spacing:-0.01em;color:var(--fg);flex:1;margin:0}
+#screen-store .ph h2{display:flex;align-items:baseline;min-width:0}
+.ph-title-clip{flex:1;min-width:0;overflow:hidden;white-space:nowrap}
+#store-ph-name{display:inline-block;white-space:nowrap}
+#store-ph-name.marquee{animation:ph-name-marquee var(--marquee-dur,8s) linear infinite}
+@keyframes ph-name-marquee{
+  0%,10%{transform:translateX(0)}
+  50%{transform:translateX(var(--marquee-dist,0px))}
+  90%,100%{transform:translateX(0)}
+}
 #ph-actions{position:absolute;top:0;right:16px;height:64px;z-index:20;display:flex;align-items:center;gap:6px}
 .ph-icon-btn{width:36px;height:36px;border-radius:var(--r-pill);border:1px solid var(--line-soft);background:var(--glass-sm);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg-3);transition:background var(--t-fast),color var(--t-fast);flex-shrink:0}
 .ph-icon-btn:hover{background:var(--bg-2);color:var(--fg)}
@@ -1152,7 +1161,7 @@ document.addEventListener('deviceready',function(){
 <!-- ════════════════ STORE ════════════════ -->
 <div id="screen-store" class="screen">
   <div class="ph">
-    <h2 id="store-ph-name">Заведение<span class="screen-help" data-info="Информация о выбранном заведении: меню, часы работы и контакты.">?</span></h2>
+    <h2><span class="ph-title-clip"><span id="store-ph-name">Заведение</span></span><span class="screen-help" data-info="Информация о выбранном заведении: меню, часы работы и контакты.">?</span></h2>
   </div>
   <div class="screen-tip"></div>
   <!-- Services tabs (only shown when direction=services) -->
@@ -4789,14 +4798,31 @@ function _promoConsentDeclineFromStore() {
 }
 
 // ─── STORE ───
+// Store title never wraps to 2 lines — if it doesn't fit the header, it scrolls (marquee) instead.
+function _setStorePhName(text) {
+  const el = document.getElementById('store-ph-name');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('marquee');
+  el.style.removeProperty('--marquee-dist');
+  requestAnimationFrame(() => {
+    const clip = el.parentElement;
+    const overflow = clip ? el.scrollWidth - clip.clientWidth : 0;
+    if (overflow > 2) {
+      el.style.setProperty('--marquee-dist', `-${overflow}px`);
+      el.classList.add('marquee');
+    }
+  });
+}
+
 async function loadStore() {
-  if (!S.store) { document.getElementById('store-ph-name').textContent = 'Выберите заведение на карте'; return; }
+  if (!S.store) { _setStorePhName('Выберите заведение на карте'); return; }
   const st = S.store;
   trackEvent('menu_open', st.id);
   if (st.delivery_enabled && st.id) loadStoreZones(st.id);
   if (st.direction && st.direction !== S.direction) {
     const dirLabel = {food:'Еда',goods:'Товары',services:'Услуги',sport:'Спорт и образование',entertainment:'Развлечения'}[S.direction] || S.direction;
-    document.getElementById('store-ph-name').textContent = dirLabel;
+    _setStorePhName(dirLabel);
     ['st-cuisine','st-addr','st-hours','st-phone'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = ''; });
     const db = document.getElementById('st-delivery-badge'); if (db) db.style.display = 'none';
     const sb = document.getElementById('st-sched-btn'); if (sb) { sb.textContent = ''; sb.style.display = 'none'; }
@@ -4852,8 +4878,7 @@ async function loadStore() {
   switchFgTab('items');
   const _titleEl = document.getElementById('store-items-title');
   if (_titleEl) _titleEl.textContent = { food: 'Меню', goods: 'Товары', services: 'Услуги', sport: 'Услуги и аренда', entertainment: 'Услуги и аренда' }[S.direction] || 'Товары и Услуги';
-  const _phNameEl = document.getElementById('store-ph-name');
-  _phNameEl.textContent = st.name;
+  _setStorePhName(st.name);
   document.getElementById('st-addr').textContent   = st.address || '';
   document.getElementById('st-hours').textContent  = st.working_hours || '';
   document.getElementById('st-phone').textContent  = st.phone || '';
