@@ -41,6 +41,8 @@
   --red-deep:#b91c1c;
   --gold:#eab308;
   --gold-deep:#a16207;
+  --teal:#14b8a6;
+  --teal-deep:#0d9488;
   --bg:#0f0e0c;
   --bg-1:#181614;
   --bg-2:#211f1c;
@@ -548,6 +550,8 @@ footer{
 .ag-btn.ag-client:hover{background:var(--blue-deep);box-shadow:0 14px 36px rgba(120,180,224,.4)}
 .ag-btn.ag-business{background:var(--brand);box-shadow:0 10px 30px rgba(232,116,59,.3)}
 .ag-btn.ag-business:hover{background:var(--brand-deep);box-shadow:0 14px 36px rgba(232,116,59,.4)}
+.ag-btn.ag-courier{background:var(--teal);box-shadow:0 10px 30px rgba(20,184,166,.3)}
+.ag-btn.ag-courier:hover{background:var(--teal-deep);box-shadow:0 14px 36px rgba(20,184,166,.4)}
 @media(max-width:480px){.ag-btns{flex-direction:column;align-items:stretch}.ag-btn{max-width:none}}
 .seg.section-focus{animation:section-pulse 1.6s ease-out}
 @keyframes section-pulse{0%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),.6)}100%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),0)}}
@@ -913,6 +917,7 @@ html[data-theme="light"] .icon-moon{display:flex}
   <div class="nav-links" data-comment-anchor="bb5ef9755d-div">
     <a class="nav-link" href="#directions-clients">Для клиентов</a>
     <a class="nav-link" href="#directions-business">Для бизнеса</a>
+    <a class="nav-link" href="#alliby-carry">Alliby Carry</a>
     <a class="nav-link" href="#pricing">Тарифы</a>
   </div>
   <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
@@ -930,10 +935,11 @@ html[data-theme="light"] .icon-moon{display:flex}
   <p class="ph-sub" data-comment-anchor="a45b823ee0-p">Alliby — агрегатор товаров и услуг с картой заведений, заказами, доставкой, записями и арендой для клиентов, без сервисных сборов. Для бизнеса — свой электронный магазин и сервис доставки со всеми инструментами крупных сетей, без комиссий и лишних вложений.</p>
 
   <div class="audience-gate">
-    <div class="ag-question">Ты клиент или представитель бизнеса?</div>
+    <div class="ag-question">Кто ты?</div>
     <div class="ag-btns">
       <button class="ag-btn ag-client" onclick="scrollToAudience('client')">Клиент</button>
       <button class="ag-btn ag-business" onclick="scrollToAudience('business')">Бизнес</button>
+      <button class="ag-btn ag-courier" onclick="scrollToAudience('courier')">Курьер</button>
     </div>
   </div>
 </header>
@@ -1130,9 +1136,72 @@ html[data-theme="light"] .icon-moon{display:flex}
         </ul>
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('entertainment','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
+
+      <div class="dir-card" style="--accent:var(--teal);--accent-rgb:20,184,166;cursor:pointer" onclick="handleDirCardClick(this,'courier','business')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>
+        <div class="dir-title">Привлечение курьера<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <p class="dir-lede">Свой штатный курьер или открытый рынок исполнителей — доставка не встаёт, даже если водитель заболел.</p>
+        <ul class="dir-list">
+          <li>Подключите штатного курьера к Alliby Carry — он получает ваши заказы автоматически, без звонков</li>
+          <li>Или доверьте доставку рынку Alliby Carry — свободные курьеры поблизости заберут заказ сами</li>
+          <li>Фиксированное вознаграждение — назначаете сумму сами, курьер соглашается или нет</li>
+          <li>Или аукцион — система находит того, кто согласен на меньшую сумму среди ближайших</li>
+          <li>Цена доставки для клиента не меняется — разницу в свою пользу забираете вы</li>
+          <li>Push курьеру приходит мгновенно, статус заказа обновляется в реальном времени</li>
+        </ul>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('courier','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
     </div>
 
     <p class="seg-note" style="text-align:center;margin:24px auto 0;max-width:680px;color:var(--fg-3);font-size:14px;line-height:1.6">Вне зависимости от направления вам доступны одни и те же инструменты: приём и статусы заказов в реальном времени, сотрудники и мастера с личным графиком, конструктор абонементов с гибкими правилами покрытия, приём онлайн-оплат через интернет-эквайринг, push-уведомления клиентской базе и аналитика по заведению. Управляйте хоть одним заведением, хоть сетью из одного аккаунта — администратор, повар, тренер или курьер получают доступ бесплатно, платите только за сам бизнес-аккаунт.</p>
+  </div>
+</section>
+
+<!-- ════════════════ ALLIBY CARRY — ДЛЯ КУРЬЕРОВ ════════════════ -->
+<section class="seg" id="alliby-carry" style="--accent:var(--teal);--accent-deep:var(--teal-deep);--accent-rgb:20,184,166">
+  <div class="seg-inner">
+    <div class="seg-head">
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby Carry</span>
+      <h2 class="seg-h2">Свой график. <em>Своя цена. Свои деньги.</em></h2>
+      <p class="seg-sub">Alliby Carry — приложение для курьеров-фрилансеров. Никакой комиссии платформы, никакого графика смен — вы решаете, когда работать и за сколько. Alliby платит бизнесу, бизнес платит вам напрямую.</p>
+    </div>
+
+    <div class="dir-grid">
+      <div class="dir-card" style="--accent:var(--teal);--accent-rgb:20,184,166">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="dir-title">Работай, когда сам решишь</div>
+        <p class="dir-lede">Включили смену — вам присылают заказы поблизости. Выключили — никто не побеспокоит.</p>
+        <ul class="dir-list">
+          <li>Без графика, без обязательной нормы часов или заказов</li>
+          <li>Работайте час утром и три вечером — как удобно вам</li>
+          <li>Можно совмещать с работой в нескольких заведениях сразу</li>
+        </ul>
+      </div>
+
+      <div class="dir-card" style="--accent:var(--teal);--accent-rgb:20,184,166">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+        <div class="dir-title">Сам назначаешь вознаграждение</div>
+        <p class="dir-lede">Не платформа решает, сколько вы заработаете за рейс, — а вы сами.</p>
+        <ul class="dir-list">
+          <li>Укажите минимальную сумму, ниже которой заказ вам просто не предложат</li>
+          <li>Ни процента комиссии платформы с вашего вознаграждения</li>
+          <li>Деньги — напрямую от заведения, без посредников</li>
+        </ul>
+      </div>
+
+      <div class="dir-card" style="--accent:var(--teal);--accent-rgb:20,184,166">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+        <div class="dir-title">Механизм аукциона</div>
+        <p class="dir-lede">Заказ достаётся не первому нажавшему, а тому, кто предложил лучшую цену.</p>
+        <ul class="dir-list">
+          <li>Несколько курьеров поблизости конкурируют за один заказ своей ставкой</li>
+          <li>Система сравнивает минимальные вознаграждения ближайших курьеров и выбирает того, кто согласен на меньшую сумму</li>
+          <li>Ставите цену ниже — чаще получаете заказы; выше — берёте только выгодные вам</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="seg-note" style="text-align:center;margin:24px auto 0;max-width:680px;color:var(--fg-3);font-size:14px;line-height:1.6">Зарегистрируйтесь в приложении Alliby Carry, включите смену — и получайте заказы от заведений рядом с вами, на своих условиях.</p>
   </div>
 </section>
 
@@ -1520,6 +1589,7 @@ var SCENARIO_ICONS = {
   services: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>',
   sport: '<path d="M2.5 15c3-1.3 6.5-1.3 9 0v6c-2.5-1.3-6-1.3-9 0v-6z"/><path d="M21.5 15c-3-1.3-6.5-1.3-9 0v6c2.5-1.3 6-1.3 9 0v-6z"/><circle cx="12" cy="7.5" r="5.5"/><path d="M12 4.3l1.7 1.2-.65 2h-2.1l-.65-2z"/><line x1="12" y1="2" x2="12" y2="4.3"/><line x1="16.8" y1="4.6" x2="13.7" y2="5.5"/><line x1="15.2" y1="11.5" x2="12.65" y2="7.5"/><line x1="8.8" y1="11.5" x2="11.35" y2="7.5"/><line x1="7.2" y1="4.6" x2="10.3" y2="5.5"/>',
   entertainment: '<rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="17" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="7" cy="17" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="1.5" fill="currentColor"/>',
+  courier: '<circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>',
 };
 
 var SCENARIOS = {
@@ -1709,6 +1779,26 @@ var SCENARIOS = {
       ],
     },
   },
+  courier: {
+    accentRgb: '20,184,166',
+    business: {
+      title: 'Привлечение курьера — глазами владельца',
+      sub: 'Пиццерия «Огонёк» — свой курьер и рынок исполнителей в одном заведении',
+      story: [
+        'У Виктора уже есть свой курьер Данил — раньше при новом заказе Виктор писал ему в мессенджер и ждал ответа. Теперь Данил подключён к Alliby Carry как штатный курьер: заказ приходит ему push-уведомлением сразу после оплаты, без единого сообщения от Виктора.',
+        'Цену доставки Виктор поставил 250 ₽ для клиента. Данилу как штатному курьеру он платит 150 ₽ за рейс — те же условия, что были раньше, просто без звонков и с точным статусом заказа на каждом шаге, который видят и Виктор, и клиент.',
+        'В четверг вечером у Данила выходной. Виктор просто переключает режим доставки на «Alliby Carry» в настройках заведения — и заказы начинают предлагаться свободным курьерам поблизости, без единой минуты простоя.',
+        'В режиме аукциона система сама сравнивает нескольких ближайших курьеров и назначает заказ тому, кто указал наименьшее минимальное вознаграждение — например, 180 ₽ вместо стандартных 250. Цена для клиента не меняется, а разницу в 70 ₽ Виктор оставляет себе.',
+        'При 15 таких заказах за вечер это дополнительные 1 050 ₽ — просто потому, что среди свободных курьеров нашёлся один, готовый выполнить рейс дешевле.',
+        'Можно и проще — без аукциона, за фиксированную полную цену доставки: тогда заказ достаётся ближайшему свободному курьеру, согласному на эту сумму, без торга.',
+        'Виктор в любой момент переключается между «своим курьером», аукционом Alliby Carry и фиксированной ценой — под конкретный вечер, не переписывая настройки заново каждый раз.',
+      ],
+      stats: [
+        { v: '70 ₽', l: 'разница между ценой доставки и ставкой курьера остаётся у заведения' },
+        { v: '0 простоя', l: 'выходной штатного курьера закрывает рынок Alliby Carry' },
+      ],
+    },
+  },
 };
 
 function handleDirCardClick(el, key, audience) {
@@ -1726,7 +1816,7 @@ function openScenario(key, audience) {
   modal.style.setProperty('--accent-rgb', dir.accentRgb);
   document.getElementById('scenario-icon').innerHTML =
     '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (SCENARIO_ICONS[key] || '') + '</svg>';
-  var dirLabels = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт и образование', entertainment: 'Развлечения' };
+  var dirLabels = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт и образование', entertainment: 'Развлечения', courier: 'Привлечение курьера' };
   var audienceLabel = audience === 'client' ? 'для клиента' : 'для бизнеса';
   document.getElementById('scenario-eyebrow').textContent = (dirLabels[key] || key) + ' · ' + audienceLabel;
   document.getElementById('scenario-title').textContent = s.title;
@@ -1744,7 +1834,7 @@ function closeScenario() {
   document.body.style.overflow = '';
 }
 function scrollToAudience(type) {
-  var id = type === 'client' ? 'directions-clients' : 'directions-business';
+  var id = type === 'client' ? 'directions-clients' : (type === 'courier' ? 'alliby-carry' : 'directions-business');
   var el = document.getElementById(id);
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
