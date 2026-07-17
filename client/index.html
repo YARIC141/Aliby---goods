@@ -6603,10 +6603,14 @@ async function loadUserAddr() {
 
 let _pendingDelivery = false;
 
-function setDeliveryMode(mode) {
+async function setDeliveryMode(mode) {
   if (mode === 'delivery') {
     if (!S.userAddrLat) { _pendingDelivery = true; openAddressPicker(); return; }
     const store = getCartStore();
+    // Ensure zones are actually loaded before judging in/out of zone — right
+    // after a page reload _dzCache can still be empty at click time, which
+    // getDeliveryInfo would otherwise read as "outside zone" by default.
+    if (store?.id) await loadStoreZones(store.id);
     const di = getDeliveryInfo(store);
     if (!di?.inZone) { showGeoToast('Вы находитесь вне зоны доставки заведения'); return; }
     S.deliveryFee = di.price;
@@ -7922,7 +7926,18 @@ async function restoreNav() {
     const _navForStore = localStorage.getItem('alliby_nav');
     if (['store','menu','cart'].includes(_navForStore)) {
       const ss = localStorage.getItem('alliby_store');
-      if (ss) { S.store = JSON.parse(ss); syncStoreNavBtn(); }
+      if (ss) {
+        S.store = JSON.parse(ss);
+        syncStoreNavBtn();
+        // Restoring straight into cart/store/menu on reload never otherwise
+        // triggers a zone fetch for this store (that normally only happens
+        // when actually navigating into the store screen) — without this,
+        // getDeliveryInfo() sees an empty _dzCache and reports "outside zone"
+        // even for an address that's genuinely covered.
+        if (S.store?.delivery_enabled && S.store?.id) {
+          loadStoreZones(S.store.id).then(() => updateCartTotals());
+        }
+      }
     }
   } catch(e) {}
   try {
