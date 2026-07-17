@@ -5539,9 +5539,10 @@ function _setupAdminOrdSentinel() {
 }
 
 function renderOrderCard(o) {
+  const noCourierFound = o.status === 'looking_for_courier' && o.carry_dispatch_status === 'no_couriers_found' && !o.carry_courier_id;
   const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)' };
-  const color = statusColors[o.status] || 'var(--fg-3)';
-  const label = statusMap[o.status] || o.status;
+  const color = noCourierFound ? 'var(--err)' : (statusColors[o.status] || 'var(--fg-3)');
+  const label = noCourierFound ? 'Курьер не найден' : (statusMap[o.status] || o.status);
   const items = o.order_items || [];
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
   const storeName = o.stores?.name || '';
@@ -5557,10 +5558,14 @@ function renderOrderCard(o) {
     if      (o.status === 'paid')                  { lbl = 'В работу →';      ns = 'in_progress'; }
     else if (o.status === 'in_progress' &&  o.is_delivery) { lbl = 'Ищем курьера'; ns = 'looking_for_courier'; icon = svgIco('search',12)+' '; }
     else if (o.status === 'in_progress' && !o.is_delivery) { lbl = 'Готов';         ns = 'ready'; }
-    else if (o.status === 'looking_for_courier')   { lbl = 'Едет к вам';      ns = 'on_the_way';          icon = svgIco('bicycle',12)+' '; }
+    else if (o.status === 'looking_for_courier' && !noCourierFound) { lbl = 'Едет к вам'; ns = 'on_the_way'; icon = svgIco('bicycle',12)+' '; }
     else if (o.status === 'on_the_way' && !o.carry_courier_id) { lbl = 'Выдан ✓'; ns = 'issued'; }
     else if (o.status === 'ready')                 { lbl = 'Выдан ✓';         ns = 'issued'; }
-    if (ns) actionBtns = `<div style="margin-top:8px;display:flex;gap:6px">
+    if (noCourierFound) actionBtns = `<div style="margin-top:8px;display:flex;gap:6px">
+      <button class="btn btn-sm btn-p" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px"
+        onclick="event.stopPropagation();retryCourierDispatch('${o.id}',this)">${svgIco('refresh',12)} Повторить поиск курьера</button>
+    </div>`;
+    else if (ns) actionBtns = `<div style="margin-top:8px;display:flex;gap:6px">
       <button class="btn btn-sm ${danger ? 'btn-d' : 'btn-p'}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px"
         onclick="event.stopPropagation();quickAdvance('${o.id}','${ns}')">${icon}${lbl}</button>
     </div>`;
@@ -5648,6 +5653,10 @@ function openOrderModal(orderId) {
          <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('looking_for_courier')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('search',13)} Ищем курьера</button>`
       : `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
          <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('ready')">Готов к выдаче</button>`;
+  } else if (o.status === 'looking_for_courier' && o.carry_dispatch_status === 'no_couriers_found' && !o.carry_courier_id) {
+    ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
+      <button class="btn btn-p" onclick="retryCourierDispatch('${o.id}',this)">${svgIco('refresh',13)} Повторить поиск курьера</button>
+      <div style="width:100%;margin-top:8px;font-size:12px;color:var(--err);display:flex;align-items:center;gap:4px;justify-content:center">${svgIco('alert',12)} Курьер не найден — заказ ждёт назначения</div>`;
   } else if (o.status === 'looking_for_courier') {
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
       <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('on_the_way')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('bicycle',13)} Едет к вам</button>`;
@@ -5690,6 +5699,21 @@ async function advanceOrder(newStatus) {
     closeModal('m-order');
     loadOrders();
   } catch(e) { restore(); alert('Ошибка: ' + (e.message || JSON.stringify(e))); }
+}
+
+async function retryCourierDispatch(orderId, btn) {
+  const restore = btnLoad(btn, 'Ищем…');
+  try {
+    await req('/rest/v1/rpc/retry_courier_dispatch', {
+      method: 'POST', body: JSON.stringify({ p_order_id: orderId }),
+    });
+    restore();
+    await loadOrders();
+    const o = _orders.find(x => x.id === orderId);
+    if (o?.carry_courier_id) showAdminToast('Курьер найден');
+    else showAdminToast('Курьер всё ещё не найден — попробуйте позже');
+    if (_currentOrder?.id === orderId) openOrderModal(orderId);
+  } catch(e) { restore(); showAdminToast('Ошибка: ' + (e.message || '')); }
 }
 
 async function quickAdvance(orderId, newStatus) {
