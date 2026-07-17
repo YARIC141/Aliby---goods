@@ -804,6 +804,13 @@ html[data-theme="light"] .icon-moon{display:flex}
 .dir-scenario-link svg{transition:transform .16s}
 .dir-card:hover .dir-scenario-link,.dir-scenario-link:hover{background:rgba(var(--accent-rgb),.26);border-color:rgba(var(--accent-rgb),.6)}
 .dir-card:hover .dir-scenario-link svg{transform:translateX(3px)}
+.dir-card-carry .dir-card-body{display:flex;flex-direction:column;flex:1;min-width:0}
+@media(min-width:961px){
+  .dir-card-carry{grid-column:1/-1;flex-direction:row;align-items:flex-start;gap:32px}
+  .dir-card-carry .dir-icon{margin-bottom:0;margin-top:4px}
+  .dir-card-carry .dir-lede{min-height:0}
+  .dir-card-carry .dir-list{display:grid;grid-template-columns:1fr 1fr;column-gap:32px;row-gap:11px}
+}
 .dir-chevron{display:none}
 @media(max-width:720px){
   .dir-card{display:grid;grid-template-columns:40px 1fr;column-gap:14px;row-gap:2px;align-items:start}
@@ -1137,19 +1144,21 @@ html[data-theme="light"] .icon-moon{display:flex}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('entertainment','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--teal);--accent-rgb:20,184,166;cursor:pointer" onclick="handleDirCardClick(this,'courier','business')" role="button" tabindex="0">
+      <div class="dir-card dir-card-carry" style="--accent:var(--teal);--accent-rgb:20,184,166;cursor:pointer" onclick="handleDirCardClick(this,'courier','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>
-        <div class="dir-title">Привлечение курьера<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Свой штатный курьер или открытый рынок исполнителей — доставка не встаёт, даже если водитель заболел.</p>
-        <ul class="dir-list">
-          <li>Подключите штатного курьера к Alliby Carry — он получает ваши заказы автоматически, без звонков</li>
-          <li>Или доверьте доставку рынку Alliby Carry — свободные курьеры поблизости заберут заказ сами</li>
-          <li>Фиксированное вознаграждение — назначаете сумму сами, курьер соглашается или нет</li>
-          <li>Или аукцион — система находит того, кто согласен на меньшую сумму среди ближайших</li>
-          <li>Цена доставки для клиента не меняется — разницу в свою пользу забираете вы</li>
-          <li>Push курьеру приходит мгновенно, статус заказа обновляется в реальном времени</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('courier','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        <div class="dir-card-body">
+          <div class="dir-title">Alliby Carry — взаимодействие с курьерами без посредников<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <p class="dir-lede">Свой штатный курьер или открытый рынок исполнителей — доставка не встаёт, даже если водитель заболел.</p>
+          <ul class="dir-list">
+            <li>Подключите штатного курьера к Alliby Carry — он получает ваши заказы автоматически, без звонков</li>
+            <li>Или доверьте доставку рынку Alliby Carry — свободные курьеры поблизости заберут заказ сами</li>
+            <li>Фиксированное вознаграждение — назначаете сумму сами, курьер соглашается или нет</li>
+            <li>Или аукцион — система находит того, кто согласен на меньшую сумму среди ближайших</li>
+            <li>Цена доставки для клиента не меняется — разницу в свою пользу забираете вы</li>
+            <li>Push курьеру приходит мгновенно, статус заказа обновляется в реальном времени</li>
+          </ul>
+          <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('courier','business')">Смотреть сценарий <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
       </div>
     </div>
 
@@ -1816,7 +1825,7 @@ function openScenario(key, audience) {
   modal.style.setProperty('--accent-rgb', dir.accentRgb);
   document.getElementById('scenario-icon').innerHTML =
     '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (SCENARIO_ICONS[key] || '') + '</svg>';
-  var dirLabels = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт и образование', entertainment: 'Развлечения', courier: 'Привлечение курьера' };
+  var dirLabels = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт и образование', entertainment: 'Развлечения', courier: 'Alliby Carry' };
   var audienceLabel = audience === 'client' ? 'для клиента' : 'для бизнеса';
   document.getElementById('scenario-eyebrow').textContent = (dirLabels[key] || key) + ' · ' + audienceLabel;
   document.getElementById('scenario-title').textContent = s.title;
