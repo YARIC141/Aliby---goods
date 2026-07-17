@@ -879,6 +879,16 @@ html.bg-custom #bg-fluid{display:none}
       <button class="btn btn-p btn-sm" onclick="openAddEmployeeModal()">+ Добавить</button>
     </div>
     <div id="emp-list" style="display:flex;flex-direction:column;gap:8px"></div>
+
+    <div class="sec" style="margin-top:24px">
+      <div class="sec-title">Штатные курьеры<span class="hint" data-tip="Свой курьер заведения — доступен в настройках доставки заведения в режиме «Свой курьер». Курьер должен сначала сам зарегистрироваться в приложении Alliby Carry и передать вам свой ID из профиля.">?</span></div>
+      <select id="scour-store" onchange="loadStaffCouriers()" style="margin-bottom:8px"></select>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input type="text" id="scour-id-input" placeholder="ID курьера">
+        <button class="btn btn-sm btn-p" style="flex-shrink:0" onclick="addStaffCourierById()">Добавить</button>
+      </div>
+      <div id="scour-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
   </div>
 </div>
 
@@ -2697,6 +2707,77 @@ async function loadSubscriptionScreen() {
 
 async function loadEmployeesScreen() {
   await loadEmployees();
+  await loadStaffCouriersScreen();
+}
+
+async function loadStaffCouriersScreen() {
+  const sel = document.getElementById('scour-store');
+  sel.innerHTML = (S.stores || []).map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  await loadStaffCouriers();
+}
+
+let _staffCouriers = [];
+
+async function loadStaffCouriers() {
+  const storeId = document.getElementById('scour-store').value;
+  const listEl = document.getElementById('scour-list');
+  if (!storeId) { listEl.innerHTML = ''; return; }
+  listEl.innerHTML = '<div style="font-size:12px;color:var(--fg-4)">Загрузка…</div>';
+  try {
+    const rows = await req(`/rest/v1/store_couriers?store_id=eq.${storeId}&select=courier_id,profiles(id,full_name,phone)`);
+    _staffCouriers = (rows || []).map(r => r.profiles).filter(Boolean);
+  } catch(e) { _staffCouriers = []; }
+  renderStaffCouriers();
+}
+
+function renderStaffCouriers() {
+  const listEl = document.getElementById('scour-list');
+  if (!_staffCouriers.length) { listEl.innerHTML = '<div style="font-size:12px;color:var(--fg-4)">Список пуст</div>'; return; }
+  listEl.innerHTML = _staffCouriers.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:var(--r-2);font-size:13px">
+      <div style="min-width:0">
+        <div>${esc(c.full_name || 'Без имени')} · ${esc(c.phone || '—')}</div>
+        <div style="font-size:11px;color:var(--fg-4);word-break:break-all">${esc(c.id)}</div>
+      </div>
+      <button class="btn btn-sm btn-d" style="flex-shrink:0;padding:3px 8px" onclick="removeStaffCourier('${c.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+async function addStaffCourierById() {
+  const storeId = document.getElementById('scour-store').value;
+  const idEl = document.getElementById('scour-id-input');
+  const id = idEl.value.trim();
+  if (!storeId) { showAdminToast('Нет доступных заведений'); return; }
+  if (!id) return;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    showAdminToast('Некорректный ID курьера');
+    return;
+  }
+  try {
+    const rows = await req(`/rest/v1/profiles?id=eq.${encodeURIComponent(id)}&is_courier=eq.true&select=id,full_name,phone`);
+    const courier = rows?.[0];
+    if (!courier) { showAdminToast('Курьер с таким ID не найден'); return; }
+    if (_staffCouriers.some(c => c.id === courier.id)) { showAdminToast('Уже в списке'); return; }
+    await req('/rest/v1/store_couriers', {
+      method: 'POST', headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({ store_id: storeId, courier_id: courier.id }),
+    });
+    idEl.value = '';
+    _staffCouriers.push(courier);
+    renderStaffCouriers();
+    showAdminToast('Курьер добавлен');
+  } catch(e) { showAdminToast('Ошибка: ' + (e.message || 'попробуйте ещё раз')); }
+}
+
+async function removeStaffCourier(courierId) {
+  const storeId = document.getElementById('scour-store').value;
+  if (!storeId) return;
+  try {
+    await req(`/rest/v1/store_couriers?store_id=eq.${storeId}&courier_id=eq.${courierId}`, { method: 'DELETE' });
+    _staffCouriers = _staffCouriers.filter(c => c.id !== courierId);
+    renderStaffCouriers();
+  } catch(e) { showAdminToast('Ошибка при удалении'); }
 }
 
 function _updatePpSummary() {
@@ -4163,7 +4244,7 @@ async function msAddOwnCourier() {
   const phone = phoneEl.value.trim();
   if (!storeId || !phone) return;
   try {
-    const rows = await req(`/rest/v1/profiles?role=eq.courier&phone=eq.${encodeURIComponent(phone)}&select=id,full_name,phone`);
+    const rows = await req(`/rest/v1/profiles?is_courier=eq.true&phone=eq.${encodeURIComponent(phone)}&select=id,full_name,phone`);
     const courier = rows?.[0];
     if (!courier) { showAdminToast('Курьер с таким телефоном не найден'); return; }
     if (_msOwnCouriers.some(c => c.id === courier.id)) { showAdminToast('Уже в списке'); return; }

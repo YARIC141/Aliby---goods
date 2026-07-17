@@ -314,6 +314,13 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
     </div>
     <div id="pf-status-alert" class="alert" style="display:none"></div>
     <div id="err-profile" class="alert alert-e" style="display:none"></div>
+    <div class="fg">
+      <label>ID курьера<span style="text-transform:none;letter-spacing:0"> — передайте магазину, чтобы вас добавили как своего курьера</span></label>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="pf-id" readonly style="flex:1;font-size:12px;color:var(--fg-3)">
+        <button class="btn btn-sm" type="button" style="flex-shrink:0" onclick="copyCourierId()">Копировать</button>
+      </div>
+    </div>
     <div class="fg"><label>Имя и фамилия</label><input type="text" id="pf-name"></div>
     <div class="fg"><label>Телефон</label><input type="tel" id="pf-phone"></div>
     <div class="fg"><label>Город</label><input type="text" id="pf-city"></div>
@@ -606,6 +613,7 @@ async function doBecomeCourier() {
 
 // ─── PROFILE ───
 function openProfileModal() {
+  document.getElementById('pf-id').value     = S.profile?.id || '';
   document.getElementById('pf-name').value   = S.profile?.full_name || '';
   document.getElementById('pf-phone').value  = S.profile?.phone || '';
   document.getElementById('pf-city').value   = S.profile?.courier_city || '';
@@ -621,6 +629,14 @@ function openProfileModal() {
   }
   statusEl.style.display = 'block';
   openModal('m-profile');
+}
+
+function copyCourierId() {
+  const id = document.getElementById('pf-id').value;
+  if (!id) return;
+  navigator.clipboard?.writeText(id).then(() => {
+    window.AllibyBridge?.haptic('light');
+  }).catch(() => {});
 }
 
 async function saveProfile() {
