@@ -862,17 +862,22 @@ async function pingLocation() {
 }
 
 async function loadActiveOrder() {
+  let rows;
   try {
-    const rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,carry_courier_reward,stores(name,address,phone)&order=carry_dispatched_at.desc&limit=1`);
-    S.activeOrder = rows?.[0] || null;
-    if (S.activeOrder) {
-      try {
-        S.activeOrder.customerPhone = await req('/rest/v1/rpc/get_order_customer_phone', {
-          method: 'POST', body: JSON.stringify({ p_order_id: S.activeOrder.id }),
-        });
-      } catch(e) { S.activeOrder.customerPhone = null; }
-    }
-  } catch(e) { S.activeOrder = null; }
+    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,carry_courier_reward,stores(name,address,phone)&order=carry_dispatched_at.desc&limit=1`);
+  } catch(e) {
+    // A network hiccup (e.g. switching wifi/mobile data) isn't evidence the
+    // order is gone — keep showing the last known order instead of wiping it.
+    return;
+  }
+  S.activeOrder = rows?.[0] || null;
+  if (S.activeOrder) {
+    try {
+      S.activeOrder.customerPhone = await req('/rest/v1/rpc/get_order_customer_phone', {
+        method: 'POST', body: JSON.stringify({ p_order_id: S.activeOrder.id }),
+      });
+    } catch(e) { S.activeOrder.customerPhone = null; }
+  }
   renderOrderCard();
 }
 
@@ -979,6 +984,16 @@ function realtimeUnsubscribe() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && S.session?.user?.id && document.getElementById('screen-main').classList.contains('active')) {
+    loadActiveOrder();
+    if (!_rtWs) realtimeSubscribeMyOrders(S.session.user.id);
+  }
+});
+
+// Switching networks (wifi <-> mobile data) drops the websocket without the
+// app ever leaving the foreground, so visibilitychange alone won't catch it —
+// reconnect and refresh as soon as connectivity is back.
+window.addEventListener('online', () => {
+  if (S.session?.user?.id && document.getElementById('screen-main').classList.contains('active')) {
     loadActiveOrder();
     if (!_rtWs) realtimeSubscribeMyOrders(S.session.user.id);
   }
