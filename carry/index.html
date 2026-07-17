@@ -256,6 +256,13 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
             </label>
           </div>
           <div id="shift-status" style="font-size:12px;color:var(--fg-3)"></div>
+          <div class="fg" style="margin-top:12px;margin-bottom:0">
+            <label>Минимальное вознаграждение, ₽</label>
+            <div style="display:flex;gap:6px">
+              <input type="number" id="shift-min-reward" min="0" step="10">
+              <button class="btn btn-sm" type="button" style="flex-shrink:0" onclick="saveMinReward()">Сохранить</button>
+            </div>
+          </div>
         </div>
 
         <div class="card">
@@ -324,7 +331,6 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
     <div class="fg"><label>Имя и фамилия</label><input type="text" id="pf-name"></div>
     <div class="fg"><label>Телефон</label><input type="tel" id="pf-phone"></div>
     <div class="fg"><label>Город</label><input type="text" id="pf-city"></div>
-    <div class="fg"><label>Минимальное вознаграждение, ₽</label><input type="number" id="pf-reward" min="0" step="10"></div>
     <div class="modal-ft">
       <button class="btn btn-d" onclick="logout()">Выйти</button>
       <button class="btn btn-p" id="pf-save-btn" onclick="saveProfile()">Сохранить</button>
@@ -572,7 +578,10 @@ async function doDeleteAccount() {
     goToAuth();
   } catch(e) {
     done();
-    alert('Ошибка удаления: ' + (e.error || e.message || ''));
+    // Deferred so the button's restored (non-spinner) state actually paints
+    // before the blocking alert() dialog freezes rendering — some WebViews
+    // won't flush a DOM change made just before a synchronous alert/confirm.
+    setTimeout(() => alert('Ошибка удаления: ' + (e.error || e.message || '')), 0);
   }
 }
 
@@ -638,7 +647,6 @@ function openProfileModal() {
   document.getElementById('pf-name').value   = S.profile?.full_name || '';
   document.getElementById('pf-phone').value  = S.profile?.phone || '';
   document.getElementById('pf-city').value   = S.profile?.courier_city || '';
-  document.getElementById('pf-reward').value = S.profile?.courier_min_reward ?? '';
   document.getElementById('err-profile').style.display = 'none';
   const statusEl = document.getElementById('pf-status-alert');
   if (S.profile?.courier_banned) {
@@ -666,8 +674,8 @@ async function saveProfile() {
   const name = document.getElementById('pf-name').value.trim();
   const phone = document.getElementById('pf-phone').value.trim();
   const city = document.getElementById('pf-city').value.trim();
-  const reward = parseFloat(document.getElementById('pf-reward').value);
-  if (!name || !phone || !city || isNaN(reward) || reward < 0) {
+  const reward = S.profile?.courier_min_reward ?? 0;
+  if (!name || !phone || !city) {
     err.textContent = 'Заполните все поля корректно';
     err.style.display = 'block';
     return;
@@ -694,11 +702,35 @@ function initMainScreen() {
   _updateThemeIcon(document.documentElement.classList.contains('dark'));
   const onShift = localStorage.getItem('carry_on_shift') === '1';
   document.getElementById('shift-toggle').checked = onShift;
+  document.getElementById('shift-min-reward').value = S.profile?.courier_min_reward ?? '';
   updateShiftStatus(onShift);
   if (onShift) startShiftPing();
   loadActiveOrder();
   loadTodayEarnings();
   realtimeSubscribeMyOrders(S.session.user.id);
+}
+
+async function saveMinReward() {
+  const input = document.getElementById('shift-min-reward');
+  const reward = parseFloat(input.value);
+  if (isNaN(reward) || reward < 0) { alert('Введите корректную сумму'); return; }
+  const done = btnLoad(event.currentTarget);
+  try {
+    await req('/rest/v1/rpc/update_courier_profile', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_full_name: S.profile?.full_name || '',
+        p_phone: S.profile?.phone || '',
+        p_city: S.profile?.courier_city || '',
+        p_min_reward: reward,
+      }),
+    });
+    S.profile = { ...S.profile, courier_min_reward: reward };
+    done();
+  } catch(e) {
+    done();
+    alert('Ошибка: ' + (e.message || ''));
+  }
 }
 
 // ─── MAIN TABS (Заказы / История / Статистика) ───
