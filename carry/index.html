@@ -522,7 +522,7 @@ async function doRegister() {
   err.style.display = 'none';
   const done = btnLoad(document.getElementById('reg-btn'), 'Регистрация…');
   try {
-    const d = await req('/auth/v1/signup', {
+    const d = await req('/auth/v1/signup?redirect_to=' + encodeURIComponent('https://carry.alliby.ru/'), {
       method: 'POST',
       body: JSON.stringify({ email: document.getElementById('reg-email').value, password: document.getElementById('reg-pwd').value }),
     });
@@ -937,7 +937,34 @@ function hideSplash() {
   setTimeout(() => splash.remove(), 500);
 }
 
+// After clicking the email confirmation link, GoTrue redirects back here with
+// tokens in the URL hash (#access_token=...&type=signup&...) — pick those up
+// and log the courier straight in instead of leaving them to do it manually.
+async function _tryConfirmHashSession() {
+  const hash = new URLSearchParams((location.hash || '').replace('#', ''));
+  const accessToken = hash.get('access_token');
+  if (!accessToken || hash.get('type') !== 'signup') return false;
+  try {
+    const r = await fetch(SB_URL + '/auth/v1/user', {
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + accessToken },
+    });
+    const user = await r.json();
+    if (!r.ok || !user?.id) return false;
+    setSession({
+      access_token: accessToken,
+      refresh_token: hash.get('refresh_token'),
+      expires_at: Math.floor(Date.now() / 1000) + parseInt(hash.get('expires_in') || '3600', 10),
+      token_type: hash.get('token_type') || 'bearer',
+      user,
+    });
+    history.replaceState({}, '', location.pathname);
+    return true;
+  } catch { return false; }
+}
+
 (async function init() {
+  if (await _tryConfirmHashSession()) { await afterAuth(); hideSplash(); return; }
+
   let saved = null;
   try {
     const raw = localStorage.getItem('carry_s');

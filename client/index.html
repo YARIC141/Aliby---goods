@@ -4105,6 +4105,25 @@ async function _enableWebPush() {
 // silently breaking session/store restore on every reload.
 let _profileReady = null;
 
+async function _tryConfirmSignupSession(hash) {
+  const accessToken = hash.get('access_token');
+  try {
+    const r = await fetch(SB_URL + '/auth/v1/user', {
+      headers: { apikey: SB_ANON, Authorization: 'Bearer ' + accessToken },
+    });
+    const user = await r.json();
+    history.replaceState({}, '', location.pathname);
+    if (!r.ok || !user?.id) return null;
+    return {
+      access_token: accessToken,
+      refresh_token: hash.get('refresh_token'),
+      expires_at: Math.floor(Date.now() / 1000) + parseInt(hash.get('expires_in') || '3600', 10),
+      token_type: hash.get('token_type') || 'bearer',
+      user,
+    };
+  } catch { return null; }
+}
+
 function setSession(d) {
   S.session = d;
   localStorage.setItem('alliby_s', JSON.stringify(d));
@@ -8307,10 +8326,18 @@ window.addEventListener('hashchange', () => {
       showAuthTab('reset');
       document.getElementById('screen-auth').classList.add('active');
       hideSplash();
-    } else {
-      await restoreNav(); // guest → map (hideSplash called inside restoreNav)
+      return;
     }
-    return;
+    // Landed here after clicking the signup confirmation email link — log
+    // straight in with the tokens GoTrue put in the URL hash instead of
+    // leaving the user to do it manually.
+    if (hash.get('type') === 'signup' && hash.get('access_token')) {
+      savedSession = await _tryConfirmSignupSession(hash);
+    }
+    if (!savedSession) {
+      await restoreNav(); // guest → map (hideSplash called inside restoreNav)
+      return;
+    }
   }
 
   // Optimistically navigate to last screen before async auth to avoid blank screen
