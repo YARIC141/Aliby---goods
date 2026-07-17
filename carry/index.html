@@ -986,29 +986,37 @@ function carryRefreshCurrentView() {
   pill.textContent = '↓';
   document.body.appendChild(pill);
 
+  // TEMP DEBUG — remove once the swipe issue is diagnosed. Shows raw touch
+  // state live so it can be read directly off the device instead of guessing.
+  const dbg = document.createElement('div');
+  dbg.style.cssText = 'position:fixed;top:2px;left:2px;right:2px;z-index:99999;background:rgba(0,0,0,.75);color:#0f0;font:11px/1.4 monospace;padding:4px 6px;pointer-events:none;white-space:pre-wrap';
+  document.body.appendChild(dbg);
+  function dlog(msg) { dbg.textContent = msg; }
+  dlog('PTR debug ready');
+
   function scrollTop() {
     const pb = document.querySelector('.screen.active .screen-body');
     return !pb || pb.scrollTop === 0;
   }
 
   document.addEventListener('touchstart', e => {
-    if (!scrollTop()) return;
     const pb = document.querySelector('.screen.active .screen-body');
     const zoneTop = pb ? pb.getBoundingClientRect().top : 0;
     const t = e.touches[0];
-    // Any touch on the scrollable area while already at scrollTop 0 can start a
-    // pull — no upper bound on the zone (client's 80px-from-top requirement was
-    // too narrow in practice: a natural pull gesture rarely starts at the exact
-    // top edge of the content).
+    const st = scrollTop();
+    dlog(`touchstart pb=${!!pb} scrollTop=${pb?.scrollTop} atTop=${st} y=${t.clientY.toFixed(0)} zoneTop=${zoneTop.toFixed(0)}`);
+    if (!st) return;
     if (t.clientY < zoneTop) return;
     startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
+    dlog(`tracking=true startY=${startY.toFixed(0)}`);
   }, { passive: true });
 
   document.addEventListener('touchmove', e => {
-    if (!tracking) return;
+    if (!tracking) { dlog('touchmove (not tracking)'); return; }
     const t = e.touches[0];
     const rawDy = t.clientY - startY;
     const rawDx = Math.abs(t.clientX - startX);
+    dlog(`touchmove dy=${rawDy.toFixed(0)} dx=${rawDx.toFixed(0)}`);
     if (rawDx > rawDy && rawDy < THRESH / 4) { tracking = false; return; }
     dy = Math.max(0, rawDy);
     const p = Math.min(dy / THRESH, 1);
@@ -1017,6 +1025,7 @@ function carryRefreshCurrentView() {
   }, { passive: true });
 
   document.addEventListener('touchend', () => {
+    dlog(`touchend tracking=${tracking} dy=${dy}`);
     if (!tracking) return;
     tracking = false;
     const reached = dy >= THRESH;
