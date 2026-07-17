@@ -329,6 +329,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
       <button class="btn btn-d" onclick="logout()">Выйти</button>
       <button class="btn btn-p" id="pf-save-btn" onclick="saveProfile()">Сохранить</button>
     </div>
+    <hr>
+    <button class="btn btn-d btn-full" id="pf-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт</button>
   </div>
 </div>
 
@@ -553,6 +555,23 @@ function logout() {
   S.session = null; S.profile = null; S.activeOrder = null;
   closeModal('m-profile');
   goToAuth();
+}
+
+async function doDeleteAccount() {
+  if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
+  const done = btnLoad(document.getElementById('pf-delete-btn'), 'Удаление…');
+  try {
+    await req('/functions/v1/delete-account', { method: 'POST' });
+    realtimeUnsubscribe();
+    stopShiftPing();
+    localStorage.removeItem('carry_s');
+    S.session = null; S.profile = null; S.activeOrder = null;
+    closeModal('m-profile');
+    goToAuth();
+  } catch(e) {
+    done();
+    alert('Ошибка удаления: ' + (e.error || e.message || ''));
+  }
 }
 
 function goToAuth() {
