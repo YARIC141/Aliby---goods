@@ -171,7 +171,7 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
   <div class="sp-sub">Загрузка…</div>
 </div>
 
-<div id="update-banner" style="display:none;position:fixed;top:calc(58px + env(safe-area-inset-top,0px));left:0;right:0;z-index:10000;background:var(--accent);color:#fff;padding:10px 16px;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center">
+<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--accent);color:#fff;padding:10px 16px;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center">
   <span style="font-size:13px">Доступна новая версия приложения</span>
   <button onclick="window.location.reload()" style="background:rgba(255,255,255,.25);border:none;color:#fff;font-size:13px;font-weight:500;padding:4px 14px;border-radius:6px;cursor:pointer">Обновить</button>
   <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 2px">×</button>
@@ -864,7 +864,7 @@ async function pingLocation() {
 async function loadActiveOrder() {
   let rows;
   try {
-    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,carry_courier_reward,stores(name,address,phone)&order=carry_dispatched_at.desc&limit=1`);
+    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,delivery_lat,delivery_lng,carry_courier_reward,stores(name,address,phone,latitude,longitude)&order=carry_dispatched_at.desc&limit=1`);
   } catch(e) {
     // A network hiccup (e.g. switching wifi/mobile data) isn't evidence the
     // order is gone — keep showing the last known order instead of wiping it.
@@ -883,7 +883,13 @@ async function loadActiveOrder() {
 
 // Empty "from" point (rtext=~destination) tells Yandex Maps to route from the
 // device's current location instead of just centering on the address.
-function _mapsLink(addr) { return 'https://yandex.ru/maps/?rtext=~' + encodeURIComponent(addr || '') + '&rtt=auto'; }
+// Prefers exact coordinates over the text address — Yandex has to geocode
+// text itself, and some OSM-sourced address strings only carry a Latin/
+// transliterated street name, which can resolve to the wrong place entirely.
+function _mapsLink(addr, lat, lng) {
+  const dest = (lat != null && lng != null) ? `${lat},${lng}` : encodeURIComponent(addr || '');
+  return 'https://yandex.ru/maps/?rtext=~' + dest + '&rtt=auto';
+}
 
 function renderOrderCard() {
   const wrap = document.getElementById('order-card-wrap');
@@ -906,7 +912,7 @@ function renderOrderCard() {
         <div class="txt">
           <div class="l">Забрать</div>
           ${esc(store.name || '')}<br>${esc(store.address || '')}
-          ${store.address ? `<br><a href="${_mapsLink(store.address)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
+          ${store.address ? `<br><a href="${_mapsLink(store.address, store.latitude, store.longitude)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
           ${store.phone ? `<br><a href="tel:${esc(store.phone)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>${esc(store.phone)}</a>` : ''}
         </div>
       </div>
@@ -915,7 +921,7 @@ function renderOrderCard() {
         <div class="txt">
           <div class="l">Доставить</div>
           ${esc(o.delivery_address || '')}
-          ${o.delivery_address ? `<br><a href="${_mapsLink(o.delivery_address)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
+          ${o.delivery_address ? `<br><a href="${_mapsLink(o.delivery_address, o.delivery_lat, o.delivery_lng)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
           ${o.customerPhone ? `<br><a href="tel:${esc(o.customerPhone)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>Позвонить клиенту</a>` : ''}
         </div>
       </div>

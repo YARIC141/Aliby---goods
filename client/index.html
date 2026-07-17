@@ -8792,6 +8792,8 @@ async function doCheckout(useSubscription = false) {
         is_delivery: S.deliveryMode === 'delivery',
         delivery_fee: S.deliveryFee || 0,
         delivery_address: S.userAddr || S.profile?.address || null,
+        delivery_lat: S.userAddrLat ?? null,
+        delivery_lng: S.userAddrLng ?? null,
         ...(_isNat ? { success_url: 'alliby://?tpay=store_success', fail_url: 'alliby://?tpay=store_fail' } : {}),
       }),
     });

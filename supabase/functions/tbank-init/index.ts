@@ -45,6 +45,8 @@ Deno.serve(async (req: Request) => {
       is_delivery?: boolean
       delivery_fee?: number
       delivery_address?: string | null
+      delivery_lat?: number | null
+      delivery_lng?: number | null
       success_url?: string
       fail_url?: string
     }
@@ -54,6 +56,7 @@ Deno.serve(async (req: Request) => {
       store_id, items, total_amount,
       subscription_discount, applied_user_subscription_id, payment_method,
       is_delivery = false, delivery_fee = 0, delivery_address = null,
+      delivery_lat = null, delivery_lng = null,
       success_url, fail_url,
     } = body
 
@@ -100,7 +103,7 @@ Deno.serve(async (req: Request) => {
           payment_method: payment_method || "subscription",
           subscription_discount: subscription_discount || 0,
           applied_user_subscription_id: applied_user_subscription_id || null,
-          is_delivery, delivery_fee, delivery_address,
+          is_delivery, delivery_fee, delivery_address, delivery_lat, delivery_lng,
         })
         .select("id").single()
 
@@ -136,6 +139,7 @@ Deno.serve(async (req: Request) => {
       applied_user_subscription_id: applied_user_subscription_id || null,
       payment_method: payment_method || "card",
       is_delivery, delivery_fee: Math.round(delivery_fee || 0), delivery_address,
+      delivery_lat, delivery_lng,
       provider,
     }
 

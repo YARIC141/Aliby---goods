@@ -85,6 +85,8 @@ Deno.serve(async (req: Request) => {
       is_delivery: intent.is_delivery,
       delivery_fee: intent.delivery_fee,
       delivery_address: intent.delivery_address,
+      delivery_lat: intent.delivery_lat,
+      delivery_lng: intent.delivery_lng,
     })
     .select('id').single()
 
