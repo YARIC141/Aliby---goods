@@ -970,6 +970,7 @@ if ('serviceWorker' in navigator) {
 (function() {
   let startY = 0, startX = 0, dy = 0, tracking = false;
   const THRESH = 72;
+  const INIT_ZONE = 80;
 
   const pill = document.createElement('div');
   pill.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-56px);width:40px;height:40px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:20px;z-index:900;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .15s;pointer-events:none';
@@ -986,7 +987,7 @@ if ('serviceWorker' in navigator) {
     const pb = document.querySelector('.screen.active .screen-body');
     const zoneTop = pb ? pb.getBoundingClientRect().top : 0;
     const t = e.touches[0];
-    if (t.clientY < zoneTop) return;
+    if (t.clientY < zoneTop || t.clientY > zoneTop + INIT_ZONE) return;
     startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
   }, { passive: true });
 
