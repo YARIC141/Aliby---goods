@@ -876,7 +876,9 @@ async function loadActiveOrder() {
   renderOrderCard();
 }
 
-function _mapsLink(addr) { return 'https://yandex.ru/maps/?text=' + encodeURIComponent(addr || ''); }
+// Empty "from" point (rtext=~destination) tells Yandex Maps to route from the
+// device's current location instead of just centering on the address.
+function _mapsLink(addr) { return 'https://yandex.ru/maps/?rtext=~' + encodeURIComponent(addr || '') + '&rtt=auto'; }
 
 function renderOrderCard() {
   const wrap = document.getElementById('order-card-wrap');
