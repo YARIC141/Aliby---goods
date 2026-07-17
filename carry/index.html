@@ -1071,6 +1071,16 @@ if ('serviceWorker' in navigator) {
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') reg.update();
         });
+        // Capacitor's native resume event is more reliable than the browser's
+        // visibilitychange inside a WebView — Android can suspend/resume the
+        // WebView on backgrounding without a clean visibilitychange firing,
+        // silently skipping the update check.
+        if (window.Capacitor?.isNativePlatform?.()) {
+          window.Capacitor.Plugins?.App?.addListener('resume', () => {
+            if (_pendingUpdate) { window.location.reload(); return; }
+            reg.update();
+          });
+        }
       })
       .catch(() => {});
   });
