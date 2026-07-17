@@ -531,7 +531,7 @@ async function doRegister() {
       await afterAuth();
     } else {
       err.className = 'alert alert-ok';
-      err.textContent = 'Аккаунт создан! Проверьте почту и подтвердите email, затем войдите.';
+      err.textContent = 'Аккаунт создан! Проверьте почту и подтвердите email, затем войдите. Если письма нет во «Входящих» — загляните в папку «Спам».';
       err.style.display = 'block';
       showAuthTab('login');
     }

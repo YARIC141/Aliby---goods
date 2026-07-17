@@ -3755,7 +3755,7 @@ async function doRegister() {
       }
     } else {
       err.className = 'alert alert-ok';
-      err.textContent = 'Аккаунт создан! Проверьте почту и нажмите ссылку для подтверждения.';
+      err.textContent = 'Аккаунт создан! Проверьте почту и нажмите ссылку для подтверждения. Если письма нет во «Входящих» — загляните в папку «Спам».';
       err.style.display = 'block';
       showAuthTab('login');
     }
