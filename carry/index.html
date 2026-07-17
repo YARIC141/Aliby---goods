@@ -532,10 +532,12 @@ async function doRegister() {
       setSession(d);
       await afterAuth();
     } else {
-      err.className = 'alert alert-ok';
-      err.textContent = 'Аккаунт создан! Проверьте почту и спам и пройдите по ссылке регистрации.';
-      err.style.display = 'block';
+      err.style.display = 'none';
       showAuthTab('login');
+      const loginMsg = document.getElementById('err-login');
+      loginMsg.className = 'alert alert-ok';
+      loginMsg.textContent = 'Аккаунт создан! Проверьте почту и спам и пройдите по ссылке регистрации.';
+      loginMsg.style.display = 'block';
     }
   } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; } finally { done(); }
 }
