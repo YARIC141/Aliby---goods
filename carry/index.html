@@ -891,6 +891,27 @@ function _mapsLink(addr, lat, lng) {
   return 'https://yandex.ru/maps/?rtext=~' + dest + '&rtt=auto';
 }
 
+// Tries Yandex Navigator first — it jumps straight into turn-by-turn
+// navigation with no "Маршрут" confirmation screen at all (the yandex.ru/maps
+// web link's confirm button can silently stop reappearing on a repeat visit
+// to the same destination, since Yandex treats it as an already-active
+// route). Falls back to the maps link if Navigator isn't installed — if the
+// page is still visible after a beat, the deep link didn't go anywhere.
+function _openRoute(e, lat, lng) {
+  if (lat == null || lng == null) return true;
+  e.preventDefault();
+  const fallbackUrl = e.currentTarget.href;
+  let hidden = false;
+  const onHide = () => { hidden = true; };
+  document.addEventListener('visibilitychange', onHide, { once: true });
+  window.location.href = 'yandexnavi://build_route_on_map?lat_to=' + lat + '&lon_to=' + lng;
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', onHide);
+    if (!hidden) window.open(fallbackUrl, '_blank');
+  }, 1200);
+  return false;
+}
+
 function renderOrderCard() {
   const wrap = document.getElementById('order-card-wrap');
   const o = S.activeOrder;
@@ -912,7 +933,7 @@ function renderOrderCard() {
         <div class="txt">
           <div class="l">Забрать</div>
           ${esc(store.name || '')}<br>${esc(store.address || '')}
-          ${store.address ? `<br><a href="${_mapsLink(store.address, store.latitude, store.longitude)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
+          ${store.address ? `<br><a href="${_mapsLink(store.address, store.latitude, store.longitude)}" onclick="return _openRoute(event, ${store.latitude ?? 'null'}, ${store.longitude ?? 'null'})" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
           ${store.phone ? `<br><a href="tel:${esc(store.phone)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>${esc(store.phone)}</a>` : ''}
         </div>
       </div>
@@ -921,7 +942,7 @@ function renderOrderCard() {
         <div class="txt">
           <div class="l">Доставить</div>
           ${esc(o.delivery_address || '')}
-          ${o.delivery_address ? `<br><a href="${_mapsLink(o.delivery_address, o.delivery_lat, o.delivery_lng)}" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
+          ${o.delivery_address ? `<br><a href="${_mapsLink(o.delivery_address, o.delivery_lat, o.delivery_lng)}" onclick="return _openRoute(event, ${o.delivery_lat ?? 'null'}, ${o.delivery_lng ?? 'null'})" target="_blank" rel="noopener">Открыть в картах →</a>` : ''}
           ${o.customerPhone ? `<br><a href="tel:${esc(o.customerPhone)}"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.17 9.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012.08 1h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L6.27 8.91A16 16 0 0015.1 17.74l1.27-1.07a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>Позвонить клиенту</a>` : ''}
         </div>
       </div>
