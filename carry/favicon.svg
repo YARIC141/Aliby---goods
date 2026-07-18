@@ -1,15 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <rect width="32" height="32" rx="7" fill="#14b8a6"/>
-  <text x="16" y="19"
+  <text x="16" y="19.80"
         font-family="Georgia, 'Times New Roman', serif"
-        font-size="16"
+        font-size="21"
         font-style="italic"
         fill="white"
         text-anchor="middle">A</text>
-  <text x="16" y="27"
+  <text x="16" y="25.40"
         font-family="Arial, sans-serif"
-        font-size="5"
+        font-size="7.5"
         font-weight="700"
+        font-style="italic"
         fill="white"
         text-anchor="middle">carry</text>
 </svg>
