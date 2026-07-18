@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'ru.alliby.carry',
+  appId: 'ru.alliby_carry.app',
   appName: 'Alliby Carry',
   // Загружаем живой сайт — нативная оболочка рендерит production URL
   server: {

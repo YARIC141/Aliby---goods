@@ -4,7 +4,7 @@ android {
     namespace = "ru.alliby.carry"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "ru.alliby.carry"
+        applicationId "ru.alliby_carry.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

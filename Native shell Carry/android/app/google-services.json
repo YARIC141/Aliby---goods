@@ -26,9 +26,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:447232030446:android:016656924af3c3d9df65ff",
+        "mobilesdk_app_id": "1:447232030446:android:f3fac1c645006c28df65ff",
         "android_client_info": {
-          "package_name": "ru.alliby.carry"
+          "package_name": "ru.alliby_carry.app"
         }
       },
       "oauth_client": [],
