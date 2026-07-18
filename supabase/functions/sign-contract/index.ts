@@ -43,8 +43,8 @@ Deno.serve(async (req: Request) => {
   if (!contract || !version || !doc_hash || !accept_text) {
     return jsonResponse({ error: 'contract, version, doc_hash, accept_text required' }, 400)
   }
-  if (!['buyer', 'seller'].includes(contract)) {
-    return jsonResponse({ error: 'contract must be "buyer" or "seller"' }, 400)
+  if (!['buyer', 'seller', 'courier'].includes(contract)) {
+    return jsonResponse({ error: 'contract must be "buyer", "seller" or "courier"' }, 400)
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
