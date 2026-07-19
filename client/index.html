@@ -8843,7 +8843,7 @@ async function handlePaymentReturn(overrideSearch) {
     S.cart = []; S.cartStoreId = null; S.appliedSub = null;
     saveCart(); updateCartCount(); renderCart?.();
     _orderNotifCount++; _updateBkBadge();
-    goTo('alibi');
+    goTo('orders');
     setTimeout(() => showOrderConfirm(_octx?.store || null, _octx?.del || false), 400);
     return true;
   }
