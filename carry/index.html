@@ -350,8 +350,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
       <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политика конфиденциальности</a>
     </div>
     <button class="btn btn-sm btn-full" id="pf-resign-btn" onclick="resignCourier()" style="margin-bottom:8px">Перестать быть курьером</button>
-    <button class="btn btn-d btn-full" id="pf-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт полностью</button>
-    <p style="font-size:11px;color:var(--fg-3);text-align:center;margin-top:8px">«Перестать быть курьером» уберёт только курьерские данные — если этот email также используется как покупатель или в панели продавца, тот аккаунт останется</p>
+    <button class="btn btn-d btn-full" id="pf-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт</button>
+    <p style="font-size:11px;color:var(--fg-3);text-align:center;margin-top:8px">Обе кнопки удаляют только курьерские данные — если этот email также используется как покупатель или в панели продавца, тот аккаунт останется. «Удалить аккаунт» дополнительно стирает вход целиком, если больше нигде не используется.</p>
   </div>
 </div>
 
@@ -622,9 +622,19 @@ async function doDeleteAccount() {
   if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
   const done = btnLoad(document.getElementById('pf-delete-btn'), 'Удаление…');
   try {
-    await req('/functions/v1/delete-account', { method: 'POST' });
+    const res = await req('/functions/v1/delete-account', { method: 'POST', body: JSON.stringify({ app: 'carry' }) });
     realtimeUnsubscribe();
     stopShiftPing();
+    if (res && res.fullyDeleted === false) {
+      // Курьерские данные удалены, но аккаунт используется как покупатель
+      // или в панели продавца — сессия остаётся активной, тот аккаунт цел.
+      S.profile = { ...S.profile, is_courier: false, courier_city: null, courier_min_reward: null, courier_lat: null, courier_lng: null };
+      S.activeOrder = null;
+      closeModal('m-profile');
+      goToOnboard();
+      setTimeout(() => alert('Курьерский профиль удалён. Аккаунт сохранён — используется в другом приложении Alliby.'), 0);
+      return;
+    }
     localStorage.removeItem('carry_s');
     S.session = null; S.profile = null; S.activeOrder = null;
     closeModal('m-profile');

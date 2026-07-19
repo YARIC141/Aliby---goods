@@ -827,7 +827,7 @@ html.bg-custom #bg-fluid{display:none}
 
     <div class="sec" id="p-sec-delete">
       <div class="sec-title">Удаление аккаунта</div>
-      <p class="txt-sm" style="margin-bottom:10px">Аккаунт и все связанные данные будут удалены безвозвратно.</p>
+      <p class="txt-sm" style="margin-bottom:10px">Роль продавца/сотрудника и связанные с ней данные будут удалены. Если этот email также используется как покупатель в Alliby или курьер в Alliby Carry — те данные сохранятся.</p>
       <button class="btn btn-d btn-full" id="p-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт</button>
     </div>
 
@@ -3926,11 +3926,15 @@ async function doDeleteAccount() {
   if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
   const restore = btnLoad(document.getElementById('p-delete-btn'), 'Удаление…');
   try {
-    await req('/functions/v1/delete-account', { method: 'POST' });
+    const res = await req('/functions/v1/delete-account', { method: 'POST', body: JSON.stringify({ app: 'admin' }) });
+    restore();
+    if (res && res.fullyDeleted === false) {
+      alert('Роль продавца/сотрудника удалена. Аккаунт сохранён — используется в другом приложении Alliby.');
+    }
     localStorage.removeItem('alliby_admin_s');
     S.session = null;
     goTo('auth');
-  } catch(e) { restore(); alert('Ошибка удаления: ' + (e.message || '')); }
+  } catch(e) { restore(); alert('Ошибка удаления: ' + (e.error || e.message || '')); }
 }
 
 // ─── STORE CATEGORIES ───

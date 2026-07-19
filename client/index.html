@@ -3794,12 +3794,16 @@ async function doDeleteAccount() {
   if (!confirm('Удалить аккаунт? Это действие нельзя отменить.')) return;
   const _uid = S.session?.user?.id;
   try {
-    await req('/functions/v1/delete-account', { method: 'POST' });
+    const res = await req('/functions/v1/delete-account', { method: 'POST', body: JSON.stringify({ app: 'client' }) });
+    if (res && res.fullyDeleted === false) {
+      alert('Не удалось удалить аккаунт полностью — обратитесь в поддержку: alliby.app@gmail.com');
+      return;
+    }
     localStorage.removeItem('alliby_s');
     _clearProfileCache(_uid);
     S.session = null; S.profile = null;
     goTo('auth');
-  } catch(e) { alert('Ошибка удаления: ' + (e.message || '')); }
+  } catch(e) { alert('Ошибка удаления: ' + (e.error || e.message || '')); }
 }
 
 // ─── PROFILE CACHE ────────────────────────────────────────────────────────────
