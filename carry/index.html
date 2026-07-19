@@ -1368,9 +1368,12 @@ function renderOrderCard() {
   const handed     = orders.filter(o => o.status === 'handed_to_courier');
   const delivering = orders.filter(o => o.status === 'accepted_by_courier' || o.status === 'on_the_way');
 
-  let html = looking.map(o => _orderCardHtml(o)).join('');
+  // Later status = higher up: what's already picked up and needs finishing
+  // comes first (route button always at the very top), then what's waiting
+  // on the courier to accept, then what's still just waiting on the admin.
+  let html = delivering.length >= 1 ? _renderDeliveringRoute(delivering) : '';
   html += handed.length >= 2 ? _renderHandedSelection(handed) : handed.map(o => _orderCardHtml(o)).join('');
-  html += delivering.length >= 1 ? _renderDeliveringRoute(delivering) : '';
+  html += looking.map(o => _orderCardHtml(o)).join('');
   wrap.innerHTML = html;
 }
 
