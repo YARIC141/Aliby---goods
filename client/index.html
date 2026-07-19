@@ -2340,7 +2340,7 @@ function fmtDate(d) {
   return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; }
-const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Курьер забирает заказ', accepted_by_courier:'Едет к вам', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const subStMap  = { active:'Активен', expired:'Истёк' };
 function fmtSubStatus(us) {
   const today = new Date().toISOString().split('T')[0];
@@ -5931,7 +5931,7 @@ function _onRealtimeBooking(record, type) {
 let _ordFilter = 'all';
 let _ordStoreFilter = 'all';
 const _ordNotif = new Set();
-const _ORD_STATUS_PRIORITY = ['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready'];
+const _ORD_STATUS_PRIORITY = ['paid', 'in_progress', 'looking_for_courier', 'handed_to_courier', 'accepted_by_courier', 'on_the_way', 'ready'];
 let _activeOrders = [];
 let _ordPage = 0, _ordHasMore = false, _ordLoading = false, _ordObserver = null;
 
@@ -5986,7 +5986,7 @@ async function _loadOrderStores() {
 
 function _onRealtimeOrder(record) {
   const status = record?.status;
-  const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready']);
+  const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'handed_to_courier', 'accepted_by_courier', 'on_the_way', 'ready']);
   const calenabsActive = document.getElementById('screen-calenabs')?.classList.contains('active');
   const isVisible = calenabsActive && _calenabsTab === 'ord';
   if (status && ACTIVE.has(status)) {
@@ -6082,8 +6082,8 @@ function _setupClientOrdSentinel() {
 }
 
 function renderActiveOrderCard(o) {
-  const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)' };
-  const statusLabels = { paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов!', issued:'Выдан', cancelled:'Отменён', pending:'Создан' };
+  const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)' };
+  const statusLabels = { paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Курьер забирает заказ', accepted_by_courier:'Едет к вам', on_the_way:'Едет к вам', ready:'Готов!', issued:'Выдан', cancelled:'Отменён', pending:'Создан' };
   const color = statusColors[o.status] || 'var(--fg-3)';
   const label = statusLabels[o.status] || o.status;
   const isReady = o.status === 'ready';
@@ -6117,7 +6117,7 @@ function openActiveOrderDetail(orderId) {
   const disc = Number(o.subscription_discount || 0);
   const fullAmount = amount + disc;
   const subName = o.user_subscriptions?.subscriptions?.name;
-  const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
+  const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
 
   document.getElementById('mod-title').textContent = storeName ? `Заказ · ${storeName}` : 'Заказ';
   document.getElementById('mod-meta').innerHTML =
@@ -6154,7 +6154,7 @@ function openActiveOrderDetail(orderId) {
   const extraEl = document.getElementById('mod-order-extra');
   if (extraEl) {
     let extraHtml = '';
-    if (o.estimated_ready_at && o.status !== 'looking_for_courier' && o.status !== 'on_the_way')
+    if (o.estimated_ready_at && !['looking_for_courier','handed_to_courier','accepted_by_courier','on_the_way'].includes(o.status))
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--warn);font-size:14px;color:var(--warn);display:flex;align-items:center;gap:6px">${svgIco('clock',14)}${o.is_delivery ? 'Ожидаемая доставка к' : 'Готов примерно к'} ${fmtTime(o.estimated_ready_at)}</div>`;
     if (o.is_delivery && o.courier_phone)
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid #06b6d4;font-size:14px;color:#06b6d4;display:flex;align-items:center;gap:6px">${svgIco('phone',14)}Телефон курьера: <a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4;font-weight:600">${esc(o.courier_phone)}</a></div>`;
@@ -8081,7 +8081,7 @@ function _renderAlibi(el, uid, redemptions, orders) {
       orders.map((o, idx) => {
         const storeName = o.stores?.name || '';
         const amount = Number(o.total_amount) || 0;
-        const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
+        const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
         const statusTxt = statusMap[o.status] || o.status;
         const itemCount = (o.order_items || []).reduce((s, i) => s + i.quantity, 0);
         return `<div class="card" style="margin-bottom:6px;padding:10px 12px;cursor:pointer" onclick="openOrderDetail(${idx})">
@@ -8134,7 +8134,7 @@ function openOrderDetail(idx) {
   if (!order) return;
   const storeName = order.stores?.name || '';
   const amount = Number(order.total_amount) || 0;
-  const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[order.status] || 'var(--fg-sec)';
+  const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[order.status] || 'var(--fg-sec)';
 
   document.getElementById('mod-title').textContent = storeName ? `Заказ · ${storeName}` : 'Заказ';
   document.getElementById('mod-meta').innerHTML =

@@ -127,6 +127,7 @@ const PUSH_TEMPLATES: Record<string, Tpl> = {
   booking_cancelled: () => ({ title: 'Запись отменена',          body: 'Слот был освобождён'                    }),
   subscription_low:  (d) => ({ title: '⚠️ Абонемент заканчивается', body: `Осталось ${d.remaining} посещений`  }),
   carry_order_assigned: () => ({ title: '🚴 Новый заказ',          body: 'Вам назначена доставка'                 }),
+  carry_order_handed:   () => ({ title: '📦 Заказ передан',        body: 'Заберите заказ и нажмите «Принять»'     }),
 }
 
 // ─── Handler ─────────────────────────────────────────────────────────────────

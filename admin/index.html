@@ -960,6 +960,8 @@ html.bg-custom #bg-fluid{display:none}
         <button class="ord-chip" data-ord-status="paid" onclick="setAdminOrderFilter('paid')">Оплачен<span class="ord-cnt" id="ord-cnt-paid"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="in_progress" onclick="setAdminOrderFilter('in_progress')">В работе<span class="ord-cnt" id="ord-cnt-in_progress"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="looking_for_courier" onclick="setAdminOrderFilter('looking_for_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-search"/></svg>Ищем курьера<span class="ord-cnt" id="ord-cnt-looking_for_courier"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="handed_to_courier" onclick="setAdminOrderFilter('handed_to_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-bicycle"/></svg>Передано курьеру<span class="ord-cnt" id="ord-cnt-handed_to_courier"></span><span class="ord-notif-dot"></span></button>
+        <button class="ord-chip" data-ord-status="accepted_by_courier" onclick="setAdminOrderFilter('accepted_by_courier')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-bicycle"/></svg>Принято курьером<span class="ord-cnt" id="ord-cnt-accepted_by_courier"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="on_the_way" onclick="setAdminOrderFilter('on_the_way')"><svg class="ico" width="12" height="12" style="margin-right:3px"><use href="#i-bicycle"/></svg>Едет<span class="ord-cnt" id="ord-cnt-on_the_way"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="ready" onclick="setAdminOrderFilter('ready')">Готов<span class="ord-cnt" id="ord-cnt-ready"></span><span class="ord-notif-dot"></span></button>
         <button class="ord-chip" data-ord-status="issued" onclick="setAdminOrderFilter('issued')">Выдан</button>
@@ -2208,7 +2210,7 @@ function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
-const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Передано курьеру', accepted_by_courier:'Принято курьером', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const VAPID_PUBLIC_KEY = 'BAqiEa54OoLDA-bJ74rSG-4C_au7IbwXL3ZEybKY-GqlQEcwnRHJrZBIAxiX4pVMuJ1FdvtNSQMOQg8lRv-d2hc';
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -5424,7 +5426,7 @@ const _adminOrdNotif = new Set();
 const _adminOrdCounts = {};
 let _ordPage = 0, _ordHasMore = false, _ordLoading = false, _ordObserver = null;
 
-const _ORD_CNT_STATUSES = ['paid','in_progress','looking_for_courier','on_the_way','ready'];
+const _ORD_CNT_STATUSES = ['paid','in_progress','looking_for_courier','handed_to_courier','accepted_by_courier','on_the_way','ready'];
 
 function _renderAdminOrdDots() {
   document.querySelectorAll('[data-ord-status]').forEach(btn => {
@@ -5449,7 +5451,7 @@ async function loadOrdCounts() {
     const storeId = S.profile?.role === 'employee'
       ? S.profile.employee_store_id
       : document.getElementById('ord-store-filter')?.value;
-    let url = '/rest/v1/orders?select=status&status=in.(paid,in_progress,looking_for_courier,on_the_way,ready)&limit=2000';
+    let url = '/rest/v1/orders?select=status&status=in.(paid,in_progress,looking_for_courier,handed_to_courier,accepted_by_courier,on_the_way,ready)&limit=2000';
     if (storeId) url += `&store_id=eq.${storeId}`;
     else if (S.stores?.length) url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
     const rows = await req(url);
@@ -5521,7 +5523,7 @@ function _setupAdminOrdSentinel() {
 
 function renderOrderCard(o) {
   const noCourierFound = o.status === 'looking_for_courier' && o.carry_dispatch_status === 'no_couriers_found' && !o.carry_courier_id;
-  const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)' };
+  const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)' };
   const color = noCourierFound ? 'var(--err)' : (statusColors[o.status] || 'var(--fg-3)');
   const label = noCourierFound ? 'Курьер не найден' : (statusMap[o.status] || o.status);
   const items = o.order_items || [];
@@ -5539,7 +5541,8 @@ function renderOrderCard(o) {
     if      (o.status === 'paid')                  { lbl = 'В работу →';      ns = 'in_progress'; }
     else if (o.status === 'in_progress' &&  o.is_delivery) { lbl = 'Ищем курьера'; ns = 'looking_for_courier'; icon = svgIco('search',12)+' '; }
     else if (o.status === 'in_progress' && !o.is_delivery) { lbl = 'Готов';         ns = 'ready'; }
-    else if (o.status === 'looking_for_courier' && !noCourierFound) { lbl = 'Едет к вам'; ns = 'on_the_way'; icon = svgIco('bicycle',12)+' '; }
+    else if (o.status === 'looking_for_courier' && !noCourierFound &&  o.carry_courier_id) { lbl = 'Передано курьеру'; ns = 'handed_to_courier'; icon = svgIco('bicycle',12)+' '; }
+    else if (o.status === 'looking_for_courier' && !noCourierFound && !o.carry_courier_id) { lbl = 'Едет к вам'; ns = 'on_the_way'; icon = svgIco('bicycle',12)+' '; }
     else if (o.status === 'on_the_way' && !o.carry_courier_id) { lbl = 'Выдан ✓'; ns = 'issued'; }
     else if (o.status === 'ready')                 { lbl = 'Выдан ✓';         ns = 'issued'; }
     if (noCourierFound) actionBtns = `<div style="margin-top:8px;display:flex;gap:6px">
@@ -5550,7 +5553,8 @@ function renderOrderCard(o) {
       <button class="btn btn-sm ${danger ? 'btn-d' : 'btn-p'}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px"
         onclick="event.stopPropagation();quickAdvance('${o.id}','${ns}')">${icon}${lbl}</button>
     </div>`;
-    else if (o.status === 'on_the_way' && o.carry_courier_id) actionBtns = `<div style="margin-top:8px;font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:4px">${svgIco('bicycle',12)} Ожидает подтверждения от курьера</div>`;
+    else if (o.status === 'handed_to_courier') actionBtns = `<div style="margin-top:8px;font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:4px">${svgIco('bicycle',12)} Ожидает, когда курьер нажмёт «Принять»</div>`;
+    else if (o.status === 'accepted_by_courier' || (o.status === 'on_the_way' && o.carry_courier_id)) actionBtns = `<div style="margin-top:8px;font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:4px">${svgIco('bicycle',12)} Ожидает подтверждения от курьера</div>`;
   }
   return `<div class="card" style="margin-bottom:8px;cursor:pointer;padding:12px 14px;${delivBorder}" onclick="openOrderModal('${esc(o.id)}')">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
@@ -5638,10 +5642,16 @@ function openOrderModal(orderId) {
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
       <button class="btn btn-p" onclick="retryCourierDispatch('${o.id}',this)">${svgIco('refresh',13)} Повторить поиск курьера</button>
       <div style="width:100%;margin-top:8px;font-size:12px;color:var(--err);display:flex;align-items:center;gap:4px;justify-content:center">${svgIco('alert',12)} Курьер не найден — заказ ждёт назначения</div>`;
+  } else if (o.status === 'looking_for_courier' && o.carry_courier_id) {
+    ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
+      <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('handed_to_courier')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('bicycle',13)} Передано курьеру</button>`;
   } else if (o.status === 'looking_for_courier') {
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
       <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('on_the_way')" style="display:inline-flex;align-items:center;gap:5px">${svgIco('bicycle',13)} Едет к вам</button>`;
-  } else if (o.status === 'on_the_way' && o.carry_courier_id) {
+  } else if (o.status === 'handed_to_courier') {
+    ft.innerHTML = `<button class="btn btn-full" onclick="closeModal('m-order')">Закрыть</button>
+      <div style="width:100%;margin-top:8px;font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:4px;justify-content:center">${svgIco('bicycle',12)} Ожидает, когда курьер нажмёт «Принять» в приложении Alliby Carry</div>`;
+  } else if (o.status === 'accepted_by_courier' || (o.status === 'on_the_way' && o.carry_courier_id)) {
     ft.innerHTML = `<button class="btn btn-full" onclick="closeModal('m-order')">Закрыть</button>
       <div style="width:100%;margin-top:8px;font-size:12px;color:var(--fg-3);display:flex;align-items:center;gap:4px;justify-content:center">${svgIco('bicycle',12)} Финальный статус «Выдан» проставит курьер в приложении Alliby Carry</div>`;
   } else if (o.status === 'on_the_way') {
@@ -5793,7 +5803,7 @@ function adminRealtimeConnect() {
           // gate client-side so platform-owner RLS visibility doesn't leak other tenants' orders.
           if (!record?.store_id || !_myStoreIds().has(record.store_id)) return;
           const newStatus = record?.status;
-          const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'on_the_way', 'ready']);
+          const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'handed_to_courier', 'accepted_by_courier', 'on_the_way', 'ready']);
           if (type === 'INSERT') {
             showAdminToast('Новый заказ!');
             if (record?.id) { _newOrderIds.add(record.id); updateNavBadge(); }

@@ -18,7 +18,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.107.0"
 import { handleCors, jsonResponse } from "../_shared/cors.ts"
 
-const ACTIVE_STATUSES = ["pending", "paid", "in_progress", "looking_for_courier", "on_the_way", "ready"]
+const ACTIVE_STATUSES = ["pending", "paid", "in_progress", "looking_for_courier", "handed_to_courier", "accepted_by_courier", "on_the_way", "ready"]
 
 Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req)

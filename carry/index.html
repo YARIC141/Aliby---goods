@@ -1150,7 +1150,7 @@ async function pingLocation() {
 async function loadActiveOrders() {
   let rows;
   try {
-    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,delivery_lat,delivery_lng,carry_courier_reward,stores(name,address,phone,latitude,longitude)&order=carry_dispatched_at.desc`);
+    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,handed_to_courier,accepted_by_courier,on_the_way)&select=id,status,delivery_address,delivery_lat,delivery_lng,carry_courier_reward,stores(name,address,phone,latitude,longitude)&order=carry_dispatched_at.desc`);
   } catch(e) {
     // A network hiccup (e.g. switching wifi/mobile data) isn't evidence the
     // orders are gone — keep showing the last known list instead of wiping it.
@@ -1200,12 +1200,16 @@ function _openRoute(e, lat, lng) {
 
 function _orderCardHtml(o) {
   const isLooking = o.status === 'looking_for_courier';
+  const isHanded  = o.status === 'handed_to_courier';
+  const canDecline = isLooking || isHanded;
+  const canDeliver = o.status === 'accepted_by_courier' || o.status === 'on_the_way';
+  const badgeTxt = isLooking ? 'Ожидает получения' : isHanded ? 'Заказ передан вам' : 'В пути к клиенту';
   const store = o.stores || {};
   const rewardTxt = o.carry_courier_reward != null ? `${Number(o.carry_courier_reward).toFixed(0)} ₽` : 'уточняется у продавца';
   return `
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <span class="badge ${isLooking ? 'badge-warn' : 'badge-info'}">${isLooking ? 'Ожидает получения' : 'В пути к клиенту'}</span>
+        <span class="badge ${canDeliver ? 'badge-info' : 'badge-warn'}">${badgeTxt}</span>
         <span style="font:600 16px/1 var(--font-sans)">${esc(rewardTxt)}</span>
       </div>
       <div class="order-addr">
@@ -1227,8 +1231,9 @@ function _orderCardHtml(o) {
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:6px">
-        ${isLooking ? `<button class="btn btn-d" style="flex:1" onclick="declineOrder('${o.id}')">Отказаться</button>` : ''}
-        ${!isLooking ? `<button class="btn btn-p btn-full" onclick="markDelivered('${o.id}')">Доставил</button>` : ''}
+        ${canDecline ? `<button class="btn btn-d" style="flex:1" onclick="declineOrder('${o.id}')">Отказаться</button>` : ''}
+        ${isHanded ? `<button class="btn btn-p" style="flex:1" onclick="acceptOrder('${o.id}')">Принять</button>` : ''}
+        ${canDeliver ? `<button class="btn btn-p btn-full" onclick="markDelivered('${o.id}')">Доставил</button>` : ''}
       </div>
     </div>`;
 }
@@ -1249,6 +1254,13 @@ async function declineOrder(orderId) {
     await req('/rest/v1/rpc/courier_decline_order', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
     await loadActiveOrders();
   } catch(e) { alert(e.message || 'Ошибка'); }
+}
+
+async function acceptOrder(orderId) {
+  try {
+    await req('/rest/v1/rpc/courier_accept_order', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
+    await loadActiveOrders();
+  } catch(e) { alert(e.error || e.message || 'Ошибка'); }
 }
 
 async function markDelivered(orderId) {
