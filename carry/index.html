@@ -375,6 +375,17 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
   </div>
 </div>
 
+<div class="overlay" id="m-confirm-delivered">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-hd"><h3>Подтвердить доставку?</h3></div>
+    <p style="font-size:14px;color:var(--fg-3);margin:0 0 16px">Заказ будет отмечен как выданный клиенту.</p>
+    <div class="modal-ft">
+      <button class="btn" onclick="cancelMarkDelivered()">Отмена</button>
+      <button class="btn btn-p" onclick="confirmMarkDelivered()">Доставил</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ─── NATIVE BRIDGE (adapted from client/index.html) ───
 (function(){
@@ -1467,8 +1478,22 @@ async function acceptOrder(orderId) {
   } catch(e) { alert(e.error || e.message || 'Ошибка'); }
 }
 
-async function markDelivered(orderId) {
-  if (!confirm('Подтвердить доставку заказа?')) return;
+let _pendingDeliverOrderId = null;
+
+function markDelivered(orderId) {
+  _pendingDeliverOrderId = orderId;
+  openModal('m-confirm-delivered');
+}
+
+function cancelMarkDelivered() {
+  _pendingDeliverOrderId = null;
+  closeModal('m-confirm-delivered');
+}
+
+async function confirmMarkDelivered() {
+  const orderId = _pendingDeliverOrderId;
+  if (!orderId) return;
+  closeModal('m-confirm-delivered');
   try {
     await req('/rest/v1/rpc/courier_mark_delivered', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
     await loadActiveOrders();
