@@ -405,7 +405,7 @@ window.AllibyBridge={
     var PN=_P().PushNotifications;
     PN.addListener('registration',function(t){_savePushToken(t.value,uid);});
     PN.addListener('pushNotificationReceived',function(n){
-      if(typeof loadActiveOrder==='function')loadActiveOrder();
+      if(typeof loadActiveOrders==='function')loadActiveOrders();
     });
     PN.addListener('pushNotificationActionPerformed',function(){
       if(typeof goToMain==='function')goToMain();
@@ -459,7 +459,7 @@ const _LOCAL = location.hostname === 'localhost' || location.hostname === '127.0
 const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
 const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
 
-let S = { session: null, profile: null, activeOrder: null };
+let S = { session: null, profile: null, activeOrders: [] };
 
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -595,7 +595,7 @@ function logout() {
   realtimeUnsubscribe();
   stopShiftPing();
   localStorage.removeItem('carry_s');
-  S.session = null; S.profile = null; S.activeOrder = null;
+  S.session = null; S.profile = null; S.activeOrders = [];
   closeModal('m-profile');
   goToAuth();
 }
@@ -611,14 +611,14 @@ async function doDeleteAccount() {
       // Курьерские данные удалены, но аккаунт используется как покупатель
       // или в панели продавца — сессия остаётся активной, тот аккаунт цел.
       S.profile = { ...S.profile, is_courier: false, courier_city: null, courier_min_reward: null, courier_lat: null, courier_lng: null };
-      S.activeOrder = null;
+      S.activeOrders = [];
       closeModal('m-profile');
       goToOnboard();
       setTimeout(() => alert('Курьерский профиль удалён. Аккаунт сохранён — используется в другом приложении Alliby.'), 0);
       return;
     }
     localStorage.removeItem('carry_s');
-    S.session = null; S.profile = null; S.activeOrder = null;
+    S.session = null; S.profile = null; S.activeOrders = [];
     closeModal('m-profile');
     goToAuth();
   } catch(e) {
@@ -985,7 +985,7 @@ function initMainScreen() {
   document.getElementById('shift-min-reward').value = S.profile?.courier_min_reward ?? '';
   updateShiftStatus(onShift);
   if (onShift) startShiftPing();
-  loadActiveOrder();
+  loadActiveOrders();
   loadTodayEarnings();
   realtimeSubscribeMyOrders(S.session.user.id);
 }
@@ -1141,23 +1141,29 @@ async function pingLocation() {
   } catch(e) { /* permission denied or no fix — just skip this tick */ }
 }
 
-async function loadActiveOrder() {
+// A "своей" (own_courier) courier can be assigned more than one order at
+// once — dispatch doesn't exclude them for being busy, it just queues the
+// next order onto them (admin/index.html's own_courier mode description).
+// A regular Alliby Carry (freelance) courier never gets a second concurrent
+// assignment (dispatch_order_courier excludes busy candidates for that
+// mode), so this list is almost always 0 or 1 item for them in practice.
+async function loadActiveOrders() {
   let rows;
   try {
-    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,delivery_lat,delivery_lng,carry_courier_reward,stores(name,address,phone,latitude,longitude)&order=carry_dispatched_at.desc&limit=1`);
+    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,on_the_way)&select=id,status,delivery_address,delivery_lat,delivery_lng,carry_courier_reward,stores(name,address,phone,latitude,longitude)&order=carry_dispatched_at.desc`);
   } catch(e) {
     // A network hiccup (e.g. switching wifi/mobile data) isn't evidence the
-    // order is gone — keep showing the last known order instead of wiping it.
+    // orders are gone — keep showing the last known list instead of wiping it.
     return;
   }
-  S.activeOrder = rows?.[0] || null;
-  if (S.activeOrder) {
+  S.activeOrders = rows || [];
+  await Promise.all(S.activeOrders.map(async o => {
     try {
-      S.activeOrder.customerPhone = await req('/rest/v1/rpc/get_order_customer_phone', {
-        method: 'POST', body: JSON.stringify({ p_order_id: S.activeOrder.id }),
+      o.customerPhone = await req('/rest/v1/rpc/get_order_customer_phone', {
+        method: 'POST', body: JSON.stringify({ p_order_id: o.id }),
       });
-    } catch(e) { S.activeOrder.customerPhone = null; }
-  }
+    } catch(e) { o.customerPhone = null; }
+  }));
   renderOrderCard();
 }
 
@@ -1192,17 +1198,11 @@ function _openRoute(e, lat, lng) {
   return false;
 }
 
-function renderOrderCard() {
-  const wrap = document.getElementById('order-card-wrap');
-  const o = S.activeOrder;
-  if (!o) {
-    wrap.innerHTML = `<div class="empty-state"><div class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>Нет активного заказа.<br>Ожидайте — как только появится подходящий заказ, он придёт сюда.</div>`;
-    return;
-  }
+function _orderCardHtml(o) {
   const isLooking = o.status === 'looking_for_courier';
   const store = o.stores || {};
   const rewardTxt = o.carry_courier_reward != null ? `${Number(o.carry_courier_reward).toFixed(0)} ₽` : 'уточняется у продавца';
-  wrap.innerHTML = `
+  return `
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <span class="badge ${isLooking ? 'badge-warn' : 'badge-info'}">${isLooking ? 'Ожидает получения' : 'В пути к клиенту'}</span>
@@ -1233,11 +1233,21 @@ function renderOrderCard() {
     </div>`;
 }
 
+function renderOrderCard() {
+  const wrap = document.getElementById('order-card-wrap');
+  const orders = S.activeOrders || [];
+  if (!orders.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>Нет активного заказа.<br>Ожидайте — как только появится подходящий заказ, он придёт сюда.</div>`;
+    return;
+  }
+  wrap.innerHTML = orders.map(_orderCardHtml).join('');
+}
+
 async function declineOrder(orderId) {
   if (!confirm('Отказаться от заказа?')) return;
   try {
     await req('/rest/v1/rpc/courier_decline_order', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
-    await loadActiveOrder();
+    await loadActiveOrders();
   } catch(e) { alert(e.message || 'Ошибка'); }
 }
 
@@ -1245,7 +1255,7 @@ async function markDelivered(orderId) {
   if (!confirm('Подтвердить доставку заказа?')) return;
   try {
     await req('/rest/v1/rpc/courier_mark_delivered', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
-    await loadActiveOrder();
+    await loadActiveOrders();
     await loadTodayEarnings();
   } catch(e) { alert(e.message || 'Ошибка'); }
 }
@@ -1277,7 +1287,7 @@ function realtimeSubscribeMyOrders(userId) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.event === 'postgres_changes') loadActiveOrder();
+        if (msg.event === 'postgres_changes') loadActiveOrders();
       } catch {}
     };
     ws.onclose = ws.onerror = () => { clearInterval(_rtHb); _rtWs = null; };
@@ -1291,7 +1301,7 @@ function realtimeUnsubscribe() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && S.session?.user?.id && document.getElementById('screen-main').classList.contains('active')) {
-    loadActiveOrder();
+    loadActiveOrders();
     if (!_rtWs) realtimeSubscribeMyOrders(S.session.user.id);
   }
 });
@@ -1301,7 +1311,7 @@ document.addEventListener('visibilitychange', () => {
 // reconnect and refresh as soon as connectivity is back.
 window.addEventListener('online', () => {
   if (S.session?.user?.id && document.getElementById('screen-main').classList.contains('active')) {
-    loadActiveOrder();
+    loadActiveOrders();
     if (!_rtWs) realtimeSubscribeMyOrders(S.session.user.id);
   }
 });

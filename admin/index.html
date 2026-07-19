@@ -1709,11 +1709,8 @@ html.bg-custom #bg-fluid{display:none}
         <div id="ms-courier-mode-desc" style="font-size:12px;line-height:1.5;color:var(--fg-3);background:var(--bg-2);border-radius:var(--r-2);padding:8px 10px;margin-bottom:12px"></div>
 
         <div id="ms-own-courier-wrap" style="display:none">
-          <div style="display:flex;gap:6px;margin-bottom:8px">
-            <input type="text" id="ms-courier-search" placeholder="Телефон курьера (+7…)" style="flex:1;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-1);background:var(--bg-input);font-size:13px;color:var(--fg)">
-            <button class="btn btn-sm btn-p" type="button" onclick="msAddOwnCourier()">Добавить</button>
-          </div>
           <div id="ms-own-courier-list" style="display:flex;flex-direction:column;gap:4px"></div>
+          <p style="font-size:11px;color:var(--fg-3);margin-top:6px">Добавить курьера в список — в разделе «Сотрудники» → «Штатные курьеры» (по ID курьера).</p>
         </div>
 
         <div id="ms-carry-wrap" style="display:none">
@@ -4240,26 +4237,6 @@ function renderMsOwnCourierList() {
       <button class="btn btn-sm btn-d" style="padding:3px 8px" onclick="msRemoveOwnCourier('${c.id}')">✕</button>
     </div>
   `).join('');
-}
-
-async function msAddOwnCourier() {
-  const storeId = document.getElementById('ms-id').value;
-  const phoneEl = document.getElementById('ms-courier-search');
-  const phone = phoneEl.value.trim();
-  if (!storeId || !phone) return;
-  try {
-    const rows = await req(`/rest/v1/profiles?is_courier=eq.true&phone=eq.${encodeURIComponent(phone)}&select=id,full_name,phone`);
-    const courier = rows?.[0];
-    if (!courier) { showAdminToast('Курьер с таким телефоном не найден'); return; }
-    if (_msOwnCouriers.some(c => c.id === courier.id)) { showAdminToast('Уже в списке'); return; }
-    await req('/rest/v1/store_couriers', {
-      method: 'POST', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({ store_id: storeId, courier_id: courier.id }),
-    });
-    phoneEl.value = '';
-    _msOwnCouriers.push(courier);
-    renderMsOwnCourierList();
-  } catch(e) { showAdminToast('Ошибка: ' + (e.message || 'попробуйте ещё раз')); }
 }
 
 async function msRemoveOwnCourier(courierId) {
