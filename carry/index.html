@@ -349,9 +349,8 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
       &nbsp;·&nbsp;
       <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политика конфиденциальности</a>
     </div>
-    <button class="btn btn-sm btn-full" id="pf-resign-btn" onclick="resignCourier()" style="margin-bottom:8px">Перестать быть курьером</button>
     <button class="btn btn-d btn-full" id="pf-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт</button>
-    <p style="font-size:11px;color:var(--fg-3);text-align:center;margin-top:8px">Обе кнопки удаляют только курьерские данные — если этот email также используется как покупатель или в панели продавца, тот аккаунт останется. «Удалить аккаунт» дополнительно стирает вход целиком, если больше нигде не используется.</p>
+    <p style="font-size:11px;color:var(--fg-3);text-align:center;margin-top:8px">Удаляются только курьерские данные — если этот email также используется как покупатель или в панели продавца, тот аккаунт останется. Если больше нигде не используется — стирается вход целиком.</p>
   </div>
 </div>
 
@@ -599,23 +598,6 @@ function logout() {
   S.session = null; S.profile = null; S.activeOrder = null;
   closeModal('m-profile');
   goToAuth();
-}
-
-async function resignCourier() {
-  if (!confirm('Перестать быть курьером? Курьерские данные (город, ставка, история смен) будут удалены. Остальной аккаунт (если тот же email используется как покупатель или в панели продавца) не пострадает.')) return;
-  const done = btnLoad(document.getElementById('pf-resign-btn'), 'Обработка…');
-  try {
-    await req('/rest/v1/rpc/resign_courier', { method: 'POST', body: JSON.stringify({}) });
-    realtimeUnsubscribe();
-    stopShiftPing();
-    S.profile = { ...S.profile, is_courier: false, courier_city: null, courier_min_reward: null, courier_lat: null, courier_lng: null };
-    S.activeOrder = null;
-    closeModal('m-profile');
-    goToOnboard();
-  } catch(e) {
-    done();
-    setTimeout(() => alert('Ошибка: ' + (e.error || e.message || '')), 0);
-  }
 }
 
 async function doDeleteAccount() {

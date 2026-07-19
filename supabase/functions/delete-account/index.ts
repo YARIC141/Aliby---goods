@@ -78,19 +78,11 @@ Deno.serve(async (req: Request) => {
   }
 
   if (app === "admin" && profile.role === "employee") {
-    // Employee logins are synthetic (created by the store's admin, see
-    // manage-employee) and exist only to staff that one store — no separate
-    // client/courier life to preserve, so self-deletion is always a full
-    // delete, same as the admin's own "remove employee" action.
-    const { error: profileError } = await serviceClient.from("profiles").delete().eq("id", user.id)
-    if (profileError) {
-      return jsonResponse({ error: "Не удалось удалить аккаунт: " + profileError.message }, 500)
-    }
-    const { error: authDeleteError } = await serviceClient.auth.admin.deleteUser(user.id)
-    if (authDeleteError) {
-      return jsonResponse({ error: "Профиль удалён, но не удалось удалить учётную запись входа. Обратитесь в поддержку: alliby.app@gmail.com" }, 500)
-    }
-    return jsonResponse({ ok: true, fullyDeleted: true })
+    // Employee/master logins are synthetic (created by the store's admin,
+    // see manage-employee) and exist only to staff that one store — removing
+    // them is the store admin's call, not self-service. The UI already hides
+    // this action for employees; this is the server-side backstop.
+    return jsonResponse({ error: "Сотрудник не может удалить свой аккаунт самостоятельно — обратитесь к администратору заведения." }, 403)
   }
 
   if (app === "admin") {
