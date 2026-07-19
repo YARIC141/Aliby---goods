@@ -459,7 +459,7 @@ const _LOCAL = location.hostname === 'localhost' || location.hostname === '127.0
 const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
 const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
 
-let S = { session: null, profile: null, activeOrders: [] };
+let S = { session: null, profile: null, activeOrders: [], selectedHandedIds: new Set(), myLat: null, myLng: null };
 
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -1134,11 +1134,97 @@ function stopShiftPing() {
 async function pingLocation() {
   try {
     const pos = await window.AllibyBridge.requestLocation();
+    S.myLat = pos.lat; S.myLng = pos.lng;
     await req('/rest/v1/rpc/update_courier_location', {
       method: 'POST',
       body: JSON.stringify({ p_lat: pos.lat, p_lng: pos.lng }),
     });
+    renderOrderCard(); // route estimate may shift now that our position is fresher
   } catch(e) { /* permission denied or no fix — just skip this tick */ }
+}
+
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000, toR = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toR, dLng = (lng2 - lng1) * toR;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function _pluralStops(n) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'точка';
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'точки';
+  return 'точек';
+}
+
+// Builds one stop per delivery address, plus one merged pickup stop per
+// distinct store (several orders from the same store share a single visit) —
+// each delivery stop requires its order's pickup stop to be visited first.
+function _buildHandedStops(orders) {
+  const pickups = new Map();
+  const stops = [];
+  orders.forEach(o => {
+    const store = o.stores || {};
+    let pkey = null;
+    if (store.latitude != null && store.longitude != null) {
+      pkey = 'p:' + store.latitude + ':' + store.longitude;
+      if (!pickups.has(pkey)) pickups.set(pkey, { key: pkey, lat: store.latitude, lng: store.longitude, requires: null, orderIds: [] });
+      pickups.get(pkey).orderIds.push(o.id);
+    }
+    if (o.delivery_lat != null && o.delivery_lng != null) {
+      stops.push({ key: 'd:' + o.id, lat: o.delivery_lat, lng: o.delivery_lng, requires: pkey, orderIds: [o.id] });
+    }
+  });
+  return [...pickups.values(), ...stops];
+}
+
+// Already-picked-up orders — only the delivery point is left, no ordering constraint.
+function _buildDeliveryStops(orders) {
+  return orders
+    .filter(o => o.delivery_lat != null && o.delivery_lng != null)
+    .map(o => ({ key: 'd:' + o.id, lat: o.delivery_lat, lng: o.delivery_lng, requires: null, orderIds: [o.id] }));
+}
+
+// Exact best-order search via backtracking — at this scale (a courier rarely
+// juggles more than a handful of orders at once) a full search is instant and
+// guarantees the true minimum, no heuristic needed. Guards against a
+// pathological pile-up of stops turning into a combinatorial explosion.
+function _optimalStopOrder(startLat, startLng, stops) {
+  if (startLat == null || startLng == null || !stops || !stops.length || stops.length > 8) return null;
+  const n = stops.length;
+  const visited = new Array(n).fill(false);
+  const path = [];
+  let best = null;
+  function pathHas(key) { return path.some(s => s.key === key); }
+  function backtrack(curLat, curLng, dist) {
+    if (best && dist >= best.totalDist) return; // can't possibly beat the best found so far
+    if (path.length === n) {
+      if (!best || dist < best.totalDist) best = { order: path.slice(), totalDist: dist };
+      return;
+    }
+    for (let i = 0; i < n; i++) {
+      if (visited[i]) continue;
+      const s = stops[i];
+      if (s.requires && !pathHas(s.requires)) continue;
+      visited[i] = true; path.push(s);
+      backtrack(s.lat, s.lng, dist + haversineM(curLat, curLng, s.lat, s.lng));
+      path.pop(); visited[i] = false;
+    }
+  }
+  backtrack(startLat, startLng, 0);
+  return best;
+}
+
+function _fmtDist(m) {
+  return m >= 1000 ? (m / 1000).toFixed(1) + ' км' : Math.round(m) + ' м';
+}
+
+// Multi-stop counterpart of _mapsLink — Yandex Navigator's one-tap deep link
+// only supports a single destination, so a combined route always falls back
+// to the plain web link (courier confirms the route there, one extra tap).
+function _combinedMapsLink(orderedStops) {
+  const pts = orderedStops.map(s => `${s.lat},${s.lng}`).join('~');
+  return 'https://yandex.ru/maps/?rtext=~' + pts + '&rtt=auto';
 }
 
 // A "своей" (own_courier) courier can be assigned more than one order at
@@ -1164,6 +1250,18 @@ async function loadActiveOrders() {
       });
     } catch(e) { o.customerPhone = null; }
   }));
+
+  // A newly handed-over order defaults to selected (recommend taking
+  // everything); one that's no longer handed_to_courier (accepted/declined/
+  // delivered) drops out of the selection. An order that's still sitting
+  // there keeps whatever checked state the courier last left it in.
+  const handedIds = new Set(S.activeOrders.filter(o => o.status === 'handed_to_courier').map(o => o.id));
+  if (!S.selectedHandedIds) S.selectedHandedIds = new Set();
+  if (!S._knownHandedIds) S._knownHandedIds = new Set();
+  handedIds.forEach(id => { if (!S._knownHandedIds.has(id)) S.selectedHandedIds.add(id); });
+  [...S.selectedHandedIds].forEach(id => { if (!handedIds.has(id)) S.selectedHandedIds.delete(id); });
+  S._knownHandedIds = handedIds;
+
   renderOrderCard();
 }
 
@@ -1198,7 +1296,8 @@ function _openRoute(e, lat, lng) {
   return false;
 }
 
-function _orderCardHtml(o) {
+function _orderCardHtml(o, opts) {
+  opts = opts || {};
   const isLooking = o.status === 'looking_for_courier';
   const isHanded  = o.status === 'handed_to_courier';
   const canDecline = isLooking || isHanded;
@@ -1206,10 +1305,11 @@ function _orderCardHtml(o) {
   const badgeTxt = isLooking ? 'Ожидает получения' : isHanded ? 'Заказ передан вам' : 'В пути к клиенту';
   const store = o.stores || {};
   const rewardTxt = o.carry_courier_reward != null ? `${Number(o.carry_courier_reward).toFixed(0)} ₽` : 'уточняется у продавца';
+  const posBadge = opts.position ? `<span class="badge badge-info" style="margin-right:6px">Точка ${opts.position}</span>` : '';
   return `
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <span class="badge ${canDeliver ? 'badge-info' : 'badge-warn'}">${badgeTxt}</span>
+        <div>${posBadge}<span class="badge ${canDeliver ? 'badge-info' : 'badge-warn'}">${badgeTxt}</span></div>
         <span style="font:600 16px/1 var(--font-sans)">${esc(rewardTxt)}</span>
       </div>
       <div class="order-addr">
@@ -1231,8 +1331,16 @@ function _orderCardHtml(o) {
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:6px">
-        ${canDecline ? `<button class="btn btn-d" style="flex:1" onclick="declineOrder('${o.id}')">Отказаться</button>` : ''}
-        ${isHanded ? `<button class="btn btn-p" style="flex:1" onclick="acceptOrder('${o.id}')">Принять</button>` : ''}
+        ${opts.selectMode ? `
+          <label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;font-size:14px">
+            <input type="checkbox" ${opts.checked ? 'checked' : ''} onchange="toggleHandedSelection('${o.id}', this.checked)" style="width:20px;height:20px;flex-shrink:0">
+            Взять этот заказ
+          </label>
+          <button class="btn btn-d btn-sm" onclick="declineOrder('${o.id}')">Отказаться</button>
+        ` : `
+          ${canDecline ? `<button class="btn btn-d" style="flex:1" onclick="declineOrder('${o.id}')">Отказаться</button>` : ''}
+          ${isHanded ? `<button class="btn btn-p" style="flex:1" onclick="acceptOrder('${o.id}')">Принять</button>` : ''}
+        `}
         ${canDeliver ? `<button class="btn btn-p btn-full" onclick="markDelivered('${o.id}')">Доставил</button>` : ''}
       </div>
     </div>`;
@@ -1245,7 +1353,99 @@ function renderOrderCard() {
     wrap.innerHTML = `<div class="empty-state"><div class="ico"><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>Нет активного заказа.<br>Ожидайте — как только появится подходящий заказ, он придёт сюда.</div>`;
     return;
   }
-  wrap.innerHTML = orders.map(_orderCardHtml).join('');
+  const looking    = orders.filter(o => o.status === 'looking_for_courier');
+  const handed     = orders.filter(o => o.status === 'handed_to_courier');
+  const delivering = orders.filter(o => o.status === 'accepted_by_courier' || o.status === 'on_the_way');
+
+  let html = looking.map(o => _orderCardHtml(o)).join('');
+  html += handed.length >= 2 ? _renderHandedSelection(handed) : handed.map(o => _orderCardHtml(o)).join('');
+  html += delivering.length >= 2 ? _renderDeliveringRoute(delivering) : delivering.map(o => _orderCardHtml(o)).join('');
+  wrap.innerHTML = html;
+}
+
+// Multiple orders handed over at once — let the courier pick which ones they
+// have room for right now rather than accepting them one at a time. Unchecked
+// orders aren't declined, they just sit there for a later pass.
+function _renderHandedSelection(handed) {
+  if (!S.selectedHandedIds) S.selectedHandedIds = new Set();
+  const checkedOrders = handed.filter(o => S.selectedHandedIds.has(o.id));
+  const startLat = S.myLat ?? S.profile?.courier_lat, startLng = S.myLng ?? S.profile?.courier_lng;
+  const plan = checkedOrders.length ? _optimalStopOrder(startLat, startLng, _buildHandedStops(checkedOrders)) : null;
+
+  const posByOrderId = {};
+  if (plan) {
+    let n = 0;
+    plan.order.forEach(s => { n++; (s.orderIds || []).forEach(id => { if (!(id in posByOrderId)) posByOrderId[id] = n; }); });
+  }
+
+  const summary = `
+    <div class="card" style="background:var(--bg-2);margin-bottom:10px">
+      <div style="font-size:13px;color:var(--fg-3);margin-bottom:8px">
+        Выбрано ${checkedOrders.length} из ${handed.length}${plan ? ` · маршрут ≈ ${_fmtDist(plan.totalDist)}` : ''}
+      </div>
+      <button class="btn btn-p btn-full" ${checkedOrders.length ? '' : 'disabled'} onclick="takeSelectedOrders()">Взять выбранные (${checkedOrders.length})</button>
+    </div>`;
+
+  const cards = handed
+    .slice()
+    .sort((a, b) => (posByOrderId[a.id] ?? 999) - (posByOrderId[b.id] ?? 999))
+    .map(o => _orderCardHtml(o, { selectMode: true, checked: S.selectedHandedIds.has(o.id), position: posByOrderId[o.id] || null }))
+    .join('');
+
+  return summary + cards;
+}
+
+// Multiple already-accepted orders — combine their remaining delivery stops
+// into one route + one combined maps link, no selection needed here (these
+// are already committed).
+function _renderDeliveringRoute(delivering) {
+  const startLat = S.myLat ?? S.profile?.courier_lat, startLng = S.myLng ?? S.profile?.courier_lng;
+  const plan = _optimalStopOrder(startLat, startLng, _buildDeliveryStops(delivering));
+
+  const posByOrderId = {};
+  if (plan) plan.order.forEach((s, i) => { (s.orderIds || []).forEach(id => { posByOrderId[id] = i + 1; }); });
+
+  const linkHtml = plan
+    ? `<a class="btn btn-p btn-full" href="${_combinedMapsLink(plan.order)}" target="_blank" rel="noopener">Открыть весь маршрут (${plan.order.length} ${_pluralStops(plan.order.length)})</a>`
+    : '';
+
+  const summary = `
+    <div class="card" style="background:var(--bg-2);margin-bottom:10px">
+      <div style="font-size:13px;color:var(--fg-3);margin-bottom:8px">
+        Маршрут: ${delivering.length} ${_pluralStops(delivering.length)}${plan ? ` · ≈ ${_fmtDist(plan.totalDist)}` : ''}
+      </div>
+      ${linkHtml}
+    </div>`;
+
+  const cards = delivering
+    .slice()
+    .sort((a, b) => (posByOrderId[a.id] ?? 999) - (posByOrderId[b.id] ?? 999))
+    .map(o => _orderCardHtml(o, { position: posByOrderId[o.id] || null }))
+    .join('');
+
+  return summary + cards;
+}
+
+function toggleHandedSelection(orderId, checked) {
+  if (!S.selectedHandedIds) S.selectedHandedIds = new Set();
+  if (checked) S.selectedHandedIds.add(orderId); else S.selectedHandedIds.delete(orderId);
+  renderOrderCard();
+}
+
+async function takeSelectedOrders() {
+  const ids = [...(S.selectedHandedIds || [])];
+  if (!ids.length) return;
+  const restore = btnLoad(event.currentTarget, 'Беру…');
+  try {
+    for (const id of ids) {
+      await req('/rest/v1/rpc/courier_accept_order', { method: 'POST', body: JSON.stringify({ p_order_id: id }) });
+    }
+    await loadActiveOrders();
+  } catch(e) {
+    restore();
+    alert(e.error || e.message || 'Ошибка');
+    await loadActiveOrders();
+  }
 }
 
 async function declineOrder(orderId) {
