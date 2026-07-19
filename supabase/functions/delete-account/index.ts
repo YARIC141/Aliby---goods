@@ -77,17 +77,31 @@ Deno.serve(async (req: Request) => {
     profile.is_courier = false
   }
 
-  if (app === "admin") {
-    if (!["admin", "employee"].includes(profile.role)) {
-      return jsonResponse({ error: "Not an admin or employee account" }, 400)
+  if (app === "admin" && profile.role === "employee") {
+    // Employee logins are synthetic (created by the store's admin, see
+    // manage-employee) and exist only to staff that one store — no separate
+    // client/courier life to preserve, so self-deletion is always a full
+    // delete, same as the admin's own "remove employee" action.
+    const { error: profileError } = await serviceClient.from("profiles").delete().eq("id", user.id)
+    if (profileError) {
+      return jsonResponse({ error: "Не удалось удалить аккаунт: " + profileError.message }, 500)
     }
-    if (profile.role === "admin" && hasStores) {
+    const { error: authDeleteError } = await serviceClient.auth.admin.deleteUser(user.id)
+    if (authDeleteError) {
+      return jsonResponse({ error: "Профиль удалён, но не удалось удалить учётную запись входа. Обратитесь в поддержку: alliby.app@gmail.com" }, 500)
+    }
+    return jsonResponse({ ok: true, fullyDeleted: true })
+  }
+
+  if (app === "admin") {
+    if (profile.role !== "admin") {
+      return jsonResponse({ error: "Not an admin account" }, 400)
+    }
+    if (hasStores) {
       return jsonResponse({ error: "Нельзя удалить аккаунт, пока у вас есть заведения — сначала передайте или удалите их." }, 400)
     }
 
-    await serviceClient.from("profiles").update({
-      role: "user", employee_store_id: null, employee_login: null, employee_password: null,
-    }).eq("id", user.id)
+    await serviceClient.from("profiles").update({ role: "user" }).eq("id", user.id)
     profile.role = "user"
   }
 
