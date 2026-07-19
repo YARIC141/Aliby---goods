@@ -1359,7 +1359,7 @@ function renderOrderCard() {
 
   let html = looking.map(o => _orderCardHtml(o)).join('');
   html += handed.length >= 2 ? _renderHandedSelection(handed) : handed.map(o => _orderCardHtml(o)).join('');
-  html += delivering.length >= 2 ? _renderDeliveringRoute(delivering) : delivering.map(o => _orderCardHtml(o)).join('');
+  html += delivering.length >= 1 ? _renderDeliveringRoute(delivering) : '';
   wrap.innerHTML = html;
 }
 
@@ -1405,9 +1405,13 @@ function _renderDeliveringRoute(delivering) {
   const posByOrderId = {};
   if (plan) plan.order.forEach((s, i) => { (s.orderIds || []).forEach(id => { posByOrderId[id] = i + 1; }); });
 
-  const linkHtml = plan
-    ? `<a class="btn btn-p btn-full" href="${_combinedMapsLink(plan.order)}" target="_blank" rel="noopener">Открыть весь маршрут (${plan.order.length} ${_pluralStops(plan.order.length)})</a>`
-    : '';
+  // A single remaining stop still gets the one-tap Navigator-first link
+  // (same as an individual order card) rather than the plain combined-route
+  // web link, which only exists because Navigator's deep link can't take
+  // more than one destination.
+  const linkHtml = !plan ? '' : plan.order.length === 1
+    ? `<a class="btn btn-p btn-full" href="${_mapsLink(null, plan.order[0].lat, plan.order[0].lng)}" onclick="return _openRoute(event, ${plan.order[0].lat}, ${plan.order[0].lng})" target="_blank" rel="noopener">Открыть маршрут</a>`
+    : `<a class="btn btn-p btn-full" href="${_combinedMapsLink(plan.order)}" target="_blank" rel="noopener">Открыть весь маршрут (${plan.order.length} ${_pluralStops(plan.order.length)})</a>`;
 
   const summary = `
     <div class="card" style="background:var(--bg-2);margin-bottom:10px">
