@@ -494,6 +494,25 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
 .acq-text strong{display:block;font:700 14px/1.4 var(--font-sans);color:var(--fg);margin-bottom:3px}
 .acq-text span{font:400 13.5px/1.55 var(--font-sans);color:var(--fg-2)}
 
+.cmp-wrap{max-width:900px;margin:56px auto 0}
+.cmp-title{font:400 22px/1.2 var(--font-display);color:var(--fg);margin-bottom:8px;text-align:center}
+.cmp-sub{font:400 14px/1.55 var(--font-sans);color:var(--fg-3);text-align:center;max-width:560px;margin:0 auto 24px}
+.cmp-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-4);background:var(--glass-card);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.cmp-table{width:100%;border-collapse:collapse;min-width:640px}
+.cmp-table th,.cmp-table td{padding:14px 16px;text-align:left;font:400 13.5px/1.5 var(--font-sans);color:var(--fg-2);border-bottom:1px solid var(--line)}
+.cmp-table th{font:700 11.5px/1.3 var(--font-sans);letter-spacing:.03em;text-transform:uppercase;color:var(--fg-3);background:rgba(255,255,255,.02)}
+.cmp-table td:first-child,.cmp-table th:first-child{color:var(--fg-2);font-weight:600;white-space:nowrap}
+.cmp-table th.cmp-us,.cmp-table td.cmp-us{background:rgba(var(--accent-rgb),.09)}
+.cmp-table td.cmp-us{color:var(--fg);font-weight:600}
+.cmp-table th.cmp-us{color:var(--accent)}
+.cmp-table tr:last-child td{border-bottom:none}
+.cmp-take{max-width:720px;margin:22px auto 0;display:flex;flex-direction:column;gap:11px}
+.cmp-take li{display:flex;gap:10px;font:400 14.5px/1.5 var(--font-sans);color:var(--fg-2)}
+.cmp-take li svg{color:var(--accent);flex-shrink:0;margin-top:3px}
+.cmp-take li strong{color:var(--fg)}
+.cmp-note{max-width:720px;margin:16px auto 0;font:400 12px/1.6 var(--font-sans);color:var(--fg-4);text-align:center}
+@media(max-width:640px){.cmp-title{font-size:19px}}
+
 /* ── FOOTER ── */
 footer{
   padding:32px clamp(20px,5vw,80px);border-top:1px solid var(--line);
@@ -1373,6 +1392,75 @@ html[data-theme="light"] .icon-moon{display:flex}
         <strong>Нужен интернет-эквайринг</strong>
         <span>Для подписки требуется подключённый интернет-эквайринг для приёма онлайн-оплат. Мы помогаем подключить и настроить его — вам не нужно разбираться в этом самостоятельно.</span>
       </div>
+    </div>
+
+    <div class="cmp-wrap">
+      <div class="cmp-title">Alliby и рынок</div>
+      <p class="cmp-sub">Яндекс Еда, Авито и YClients закрывают по одной задаче. Alliby — еда, товары, услуги и абонементы в одном приложении.</p>
+      <div class="cmp-scroll">
+        <table class="cmp-table">
+          <thead>
+            <tr>
+              <th>Показатель</th>
+              <th class="cmp-us">Alliby</th>
+              <th>Яндекс Еда</th>
+              <th>Авито</th>
+              <th>YClients</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Направления</td>
+              <td class="cmp-us">Еда + товары + услуги + абонементы</td>
+              <td>Еда</td>
+              <td>Объявления</td>
+              <td>Запись на услуги</td>
+            </tr>
+            <tr>
+              <td>Комиссия с заказа</td>
+              <td class="cmp-us">0%</td>
+              <td>16,67–29,17%</td>
+              <td>оплата за размещение</td>
+              <td>0%</td>
+            </tr>
+            <tr>
+              <td>Деньги от клиента</td>
+              <td class="cmp-us">сразу на счёт бизнеса</td>
+              <td>раз в неделю, за вычетом комиссии</td>
+              <td>вне площадки</td>
+              <td>напрямую, свой эквайринг</td>
+            </tr>
+            <tr>
+              <td>Стоимость</td>
+              <td class="cmp-us">930–1 600 ₽/мес</td>
+              <td>% с каждого заказа</td>
+              <td>за размещение и продвижение</td>
+              <td>857–4 285+ ₽/мес</td>
+            </tr>
+            <tr>
+              <td>Своя доставка</td>
+              <td class="cmp-us">есть — Alliby Carry</td>
+              <td>есть, курьеры сервиса</td>
+              <td>Авито Доставка (не «здесь и сейчас»)</td>
+              <td>нет</td>
+            </tr>
+            <tr>
+              <td>Карта заведений для клиента</td>
+              <td class="cmp-us">есть</td>
+              <td>есть (только еда)</td>
+              <td>нет</td>
+              <td>нет</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="cmp-take">
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span><strong>Одно приложение вместо трёх.</strong> Еду, товары, услуги и абонементы не нужно вести в разных сервисах.</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span><strong>0% с заказа.</strong> Фиксированная подписка вместо комиссии до 29% у Яндекс Еды — и деньги приходят сразу, а не раз в неделю.</span></li>
+        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span><strong>Своя доставка без комиссии платформы.</strong> Штатный курьер по ID или открытый пул курьеров-фрилансеров.</span></li>
+      </ul>
+      <p class="cmp-note">Комиссии и тарифы конкурентов приведены по открытым источникам на июль 2026 года и могут измениться.</p>
     </div>
 
     <div style="text-align:center;margin-top:32px">
