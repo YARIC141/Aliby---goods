@@ -506,6 +506,10 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
 .cmp-table td.cmp-us{color:var(--fg);font-weight:600}
 .cmp-table th.cmp-us{color:var(--accent)}
 .cmp-table tr:last-child td{border-bottom:none}
+.cmp-ico{display:inline-flex;align-items:center;gap:6px}
+.cmp-ico svg{flex-shrink:0}
+.cmp-ico.cmp-yes svg{color:var(--green)}
+.cmp-ico.cmp-no svg{color:var(--red)}
 .cmp-take{max-width:720px;margin:22px auto 0;display:flex;flex-direction:column;gap:11px}
 .cmp-take li{display:flex;gap:10px;font:400 14.5px/1.5 var(--font-sans);color:var(--fg-2)}
 .cmp-take li svg{color:var(--accent);flex-shrink:0;margin-top:3px}
@@ -1421,24 +1425,24 @@ html[data-theme="light"] .icon-moon{display:flex}
             </tr>
             <tr>
               <td>Абонементы, QR-списание визитов</td>
-              <td class="cmp-us">есть</td>
-              <td>нет</td>
-              <td>нет</td>
-              <td>есть</td>
+              <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
             </tr>
             <tr>
               <td>Аренда на выбранный период</td>
-              <td class="cmp-us">есть</td>
-              <td>нет</td>
+              <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
               <td>только объявления</td>
-              <td>нет отдельного модуля</td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет отдельного модуля</span></td>
             </tr>
             <tr>
               <td>Календарь записей</td>
-              <td class="cmp-us">есть</td>
-              <td>нет</td>
-              <td>нет</td>
-              <td>есть (специализация)</td>
+              <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть (специализация)</span></td>
             </tr>
             <tr>
               <td>Комиссия с заказа</td>
@@ -1463,17 +1467,17 @@ html[data-theme="light"] .icon-moon{display:flex}
             </tr>
             <tr>
               <td>Своя доставка</td>
-              <td class="cmp-us">есть — Alliby Carry</td>
-              <td>есть, курьеры сервиса</td>
+              <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть — Alliby Carry</span></td>
+              <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть, курьеры сервиса</span></td>
               <td>Авито Доставка (не «здесь и сейчас»)</td>
-              <td>нет</td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
             </tr>
             <tr>
               <td>Карта заведений для клиента</td>
-              <td class="cmp-us">есть</td>
-              <td>есть (только еда)</td>
-              <td>нет</td>
-              <td>нет</td>
+              <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
+              <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть (только еда)</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
             </tr>
           </tbody>
         </table>
