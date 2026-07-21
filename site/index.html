@@ -510,6 +510,7 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
 .cmp-ico svg{flex-shrink:0;width:18px;height:18px;stroke-width:3.5px}
 .cmp-ico.cmp-yes svg{color:var(--green)}
 .cmp-ico.cmp-no svg{color:var(--red)}
+.cmp-na{color:var(--fg-4);font-style:italic}
 .cmp-take{max-width:720px;margin:22px auto 0;display:flex;flex-direction:column;gap:11px}
 .cmp-take li{display:flex;gap:10px;font:400 14.5px/1.5 var(--font-sans);color:var(--fg-2)}
 .cmp-take li svg{color:var(--accent);flex-shrink:0;margin-top:3px}
@@ -1426,22 +1427,22 @@ html[data-theme="light"] .icon-moon{display:flex}
             <tr>
               <td>Абонементы, QR-списание визитов</td>
               <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
-              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
-              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-na">н/п</span></td>
+              <td><span class="cmp-na">н/п</span></td>
               <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
             </tr>
             <tr>
               <td>Аренда на выбранный период</td>
               <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
-              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-na">н/п</span></td>
               <td>только объявления</td>
               <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет отдельного модуля</span></td>
             </tr>
             <tr>
               <td>Календарь записей</td>
               <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></td>
-              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
-              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></td>
+              <td><span class="cmp-na">н/п</span></td>
+              <td><span class="cmp-na">н/п</span></td>
               <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть (специализация)</span></td>
             </tr>
             <tr>
@@ -1482,15 +1483,15 @@ html[data-theme="light"] .icon-moon{display:flex}
             <tr>
               <td>Доп. заведение / точка</td>
               <td class="cmp-us">500 ₽/мес (или 5 000 ₽/год)</td>
-              <td>без отдельной платы — комиссия по заказам этой точки</td>
-              <td>без отдельной платы — тариф по объявлениям</td>
+              <td><span class="cmp-na">н/п</span></td>
+              <td><span class="cmp-na">н/п</span></td>
               <td>новая подписка с нуля, 857–4 285+ ₽/мес</td>
             </tr>
             <tr>
               <td>Доп. сотрудник / мастер</td>
               <td class="cmp-us">бесплатно, без ограничений</td>
-              <td>—</td>
-              <td>без отдельной платы</td>
+              <td><span class="cmp-na">н/п</span></td>
+              <td><span class="cmp-na">н/п</span></td>
               <td>доплаты нет, но нужен тариф с бо́льшим лимитом (3 → 10 → без ограничений)</td>
             </tr>
             <tr>
@@ -1499,6 +1500,13 @@ html[data-theme="light"] .icon-moon{display:flex}
               <td>≈9–29 ₽ с заказа (в Москве — 29 ₽)</td>
               <td>нет отдельного сбора, покупатель оплачивает доставку по факту</td>
               <td>нет</td>
+            </tr>
+            <tr>
+              <td>Бесплатный пробный период</td>
+              <td class="cmp-us"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>1 месяц, весь функционал</span></td>
+              <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>1 мес. на подписку, комиссия с заказов — всегда</span></td>
+              <td><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет, есть постоянный бесплатный тариф с лимитами</span></td>
+              <td><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>7 дней</span></td>
             </tr>
           </tbody>
         </table>
