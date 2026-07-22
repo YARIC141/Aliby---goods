@@ -521,6 +521,18 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
 .cmp-legend strong{color:var(--fg-2);font-weight:700}
 .cmp-note{max-width:720px;margin:16px auto 0;font:400 12px/1.6 var(--font-sans);color:var(--fg-4);text-align:center}
 @media(max-width:640px){.cmp-title{font-size:19px}}
+.cmp-mobile{display:none;flex-direction:column;gap:14px}
+@media(max-width:640px){.cmp-scroll{display:none}.cmp-mobile{display:flex}}
+.cmp-mcard{border:1px solid var(--line);border-radius:var(--r-4);background:rgba(255,255,255,.04);overflow:hidden}
+.cmp-mcard.cmp-us{border-color:rgba(var(--accent-rgb),.4);background:rgba(var(--accent-rgb),.08)}
+.cmp-mhead{padding:13px 16px;font:700 15px/1.2 var(--font-sans);color:var(--fg);border-bottom:1px solid var(--line)}
+.cmp-mcard.cmp-us .cmp-mhead{color:var(--accent)}
+.cmp-mrow{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.cmp-mrow:last-child{border-bottom:none}
+.cmp-mlabel{font:700 11px/1.3 var(--font-sans);letter-spacing:.02em;color:var(--fg-3)}
+.cmp-mval{font:400 14px/1.4 var(--font-sans);color:var(--fg-2)}
+.cmp-mcard.cmp-us .cmp-mval{color:var(--fg);font-weight:600}
+html[data-theme="light"] .cmp-mcard{background:rgba(255,255,255,.5)}
 
 /* ── FOOTER ── */
 footer{
@@ -1516,6 +1528,76 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="cmp-mobile">
+        <div class="cmp-mcard cmp-us">
+          <div class="cmp-mhead">Alliby</div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Направления</span><span class="cmp-mval">Еда + товары + услуги + абонементы</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Абонементы, QR-списание визитов</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Аренда на выбранный период</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Календарь записей</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Комиссия с заказа</span><span class="cmp-mval">0%</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Деньги от клиента</span><span class="cmp-mval">сразу на счёт бизнеса</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Стоимость</span><span class="cmp-mval">930–1 600 ₽/мес</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Своя доставка</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть — Alliby Carry</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Карта заведений для клиента</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. заведение / точка</span><span class="cmp-mval">500 ₽/мес (или 5 000 ₽/год)</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. сотрудник / мастер</span><span class="cmp-mval">бесплатно, без ограничений</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Сервисный сбор для клиента</span><span class="cmp-mval">нет</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Бесплатный пробный период</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>1 месяц, весь функционал</span></span></div>
+        </div>
+
+        <div class="cmp-mcard">
+          <div class="cmp-mhead">Яндекс Еда</div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Направления</span><span class="cmp-mval">Еда</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Абонементы, QR-списание визитов</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Аренда на выбранный период</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Календарь записей</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Комиссия с заказа</span><span class="cmp-mval">16,67–29,17%</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Деньги от клиента</span><span class="cmp-mval">раз в неделю, за вычетом комиссии</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Стоимость</span><span class="cmp-mval">≈130–235 ₽ с заказа при чеке 800 ₽</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Своя доставка</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть, курьеры сервиса</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Карта заведений для клиента</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть (только еда)</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. заведение / точка</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. сотрудник / мастер</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Сервисный сбор для клиента</span><span class="cmp-mval">≈9–29 ₽ с заказа (в Москве — 29 ₽)</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Бесплатный пробный период</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>1 мес. на подписку, комиссия с заказов — всегда</span></span></div>
+        </div>
+
+        <div class="cmp-mcard">
+          <div class="cmp-mhead">Авито</div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Направления</span><span class="cmp-mval">Объявления</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Абонементы, QR-списание визитов</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Аренда на выбранный период</span><span class="cmp-mval">только объявления</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Календарь записей</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Комиссия с заказа</span><span class="cmp-mval">оплата за размещение</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Деньги от клиента</span><span class="cmp-mval">вне площадки</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Стоимость</span><span class="cmp-mval">0–6 000+ ₽/мес за размещение</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Своя доставка</span><span class="cmp-mval">Авито Доставка (не «здесь и сейчас»)</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Карта заведений для клиента</span><span class="cmp-mval"><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. заведение / точка</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. сотрудник / мастер</span><span class="cmp-mval"><span class="cmp-na">н/п</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Сервисный сбор для клиента</span><span class="cmp-mval">нет отдельного сбора, покупатель оплачивает доставку по факту</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Бесплатный пробный период</span><span class="cmp-mval"><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет, есть постоянный бесплатный тариф с лимитами</span></span></div>
+        </div>
+
+        <div class="cmp-mcard">
+          <div class="cmp-mhead">YClients</div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Направления</span><span class="cmp-mval">Запись на услуги</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Абонементы, QR-списание визитов</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Аренда на выбранный период</span><span class="cmp-mval"><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет отдельного модуля</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Календарь записей</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>есть (специализация)</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Комиссия с заказа</span><span class="cmp-mval">0%</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Деньги от клиента</span><span class="cmp-mval">напрямую, свой эквайринг</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Стоимость</span><span class="cmp-mval">857–4 285+ ₽/мес</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Своя доставка</span><span class="cmp-mval"><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Карта заведений для клиента</span><span class="cmp-mval"><span class="cmp-ico cmp-no"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>нет</span></span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. заведение / точка</span><span class="cmp-mval">новая подписка с нуля, 857–4 285+ ₽/мес</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Доп. сотрудник / мастер</span><span class="cmp-mval">доплаты нет, но нужен тариф с бо́льшим лимитом (3 → 10 → без ограничений)</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Сервисный сбор для клиента</span><span class="cmp-mval">нет</span></div>
+          <div class="cmp-mrow"><span class="cmp-mlabel">Бесплатный пробный период</span><span class="cmp-mval"><span class="cmp-ico cmp-yes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>7 дней</span></span></div>
+        </div>
       </div>
 
       <div class="cmp-legend">
