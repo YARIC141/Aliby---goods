@@ -521,8 +521,15 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
 .cmp-legend strong{color:var(--fg-2);font-weight:700}
 .cmp-note{max-width:720px;margin:16px auto 0;font:400 12px/1.6 var(--font-sans);color:var(--fg-4);text-align:center}
 @media(max-width:640px){.cmp-title{font-size:19px}}
-.cmp-mobile{display:none;flex-direction:column;gap:14px}
-@media(max-width:640px){.cmp-scroll{display:none}.cmp-mobile{display:flex}}
+.cmp-mobile{display:none;gap:12px}
+.cmp-mobile::-webkit-scrollbar{display:none}
+@media(max-width:640px){
+  .cmp-scroll{display:none}
+  .cmp-mobile{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+  .cmp-mcard{flex:0 0 86%;scroll-snap-align:center}
+}
+.cmp-mswipe-hint{display:none}
+@media(max-width:640px){.cmp-mswipe-hint{display:block;text-align:center;font:600 12px/1 var(--font-sans);color:var(--fg-3);margin-bottom:10px}}
 .cmp-mcard{border:1px solid var(--line);border-radius:var(--r-4);background:rgba(255,255,255,.04);overflow:hidden}
 .cmp-mcard.cmp-us{border-color:rgba(var(--accent-rgb),.4);background:rgba(var(--accent-rgb),.08)}
 .cmp-mhead{padding:13px 16px;font:700 15px/1.2 var(--font-sans);color:var(--fg);border-bottom:1px solid var(--line)}
@@ -1530,6 +1537,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         </table>
       </div>
 
+      <p class="cmp-mswipe-hint">← Свайпните, чтобы сравнить сервисы →</p>
       <div class="cmp-mobile">
         <div class="cmp-mcard cmp-us">
           <div class="cmp-mhead">Alliby</div>
