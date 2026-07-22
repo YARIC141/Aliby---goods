@@ -9954,8 +9954,19 @@ function closeStoreSchedDay() {
   pill.textContent = '↓';
   document.body.appendChild(pill);
 
+  // Screens like store detail (services direction) hold several .pb panes at once
+  // (Услуги/Мастера/Расписание) and toggle them via display:none — querying the first
+  // .pb in DOM order picked a hidden one whenever a non-default tab was active, collapsing
+  // its getBoundingClientRect() to all zeros and silently killing the swipe-start zone check.
+  function activePb() {
+    const screen = document.querySelector('.screen.active');
+    if (!screen) return null;
+    for (const el of screen.querySelectorAll('.pb')) if (el.offsetParent !== null) return el;
+    return null;
+  }
+
   function scrollTop() {
-    const pb = document.querySelector('.screen.active .pb');
+    const pb = activePb();
     return !pb || pb.scrollTop === 0;
   }
 
@@ -9964,7 +9975,7 @@ function closeStoreSchedDay() {
     // INIT_ZONE is relative to the top of the active screen's scrollable area, not the
     // viewport — screens with an extra tab bar (e.g. store detail) push that area down,
     // so a fixed viewport-relative zone missed swipes that started where the list visually begins.
-    const pb = document.querySelector('.screen.active .pb');
+    const pb = activePb();
     const zoneTop = pb ? pb.getBoundingClientRect().top : 0;
     const t = e.touches[0];
     if (t.clientY < zoneTop || t.clientY > zoneTop + INIT_ZONE) return;
