@@ -5278,8 +5278,12 @@ async function loadMenuItems() {
   const storeId = S.store.id;
   const catId = S.menuCatId;
 
-  // Same store + same category → re-apply filters only (search/sort/avail changed)
-  if (_menuCliState.storeId === storeId && _menuCliState.catId === catId && _allMenuItems.length) {
+  // Same store + same category, fetched recently → re-apply filters only (search/sort/avail
+  // changed). Without the freshness check this reused _allMenuItems forever for the lifetime
+  // of the tab — e.g. re-entering a store screen after data changed server-side (new photos,
+  // price, availability) kept showing whatever was first fetched this session.
+  const _sameList = _menuCliState.storeId === storeId && _menuCliState.catId === catId && _allMenuItems.length;
+  if (_sameList && _menuFetchKey === `${storeId}_${catId}` && (Date.now() - _menuFetchTs) < _MENU_THROTTLE) {
     _renderMenuGrid(el, _allMenuItems);
     return;
   }
