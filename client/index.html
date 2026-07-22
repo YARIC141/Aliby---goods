@@ -5374,8 +5374,12 @@ const _FOOD_IMGS = {
 };
 const _FOOD_DEFAULT = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=240&fit=crop&auto=format';
 
+const _DIR_ICON = { food:'food', goods:'goods', services:'services', sport:'sport', entertainment:'entertain', courier:'pkg' };
+
 function itemFallbackImg(item, alt) {
   if (item.image_url) return `<img src="${esc(item.image_url)}" alt="${esc(alt||item.name)}">`;
+  const dir = S.store?.direction;
+  if (dir && dir !== 'food') return svgIco(_DIR_ICON[dir] || 'goods', 32);
   const n = (item.name || '').toLowerCase();
   const url = Object.entries(_FOOD_IMGS).find(([k]) => n.includes(k))?.[1] || _FOOD_DEFAULT;
   return `<img src="${url}" alt="${esc(alt||item.name)}">`;
