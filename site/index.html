@@ -99,13 +99,14 @@ nav{
 .nav-drop:hover .nav-drop-menu{opacity:1;visibility:visible;transform:translateX(-50%) translateY(2px)}
 .nav-drop-menu a{padding:9px 12px;border-radius:var(--r-2);font:600 13px/1.2 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:background .14s,color .14s}
 .nav-drop-menu a:hover{background:var(--bg-2);color:var(--fg)}
-.nav-play-badge{display:inline-flex;align-items:center;transition:transform .14s}
+.nav-play-badge{display:inline-flex;align-items:center;flex-shrink:0;transition:transform .14s}
 .nav-play-badge img{height:40px;width:auto;display:block}
 .nav-play-badge:hover{transform:translateY(-1px)}
 .cta-play-badge{display:inline-flex;align-items:center;transition:transform .14s}
 .cta-play-badge img{height:54px;width:auto;display:block}
 .cta-play-badge:hover{transform:translateY(-2px)}
 @media(max-width:720px){.nav-links .nav-link,.nav-drop{display:none}}
+@media(max-width:400px){nav{padding:0 14px}.nav-play-badge img{height:30px}}
 
 /* ── PAGE HERO ── */
 #page-hero{
@@ -817,8 +818,10 @@ html[data-theme="light"] .icon-moon{display:flex}
 .dir-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:48px}
 @media(max-width:960px){.dir-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:720px){.dir-grid{grid-template-columns:1fr}}
-.dir-card{background:var(--glass-card);border:1px solid var(--line);border-radius:var(--r-4);padding:28px;transition:border-color .2s,transform .2s,box-shadow .2s;display:flex;flex-direction:column}
-.dir-card:hover{transform:translateY(-3px);border-color:rgba(var(--accent-rgb),.45);box-shadow:0 16px 40px rgba(var(--accent-rgb),.14)}
+.dir-card{background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:var(--r-4);padding:28px;transition:background .2s,border-color .2s,transform .2s,box-shadow .2s;display:flex;flex-direction:column}
+.dir-card:hover{background:rgba(255,255,255,.095);transform:translateY(-3px);border-color:rgba(var(--accent-rgb),.45);box-shadow:0 16px 40px rgba(var(--accent-rgb),.14)}
+html[data-theme="light"] .dir-card{background:rgba(255,255,255,.5)}
+html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 .dir-card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .dir-icon{width:48px;height:48px;border-radius:var(--r-3);display:flex;align-items:center;justify-content:center;margin-bottom:18px;background:rgba(var(--accent-rgb),.14);color:var(--accent);flex-shrink:0}
 .dir-title{font:700 19px/1.2 var(--font-sans);margin-bottom:6px;color:var(--fg)}
