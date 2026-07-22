@@ -9972,11 +9972,11 @@ function closeStoreSchedDay() {
 
   document.addEventListener('touchstart', e => {
     if (!scrollTop()) return;
-    // INIT_ZONE is relative to the top of the active screen's scrollable area, not the
-    // viewport — screens with an extra tab bar (e.g. store detail) push that area down,
-    // so a fixed viewport-relative zone missed swipes that started where the list visually begins.
-    const pb = activePb();
-    const zoneTop = pb ? pb.getBoundingClientRect().top : 0;
+    // Anchor the swipe-start zone to the screen's header (.ph), same on every screen —
+    // store detail's extra tab bar sits below the header, not inside it, so this stays
+    // consistent instead of drifting down with whichever tab pane happens to be open.
+    const ph = document.querySelector('.screen.active .ph');
+    const zoneTop = ph ? ph.getBoundingClientRect().top : 0;
     const t = e.touches[0];
     if (t.clientY < zoneTop || t.clientY > zoneTop + INIT_ZONE) return;
     startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
