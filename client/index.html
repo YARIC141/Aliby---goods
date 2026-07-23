@@ -6717,16 +6717,25 @@ function renderDeliveryToggle() {
   if (pu) pu.style.opacity  = isDelivery ? '0.45' : '1';
   if (dv) dv.style.opacity  = isDelivery ? '1'    : '0.45';
   const priceLbl = document.getElementById('del-price-lbl');
-  if (priceLbl) priceLbl.textContent = di ? (di.inZone ? `${di.price} ₽` : '(недоступно)') : '';
+  if (priceLbl) priceLbl.textContent = di?.inZone ? `${di.price} ₽` : '';
   const dr = document.getElementById('c-delivery-row');
   if (dr) dr.style.display = isDelivery ? '' : 'none';
   const addrWrap = document.getElementById('delivery-addr-wrap');
   if (addrWrap) {
-    if (isDelivery && di?.inZone) {
-      const addrTxt = S.userAddr || document.getElementById('p-address')?.value?.trim() || S.profile?.address || '';
+    if (isDelivery) {
       addrWrap.style.display = 'flex';
       const txtEl = document.getElementById('delivery-addr-txt');
-      if (txtEl) txtEl.textContent = addrTxt || 'Укажите адрес доставки';
+      if (txtEl) {
+        if (di?.inZone) {
+          let addrTxt = S.userAddr || document.getElementById('p-address')?.value?.trim() || S.profile?.address || '';
+          if (/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/.test(addrTxt)) addrTxt = ''; // never show raw lat/lng
+          txtEl.textContent = addrTxt || 'Укажите адрес доставки';
+          txtEl.style.color = '';
+        } else {
+          txtEl.textContent = 'Доставка недоступна по этому адресу';
+          txtEl.style.color = 'var(--warn)';
+        }
+      }
     } else {
       addrWrap.style.display = 'none';
     }
