@@ -2320,6 +2320,16 @@ async function req(path, opts = {}, _retried = false) {
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+// Serves our own Beget S3 bucket through alliby.ru instead of hotlinking it directly —
+// some networks resolve/route third-party CDN domains differently than our own domain
+// (seen on the native shell: images silently failed on one Wi-Fi network but not via VPN),
+// while alliby.ru itself always worked. Only this exact known bucket is ever rewritten.
+const _MEDIA_ORIGIN = 'https://s3.ru1.storage.beget.cloud/7e1578c73dcc-alliby-media/';
+function mediaUrl(url) {
+  return typeof url === 'string' && url.startsWith(_MEDIA_ORIGIN)
+    ? 'https://alliby.ru/media/' + url.slice(_MEDIA_ORIGIN.length)
+    : url;
+}
 // External payment gateway URLs must open in the system browser on native (Capacitor
 // WebView blocks/loses navigation to foreign origins and would kill the app bridge);
 // on web, a normal same-tab redirect is fine.
@@ -4429,7 +4439,7 @@ function renderStoreList(stores) {
     const d = document.createElement('div');
     d.className = 'sl-item' + (S.store?.id === st.id ? ' sel' : '');
     const schedLabel = _SVC_DIRS.has(st.direction) ? `${svgIco('calendar',13)} Календарь записей` : `${svgIco('clock',13)} График работы`;
-    const thumb = st.image_url ? `<img src="${esc(st.image_url)}" style="width:52px;height:52px;object-fit:cover;border-radius:var(--r-2);flex-shrink:0;border:1px solid var(--line-soft)">` : '';
+    const thumb = st.image_url ? `<img src="${esc(mediaUrl(st.image_url))}" style="width:52px;height:52px;object-fit:cover;border-radius:var(--r-2);flex-shrink:0;border:1px solid var(--line-soft)">` : '';
     const delInfo = getDeliveryInfo(st);
     const delBadge = delInfo ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:${delInfo.inZone?'#16a34a':'#ef4444'};color:#fff;vertical-align:middle;margin-left:4px">${svgIco('bicycle',11)}</span>` : '';
     d.innerHTML = `
@@ -4466,7 +4476,7 @@ function renderMapMarkers(stores) {
       ? `<div class="p-del${_stHasCart ? '' : ' no-cart'}" style="background:${delInfo.inZone?'#16a34a':'#ef4444'};color:#fff;display:flex;align-items:center;justify-content:center">${svgIco('bicycle',11)}</div>`
       : '';
     const pinHead = st.image_url
-      ? `<div class="p-img-wrap"><img class="p-img" src="${esc(st.image_url)}" alt="">${_stHasCart ? _cartBadge : ''}${_delBadge}</div>`
+      ? `<div class="p-img-wrap"><img class="p-img" src="${esc(mediaUrl(st.image_url))}" alt="">${_stHasCart ? _cartBadge : ''}${_delBadge}</div>`
       : `<div class="p-dot-wrap"><div class="p-dot" style="background:${esc(st.marker_color||'#e8430a')}"></div>${_stHasCart ? _cartBadge : ''}${_delBadge}</div>`;
     el.innerHTML = `
       ${pinHead}
@@ -4525,7 +4535,7 @@ async function showStorePopup(st, listItem) {
   document.querySelectorAll('.sl-item').forEach(el => el.classList.remove('sel'));
   listItem?.classList.add('sel');
   const ppImg = document.getElementById('pp-img');
-  if (st.image_url) { ppImg.src = esc(st.image_url); ppImg.style.display = 'block'; }
+  if (st.image_url) { ppImg.src = mediaUrl(st.image_url); ppImg.style.display = 'block'; }
   else ppImg.style.display = 'none';
   document.getElementById('pp-name').textContent  = st.name || '';
   document.getElementById('pp-addr').textContent  = st.address || '';
@@ -4931,7 +4941,7 @@ async function loadStore() {
   }
   const logoEl = document.getElementById('store-logo');
   if (st.image_url) {
-    logoEl.innerHTML = `<img src="${esc(st.image_url)}" alt="${esc(st.name)}">`;
+    logoEl.innerHTML = `<img src="${esc(mediaUrl(st.image_url))}" alt="${esc(st.name)}">`;
   } else {
     logoEl.textContent = st.name ? st.name[0].toUpperCase() : '?';
   }
@@ -5381,7 +5391,7 @@ const _FOOD_DEFAULT = 'https://images.unsplash.com/photo-1504674900247-0877df9cc
 const _DIR_ICON = { food:'food', goods:'goods', services:'services', sport:'sport', entertainment:'entertain', courier:'pkg' };
 
 function itemFallbackImg(item, alt) {
-  if (item.image_url) return `<img src="${esc(item.image_url)}" alt="${esc(alt||item.name)}">`;
+  if (item.image_url) return `<img src="${esc(mediaUrl(item.image_url))}" alt="${esc(alt||item.name)}">`;
   const dir = S.store?.direction;
   if (dir && dir !== 'food') return svgIco(_DIR_ICON[dir] || 'goods', 32);
   const n = (item.name || '').toLowerCase();
@@ -8007,7 +8017,7 @@ function _renderRecentStores(el, unique) {
     html += `<div class="recent-dir-block"><div class="recent-dir-label" style="color:${color};border-color:${color}40">${label}</div>`;
     for (const { store_id, store: st } of items) {
       const thumb = st.image_url
-        ? `<img src="${esc(st.image_url)}" alt="">`
+        ? `<img src="${esc(mediaUrl(st.image_url))}" alt="">`
         : `<span>${st.store_categories?.icon || svgIco('store',20)}</span>`;
       const cat = st.store_categories
         ? ((st.store_categories.icon || '') + ' ' + st.store_categories.name).trim() : '';
@@ -8944,7 +8954,7 @@ async function loadStoreMasters() {
   el.innerHTML = masters.map(m => {
     const initials = (m.full_name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
     const photoHtml = m.master_photo_url
-      ? `<img src="${esc(m.master_photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+      ? `<img src="${esc(mediaUrl(m.master_photo_url))}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
       : `<span style="font-size:22px;font-weight:700;color:var(--fg-3)">${initials}</span>`;
     const bioPreview = m.master_bio ? m.master_bio.slice(0, 90) + (m.master_bio.length > 90 ? '…' : '') : '';
     return `<div onclick="openMasterProfile('${m.id}')"
@@ -8988,7 +8998,7 @@ async function openMasterProfile(masterId) {
   avatarFb.textContent = initials;
   if (master.master_photo_url) {
     const img = document.createElement('img');
-    img.src = master.master_photo_url;
+    img.src = mediaUrl(master.master_photo_url);
     img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
     img.onload = () => { avatarFb.style.display = 'none'; };
     img.onerror = () => { img.remove(); avatarFb.style.display = ''; };
