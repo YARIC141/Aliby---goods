@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
 
     let body: {
       store_id?: string
-      items?: { menu_item_id: string; quantity: number; price_at_time: number }[]
+      items?: { menu_item_id: string; quantity: number; price_at_time: number; selected_options?: { group_id: string; option_id: string; name: string; price_add: number }[] }[]
       total_amount?: number
       subscription_discount?: number
       applied_user_subscription_id?: string
@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({ error: "Failed to create order: " + (orderError?.message ?? "unknown") }, 500)
 
       const { error: itemsError } = await serviceClient.from("order_items").insert(
-        items.map(item => ({ order_id: order.id, menu_item_id: item.menu_item_id, quantity: item.quantity, price_at_time: item.price_at_time }))
+        items.map(item => ({ order_id: order.id, menu_item_id: item.menu_item_id, quantity: item.quantity, price_at_time: item.price_at_time, selected_options: item.selected_options || [] }))
       )
       if (itemsError) {
         await serviceClient.from("orders").delete().eq("id", order.id)

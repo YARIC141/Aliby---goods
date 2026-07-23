@@ -5136,21 +5136,24 @@ function getCartSubAllocation() {
 
   let usesLeft = globalBest.us.remaining_uses; // null = unlimited
   let totalQty = 0, coveredQty = 0;
+  // Keyed by cart-line index, not item.id — a same item can have several lines (different
+  // chosen options), and keying by item.id would let a later line's allocation silently
+  // overwrite an earlier line's in this map.
   const perItem = new Map();
 
-  for (const { item, qty } of S.cart) {
+  S.cart.forEach(({ item, qty }, idx) => {
     const b = getBestDisc(item);
     if (!b || b.sub.id !== globalBest.sub.id) {
-      perItem.set(item.id, { covered: 0, uncovered: qty, disc: 0 });
+      perItem.set(idx, { covered: 0, uncovered: qty, disc: 0 });
       totalQty += qty;
-      continue;
+      return;
     }
     const covered = usesLeft === null ? qty : Math.min(qty, Math.max(0, usesLeft));
     if (usesLeft !== null) usesLeft = Math.max(0, usesLeft - covered);
-    perItem.set(item.id, { covered, uncovered: qty - covered, disc: b.disc });
+    perItem.set(idx, { covered, uncovered: qty - covered, disc: b.disc });
     totalQty += qty;
     coveredQty += covered;
-  }
+  });
   if (!coveredQty) return null;
   return { us: globalBest.us, sub: globalBest.sub, totalQty, coveredQty, perItem };
 }
@@ -5412,9 +5415,20 @@ function itemActions(item, qty) {
   }
   if (S.storeSubActive === false) return '';
   if (S.store?.accepts_online_payment === false) return '';
+  // Items with option groups can have several cart lines at once (different combinations),
+  // so a single −/+ stepper on the card can't unambiguously target one of them — always
+  // reopen the picker instead; qty here is just an informational total across all lines.
+  const hasOptions = (_optGroupsCache.get(item.id) || []).length > 0;
+  if (qty > 0 && hasOptions) {
+    return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">+ ещё (${qty})</button>`;
+  }
   return qty > 0
     ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
     : `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">В корзину</button>`;
+}
+
+function _cartQtyForItem(id) {
+  return S.cart.filter(c => c.item.id === id).reduce((s, c) => s + c.qty, 0);
 }
 
 function updateItemCardInPlace(id) {
@@ -5422,15 +5436,13 @@ function updateItemCardInPlace(id) {
   if (!card) return;
   const item = itemCache.get(id);
   if (!item) return;
-  const inCart = S.cart.find(c => c.item.id === id);
   const actions = card.querySelector('.item-actions');
-  if (actions) actions.innerHTML = itemActions(item, inCart?.qty || 0);
+  if (actions) actions.innerHTML = itemActions(item, _cartQtyForItem(id));
 }
 
 function renderItemCard(item) {
   itemCache.set(item.id, item);
-  const inCart = S.cart.find(c => c.item.id === item.id);
-  const qty = inCart?.qty || 0;
+  const qty = _cartQtyForItem(item.id);
   const imgHtml = itemFallbackImg(item);
   const best = getBestDisc(item);
   const hint = !best ? getBestUnownedDiscForItem(item) : null;
@@ -5633,6 +5645,15 @@ function addToCartFromDetail() {
 // Store items by id for add to cart without JSON injection
 const itemCache = new Map();
 function cacheItem(item) { itemCache.set(item.id, item); return item; }
+// Two cart lines count as "the same" only when both the item and the exact set of
+// chosen options match — otherwise different variants of one item (e.g. burger with
+// cheese vs. with bacon) would collapse into a single line and silently lose one variant.
+function _optionsEqual(a = [], b = []) {
+  if (a.length !== b.length) return false;
+  const key = arr => arr.map(o => o.option_id).slice().sort().join(',');
+  return key(a) === key(b);
+}
+
 async function addToCartById(id, options) {
   // options: undefined = from card (auto-detect); array = from detail modal
   let item = itemCache.get(id);
@@ -5643,13 +5664,13 @@ async function addToCartById(id, options) {
     } catch(e) { return; }
   }
   if (!item) return;
-  // From card: if item has option groups and not yet in cart, open detail modal instead
+  // If the item has option groups, always route through the detail modal to pick them —
+  // regardless of whether some variant of this item is already in the cart — so a second
+  // "+" click lets you choose a different combination instead of blindly bumping qty on
+  // whatever line happened to be found first.
   if (options === undefined) {
-    const alreadyInCart = S.cart.some(c => c.item.id === id);
-    if (!alreadyInCart) {
-      const groups = await _getOptionGroups(id);
-      if (groups.length > 0) { openItemDetail(id); return; }
-    }
+    const groups = await _getOptionGroups(id);
+    if (groups.length > 0) { openItemDetail(id); return; }
     options = [];
   }
   if (S.cartStoreId && S.cartStoreId !== S.store?.id) {
@@ -5658,10 +5679,9 @@ async function addToCartById(id, options) {
     saveCart(); updateCartCount();
   }
   S.cartStoreId = S.store?.id;
-  const ex = S.cart.find(c => c.item.id === item.id);
+  const ex = S.cart.find(c => c.item.id === item.id && _optionsEqual(c.options, options));
   if (ex) {
     ex.qty++;
-    if (options.length) ex.options = options;
   } else {
     S.cart.push({ item, qty: 1, options });
   }
@@ -6066,7 +6086,7 @@ async function loadActiveOrders(append = false) {
     if (_ordPage === 0) _loadOrderStores();
     const statusQ = (_ordFilter && _ordFilter !== 'all') ? `&status=eq.${_ordFilter}` : '&status=neq.pending';
     const storeQ  = (_ordStoreFilter && _ordStoreFilter !== 'all') ? `&store_id=eq.${_ordStoreFilter}` : '';
-    const url = `/rest/v1/orders?user_id=eq.${uid}${statusQ}${storeQ}&select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
+    const url = `/rest/v1/orders?user_id=eq.${uid}${statusQ}${storeQ}&select=*,order_items(id,quantity,price_at_time,selected_options,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     const page = await req(url);
     _ordHasMore = page.length === 20;
     _ordPage++;
@@ -6157,6 +6177,7 @@ function openActiveOrderDetail(orderId) {
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)">
           <div>
             <div style="font:400 14px/1.3 var(--font-sans)">${esc(name)}</div>
+            ${it.selected_options?.length ? `<div style="font-size:12px;color:var(--fg-4);margin-top:1px">${it.selected_options.map(o => esc(o.name)).join(', ')}</div>` : ''}
             <div class="txt-muted">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</div>
           </div>
           <div style="font:500 15px/1 var(--font-sans)">${line.toFixed(0)} ₽</div>
@@ -6717,10 +6738,10 @@ function updateCartTotals() {
   const alloc = (rawAlloc && _cartUseSub) ? rawAlloc : null;
   let discounted = full;
   if (alloc) {
-    for (const { item } of S.cart) {
-      const info = alloc.perItem.get(item.id);
+    S.cart.forEach((_, idx) => {
+      const info = alloc.perItem.get(idx);
       if (info?.covered > 0) discounted -= info.disc * info.covered;
-    }
+    });
   }
   const fee = S.deliveryMode === 'delivery' ? (S.deliveryFee || 0) : 0;
   document.getElementById('c-subtotal').textContent = full + ' ₽';
@@ -6768,11 +6789,11 @@ async function renderCart() {
   const alloc = (rawAlloc && _cartUseSub) ? rawAlloc : null;
   const cartStoreName = getCartStore()?.name || '';
   const cartStoreHdr = cartStoreName ? `<div style="padding:6px 16px 4px;font-size:12px;color:var(--accent);font-weight:500">${esc(cartStoreName)}</div>` : '';
-  body.innerHTML = cartStoreHdr + S.cart.map(({ item, qty, options = [] }) => {
+  body.innerHTML = cartStoreHdr + S.cart.map(({ item, qty, options = [] }, idx) => {
     const optExtra = options.reduce((s, o) => s + (o.price_add || 0), 0);
     const unitPrice = item.price + optExtra;
     const fullSum = unitPrice * qty;
-    const info = alloc?.perItem.get(item.id);
+    const info = alloc?.perItem.get(idx);
     const { covered = 0, uncovered = qty, disc = 0 } = info || {};
     let priceHtml, subNoteHtml = '';
     if (covered > 0) {
@@ -6800,7 +6821,7 @@ async function renderCart() {
         ${optionsHtml}
         ${priceHtml}
       </div>
-      <div class="qty-ctrl" style="flex-shrink:0"><button class="qty-btn" onclick="cartQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty('${item.id}',1)">+</button></div>
+      <div class="qty-ctrl" style="flex-shrink:0"><button class="qty-btn" onclick="cartQty(${idx},-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="cartQty(${idx},1)">+</button></div>
       ${subNoteHtml}
     </div>`;
   }).join('') + (alloc
@@ -6812,11 +6833,10 @@ async function renderCart() {
   if (payBtn) { payBtn.disabled = false; payBtn.onclick = startCheckout; }
 }
 
-function cartQty(id, d) {
-  const i = S.cart.findIndex(c => c.item.id === id);
-  if (i < 0) return;
-  S.cart[i].qty += d;
-  if (S.cart[i].qty <= 0) { S.cart.splice(i, 1); S.appliedSub = null; }
+function cartQty(idx, d) {
+  if (idx < 0 || idx >= S.cart.length) return;
+  S.cart[idx].qty += d;
+  if (S.cart[idx].qty <= 0) { S.cart.splice(idx, 1); S.appliedSub = null; }
   updateCartCount(); renderCart();
 }
 
@@ -7873,7 +7893,7 @@ async function _prefetchClient() {
     (async () => {
       const [redemptions, orders] = await Promise.all([
         req(`/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions!inner(subscriptions(name,stores(name)))&user_subscriptions.user_id=eq.${uid}&order=redeemed_at.desc&limit=50`),
-        req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30`),
+        req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,selected_options,menu_items(name))&order=order_time.desc&limit=30`),
       ]);
       try { localStorage.setItem(`alliby_alibi_${uid}`, JSON.stringify({ redemptions, orders })); } catch {}
     })(),
@@ -8136,7 +8156,7 @@ async function loadAlibi() {
   try {
     const [redemptions, orders] = await Promise.all([
       req(`/rest/v1/subscription_redemptions?select=id,redeemed_at,amount_discounted,user_subscriptions!inner(subscriptions(name,stores(name)))&user_subscriptions.user_id=eq.${uid}&order=redeemed_at.desc&limit=50`),
-      req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,menu_items(name))&order=order_time.desc&limit=30`),
+      req(`/rest/v1/orders?user_id=eq.${uid}&select=id,order_time,status,total_amount,is_delivery,delivery_fee,stores(name),order_items(id,quantity,price_at_time,selected_options,menu_items(name))&order=order_time.desc&limit=30`),
     ]);
     try { localStorage.setItem(cacheKey, JSON.stringify({ redemptions, orders })); } catch(ex) {}
     _renderAlibi(el, uid, redemptions, orders);
@@ -8174,6 +8194,7 @@ function openOrderDetail(idx) {
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft)">
           <div>
             <div style="font:400 14px/1.3 var(--font-sans)">${esc(name)}</div>
+            ${it.selected_options?.length ? `<div style="font-size:12px;color:var(--fg-4);margin-top:1px">${it.selected_options.map(o => esc(o.name)).join(', ')}</div>` : ''}
             <div class="txt-muted">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</div>
           </div>
           <div style="font:500 15px/1 var(--font-sans)">${line.toFixed(0)} ₽</div>
@@ -8778,7 +8799,7 @@ async function doCheckout(useSubscription = false) {
   }, 0);
   const items = S.cart.map(({ item, qty, options = [] }) => {
     const optExtra = options.reduce((s, o) => s + (o.price_add || 0), 0);
-    return { menu_item_id: item.id, quantity: qty, price_at_time: item.price + optExtra };
+    return { menu_item_id: item.id, quantity: qty, price_at_time: item.price + optExtra, selected_options: options };
   });
 
   let subDiscount = 0;
@@ -8787,10 +8808,10 @@ async function doCheckout(useSubscription = false) {
   if (useSubscription) {
     const alloc = getCartSubAllocation();
     if (alloc) {
-      for (const { item, qty } of S.cart) {
-        const info = alloc.perItem.get(item.id);
+      S.cart.forEach((_, idx) => {
+        const info = alloc.perItem.get(idx);
         if (info?.covered > 0) subDiscount += info.disc * info.covered;
-      }
+      });
       appliedUsSubId = alloc.us?.id || null;
       paymentMethod = subDiscount >= fullAmount ? 'subscription' : 'mixed';
     }

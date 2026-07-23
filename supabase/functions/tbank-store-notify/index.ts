@@ -121,9 +121,9 @@ Deno.serve(async (req: Request) => {
     return OK // T-Bank повторит попытку
   }
 
-  const items = intent.items as { menu_item_id: string; quantity: number; price_at_time: number }[]
+  const items = intent.items as { menu_item_id: string; quantity: number; price_at_time: number; selected_options?: { group_id: string; option_id: string; name: string; price_add: number }[] }[]
   const { error: itemsError } = await serviceClient.from("order_items").insert(
-    items.map(i => ({ order_id: order.id, menu_item_id: i.menu_item_id, quantity: i.quantity, price_at_time: i.price_at_time }))
+    items.map(i => ({ order_id: order.id, menu_item_id: i.menu_item_id, quantity: i.quantity, price_at_time: i.price_at_time, selected_options: i.selected_options || [] }))
   )
   if (itemsError) {
     await serviceClient.from("orders").delete().eq("id", order.id)

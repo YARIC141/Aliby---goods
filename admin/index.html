@@ -1546,7 +1546,7 @@ html.bg-custom #bg-fluid{display:none}
     <div id="m-order-body" style="margin-bottom:12px"></div>
     <div id="m-order-ready-time-sect" style="display:none;margin-bottom:14px">
       <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Ожидаемое время готовности</label>
-      <input type="datetime-local" id="m-order-ready-time" style="width:100%;padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)">
+      <input type="time" id="m-order-ready-time" style="width:100%;padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)">
     </div>
     <div class="modal-ft" id="m-order-ft"></div>
   </div>
@@ -5484,7 +5484,7 @@ async function loadOrders(append = false) {
     const storeId = S.profile?.role === 'employee'
       ? S.profile.employee_store_id
       : document.getElementById('ord-store-filter')?.value;
-    let url = `/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
+    let url = `/rest/v1/orders?select=*,order_items(id,quantity,price_at_time,selected_options,menu_items(name)),stores(name,direction)&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     if (storeId) url += `&store_id=eq.${storeId}`;
     else if (S.stores?.length) url += `&store_id=in.(${S.stores.map(s => s.id).join(',')})`;
     if (_adminOrdFilter && _adminOrdFilter !== 'all') url += `&status=eq.${_adminOrdFilter}`;
@@ -5605,7 +5605,7 @@ function openOrderModal(orderId) {
     ${o.stores?.name ? `<div style="font-size:12px;color:var(--fg-4);margin-bottom:10px">${esc(o.stores.name)}</div>` : ''}
     <div style="margin-bottom:12px">
       ${items.map(it => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);font-size:14px">
-        <span>${esc(it.menu_items?.name || '—')}</span>
+        <span>${esc(it.menu_items?.name || '—')}${it.selected_options?.length ? `<div style="font-size:12px;color:var(--fg-4);margin-top:2px">${it.selected_options.map(o => esc(o.name)).join(', ')}</div>` : ''}</span>
         <span style="color:var(--fg-3);white-space:nowrap">${it.quantity} × ${Number(it.price_at_time).toFixed(0)} ₽</span>
       </div>`).join('')}
       ${o.is_delivery && o.delivery_fee ? `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);font-size:14px">
@@ -5628,7 +5628,7 @@ function openOrderModal(orderId) {
     if (needTime) {
       rtSect.style.display = '';
       const def = new Date(Date.now() + 30 * 60000);
-      document.getElementById('m-order-ready-time').value = def.toISOString().slice(0, 16);
+      document.getElementById('m-order-ready-time').value = String(def.getHours()).padStart(2, '0') + ':' + String(def.getMinutes()).padStart(2, '0');
     }
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
       <button class="btn btn-p" id="ord-advance-btn" onclick="advanceOrder('in_progress')">Взять в работу</button>`;
@@ -5664,6 +5664,17 @@ function openOrderModal(orderId) {
   openModal('m-order');
 }
 
+// The picker only collects a time-of-day (no date) — assume today, but if the picked
+// time is already well in the past, the admin must mean it crosses midnight into tomorrow.
+function _timeInputToISO(hhmm) {
+  if (!hhmm) return null;
+  const [h, m] = hhmm.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  if (d.getTime() < Date.now() - 5 * 60000) d.setDate(d.getDate() + 1);
+  return d.toISOString();
+}
+
 async function advanceOrder(newStatus) {
   if (!_currentOrder) return;
   const o = _currentOrder;
@@ -5672,7 +5683,7 @@ async function advanceOrder(newStatus) {
   if (newStatus === 'in_progress' && dir !== 'services') {
     const rtVal = document.getElementById('m-order-ready-time').value;
     if (!rtVal) { alert('Укажите ожидаемое время готовности'); return; }
-    body.estimated_ready_at = new Date(rtVal).toISOString();
+    body.estimated_ready_at = _timeInputToISO(rtVal);
   }
   if (newStatus === 'on_the_way') {
     const raw = prompt('Телефон курьера (необязательно):');
