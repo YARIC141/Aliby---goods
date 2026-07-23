@@ -6502,6 +6502,11 @@ async function dzvConfirmPick() {
   _dzvRenderLegend(zones);
   dzvCancelPick();
   if (S.deliveryMode === 'delivery') updateCartTotals();
+  if (_pendingDelivery) {
+    _pendingDelivery = false;
+    closeDzViewer();
+    setTimeout(() => setDeliveryMode('delivery'), 100);
+  }
 }
 
 function _dzvOnMapClick(e) {
@@ -6659,7 +6664,12 @@ async function setDeliveryMode(mode) {
     // getDeliveryInfo would otherwise read as "outside zone" by default.
     if (store?.id) await loadStoreZones(store.id);
     const di = getDeliveryInfo(store);
-    if (!di?.inZone) { showGeoToast('Вы находитесь вне зоны доставки заведения'); return; }
+    if (!di?.inZone) {
+      showGeoToast('Вы находитесь вне зоны доставки заведения — выберите адрес в зоне доставки');
+      _pendingDelivery = true;
+      openDzViewer(store);
+      return;
+    }
     S.deliveryFee = di.price;
   } else {
     S.deliveryFee = 0;
