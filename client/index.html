@@ -1335,7 +1335,10 @@ document.addEventListener('deviceready',function(){
               <span id="del-price-lbl" style="font-size:11px;opacity:.7"></span>
             </button>
           </div>
-          <div id="delivery-eta-wrap" style="display:none;margin-top:8px;padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--line);font-size:12px;color:var(--fg-3)"></div>
+          <div id="delivery-addr-wrap" style="display:none;margin-top:8px;padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--line);font-size:12px;color:var(--fg-3);align-items:center;gap:6px;cursor:pointer" onclick="openCartAddressPicker()">
+            <svg class="ico" width="13" height="13" style="flex-shrink:0"><use href="#i-pushpin"/></svg><span id="delivery-addr-txt" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span><span style="opacity:.6;flex-shrink:0">→</span>
+          </div>
+          <div id="delivery-eta-wrap" style="display:none;margin-top:6px;padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--line);font-size:12px;color:var(--fg-3)"></div>
         </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
@@ -6498,6 +6501,7 @@ async function dzvConfirmPick() {
   const zones = _dzvStore ? await loadStoreZones(_dzvStore.id) : [];
   _dzvRenderLegend(zones);
   dzvCancelPick();
+  if (S.deliveryMode === 'delivery') updateCartTotals();
 }
 
 function _dzvOnMapClick(e) {
@@ -6706,6 +6710,17 @@ function renderDeliveryToggle() {
   if (priceLbl) priceLbl.textContent = di ? (di.inZone ? `${di.price} ₽` : '(недоступно)') : '';
   const dr = document.getElementById('c-delivery-row');
   if (dr) dr.style.display = isDelivery ? '' : 'none';
+  const addrWrap = document.getElementById('delivery-addr-wrap');
+  if (addrWrap) {
+    if (isDelivery && di?.inZone) {
+      const addrTxt = S.userAddr || document.getElementById('p-address')?.value?.trim() || S.profile?.address || '';
+      addrWrap.style.display = 'flex';
+      const txtEl = document.getElementById('delivery-addr-txt');
+      if (txtEl) txtEl.textContent = addrTxt || 'Укажите адрес доставки';
+    } else {
+      addrWrap.style.display = 'none';
+    }
+  }
   const etaWrap = document.getElementById('delivery-eta-wrap');
   if (etaWrap) {
     if (isDelivery && di?.inZone) {
@@ -6716,6 +6731,12 @@ function renderDeliveryToggle() {
       etaWrap.style.display = 'none';
     }
   }
+}
+
+function openCartAddressPicker() {
+  const store = getCartStore();
+  if (!store) return;
+  openDzViewer(store);
 }
 
 // ─── CART ───
