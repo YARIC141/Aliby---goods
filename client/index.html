@@ -6128,14 +6128,18 @@ function _setupClientOrdSentinel() {
 function renderActiveOrderCard(o) {
   const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)' };
   const statusLabels = { paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Курьер забирает заказ', accepted_by_courier:'Едет к вам', on_the_way:'Едет к вам', ready:'Готов!', issued:'Выдан', cancelled:'Отменён', pending:'Создан' };
-  const color = statusColors[o.status] || 'var(--fg-3)';
-  const label = statusLabels[o.status] || o.status;
+  // A courier can get matched (courier_phone set) slightly before the backend flips
+  // the order off looking_for_courier — showing "still searching" once we already
+  // have a courier's phone number would be a visible contradiction.
+  const courierFound = o.status === 'looking_for_courier' && !!o.courier_phone;
+  const color = statusColors[courierFound ? 'accepted_by_courier' : o.status] || 'var(--fg-3)';
+  const label = courierFound ? 'Курьер найден' : (statusLabels[o.status] || o.status);
   const isReady = o.status === 'ready';
   const isOnTheWay = o.status === 'on_the_way';
-  const isLooking = o.status === 'looking_for_courier';
+  const isLooking = o.status === 'looking_for_courier' && !courierFound;
   const isIssued = o.status === 'issued';
   const delivBorder = o.is_delivery ? 'border:2px solid #f5c518;' : '';
-  const hasExtra = isReady || isOnTheWay || isLooking || isIssued || o.estimated_ready_at;
+  const hasExtra = isReady || isOnTheWay || isLooking || isIssued || courierFound || o.estimated_ready_at;
   return `<div class="card" style="margin:10px 16px;padding:14px;cursor:pointer;${delivBorder}" onclick="openActiveOrderDetail('${esc(o.id)}')">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:${hasExtra ? '10px' : '0'}">
       <div>
@@ -6147,6 +6151,7 @@ function renderActiveOrderCard(o) {
     </div>
     ${o.estimated_ready_at && !isLooking && !isOnTheWay ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--warn);font-size:13px;color:var(--warn)${isReady ? ';margin-bottom:10px' : ''}"><span style="display:flex;align-items:center;gap:5px">${svgIco('clock',14)}${o.is_delivery ? 'Ожидаемая доставка к' : 'Готов примерно к'} ${fmtTime(o.estimated_ready_at)}</span></div>` : ''}
     ${isLooking ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid #f97316;font-size:13px;color:#f97316;display:flex;align-items:center;gap:6px">${svgIco('search',14)}Ищем курьера для вашего заказа…</div>` : ''}
+    ${courierFound ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid #06b6d4;font-size:13px;color:#06b6d4;font-weight:600;display:flex;flex-direction:column;gap:4px"><span style="display:flex;align-items:center;gap:6px">${svgIco('bicycle',14)}Курьер найден, скоро заберёт заказ</span><span style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px">${svgIco('phone',12)}<a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4">${esc(o.courier_phone)}</a></span></div>` : ''}
     ${isOnTheWay ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid #06b6d4;font-size:13px;color:#06b6d4;font-weight:600;display:flex;align-items:center;gap:6px">${svgIco('bicycle',14)}Курьер уже едет к вам!${o.courier_phone ? `<div style="margin-top:4px;font-size:12px;display:flex;align-items:center;gap:4px">${svgIco('phone',12)}<a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4">${esc(o.courier_phone)}</a></div>` : ''}</div>` : ''}
     ${isReady && !o.is_delivery ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--ok);font-size:13px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:6px">${svgIco('check-circle',14)}Ваш заказ готов! Можно забрать.</div>` : ''}
     ${isIssued ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--ok);font-size:13px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:6px">${o.is_delivery ? `${svgIco('pkg',14)}Заказ доставлен!` : `${svgIco('check-circle',14)}Ваш заказ готов! Можете забирать.`}</div>` : ''}
@@ -6161,12 +6166,13 @@ function openActiveOrderDetail(orderId) {
   const disc = Number(o.subscription_discount || 0);
   const fullAmount = amount + disc;
   const subName = o.user_subscriptions?.subscriptions?.name;
-  const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[o.status] || 'var(--fg-sec)';
+  const courierFound = o.status === 'looking_for_courier' && !!o.courier_phone;
+  const statusColor = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)', issued:'var(--fg-3)', cancelled:'var(--err)', pending:'var(--fg-sec)' }[courierFound ? 'accepted_by_courier' : o.status] || 'var(--fg-sec)';
 
   document.getElementById('mod-title').textContent = storeName ? `Заказ · ${storeName}` : 'Заказ';
   document.getElementById('mod-meta').innerHTML =
     `<span class="txt-muted" style="font-size:13px">${fmtDate(o.order_time)}</span>` +
-    `<span style="font-size:12px;color:${statusColor};border:1px solid currentColor;border-radius:4px;padding:2px 6px">${statusMap[o.status] || o.status}</span>` +
+    `<span style="font-size:12px;color:${statusColor};border:1px solid currentColor;border-radius:4px;padding:2px 6px">${courierFound ? 'Курьер найден' : (statusMap[o.status] || o.status)}</span>` +
     `<span class="txt-muted" style="font-size:12px">#${o.id.slice(0,8)}</span>`;
 
   const items = o.order_items || [];
