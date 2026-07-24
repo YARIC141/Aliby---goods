@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ru.alliby.app",
+      "sha256_cert_fingerprints": [
+        "A9:77:2B:9B:D2:CB:FD:72:D7:F0:14:1E:70:17:95:58:E5:48:87:93:45:CA:3E:80:00:F9:0A:CC:08:CB:CC:DF"
+      ]
+    }
+  }
+]
