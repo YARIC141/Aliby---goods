@@ -72,10 +72,6 @@
 html{scroll-behavior:smooth}
 body{font-family:var(--font-sans);font-size:16px;color:var(--fg);background-color:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
 #shader-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
-#bg-ornament{position:fixed;inset:-200px 0;width:100%;height:calc(100% + 400px);pointer-events:none;z-index:0;will-change:transform}
-#bg-ornament .op{stroke:var(--pat);fill:none;stroke-width:1.1}
-#bg-ornament .op-x{stroke-opacity:.45}
-#bg-ornament .op-f{fill:var(--pat);stroke:none}
 #page-wrap{position:relative;z-index:1}
 
 /* ── NAV ── */
@@ -956,20 +952,6 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 <body>
 
 <canvas id="shader-bg" aria-hidden="true"></canvas>
-<svg id="bg-ornament" aria-hidden="true">
-  <defs>
-    <pattern id="bgpat" x="0" y="0" width="72" height="72" patternUnits="userSpaceOnUse">
-      <path class="op" d="M0 36L36 0L72 36L36 72Z"/>
-      <path class="op op-x" d="M36 0L36 72M0 36L72 36"/>
-      <circle class="op-f" cx="36" cy="36" r="2.1"/>
-      <circle class="op-f" cx="0" cy="0" r="1.5"/>
-      <circle class="op-f" cx="72" cy="0" r="1.5"/>
-      <circle class="op-f" cx="0" cy="72" r="1.5"/>
-      <circle class="op-f" cx="72" cy="72" r="1.5"/>
-    </pattern>
-  </defs>
-  <rect width="100%" height="100%" fill="url(#bgpat)"/>
-</svg>
 
 <div id="page-wrap">
 
@@ -1788,19 +1770,6 @@ function orderTake(btn){
     el.dataset.theme=next;
     localStorage.setItem('alliby-theme',next);
   });
-})();
-(function(){
-  var orn=document.getElementById('bg-ornament');
-  if(!orn)return;
-  var ticking=false;
-  window.addEventListener('scroll',function(){
-    if(ticking)return;
-    ticking=true;
-    requestAnimationFrame(function(){
-      orn.style.transform='translateY('+(Math.round(window.scrollY*0.13)%72)+'px)';
-      ticking=false;
-    });
-  },{passive:true});
 })();
 (function(){
   var DELAY=2800,PAUSE=7000;
