@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Как устроен аукцион ставок курьеров в Alliby Carry — Alliby</title>
+<meta name="description" content="Механика аукциона минимальных ставок в Alliby Carry: как выбирается курьер, кто получает заказ и чем аукцион отличается от режима «полная стоимость ближайшему».">
+<link rel="canonical" href="https://site.alliby.ru/articles/auktsion-stavok-kurerov">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Как устроен аукцион ставок курьеров в Alliby Carry">
+<meta property="og:description" content="Механика подбора курьера по наименьшей заявленной ставке.">
+<meta property="og:url" content="https://site.alliby.ru/articles/auktsion-stavok-kurerov">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font:400 16px/1.75 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#1a1a1a;background:#fff;padding:0 0 80px}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid #eee;padding:14px 0;margin-bottom:32px}
+header a{color:#14b8a6;text-decoration:none;font-size:14px;font-weight:500}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#14b8a6;margin-bottom:10px}
+h1{font-size:30px;font-weight:700;line-height:1.3;margin-bottom:10px}
+.meta{color:#888;font-size:13px;margin-bottom:32px}
+h2{font-size:20px;font-weight:700;margin:32px 0 12px;color:#1a1a1a}
+p{margin-bottom:14px}
+ol,ul{padding-left:22px;margin-bottom:14px}
+li{margin-bottom:8px}
+a{color:#14b8a6}
+strong{font-weight:700}
+table{width:100%;border-collapse:collapse;margin:16px 0 20px;font-size:14px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid #eee;vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.02em;color:#888;font-weight:600}
+.callout{background:#f4fbfa;border:1px solid #d9f0ec;border-radius:12px;padding:20px 22px;margin:32px 0 8px}
+.callout p:last-child{margin-bottom:0}
+.btn{display:inline-block;margin-top:10px;margin-right:10px;background:#14b8a6;color:#fff;font-weight:600;font-size:14px;padding:10px 18px;border-radius:8px;text-decoration:none}
+.btn-outline{display:inline-block;margin-top:10px;border:1px solid #14b8a6;color:#14b8a6;font-weight:600;font-size:14px;padding:9px 18px;border-radius:8px;text-decoration:none}
+footer{margin-top:40px;padding-top:20px;border-top:1px solid #eee;font-size:13px;color:#999}
+footer a{color:#14b8a6;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><a href="/articles">← Статьи</a></header>
+
+<span class="tag">Alliby Carry</span>
+<h1>Как устроен аукцион ставок курьеров в Alliby Carry</h1>
+<div class="meta">Alliby Carry · для заведений и курьеров-фрилансеров</div>
+
+<p>В открытом рынке Alliby Carry заказ на доставку не просто достаётся первому освободившемуся курьеру рядом. Есть два режима подбора, и один из них — аукцион минимальных ставок, где решает не только расстояние, но и цена, которую сам курьер готов взять за рейс.</p>
+
+<h2>Что такое минимальная ставка курьера</h2>
+<p>У каждого курьера в профиле есть минимальная ставка — сумма, ниже которой он не согласен выполнять доставку. Её можно менять в любой момент: изменение действует на новые заказы, уже назначенный рейс не пересчитывается.</p>
+
+<h2>Как проходит подбор в режиме «Аукцион»</h2>
+<ol>
+<li>Заказ оплачен, доставка активирована, заведение работает в режиме открытого рынка Carry с аукционом.</li>
+<li>Система собирает всех свободных курьеров города в радиусе поиска, заданном заведением.</li>
+<li>Из них отбираются те, чья минимальная ставка не превышает стоимость доставки, установленную заведением для этой зоны.</li>
+<li>Среди отобранных выбирается курьер с наименьшей заявленной ставкой.</li>
+<li>Заказ автоматически резервируется за этим курьером — он получает именно ту сумму, которую указал сам.</li>
+</ol>
+<p>Разницу между ценой доставки для клиента и суммой, которую попросил победивший курьер, заведение оставляет себе.</p>
+
+<h2>Чем это отличается от «Полной стоимости ближайшему»</h2>
+<p>Во втором режиме ставки вообще не сравниваются — заказ достаётся географически ближайшему к заведению свободному курьеру, и он получает полную стоимость доставки, без торга. Это быстрее и проще, но без экономии на разнице ставок.</p>
+
+<table>
+<tr><th>Критерий</th><th>Аукцион</th><th>Полная стоимость ближайшему</th></tr>
+<tr><td>Кто получает заказ</td><td>курьер с наименьшей ставкой</td><td>ближайший к заведению</td></tr>
+<tr><td>Сколько получает курьер</td><td>свою заявленную ставку</td><td>полную стоимость доставки</td></tr>
+<tr><td>Экономия для заведения</td><td>да, разница в свою пользу</td><td>нет</td></tr>
+<tr><td>Скорость подбора</td><td>сравнение ставок по радиусу</td><td>без сравнения, сразу ближайший</td></tr>
+</table>
+
+<h2>Если курьер отказался</h2>
+<p>Курьер вправе отказаться от уже назначенного заказа в любой момент, без объяснения причин и без штрафа. Тогда подбор запускается заново среди оставшихся подходящих курьеров — по тому же принципу, который выбрало заведение.</p>
+
+<div class="callout">
+  <p><strong>Аукцион ставок доступен в открытом рынке Alliby Carry.</strong> Заведениям — включите его в настройках доставки. Курьерам — укажите свою минимальную ставку в профиле.</p>
+  <a class="btn" href="/#directions-business">Alliby для бизнеса →</a>
+  <a class="btn-outline" href="/#alliby-carry">Alliby Carry для курьеров →</a>
+</div>
+
+<footer>
+  <a href="/articles">Все статьи</a> &nbsp;·&nbsp; <a href="/">Alliby</a> &nbsp;·&nbsp; <a href="/carry-terms">Условия для курьера</a>
+</footer>
+</div>
+</body>
+</html>
