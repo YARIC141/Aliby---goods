@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Alliby Business</string>
+    <string name="title_activity_main">Alliby Business</string>
+    <string name="package_name">ru.alliby_business.app</string>
+    <string name="custom_url_scheme">ru.alliby_business.app</string>
+</resources>
