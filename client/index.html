@@ -1922,6 +1922,20 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+<!-- Courier location modal -->
+<div class="overlay" id="m-courier-map" onclick="if(event.target===this)closeCourierMap()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3>Где курьер</h3>
+      <button class="modal-x" onclick="closeCourierMap()">✕</button>
+    </div>
+    <div id="courier-map-wrap" style="position:relative;height:320px;border-radius:var(--r-2);overflow:hidden;background:var(--bg-2)">
+      <div id="courier-map" style="width:100%;height:100%"></div>
+      <div id="courier-map-status" style="position:absolute;left:0;right:0;bottom:0;padding:8px 12px;background:linear-gradient(transparent,rgba(0,0,0,.55));color:#fff;font-size:12px;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════ QR MODAL ════════════════ -->
 <div class="overlay" id="m-qr">
   <div class="modal" style="max-width:320px;text-align:center">
@@ -6212,6 +6226,8 @@ function openActiveOrderDetail(orderId) {
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--warn);font-size:14px;color:var(--warn);display:flex;align-items:center;gap:6px">${svgIco('clock',14)}${o.is_delivery ? 'Ожидаемая доставка к' : 'Готов примерно к'} ${fmtTime(o.estimated_ready_at)}</div>`;
     if (o.is_delivery && o.courier_phone)
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid #06b6d4;font-size:14px;color:#06b6d4;display:flex;align-items:center;gap:6px">${svgIco('phone',14)}Телефон курьера: <a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4;font-weight:600">${esc(o.courier_phone)}</a></div>`;
+    if (o.is_delivery && o.carry_courier_id && ['accepted_by_courier','on_the_way'].includes(o.status))
+      extraHtml += `<button class="btn btn-sec btn-full" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openCourierMap('${o.id}')">${svgIco('map',14)}Посмотреть где курьер</button>`;
     if (o.status === 'ready' && !o.is_delivery)
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--ok);font-size:14px;color:var(--ok);font-weight:600;display:flex;align-items:center;gap:6px">${svgIco('check-circle',14)}Ваш заказ готов! Можно забрать.</div>`;
     if (o.status === 'issued')
@@ -6220,6 +6236,83 @@ function openActiveOrderDetail(orderId) {
   }
 
   openModal('m-order-detail');
+}
+
+// ─── COURIER LOCATION MAP ───
+// Polls every 15s while the modal is open — matches how often the courier
+// app itself pushes a fresh point while actively delivering (see carry's
+// _pingIntervalMs()), so the marker doesn't lag noticeably behind reality.
+let _courierMap = null, _courierMapMarker = null, _courierMapDestMarker = null, _courierMapTimer = null, _courierMapOrderId = null;
+
+function openCourierMap(orderId) {
+  const o = _activeOrders.find(x => x.id === orderId);
+  if (!o) return;
+  _courierMapOrderId = orderId;
+  openModal('m-courier-map');
+  const destLat = o.delivery_lat, destLng = o.delivery_lng;
+  setTimeout(() => {
+    if (!_courierMap) {
+      _courierMap = new maplibregl.Map({
+        container: 'courier-map', style: buildOsmStyle(),
+        center: [destLng ?? 50.10, destLat ?? 53.20], zoom: 13, attributionControl: false,
+      });
+    } else {
+      _courierMap.resize();
+    }
+    if (destLat != null && destLng != null) {
+      const el = document.createElement('div');
+      el.innerHTML = `<svg class="ico" width="26" height="26" style="color:var(--accent);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))"><use href="#i-pushpin"/></svg>`;
+      if (_courierMapDestMarker) _courierMapDestMarker.remove();
+      _courierMapDestMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([destLng, destLat]).addTo(_courierMap);
+    }
+  }, 50);
+  const statusEl = document.getElementById('courier-map-status');
+  if (statusEl) statusEl.textContent = 'Ищем курьера на карте…';
+  _pollCourierLocation();
+  clearInterval(_courierMapTimer);
+  _courierMapTimer = setInterval(_pollCourierLocation, 15000);
+}
+
+function closeCourierMap() {
+  closeModal('m-courier-map');
+  clearInterval(_courierMapTimer);
+  _courierMapTimer = null;
+  _courierMapOrderId = null;
+}
+
+async function _pollCourierLocation() {
+  if (!_courierMapOrderId) return;
+  const statusEl = document.getElementById('courier-map-status');
+  let point;
+  try {
+    const rows = await req('/rest/v1/rpc/get_order_courier_location', {
+      method: 'POST', body: JSON.stringify({ p_order_id: _courierMapOrderId }),
+    });
+    point = rows?.[0];
+  } catch(e) {
+    if (statusEl) statusEl.textContent = 'Не удалось получить местоположение';
+    return;
+  }
+  if (!point || point.lat == null || point.lng == null) {
+    if (statusEl) statusEl.textContent = 'Местоположение курьера пока недоступно';
+    return;
+  }
+  if (!_courierMap) return;
+  if (!_courierMapMarker) {
+    const el = document.createElement('div');
+    el.innerHTML = svgIco('bicycle', 22);
+    el.style.cssText = 'color:#06b6d4;background:#fff;border-radius:50%;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex';
+    _courierMapMarker = new maplibregl.Marker({ element: el }).setLngLat([point.lng, point.lat]).addTo(_courierMap);
+  } else {
+    _courierMapMarker.setLngLat([point.lng, point.lat]);
+  }
+  const bounds = new maplibregl.LngLatBounds().extend([point.lng, point.lat]);
+  if (_courierMapDestMarker) bounds.extend(_courierMapDestMarker.getLngLat());
+  _courierMap.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 400 });
+  if (statusEl) {
+    const secAgo = Math.max(0, Math.round((Date.now() - new Date(point.updated_at).getTime()) / 1000));
+    statusEl.textContent = secAgo < 60 ? `Обновлено ${secAgo} сек назад` : `Обновлено ${Math.round(secAgo / 60)} мин назад`;
+  }
 }
 
 // ─── DELIVERY ───

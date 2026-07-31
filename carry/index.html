@@ -673,10 +673,10 @@ async function afterAuth() {
 
 // ─── COURIER CONTRACT (публичная оферта, ФЗ-63 ПЭП) ───
 const COURIER_CONTRACT = {
-  version: '2026-07-28',
+  version: '2026-07-31',
   text: `УСЛОВИЯ ИСПОЛЬЗОВАНИЯ ALLIBY CARRY (ПУБЛИЧНАЯ ОФЕРТА ДЛЯ КУРЬЕРА)
 
-г. Самара                                        «28» июля 2026 г.
+г. Самара                                        «31» июля 2026 г.
 
 Настоящий документ является официальным предложением (публичной
 офертой) ИП Копылов Ярослав Денисович заключить договор об
@@ -736,7 +736,9 @@ Email: yarich92@gmail.com
 сигнал готовности получать уведомления алгоритма подбора Заказов,
 а не учёт рабочего времени или элемент трудового распорядка.
 3.2. Пока статус «На смене» активен, Сервис периодически получает
-геопозицию Курьера — исключительно для подбора исполнителя.
+геопозицию Курьера для подбора исполнителя. С момента принятия
+Курьером назначенного Заказа и до его передачи Покупателю геопозиция
+дополнительно отображается Покупателю на карте в его Заказе.
 3.3. Подбор Курьера для Заказа выполняется автоматически: либо
 из перечня, указанного Продавцом («Свой курьер»), либо среди
 свободных Курьеров города по критерию наименьшей заявленной
@@ -781,8 +783,9 @@ Email: yarich92@gmail.com
 (в период «На смене»), статус занятости, историю Заказов,
 сведения о жалобах.
 6.2. Регистрируясь, Курьер даёт согласие на обработку геопозиции
-на время действия статуса «На смене»; может прекратить передачу
-в любой момент, отключив смену.
+на время действия статуса «На смене», включая её показ Покупателю
+на карте с момента принятия Заказа до его передачи (п. 3.2);
+может прекратить передачу в любой момент, отключив смену.
 6.3. Номер телефона Покупателя раскрывается Курьеру только по
 текущему назначенному Заказу; номер Курьера аналогично раскрывается
 Покупателю и Продавцу.
@@ -995,7 +998,16 @@ async function saveProfile() {
 }
 
 // ─── MAIN SCREEN / SHIFT / GEO-PING ───
-let _shiftInterval = null;
+let _shiftTimer = null;
+
+// While actually carrying an order (customer may have the "where's my
+// courier" map open) ping much more often than the baseline — the customer
+// polls every 15s, so keeping the point close to that fresh avoids a map
+// that visibly jumps once every minute and a half.
+function _pingIntervalMs() {
+  const delivering = (S.activeOrders || []).some(o => o.status === 'accepted_by_courier' || o.status === 'on_the_way');
+  return delivering ? 20000 : 90000;
+}
 
 function initMainScreen() {
   goToMain();
@@ -1133,7 +1145,7 @@ async function loadStats() {
 
 function updateShiftStatus(on) {
   document.getElementById('shift-status').textContent = on
-    ? 'Вы на смене — геопозиция обновляется каждые ~1.5 мин'
+    ? 'Вы на смене — геопозиция обновляется каждые ~1.5 мин, а во время доставки заказа — каждые ~20 сек (её видит покупатель на карте)'
     : 'Вы не на смене — новые заказы предлагаться не будут';
 }
 
@@ -1145,11 +1157,14 @@ function onShiftToggle(checked) {
 
 function startShiftPing() {
   stopShiftPing();
-  pingLocation();
-  _shiftInterval = setInterval(pingLocation, 90000);
+  const tick = async () => {
+    await pingLocation();
+    _shiftTimer = setTimeout(tick, _pingIntervalMs());
+  };
+  tick();
 }
 function stopShiftPing() {
-  if (_shiftInterval) { clearInterval(_shiftInterval); _shiftInterval = null; }
+  if (_shiftTimer) { clearTimeout(_shiftTimer); _shiftTimer = null; }
 }
 async function pingLocation() {
   try {
