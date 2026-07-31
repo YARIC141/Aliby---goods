@@ -1,6 +1,6 @@
 {
-  "name": "Alliby Admin",
-  "short_name": "Alliby Admin",
+  "name": "Alliby Business",
+  "short_name": "Alliby Business",
   "description": "Панель управления Alliby",
   "start_url": "/admin/",
   "scope": "/admin/",
