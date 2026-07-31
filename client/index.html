@@ -8968,7 +8968,13 @@ async function doCheckout(useSubscription = false) {
         delivery_address: S.userAddr || S.profile?.address || null,
         delivery_lat: S.userAddrLat ?? null,
         delivery_lng: S.userAddrLng ?? null,
-        ...(_isNat ? { success_url: 'alliby://?tpay=store_success', fail_url: 'alliby://?tpay=store_fail' } : {}),
+        // Was 'alliby://...' — T-Bank's hosted "Вернуться в магазин" button
+        // needs a real http(s) link to render as a clickable link at all;
+        // a bare custom scheme isn't a website address, so T-Bank fell back
+        // to the terminal's own registered site URL instead of ours. The
+        // verified App Link on https://alliby.ru (see client's
+        // AndroidManifest.xml + .well-known/assetlinks.json) already routes
+        // this back into the native app, so no custom scheme is needed.
       }),
     });
     if (result.free) {
