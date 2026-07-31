@@ -1262,6 +1262,11 @@ function _combinedMapsLink(orderedStops) {
   return 'https://yandex.ru/maps/?rtext=~' + pts + '&rtt=auto';
 }
 
+function fmtTime(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
 // A "своей" (own_courier) courier can be assigned more than one order at
 // once — dispatch doesn't exclude them for being busy, it just queues the
 // next order onto them (admin/index.html's own_courier mode description).
@@ -1271,7 +1276,7 @@ function _combinedMapsLink(orderedStops) {
 async function loadActiveOrders() {
   let rows;
   try {
-    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,handed_to_courier,accepted_by_courier,on_the_way)&select=id,status,delivery_address,delivery_lat,delivery_lng,carry_courier_reward,stores(name,address,phone,latitude,longitude)&order=carry_dispatched_at.desc`);
+    rows = await req(`/rest/v1/orders?carry_courier_id=eq.${S.session.user.id}&status=in.(looking_for_courier,handed_to_courier,accepted_by_courier,on_the_way)&select=id,status,order_time,delivery_address,delivery_lat,delivery_lng,carry_courier_reward,stores(name,address,phone,latitude,longitude)&order=carry_dispatched_at.desc`);
   } catch(e) {
     // A network hiccup (e.g. switching wifi/mobile data) isn't evidence the
     // orders are gone — keep showing the last known list instead of wiping it.
@@ -1341,12 +1346,14 @@ function _orderCardHtml(o, opts) {
   const store = o.stores || {};
   const rewardTxt = o.carry_courier_reward != null ? `${Number(o.carry_courier_reward).toFixed(0)} ₽` : 'уточняется у продавца';
   const posBadge = opts.position ? `<span class="badge badge-info" style="margin-right:6px">Точка ${opts.position}</span>` : '';
+  const createdTxt = o.order_time ? fmtTime(o.order_time) : null;
   return `
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div>${posBadge}<span class="badge ${canDeliver ? 'badge-info' : 'badge-warn'}">${badgeTxt}</span></div>
         <span style="font:600 16px/1 var(--font-sans)">${esc(rewardTxt)}</span>
       </div>
+      ${createdTxt ? `<div style="font-size:12px;color:var(--fg-3);margin-bottom:10px;margin-top:-4px">Заказ создан в ${createdTxt}</div>` : ''}
       <div class="order-addr">
         <div class="dot from"></div>
         <div class="txt">
