@@ -9,6 +9,13 @@
 supabase/.temp/
 supabase/functions/.env
 
+# Build artifacts (keep submitted releases as explicit exceptions if needed)
+*.aab
+*.apk
+
+# Office lock files
+~$*
+
 # OS
 .DS_Store
 Thumbs.db
