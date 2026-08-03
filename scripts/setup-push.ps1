@@ -4,7 +4,8 @@
 
 $REF       = "bucxawpwttvtwdwdtuhh"
 $SB_URL    = "https://${REF}.supabase.co"
-$SVC_KEY   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1Y3hhd3B3dHR2dHdkd2R0dWhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzEwNjQ1NiwiZXhwIjoyMDkyNjgyNDU2fQ.GrTJ4WjwgkBUSSSLIgjKSYt6EGln8U1eYlxGe9EhfzM"
+# проект bucxawpwttvtwdwdtuhh удалён; при повторном использовании скрипта задать ключ через env-переменную
+$SVC_KEY   = $env:ALLIBY_SERVICE_ROLE_KEY
 $ACCESS_TOKEN = (Get-Content "$PSScriptRoot\..\\.secrets" | Where-Object { $_ -match 'SUPABASE_ACCESS_TOKEN' } | ForEach-Object { ($_ -split '=',2)[1] })
 $FUNC_URL  = "${SB_URL}/functions/v1/send-push"
 $HEADERS_JSON = "{`"Content-Type`":`"application/json`",`"Authorization`":`"Bearer ${SVC_KEY}`"}"

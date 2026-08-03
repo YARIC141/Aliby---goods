@@ -1,7 +1,8 @@
 # OSM → Samara vector map importer (uses curl.exe for Overpass, PowerShell for import)
 
 $IMPORT_URL = "https://bucxawpwttvtwdwdtuhh.supabase.co/functions/v1/vector-map-import"
-$SVC_KEY    = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1Y3hhd3B3dHR2dHdkd2R0dWhoIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzEwNjQ1NiwiZXhwIjoyMDkyNjgyNDU2fQ.GrTJ4WjwgkBUSSSLIgjKSYt6EGln8U1eYlxGe9EhfzM"
+# проект bucxawpwttvtwdwdtuhh удалён; при повторном использовании скрипта задать ключ через env-переменную
+$SVC_KEY    = $env:ALLIBY_SERVICE_ROLE_KEY
 $OVERPASS   = "https://overpass-api.de/api/interpreter"
 
 function Fetch-Overpass($query, $timeoutSec = 120) {
