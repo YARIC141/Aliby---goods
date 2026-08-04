@@ -545,7 +545,7 @@ async function refreshSession() {
 
 function setSession(d) {
   S.session = d;
-  localStorage.setItem('carry_s', JSON.stringify(d));
+  try { localStorage.setItem('carry_s', JSON.stringify(d)); } catch(e) {}
   const uid = d.user?.id;
   if (uid) window.AllibyBridge?.registerPush(uid);
 }

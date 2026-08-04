@@ -2590,7 +2590,7 @@ async function doResetPwd() {
 
 function setSession(d) {
   S.session = d;
-  localStorage.setItem('alliby_admin_s', JSON.stringify(d));
+  try { localStorage.setItem('alliby_admin_s', JSON.stringify(d)); } catch(e) {}
   document.getElementById('sn-email').textContent = d.user?.email || '';
 }
 
