@@ -1,3 +1,4 @@
+import { tbankHttpClient } from "../_shared/tbank-http-client.ts"
 /**
  * Edge Function: tbank-platform-init
  * Initiates a platform subscription via T-Bank.
@@ -144,7 +145,7 @@ Deno.serve(async (req: Request) => {
       Receipt: receipt,
     }
 
-    const tResp = await fetch(TBANK_INIT_URL, {
+    const tResp = await fetch(TBANK_INIT_URL, { client: tbankHttpClient,
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(initPayload),
     })
@@ -260,7 +261,7 @@ Deno.serve(async (req: Request) => {
       }],
     }
 
-    const tResp = await fetch(TBANK_INIT_URL, {
+    const tResp = await fetch(TBANK_INIT_URL, { client: tbankHttpClient,
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password), Receipt: receipt }),
     })
@@ -403,7 +404,7 @@ Deno.serve(async (req: Request) => {
       }],
     }
 
-    const tResp = await fetch(TBANK_INIT_URL, {
+    const tResp = await fetch(TBANK_INIT_URL, { client: tbankHttpClient,
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password), Receipt: receipt }),
     })

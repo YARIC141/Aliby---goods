@@ -1,3 +1,4 @@
+import { tbankHttpClient } from "../_shared/tbank-http-client.ts"
 /**
  * Edge Function: tbank-platform-charge
  * Called daily by pg_cron to process recurring subscription renewals.
@@ -82,7 +83,7 @@ Deno.serve(async (req: Request) => {
         Description: `Продление подписки Aliby`,
         CustomerKey: sub.user_id,
       }
-      const initResp = await fetch(TBANK_INIT_URL, {
+      const initResp = await fetch(TBANK_INIT_URL, { client: tbankHttpClient,
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...initScalar, Token: await calcToken(initScalar, password) }),
       })
@@ -98,7 +99,7 @@ Deno.serve(async (req: Request) => {
         PaymentId:   initData.PaymentId,
         RebillId:    sub.rebill_id,
       }
-      const chargeResp = await fetch(TBANK_CHARGE_URL, {
+      const chargeResp = await fetch(TBANK_CHARGE_URL, { client: tbankHttpClient,
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...chargeScalar, Token: await calcToken(chargeScalar, password) }),
       })

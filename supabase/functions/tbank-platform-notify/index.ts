@@ -1,3 +1,4 @@
+import { tbankHttpClient } from "../_shared/tbank-http-client.ts"
 /**
  * Edge Function: tbank-platform-notify
  * Receives T-Bank payment notifications for platform subscriptions.
@@ -99,7 +100,7 @@ Deno.serve(async (req: Request) => {
             PaymentId:   String(paymentId),
             Amount:      100,
           }
-          await fetch(TBANK_CANCEL_URL, {
+          await fetch(TBANK_CANCEL_URL, { client: tbankHttpClient,
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...cancelScalar, Token: await calcToken(cancelScalar, password) }),
           }).catch(() => {})

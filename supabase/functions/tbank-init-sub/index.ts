@@ -1,3 +1,4 @@
+import { tbankHttpClient } from "../_shared/tbank-http-client.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.107.0"
 import { handleCors, jsonResponse } from "../_shared/cors.ts"
 import { decryptPaymentKey } from "../_shared/payment-crypto.ts"
@@ -161,7 +162,7 @@ Deno.serve(async (req: Request) => {
     FailURL: FAIL_BASE + payment.id,
   }
 
-  const tResp = await fetch(TBANK_INIT_URL, {
+  const tResp = await fetch(TBANK_INIT_URL, { client: tbankHttpClient,
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...scalarParams, Token: await calcToken(scalarParams, password) }),
   })
