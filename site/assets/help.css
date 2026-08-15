@@ -1,0 +1,74 @@
+.hlp{--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+.hlp-lead{color:var(--fg-2);font-size:15px;line-height:1.75;margin-bottom:32px;max-width:640px}
+
+/* ── содержание ── */
+.hlp-toc{border:1px solid var(--line);border-radius:var(--r-3);background:var(--bg-1);padding:16px 18px;margin-bottom:44px}
+.hlp-toc-t{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.hlp-toc ol{list-style:none;margin:0;padding:0;counter-reset:hlptoc;columns:2;column-gap:24px}
+.hlp-toc li{counter-increment:hlptoc;margin:0;break-inside:avoid}
+.hlp-toc a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:var(--r-2);color:var(--fg-2);text-decoration:none;font-size:14px;line-height:1.35;transition:background .15s,color .15s}
+.hlp-toc a:hover{background:var(--bg-2);color:var(--fg)}
+.hlp-toc a::before{content:counter(hlptoc);font:700 11px/1.5 var(--mono);color:var(--fg-3);min-width:18px;flex-shrink:0}
+@media(max-width:640px){.hlp-toc ol{columns:1}}
+
+/* ── разделы ── */
+.hlp-sec{scroll-margin-top:76px;margin-bottom:52px}
+.hlp-sec>h3{font:400 27px/1.25 var(--font-display);color:var(--fg);margin:0 0 6px;display:flex;align-items:baseline;gap:12px}
+.hlp-sec>h3 .n{font:700 12px/1 var(--mono);color:#08211d;background:var(--teal);border-radius:var(--r-pill);padding:6px 10px;flex-shrink:0}
+.hlp-sec>p{color:var(--fg-2);margin:12px 0}
+.hlp-sub{font:700 15px/1.35 var(--font-sans);color:var(--fg);margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+
+/* ── списки ── */
+.hlp ul,.hlp ol.hlp-steps{margin:12px 0;padding-left:0;list-style:none}
+.hlp ul li{position:relative;padding-left:19px;margin-bottom:8px;color:var(--fg-2)}
+.hlp ul li::before{content:'';position:absolute;left:5px;top:11px;width:4px;height:4px;border-radius:50%;background:var(--fg-3)}
+ol.hlp-steps{counter-reset:hlpstep}
+ol.hlp-steps>li{counter-increment:hlpstep;position:relative;padding-left:36px;margin-bottom:14px;color:var(--fg-2)}
+ol.hlp-steps>li::before{content:counter(hlpstep);position:absolute;left:0;top:2px;width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:var(--bg-2);color:var(--fg-2);font:700 11px/22px var(--mono);text-align:center}
+ol.hlp-steps>li ul{margin:7px 0 0}
+
+/* ── акценты в тексте ── */
+.hlp b.k{font:600 13px/1.3 var(--font-sans);color:var(--fg);background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:nowrap;display:inline-block}
+.hlp .path{font:600 13px/1.4 var(--font-sans);color:var(--fg-2);background:var(--bg-2);border-radius:6px;padding:2px 8px;white-space:nowrap;display:inline-block}
+.hlp code{font:400 12.5px/1.4 var(--mono);background:var(--bg-2);border-radius:6px;padding:1px 6px;color:var(--fg-2)}
+
+/* ── таблица полей ── */
+.hlp-fields{border:1px solid var(--line);border-radius:var(--r-3);overflow:hidden;margin:14px 0}
+.hlp-fields .r{display:grid;grid-template-columns:210px 1fr;border-bottom:1px solid var(--line)}
+.hlp-fields .r:last-child{border-bottom:none}
+.hlp-fields .r>.f{padding:11px 15px;font-weight:700;font-size:14px;line-height:1.5;color:var(--fg);background:var(--bg-1);border-right:1px solid var(--line)}
+.hlp-fields .r>.d{padding:11px 15px;font-size:14px;line-height:1.65;color:var(--fg-2)}
+.hlp-fields .req{color:var(--brand);font-weight:700;margin-left:2px}
+@media(max-width:640px){
+  .hlp-fields .r{grid-template-columns:1fr}
+  .hlp-fields .r>.f{border-right:none;border-bottom:1px solid var(--line);padding-bottom:8px}
+}
+
+/* ── врезки ── */
+.hlp-note,.hlp-warn,.hlp-tip{border-radius:var(--r-3);padding:13px 16px;margin:16px 0;font-size:14px;line-height:1.7;color:var(--fg-2)}
+.hlp-note{background:rgba(120,180,224,.09);border:1px solid rgba(120,180,224,.3)}
+.hlp-warn{background:rgba(232,116,59,.09);border:1px solid rgba(232,116,59,.32)}
+.hlp-tip{background:rgba(20,184,166,.09);border:1px solid rgba(20,184,166,.3)}
+.hlp-note b,.hlp-warn b,.hlp-tip b{display:block;margin-bottom:4px;color:var(--fg)}
+.hlp-warn b{color:var(--brand)}
+
+/* ── схемы ── */
+.hlp-scheme{overflow-x:auto;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-3);padding:16px;margin:16px 0}
+.hlp-scheme pre{margin:0;font:400 12px/1.6 var(--mono);color:var(--fg-2);white-space:pre}
+@media(max-width:640px){.hlp-scheme pre{font-size:11px}}
+
+/* ── тарифы ── */
+.hlp-price{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
+.hlp-price>div{flex:1;min-width:170px;border:1px solid var(--line);border-radius:var(--r-3);padding:14px 16px;background:var(--bg-1)}
+.hlp-price .amt{font:700 21px/1 var(--font-sans);color:var(--teal);margin-bottom:5px}
+.hlp-price .cap{font-size:13px;line-height:1.5;color:var(--fg-3)}
+
+/* ── вопросы ── */
+.hlp-faq{border-bottom:1px solid var(--line);padding:14px 0}
+.hlp-faq:last-child{border-bottom:none}
+.hlp-faq .q{font-weight:700;font-size:15px;line-height:1.45;color:var(--fg);margin-bottom:6px}
+.hlp-faq .a{font-size:14px;line-height:1.7;color:var(--fg-2)}
+
+/* ── возврат к содержанию ── */
+.hlp-back{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:6px 13px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-1);color:var(--fg-3);font-size:12.5px;text-decoration:none;transition:background .15s,color .15s}
+.hlp-back:hover{background:var(--bg-2);color:var(--fg)}
