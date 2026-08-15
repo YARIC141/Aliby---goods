@@ -490,6 +490,12 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
   --accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224;
   border-bottom:1px solid var(--line);
 }
+/* Тарифы раскрыты по умолчанию скрыты (togglePricing показывает их только
+   по клику на кнопку «Alliby для бизнеса»). Любая другая ссылка на #pricing —
+   в шапке, футере, с других страниц через /#pricing — просто ставит URL-якорь
+   и раньше не раскрывала блок вовсе. :target ловит все эти переходы разом,
+   без гонки с таймингом JS и без завязки на порядок скриптов. */
+#pricing:target #pricing-content{display:block!important}
 .tiers{
   display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
   border:1px solid var(--line);border-radius:var(--r-4);overflow:hidden;
