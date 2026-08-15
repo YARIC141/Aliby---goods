@@ -2346,24 +2346,6 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
-<div class="overlay" id="m-buy">
-  <div class="modal">
-    <div class="modal-hd">
-      <h3 id="mb-title">Купить абонемент</h3>
-      <button class="modal-x" onclick="closeModal('m-buy')">✕</button>
-    </div>
-    <div id="mb-info" class="card" style="margin-bottom:14px"></div>
-    <div id="mb-gift-warn" style="display:none;background:#fff8e1;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#7c5c00;line-height:1.5">
-      <svg class="ico" width="14" height="14" style="margin-right:5px;vertical-align:text-top;color:#7c5c00"><use href="#i-alert"/></svg>Срок действия подарочного абонемента начинается <strong>с момента покупки</strong>, а не с момента активации получателем. После покупки вы получите ID абонемента — передайте его получателю в разделе «Подарки».
-    </div>
-    <p class="txt-sm" style="margin-bottom:14px">Нажмите «Купить» для оформления абонемента.</p>
-    <div class="modal-ft">
-      <button class="btn" onclick="closeModal('m-buy')">Отмена</button>
-      <button class="btn btn-p" id="buy-sub-btn" onclick="buySubscription()">Купить →</button>
-    </div>
-  </div>
-</div>
-
 <!-- ════════════════ COOKIE BANNER ════════════════ -->
 
 <!-- ════════════════ BUYER CONTRACT MODAL ════════════════ -->
@@ -2709,7 +2691,7 @@ const DEFAULT_FEATURES = {
 const S = {
   session: null, profile: null, store: null, storeSubActive: true,
   cart: [], cartStoreId: null, appliedSub: null, cartUsubs: [], subCart: [], giftSubCart: [], rentCart: [],
-  menuCatId: '', menuStoreSubs: [], menuUserSubs: [], pendingSub: null,
+  menuCatId: '', menuStoreSubs: [], menuUserSubs: [],
   map: null, mapMarkers: [], homeMarker: null, mapFitted: false, allStores: [], mapCat: new Set(),
   nearbyMeters: null, geoLat: null, geoLng: null, deliveryFilter: false,
   navHistory: [], navIdx: -1,
@@ -8170,83 +8152,6 @@ async function openSubDetailModal(id) {
   document.getElementById('msd-conds').innerHTML = rows.length
     ? `<div class="cond-title">Условия</div>${rows.join('')}`
     : '';
-}
-
-function openBuyModal(id, name, price, days, uses) {
-  S.pendingSub   = { id, name, price, duration_days: days, total_uses: uses };
-  S.pendingGift  = false;
-  document.getElementById('mb-title').textContent = 'Купить абонемент';
-  document.getElementById('mb-gift-warn').style.display = 'none';
-  document.getElementById('mb-info').innerHTML = `
-    <strong>${esc(name)}</strong><br>
-    <span class="lbl">Цена:</span> ${price} ₽ &nbsp;
-    <span class="lbl">Срок:</span> ${days} дн. &nbsp;
-    <span class="lbl">Использований:</span> ${uses === 0 ? 'безлимит' : uses}`;
-  openModal('m-buy');
-}
-
-function openGiftModal(id, name, price, days, uses) {
-  S.pendingSub   = { id, name, price, duration_days: days, total_uses: uses };
-  S.pendingGift  = true;
-  document.getElementById('mb-title').textContent = 'Приобрести в подарок';
-  document.getElementById('mb-gift-warn').style.display = 'block';
-  document.getElementById('mb-info').innerHTML = `
-    <strong>${esc(name)}</strong><br>
-    <span class="lbl">Цена:</span> ${price} ₽ &nbsp;
-    <span class="lbl">Срок:</span> ${days} дн. &nbsp;
-    <span class="lbl">Использований:</span> ${uses === 0 ? 'безлимит' : uses}`;
-  openModal('m-buy');
-}
-
-async function buySubscription() {
-  if (!S.pendingSub) return;
-  if (!S.session) { alert('Войдите в аккаунт'); return; }
-  const sub    = S.pendingSub;
-  const isGift = !!S.pendingGift;
-  const restore = btnLoad(document.getElementById('buy-sub-btn'), 'Покупка…');
-  try {
-    const today = new Date();
-    const end = new Date(today);
-    end.setDate(end.getDate() + sub.duration_days);
-    const body = {
-      user_id:        S.session.user.id,
-      subscription_id: sub.id,
-      status:         'active',
-      start_date:     today.toISOString().split('T')[0],
-      end_date:       end.toISOString().split('T')[0],
-      remaining_uses: sub.total_uses === 0 ? null : sub.total_uses,
-    };
-    if (isGift) body.gift_status = 'pending';
-    await req('/rest/v1/user_subscriptions', {
-      method: 'POST',
-      headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify(body),
-    });
-    restore();
-    closeModal('m-buy');
-    S.pendingSub  = null;
-    S.pendingGift = false;
-    _invalidateApiCache('user_subscriptions');
-    S.menuUserSubs = [];
-    if (S.cart.length) {
-      const sid = S.store?.id || S.cartStoreId;
-      await loadMenuUserSubs(sid);
-    }
-    if (isGift) {
-      alert('Подарочный абонемент куплен! ID абонемента отображается в разделе «Подарки» — передайте его получателю.');
-      _subFilter = 'gifts';
-      goTo('subscriptions');
-    } else {
-      alert('Абонемент куплен! Оплата имитирована.');
-      // Если в корзине есть товары — показать корзину с пересчитанными ценами
-      if (S.cart.length) { goTo('cart'); } else { goTo('subscriptions'); }
-    }
-  } catch(e) {
-    restore();
-    const msg = String(e.message || e);
-    if (msg.includes('out_of_stock')) alert('Этот абонемент уже распродан');
-    else alert('Ошибка: ' + msg);
-  }
 }
 
 // ─── PROFILE ───
