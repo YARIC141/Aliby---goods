@@ -593,11 +593,14 @@ footer{
 .footer-nav{display:flex;gap:24px;flex-wrap:wrap}
 .footer-nav a{font:400 13px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s}
 .footer-nav a:hover{color:var(--fg)}
-.footer-apps{display:flex;gap:14px}
-.footer-app-btn{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none}
-.footer-app-tile{width:44px;height:44px;border-radius:var(--r-3);background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;transition:border-color .16s,transform .16s}
-.footer-app-btn:hover .footer-app-tile{border-color:var(--brand);transform:translateY(-2px)}
-.footer-app-label{font:600 11px/1 var(--font-sans);color:var(--fg-3)}
+.footer-apps{display:flex;gap:12px;flex-wrap:wrap;width:100%}
+.footer-app{flex:1;min-width:210px;display:flex;flex-direction:column;gap:9px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-3);background:var(--bg-2)}
+.footer-app-hd{display:flex;flex-direction:column;gap:3px}
+.footer-app-name{font:700 14px/1.2 var(--font-sans)}
+.footer-app-cap{font:600 11px/1 var(--font-sans);color:var(--fg-3)}
+.footer-app-links{display:flex;gap:7px;flex-wrap:wrap}
+.footer-app-links a{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg-1);font:600 11px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:border-color .16s,color .16s,transform .14s}
+.footer-app-links a:hover{color:var(--fg);border-color:var(--fg-3);transform:translateY(-1px)}
 
 /* ── COOKIE BANNER ── */
 #cookie-banner{
@@ -1322,7 +1325,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
   <h2 class="cta-h2">Начните пользоваться Alliby</h2>
   <p class="cta-sub">Клиентам — найти место и заказать за минуту. Бизнесу — подключить заведение и принимать заказы онлайн.</p>
   <div class="cta-btns">
-    <a class="cta-play-badge" href="https://play.google.com/store/apps/details?id=ru.alliby.app" target="_blank" rel="noopener" aria-label="Скачать в Google Play">
+    <a class="cta-play-badge" href="https://play.google.com/store/apps/details?id=ru.alliby.app&amp;pcampaignid=web_share" target="_blank" rel="noopener" aria-label="Скачать в Google Play">
       <img src="https://play.google.com/intl/ru_ru/badges/static/images/badges/ru_badge_web_generic.png" alt="Доступно в Google Play" height="54">
     </a>
     <a class="btn-blue" href="#pricing" onclick="goToBusinessTerms();return false">
@@ -1705,14 +1708,27 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
     <a href="/delete-account">Удаление аккаунта</a>
   </div>
   <div class="footer-apps">
-    <a class="footer-app-btn" href="https://play.google.com/store/apps/details?id=ru.alliby.app" target="_blank" rel="noopener">
-      <span class="footer-app-tile"><svg width="22" height="22" viewBox="0 0 28.99 31.99"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg></span>
-      <span class="footer-app-label">Google Play</span>
-    </a>
-    <a class="footer-app-btn" href="https://alliby.ru/">
-      <span class="footer-app-tile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
-      <span class="footer-app-label">Web версия</span>
-    </a>
+    <div class="footer-app">
+      <div class="footer-app-hd"><b class="footer-app-name c-client">Alliby</b><span class="footer-app-cap">Для клиентов</span></div>
+      <div class="footer-app-links">
+        <a href="https://alliby.ru/"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Веб-версия</a>
+        <a href="https://play.google.com/store/apps/details?id=ru.alliby.app&amp;pcampaignid=web_share" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 28.99 31.99" aria-hidden="true"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg> Google Play</a>
+      </div>
+    </div>
+    <div class="footer-app">
+      <div class="footer-app-hd"><b class="footer-app-name c-business">Alliby Business</b><span class="footer-app-cap">Для бизнеса</span></div>
+      <div class="footer-app-links">
+        <a href="https://admin.alliby.ru/"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Веб-версия</a>
+        <a href="https://play.google.com/store/apps/details?id=ru.alliby_business.app&amp;pcampaignid=web_share" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 28.99 31.99" aria-hidden="true"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg> Google Play</a>
+      </div>
+    </div>
+    <div class="footer-app">
+      <div class="footer-app-hd"><b class="footer-app-name c-carry">Alliby Carry</b><span class="footer-app-cap">Для курьеров</span></div>
+      <div class="footer-app-links">
+        <a href="https://carry.alliby.ru/"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Веб-версия</a>
+        <a href="https://play.google.com/store/apps/details?id=ru.alliby_carry.app&amp;pcampaignid=web_share" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 28.99 31.99" aria-hidden="true"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg> Google Play</a>
+      </div>
+    </div>
   </div>
   <div style="width:100%;display:flex;flex-direction:column;gap:4px">
     <span class="footer-copy">© 2026 Alliby. Сайт использует файлы cookie для улучшения работы сервиса.</span>
@@ -2140,6 +2156,37 @@ function closeScenario() {
   document.getElementById('scenario-modal').classList.remove('open');
   document.body.style.overflow = '';
 }
+
+// Пункт сценария в меню: пролистать к карточке направления и открыть её сценарий.
+// С подстраниц ссылка ведёт на /#dir-…, поэтому тот же разбор нужен и при загрузке.
+(function () {
+  function openDirTarget(id, smooth) {
+    var m = /^dir-(client|business)-([a-z]+)$/.exec(id);
+    if (!m) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+    el.classList.add('section-focus');
+    setTimeout(function () { el.classList.remove('section-focus'); }, 1600);
+    // ждём окончания прокрутки — модалка ставит overflow:hidden и оборвала бы её
+    setTimeout(function () { openScenario(m[2], m[1]); }, smooth ? 520 : 260);
+  }
+
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('.nav-sub a[href^="#dir-"]');
+    if (!a) return;
+    e.preventDefault();
+    var nav = document.querySelector('nav');
+    if (nav) nav.classList.remove('open');
+    openDirTarget(a.getAttribute('href').slice(1), true);
+  });
+
+  if (/^#dir-(client|business)-[a-z]+$/.test(location.hash)) {
+    window.addEventListener('load', function () {
+      setTimeout(function () { openDirTarget(location.hash.slice(1), false); }, 120);
+    });
+  }
+})();
 function scrollToAudience(type) {
   var id = type === 'client' ? 'directions-clients' : (type === 'courier' ? 'alliby-carry' : 'directions-business');
   var el = document.getElementById(id);
