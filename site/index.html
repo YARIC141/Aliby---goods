@@ -85,8 +85,22 @@ nav{
 .nav-logo{font:400 22px/1 var(--font-display);color:var(--fg);text-decoration:none;letter-spacing:-.01em}
 .nav-logo span{color:var(--brand)}
 .nav-links{display:flex;align-items:center;gap:18px}
-.nav-link{font:600 14px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s}
+.nav-item{position:relative;display:flex;align-items:center}
+.nav-link{display:inline-flex;align-items:center;gap:6px;font:600 14px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s;white-space:nowrap}
 .nav-link:hover{color:var(--fg)}
+.nl-aud{color:var(--fg-3);font-weight:600}
+.nav-link:hover .nl-aud{color:var(--fg-2)}
+.nl-app{font-weight:700}
+.c-client{color:var(--brand)}
+.c-business{color:var(--blue)}
+.c-carry{color:var(--teal)}
+.nl-caret{opacity:.45;flex-shrink:0;transition:transform .18s}
+.nav-item:hover .nl-caret{transform:rotate(180deg)}
+.nav-sub{position:absolute;top:100%;left:0;transform:translateY(8px);min-width:250px;padding:8px;display:flex;flex-direction:column;gap:1px;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-3);box-shadow:0 18px 50px rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .16s,transform .16s;z-index:120}
+.nav-item:hover .nav-sub{opacity:1;visibility:visible;transform:translateY(2px)}
+.nav-sub a{padding:9px 12px;border-radius:var(--r-2);font:600 13px/1.3 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:background .14s,color .14s}
+.nav-sub a:hover{background:var(--bg-2);color:var(--fg)}
+.nav-sub-t{padding:11px 12px 5px;font:700 10px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
 .nav-drop{position:relative;display:flex;align-items:center}
 .nav-drop-t{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
 .nav-drop-t svg{transition:transform .18s}
@@ -106,13 +120,18 @@ nav{
 .nav-burger .bx-close{display:none}
 nav.open .nav-burger .bx-open{display:none}
 nav.open .nav-burger .bx-close{display:block}
-@media(max-width:720px){
+@media(max-width:1000px){
   .nav-drop{display:none}
   .nav-burger{display:flex}
   .nav-links{position:absolute;top:64px;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--bg-1);border-bottom:1px solid var(--line);max-height:0;overflow:hidden;opacity:0;pointer-events:none;transition:max-height .22s ease,opacity .18s ease}
-  nav.open .nav-links{max-height:75vh;overflow-y:auto;opacity:1;pointer-events:auto}
-  .nav-links .nav-link{padding:13px clamp(20px,5vw,80px);font-size:15px;border-bottom:1px solid var(--line)}
-  .nav-links .nav-link:last-child{border-bottom:none}
+  nav.open .nav-links{max-height:78vh;overflow-y:auto;opacity:1;pointer-events:auto}
+  .nav-item{display:block}
+  .nav-links .nav-link{padding:13px clamp(20px,5vw,80px);font-size:15px;border-bottom:1px solid var(--line);width:100%}
+  .nl-caret{display:none}
+  .nav-sub{position:static;transform:none;opacity:1;visibility:visible;min-width:0;padding:4px 0 8px;gap:0;background:var(--bg-2);border:none;border-radius:0;box-shadow:none;border-bottom:1px solid var(--line)}
+  .nav-sub a{padding:10px clamp(20px,5vw,80px);padding-left:calc(clamp(20px,5vw,80px) + 20px);font-size:14px;border-radius:0}
+  .nav-sub-t{padding-left:calc(clamp(20px,5vw,80px) + 20px)}
+  .nav-item:last-child .nav-link{border-bottom:none}
 }
 @media(max-width:400px){nav{padding:0 14px}.nav-play-badge img{height:30px}}
 
@@ -441,6 +460,20 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
   transition:background .18s,transform .14s,color .18s;
 }
 .btn-blue:hover{background:rgba(120,180,224,.2);color:#fff;transform:translateY(-2px)}
+.btn-orange{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 32px;border-radius:var(--r-pill);
+  background:rgba(232,116,59,.12);border:1px solid rgba(232,116,59,.4);
+  color:var(--brand);font:700 16px/1 var(--font-sans);text-decoration:none;
+  transition:background .18s,transform .14s,color .18s;
+}
+.btn-orange:hover{background:rgba(232,116,59,.2);color:#fff;transform:translateY(-2px)}
+.btn-mint{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 32px;border-radius:var(--r-pill);
+  background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.4);
+  color:var(--teal);font:700 16px/1 var(--font-sans);text-decoration:none;
+  transition:background .18s,transform .14s,color .18s;
+}
+.btn-mint:hover{background:rgba(20,184,166,.2);color:#fff;transform:translateY(-2px)}
 
 .seg-lead{
   font:400 clamp(18px,2.2vw,22px)/1.5 var(--font-display);
@@ -604,10 +637,10 @@ footer{
   transition:transform .16s,box-shadow .16s;
 }
 .ag-btn:hover{transform:translateY(-2px)}
-.ag-btn.ag-client{background:var(--blue);box-shadow:0 10px 30px rgba(120,180,224,.3)}
-.ag-btn.ag-client:hover{background:var(--blue-deep);box-shadow:0 14px 36px rgba(120,180,224,.4)}
-.ag-btn.ag-business{background:var(--brand);box-shadow:0 10px 30px rgba(232,116,59,.3)}
-.ag-btn.ag-business:hover{background:var(--brand-deep);box-shadow:0 14px 36px rgba(232,116,59,.4)}
+.ag-btn.ag-client{background:var(--brand);box-shadow:0 10px 30px rgba(232,116,59,.3)}
+.ag-btn.ag-client:hover{background:var(--brand-deep);box-shadow:0 14px 36px rgba(232,116,59,.4)}
+.ag-btn.ag-business{background:var(--blue);box-shadow:0 10px 30px rgba(120,180,224,.3)}
+.ag-btn.ag-business:hover{background:var(--blue-deep);box-shadow:0 14px 36px rgba(120,180,224,.4)}
 .ag-btn.ag-courier{background:var(--teal);box-shadow:0 10px 30px rgba(20,184,166,.3)}
 .ag-btn.ag-courier:hover{background:var(--teal-deep);box-shadow:0 14px 36px rgba(20,184,166,.4)}
 @media(max-width:480px){.ag-btns{flex-direction:column;align-items:stretch}.ag-btn{max-width:none}}
@@ -848,7 +881,7 @@ html[data-theme="light"] .icon-moon{display:flex}
 .dir-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:48px}
 @media(max-width:960px){.dir-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:720px){.dir-grid{grid-template-columns:1fr}}
-.dir-card{background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:var(--r-4);padding:28px;transition:background .2s,border-color .2s,transform .2s,box-shadow .2s;display:flex;flex-direction:column}
+.dir-card{scroll-margin-top:88px;background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:var(--r-4);padding:28px;transition:background .2s,border-color .2s,transform .2s,box-shadow .2s;display:flex;flex-direction:column}
 .dir-card:hover{background:rgba(255,255,255,.095);transform:translateY(-3px);border-color:rgba(var(--accent-rgb),.45);box-shadow:0 16px 40px rgba(var(--accent-rgb),.14)}
 html[data-theme="light"] .dir-card{background:rgba(255,255,255,.5)}
 html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
@@ -971,12 +1004,36 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 <nav>
   <a class="nav-logo" href="/">Alli<span>by</span></a>
   <div class="nav-links">
-    <a class="nav-link" href="#directions-clients">Для клиентов</a>
-    <a class="nav-link" href="#directions-business">Для бизнеса</a>
-    <a class="nav-link" href="/help-business">Инструкция</a>
-    <a class="nav-link" href="#alliby-carry">Alliby Carry</a>
-    <a class="nav-link" href="#pricing">Тарифы</a>
-    <a class="nav-link" href="/articles">Статьи</a>
+    <div class="nav-item">
+      <a class="nav-link" href="#directions-clients"><span class="nl-aud">Для клиентов</span> <b class="nl-app c-client">Alliby</b><svg class="nl-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a>
+      <div class="nav-sub">
+        <a href="#directions-clients">Обзор направлений</a>
+        <div class="nav-sub-t">Сценарии для клиентов</div>
+        <a href="#dir-client-food">Еда</a>
+        <a href="#dir-client-goods">Товары</a>
+        <a href="#dir-client-services">Услуги</a>
+        <a href="#dir-client-sport">Спорт и образование</a>
+        <a href="#dir-client-entertainment">Развлечения</a>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a class="nav-link" href="#directions-business"><span class="nl-aud">Для бизнеса</span> <b class="nl-app c-business">Alliby Business</b><svg class="nl-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a>
+      <div class="nav-sub">
+        <a href="#directions-business">Обзор возможностей</a>
+        <a href="/help-business">Инструкция по работе с Alliby Business</a>
+        <div class="nav-sub-t">Сценарии для бизнеса</div>
+        <a href="#dir-business-food">Еда</a>
+        <a href="#dir-business-goods">Товары</a>
+        <a href="#dir-business-services">Услуги</a>
+        <a href="#dir-business-sport">Спорт и образование</a>
+        <a href="#dir-business-entertainment">Развлечения</a>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a class="nav-link" href="#alliby-carry"><span class="nl-aud">Для курьеров</span> <b class="nl-app c-carry">Alliby Carry</b></a>
+    </div>
+    <div class="nav-item"><a class="nav-link" href="#pricing">Тарифы</a></div>
+    <div class="nav-item"><a class="nav-link" href="/articles">Статьи</a></div>
   </div>
   <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
     <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -1006,7 +1063,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 <section class="seg" id="directions-clients" style="--accent:var(--brand);--accent-deep:var(--brand-deep);--accent-rgb:232,116,59">
   <div class="seg-inner">
     <div class="seg-head">
-      <span class="seg-eyebrow"><span class="sc-dot"></span>Пять направлений</span>
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Для клиентов · <b class="nl-app c-client">Alliby</b></span>
       <h2 class="seg-h2">Что бы вам ни было нужно — <em>Alliby уже умеет это</em></h2>
       <p class="seg-sub">Сценарий один во всех направлениях: нашли на карте — выбрали — купили, забронировали или взяли в аренду. Абонементы со скидкой и подарочные сертификаты работают везде.</p>
       <div class="legend">
@@ -1019,7 +1076,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
     </div>
 
     <div class="dir-grid">
-      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','client')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-client-food" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
         <div class="dir-title">Еда<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Голод — самая частая причина открыть телефон. Закрываем её за пару касаний.</p>
@@ -1032,7 +1089,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('food','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','client')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-client-goods" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
         <div class="dir-title">Товары<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">От аптеки до техномаркета — заказ без похода в магазин.</p>
@@ -1045,7 +1102,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('goods','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','client')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-client-services" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
         <div class="dir-title">Услуги<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Барбершоп, салон красоты, мастерская — запись, которая не путается.</p>
@@ -1059,7 +1116,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('services','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','client')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-client-sport" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 15c3-1.3 6.5-1.3 9 0v6c-2.5-1.3-6-1.3-9 0v-6z"/><path d="M21.5 15c-3-1.3-6.5-1.3-9 0v6c2.5-1.3 6-1.3 9 0v-6z"/><circle cx="12" cy="7.5" r="5.5"/><path d="M12 4.3l1.7 1.2-.65 2h-2.1l-.65-2z"/><line x1="12" y1="2" x2="12" y2="4.3"/><line x1="16.8" y1="4.6" x2="13.7" y2="5.5"/><line x1="15.2" y1="11.5" x2="12.65" y2="7.5"/><line x1="8.8" y1="11.5" x2="11.35" y2="7.5"/><line x1="7.2" y1="4.6" x2="10.3" y2="5.5"/></svg></div>
         <div class="dir-title">Спорт и образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Зал, корт, персональный тренер — прогресс без звонков администратору.</p>
@@ -1073,7 +1130,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','client')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-client-entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="17" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="7" cy="17" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="1.5" fill="currentColor"/></svg></div>
         <div class="dir-title">Развлечения<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Компьютерный клуб, квеструм, караоке, каток — в одном заведении сразу всё.</p>
@@ -1090,7 +1147,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 
     <p class="seg-note" style="text-align:center;margin:24px auto 0;max-width:680px;color:var(--fg-3);font-size:14px;line-height:1.6">Одно и то же заведение может совмещать всё сразу: столик в кофейне бронируется как «аренда», настольная игра сдаётся напрокат, а мастер-класс по латте-арту — по записи с выбором бариста. Тип позиции — товар, услуга или аренда — настраивается для каждой карточки отдельно, независимо от направления.</p>
     <div style="text-align:center;margin-top:28px">
-      <a class="btn-blue" href="https://alliby.ru/">
+      <a class="btn-orange" href="https://alliby.ru/">
         Открыть Alliby
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
@@ -1102,13 +1159,13 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 <section class="seg" id="directions-business" style="--accent:var(--blue);--accent-deep:var(--blue-deep);--accent-rgb:120,180,224;background:rgba(0,0,0,.18);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
   <div class="seg-inner">
     <div class="seg-head">
-      <span class="seg-eyebrow"><span class="sc-dot"></span>Пять направлений</span>
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Для бизнеса · <b class="nl-app c-business">Alliby Business</b></span>
       <h2 class="seg-h2">Один кабинет — <em>любое направление</em></h2>
       <p class="seg-sub">Свой магазин, запись и доставка — за пару кликов, без разработки и внедрения. Любая позиция каталога может быть товаром, услугой или арендой, независимо от направления заведения. Соберите под свой формат: доставка, запись, прокат или всё сразу.</p>
     </div>
 
     <div class="dir-grid">
-      <div class="dir-card" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','business')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-business-food" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
         <div class="dir-title">Еда<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Рестораны, кофейни, бары — от меню до курьера.</p>
@@ -1122,7 +1179,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('food','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','business')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-business-goods" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
         <div class="dir-title">Товары<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Магазины и точки продаж — каталог, который продаёт и сдаёт в аренду.</p>
@@ -1136,7 +1193,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('goods','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','business')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-business-services" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
         <div class="dir-title">Услуги<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Салоны, мастерские, студии — расписание, которое не путается.</p>
@@ -1151,7 +1208,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('services','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','business')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-business-sport" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 15c3-1.3 6.5-1.3 9 0v6c-2.5-1.3-6-1.3-9 0v-6z"/><path d="M21.5 15c-3-1.3-6.5-1.3-9 0v6c2.5-1.3 6-1.3 9 0v-6z"/><circle cx="12" cy="7.5" r="5.5"/><path d="M12 4.3l1.7 1.2-.65 2h-2.1l-.65-2z"/><line x1="12" y1="2" x2="12" y2="4.3"/><line x1="16.8" y1="4.6" x2="13.7" y2="5.5"/><line x1="15.2" y1="11.5" x2="12.65" y2="7.5"/><line x1="8.8" y1="11.5" x2="11.35" y2="7.5"/><line x1="7.2" y1="4.6" x2="10.3" y2="5.5"/></svg></div>
         <div class="dir-title">Спорт и образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Фитнес-клубы, залы, корты, секции — расписание тренеров и загрузка зала.</p>
@@ -1166,7 +1223,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
-      <div class="dir-card" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','business')" role="button" tabindex="0">
+      <div class="dir-card" id="dir-business-entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="17" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="7" cy="17" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="1.5" fill="currentColor"/></svg></div>
         <div class="dir-title">Развлечения<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Компьютерные клубы, квесты, VR — самый гибкий формат каталога.</p>
@@ -1201,11 +1258,11 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 
     <p class="seg-note" style="text-align:center;margin:24px auto 0;max-width:680px;color:var(--fg-3);font-size:14px;line-height:1.6">Инструменты одни и те же в любом направлении: заказы и статусы в реальном времени, сотрудники и мастера с личным графиком, конструктор абонементов, онлайн-оплата, рассылки и аналитика. Одно заведение или сеть — всё из одного аккаунта, а сотрудникам доступ бесплатный: администратор, повар, тренер и курьер не занимают платных мест.</p>
     <p class="seg-note" style="text-align:center;margin:14px auto 0;max-width:680px;font-size:14px">
-      Не знаете, с чего начать? <a href="/help-business" style="color:var(--blue);font-weight:600">Пошаговая инструкция по кабинету →</a>
+      Не знаете, с чего начать? <a href="/help-business" style="color:var(--blue);font-weight:600">Инструкция по работе с Alliby Business →</a>
     </p>
     <div style="text-align:center;margin-top:28px">
       <a class="btn-blue" href="https://admin.alliby.ru/">
-        Открыть Alliby для бизнеса
+        Открыть Alliby Business
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
     </div>
@@ -1216,7 +1273,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 <section class="seg" id="alliby-carry" style="--accent:var(--teal);--accent-deep:var(--teal-deep);--accent-rgb:20,184,166">
   <div class="seg-inner">
     <div class="seg-head">
-      <span class="seg-eyebrow"><span class="sc-dot"></span>Alliby Carry</span>
+      <span class="seg-eyebrow"><span class="sc-dot"></span>Для курьеров · <b class="nl-app c-carry">Alliby Carry</b></span>
       <h2 class="seg-h2">Свой график. <em>Своя цена. Свои деньги.</em></h2>
       <p class="seg-sub">Приложение для курьеров-фрилансеров: ни комиссии платформы, ни графика смен. Вы решаете, когда работать и за сколько, а деньги приходят напрямую от заведения.</p>
     </div>
@@ -1258,7 +1315,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 
     <p class="seg-note" style="text-align:center;margin:24px auto 0;max-width:680px;color:var(--fg-3);font-size:14px;line-height:1.6">Зарегистрируйтесь в приложении Alliby Carry, включите смену — и получайте заказы от заведений рядом с вами, на своих условиях.</p>
     <div style="text-align:center;margin-top:28px">
-      <a class="btn-blue" href="https://carry.alliby.ru/">
+      <a class="btn-mint" href="https://carry.alliby.ru/">
         Открыть Alliby Carry
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
@@ -1626,7 +1683,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 
     <div style="text-align:center;margin-top:32px">
       <a class="btn-blue" href="https://admin.alliby.ru/">
-        Открыть Alliby для бизнеса
+        Открыть Alliby Business
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
     </div>
