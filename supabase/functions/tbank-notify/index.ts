@@ -116,6 +116,13 @@ Deno.serve(async (req: Request) => {
       order_id: order.id,
       amount_discounted: intent.subscription_discount,
     })
+    // Раньше запись о списании создавалась, а remaining_uses не уменьшался —
+    // абонемент давал скидку на товары неограниченно. Списываем ровно столько
+    // единиц, сколько абонемент покрыл при расчёте корзины в tbank-init.
+    await serviceClient.rpc('consume_subscription_uses', {
+      p_user_subscription_id: intent.applied_user_subscription_id,
+      p_uses: Number(intent.subscription_uses) || 0,
+    })
   }
 
   await serviceClient.from('payment_intents').delete().eq('id', intent.id)
