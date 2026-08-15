@@ -212,16 +212,24 @@ Deno.serve(async (req: Request) => {
 
     serverDiscount = Math.min(serverDiscount, fullAmount)
 
-    // Доставка: цену берём из зон заведения, иначе её можно было занизить.
+    // Доставка: цену определяет адрес. Раньше сюда приходило delivery_fee от
+    // клиента — сперва вообще без проверки, потом со сверкой по списку цен
+    // зон, что позволяло подставить цену самой дешёвой зоны при дальнем
+    // адресе. Теперь зону считает сервер по тем же координатам, по которым
+    // курьер поедет к покупателю.
     let serverDeliveryFee = 0
     if (is_delivery) {
-      const { data: zones } = await serviceClient
-        .from("delivery_zones").select("price").eq("store_id", store_id)
-      const allowed = new Set((zones ?? []).map(z => Number(z.price)))
-      const claimed = Number(delivery_fee) || 0
-      if (!allowed.has(claimed))
-        return jsonResponse({ error: "Стоимость доставки не соответствует зонам заведения" }, 400)
-      serverDeliveryFee = claimed
+      if (delivery_lat == null || delivery_lng == null)
+        return jsonResponse({ error: "Укажите адрес доставки на карте" }, 400)
+
+      const { data: fee, error: feeErr } = await serviceClient.rpc("delivery_fee_for_point", {
+        p_store_id: store_id, p_lat: delivery_lat, p_lng: delivery_lng,
+      })
+      if (feeErr) return jsonResponse({ error: "Не удалось определить зону доставки" }, 500)
+      if (fee === null || fee === undefined)
+        return jsonResponse({ error: "Этот адрес вне зоны доставки заведения" }, 400)
+
+      serverDeliveryFee = Number(fee)
     }
 
     const serverTotal = Math.max(0, fullAmount - serverDiscount) + serverDeliveryFee
@@ -238,7 +246,7 @@ Deno.serve(async (req: Request) => {
           payment_method: serverPaymentMethod,
           subscription_discount: Math.round(serverDiscount),
           applied_user_subscription_id: subIdApplied,
-          is_delivery, delivery_fee, delivery_address, delivery_lat, delivery_lng,
+          is_delivery, delivery_fee: serverDeliveryFee, delivery_address, delivery_lat, delivery_lng,
         })
         .select("id").single()
 
@@ -279,7 +287,7 @@ Deno.serve(async (req: Request) => {
       subscription_uses: subUses,
       applied_user_subscription_id: subIdApplied,
       payment_method: serverPaymentMethod,
-      is_delivery, delivery_fee: Math.round(delivery_fee || 0), delivery_address,
+      is_delivery, delivery_fee: Math.round(serverDeliveryFee), delivery_address,
       delivery_lat, delivery_lng,
       provider,
     }
