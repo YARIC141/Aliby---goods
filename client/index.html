@@ -617,6 +617,63 @@ html.bg-custom #bg-fluid{display:none}
 .bg-opt-prev{width:100%;height:44px;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line-soft);background-size:cover;background-position:center}
 .bg-opt-grad{background:radial-gradient(circle at 0% 0%,rgba(232,116,59,.55) 0%,transparent 55%),radial-gradient(circle at 100% 100%,rgba(120,180,224,.55) 0%,transparent 55%),var(--bg)}
 .bg-opt-fluid{background:radial-gradient(circle at 100% 0%,rgba(120,180,224,.55) 0%,transparent 55%),radial-gradient(circle at 0% 100%,rgba(232,116,59,.55) 0%,transparent 55%),var(--bg)}
+/* ─── HELP / ИНСТРУКЦИЯ ─── */
+#screen-help .pb{scroll-behavior:smooth}
+.hlp{max-width:780px;margin:0 auto;padding-bottom:60px}
+.hlp-lead{font:400 15px/1.65 var(--font-sans);color:var(--fg-2);margin:0 0 20px}
+.hlp-toc{border:1px solid var(--line-soft);border-radius:var(--r-3);background:var(--glass);padding:14px 16px;margin-bottom:28px}
+.hlp-toc-t{font:400 10px/1 var(--font-sans);text-transform:uppercase;letter-spacing:.12em;color:var(--fg-4);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--line-soft)}
+.hlp-toc ol{list-style:none;margin:0;padding:0;counter-reset:hlptoc}
+.hlp-toc li{counter-increment:hlptoc;margin:0}
+.hlp-toc a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:var(--r-1);color:var(--fg-2);text-decoration:none;font:400 14px/1.35 var(--font-sans);cursor:pointer;transition:background var(--t-fast),color var(--t-fast)}
+.hlp-toc a:hover{background:var(--bg-2);color:var(--fg)}
+.hlp-toc a::before{content:counter(hlptoc);font:600 11px/1.5 var(--font-mono);color:var(--fg-4);min-width:18px;flex-shrink:0}
+.hlp-sec{scroll-margin-top:8px;margin-bottom:34px;padding-top:4px}
+.hlp-sec>h3{font:400 24px/1.2 var(--font-display);letter-spacing:-.01em;color:var(--fg);margin:0 0 4px;display:flex;align-items:baseline;gap:10px}
+.hlp-sec>h3 .n{font:600 12px/1 var(--font-mono);color:var(--accent-fg);background:var(--accent);border-radius:var(--r-pill);padding:5px 9px;flex-shrink:0;letter-spacing:0}
+.hlp-sec>h3+.hlp-sub{margin-top:14px}
+.hlp-sec>p{font:400 14px/1.7 var(--font-sans);color:var(--fg-2);margin:10px 0}
+.hlp-sub{font:600 14px/1.3 var(--font-sans);color:var(--fg);margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)}
+.hlp ul,.hlp ol.hlp-steps{margin:10px 0;padding-left:0;list-style:none}
+.hlp ul li{position:relative;padding-left:18px;margin-bottom:7px;font:400 14px/1.65 var(--font-sans);color:var(--fg-2)}
+.hlp ul li::before{content:'';position:absolute;left:5px;top:10px;width:4px;height:4px;border-radius:50%;background:var(--fg-4)}
+ol.hlp-steps{counter-reset:hlpstep}
+ol.hlp-steps>li{counter-increment:hlpstep;position:relative;padding-left:34px;margin-bottom:12px;font:400 14px/1.65 var(--font-sans);color:var(--fg-2)}
+ol.hlp-steps>li::before{content:counter(hlpstep);position:absolute;left:0;top:1px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--bg-1);color:var(--fg-3);font:600 11px/22px var(--font-mono);text-align:center}
+ol.hlp-steps>li ul{margin:6px 0 0}
+.hlp b.k{font:600 13px/1.3 var(--font-sans);color:var(--fg);background:var(--bg-2);border:1px solid var(--line-soft);border-radius:var(--r-1);padding:1px 6px;white-space:nowrap;display:inline-block}
+.hlp .path{font:500 13px/1.4 var(--font-sans);color:var(--fg-3);background:var(--bg-2);border-radius:var(--r-1);padding:2px 7px;white-space:nowrap;display:inline-block}
+.hlp code{font:400 12.5px/1.4 var(--font-mono);background:var(--bg-2);border-radius:var(--r-1);padding:1px 5px;color:var(--fg-2)}
+.hlp-fields{border:1px solid var(--line-soft);border-radius:var(--r-3);overflow:hidden;margin:12px 0}
+.hlp-fields .r{display:grid;grid-template-columns:190px 1fr;gap:0;border-bottom:1px solid var(--line-soft)}
+.hlp-fields .r:last-child{border-bottom:none}
+.hlp-fields .r>.f{padding:10px 14px;font:600 13px/1.5 var(--font-sans);color:var(--fg);background:var(--bg-1);border-right:1px solid var(--line-soft)}
+.hlp-fields .r>.d{padding:10px 14px;font:400 13px/1.6 var(--font-sans);color:var(--fg-2)}
+.hlp-fields .req{color:var(--err);font-weight:700;margin-left:2px}
+.hlp-note,.hlp-warn,.hlp-tip{border-radius:var(--r-2);padding:11px 14px;margin:14px 0;font:400 13px/1.65 var(--font-sans)}
+.hlp-note{background:oklch(from var(--info) l c h / .09);border:1px solid oklch(from var(--info) l c h / .3);color:var(--fg-2)}
+.hlp-warn{background:oklch(from var(--err) l c h / .08);border:1px solid oklch(from var(--err) l c h / .3);color:var(--fg-2)}
+.hlp-tip{background:oklch(from var(--ok) l c h / .09);border:1px solid oklch(from var(--ok) l c h / .3);color:var(--fg-2)}
+.hlp-note b,.hlp-warn b,.hlp-tip b{display:block;margin-bottom:3px;font-weight:700;color:var(--fg)}
+.hlp-warn b{color:var(--err)}
+.hlp-scheme{overflow-x:auto;background:var(--bg-1);border:1px solid var(--line-soft);border-radius:var(--r-2);padding:14px;margin:14px 0}
+.hlp-scheme pre{margin:0;font:400 12px/1.6 var(--font-mono);color:var(--fg-2);white-space:pre}
+.hlp-price{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.hlp-price>div{flex:1;min-width:150px;border:1px solid var(--line-soft);border-radius:var(--r-3);padding:12px 14px;background:var(--glass)}
+.hlp-price .amt{font:700 20px/1 var(--font-sans);color:var(--brand-ice-deep);margin-bottom:4px}
+.hlp-price .cap{font:400 12px/1.45 var(--font-sans);color:var(--fg-3)}
+.hlp-faq{border-bottom:1px solid var(--line-soft);padding:12px 0}
+.hlp-faq:last-child{border-bottom:none}
+.hlp-faq .q{font:600 14px/1.45 var(--font-sans);color:var(--fg);margin-bottom:5px}
+.hlp-faq .a{font:400 13.5px/1.65 var(--font-sans);color:var(--fg-2)}
+.hlp-back{display:inline-flex;align-items:center;gap:5px;margin-top:4px;padding:5px 11px;border:1px solid var(--line-soft);border-radius:var(--r-pill);background:var(--glass);color:var(--fg-3);font:400 12px/1.4 var(--font-sans);text-decoration:none;cursor:pointer}
+.hlp-site-link{font:600 12px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;border:1px solid var(--line-soft);border-radius:var(--r-pill);padding:9px 12px;flex-shrink:0}
+@media(max-width:620px){
+  .hlp-fields .r{grid-template-columns:1fr}
+  .hlp-fields .r>.f{border-right:none;border-bottom:1px solid var(--line-soft);padding-bottom:7px}
+  .hlp-sec>h3{font-size:21px}
+  .hlp-scheme pre{font-size:11px}
+}
 </style>
 <script>
 if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
@@ -1560,6 +1617,13 @@ document.addEventListener('deviceready',function(){
     </div>
 
     <div class="sec">
+      <button class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between" onclick="goTo('help')">
+        <span>Инструкция</span>
+        <span style="color:var(--fg-4);font-size:18px">›</span>
+      </button>
+    </div>
+
+    <div class="sec">
       <button class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between" onclick="openCustomize()">
         <span>Кастомизация</span>
         <span style="color:var(--fg-4);font-size:18px">›</span>
@@ -1607,6 +1671,436 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+
+<!-- ════════════════ HELP / ИНСТРУКЦИЯ ════════════════ -->
+<div id="screen-help" class="screen">
+  <div class="ph">
+    <button class="btn-back" onclick="goTo('profile')">←</button>
+    <h2>Инструкция</h2>
+    <a href="https://site.alliby.ru/help-client" target="_blank" rel="noopener" class="hlp-site-link">На сайте ↗</a>
+  </div>
+  <div class="pb" id="help-scroll">
+    <div class="hlp">
+
+      <p class="hlp-lead">Как пользоваться Alliby — от первого запуска до заказа, записи и абонемента. Разделы идут в том порядке, в котором с ними обычно сталкиваются.</p>
+
+      <div class="hlp-toc" id="toc">
+        <div class="hlp-toc-t">Содержание</div>
+        <ol>
+          <li><a onclick="helpJump('h1')">С чего начать</a></li>
+          <li><a onclick="helpJump('h2')">Регистрация и вход</a></li>
+          <li><a onclick="helpJump('h3')">Город и адрес доставки</a></li>
+          <li><a onclick="helpJump('h4')">Как найти заведение</a></li>
+          <li><a onclick="helpJump('h5')">Страница заведения</a></li>
+          <li><a onclick="helpJump('h6')">Товары и опции</a></li>
+          <li><a onclick="helpJump('h7')">Запись на услугу</a></li>
+          <li><a onclick="helpJump('h8')">Аренда</a></li>
+          <li><a onclick="helpJump('h9')">Абонементы</a></li>
+          <li><a onclick="helpJump('h10')">Корзина и оплата</a></li>
+          <li><a onclick="helpJump('h11')">Заказ и доставка</a></li>
+          <li><a onclick="helpJump('h12')">Раздел «Алиби»</a></li>
+          <li><a onclick="helpJump('h13')">Профиль и уведомления</a></li>
+          <li><a onclick="helpJump('h14')">Частые вопросы и поддержка</a></li>
+        </ol>
+      </div>
+
+      <!-- ─── 1 ─── -->
+      <section class="hlp-sec" id="h1">
+        <h3><span class="n">1</span> С чего начать</h3>
+        <p>Alliby собирает заведения города в одном приложении. В нём можно заказать еду и товары, записаться к мастеру, забронировать площадку, взять что-то в аренду и купить абонемент со скидкой — не устанавливая отдельное приложение под каждую задачу.</p>
+
+        <div class="hlp-sub">Пять направлений</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Еда</div><div class="d">Кафе и рестораны: заказ блюд, доставка или самовывоз, бронь столика.</div></div>
+          <div class="r"><div class="f">Товары</div><div class="d">Магазины и шоурумы: покупка с доставкой или самовывозом, аренда вещей.</div></div>
+          <div class="r"><div class="f">Услуги</div><div class="d">Салоны, мастерские, студии: запись к конкретному мастеру на выбранное время.</div></div>
+          <div class="r"><div class="f">Спорт и образование</div><div class="d">Залы, корты, секции: запись к тренеру, бронь зала, аренда инвентаря.</div></div>
+          <div class="r"><div class="f">Развлечения</div><div class="d">Клубы, квесты, караоке: бронь площадки, запись на мастер-класс.</div></div>
+        </div>
+        <div class="hlp-note"><b>Направление — это не жёсткая рамка</b>Одно заведение может совмещать всё сразу: кофейня продаёт кофе, сдаёт настольные игры в аренду и записывает на мастер-класс по латте-арту.</div>
+
+        <div class="hlp-sub">Навигация</div>
+        <p>Внизу пять вкладок:</p>
+        <ul>
+          <li><b class="k">Главная</b> — плитки направлений, QR, статистика и недавние заведения.</li>
+          <li><b class="k">Заведения</b> — карта и список с поиском и фильтрами.</li>
+          <li><b class="k">Меню</b> — открытое заведение с его товарами и услугами.</li>
+          <li><b class="k">Корзина</b> — то, что вы выбрали, и оформление заказа.</li>
+          <li><b class="k">Алиби</b> — ваши заказы, записи, абонементы и аренда.</li>
+        </ul>
+        <p>Значок <b class="k">?</b> рядом с заголовком экрана показывает короткую подсказку по разделу.</p>
+
+        <div class="hlp-sub">Как всё устроено</div>
+        <div class="hlp-scheme"><pre>Выбрали город
+    │
+    ▼
+Нашли заведение (карта или список)
+    │
+    ├──► Товар ──────► корзина ──► оплата ──► заказ
+    │
+    ├──► Услуга ─────► выбор мастера и времени ──► запись
+    │
+    ├──► Аренда ─────► выбор периода ──► бронь
+    │
+    └──► Абонемент ──► покупка ──► скидка при заказе
+                                   или списание по QR</pre></div>
+
+        <div class="hlp-tip"><b>Приложение можно не устанавливать</b>Если в заведении есть QR-код Alliby, наведите камеру — меню или каталог откроется сразу, без установки и регистрации. Приложение пригодится, когда вы возвращаетесь в заведение регулярно: тогда появляются история, абонементы и уведомления о заказе.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 2 ─── -->
+      <section class="hlp-sec" id="h2">
+        <h3><span class="n">2</span> Регистрация и вход</h3>
+
+        <div class="hlp-sub">2.1. Создание аккаунта</div>
+        <ol class="hlp-steps">
+          <li>Откройте вкладку <b class="k">Регистрация</b> на стартовом экране.</li>
+          <li>Введите email и пароль — не менее 6 символов.</li>
+          <li>Примите Пользовательское соглашение: пролистайте текст до конца, отметьте согласие и нажмите кнопку подтверждения.</li>
+        </ol>
+
+        <div class="hlp-sub">2.2. Вход и восстановление пароля</div>
+        <p>На вкладке <b class="k">Вход</b> введите email и пароль. Если пароль забыт, воспользуйтесь восстановлением — на почту придёт ссылка для смены.</p>
+
+        <div class="hlp-note"><b>Один аккаунт на всю экосистему</b>Тот же email работает в Alliby&nbsp;Business, если вы откроете своё заведение, и в Alliby&nbsp;Carry, если станете курьером. Роли добавляются к аккаунту, история покупок при этом сохраняется.</div>
+
+        <div class="hlp-sub">2.3. Можно ли без регистрации</div>
+        <p>Смотреть меню и каталог по QR-коду можно без аккаунта. Он понадобится, чтобы оформить заказ, записаться, купить абонемент и видеть свою историю.</p>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 3 ─── -->
+      <section class="hlp-sec" id="h3">
+        <h3><span class="n">3</span> Город и адрес доставки</h3>
+
+        <div class="hlp-sub">3.1. Город</div>
+        <p>При первом запуске приложение попросит выбрать город — от него зависит, какие заведения вы увидите на карте. Начните вводить название, чтобы отфильтровать список. Сменить город можно в профиле.</p>
+
+        <div class="hlp-sub">3.2. Адрес доставки</div>
+        <p>Адрес нужен, чтобы приложение понимало, какие заведения доставляют именно к вам и сколько это стоит.</p>
+        <ol class="hlp-steps">
+          <li>Откройте <span class="path">Профиль → Адрес доставки</span> или нажмите значок дома на экране заведений.</li>
+          <li>Найдите нужное место на карте и поставьте точку.</li>
+          <li>Подтвердите выбор.</li>
+        </ol>
+        <div class="hlp-tip"><b>Зачем указывать адрес заранее</b>С сохранённым адресом на карте сразу видно, кто довезёт до вас, а кто нет, и какой будет стоимость доставки — не нужно проверять это в каждом заведении по очереди.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 4 ─── -->
+      <section class="hlp-sec" id="h4">
+        <h3><span class="n">4</span> Как найти заведение</h3>
+        <p>Вкладка <b class="k">Заведения</b> — это карта и список рядом. Сверху переключаются направления: Еда, Товары, Услуги, Спорт и образование, Развлечения.</p>
+
+        <div class="hlp-sub">4.1. Поиск и фильтры</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Поиск</div><div class="d">Строка поиска по названию заведения.</div></div>
+          <div class="r"><div class="f">Рядом</div><div class="d">Заведения поблизости от вашего текущего местоположения.</div></div>
+          <div class="r"><div class="f">Доставка</div><div class="d">Оставляет только тех, кто доставляет по вашему адресу. Работает после того, как адрес указан.</div></div>
+          <div class="r"><div class="f">Категории</div><div class="d">Список под поиском — тип заведения внутри направления.</div></div>
+        </div>
+
+        <div class="hlp-sub">4.2. Метки на карте</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Жёлтая метка</div><div class="d">Доступен онлайн-заказ.</div></div>
+          <div class="r"><div class="f">Зелёный значок</div><div class="d">Заведение доставляет в вашу зону.</div></div>
+          <div class="r"><div class="f">Красный значок</div><div class="d">Ваш адрес вне зоны доставки этого заведения.</div></div>
+          <div class="r"><div class="f">Значок дома</div><div class="d">Ваш сохранённый адрес доставки.</div></div>
+        </div>
+        <p>Кнопка <b class="k">Легенда</b> на карте раскрывает эту же расшифровку. Нажатие на метку открывает карточку с адресом, часами работы, телефоном и средним чеком, а кнопка <b class="k">Открыть заведение →</b> ведёт внутрь.</p>
+        <div class="hlp-note"><b>Карту можно свернуть</b>Кнопка со значком карты переключает вид: только список, только карта или оба вместе — удобно на маленьком экране.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 5 ─── -->
+      <section class="hlp-sec" id="h5">
+        <h3><span class="n">5</span> Страница заведения</h3>
+        <p>Здесь собрано всё, что предлагает заведение: описание, фото, часы работы, контакты и каталог, разбитый по категориям.</p>
+        <ul>
+          <li>Кнопка с часами открывает подробный <b>график работы</b> по дням недели.</li>
+          <li>Если у заведения есть <b>абонементы</b>, они показаны отдельным блоком вверху.</li>
+          <li>Для направления <b>Услуги</b> появляются две вкладки — <b class="k">Услуги</b> и <b class="k">Мастера</b>.</li>
+          <li>Кнопка <b class="k">Реквизиты продавца</b> внизу — юридические данные заведения.</li>
+        </ul>
+        <div class="hlp-note"><b>Кнопки «В корзину» нет</b>Значит, заведение не подключило онлайн-оплату. Каталог и цены смотреть можно, а оформить заказ через приложение — нет.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 6 ─── -->
+      <section class="hlp-sec" id="h6">
+        <h3><span class="n">6</span> Товары и опции</h3>
+        <p>Нажатие на карточку открывает подробную страницу: фото, описание, состав, аллергены и цена.</p>
+
+        <div class="hlp-sub">6.1. Опции</div>
+        <p>У многих позиций есть варианты — размер, добавки, способ подачи. Они бывают двух видов:</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Один из списка</div><div class="d">Можно выбрать только один вариант — например, объём стакана.</div></div>
+          <div class="r"><div class="f">Несколько сразу</div><div class="d">Можно отметить любое количество — например, дополнительные топпинги.</div></div>
+        </div>
+        <p>Опции могут менять цену: итоговая сумма пересчитывается сразу и видна на кнопке добавления.</p>
+
+        <div class="hlp-sub">6.2. Цена «от N ₽»</div>
+        <p>Если у позиции разная цена по дням недели или времени суток, на карточке показана минимальная. Точная сумма определяется при добавлении в корзину.</p>
+
+        <div class="hlp-sub">6.3. Позиции нет в наличии</div>
+        <p>Заведение может временно скрыть позицию — тогда она не показывается в каталоге. Для аренды дополнительно видно, сколько единиц свободно.</p>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 7 ─── -->
+      <section class="hlp-sec" id="h7">
+        <h3><span class="n">7</span> Запись на услугу</h3>
+        <p>Услуги оплачиваются не как товар в корзине — вы выбираете время и записываетесь.</p>
+
+        <ol class="hlp-steps">
+          <li>Откройте заведение направления <b>Услуги</b>.</li>
+          <li>Выберите услугу на вкладке <b class="k">Услуги</b> или сразу мастера на вкладке <b class="k">Мастера</b>.</li>
+          <li>В карточке мастера видны фото, описание, опыт и список услуг с ценами.</li>
+          <li>Нажмите запись — откроется окно <b>«Выберите время»</b> со свободными слотами.</li>
+          <li>Выберите дату и время и подтвердите.</li>
+        </ol>
+
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Свободные слоты</div><div class="d">Формируются из расписания заведения и графика конкретного мастера.</div></div>
+          <div class="r"><div class="f">Длительность</div><div class="d">Задана заведением — от неё зависит, какие слоты остаются свободными после вашей записи.</div></div>
+          <div class="r"><div class="f">Цена у мастера</div><div class="d">У разных мастеров одна и та же услуга может стоить по-разному.</div></div>
+        </div>
+
+        <div class="hlp-sub">Перенос и отмена</div>
+        <p>Запись видна в разделе <span class="path">Алиби → Записи</span>. Оттуда её можно перенести или отменить — условия по срокам устанавливает заведение.</p>
+        <div class="hlp-note"><b>Если нет свободных слотов</b>Значит, заведение не заполнило расписание на эти дни или всё занято. Попробуйте другую дату или другого мастера.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 8 ─── -->
+      <section class="hlp-sec" id="h8">
+        <h3><span class="n">8</span> Аренда</h3>
+        <p>Аренда — это когда вещь берут на время: инвентарь, оборудование, зал или стол.</p>
+        <ol class="hlp-steps">
+          <li>Откройте позицию с типом <b>Аренда</b>.</li>
+          <li>Выберите период — заведение задаёт шаг, например 2 часа или 1 день.</li>
+          <li>Стоимость пересчитается под выбранный период.</li>
+          <li>Добавьте в корзину и оплатите в блоке <b>«Аренда»</b>.</li>
+        </ol>
+        <div class="hlp-note"><b>Свободных единиц ограниченное число</b>Заведение указывает, сколько предметов у него есть. Если всё занято на выбранный период, приложение это покажет.</div>
+        <p>Активная аренда видна в разделе <span class="path">Алиби → Аренда</span> со статусами: <b>Ожидает</b>, <b>Активна</b>, <b>Возвращено</b>, <b>Отменена</b>.</p>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 9 ─── -->
+      <section class="hlp-sec" id="h9">
+        <h3><span class="n">9</span> Абонементы</h3>
+        <p>Абонемент — предоплаченная скидка на конкретный товар или услугу. Вы платите один раз и дальше получаете пониженную цену.</p>
+
+        <div class="hlp-sub">9.1. Покупка</div>
+        <ol class="hlp-steps">
+          <li>Откройте карточку абонемента на странице заведения.</li>
+          <li>Проверьте условия: размер скидки, срок действия, количество использований и ограничения по времени.</li>
+          <li>Нажмите <b class="k">Купить</b> — абонемент попадёт в корзину в блок <b>«Абонементы к покупке»</b>.</li>
+          <li>Оплатите кнопкой <b class="k">Купить абонементы</b>.</li>
+        </ol>
+
+        <div class="hlp-sub">9.2. Как работает скидка</div>
+        <div class="hlp-scheme"><pre>Купили абонемент
+    │
+    ▼
+Добавили покрытый товар в корзину
+    │
+    ▼
+Цена показывается со скидкой
+    │
+    ├──► галочка в корзине включает
+    │    и выключает применение
+    ▼
+Оплатили — использование списалось</pre></div>
+        <p>Если абонемент применим к тому, что лежит в корзине, появляется переключатель — скидку можно не применять и сохранить использование на потом.</p>
+
+        <div class="hlp-sub">9.3. Ограничения</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Срок действия</div><div class="d">Отсчитывается с момента покупки.</div></div>
+          <div class="r"><div class="f">Количество использований</div><div class="d">Может быть ограничено или безлимитно.</div></div>
+          <div class="r"><div class="f">Дни и часы</div><div class="d">Абонемент может действовать только в определённые дни недели или время суток — например, утренний тариф.</div></div>
+          <div class="r"><div class="f">Минимальная сумма</div><div class="d">Скидка может применяться только к заказу от определённой суммы.</div></div>
+        </div>
+
+        <div class="hlp-sub">9.4. Списание в заведении</div>
+        <p>Когда вы приходите лично, покажите сотруднику свой <b>QR-код</b> — кнопка <b class="k">QR</b> на главном экране. Он отсканирует его и спишет одно использование.</p>
+
+        <div class="hlp-sub">9.5. Подарочные абонементы</div>
+        <p>Абонемент можно купить в подарок — он оформляется отдельным блоком в корзине. Срок действия начинается с момента покупки, а не с момента передачи.</p>
+
+        <div class="hlp-warn"><b>Заведение обязано принимать абонемент</b>Пока срок не истёк и использования не исчерпаны, заведение обязано применять скидку. Если отказывают — напишите в поддержку.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 10 ─── -->
+      <section class="hlp-sec" id="h10">
+        <h3><span class="n">10</span> Корзина и оплата</h3>
+        <p>Корзина разделена на блоки: товары, абонементы, подарочные абонементы и аренда. Каждый блок оплачивается своей кнопкой.</p>
+
+        <div class="hlp-sub">10.1. Способ получения</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Самовывоз</div><div class="d">Забираете сами. Заведение укажет время готовности.</div></div>
+          <div class="r"><div class="f">Доставка</div><div class="d">Привезёт курьер. Стоимость зависит от зоны, в которую попадает ваш адрес, и показана на кнопке.</div></div>
+        </div>
+        <p>Если выбрана доставка, под кнопками появится ваш адрес — его можно поменять нажатием. Предупреждение <b>«Адрес недоступен для доставки»</b> означает, что вы вне зон этого заведения: оформите самовывоз или выберите другое заведение.</p>
+
+        <div class="hlp-sub">10.2. Итоговая сумма</div>
+        <ul>
+          <li><b>Подытог</b> — стоимость позиций.</li>
+          <li><b>Доставка</b> — отдельной строкой, если выбрана.</li>
+          <li><b>Итого</b> — к оплате, уже со скидкой абонемента, если она применена.</li>
+        </ul>
+
+        <div class="hlp-sub">10.3. Оплата</div>
+        <ol class="hlp-steps">
+          <li>Нажмите <b class="k">Оплатить</b>.</li>
+          <li>Откроется защищённая страница банка-эквайера.</li>
+          <li>После успешной оплаты вы вернётесь в приложение, а заказ появится в разделе «Алиби».</li>
+        </ol>
+        <div class="hlp-note"><b>Деньги идут напрямую заведению</b>Alliby не принимает платежи и не удерживает комиссию с вашей покупки. Оплата проходит через эквайринг того заведения, у которого вы заказываете.</div>
+        <div class="hlp-note"><b>«Заведение временно приостановило продажи»</b>Такой баннер в корзине значит, что заказ сейчас оформить нельзя — попробуйте позже.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 11 ─── -->
+      <section class="hlp-sec" id="h11">
+        <h3><span class="n">11</span> Заказ и доставка</h3>
+        <p>Оплаченный заказ виден в разделе <span class="path">Алиби → Заказы</span>. Статус обновляется сам, обновлять экран не нужно.</p>
+
+        <div class="hlp-sub">11.1. Статусы</div>
+        <div class="hlp-scheme"><pre>Оплачен
+   │  заведение приняло заказ в работу
+   ▼
+В работе ── указывается время готовности
+   │
+   ├── самовывоз ──► Готов ──► Выдан
+   │
+   └── доставка
+        │
+        ▼
+   Ищем курьера
+        │
+        ▼
+   Едет ──► Выдан</pre></div>
+
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Оплачен</div><div class="d">Заведение ещё не приступило.</div></div>
+          <div class="r"><div class="f">В работе</div><div class="d">Готовят. Показано ожидаемое время готовности.</div></div>
+          <div class="r"><div class="f">Ищем курьера</div><div class="d">Заказ собран, подбирается курьер.</div></div>
+          <div class="r"><div class="f">Едет</div><div class="d">Курьер в пути. Доступна карта с его положением.</div></div>
+          <div class="r"><div class="f">Готов</div><div class="d">Для самовывоза — можно забирать.</div></div>
+          <div class="r"><div class="f">Выдан</div><div class="d">Заказ завершён.</div></div>
+          <div class="r"><div class="f">Отменён</div><div class="d">Заказ отменён заведением.</div></div>
+        </div>
+
+        <div class="hlp-sub">11.2. Где курьер</div>
+        <p>Пока заказ едет, в его карточке доступна кнопка карты — на ней видно положение курьера. Точка обновляется примерно раз в 20 секунд. Там же есть телефон курьера.</p>
+        <div class="hlp-note"><b>Курьер виден не всегда</b>Его положение показывается с момента, когда он принял заказ, и до передачи вам. Если заведение доставляет своими силами вручную, карты может не быть — тогда ориентируйтесь на статус и телефон.</div>
+
+        <div class="hlp-sub">11.3. Возврат и претензии</div>
+        <p>Заказ оформляется напрямую с заведением, поэтому вопросы возврата решаются с ним — контакты есть в карточке заказа. Если заведение не отвечает, напишите в поддержку Alliby: платформа поможет с урегулированием. Подробности — в <a href="https://site.alliby.ru/refund" target="_blank" rel="noopener" style="color:var(--accent)">Политике возврата средств</a>.</p>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 12 ─── -->
+      <section class="hlp-sec" id="h12">
+        <h3><span class="n">12</span> Раздел «Алиби»</h3>
+        <p>Личный раздел с четырьмя вкладками — всё, что вы заказали, забронировали и купили.</p>
+
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Заказы</div><div class="d">История покупок с фильтрами по заведению и статусу. Нажатие открывает состав заказа и сумму.</div></div>
+          <div class="r"><div class="f">Записи</div><div class="d">Календарь записей на услуги. Выберите день, чтобы увидеть детали, перенести или отменить.</div></div>
+          <div class="r"><div class="f">Абонементы</div><div class="d">Купленные абонементы: остаток использований, срок действия и условия.</div></div>
+          <div class="r"><div class="f">Аренда</div><div class="d">Что и на какой срок вы взяли, когда нужно вернуть.</div></div>
+        </div>
+
+        <div class="hlp-sub">Статистика</div>
+        <p>Кнопка <b class="k">Статистика</b> на главном экране показывает, сколько вы сэкономили на абонементах и как их использовали.</p>
+        <div class="hlp-tip"><b>Обновление в реальном времени</b>Точка рядом с заголовком показывает связь с сервером. Пока она зелёная, статус заказа меняется на экране сам — держать приложение открытым достаточно.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 13 ─── -->
+      <section class="hlp-sec" id="h13">
+        <h3><span class="n">13</span> Профиль и уведомления</h3>
+
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Имя</div><div class="d">Видит заведение при оформлении заказа.</div></div>
+          <div class="r"><div class="f">Телефон</div><div class="d">Нужен курьеру и заведению, чтобы связаться по заказу.</div></div>
+          <div class="r"><div class="f">Адрес доставки</div><div class="d">Точка на карте. По ней считается зона и стоимость доставки.</div></div>
+          <div class="r"><div class="f">Город</div><div class="d">Определяет, какие заведения показываются.</div></div>
+          <div class="r"><div class="f">Кастомизация</div><div class="d">Тема оформления, фон и другие настройки внешнего вида.</div></div>
+          <div class="r"><div class="f">Сменить пароль</div><div class="d">Новый пароль — минимум 6 символов.</div></div>
+        </div>
+
+        <div class="hlp-sub">13.1. Уведомления</div>
+        <p>Приложение присылает push о статусе заказа и записи — это часть сервиса. Отдельно запрашивается согласие на <b>рекламные</b> уведомления от заведений: акции и новости. Согласие добровольное, его можно не давать и отозвать позже.</p>
+        <div class="hlp-note"><b>Подписка на конкретное заведение</b>На странице заведения можно отдельно подписаться на его уведомления или отписаться — независимо от общего согласия на рекламу.</div>
+
+        <div class="hlp-sub">13.2. Документы и удаление</div>
+        <ul>
+          <li>Пользовательское соглашение, Политика конфиденциальности и Политика возврата средств — в блоке «Документы».</li>
+          <li><b class="k">Написать в поддержку</b> — готовое письмо на <code>alliby.app@gmail.com</code>.</li>
+          <li><b class="k">Удалить аккаунт</b> — аккаунт и связанные данные удаляются безвозвратно.</li>
+        </ul>
+        <div class="hlp-warn"><b>Удаление необратимо</b>Вместе с аккаунтом пропадут история заказов и купленные абонементы. Если остались действующие абонементы или незавершённые заказы, сначала разберитесь с ними.</div>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+      <!-- ─── 14 ─── -->
+      <section class="hlp-sec" id="h14">
+        <h3><span class="n">14</span> Частые вопросы и поддержка</h3>
+
+        <div class="hlp-faq">
+          <div class="q">Не вижу кнопку «В корзину»</div>
+          <div class="a">Заведение не подключило онлайн-оплату. Меню посмотреть можно, заказать через приложение — нет. Попробуйте позвонить по телефону из карточки заведения.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Заведение не доставляет по моему адресу</div>
+          <div class="a">Ваш адрес вне зон доставки этого заведения. Оформите самовывоз или включите фильтр <b>«Доставка»</b> на экране заведений — останутся только те, кто довезёт до вас.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Скидка по абонементу не применилась</div>
+          <div class="a">Проверьте: не истёк ли срок, остались ли использования, подходит ли день недели и время, набрана ли минимальная сумма заказа и включён ли переключатель применения в корзине.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Нет свободного времени для записи</div>
+          <div class="a">Заведение не заполнило расписание на эти дни или всё занято. Выберите другую дату или другого мастера — у каждого свой график.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Оплата не прошла</div>
+          <div class="a">Деньги списывает банк-эквайер заведения. Проверьте баланс и лимиты карты, попробуйте ещё раз. Если сумма списалась, а заказ не появился — напишите в поддержку, указав время платежа.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Заказ долго в статусе «Ищем курьера»</div>
+          <div class="a">Свободных курьеров рядом пока нет. Заведение может повторить поиск или передать заказ своими силами. Точные сроки зависят от загрузки — при длительном ожидании свяжитесь с заведением.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Хочу вернуть деньги за заказ</div>
+          <div class="a">Возврат оформляет заведение — договор на покупку у вас с ним. Свяжитесь по контактам из карточки заказа; если ответа нет, подключится поддержка Alliby.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Не приходят уведомления</div>
+          <div class="a">Проверьте, разрешены ли уведомления для приложения в настройках телефона. Рекламные уведомления приходят только при отдельном согласии.</div>
+        </div>
+
+        <div class="hlp-sub">Поддержка</div>
+        <p>Пишите на <code>alliby.app@gmail.com</code> — кнопка <b class="k">Написать в поддержку</b> в профиле подготовит письмо. Укажите название заведения и время заказа, так разберутся быстрее.</p>
+
+        <div class="hlp-sub">Документы</div>
+        <ul>
+          <li><a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательское соглашение</a></li>
+          <li><a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политика конфиденциальности</a></li>
+          <li><a href="https://site.alliby.ru/refund" target="_blank" rel="noopener" style="color:var(--accent)">Политика возврата средств</a></li>
+        </ul>
+        <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
+      </section>
+
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════ BOTTOM NAV ════════════════ -->
 <div id="bottom-nav">
@@ -3612,6 +4106,17 @@ function setBgStyle(s) {
   document.querySelectorAll('.bg-opt').forEach(b => b.classList.toggle('active', b.dataset.bg === s));
   try { localStorage.setItem('alliby_bg', s); } catch(e) {}
 }
+// ─── HELP / ИНСТРУКЦИЯ ───
+function helpJump(id) {
+  const el = document.getElementById(id), box = document.getElementById('help-scroll');
+  if (!el || !box) return;
+  const top = box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - 8;
+  box.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+}
+function helpTop() {
+  document.getElementById('help-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function openCustomize() { document.getElementById('panel-customize').classList.add('open'); }
 function closeCustomize() { document.getElementById('panel-customize').classList.remove('open'); }
 function setOrnament(on) {
@@ -10177,7 +10682,7 @@ function closeStoreSchedDay() {
 </script>
 </div><!-- #zoom-root -->
 
-<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--accent);color:#fff;padding:10px 16px;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center">
+<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--accent);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center">
   <span style="font-size:13px">Доступна новая версия приложения</span>
   <button onclick="window.location.reload()" style="background:rgba(255,255,255,.25);border:none;color:#fff;font-size:13px;font-weight:500;padding:4px 14px;border-radius:6px;cursor:pointer">Обновить</button>
   <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;padding:0 2px">×</button>
