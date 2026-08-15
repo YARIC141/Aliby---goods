@@ -79,10 +79,6 @@ nav{
 .icon-moon{display:none}
 html[data-theme="light"] .icon-sun{display:none}
 html[data-theme="light"] .icon-moon{display:flex}
-.nav-play-badge{display:inline-flex;align-items:center;flex-shrink:0;transition:transform .14s;margin-left:16px}
-.nav-play-badge img{height:34px;width:auto;display:block}
-.nav-play-badge:hover{transform:translateY(-1px)}
-@media(max-width:520px){.nav-play-badge{display:none}}
 
 /* ── MOBILE MENU ── */
 .nav-burger{
