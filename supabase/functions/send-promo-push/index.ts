@@ -137,6 +137,28 @@ Deno.serve(async (req: Request) => {
     .maybeSingle()
   if (!platSub) return jsonResponse({ error: 'Active platform subscription required' }, 403)
 
+  // Не чаще одной рассылки в сутки на заведение. Ограничение было обещано
+  // в кабинете и в инструкции, но нигде не проверялось — продавец мог
+  // отправлять пуши всему городу без остановки. Опираемся на уже
+  // сохраняемые promo_notifications, отдельный счётчик не нужен.
+  const dayAgo = new Date(Date.now() - 24 * 3600_000).toISOString()
+  const { data: recentPromo } = await svcClient
+    .from('promo_notifications')
+    .select('sent_at')
+    .eq('store_id', store_id)
+    .gte('sent_at', dayAgo)
+    .order('sent_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (recentPromo?.sent_at) {
+    const nextAt = new Date(new Date(recentPromo.sent_at as string).getTime() + 24 * 3600_000)
+    const hours  = Math.max(1, Math.ceil((nextAt.getTime() - Date.now()) / 3600_000))
+    return jsonResponse({
+      error: `Рассылку можно отправлять не чаще раза в сутки. Следующая — примерно через ${hours} ч.`,
+    }, 429)
+  }
+
   let uniqueUserIds: string[]
 
   if (audience === 'city') {
