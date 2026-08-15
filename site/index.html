@@ -100,7 +100,9 @@ nav{
 .nav-item:hover .nav-sub{opacity:1;visibility:visible;transform:translateY(2px)}
 .nav-sub a{padding:9px 12px;border-radius:var(--r-2);font:600 13px/1.3 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:background .14s,color .14s}
 .nav-sub a:hover{background:var(--bg-2);color:var(--fg)}
-.nav-sub-t{padding:11px 12px 5px;font:700 10px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
+.nav-sub-t{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;background:none;border:none;margin:0;padding:11px 12px 5px;font:700 10px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);text-align:left;cursor:default}
+.nav-sub-caret{display:none;flex-shrink:0;transition:transform .18s}
+.nav-scenarios{display:flex;flex-direction:column;gap:1px}
 .nav-drop{position:relative;display:flex;align-items:center}
 .nav-drop-t{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
 .nav-drop-t svg{transition:transform .18s}
@@ -127,7 +129,12 @@ nav.open .nav-burger .bx-close{display:block}
   .nl-caret{display:none}
   .nav-sub{position:static;transform:none;opacity:1;visibility:visible;min-width:0;padding:4px 0 8px;gap:0;background:var(--bg-2);border:none;border-radius:0;box-shadow:none;border-bottom:1px solid var(--line)}
   .nav-sub a{padding:10px clamp(20px,5vw,80px);padding-left:calc(clamp(20px,5vw,80px) + 20px);font-size:14px;border-radius:0}
-  .nav-sub-t{padding-left:calc(clamp(20px,5vw,80px) + 20px)}
+  .nav-sub-t{padding:11px clamp(20px,5vw,80px) 11px calc(clamp(20px,5vw,80px) + 20px);cursor:pointer}
+  .nav-sub-caret{display:block;opacity:.6}
+  .nav-sub-t[aria-expanded="true"] .nav-sub-caret{transform:rotate(180deg)}
+  .nav-scenarios{max-height:0;overflow:hidden;opacity:0;transition:max-height .22s ease,opacity .18s ease}
+  .nav-sub-t[aria-expanded="true"] + .nav-scenarios{max-height:280px;opacity:1}
+  .nav-scenarios a{padding:9px clamp(20px,5vw,80px) 9px calc(clamp(20px,5vw,80px) + 36px);font-size:13.5px}
   .nav-item:last-child .nav-link{border-bottom:none}
 }
 @media(max-width:400px){nav{padding:0 14px}}
@@ -1008,12 +1015,14 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
       <a class="nav-link" href="#directions-clients"><span class="nl-aud">Для клиентов</span> <b class="nl-app c-client">Alliby</b><svg class="nl-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a>
       <div class="nav-sub">
         <a href="#directions-clients">Обзор направлений</a>
-        <div class="nav-sub-t">Сценарии для клиентов</div>
-        <a href="#dir-client-food">Еда</a>
-        <a href="#dir-client-goods">Товары</a>
-        <a href="#dir-client-services">Услуги</a>
-        <a href="#dir-client-sport">Спорт и образование</a>
-        <a href="#dir-client-entertainment">Развлечения</a>
+        <button type="button" class="nav-sub-t" aria-expanded="false">Сценарии для клиентов<svg class="nav-sub-caret" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="nav-scenarios">
+          <a href="#dir-client-food">Еда</a>
+          <a href="#dir-client-goods">Товары</a>
+          <a href="#dir-client-services">Услуги</a>
+          <a href="#dir-client-sport">Спорт и образование</a>
+          <a href="#dir-client-entertainment">Развлечения</a>
+        </div>
       </div>
     </div>
     <div class="nav-item">
@@ -1021,12 +1030,14 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
       <div class="nav-sub">
         <a href="#directions-business">Обзор возможностей</a>
         <a href="/help-business">Инструкция по работе с Alliby Business</a>
-        <div class="nav-sub-t">Сценарии для бизнеса</div>
-        <a href="#dir-business-food">Еда</a>
-        <a href="#dir-business-goods">Товары</a>
-        <a href="#dir-business-services">Услуги</a>
-        <a href="#dir-business-sport">Спорт и образование</a>
-        <a href="#dir-business-entertainment">Развлечения</a>
+        <button type="button" class="nav-sub-t" aria-expanded="false">Сценарии для бизнеса<svg class="nav-sub-caret" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+        <div class="nav-scenarios">
+          <a href="#dir-business-food">Еда</a>
+          <a href="#dir-business-goods">Товары</a>
+          <a href="#dir-business-services">Услуги</a>
+          <a href="#dir-business-sport">Спорт и образование</a>
+          <a href="#dir-business-entertainment">Развлечения</a>
+        </div>
       </div>
     </div>
     <div class="nav-item">
@@ -1847,9 +1858,17 @@ function orderTake(btn){
   b.setAttribute('aria-label','Меню');b.setAttribute('aria-expanded','false');
   b.innerHTML='<svg class="bx bx-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>'+
     '<svg class="bx bx-close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-  function setOpen(on){nav.classList.toggle('open',on);b.setAttribute('aria-expanded',on?'true':'false');}
+  function setOpen(on){
+    nav.classList.toggle('open',on);
+    b.setAttribute('aria-expanded',on?'true':'false');
+    if(!on)links.querySelectorAll('.nav-sub-t[aria-expanded="true"]').forEach(function(t){t.setAttribute('aria-expanded','false');});
+  }
   b.addEventListener('click',function(e){e.stopPropagation();setOpen(!nav.classList.contains('open'));});
-  links.addEventListener('click',function(e){if(e.target.closest('a'))setOpen(false);});
+  links.addEventListener('click',function(e){
+    var t=e.target.closest('.nav-sub-t');
+    if(t){e.preventDefault();t.setAttribute('aria-expanded',t.getAttribute('aria-expanded')==='true'?'false':'true');return;}
+    if(e.target.closest('a'))setOpen(false);
+  });
   document.addEventListener('click',function(e){if(!nav.contains(e.target))setOpen(false);});
   document.addEventListener('keydown',function(e){if(e.key==='Escape')setOpen(false);});
   nav.appendChild(b);

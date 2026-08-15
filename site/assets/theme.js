@@ -26,12 +26,23 @@
   function setOpen(on){
     nav.classList.toggle('open',on);
     b.setAttribute('aria-expanded',on?'true':'false');
+    if(!on){
+      links.querySelectorAll('.nav-sub-t[aria-expanded="true"]').forEach(function(t){
+        t.setAttribute('aria-expanded','false');
+      });
+    }
   }
   b.addEventListener('click',function(e){
     e.stopPropagation();
     setOpen(!nav.classList.contains('open'));
   });
   links.addEventListener('click',function(e){
+    var t=e.target.closest('.nav-sub-t');
+    if(t){
+      e.preventDefault();
+      t.setAttribute('aria-expanded',t.getAttribute('aria-expanded')==='true'?'false':'true');
+      return;
+    }
     if(e.target.closest('a'))setOpen(false);
   });
   document.addEventListener('click',function(e){
