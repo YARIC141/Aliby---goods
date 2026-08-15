@@ -1231,6 +1231,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
   <div class="ph">
     <button class="btn-back" onclick="goTo('profile')">←</button>
     <h2>Инструкция</h2>
+    <a href="https://site.alliby.ru/help-business" target="_blank" rel="noopener" class="btn btn-sm" style="text-decoration:none;flex-shrink:0">Открыть на сайте ↗</a>
   </div>
   <div class="pb" id="help-scroll">
     <div class="hlp">
@@ -1408,15 +1409,13 @@ ol.hlp-steps>li ul{margin:6px 0 0}
         <h3><span class="n">4</span> Подписка, тарифы и оплата</h3>
         <p>Раздел <span class="path">Подписка</span> управляет доступом к платным возможностям и количеством заведений.</p>
 
-        <div class="hlp-sub">4.1. Что даёт подписка</div>
-        <ul>
-          <li>Полный доступ к панели управления.</li>
-          <li>Одно заведение включено в основную подписку.</li>
-          <li>Доставка и зоны доставки.</li>
-          <li>Абонементы.</li>
-          <li>Аналитика и рекламные рассылки.</li>
-          <li>Возможность приобретать дополнительные заведения.</li>
-        </ul>
+        <div class="hlp-sub">4.1. Что закрыто подпиской, а что бесплатно</div>
+        <p>Большая часть кабинета работает без оплаты. Подписка нужна ровно для четырёх вещей:</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">По подписке</div><div class="d">Онлайн-оплата заказов · доставка и зоны доставки · push-рассылки по клиентской базе · второе и последующие заведения.</div></div>
+          <div class="r"><div class="f">Бесплатно всегда</div><div class="d">Первое заведение на карте · каталог товаров и услуг · категории · расписание и мастера · записи и брони · абонементы и QR-списание · сотрудники · аналитика.</div></div>
+        </div>
+        <div class="hlp-note"><b>Сотрудники не занимают платных мест</b>Администраторы, повара, тренеры, мастера и штатные курьеры добавляются бесплатно и в любом количестве.</div>
 
         <div class="hlp-sub">4.2. Пробный месяц</div>
         <ol class="hlp-steps">
@@ -1433,7 +1432,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
         <div class="hlp-note"><b>Разница в режимах продления</b>Пробный период переходит в подписку с автопродлением. Оплата выбранного периода отдельным платежом автопродления не имеет — по окончании срока нужно оплатить заново.</div>
 
         <div class="hlp-sub">4.4. Дополнительные заведения</div>
-        <p>Первое заведение входит в основную подписку. Каждое следующее требует отдельной подписки.</p>
+        <p>Первое заведение бесплатно и подписки не требует. Каждое следующее — отдельная подписка на это заведение.</p>
         <div class="hlp-price">
           <div><div class="amt">500 ₽</div><div class="cap">На месяц · разовая оплата · 30 дней</div></div>
           <div><div class="amt">5 000 ₽</div><div class="cap">На год · 365 дней · экономия 1 000 ₽</div></div>
@@ -1449,7 +1448,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
 
         <div class="hlp-sub">4.5. Статусы подписки</div>
         <div class="hlp-fields">
-          <div class="r"><div class="f">Бесплатно</div><div class="d">Первое заведение, пока действует основная подписка.</div></div>
+          <div class="r"><div class="f">Бесплатно</div><div class="d">Первое заведение — оплата за него не нужна.</div></div>
           <div class="r"><div class="f">Пробный</div><div class="d">Идёт бесплатный первый месяц.</div></div>
           <div class="r"><div class="f">Активна</div><div class="d">Подписка оплачена и действует.</div></div>
           <div class="r"><div class="f">Ошибка оплаты</div><div class="d">Списание не прошло. Доступ временно сохраняется — обновите платёжные данные.</div></div>
@@ -2255,7 +2254,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
     <ul style="list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--fg-2)">
       <li>✓ Полный доступ к панели управления</li>
       <li>✓ 1 заведение в базовой подписке</li>
-      <li>✓ Доставка, абонементы, аналитика</li>
+      <li>✓ Онлайн-оплата, доставка, push-рассылки</li>
       <li>✓ Отмена в любой момент</li>
     </ul>
     <p style="font-size:12px;color:var(--fg-4);margin-bottom:14px">При активации спишем 1 ₽ для проверки карты — сумма будет возвращена автоматически.</p>
@@ -4143,7 +4142,7 @@ async function loadStoreSubscriptions() {
     if (!mainSub) {
       html += `<div class="card" style="padding:14px;margin-top:10px;border:1px dashed var(--line-soft)">` +
         `<div style="font:600 13px/1 var(--font-sans);margin-bottom:6px">Расширьте возможности</div>` +
-        `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:10px">Подписка открывает доставку, аналитику, абонементы и возможность добавлять заведения.</div>` +
+        `<div style="font:400 12px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:10px">Подписка открывает онлайн-оплату, доставку, push-рассылки и дополнительные заведения.</div>` +
         `<div style="display:flex;flex-direction:column;gap:6px">` +
           (!_hadTrial ? `<button class="btn btn-p btn-full" onclick="startPlatformSubscription()">Начать бесплатный месяц →</button>` : '') +
           `<button class="btn ${_hadTrial ? 'btn-p' : 'btn-sec'} btn-full" onclick="startRegularSubscription()">Выбрать тариф →</button>` +

@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Инструкция по Alliby Business — как подключить заведение</title>
+<meta name="description" content="Полное руководство по кабинету Alliby Business: регистрация, создание заведения, каталог товаров и услуг, доставка и зоны, расписание и мастера, сотрудники, абонементы, заказы и аналитика.">
+<link rel="canonical" href="https://site.alliby.ru/help-business">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Инструкция по Alliby Business">
+<meta property="og:description" content="От регистрации до первого заказа: пошаговое руководство по кабинету продавца Alliby Business.">
+<meta property="og:url" content="https://site.alliby.ru/help-business">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,500;0,6..12,600;0,6..12,700;1,6..12,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/subpage.css">
+<style>
+.hlp{--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+.hlp-lead{color:var(--fg-2);font-size:15px;line-height:1.75;margin-bottom:32px;max-width:640px}
+
+/* ── содержание ── */
+.hlp-toc{border:1px solid var(--line);border-radius:var(--r-3);background:var(--bg-1);padding:16px 18px;margin-bottom:44px}
+.hlp-toc-t{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.hlp-toc ol{list-style:none;margin:0;padding:0;counter-reset:hlptoc;columns:2;column-gap:24px}
+.hlp-toc li{counter-increment:hlptoc;margin:0;break-inside:avoid}
+.hlp-toc a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:var(--r-2);color:var(--fg-2);text-decoration:none;font-size:14px;line-height:1.35;transition:background .15s,color .15s}
+.hlp-toc a:hover{background:var(--bg-2);color:var(--fg)}
+.hlp-toc a::before{content:counter(hlptoc);font:700 11px/1.5 var(--mono);color:var(--fg-3);min-width:18px;flex-shrink:0}
+@media(max-width:640px){.hlp-toc ol{columns:1}}
+
+/* ── разделы ── */
+.hlp-sec{scroll-margin-top:76px;margin-bottom:52px}
+.hlp-sec>h3{font:400 27px/1.25 var(--font-display);color:var(--fg);margin:0 0 6px;display:flex;align-items:baseline;gap:12px}
+.hlp-sec>h3 .n{font:700 12px/1 var(--mono);color:#08211d;background:var(--teal);border-radius:var(--r-pill);padding:6px 10px;flex-shrink:0}
+.hlp-sec>p{color:var(--fg-2);margin:12px 0}
+.hlp-sub{font:700 15px/1.35 var(--font-sans);color:var(--fg);margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+
+/* ── списки ── */
+.hlp ul,.hlp ol.hlp-steps{margin:12px 0;padding-left:0;list-style:none}
+.hlp ul li{position:relative;padding-left:19px;margin-bottom:8px;color:var(--fg-2)}
+.hlp ul li::before{content:'';position:absolute;left:5px;top:11px;width:4px;height:4px;border-radius:50%;background:var(--fg-3)}
+ol.hlp-steps{counter-reset:hlpstep}
+ol.hlp-steps>li{counter-increment:hlpstep;position:relative;padding-left:36px;margin-bottom:14px;color:var(--fg-2)}
+ol.hlp-steps>li::before{content:counter(hlpstep);position:absolute;left:0;top:2px;width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:var(--bg-2);color:var(--fg-2);font:700 11px/22px var(--mono);text-align:center}
+ol.hlp-steps>li ul{margin:7px 0 0}
+
+/* ── акценты в тексте ── */
+.hlp b.k{font:600 13px/1.3 var(--font-sans);color:var(--fg);background:var(--bg-2);border:1px solid var(--line);border-radius:6px;padding:1px 7px;white-space:nowrap;display:inline-block}
+.hlp .path{font:600 13px/1.4 var(--font-sans);color:var(--fg-2);background:var(--bg-2);border-radius:6px;padding:2px 8px;white-space:nowrap;display:inline-block}
+.hlp code{font:400 12.5px/1.4 var(--mono);background:var(--bg-2);border-radius:6px;padding:1px 6px;color:var(--fg-2)}
+
+/* ── таблица полей ── */
+.hlp-fields{border:1px solid var(--line);border-radius:var(--r-3);overflow:hidden;margin:14px 0}
+.hlp-fields .r{display:grid;grid-template-columns:210px 1fr;border-bottom:1px solid var(--line)}
+.hlp-fields .r:last-child{border-bottom:none}
+.hlp-fields .r>.f{padding:11px 15px;font-weight:700;font-size:14px;line-height:1.5;color:var(--fg);background:var(--bg-1);border-right:1px solid var(--line)}
+.hlp-fields .r>.d{padding:11px 15px;font-size:14px;line-height:1.65;color:var(--fg-2)}
+.hlp-fields .req{color:var(--brand);font-weight:700;margin-left:2px}
+@media(max-width:640px){
+  .hlp-fields .r{grid-template-columns:1fr}
+  .hlp-fields .r>.f{border-right:none;border-bottom:1px solid var(--line);padding-bottom:8px}
+}
+
+/* ── врезки ── */
+.hlp-note,.hlp-warn,.hlp-tip{border-radius:var(--r-3);padding:13px 16px;margin:16px 0;font-size:14px;line-height:1.7;color:var(--fg-2)}
+.hlp-note{background:rgba(120,180,224,.09);border:1px solid rgba(120,180,224,.3)}
+.hlp-warn{background:rgba(232,116,59,.09);border:1px solid rgba(232,116,59,.32)}
+.hlp-tip{background:rgba(20,184,166,.09);border:1px solid rgba(20,184,166,.3)}
+.hlp-note b,.hlp-warn b,.hlp-tip b{display:block;margin-bottom:4px;color:var(--fg)}
+.hlp-warn b{color:var(--brand)}
+
+/* ── схемы ── */
+.hlp-scheme{overflow-x:auto;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-3);padding:16px;margin:16px 0}
+.hlp-scheme pre{margin:0;font:400 12px/1.6 var(--mono);color:var(--fg-2);white-space:pre}
+@media(max-width:640px){.hlp-scheme pre{font-size:11px}}
+
+/* ── тарифы ── */
+.hlp-price{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}
+.hlp-price>div{flex:1;min-width:170px;border:1px solid var(--line);border-radius:var(--r-3);padding:14px 16px;background:var(--bg-1)}
+.hlp-price .amt{font:700 21px/1 var(--font-sans);color:var(--teal);margin-bottom:5px}
+.hlp-price .cap{font-size:13px;line-height:1.5;color:var(--fg-3)}
+
+/* ── вопросы ── */
+.hlp-faq{border-bottom:1px solid var(--line);padding:14px 0}
+.hlp-faq:last-child{border-bottom:none}
+.hlp-faq .q{font-weight:700;font-size:15px;line-height:1.45;color:var(--fg);margin-bottom:6px}
+.hlp-faq .a{font-size:14px;line-height:1.7;color:var(--fg-2)}
+
+/* ── возврат к содержанию ── */
+.hlp-back{display:inline-flex;align-items:center;gap:5px;margin-top:6px;padding:6px 13px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-1);color:var(--fg-3);font-size:12.5px;text-decoration:none;transition:background .15s,color .15s}
+.hlp-back:hover{background:var(--bg-2);color:var(--fg)}
+</style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="/">Alli<span>by</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="/#directions-clients">Для клиентов</a>
+    <a class="nav-link" href="/#directions-business">Для бизнеса</a>
+    <a class="nav-link" href="/help-business">Инструкция</a>
+    <a class="nav-link" href="/#alliby-carry">Alliby Carry</a>
+    <a class="nav-link" href="/#pricing">Тарифы</a>
+    <a class="nav-link" href="/articles">Статьи</a>
+  </div>
+  <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">
+    <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+  </button>
+  <a class="nav-play-badge" href="https://play.google.com/store/apps/details?id=ru.alliby.app" target="_blank" rel="noopener" aria-label="Скачать в Google Play">
+    <img src="https://play.google.com/intl/ru_ru/badges/static/images/badges/ru_badge_web_generic.png" alt="Доступно в Google Play" height="40">
+  </a>
+</nav>
+<div class="wrap wide" id="top">
+
+<div class="crumbs"><a href="/">Alliby</a> &nbsp;·&nbsp; Инструкция для бизнеса</div>
+<span class="tag business">Для бизнеса</span>
+<h1>Инструкция по Alliby Business</h1>
+<div class="meta">Кабинет продавца · от регистрации до первого заказа</div>
+
+<div class="hlp">
+<p class="hlp-lead">Полное руководство по кабинету Alliby&nbsp;Business — от регистрации до приёма первого заказа. Разделы идут в том порядке, в котором их проходят при запуске заведения. Эта же инструкция доступна внутри кабинета: <b>Профиль → Инструкция</b>.</p>
+
+      <div class="hlp-toc" id="toc">
+        <div class="hlp-toc-t">Содержание</div>
+        <ol>
+          <li><a href="#h1">С чего начать и как устроен кабинет</a></li>
+          <li><a href="#h2">Регистрация и вход</a></li>
+          <li><a href="#h3">Профиль и юридические данные</a></li>
+          <li><a href="#h4">Подписка, тарифы и оплата</a></li>
+          <li><a href="#h5">Интернет-эквайринг</a></li>
+          <li><a href="#h6">Создание заведения</a></li>
+          <li><a href="#h7">Доставка и зоны доставки</a></li>
+          <li><a href="#h8">Категории меню</a></li>
+          <li><a href="#h9">Товары, услуги и аренда</a></li>
+          <li><a href="#h10">Абонементы</a></li>
+          <li><a href="#h11">Расписание и запись на услуги</a></li>
+          <li><a href="#h12">Сотрудники и мастера</a></li>
+          <li><a href="#h13">Заказы, записи и аренда</a></li>
+          <li><a href="#h14">Аналитика и реклама</a></li>
+          <li><a href="#h15">Сканер QR и списание абонементов</a></li>
+          <li><a href="#h16">Частые вопросы и поддержка</a></li>
+        </ol>
+      </div>
+
+      <!-- ─────────── 1 ─────────── -->
+      <section class="hlp-sec" id="h1">
+        <h3><span class="n">1</span> С чего начать и как устроен кабинет</h3>
+
+        <p>Alliby&nbsp;Business — это панель управления продавца. Здесь вы создаёте заведение, наполняете каталог, настраиваете доставку и принимаете заказы. Покупатели видят ваше заведение в отдельном приложении Alliby, а доставку могут выполнять курьеры из приложения Alliby&nbsp;Carry.</p>
+
+        <div class="hlp-sub">Три приложения экосистемы</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Alliby Business</div><div class="d">Ваш кабинет. Заведения, каталог, заказы, сотрудники, подписка.</div></div>
+          <div class="r"><div class="f">Alliby</div><div class="d">Приложение покупателя. Карта заведений, каталог, корзина, оплата, запись на услуги, абонементы.</div></div>
+          <div class="r"><div class="f">Alliby Carry</div><div class="d">Приложение курьера. Используется, если вы подключаете доставку силами курьеров платформы или своих штатных курьеров.</div></div>
+        </div>
+
+        <div class="hlp-sub">Путь запуска — общая схема</div>
+        <div class="hlp-scheme"><pre>Регистрация
+    │
+    ▼
+Выбор города
+    │
+    ▼
+Юридические данные (ИНН, наименование)
+    │
+    ▼
+Подписание Лицензионного договора
+    │
+    ▼
+Подписка: пробный месяц или тариф
+    │
+    ▼
+Создание заведения  ──────────►  Первое заведение бесплатно
+    │                             (входит в основную подписку)
+    ├──► Категории меню
+    ├──► Товары и услуги
+    ├──► Доставка и зоны (если нужна)
+    ├──► Расписание и мастера (для услуг)
+    ├──► Абонементы (по желанию)
+    └──► Сотрудники
+    │
+    ▼
+Приём заказов и записей</pre></div>
+
+        <div class="hlp-sub">Навигация</div>
+        <p>На широком экране меню располагается слева, на телефоне — снизу. Набор пунктов одинаковый:</p>
+        <ul>
+          <li><b class="k">Заведения</b> — список ваших точек, создание и редактирование.</li>
+          <li><b class="k">Товары и Услуги</b> — каталог и вкладка «Абонементы».</li>
+          <li><b class="k">Аналитика и реклама</b> — статистика продаж и push-рассылки.</li>
+          <li><b class="k">Заказы и записи</b> — три вкладки: «Заказы», «Записи», «Аренда».</li>
+          <li><b class="k">Сотрудники и мастера</b> — доступы персонала, мастера, штатные курьеры.</li>
+          <li><b class="k">Подписка</b> — тарифы, оплата, эквайринг, история операций.</li>
+        </ul>
+        <p>В правом верхнем углу — три быстрые кнопки: <b class="k">Сканер QR</b>, переключатель темы и <b class="k">Профиль</b>. Возле заголовка каждого экрана есть значок <b class="k">?</b> — нажмите, чтобы увидеть краткую подсказку по разделу.</p>
+
+        <div class="hlp-note"><b>Подсказки в формах</b>Внутри форм рядом с названиями полей тоже встречается значок <b class="k">?</b>. Он объясняет, что именно попадёт в поле и как это увидит покупатель. Если сомневаетесь в назначении поля — нажмите на него.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 2 ─────────── -->
+      <section class="hlp-sec" id="h2">
+        <h3><span class="n">2</span> Регистрация и вход</h3>
+
+        <div class="hlp-sub">2.1. Создание аккаунта продавца</div>
+        <ol class="hlp-steps">
+          <li>На стартовом экране откройте вкладку <b class="k">Регистрация</b>.</li>
+          <li>Заполните поля: <b>Имя и фамилия</b>, <b>Email</b>, <b>Пароль</b> и <b>Подтвердите пароль</b>.</li>
+          <li>Отметьте согласие на обработку персональных данных и принятие Лицензионного договора — до этого кнопка регистрации неактивна.</li>
+          <li>Нажмите <b class="k">Создать аккаунт</b>. Вход в кабинет произойдёт автоматически.</li>
+        </ol>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Пароль</div><div class="d">Не менее 6 символов. Оба поля должны совпадать, иначе появится сообщение «Пароли не совпадают».</div></div>
+          <div class="r"><div class="f">Email</div><div class="d">Будет использоваться как логин. На него же приходит письмо для восстановления пароля.</div></div>
+        </div>
+
+        <div class="hlp-sub">2.2. Если email уже зарегистрирован как покупатель</div>
+        <p>Один и тот же email может использоваться и в приложении покупателя, и в кабинете продавца. Если вы вводите такой email при входе, кабинет предложит расширить аккаунт:</p>
+        <ol class="hlp-steps">
+          <li>Появится блок <b>«Аккаунт покупателя»</b> с пояснением.</li>
+          <li>Нажмите <b class="k">Стать продавцом</b>.</li>
+          <li>Роль продавца добавится к существующему аккаунту, история заказов покупателя сохранится.</li>
+        </ol>
+
+        <div class="hlp-sub">2.3. Выбор города</div>
+        <p>Сразу после первого входа кабинет попросит выбрать город. Город определяет, где по умолчанию открывается карта при указании адреса заведения и в какой город попадают рекламные рассылки. Начните вводить название — список отфильтруется.</p>
+        <div class="hlp-note"><b>Города нет в списке</b>Напишите в поддержку — город добавят в справочник платформы.</div>
+
+        <div class="hlp-sub">2.4. Вход и восстановление пароля</div>
+        <ol class="hlp-steps">
+          <li>Вкладка <b class="k">Вход</b>: введите email и пароль, нажмите <b class="k">Войти</b>.</li>
+          <li>Забыли пароль — нажмите <b class="k">Забыл пароль</b>, укажите email и нажмите <b class="k">Отправить ссылку</b>.</li>
+          <li>Откройте письмо и перейдите по ссылке — кабинет откроется на форме нового пароля.</li>
+          <li>Введите новый пароль и нажмите <b class="k">Сохранить пароль</b>, затем войдите заново.</li>
+        </ol>
+
+        <div class="hlp-sub">2.5. Вход сотрудника</div>
+        <p>Сотрудники входят в тот же кабинет, но не по email, а по короткому логину, который вы им выдаёте (см. раздел <a href="#h12">Сотрудники и мастера</a>). В поле <b>«Email или логин сотрудника»</b> достаточно ввести логин без домена — система подставит его сама.</p>
+        <div class="hlp-note"><b>Что видит сотрудник</b>Сотрудник попадает сразу на экран «Заказы и записи» и работает только со своим заведением. Разделы подписки, юридических данных и управления персоналом ему недоступны.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 3 ─────────── -->
+      <section class="hlp-sec" id="h3">
+        <h3><span class="n">3</span> Профиль и юридические данные</h3>
+        <p>Раздел открывается кнопкой с изображением человека в правом верхнем углу или пунктом <span class="path">Профиль</span>.</p>
+
+        <div class="hlp-sub">3.1. Аккаунт</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Email</div><div class="d">Логин аккаунта. Отображается только для справки.</div></div>
+          <div class="r"><div class="f">Роль</div><div class="d">«Администратор» — полный доступ владельца, «Сотрудник» — ограниченный.</div></div>
+          <div class="r"><div class="f">Телефон для чека</div><div class="d">Номер, на который отправляется фискальный чек при онлайн-оплате. Формат <code>+79001234567</code>. Введите номер и нажмите <b class="k">Сохранить</b>.</div></div>
+        </div>
+
+        <div class="hlp-sub">3.2. Юридические данные</div>
+        <p>Это обязательный блок для работы с онлайн-оплатой. Данные едины для всех ваших заведений и показываются покупателю в разделе «Реквизиты продавца» на странице заведения — этого требует статья 26.1 закона «О защите прав потребителей».</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Юридическое наименование<span class="req">*</span></div><div class="d">Полностью, как в документах: <code>ООО «Название»</code> или <code>ИП Иванов Иван Иванович</code>.</div></div>
+          <div class="r"><div class="f">ИНН<span class="req">*</span></div><div class="d">10 цифр — для ООО и АО, 12 цифр — для ИП. Поле проверяет длину при вводе.</div></div>
+          <div class="r"><div class="f">ОГРН / ОГРНИП</div><div class="d">13 цифр — для ООО, 15 цифр — для ОГРНИП.</div></div>
+        </div>
+        <div class="hlp-note"><b>Когда попросят заполнить</b>Если вы не заполнили эти поля заранее, кабинет запросит их автоматически в момент оформления подписки — без них договор не заключается.</div>
+
+        <div class="hlp-sub">3.3. Смена пароля</div>
+        <p>Введите новый пароль (минимум 6 символов) в блоке <b>«Сменить пароль»</b> и нажмите <b class="k">Обновить</b>.</p>
+
+        <div class="hlp-sub">3.4. Кастомизация внешнего вида</div>
+        <p>Кнопка <span class="path">Профиль → Кастомизация</span> открывает панель настроек оформления:</p>
+        <ul>
+          <li><b>Тёмная тема</b> — переключение светлого и тёмного оформления.</li>
+          <li><b>Меню сбоку</b> — на телефоне переносит панель навигации вбок вместо нижней полосы.</li>
+          <li><b>Фон</b> — «Градиент», «Фигуры» или свой рисунок (кнопка «Свой» → выбор файла). Кнопка <b class="k">Убрать свой фон</b> возвращает стандартный.</li>
+          <li><b>Орнамент</b> — включает или отключает декоративный узор интерфейса.</li>
+        </ul>
+        <p>Настройки сохраняются в этом браузере или на этом устройстве и не влияют на то, что видят покупатели.</p>
+
+        <div class="hlp-sub">3.5. Документы, поддержка и удаление аккаунта</div>
+        <ul>
+          <li><b class="k">Написать в поддержку</b> — готовит письмо на <code>alliby.app@gmail.com</code>; можно открыть почтовый клиент, Gmail в браузере или просто скопировать адрес.</li>
+          <li>Блок <b>«Документы»</b> — Лицензионный договор, Политика конфиденциальности, Условия использования.</li>
+          <li><b class="k">Выйти из аккаунта</b> — завершает сессию.</li>
+          <li><b class="k">Удалить аккаунт</b> — удаляет роль продавца. Если этот же email используется как покупатель в Alliby или курьер в Alliby Carry, те данные сохранятся.</li>
+        </ul>
+        <div class="hlp-warn"><b>Удаление необратимо</b>Вместе с ролью продавца перестаёт действовать доступ к заведениям и каталогу. Прежде чем удалять аккаунт, убедитесь, что завершены все активные заказы и подписки.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 4 ─────────── -->
+      <section class="hlp-sec" id="h4">
+        <h3><span class="n">4</span> Подписка, тарифы и оплата</h3>
+        <p>Раздел <span class="path">Подписка</span> управляет доступом к платным возможностям и количеством заведений.</p>
+
+        <div class="hlp-sub">4.1. Что закрыто подпиской, а что бесплатно</div>
+        <p>Большая часть кабинета работает без оплаты. Подписка нужна ровно для четырёх вещей:</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">По подписке</div><div class="d">Онлайн-оплата заказов · доставка и зоны доставки · push-рассылки по клиентской базе · второе и последующие заведения.</div></div>
+          <div class="r"><div class="f">Бесплатно всегда</div><div class="d">Первое заведение на карте · каталог товаров и услуг · категории · расписание и мастера · записи и брони · абонементы и QR-списание · сотрудники · аналитика.</div></div>
+        </div>
+        <div class="hlp-note"><b>Сотрудники не занимают платных мест</b>Администраторы, повара, тренеры, мастера и штатные курьеры добавляются бесплатно и в любом количестве.</div>
+
+        <div class="hlp-sub">4.2. Пробный месяц</div>
+        <ol class="hlp-steps">
+          <li>В разделе <span class="path">Подписка</span> нажмите <b class="k">Начать бесплатный месяц →</b>.</li>
+          <li>Если юридические данные ещё не заполнены — кабинет откроет форму с ИНН и наименованием.</li>
+          <li>Откроется Лицензионный договор. Пролистайте текст до конца — только тогда появится галочка согласия. Отметьте её и нажмите <b class="k">Подписать</b>.</li>
+          <li>Подтвердите согласие на автоматические списания и нажмите <b class="k">Начать →</b>.</li>
+          <li>Вы перейдёте на защищённую страницу оплаты Т-Банка.</li>
+        </ol>
+        <div class="hlp-note"><b>Списание 1&nbsp;₽</b>При активации пробного периода списывается 1&nbsp;₽ для проверки карты — сумма возвращается автоматически. Первый месяц бесплатный, далее подписка продлевается автоматически.</div>
+
+        <div class="hlp-sub">4.3. Платные тарифы</div>
+        <p>Если пробный период уже использован, нажмите <b class="k">Выбрать тариф →</b>. Доступны периоды: месяц, 3 месяца, 6 месяцев и год. Базовая стоимость — <b>1&nbsp;600&nbsp;₽ в месяц</b>. Отметьте согласие с условиями и нажмите кнопку оплаты.</p>
+        <div class="hlp-note"><b>Разница в режимах продления</b>Пробный период переходит в подписку с автопродлением. Оплата выбранного периода отдельным платежом автопродления не имеет — по окончании срока нужно оплатить заново.</div>
+
+        <div class="hlp-sub">4.4. Дополнительные заведения</div>
+        <p>Первое заведение бесплатно и подписки не требует. Каждое следующее — отдельная подписка на это заведение.</p>
+        <div class="hlp-price">
+          <div><div class="amt">500 ₽</div><div class="cap">На месяц · разовая оплата · 30 дней</div></div>
+          <div><div class="amt">5 000 ₽</div><div class="cap">На год · 365 дней · экономия 1 000 ₽</div></div>
+        </div>
+        <ol class="hlp-steps">
+          <li>Откройте <span class="path">Подписка</span> и нажмите <b class="k">Приобрести подписку на дополнительное заведение</b>.</li>
+          <li>Выберите тариф — на месяц или на год.</li>
+          <li>Проверьте сумму в окне подтверждения и нажмите <b class="k">Оплатить и добавить заведение</b>.</li>
+          <li>После успешной оплаты появится свободный слот, и вы сможете создать новое заведение.</li>
+        </ol>
+        <div class="hlp-warn"><b>Требуется основная подписка</b>Кнопка приобретения дополнительного заведения работает только при активной основной подписке. Без неё появится окно «Нужна основная подписка».</div>
+        <div class="hlp-note"><b>Проблемы с оплатой на компьютере</b>Если оплата не проходит в браузере на компьютере, попробуйте оплатить со смартфона — на это же указывает подсказка в окне оплаты.</div>
+
+        <div class="hlp-sub">4.5. Статусы подписки</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Бесплатно</div><div class="d">Первое заведение — оплата за него не нужна.</div></div>
+          <div class="r"><div class="f">Пробный</div><div class="d">Идёт бесплатный первый месяц.</div></div>
+          <div class="r"><div class="f">Активна</div><div class="d">Подписка оплачена и действует.</div></div>
+          <div class="r"><div class="f">Ошибка оплаты</div><div class="d">Списание не прошло. Доступ временно сохраняется — обновите платёжные данные.</div></div>
+          <div class="r"><div class="f">Завершена / Истекла</div><div class="d">Подписка отменена или срок закончился.</div></div>
+        </div>
+
+        <div class="hlp-sub">4.6. История операций и отмена</div>
+        <p>Кнопка <b class="k">История операций</b> в разделе «Подписка» показывает список платежей и продлений. Чтобы прекратить автосписания, воспользуйтесь кнопкой завершения подписки — доступ сохранится до конца уже оплаченного периода.</p>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 5 ─────────── -->
+      <section class="hlp-sec" id="h5">
+        <h3><span class="n">5</span> Интернет-эквайринг</h3>
+        <p>Эквайринг — это приём оплаты картой от покупателей. Ключи хранятся в вашем кабинете, деньги поступают напрямую на ваш расчётный счёт в банке-эквайере. Настройка находится в разделе <span class="path">Подписка → Интернет-эквайринг</span>.</p>
+
+        <div class="hlp-sub">5.1. Подключение</div>
+        <ol class="hlp-steps">
+          <li>Заключите договор эквайринга с банком и получите <b>Terminal Key</b> и <b>секретный ключ</b> (боевые и тестовые).</li>
+          <li>В кабинете откройте <span class="path">Подписка → Интернет-эквайринг</span>.</li>
+          <li>Выберите провайдера в списке — например, <b>Тинькофф T-Касса</b>.</li>
+          <li>Заполните блок <b>«Тестовые ключи»</b>, затем блок <b>«Боевые ключи»</b>.</li>
+          <li>Нажмите <b class="k">Сохранить</b>.</li>
+        </ol>
+
+        <div class="hlp-sub">5.2. Тестовый и боевой режим</div>
+        <p>Переключатель <b>«Режим оплаты»</b> определяет, какая пара ключей используется прямо сейчас.</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Тестовый</div><div class="d">Работают тестовые ключи. Реальных списаний нет — режим для проверки сценария оплаты.</div></div>
+          <div class="r"><div class="f">Боевой</div><div class="d">Работают боевые ключи. Деньги списываются с карт покупателей по-настоящему.</div></div>
+        </div>
+        <div class="hlp-warn"><b>Проверьте перед запуском</b>Пока включён тестовый режим, реальные заказы оплатить нельзя. Не забудьте переключить режим на боевой, когда завершите проверку.</div>
+        <div class="hlp-note"><b>Сохранённые ключи</b>Рядом с заполненными полями появляется отметка <b>«✓ сохранён»</b>. Секретный ключ не показывается повторно: оставьте поле пустым, если менять его не нужно.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 6 ─────────── -->
+      <section class="hlp-sec" id="h6">
+        <h3><span class="n">6</span> Создание заведения</h3>
+        <p>Заведение — это точка, которую покупатель находит на карте и в списке. Откройте раздел <span class="path">Заведения</span> и нажмите <b class="k">+ Добавить</b>.</p>
+
+        <div class="hlp-sub">6.1. Основные поля</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Название<span class="req">*</span></div><div class="d">Полное название, которое увидят покупатели в приложении и на карте.</div></div>
+          <div class="r"><div class="f">Адрес и позиция на карте</div><div class="d">Нажмите <b class="k">Указать</b> — откроется карта. Найдите нужное место, поставьте точку и подтвердите выбор. Адрес и координаты подставятся автоматически.</div></div>
+          <div class="r"><div class="f">Телефон</div><div class="d">Покупатель видит номер на странице заведения и может позвонить в одно касание.</div></div>
+          <div class="r"><div class="f">Часы работы</div><div class="d">Свободный текст, например <code>Пн-Пт 9:00–21:00, Сб-Вс 10:00–20:00</code> или <code>Ежедневно 8:00–23:00</code>.</div></div>
+          <div class="r"><div class="f">Направление<span class="req">*</span></div><div class="d">Определяет раздел приложения покупателя: <b>Еда</b>, <b>Товары</b>, <b>Услуги</b>, <b>Спорт и образование</b>, <b>Развлечения</b>.</div></div>
+          <div class="r"><div class="f">Тип заведения</div><div class="d">Задаёт иконку метки на карте и участвует в фильтрах. Список зависит от выбранного направления.</div></div>
+          <div class="r"><div class="f">Средний чек (₽)</div><div class="d">Показывается прямо на метке карты. Оставьте пустым, чтобы не отображать.</div></div>
+        </div>
+        <div class="hlp-note"><b>Направление меняет интерфейс</b>При выборе «Услуги» в позициях каталога появляется длительность и запись к мастеру, а поле «Время приготовления» меняет смысл. Для направления «Товары» открывается блок собственных категорий товаров.</div>
+
+        <div class="hlp-sub">6.2. Фото заведения</div>
+        <ol class="hlp-steps">
+          <li>Нажмите <b class="k">Выбрать фото</b> и укажите файл.</li>
+          <li>Откроется окно кадрирования. Перетащите рамку — область обрезается в пропорции 1:1.</li>
+          <li>Нажмите <b class="k">Загрузить</b>. Кнопка <b class="k">Удалить</b> убирает фото.</li>
+        </ol>
+
+        <div class="hlp-sub">6.3. Цвет метки</div>
+        <p>Поле <b>«Цвет метки»</b> задаёт цвет точки заведения на карте. Если у вас несколько заведений, разные цвета помогают различать их с одного взгляда.</p>
+
+        <div class="hlp-sub">6.4. Онлайн-оплата</div>
+        <p>Переключатель <b>«Онлайн-оплата»</b> определяет, может ли покупатель оформить заказ через приложение.</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Включено</div><div class="d">Покупатель добавляет позиции в корзину и оплачивает заказ.</div></div>
+          <div class="r"><div class="f">Выключено</div><div class="d">Каталог виден, но кнопка «В корзину» скрыта — заведение работает как витрина.</div></div>
+        </div>
+
+        <div class="hlp-sub">6.5. Категории товаров</div>
+        <p>Для направления «Товары» в карточке заведения появляется блок <b>«Категории товаров»</b>. Кнопка <b class="k">+ Добавить</b> создаёт строку категории — это верхний уровень группировки в витрине заведения.</p>
+
+        <div class="hlp-sub">6.6. Сохранение и лимит заведений</div>
+        <p>Нажмите <b class="k">Сохранить</b>. Первое заведение создаётся сразу. При попытке создать второе кабинет проверит подписку:</p>
+        <div class="hlp-scheme"><pre>Сохранение заведения
+    │
+    ├─ Это первое заведение? ──► да ──► Создано
+    │
+    └─ нет
+        │
+        ├─ Есть основная подписка? ──► нет ──► Предложение оформить подписку
+        │
+        └─ да
+            │
+            ├─ Есть свободный оплаченный слот? ──► да ──► Создано
+            │
+            └─ нет ──► «Сначала приобретите подписку
+                        дополнительного заведения»</pre></div>
+
+        <div class="hlp-sub">6.7. Карточка заведения</div>
+        <p>В списке <span class="path">Заведения</span> каждая карточка открывает окно с адресом, телефоном, часами работы и типом. Доступные действия:</p>
+        <ul>
+          <li><b class="k">Редактировать</b> — открыть форму заведения.</li>
+          <li><b class="k">QR-код</b> — код и ссылка на витрину заведения. Ссылку можно скопировать, QR — распечатать и разместить в зале.</li>
+          <li><b class="k">Поделиться ссылкой</b> — отправить прямую ссылку на список товаров и услуг.</li>
+          <li><b class="k">Карта</b> — показать заведение на карте.</li>
+          <li><b class="k">Удалить</b> — удаление с подтверждением.</li>
+        </ul>
+        <div class="hlp-tip"><b>QR в зале работает как витрина</b>Распечатанный QR-код ведёт покупателя прямо в ваш каталог: он открывает список позиций, не устанавливая приложение заранее.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 7 ─────────── -->
+      <section class="hlp-sec" id="h7">
+        <h3><span class="n">7</span> Доставка и зоны доставки</h3>
+        <p>Доставка настраивается внутри карточки заведения — блок <b>«Доставка»</b>. Функция требует активной подписки.</p>
+
+        <div class="hlp-sub">7.1. Включение доставки</div>
+        <ol class="hlp-steps">
+          <li>Откройте заведение на редактирование.</li>
+          <li>Включите переключатель <b>«Доставка»</b>.</li>
+          <li>Появятся кнопка <b class="k">Настроить зоны доставки →</b> и блок выбора курьера.</li>
+        </ol>
+
+        <div class="hlp-sub">7.2. Редактор зон</div>
+        <p>Зона доставки — это область на карте со своей стоимостью. Покупателю подставляется цена той зоны, в которую попал его адрес.</p>
+        <ol class="hlp-steps">
+          <li>Нажмите <b class="k">Настроить зоны доставки →</b> — откроется карта с панелью зон.</li>
+          <li>Нажмите <b class="k">+ Добавить зону</b>.</li>
+          <li>Выберите форму зоны кнопкой переключения:
+            <ul>
+              <li><b>◎ Радиус</b> — круг вокруг заведения; удобно для быстрой настройки.</li>
+              <li><b>⬡ Полигон</b> — произвольный контур; вершины перетаскиваются мышью или пальцем.</li>
+            </ul>
+          </li>
+          <li>Для полигона используйте кнопки <b class="k">+ Вершина</b> и <b class="k">− Вершина</b>, чтобы уточнить форму.</li>
+          <li>Впишите стоимость доставки для зоны в поле <b>₽</b>.</li>
+          <li>Задайте цвет зоны, нажав на цветной кружок.</li>
+          <li>Нажмите <b class="k">Сохранить</b>.</li>
+        </ol>
+
+        <div class="hlp-note"><b>Порядок зон важен</b>Зоны проверяются сверху вниз по списку. Если адрес попадает сразу в несколько зон, применяется первая подходящая. Меняйте порядок стрелками <b class="k">▲</b> <b class="k">▼</b> или перетаскиванием за значок <code>⠿</code> — более узкие и дешёвые зоны логично ставить выше широких.</div>
+
+        <div class="hlp-scheme"><pre>Список зон           Что получит покупатель
+─────────────        ──────────────────────
+1  ⬡  Центр    100 ₽    адрес в центре      → 100 ₽
+2  ◎  3 км     200 ₽    адрес в 2 км        → 200 ₽
+3  ◎  7 км     350 ₽    адрес в 6 км        → 350 ₽
+                        адрес в 12 км       → вне доставки</pre></div>
+
+        <div class="hlp-sub">7.3. Кто выполняет доставку</div>
+        <p>Список <b>«Поиск курьера»</b> определяет способ подачи заказа курьеру.</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Вручную</div><div class="d">Вы сами передаёте заказ своему курьеру и вручную двигаете статусы. Телефон курьера можно указать при переводе заказа в статус «Едет».</div></div>
+          <div class="r"><div class="f">Свой курьер</div><div class="d">Заказ назначается ближайшему курьеру из вашего списка штатных курьеров, независимо от расстояния. Курьер работает в приложении Alliby Carry.</div></div>
+          <div class="r"><div class="f">Alliby Carry</div><div class="d">Заказ уходит курьерам платформы в заданном радиусе.</div></div>
+        </div>
+
+        <p>Для режима <b>Alliby Carry</b> дополнительно настраиваются:</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Аукцион</div><div class="d">Курьеры предлагают свои ставки, выбирается минимальная — выгоднее по цене.</div></div>
+          <div class="r"><div class="f">Полная цена</div><div class="d">Заказ отдаётся ближайшему свободному курьеру по полной стоимости — быстрее по времени.</div></div>
+          <div class="r"><div class="f">Радиус поиска, м</div><div class="d">В каком радиусе от заведения искать курьеров. Значение по умолчанию — 3000 м. В режиме «Свой курьер» радиус не действует.</div></div>
+        </div>
+
+        <div class="hlp-sub">7.4. Штатные курьеры</div>
+        <p>Список своих курьеров ведётся в разделе <span class="path">Сотрудники и мастера → Штатные курьеры</span>.</p>
+        <ol class="hlp-steps">
+          <li>Курьер самостоятельно регистрируется в приложении <b>Alliby Carry</b>.</li>
+          <li>В своём профиле он находит <b>ID курьера</b> и передаёт его вам.</li>
+          <li>Выберите заведение, вставьте ID в поле и нажмите <b class="k">Добавить</b>.</li>
+          <li>После этого курьер станет доступен в режиме «Свой курьер».</li>
+        </ol>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 8 ─────────── -->
+      <section class="hlp-sec" id="h8">
+        <h3><span class="n">8</span> Категории меню</h3>
+        <p>Категории группируют позиции внутри витрины: «Кофе», «Бургеры», «Стрижки», «Инвентарь». Они же используются в правилах абонементов и в фильтрах каталога.</p>
+        <ol class="hlp-steps">
+          <li>Откройте экран категорий и нажмите <b class="k">+ Добавить</b>.</li>
+          <li>Введите <b>Название</b>.</li>
+          <li>Выберите <b>Заведение</b>. Если оставить поле пустым, категория станет глобальной и будет доступна во всех ваших заведениях.</li>
+          <li>Нажмите <b class="k">Сохранить</b>.</li>
+        </ol>
+        <div class="hlp-tip"><b>Быстрый способ</b>Категорию можно создать не выходя из карточки товара: в поле «Категория» нажмите <b class="k">+</b>, впишите название и подтвердите галочкой.</div>
+        <p>Фильтр <b>«Все заведения»</b> вверху экрана позволяет посмотреть категории конкретной точки. Каждую строку можно отредактировать или удалить.</p>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 9 ─────────── -->
+      <section class="hlp-sec" id="h9">
+        <h3><span class="n">9</span> Товары, услуги и аренда</h3>
+        <p>Раздел <span class="path">Товары и Услуги</span> — основной каталог. Вкладка <b>«Товары и услуги»</b> содержит позиции, вкладка <b>«Абонементы»</b> — абонементы (см. следующий раздел).</p>
+
+        <div class="hlp-sub">9.1. Добавление позиции</div>
+        <ol class="hlp-steps">
+          <li>Нажмите <b class="k">+ Добавить</b>.</li>
+          <li>Выберите <b>Заведение</b> и <b>Категорию</b>.</li>
+          <li>Заполните название, описание и цену.</li>
+          <li>Выберите <b>Тип позиции</b> — от него зависит набор остальных полей.</li>
+          <li>Загрузите фото и при необходимости добавьте группы опций.</li>
+          <li>Нажмите <b class="k">Сохранить</b>.</li>
+        </ol>
+
+        <div class="hlp-sub">9.2. Общие поля</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Заведение<span class="req">*</span></div><div class="d">К какой точке относится позиция.</div></div>
+          <div class="r"><div class="f">Категория</div><div class="d">Раздел витрины. Можно оставить «Без категории».</div></div>
+          <div class="r"><div class="f">Название<span class="req">*</span></div><div class="d">Полное название, которое увидит покупатель.</div></div>
+          <div class="r"><div class="f">Описание</div><div class="d">Состав, особенности или условия оказания услуги.</div></div>
+          <div class="r"><div class="f">Аллергены</div><div class="d">Через запятую: глютен, молоко, яйца, орехи. Оставьте пустым, если аллергенов нет.</div></div>
+          <div class="r"><div class="f">Цена (₽)<span class="req">*</span></div><div class="d">Стоимость одной единицы.</div></div>
+          <div class="r"><div class="f">Время приготовления</div><div class="d">Сколько минут занимает приготовление или подготовка. Подставляется при расчёте времени готовности заказа.</div></div>
+          <div class="r"><div class="f">В наличии</div><div class="d">Снимите галочку, чтобы временно скрыть позицию от покупателей, не удаляя её.</div></div>
+        </div>
+
+        <div class="hlp-sub">9.3. Тип позиции</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Товар</div><div class="d">Обычная покупка: покупатель кладёт позицию в корзину и оплачивает.</div></div>
+          <div class="r"><div class="f">Услуга</div><div class="d">Запись на время. Появляется поле <b>«Длительность услуги (мин)»</b>. Услугу можно закрепить за мастером.</div></div>
+          <div class="r"><div class="f">Аренда</div><div class="d">Предмет сдаётся на выбранный покупателем период.</div></div>
+        </div>
+
+        <p>Для типа <b>«Аренда»</b> открывается отдельный блок:</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Период аренды</div><div class="d">Шаг, на который берут предмет: число + единица (минуты, часы, дни, недели, месяцы). Например <code>2 часа</code> или <code>1 день</code>.</div></div>
+          <div class="r"><div class="f">Всего единиц</div><div class="d">Физическое количество предметов у вас на руках.</div></div>
+          <div class="r"><div class="f">В наличии</div><div class="d">Сколько свободно сейчас. Значение обновляется автоматически при бронированиях.</div></div>
+        </div>
+
+        <div class="hlp-sub">9.4. Правила для цены</div>
+        <p>Включите галочку <b>«Правила для цены»</b>, чтобы задать разную стоимость по дням недели или времени суток — например, дешевле утром или дороже в выходные.</p>
+        <ol class="hlp-steps">
+          <li>Отметьте <b>«Правила для цены»</b>.</li>
+          <li>Нажмите <b class="k">+ Правило</b> и задайте условие и цену.</li>
+          <li>Добавьте столько правил, сколько нужно.</li>
+        </ol>
+        <div class="hlp-note"><b>Как это видит покупатель</b>На карточке позиции показывается минимальная из возможных цен в формате «от N ₽», а точная сумма рассчитывается при оформлении.</div>
+
+        <div class="hlp-sub">9.5. Фото</div>
+        <p>Нажмите на область с подписью «Нажмите чтобы выбрать фото» и укажите файл в формате JPEG, PNG или WebP. Кнопка <b class="k">Удалить фото</b> убирает изображение.</p>
+
+        <div class="hlp-sub">9.6. Группы опций</div>
+        <p>Опции — это выбор, который покупатель делает при заказе: размер, добавки, вариант подачи. Нажмите <b class="k">+ Группа</b> и задайте тип:</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Радио</div><div class="d">Взаимоисключающий выбор — можно выбрать только один вариант. Пример: размер стакана.</div></div>
+          <div class="r"><div class="f">Чекбокс</div><div class="d">Множественный выбор — можно отметить несколько. Пример: дополнительные топпинги.</div></div>
+        </div>
+        <div class="hlp-tip"><b>Опции могут менять цену</b>Каждому варианту внутри группы задаётся своя надбавка, поэтому «Двойной эспрессо» или «Дополнительный сыр» корректно попадут в итоговую сумму заказа.</div>
+
+        <div class="hlp-sub">9.7. Запрещённые товары</div>
+        <div class="hlp-warn"><b>Размещать запрещено</b>
+          • Алкоголь при дистанционной продаже — подп. 14 п. 2 ст. 16 ФЗ-171<br>
+          • Никотин, табак, электронные сигареты — ФЗ-15<br>
+          • Наркотические и психотропные вещества — ФЗ-3, ст. 228 УК РФ<br>
+          • Оружие и взрывчатые вещества — ФЗ-150, ст. 222.1 УК РФ<br>
+          • Рецептурные лекарства — ФЗ-61<br>
+          • Пиротехника II–V класса — ТР ЕАЭС 006/2011<br>
+          • Нацистская символика и экстремистский контент — ФЗ-114<br><br>
+          Нарушение влечёт немедленную блокировку кабинета согласно Лицензионному договору, п. 5.5.
+        </div>
+
+        <div class="hlp-sub">9.8. Поиск и фильтры</div>
+        <p>Над списком позиций доступны фильтры по заведению и категории, а также строка поиска по названию — они помогают быстро найти нужную позицию в большом каталоге.</p>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 10 ─────────── -->
+      <section class="hlp-sec" id="h10">
+        <h3><span class="n">10</span> Абонементы</h3>
+        <p>Абонемент — это предоплаченная скидка на конкретный товар или услугу. Покупатель приобретает его в приложении, а затем получает пониженную цену при заказе или показывает QR-код для списания.</p>
+
+        <div class="hlp-scheme"><pre>ВЫ                                ПОКУПАТЕЛЬ
+──                                ──────────
+Создали абонемент      ────►      Видит карточку абонемента
+                                  на странице заведения
+                                          │
+                                          ▼
+                                  Купил абонемент
+                                          │
+                                          ▼
+                                  Цена товара в каталоге
+                                  и в корзине — со скидкой
+                                          │
+Сканер QR              ◄────      Показывает свой QR-код
+Списали использование             в приложении</pre></div>
+
+        <div class="hlp-sub">10.1. Создание абонемента</div>
+        <ol class="hlp-steps">
+          <li>Откройте <span class="path">Товары и Услуги</span> и перейдите на вкладку <b>«Абонементы»</b>.</li>
+          <li>Нажмите <b class="k">+ Добавить</b>.</li>
+          <li>Выберите <b>Заведение</b> — после этого подгрузится список его позиций.</li>
+          <li>Заполните основные поля, при необходимости — ограничения и лимиты.</li>
+          <li>Нажмите <b class="k">Сохранить</b>.</li>
+        </ol>
+
+        <div class="hlp-sub">10.2. Основные поля</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Заведение<span class="req">*</span></div><div class="d">Точка, в которой действует абонемент.</div></div>
+          <div class="r"><div class="f">Название<span class="req">*</span></div><div class="d">То, что увидит покупатель. Например «10 кофе со скидкой 30%».</div></div>
+          <div class="r"><div class="f">Товар / услуга<span class="req">*</span></div><div class="d">Позиция, на которую распространяется скидка. Список появляется после выбора заведения.</div></div>
+          <div class="r"><div class="f">Цена абонемента (₽)<span class="req">*</span></div><div class="d">Сколько покупатель платит за сам абонемент.</div></div>
+          <div class="r"><div class="f">Тип скидки<span class="req">*</span></div><div class="d">«% от цены товара» или «Фиксированная скидка (₽)».</div></div>
+          <div class="r"><div class="f">Размер скидки<span class="req">*</span></div><div class="d">Число: например <code>20</code> для 20% или <code>50</code> для 50 ₽.</div></div>
+          <div class="r"><div class="f">Срок действия (дней)<span class="req">*</span></div><div class="d">Через сколько дней после покупки абонемент истекает.</div></div>
+          <div class="r"><div class="f">Всего использований</div><div class="d">Сколько раз можно воспользоваться. <code>0</code> — без ограничения.</div></div>
+          <div class="r"><div class="f">Тираж (шт.)</div><div class="d">Сколько абонементов вообще можно продать. Пусто — без ограничения.</div></div>
+        </div>
+
+        <div class="hlp-sub">10.3. Временные ограничения</div>
+        <p>Блок позволяет ограничить действие абонемента определённым временем — например, сделать «утренний» тариф.</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Дни недели</div><div class="d">Отметьте нужные дни. Если не отмечено ничего — действует каждый день.</div></div>
+          <div class="r"><div class="f">Время начала / окончания</div><div class="d">Интервал в течение дня по московскому времени. Пусто — без ограничения.</div></div>
+          <div class="r"><div class="f">Исключённые даты</div><div class="d">Даты, в которые абонемент не действует (например, праздники). Формат <code>ГГГГ-ММ-ДД</code>, через запятую.</div></div>
+        </div>
+
+        <div class="hlp-sub">10.4. Лимиты использования</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Макс. использований в день</div><div class="d">Сколько раз в сутки покупатель может применить абонемент. Пусто — без ограничения.</div></div>
+          <div class="r"><div class="f">Мин. интервал (ч)</div><div class="d">Минимальное время между двумя применениями. Например <code>4</code> — не чаще раза в 4 часа.</div></div>
+          <div class="r"><div class="f">Мин. сумма заказа (₽)</div><div class="d">Если сумма покрытых абонементом позиций ниже этого значения, скидка не применяется.</div></div>
+        </div>
+
+        <div class="hlp-warn"><b>Обязательство перед покупателем</b>Публикуя абонемент, вы обязуетесь принимать его в течение всего срока действия — согласно Лицензионному договору, п. 2.4. Изменение условий уже проданного абонемента не освобождает от этого обязательства.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 11 ─────────── -->
+      <section class="hlp-sec" id="h11">
+        <h3><span class="n">11</span> Расписание и запись на услуги</h3>
+        <p>Расписание нужно заведениям, которые принимают запись на время: салонам, студиям, кортам, мастерским. Оно определяет, какие слоты покупатель увидит при записи.</p>
+
+        <div class="hlp-sub">11.1. Как открыть</div>
+        <p>Откройте раздел <span class="path">Заведения</span> и нажмите на карточке нужной точки кнопку с изображением календаря. Откроется экран расписания: календарь по месяцам с переключателями <b class="k">←</b> и <b class="k">→</b> и кнопка <b class="k">Редактировать</b>.</p>
+        <div class="hlp-note"><b>У сотрудников свой вход</b>Сотруднику пункт <b class="k">Расписание</b> показывается прямо в меню — он открывает расписание своего заведения. Редактировать его сотрудник не может, только просматривать записи.</div>
+
+        <div class="hlp-sub">11.2. Шаблоны</div>
+        <p>Шаблон — это готовый набор временных слотов, который можно применить сразу к нескольким дням. Это основной способ заполнить месяц за несколько нажатий.</p>
+        <ol class="hlp-steps">
+          <li>Нажмите <b class="k">Редактировать</b> — откроется панель шаблонов.</li>
+          <li>Нажмите <b class="k">+ Новый шаблон</b>.</li>
+          <li>Введите название, например <code>Рабочий день</code>.</li>
+          <li>Кнопкой <b class="k">+ Добавить слот</b> задайте временные интервалы приёма.</li>
+          <li>Нажмите <b class="k">Сохранить</b>.</li>
+        </ol>
+
+        <div class="hlp-sub">11.3. Применение шаблона к дням</div>
+        <ol class="hlp-steps">
+          <li>В режиме редактирования отметьте нужные дни в календаре.</li>
+          <li>Выберите шаблон в списке.</li>
+          <li>Нажмите <b class="k">Применить к выбранным</b>.</li>
+        </ol>
+        <div class="hlp-tip"><b>Быстрое заполнение месяца</b>Создайте два шаблона — «Будни» и «Суббота». Выделите все будние дни месяца, примените первый; затем выделите субботы и примените второй. Воскресенья оставьте выходными.</div>
+
+        <div class="hlp-sub">11.4. Работа с отдельным днём</div>
+        <p>Нажатие на день открывает панель с его слотами. Здесь же отображаются записи покупателей на этот день. Кнопка <b class="k">Сделать выходным</b> убирает все слоты дня — запись на него станет недоступна.</p>
+
+        <div class="hlp-note"><b>Индикатор обновления</b>Точка рядом с заголовком расписания показывает связь с сервером. Когда она зелёная, новые записи покупателей появляются в календаре сразу, без обновления страницы.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 12 ─────────── -->
+      <section class="hlp-sec" id="h12">
+        <h3><span class="n">12</span> Сотрудники и мастера</h3>
+        <p>Раздел <span class="path">Сотрудники и мастера</span> решает две задачи: выдать персоналу доступ к обработке заказов и завести мастеров, к которым записываются покупатели.</p>
+
+        <div class="hlp-sub">12.1. Добавление сотрудника</div>
+        <ol class="hlp-steps">
+          <li>Нажмите <b class="k">+ Добавить</b>.</li>
+          <li>Заполните <b>ФИО</b> и <b>Телефон</b>.</li>
+          <li>Выберите <b>Заведение</b> — сотрудник будет работать только с ним.</li>
+          <li>Задайте <b>Пароль</b> — минимум 6 символов.</li>
+          <li>Нажмите <b class="k">Сохранить</b>.</li>
+          <li>В карточке появится строка <b>«Логин»</b> — передайте его сотруднику вместе с паролем.</li>
+        </ol>
+        <div class="hlp-note"><b>Как входит сотрудник</b>В поле входа он вводит только короткий логин (без «собаки» и домена) и пароль. После входа сразу попадает на экран «Заказы и записи» своего заведения.</div>
+
+        <div class="hlp-sub">12.2. Права сотрудника</div>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Доступно</div><div class="d">Заказы и записи своего заведения, смена их статусов, каталог, расписание.</div></div>
+          <div class="r"><div class="f">Недоступно</div><div class="d">Подписка и оплата, юридические данные, управление другими сотрудниками, другие заведения.</div></div>
+        </div>
+
+        <div class="hlp-sub">12.3. Настройка мастера</div>
+        <p>Мастер — это сотрудник, к которому покупатель записывается на услугу. Откройте карточку сотрудника и включите переключатель <b>«Является мастером»</b>.</p>
+        <div class="hlp-fields">
+          <div class="r"><div class="f">Описание мастера</div><div class="d">Опыт работы, специализация, сертификаты. Покупатель видит этот текст при выборе мастера.</div></div>
+          <div class="r"><div class="f">Фото</div><div class="d">Портрет мастера. Форматы JPEG, PNG, WebP.</div></div>
+          <div class="r"><div class="f">Расписание</div><div class="d">Дни и часы, когда мастер принимает. Покупателю показываются только свободные слоты.</div></div>
+          <div class="r"><div class="f">Услуги</div><div class="d">Отметьте услуги, которые выполняет мастер, и укажите цену для каждой — она может отличаться от базовой цены позиции.</div></div>
+        </div>
+        <div class="hlp-tip"><b>Разные цены у разных мастеров</b>Если у опытного мастера стрижка дороже, задайте цену прямо в его карточке — покупатель увидит корректную сумму при выборе конкретного специалиста.</div>
+
+        <div class="hlp-sub">12.4. Штатные курьеры</div>
+        <p>Блок внизу экрана. Порядок добавления описан в разделе <a href="#h7">Доставка и зоны доставки</a>: курьер регистрируется в Alliby&nbsp;Carry, передаёт вам свой ID, вы добавляете его к нужному заведению.</p>
+
+        <div class="hlp-sub">12.5. Поиск</div>
+        <p>Строка <b>«Поиск по имени…»</b> фильтрует список — удобно, когда сотрудников много.</p>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 13 ─────────── -->
+      <section class="hlp-sec" id="h13">
+        <h3><span class="n">13</span> Заказы, записи и аренда</h3>
+        <p>Это рабочий экран, за которым проходит день. Он разделён на три вкладки: <b>Заказы</b>, <b>Записи</b> и <b>Аренда</b>. Красный счётчик на пункте меню показывает количество новых заказов.</p>
+
+        <div class="hlp-sub">13.1. Вкладка «Заказы»</div>
+        <p>Список оплаченных заказов. Сверху — фильтр по заведению и полоса статусов; цифра рядом со статусом показывает, сколько заказов в нём находится.</p>
+
+        <div class="hlp-sub">13.2. Путь заказа на самовывоз</div>
+        <div class="hlp-scheme"><pre>Оплачен
+   │  вы нажимаете «Взять в работу»
+   │  и указываете время готовности
+   ▼
+В работе
+   │  вы нажимаете «Готов к выдаче»
+   ▼
+Готов
+   │  покупатель забрал
+   ▼
+Выдан</pre></div>
+
+        <div class="hlp-sub">13.3. Путь заказа с доставкой</div>
+        <div class="hlp-scheme"><pre>Оплачен
+   │  «Взять в работу» + время готовности
+   ▼
+В работе
+   │  «Ищем курьера»
+   ▼
+Ищем курьера
+   │
+   ├─ курьер не найден
+   │     └─► «Повторить поиск курьера»
+   │
+   ├─ курьер найден (Alliby Carry / свой)
+   │     │  «Передано курьеру»
+   │     ▼
+   │  Передано курьеру
+   │     │  курьер нажимает «Принять»
+   │     ▼  в приложении Alliby Carry
+   │  Принято курьером
+   │     │
+   │     ▼
+   │  Едет ──► Выдан
+   │           (статус ставит курьер)
+   │
+   └─ доставка вручную
+         │  «Едет к вам» + телефон курьера
+         ▼
+      Едет ──► «Выдан» (ставите вы)</pre></div>
+
+        <div class="hlp-sub">13.4. Действия с заказом</div>
+        <ol class="hlp-steps">
+          <li>Нажмите на карточку — откроется окно с составом, выбранными опциями, суммой и адресом доставки.</li>
+          <li>При переводе в статус <b>«В работе»</b> укажите ожидаемое время готовности — покупатель увидит его в приложении.</li>
+          <li>Кнопка перехода в следующий статус находится внизу окна и подписана по смыслу текущего шага.</li>
+          <li>Если курьер не найден, воспользуйтесь кнопкой <b class="k">Повторить поиск курьера</b>.</li>
+        </ol>
+        <div class="hlp-note"><b>Услуги без времени готовности</b>Для заведений направления «Услуги» время готовности не запрашивается — там заказ сразу переходит в работу.</div>
+        <div class="hlp-note"><b>Финальный статус при доставке курьером</b>Если заказ принят курьером Alliby Carry, статус «Выдан» проставляет сам курьер в своём приложении после передачи заказа покупателю.</div>
+
+        <div class="hlp-sub">13.5. Вкладка «Записи»</div>
+        <p>Записи на услуги показаны в календаре. Выберите заведение, затем день — откроется список записей за этот день. Статусы: <b>Активна</b>, <b>Завершена</b>, <b>Отменена</b>. Нажатие на запись открывает карточку с деталями и доступными действиями.</p>
+
+        <div class="hlp-sub">13.6. Вкладка «Аренда»</div>
+        <p>Устроена так же, как «Записи»: календарь по месяцам и фильтр статусов — <b>Ожидает</b>, <b>Активна</b>, <b>Возвращено</b>, <b>Отменена</b>. Выберите заведение и день, чтобы увидеть, какие предметы выданы и когда их ждут обратно.</p>
+
+        <div class="hlp-tip"><b>Живое обновление</b>Точка рядом с заголовком экрана показывает связь с сервером. Пока она зелёная, новые заказы появляются в списке сами — держать экран открытым во время смены достаточно, обновлять страницу не нужно.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 14 ─────────── -->
+      <section class="hlp-sec" id="h14">
+        <h3><span class="n">14</span> Аналитика и реклама</h3>
+
+        <div class="hlp-sub">14.1. Аналитика</div>
+        <ol class="hlp-steps">
+          <li>Откройте <span class="path">Аналитика и реклама</span>, вкладка <b>«Аналитика»</b>.</li>
+          <li>Выберите заведение.</li>
+          <li>Выберите месяц и год — отчёт построится за этот период.</li>
+        </ol>
+        <p>Отчёт показывает продажи за выбранный месяц и помогает сравнить периоды между собой.</p>
+
+        <div class="hlp-sub">14.2. Рекламные рассылки</div>
+        <p>Вкладка <b>«Реклама»</b> отправляет push-уведомление покупателям. Функция доступна при активной подписке.</p>
+        <ol class="hlp-steps">
+          <li>Выберите <b>Заведение</b>.</li>
+          <li>Выберите <b>Аудиторию</b>:
+            <ul>
+              <li><b>По покупателям</b> — тем, кто уже заказывал у вас. Дополнительно укажите период: 7, 30 или 90 дней.</li>
+              <li><b>Всем в городе</b> — всем пользователям города вашего заведения, которые дали согласие на рекламные уведомления.</li>
+            </ul>
+          </li>
+          <li>Напишите <b>Текст сообщения</b> — не более 200 символов.</li>
+          <li>Нажмите <b class="k">Отправить рассылку</b>.</li>
+        </ol>
+        <div class="hlp-warn"><b>Ограничения по закону</b>Рассылка является рекламой в смысле ФЗ-38. Покупатели дали согласие на уведомления при установке приложения. Отправлять можно не более одной рассылки в 24 часа.</div>
+        <div class="hlp-tip"><b>Что писать</b>Короткое конкретное предложение работает лучше общего приветствия: укажите повод, выгоду и срок — например «Сегодня до 18:00 кофе с собой −30%».</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 15 ─────────── -->
+      <section class="hlp-sec" id="h15">
+        <h3><span class="n">15</span> Сканер QR и списание абонементов</h3>
+        <p>Сканер открывается кнопкой с изображением QR-кода в правом верхнем углу. Он нужен, чтобы списать использование абонемента, когда покупатель пришёл в заведение.</p>
+
+        <div class="hlp-sub">15.1. Сканирование камерой</div>
+        <ol class="hlp-steps">
+          <li>Нажмите <b class="k">Включить камеру</b> и разрешите доступ к камере.</li>
+          <li>Наведите рамку на QR-код в приложении покупателя.</li>
+          <li>После распознавания появится список его активных абонементов.</li>
+          <li>Выберите нужный абонемент.</li>
+          <li>Укажите <b>количество списаний</b> (от 1 до 20) и нажмите <b class="k">ОК — Списать</b>.</li>
+        </ol>
+
+        <div class="hlp-sub">15.2. Ручной ввод</div>
+        <p>Если камера недоступна, воспользуйтесь блоком <b>«Ввести ID вручную»</b>: попросите покупателя продиктовать идентификатор из его профиля, вставьте в поле и нажмите <b class="k">Найти</b>.</p>
+
+        <div class="hlp-note"><b>Абонемент не найден</b>Проверьте, что абонемент относится к вашему заведению, не истёк по сроку и не исчерпал количество использований. Также абонемент может не действовать в текущий день недели или время суток, если вы задавали временные ограничения.</div>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+
+      <!-- ─────────── 16 ─────────── -->
+      <section class="hlp-sec" id="h16">
+        <h3><span class="n">16</span> Частые вопросы и поддержка</h3>
+
+        <div class="hlp-faq">
+          <div class="q">Не могу создать второе заведение</div>
+          <div class="a">Первое заведение бесплатно, каждое следующее требует отдельной подписки. Откройте <span class="path">Подписка</span>, убедитесь, что основная подписка активна, и приобретите подписку на дополнительное заведение.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Покупатель не видит кнопку «В корзину»</div>
+          <div class="a">Проверьте переключатель <b>«Онлайн-оплата»</b> в карточке заведения. Если он выключен, каталог виден, но заказ оформить нельзя.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Не работает доставка</div>
+          <div class="a">Доставка требует активной подписки, включённого переключателя в карточке заведения и хотя бы одной сохранённой зоны. Если адрес покупателя не попадает ни в одну зону, доставка ему недоступна.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Оплата не проходит</div>
+          <div class="a">Убедитесь, что в разделе <span class="path">Подписка → Интернет-эквайринг</span> выбран боевой режим и заполнены боевые ключи. При оплате подписки с компьютера иногда помогает повторная попытка со смартфона.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Позиция не появляется у покупателя</div>
+          <div class="a">Проверьте галочку <b>«В наличии»</b> в карточке позиции и правильность выбранного заведения. Для типа «Аренда» также проверьте поле «В наличии» с количеством свободных единиц.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Покупатель не может записаться на услугу</div>
+          <div class="a">Запись возможна только в те слоты, которые заданы в расписании. Проверьте, что на нужные дни применён шаблон, а у мастера настроены расписание и список услуг.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Сотрудник не может войти</div>
+          <div class="a">Сотрудник вводит короткий логин из своей карточки, а не email. Логин виден в разделе <span class="path">Сотрудники и мастера</span> после сохранения карточки. Пароль можно задать заново, отредактировав сотрудника.</div>
+        </div>
+        <div class="hlp-faq">
+          <div class="q">Заказ завис в статусе «Ищем курьера»</div>
+          <div class="a">Откройте заказ и нажмите <b class="k">Повторить поиск курьера</b>. Если курьеров поблизости нет, увеличьте радиус поиска в настройках доставки заведения или передайте заказ вручную.</div>
+        </div>
+
+        <div class="hlp-sub">Поддержка</div>
+        <p>Если ответа на ваш вопрос здесь нет, напишите нам: <span class="path">Профиль → Написать в поддержку</span> или напрямую на <code>alliby.app@gmail.com</code>. В письме укажите название заведения и, если речь о конкретном заказе, его номер — это ускорит разбор.</p>
+
+        <div class="hlp-sub">Документы</div>
+        <ul>
+          <li><a href="https://site.alliby.ru/license" target="_blank" rel="noopener">Лицензионный договор</a> — условия использования кабинета и обязательства продавца.</li>
+          <li><a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener">Политика конфиденциальности</a></li>
+          <li><a href="https://site.alliby.ru/terms" target="_blank" rel="noopener">Условия использования</a></li>
+        </ul>
+        <a class="hlp-back" href="#toc">↑ К содержанию</a>
+      </section>
+</div>
+
+<div class="callout">
+  <p><strong>Готовы подключить заведение?</strong> Первое заведение, каталог, расписание и абонементы — бесплатно. Подписка нужна только для онлайн-оплаты, доставки и рассылок.</p>
+  <a class="btn" href="https://admin.alliby.ru/" target="_blank" rel="noopener">Открыть кабинет →</a>
+  <a class="btn-outline" href="/#pricing">Тарифы</a>
+</div>
+
+<footer>
+  <a href="/">Alliby</a> &nbsp;·&nbsp; <a href="/articles">Статьи</a> &nbsp;·&nbsp; <a href="/license">Лицензионный договор</a> &nbsp;·&nbsp; <a href="/privacy">Конфиденциальность</a>
+</footer>
+</div>
+<script src="/assets/theme.js"></script>
+</body>
+</html>
