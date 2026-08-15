@@ -478,12 +478,20 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
   transition:background .18s,transform .14s,color .18s;
 }
 .btn-mint:hover{background:rgba(20,184,166,.2);color:#fff;transform:translateY(-2px)}
-.btn-line{
+.btn-gold{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 26px;border-radius:var(--r-pill);
-  background:none;border:1px solid var(--line);color:var(--fg-2);font:600 14px/1 var(--font-sans);text-decoration:none;
-  transition:border-color .18s,color .18s,background .18s;cursor:pointer;
+  background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.4);
+  color:var(--gold);font:700 14px/1 var(--font-sans);text-decoration:none;
+  transition:background .18s,transform .14s,color .18s;cursor:pointer;
 }
-.btn-line:hover{border-color:var(--fg-3);color:var(--fg);background:rgba(255,255,255,.04)}
+.btn-gold:hover{background:rgba(234,179,8,.2);color:#0f0e0c;transform:translateY(-2px)}
+.btn-green{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 26px;border-radius:var(--r-pill);
+  background:rgba(53,168,98,.12);border:1px solid rgba(53,168,98,.4);
+  color:var(--green);font:700 14px/1 var(--font-sans);text-decoration:none;
+  transition:background .18s,transform .14s,color .18s;cursor:pointer;
+}
+.btn-green:hover{background:rgba(53,168,98,.2);color:#fff;transform:translateY(-2px)}
 
 .seg-lead{
   font:400 clamp(18px,2.2vw,22px)/1.5 var(--font-display);
@@ -1301,8 +1309,8 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         Открыть Alliby Business
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
-      <a class="btn-line" href="#pricing" onclick="togglePricing();return false">К тарифам</a>
-      <a class="btn-line" href="#cmp" onclick="goToComparison();return false">Узнай о преимуществах Alliby над конкурентами</a>
+      <a class="btn-gold" href="#pricing" onclick="togglePricing();return false">К тарифам</a>
+      <a class="btn-green" href="#cmp" onclick="goToComparison();return false">Узнай о преимуществах Alliby над конкурентами</a>
     </div>
   </div>
 </section>
