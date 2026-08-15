@@ -3038,6 +3038,13 @@ function _calenabsIsActive() { return document.getElementById('screen-calenabs')
 const RENT_UNIT_RU = { minute:'мин', hour:'ч', day:'д', week:'нед', month:'мес' };
 const RENT_STATUS_RU = { pending:'Ожидает', active:'Активна', completed:'Возвращено', cancelled:'Отменена' };
 const RENT_STATUS_COLOR = { pending:'var(--warn)', active:'var(--ok)', completed:'var(--fg-3)', cancelled:'var(--err)' };
+// status — стадия жизненного цикла аренды, payment_status — факт оплаты.
+// Без второго бейджа оплаченная аренда выглядела как «Ожидает» и не
+// отличалась от неоплаченной ни у покупателя, ни у продавца.
+function _rentPaidBadge(r) {
+  if (r?.payment_status !== 'paid') return '';
+  return `<span data-rent-paid style="font-size:11px;color:var(--ok);border:1px solid currentColor;border-radius:4px;padding:2px 5px;flex-shrink:0;margin-left:6px">Оплачена</span>`;
+}
 function _rentPeriodStr(r) {
   const unit = r.menu_items?.rent_period_unit;
   const s = new Date(r.start_at), e = new Date(r.end_at);
@@ -3079,7 +3086,7 @@ async function loadMyRentReservations() {
   if (!uid) { el.innerHTML = '<div class="empty">Войдите в аккаунт</div>'; return; }
   el.innerHTML = '<div class="loading">Загрузка…</div>';
   try {
-    const rows = await req(`/rest/v1/rent_reservations?user_id=eq.${uid}&select=id,start_at,end_at,quantity,total_price,status,menu_items(name,rent_period_unit),stores(name)&order=created_at.desc&limit=50`);
+    const rows = await req(`/rest/v1/rent_reservations?user_id=eq.${uid}&select=id,start_at,end_at,quantity,total_price,status,payment_status,menu_items(name,rent_period_unit),stores(name)&order=created_at.desc&limit=50`);
     if (!rows.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет аренд</div>'; return; }
     el.innerHTML = rows.map(r => {
       const item = r.menu_items || {};
@@ -3090,7 +3097,7 @@ async function loadMyRentReservations() {
       return `<div class="card" data-rent-id="${r.id}" style="margin-bottom:10px;padding:12px 14px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
-          <span data-rent-status style="font-size:11px;color:${sc};border:1px solid currentColor;border-radius:4px;padding:2px 5px;flex-shrink:0;margin-left:6px">${sl}</span>
+          <div style="display:flex;align-items:center;flex-shrink:0">${_rentPaidBadge(r)}<span data-rent-status style="font-size:11px;color:${sc};border:1px solid currentColor;border-radius:4px;padding:2px 5px;flex-shrink:0;margin-left:6px">${sl}</span></div>
         </div>
         <div style="font-size:12px;color:var(--fg-3)">${esc(store.name || '')}</div>
         <div style="font-size:13px;color:var(--fg-2);margin-top:4px">${periodStr}</div>
@@ -3533,16 +3540,17 @@ function rentCalcTotal() {
   const addBtn  = document.getElementById('mrent-add-cart-btn');
   const bookBtn = document.getElementById('mrent-book-btn');
   const payBtn  = document.getElementById('mrent-pay-btn');
-  if (isTimeUnit) {
-    if (addBtn)  addBtn.style.display  = 'none';
-    if (bookBtn) bookBtn.style.display = '';
-    if (payBtn)  payBtn.style.display  = S.storeSubActive !== false ? '' : 'none';
-    if (payBtn)  payBtn.textContent    = (_rentFullSub && _rentUseSub) ? 'Оплатить абонементом' : 'Оплатить';
-  } else {
-    if (addBtn)  addBtn.style.display  = S.storeSubActive !== false ? '' : 'none';
-    if (bookBtn) bookBtn.style.display = '';
-    if (payBtn)  payBtn.style.display  = 'none';
-  }
+  // «Оплатить» доступна для любой единицы аренды, включая посуточную:
+  // rentPayNow() не зависит от unit и корректно проводит абонемент через
+  // tbank-init-rent. «В корзину» — только для длинных периодов, где имеет
+  // смысл собирать несколько позиций; при оплате абонементом она прячется,
+  // потому что скидка применяется только на прямой оплате.
+  const canPay = S.storeSubActive !== false;
+  const useSubNow = !!(_rentFullSub && _rentUseSub);
+  if (addBtn)  addBtn.style.display  = (!isTimeUnit && canPay && !useSubNow) ? '' : 'none';
+  if (bookBtn) bookBtn.style.display = '';
+  if (payBtn)  payBtn.style.display  = canPay ? '' : 'none';
+  if (payBtn)  payBtn.textContent    = useSubNow ? 'Оплатить абонементом' : 'Оплатить';
 
   // store for add-to-cart
   _rentItem._pendingStart = startDT?.toISOString();
@@ -6465,6 +6473,10 @@ function _onRealtimeRent(record, type) {
     const sl = RENT_STATUS_RU[record.status] || record.status;
     const badge = card.querySelector('[data-rent-status]');
     if (badge) { badge.style.color = sc; badge.textContent = sl; }
+    // Оплата приходит вебхуком от банка отдельным UPDATE — бейдж «Оплачена»
+    // должен появиться без перезагрузки списка.
+    if (record.payment_status === 'paid' && badge && !card.querySelector('[data-rent-paid]'))
+      badge.insertAdjacentHTML('beforebegin', _rentPaidBadge(record));
   } else if (isVisible) {
     loadMyRentReservations();
   }
@@ -10138,17 +10150,28 @@ async function confirmBooking(payNow) {
           method: 'PATCH', body: JSON.stringify({ status: 'rescheduled' }),
         });
       }
-      await req('/rest/v1/bookings', {
-        method: 'POST', headers: { Prefer: 'return=minimal' },
-        body: JSON.stringify({ ...bookingData, payment_status: 'paid' }),
+      // Запись создаётся неоплаченной, а отметку «оплачено» ставит сервер
+      // в tbank-init-booking — он же проверяет абонемент и списывает
+      // использование. Клиент не вправе объявлять запись оплаченной сам.
+      const [created] = await req('/rest/v1/bookings', {
+        method: 'POST', headers: { Prefer: 'return=representation' },
+        body: JSON.stringify({ ...bookingData, payment_status: 'unpaid' }),
       });
+      const res = await req('/functions/v1/tbank-init-booking', {
+        method: 'POST',
+        body: JSON.stringify({
+          booking_id: created.id,
+          applied_user_subscription_id: _bookingFullSub.us.id,
+        }),
+      });
+      if (!res?.free) throw { message: res?.error || 'не удалось списать абонемент' };
       closeModal('m-book-slot');
       showBookingConfirm(_booking.currentDate, _booking.selectedSlot.start, S.store?.name, _booking.item?.name);
       if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
       if (_storeSchedIsActive()) loadCaScheduleScreen();
       if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
     } catch(e) {
-      showGeoToast('Ошибка при бронировании');
+      showGeoToast('Ошибка: ' + (e?.error || e?.message || 'не удалось записаться'));
       restorePayBook();
     }
     return;
@@ -10226,7 +10249,7 @@ async function loadBookingsScreen() {
   } catch(e) {}
   _myBk.rentByDate = {};
   try {
-    const rentRows = await req(`/rest/v1/rent_reservations?user_id=eq.${S.session.user.id}&start_at=lte.${lastDay}T23:59:59&end_at=gte.${firstDay}T00:00:00&select=id,start_at,end_at,quantity,total_price,status,menu_items(name,rent_period_unit),stores(name)&order=start_at.asc`);
+    const rentRows = await req(`/rest/v1/rent_reservations?user_id=eq.${S.session.user.id}&start_at=lte.${lastDay}T23:59:59&end_at=gte.${firstDay}T00:00:00&select=id,start_at,end_at,quantity,total_price,status,payment_status,menu_items(name,rent_period_unit),stores(name)&order=start_at.asc`);
     rentRows.forEach(r => {
       const sd0 = _localDateOf(r.start_at), ed0 = _localDateOf(r.end_at);
       const sd = sd0 < firstDay ? firstDay : sd0;
@@ -10384,6 +10407,7 @@ function _rentDayItemsHtml(ds) {
           <span>${periodStr}</span>
           <span style="color:var(--accent)">${Number(r.total_price || 0).toFixed(0)} ₽</span>
           <span style="color:${sc}">${esc(sl)}</span>
+          ${r.payment_status === 'paid' ? '<span style="color:var(--ok)">Оплачена</span>' : ''}
         </div>
       </div>
     </div>`;

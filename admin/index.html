@@ -6900,7 +6900,7 @@ async function renderRentDayView(dateStr) {
   const dayStart = new Date(dateStr + 'T00:00:00').toISOString();
   const dayEnd   = new Date(dateStr + 'T23:59:59').toISOString();
   try {
-    let url = `/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=gte.${dayStart}&start_at=lte.${dayEnd}&select=id,start_at,end_at,quantity,total_price,status,notes,menu_items(name,rent_period_unit,rent_period_step),profiles(full_name,phone)&order=start_at.asc`;
+    let url = `/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=gte.${dayStart}&start_at=lte.${dayEnd}&select=id,start_at,end_at,quantity,total_price,status,payment_status,notes,menu_items(name,rent_period_unit,rent_period_step),profiles(full_name,phone)&order=start_at.asc`;
     if (_rentTab.statusFilter !== 'all') url += `&status=eq.${_rentTab.statusFilter}`;
     const rows = await req(url);
     _rentTab.counts[dateStr] = rows.filter(r => r.status !== 'cancelled').length;
@@ -6931,6 +6931,11 @@ function _renderRentRow(r) {
   const statusLabel = RENT_STATUS_LABEL[r.status] || r.status;
   const unitLabel = RENT_UNIT_LABEL[item.rent_period_unit] || '';
   const step = item.rent_period_step > 1 ? item.rent_period_step + ' ' : '';
+  // status — стадия аренды, payment_status — оплата. Без второго бейджа
+  // оплаченная аренда выглядела в кабинете как обычная «Ожидает».
+  const paidBadge = r.payment_status === 'paid'
+    ? `<span style="font-size:12px;color:var(--ok);border:1px solid currentColor;border-radius:4px;padding:2px 6px">Оплачена</span>`
+    : `<span style="font-size:12px;color:var(--fg-4);border:1px solid currentColor;border-radius:4px;padding:2px 6px">Не оплачена</span>`;
   const canComplete = r.status === 'active';
   const canActivate = r.status === 'pending';
   const canCancel   = r.status === 'pending' || r.status === 'active';
@@ -6942,7 +6947,10 @@ function _renderRentRow(r) {
   return `<div class="card" style="margin-bottom:10px;padding:12px 14px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
       <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
-      <span style="font-size:12px;color:${statusColor};border:1px solid currentColor;border-radius:4px;padding:2px 6px;flex-shrink:0;margin-left:8px">${statusLabel}</span>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px">
+        ${paidBadge}
+        <span style="font-size:12px;color:${statusColor};border:1px solid currentColor;border-radius:4px;padding:2px 6px">${statusLabel}</span>
+      </div>
     </div>
     <div style="font-size:13px;color:var(--fg-2);margin-bottom:4px">${_fmtRentPeriod(r.start_at, r.end_at)}${unitLabel ? ` · шаг ${step}${unitLabel}` : ''}</div>
     <div style="font-size:13px;color:var(--fg-2);margin-bottom:4px">Кол-во: ${r.quantity} шт · ${Number(r.total_price).toFixed(0)} ₽</div>
