@@ -2593,6 +2593,46 @@ ol.hlp-steps>li ul{margin:6px 0 0}
         <span class="toggle-track"></span>
       </label>
     </div>
+    <div id="ms-preorder-section" style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <span style="font:600 13px/1 var(--font-sans)">Заказ ко времени</span>
+          <span class="hint" data-tip="Клиент сможет оформить заказ без онлайн-оплаты — на сегодня, к выбранному времени в рабочем окне. Оплата — при получении.">?</span>
+        </div>
+        <label class="toggle-sw">
+          <input type="checkbox" id="ms-preorder-enabled" onchange="onMsPreorderChange()">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="ms-preorder-wrap" style="display:none">
+        <div class="grid2" style="margin-bottom:10px">
+          <div class="fg">
+            <label>Приём заказов с</label>
+            <input type="time" id="ms-preorder-opens">
+          </div>
+          <div class="fg">
+            <label>Приём заказов до</label>
+            <input type="time" id="ms-preorder-closes">
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:10px">
+          <label>Мин. время приготовления, мин<span class="hint" data-tip="Нельзя выбрать время получения раньше, чем сейчас + это значение">?</span></label>
+          <input type="number" id="ms-preorder-prep" min="0" step="5" value="20">
+        </div>
+        <div class="fg">
+          <label>Рабочие дни<span class="hint" data-tip="В какие дни недели доступен заказ ко времени">?</span></label>
+          <div class="weekdays">
+            <label><input type="checkbox" value="1" class="ms-preorder-wd" checked> Пн</label>
+            <label><input type="checkbox" value="2" class="ms-preorder-wd" checked> Вт</label>
+            <label><input type="checkbox" value="3" class="ms-preorder-wd" checked> Ср</label>
+            <label><input type="checkbox" value="4" class="ms-preorder-wd" checked> Чт</label>
+            <label><input type="checkbox" value="5" class="ms-preorder-wd" checked> Пт</label>
+            <label><input type="checkbox" value="6" class="ms-preorder-wd" checked> Сб</label>
+            <label><input type="checkbox" value="7" class="ms-preorder-wd" checked> Вс</label>
+          </div>
+        </div>
+      </div>
+    </div>
     <div id="ms-cats-section" style="display:none;padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font:600 13px/1 var(--font-sans)">Категории товаров</span>
@@ -4971,6 +5011,16 @@ async function openStoreModal(store) {
   }
   const opEl = document.getElementById('ms-online-payment');
   if (opEl) opEl.checked = store?.accepts_online_payment !== false;
+  const poEl = document.getElementById('ms-preorder-enabled');
+  if (poEl) {
+    poEl.checked = !!store?.preorder_enabled;
+    document.getElementById('ms-preorder-opens').value  = store?.preorder_opens  ? store.preorder_opens.slice(0,5)  : '';
+    document.getElementById('ms-preorder-closes').value = store?.preorder_closes ? store.preorder_closes.slice(0,5) : '';
+    document.getElementById('ms-preorder-prep').value   = store?.preorder_prep_minutes ?? 20;
+    const _poDays = store?.preorder_weekdays || [1,2,3,4,5,6,7];
+    document.querySelectorAll('.ms-preorder-wd').forEach(cb => { cb.checked = _poDays.includes(parseInt(cb.value)); });
+    onMsPreorderChange();
+  }
   _msEditStore = store || null;
   const _msCatSec = document.getElementById('ms-cats-section');
   if (_msCatSec) {
@@ -5060,6 +5110,12 @@ async function cancelPickMode() {
 }
 
 function onMsDeliveryChange() {}
+
+function onMsPreorderChange() {
+  const on = document.getElementById('ms-preorder-enabled')?.checked ?? false;
+  const wrap = document.getElementById('ms-preorder-wrap');
+  if (wrap) wrap.style.display = on ? '' : 'none';
+}
 
 // ─── Courier mode (Alliby Carry) ───
 const _COURIER_MODE_DESC = {
@@ -5232,6 +5288,11 @@ async function saveStore() {
     image_url:          document.getElementById('ms-image-url').value || null,
     delivery_enabled:         !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
     accepts_online_payment:   document.getElementById('ms-online-payment')?.checked ?? true,
+    preorder_enabled:         document.getElementById('ms-preorder-enabled')?.checked ?? false,
+    preorder_opens:           document.getElementById('ms-preorder-enabled')?.checked ? (document.getElementById('ms-preorder-opens').value || null) : null,
+    preorder_closes:          document.getElementById('ms-preorder-enabled')?.checked ? (document.getElementById('ms-preorder-closes').value || null) : null,
+    preorder_prep_minutes:    parseInt(document.getElementById('ms-preorder-prep')?.value) || 20,
+    preorder_weekdays:        [...document.querySelectorAll('.ms-preorder-wd:checked')].map(cb => parseInt(cb.value)),
     delivery_courier_mode:    document.getElementById('ms-courier-mode')?.value || 'manual',
     delivery_carry_bid_mode:  document.getElementById('ms-courier-mode')?.value === 'carry'
       ? (document.getElementById('ms-carry-bid-mode')?.value || 'auction') : null,
