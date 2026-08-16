@@ -1400,6 +1400,20 @@ document.addEventListener('deviceready',function(){
           </div>
           <div id="delivery-eta-wrap" style="display:none;margin-top:6px;font-size:12px;color:var(--fg-3)"></div>
         </div>
+        <div id="preorder-toggle-wrap" style="display:none;margin-top:12px">
+          <div style="display:flex;gap:8px">
+            <button id="po-now-btn" class="btn btn-p" style="flex:1;min-height:44px" onclick="setOrderMode('now')">Сейчас</button>
+            <button id="po-sched-btn" class="btn btn-p" style="flex:1;min-height:44px" onclick="setOrderMode('scheduled')">Ко времени</button>
+          </div>
+          <div id="preorder-time-wrap" style="display:none;margin-top:8px">
+            <label style="display:block;font-size:12px;color:var(--fg-3);margin-bottom:4px">Заберу в</label>
+            <select id="preorder-time-select" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px"></select>
+            <label id="preorder-paynow-row" style="display:none;align-items:center;gap:8px;margin-top:8px;font:400 13px/1.4 var(--font-sans);color:var(--fg-2);cursor:pointer">
+              <input type="checkbox" id="preorder-pay-now" style="width:16px;height:16px;flex-shrink:0;accent-color:var(--accent)" onchange="updateCartPayBtnLabel()">
+              <span>Оплатить сейчас онлайн</span>
+            </label>
+          </div>
+        </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
         <p style="font-size:11px;color:var(--fg-4);text-align:center;margin-top:6px;line-height:1.5">Совершая покупку, вы соглашаетесь с <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательским соглашением</a> и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой обработки персональных данных</a></p>
@@ -2699,6 +2713,7 @@ const S = {
   direction: 'food',
   _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null}, sport: {items:[],storeId:null}, entertainment: {items:[],storeId:null} },
   deliveryMode: null, deliveryFee: 0,
+  orderMode: 'now',
   userAddrLat: null, userAddrLng: null,
   cityData: null,
   get city() { return localStorage.getItem('alliby_city'); },
@@ -2846,7 +2861,7 @@ function fmtDate(d) {
   return new Date(d).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 function fmtShortDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '—'; }
-const statusMap = { pending:'Создан', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Курьер забирает заказ', accepted_by_courier:'Едет к вам', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
+const statusMap = { pending:'Оплата при получении', paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Курьер забирает заказ', accepted_by_courier:'Едет к вам', on_the_way:'Едет к вам', ready:'Готов', issued:'Выдан', cancelled:'Отменён' };
 const subStMap  = { active:'Активен', expired:'Истёк' };
 function fmtSubStatus(us) {
   const today = new Date().toISOString().split('T')[0];
@@ -4986,7 +5001,7 @@ function renderMapMarkers(stores) {
     el.className = 'store-pin';
     const _cartBadge = '<div class="p-cart"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#000"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM5.2 4H2V2H0v2h2l3.6 7.59-1.35 2.44C4.1 14.37 4 14.68 4 15c0 1.1.9 2 2 2h14v-2H6.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.24-5.88A1 1 0 0023.1 6H5.2z"/></svg></div>';
     const delInfo = getDeliveryInfo(st);
-    const _stHasCart = st.has_cart && st.accepts_online_payment !== false;
+    const _stHasCart = st.has_cart && storeCanOrder(st);
     const _delBadge = delInfo
       ? `<div class="p-del${_stHasCart ? '' : ' no-cart'}" style="background:${delInfo.inZone?'#16a34a':'#ef4444'};color:#fff;display:flex;align-items:center;justify-content:center">${svgIco('bicycle',11)}</div>`
       : '';
@@ -5060,7 +5075,7 @@ async function showStorePopup(st, listItem) {
   if (st.avg_order_amount) { ppAvg.textContent = `Средний чек: ~${st.avg_order_amount} ₽`; ppAvg.style.display = ''; }
   else ppAvg.style.display = 'none';
   const ppCart = document.getElementById('pp-cart-badge');
-  ppCart.style.display = (st.has_cart && st.accepts_online_payment !== false) ? 'flex' : 'none';
+  ppCart.style.display = (st.has_cart && storeCanOrder(st)) ? 'flex' : 'none';
   const ppDel = document.getElementById('pp-delivery');
   if (ppDel) {
     if (st.delivery_enabled) {
@@ -5929,7 +5944,7 @@ function itemActions(item, qty) {
     return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openBookingSlotModal(itemCache.get('${item.id}'))">Записаться</button>`;
   }
   if (S.storeSubActive === false) return '';
-  if (S.store?.accepts_online_payment === false) return '';
+  if (!storeCanOrder(S.store)) return '';
   // Items with option groups can have several cart lines at once (different combinations),
   // so a single −/+ stepper on the card can't unambiguously target one of them — always
   // reopen the picker instead; qty here is just an informational total across all lines.
@@ -6114,7 +6129,7 @@ function openItemDetail(id) {
   }
 
   const btn = document.getElementById('mi-cart-btn');
-  if (S.storeSubActive === false || S.store?.accepts_online_payment === false) {
+  if (S.storeSubActive === false || !storeCanOrder(S.store)) {
     btn.style.display = 'none';
   } else {
     btn.style.display = '';
@@ -6523,7 +6538,7 @@ async function _loadOrderStores() {
   const uid = S.session?.user?.id;
   if (!uid) return;
   try {
-    const rows = await req(`/rest/v1/orders?user_id=eq.${uid}&status=neq.pending&select=store_id,stores(id,name)&limit=200`);
+    const rows = await req(`/rest/v1/orders?user_id=eq.${uid}&or=(status.neq.pending,payment_method.eq.later)&select=store_id,stores(id,name)&limit=200`);
     const seen = new Map();
     (rows || []).forEach(r => {
       if (r.store_id && r.stores?.name && !seen.has(r.store_id)) {
@@ -6640,7 +6655,7 @@ function _setupClientOrdSentinel() {
 
 function renderActiveOrderCard(o) {
   const statusColors = { paid:'var(--info)', in_progress:'var(--warn)', looking_for_courier:'#f97316', handed_to_courier:'#a855f7', accepted_by_courier:'#06b6d4', on_the_way:'#06b6d4', ready:'var(--ok)' };
-  const statusLabels = { paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Курьер забирает заказ', accepted_by_courier:'Едет к вам', on_the_way:'Едет к вам', ready:'Готов!', issued:'Выдан', cancelled:'Отменён', pending:'Создан' };
+  const statusLabels = { paid:'Оплачен', in_progress:'В работе', looking_for_courier:'Ищем курьера', handed_to_courier:'Курьер забирает заказ', accepted_by_courier:'Едет к вам', on_the_way:'Едет к вам', ready:'Готов!', issued:'Выдан', cancelled:'Отменён', pending:'Оплата при получении' };
   // A courier can get matched (courier_phone set) slightly before the backend flips
   // the order off looking_for_courier — showing "still searching" once we already
   // have a courier's phone number would be a visible contradiction.
@@ -6651,8 +6666,9 @@ function renderActiveOrderCard(o) {
   const isOnTheWay = o.status === 'on_the_way';
   const isLooking = o.status === 'looking_for_courier' && !courierFound;
   const isIssued = o.status === 'issued';
+  const isPendingPickup = o.status === 'pending' && !!o.pickup_time;
   const delivBorder = o.is_delivery ? 'border:2px solid #f5c518;' : '';
-  const hasExtra = isReady || isOnTheWay || isLooking || isIssued || courierFound || o.estimated_ready_at;
+  const hasExtra = isReady || isOnTheWay || isLooking || isIssued || courierFound || o.estimated_ready_at || isPendingPickup;
   return `<div class="card" style="margin:10px 16px;padding:14px;cursor:pointer;${delivBorder}" onclick="openActiveOrderDetail('${esc(o.id)}')">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:${hasExtra ? '10px' : '0'}">
       <div>
@@ -6662,6 +6678,7 @@ function renderActiveOrderCard(o) {
       </div>
       <span style="padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid ${color};color:${color}">${label}</span>
     </div>
+    ${isPendingPickup ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--fg-3);font-size:13px;color:var(--fg-2);margin-bottom:10px"><span style="display:flex;align-items:center;gap:5px">${svgIco('clock',14)}Заберёте к ${fmtTime(o.pickup_time)} · оплата при получении</span></div>` : ''}
     ${o.estimated_ready_at && !isLooking && !isOnTheWay ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--warn);font-size:13px;color:var(--warn)${isReady ? ';margin-bottom:10px' : ''}"><span style="display:flex;align-items:center;gap:5px">${svgIco('clock',14)}${o.is_delivery ? 'Ожидаемая доставка к' : 'Готов примерно к'} ${fmtTime(o.estimated_ready_at)}</span></div>` : ''}
     ${isLooking ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid #f97316;font-size:13px;color:#f97316;display:flex;align-items:center;gap:6px">${svgIco('search',14)}Ищем курьера для вашего заказа…</div>` : ''}
     ${courierFound ? `<div style="padding:8px 10px;border-radius:var(--r-2);border:1px solid #06b6d4;font-size:13px;color:#06b6d4;font-weight:600;display:flex;flex-direction:column;gap:4px"><span style="display:flex;align-items:center;gap:6px">${svgIco('bicycle',14)}Курьер найден, скоро заберёт заказ</span><span style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px">${svgIco('phone',12)}<a href="tel:${esc(o.courier_phone)}" style="color:#06b6d4">${esc(o.courier_phone)}</a></span></div>` : ''}
@@ -6721,6 +6738,8 @@ function openActiveOrderDetail(orderId) {
   const extraEl = document.getElementById('mod-order-extra');
   if (extraEl) {
     let extraHtml = '';
+    if (o.pickup_time)
+      extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--line);font-size:14px;color:var(--fg-2);display:flex;align-items:center;gap:6px">${svgIco('clock',14)}Заберёте к ${fmtTime(o.pickup_time)}${o.payment_method === 'later' ? ' · оплата при получении' : ''}</div>`;
     if (o.estimated_ready_at && !['looking_for_courier','handed_to_courier','accepted_by_courier','on_the_way'].includes(o.status))
       extraHtml += `<div style="margin-top:12px;padding:10px 12px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--warn);font-size:14px;color:var(--warn);display:flex;align-items:center;gap:6px">${svgIco('clock',14)}${o.is_delivery ? 'Ожидаемая доставка к' : 'Готов примерно к'} ${fmtTime(o.estimated_ready_at)}</div>`;
     if (o.is_delivery && o.courier_phone)
@@ -7030,6 +7049,108 @@ function getDeliveryInfo(store) {
   return _checkDeliveryZones(zones, S.userAddrLat, S.userAddrLng);
 }
 
+// Заказать можно, если доступна онлайн-оплата ИЛИ включён «Заказ ко времени»
+// (тогда оплата — при получении). Раньше выключенная онлайн-оплата прятала
+// «В корзину» полностью — теперь это лишь один из двух путей оформления.
+function storeCanOrder(store) {
+  return store?.accepts_online_payment !== false || !!store?.preorder_enabled;
+}
+
+// ─── Заказ ко времени: окно на сегодня по местному времени устройства ─────
+function getPreorderWindowToday(store) {
+  if (!store?.preorder_enabled) return null;
+  const now = new Date();
+  const dow = ((now.getDay() + 6) % 7) + 1; // 1=Пн..7=Вс
+  const days = store.preorder_weekdays?.length ? store.preorder_weekdays : [1,2,3,4,5,6,7];
+  if (!days.includes(dow)) return null;
+
+  const STEP = 10;
+  const prep = Number(store.preorder_prep_minutes) || 0;
+  const earliest = new Date(now.getTime() + prep * 60000);
+  let startMin = earliest.getHours() * 60 + earliest.getMinutes();
+  startMin = Math.ceil(startMin / STEP) * STEP;
+  if (store.preorder_opens) {
+    const [oh, om] = store.preorder_opens.split(':').map(Number);
+    startMin = Math.max(startMin, oh * 60 + om);
+  }
+  let endMin = 23 * 60 + 59;
+  if (store.preorder_closes) {
+    const [ch, cm] = store.preorder_closes.split(':').map(Number);
+    endMin = ch * 60 + cm;
+  }
+  if (startMin > endMin) return null;
+  return { startMin, endMin, step: STEP };
+}
+
+function populatePreorderSlots(store) {
+  const sel = document.getElementById('preorder-time-select');
+  if (!sel) return false;
+  const win = getPreorderWindowToday(store);
+  sel.innerHTML = '';
+  if (!win) return false;
+  for (let m = win.startMin; m <= win.endMin; m += win.step) {
+    const hh = String(Math.floor(m / 60)).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    const opt = document.createElement('option');
+    opt.value = `${hh}:${mm}`;
+    opt.textContent = `${hh}:${mm}`;
+    sel.appendChild(opt);
+  }
+  return sel.options.length > 0;
+}
+
+function preorderTimeToISO(hhmm) {
+  const [h, m] = (hhmm || '').split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+}
+
+function setOrderMode(mode) {
+  const store = getCartStore();
+  if (mode === 'scheduled') {
+    if (S.deliveryMode === 'delivery') { showGeoToast('Заказ ко времени доступен только с самовывозом'); return; }
+    if (!populatePreorderSlots(store)) { showGeoToast('Сегодня заказ ко времени больше недоступен'); return; }
+  }
+  S.orderMode = mode;
+  renderPreorderToggle();
+}
+
+function updateCartPayBtnLabel() {
+  const btn = document.getElementById('cart-pay-btn');
+  if (!btn) return;
+  const scheduled = S.orderMode === 'scheduled';
+  const payNow = document.getElementById('preorder-pay-now')?.checked;
+  btn.textContent = (scheduled && !payNow) ? 'Оформить заказ' : 'Оплатить';
+}
+
+function renderPreorderToggle() {
+  const wrap = document.getElementById('preorder-toggle-wrap');
+  if (!wrap) return;
+  const store = getCartStore();
+  const show = !!(store?.preorder_enabled && S.cart.length && S.deliveryMode !== 'delivery');
+  wrap.style.display = show ? '' : 'none';
+  if (!show) { S.orderMode = 'now'; updateCartPayBtnLabel(); return; }
+
+  const isSched = S.orderMode === 'scheduled';
+  const nowBtn = document.getElementById('po-now-btn');
+  const schedBtn = document.getElementById('po-sched-btn');
+  if (nowBtn) nowBtn.style.opacity = isSched ? '0.45' : '1';
+  if (schedBtn) schedBtn.style.opacity = isSched ? '1' : '0.45';
+  const timeWrap = document.getElementById('preorder-time-wrap');
+  if (timeWrap) timeWrap.style.display = isSched ? '' : 'none';
+  if (isSched && !populatePreorderSlots(store)) {
+    S.orderMode = 'now';
+    if (timeWrap) timeWrap.style.display = 'none';
+    if (nowBtn) nowBtn.style.opacity = '1';
+    if (schedBtn) schedBtn.style.opacity = '0.45';
+  }
+  const payNowRow = document.getElementById('preorder-paynow-row');
+  if (payNowRow) payNowRow.style.display = (S.orderMode === 'scheduled' && store?.accepts_online_payment !== false) ? 'flex' : 'none';
+  updateCartPayBtnLabel();
+}
+
 // ── Zone viewer ───────────────────────────────────────────────────────────────
 let _dzvMap = null, _dzvStore = null, _dzvHomeMarker = null;
 
@@ -7292,6 +7413,7 @@ function renderDeliveryToggle() {
     const dr = document.getElementById('c-delivery-row'); if (dr) dr.style.display = 'none';
     const addrWrap = document.getElementById('delivery-addr-wrap'); if (addrWrap) addrWrap.style.display = 'none';
     const payBtn = document.getElementById('cart-pay-btn'); if (payBtn) payBtn.disabled = false;
+    renderPreorderToggle();
     return;
   }
   const di = getDeliveryInfo(store);
@@ -7341,6 +7463,7 @@ function renderDeliveryToggle() {
       etaWrap.style.display = 'none';
     }
   }
+  renderPreorderToggle();
 }
 
 function openCartAddressPicker() {
@@ -9372,6 +9495,14 @@ async function doCheckout(useSubscription = false) {
   const deliveryFee = S.deliveryMode === 'delivery' ? (S.deliveryFee || 0) : 0;
   const totalAmount = Math.max(0, fullAmount - subDiscount) + deliveryFee;
 
+  const orderMode = S.orderMode === 'scheduled' ? 'scheduled' : 'now';
+  let pickupTimeISO = null;
+  if (orderMode === 'scheduled') {
+    pickupTimeISO = preorderTimeToISO(document.getElementById('preorder-time-select')?.value);
+    if (!pickupTimeISO) { showGeoToast('Выберите время получения заказа'); return; }
+  }
+  const payNow = orderMode !== 'scheduled' || !!document.getElementById('preorder-pay-now')?.checked;
+
   const payBtn = document.getElementById('cart-pay-btn');
   payBtn.disabled = true;
   payBtn.textContent = 'Создание заказа…';
@@ -9390,6 +9521,7 @@ async function doCheckout(useSubscription = false) {
         delivery_address: S.userAddr || S.profile?.address || null,
         delivery_lat: S.userAddrLat ?? null,
         delivery_lng: S.userAddrLng ?? null,
+        order_mode: orderMode, pickup_time: pickupTimeISO, pay_now: payNow,
         // Was 'alliby://...' — T-Bank's hosted "Вернуться в магазин" button
         // needs a real http(s) link to render as a clickable link at all;
         // a bare custom scheme isn't a website address, so T-Bank fell back
@@ -9402,10 +9534,19 @@ async function doCheckout(useSubscription = false) {
     if (result.free) {
       const _oc_store = S.store?.name || null;
       const _oc_del = S.deliveryMode === 'delivery';
-      S.deliveryMode = null; S.deliveryFee = 0;
+      S.deliveryMode = null; S.deliveryFee = 0; S.orderMode = 'now';
       S.cart = []; S.cartStoreId = null; saveCart(); updateCartCount(); renderCart();
       _orderNotifCount++; _updateBkBadge();
       showOrderConfirm(_oc_store, _oc_del);
+      goTo(S.store ? 'store' : 'map');
+      return;
+    }
+    if (result.pending) {
+      const _oc_store = S.store?.name || null;
+      S.deliveryMode = null; S.deliveryFee = 0; S.orderMode = 'now';
+      S.cart = []; S.cartStoreId = null; saveCart(); updateCartCount(); renderCart();
+      _orderNotifCount++; _updateBkBadge();
+      showOrderConfirm(_oc_store, false, 'Заказ принят! Оплата при получении');
       goTo(S.store ? 'store' : 'map');
       return;
     }
@@ -9422,7 +9563,7 @@ async function doCheckout(useSubscription = false) {
     showGeoToast('Ошибка: ' + (e.error || e.message || 'Попробуйте ещё раз'));
   } finally {
     payBtn.disabled = false;
-    payBtn.textContent = 'Оплатить';
+    updateCartPayBtnLabel();
   }
 }
 
