@@ -17,6 +17,28 @@ async function calcToken(params: Record<string, string | number>, password: stri
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("")
 }
 
+// Все проверки «сегодня / рабочий день / рабочее время» — по московскому
+// времени, как и остальные time_rules платформы (см. подписки).
+function mskParts(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Moscow", weekday: "short", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(date)
+  const map: Record<string, string> = {}
+  for (const p of parts) map[p.type] = p.value
+  const wdMap: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }
+  return {
+    date: `${map.year}-${map.month}-${map.day}`,
+    minutes: parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10),
+    weekday: wdMap[map.weekday],
+  }
+}
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number)
+  return h * 60 + (m || 0)
+}
+
 Deno.serve(async (req: Request) => {
   const corsResponse = handleCors(req)
   if (corsResponse) return corsResponse
@@ -50,6 +72,9 @@ Deno.serve(async (req: Request) => {
       delivery_lng?: number | null
       success_url?: string
       fail_url?: string
+      order_mode?: "now" | "scheduled"
+      pickup_time?: string
+      pay_now?: boolean
     }
     try { body = await req.json() } catch { return jsonResponse({ error: "Invalid JSON body" }, 400) }
 
@@ -59,6 +84,7 @@ Deno.serve(async (req: Request) => {
       is_delivery = false, delivery_fee = 0, delivery_address = null,
       delivery_lat = null, delivery_lng = null,
       success_url, fail_url,
+      order_mode = "now", pickup_time, pay_now = false,
     } = body
 
     if (!store_id || !items?.length)
@@ -74,10 +100,44 @@ Deno.serve(async (req: Request) => {
     // Get store owner
     const { data: storeData } = await serviceClient
       .from("stores")
-      .select("owner_user_id")
+      .select("owner_user_id, preorder_enabled, preorder_opens, preorder_closes, preorder_weekdays, preorder_prep_minutes")
       .eq("id", store_id).maybeSingle()
 
     if (!storeData) return jsonResponse({ error: "Store not found" }, 404)
+
+    // ─── Заказ ко времени: время получения проверяет только сервер ────────
+    let pickupAt: Date | null = null
+    if (order_mode === "scheduled") {
+      if (!storeData.preorder_enabled)
+        return jsonResponse({ error: "Заказ ко времени недоступен для этого заведения" }, 400)
+      if (!pickup_time)
+        return jsonResponse({ error: "Укажите время получения заказа" }, 400)
+      if (is_delivery)
+        return jsonResponse({ error: "Заказ ко времени доступен только для самовывоза" }, 400)
+
+      pickupAt = new Date(pickup_time)
+      if (isNaN(pickupAt.getTime()))
+        return jsonResponse({ error: "Некорректное время получения" }, 400)
+
+      const nowP    = mskParts(new Date())
+      const pickupP = mskParts(pickupAt)
+
+      if (pickupP.date !== nowP.date)
+        return jsonResponse({ error: "Заказ ко времени можно оформить только на сегодня" }, 400)
+
+      const weekdays: number[] = storeData.preorder_weekdays || []
+      if (!weekdays.includes(nowP.weekday))
+        return jsonResponse({ error: "Сегодня заказ ко времени недоступен" }, 400)
+
+      const prep = Number(storeData.preorder_prep_minutes) || 0
+      if (pickupAt.getTime() < Date.now() + prep * 60_000)
+        return jsonResponse({ error: `Раньше, чем через ${prep} мин, заказ не приготовят` }, 400)
+
+      if (storeData.preorder_opens && pickupP.minutes < timeToMinutes(storeData.preorder_opens))
+        return jsonResponse({ error: "Указанное время раньше начала приёма заказов ко времени" }, 400)
+      if (storeData.preorder_closes && pickupP.minutes > timeToMinutes(storeData.preorder_closes))
+        return jsonResponse({ error: "Указанное время позже конца приёма заказов ко времени" }, 400)
+    }
 
     // Check owner's platform subscription
     const today = new Date().toISOString().split("T")[0]
@@ -237,16 +297,24 @@ Deno.serve(async (req: Request) => {
       : serverDiscount >= fullAmount ? "subscription" : "mixed"
     const orderItemsPayload = safeItems.map(({ _basePrice, _categoryId, ...rest }) => rest)
 
-    // Free order (paid fully by subscription) — create order directly, no payment needed
-    if (serverTotal === 0) {
+    // Заказ без оплаты сейчас: либо полностью покрыт абонементом (как и
+    // раньше), либо клиент выбрал «Заказ ко времени» без чекбокса «Оплатить
+    // сейчас» — тогда создаём заказ сразу с оплатой при получении, минуя
+    // T-Bank, независимо от суммы.
+    const skipPayment = serverTotal === 0 || (order_mode === "scheduled" && !pay_now)
+
+    if (skipPayment) {
+      const isFree = serverTotal === 0
       const { data: order, error: orderError } = await serviceClient
         .from("orders")
         .insert({
-          user_id: user.id, store_id, total_amount: 0, status: "paid",
-          payment_method: serverPaymentMethod,
+          user_id: user.id, store_id, total_amount: isFree ? 0 : Math.round(serverTotal),
+          status: isFree ? "paid" : "pending",
+          payment_method: isFree ? serverPaymentMethod : "later",
           subscription_discount: Math.round(serverDiscount),
           applied_user_subscription_id: subIdApplied,
           is_delivery, delivery_fee: serverDeliveryFee, delivery_address, delivery_lat, delivery_lng,
+          pickup_time: pickupAt ? pickupAt.toISOString() : null,
         })
         .select("id").single()
 
@@ -275,7 +343,12 @@ Deno.serve(async (req: Request) => {
           p_user_subscription_id: subIdApplied, p_uses: subUses,
         })
       }
-      return jsonResponse({ order_id: order.id, free: true, amount: 0 })
+      return jsonResponse({
+        order_id: order.id,
+        free: isFree,
+        pending: !isFree,
+        amount: isFree ? 0 : Math.round(serverTotal),
+      })
     }
 
     // Create payment intent (cart data held here until payment confirmed)
@@ -289,6 +362,7 @@ Deno.serve(async (req: Request) => {
       payment_method: serverPaymentMethod,
       is_delivery, delivery_fee: Math.round(serverDeliveryFee), delivery_address,
       delivery_lat, delivery_lng,
+      pickup_time: pickupAt ? pickupAt.toISOString() : null,
       provider,
     }
 
