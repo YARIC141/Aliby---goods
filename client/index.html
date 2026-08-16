@@ -1401,19 +1401,18 @@ document.addEventListener('deviceready',function(){
           <div id="delivery-eta-wrap" style="display:none;margin-top:6px;font-size:12px;color:var(--fg-3)"></div>
         </div>
         <div id="preorder-toggle-wrap" style="display:none;margin-top:12px">
-          <div id="preorder-mode-row" style="display:flex;gap:8px">
-            <button id="po-now-btn" class="btn btn-p" style="flex:1;min-height:44px" onclick="setOrderMode('now')">Сейчас</button>
-            <button id="po-sched-btn" class="btn btn-p" style="flex:1;min-height:44px" onclick="setOrderMode('scheduled')">Ко времени</button>
+          <button id="preorder-pick-btn" class="btn btn-p btn-full" style="min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px" onclick="openPreorderPicker()">
+            <svg class="ico" width="15" height="15"><use href="#i-clock"/></svg><span id="preorder-pick-lbl">Заказать ко времени</span>
+          </button>
+          <div id="preorder-chosen-row" style="display:none;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;border-radius:var(--r-2);background:var(--bg-2);border:1px solid var(--line)">
+            <span style="font-size:13px;color:var(--fg-2);flex:1">Заберу к <b id="preorder-chosen-time"></b></span>
+            <button class="btn btn-sm" style="flex-shrink:0" onclick="clearPreorderTime()">Сбросить</button>
           </div>
-          <div id="preorder-time-wrap" style="display:none;margin-top:8px">
-            <label style="display:block;font-size:12px;color:var(--fg-3);margin-bottom:4px">Заберу в</label>
-            <select id="preorder-time-select" style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px"></select>
-            <label id="preorder-paynow-row" style="display:none;align-items:center;gap:8px;margin-top:8px;font:400 13px/1.4 var(--font-sans);color:var(--fg-2);cursor:pointer">
-              <input type="checkbox" id="preorder-pay-now" style="width:16px;height:16px;flex-shrink:0;accent-color:var(--accent)" onchange="updateCartPayBtnLabel()">
-              <span>Оплатить сейчас онлайн</span>
-            </label>
-          </div>
-          <div id="preorder-closed-msg" style="display:none;margin-top:8px;font-size:12px;color:var(--warn)">Сегодня приём заказов ко времени уже закрыт</div>
+          <label id="preorder-paynow-row" style="display:none;align-items:center;gap:8px;margin-top:8px;font:400 13px/1.4 var(--font-sans);color:var(--fg-2);cursor:pointer">
+            <input type="checkbox" id="preorder-pay-now" style="width:16px;height:16px;flex-shrink:0;accent-color:var(--accent)" onchange="updateCartPayBtnLabel()">
+            <span>Оплатить сейчас онлайн</span>
+          </label>
+          <div id="preorder-closed-msg" style="display:none;margin-top:8px;font-size:12px;color:var(--warn)">Сейчас заведение не принимает заказы ко времени</div>
         </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
@@ -1443,6 +1442,7 @@ document.addEventListener('deviceready',function(){
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;padding:6px 16px 4px;flex-shrink:0">
       <button class="chip active" data-ord-status="all" onclick="setOrderFilter('all')">Все<span class="ord-notif-dot"></span></button>
+      <button class="chip" data-ord-status="pending" onclick="setOrderFilter('pending')">Оплата при получении<span class="ord-notif-dot"></span></button>
       <button class="chip" data-ord-status="paid" onclick="setOrderFilter('paid')">Оплачен<span class="ord-notif-dot"></span></button>
       <button class="chip" data-ord-status="in_progress" onclick="setOrderFilter('in_progress')">В работе<span class="ord-notif-dot"></span></button>
       <button class="chip" data-ord-status="looking_for_courier" onclick="setOrderFilter('looking_for_courier')"><svg class="ico" width="11" height="11"><use href="#i-search"/></svg>Ищем курьера<span class="ord-notif-dot"></span></button>
@@ -2396,6 +2396,18 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+<!-- ════════════════ PREORDER TIME PICKER ════════════════ -->
+<div class="overlay" id="m-preorder-time">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Время получения</h3>
+      <button class="modal-x" onclick="closeModal('m-preorder-time')">✕</button>
+    </div>
+    <p id="preorder-picker-hint" style="font-size:13px;color:var(--fg-3);line-height:1.5;margin-bottom:10px"></p>
+    <div id="preorder-slot-list" style="display:flex;flex-wrap:wrap;gap:8px;max-height:46vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- ════════════════ ORDER DETAIL MODAL ════════════════ -->
 <div class="overlay" id="m-order-detail">
   <div class="modal" style="max-width:480px">
@@ -2714,7 +2726,7 @@ const S = {
   direction: 'food',
   _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null}, sport: {items:[],storeId:null}, entertainment: {items:[],storeId:null} },
   deliveryMode: null, deliveryFee: 0,
-  orderMode: 'now',
+  pickupIso: null, pickupLabel: null,
   userAddrLat: null, userAddrLng: null,
   cityData: null,
   get city() { return localStorage.getItem('alliby_city'); },
@@ -6619,7 +6631,12 @@ async function loadActiveOrders(append = false) {
     const uid = S.session?.user?.id;
     if (!uid) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет данных</div>'; _ordLoading = false; return; }
     if (_ordPage === 0) _loadOrderStores();
-    const statusQ = (_ordFilter && _ordFilter !== 'all') ? `&status=eq.${_ordFilter}` : '&status=neq.pending';
+    // pending бывает двух видов: заказ ко времени с оплатой при получении
+    // (payment_method='later') и старые orphan-записи из бага до
+    // lock_orders_and_user_subs_insert — вторые показывать нельзя.
+    const statusQ = (_ordFilter && _ordFilter !== 'all')
+      ? `&status=eq.${_ordFilter}` + (_ordFilter === 'pending' ? '&payment_method=eq.later' : '')
+      : '&or=(status.neq.pending,payment_method.eq.later)';
     const storeQ  = (_ordStoreFilter && _ordStoreFilter !== 'all') ? `&store_id=eq.${_ordStoreFilter}` : '';
     const url = `/rest/v1/orders?user_id=eq.${uid}${statusQ}${storeQ}&select=*,order_items(id,quantity,price_at_time,selected_options,menu_items(name)),stores(name,direction),user_subscriptions!applied_user_subscription_id(subscriptions(name))&order=order_time.desc&limit=20&offset=${_ordPage * 20}`;
     const page = await req(url);
@@ -7057,80 +7074,136 @@ function storeCanOrder(store) {
   return store?.accepts_online_payment !== false || !!store?.preorder_enabled;
 }
 
-// ─── Заказ ко времени: окно на сегодня по местному времени устройства ─────
-function getPreorderWindowToday(store) {
+// ─── Заказ ко времени ────────────────────────────────────────────────────
+// Окно приёма владелец задаёт в своём поясе (stores.timezone), поэтому и
+// «текущий рабочий день», и слоты считаем там же, а не по часам устройства:
+// иначе клиент из другого пояса видел бы слоты, которые сервер отвергнет.
+function _tzParts(date, tz) {
+  const p = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz, weekday: 'short', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(date);
+  const m = {};
+  p.forEach(x => { m[x.type] = x.value; });
+  const wd = { Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6, Sun:7 };
+  return {
+    y: +m.year, mo: +m.month, d: +m.day, weekday: wd[m.weekday],
+    minutes: (parseInt(m.hour, 10) % 24) * 60 + parseInt(m.minute, 10),
+  };
+}
+
+function _tzOffsetMin(date, tz) {
+  const name = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longOffset' })
+    .formatToParts(date).find(x => x.type === 'timeZoneName')?.value || 'GMT+00:00';
+  const m = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(name);
+  if (!m) return 0;
+  return (m[1] === '-' ? -1 : 1) * (parseInt(m[2], 10) * 60 + parseInt(m[3] || '0', 10));
+}
+
+// «Стенное» время в зоне заведения → момент времени.
+function _tzWallToDate(y, mo, d, minutes, tz) {
+  const guess = Date.UTC(y, mo - 1, d, 0, minutes);
+  const o1 = _tzOffsetMin(new Date(guess), tz);
+  const t1 = guess - o1 * 60000;
+  const o2 = _tzOffsetMin(new Date(t1), tz);
+  return new Date(o2 === o1 ? t1 : guess - o2 * 60000);
+}
+
+function _storeTz(store) { return store?.timezone || 'Europe/Moscow'; }
+
+// Границы текущего рабочего дня. closes <= opens означает окно через полночь
+// (22:00–02:00): рабочий день мог начаться вчера и ещё не закончиться.
+function getPreorderWindow(store, now = new Date()) {
   if (!store?.preorder_enabled) return null;
-  const now = new Date();
-  const dow = ((now.getDay() + 6) % 7) + 1; // 1=Пн..7=Вс
+  const tz = _storeTz(store);
+  const opens  = store.preorder_opens  ? _hhmmToMin(store.preorder_opens)  : 0;
+  const closes = store.preorder_closes ? _hhmmToMin(store.preorder_closes) : 24 * 60 - 1;
   const days = store.preorder_weekdays?.length ? store.preorder_weekdays : [1,2,3,4,5,6,7];
-  if (!days.includes(dow)) return null;
-
-  const STEP = 10;
-  const prep = Number(store.preorder_prep_minutes) || 0;
-  const earliest = new Date(now.getTime() + prep * 60000);
-  let startMin = earliest.getHours() * 60 + earliest.getMinutes();
-  startMin = Math.ceil(startMin / STEP) * STEP;
-  if (store.preorder_opens) {
-    const [oh, om] = store.preorder_opens.split(':').map(Number);
-    startMin = Math.max(startMin, oh * 60 + om);
+  const n = _tzParts(now, tz);
+  const at = (shift, mins) => {
+    const b = new Date(Date.UTC(n.y, n.mo - 1, n.d + shift));
+    return _tzWallToDate(b.getUTCFullYear(), b.getUTCMonth() + 1, b.getUTCDate(), mins, tz);
+  };
+  if (closes > opens)
+    return days.includes(n.weekday) ? { start: at(0, opens), end: at(0, closes), tz } : null;
+  if (n.minutes >= opens)
+    return days.includes(n.weekday) ? { start: at(0, opens), end: at(1, closes), tz } : null;
+  if (n.minutes <= closes) {
+    const prev = ((n.weekday + 5) % 7) + 1;
+    return days.includes(prev) ? { start: at(-1, opens), end: at(0, closes), tz } : null;
   }
-  let endMin = 23 * 60 + 59;
-  if (store.preorder_closes) {
-    const [ch, cm] = store.preorder_closes.split(':').map(Number);
-    endMin = ch * 60 + cm;
-  }
-  if (startMin > endMin) return null;
-  return { startMin, endMin, step: STEP };
+  return null;
 }
 
-function populatePreorderSlots(store) {
-  const sel = document.getElementById('preorder-time-select');
-  if (!sel) return false;
-  const win = getPreorderWindowToday(store);
-  sel.innerHTML = '';
-  if (!win) return false;
-  for (let m = win.startMin; m <= win.endMin; m += win.step) {
-    const hh = String(Math.floor(m / 60)).padStart(2, '0');
-    const mm = String(m % 60).padStart(2, '0');
-    const opt = document.createElement('option');
-    opt.value = `${hh}:${mm}`;
-    opt.textContent = `${hh}:${mm}`;
-    sel.appendChild(opt);
+function _hhmmToMin(t) {
+  const [h, m] = String(t).split(':').map(Number);
+  return h * 60 + (m || 0);
+}
+
+// Доступные слоты как список моментов времени с подписью в зоне заведения.
+function getPreorderSlots(store) {
+  const win = getPreorderWindow(store);
+  if (!win) return [];
+  const STEP = 10, prep = Number(store.preorder_prep_minutes) || 0;
+  const earliest = Date.now() + prep * 60000;
+  let from = Math.max(win.start.getTime(), earliest);
+  from = Math.ceil(from / (STEP * 60000)) * (STEP * 60000);
+  const slots = [];
+  for (let t = from; t <= win.end.getTime(); t += STEP * 60000) {
+    const d = new Date(t);
+    const p = _tzParts(d, win.tz);
+    slots.push({
+      iso: d.toISOString(),
+      label: `${String(Math.floor(p.minutes / 60)).padStart(2, '0')}:${String(p.minutes % 60).padStart(2, '0')}`,
+    });
+    if (slots.length >= 200) break;
   }
-  return sel.options.length > 0;
+  return slots;
 }
 
-function preorderTimeToISO(hhmm) {
-  const [h, m] = (hhmm || '').split(':').map(Number);
-  if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  return d.toISOString();
-}
-
-function setOrderMode(mode) {
+function openPreorderPicker() {
   const store = getCartStore();
-  if (mode === 'scheduled') {
-    if (S.deliveryMode === 'delivery') { showGeoToast('Заказ ко времени доступен только с самовывозом'); return; }
-    if (!populatePreorderSlots(store)) { showGeoToast('Сегодня заказ ко времени больше недоступен'); return; }
-  }
-  S.orderMode = mode;
+  const slots = getPreorderSlots(store);
+  const list = document.getElementById('preorder-slot-list');
+  const hint = document.getElementById('preorder-picker-hint');
+  if (!list) return;
+  if (!slots.length) { showGeoToast('Сейчас заведение не принимает заказы ко времени'); return; }
+  const prep = Number(store.preorder_prep_minutes) || 0;
+  if (hint) hint.textContent = prep
+    ? `Заказ готовят минимум ${prep} мин, поэтому доступно только время начиная с ближайшего.`
+    : 'Выберите, к какому времени приготовить заказ.';
+  list.innerHTML = slots.map(s =>
+    `<button class="btn${S.pickupIso === s.iso ? ' btn-p' : ''}" style="min-width:78px"
+       onclick="choosePreorderTime('${s.iso}','${s.label}')">${s.label}</button>`).join('');
+  openModal('m-preorder-time');
+}
+
+function choosePreorderTime(iso, label) {
+  S.pickupIso = iso;
+  S.pickupLabel = label;
+  closeModal('m-preorder-time');
   renderPreorderToggle();
 }
 
-// Кнопка называется «Оплатить» только когда клик действительно уйдёт в
-// онлайн-оплату (T-Bank) — иначе (нет онлайн-оплаты у заведения, либо выбран
-// заказ ко времени без галочки «Оплатить сейчас») деньги берут при выдаче,
-// и подписывать кнопку «Оплатить» было бы враньём.
+function clearPreorderTime() {
+  S.pickupIso = null;
+  S.pickupLabel = null;
+  const chk = document.getElementById('preorder-pay-now');
+  if (chk) chk.checked = false;
+  renderPreorderToggle();
+}
+
+// «Оплатить» — только когда клик действительно уйдёт в онлайн-оплату. Иначе
+// деньги берут при выдаче, и подписывать кнопку «Оплатить» было бы враньём.
 function updateCartPayBtnLabel() {
   const btn = document.getElementById('cart-pay-btn');
   if (!btn) return;
   const store = getCartStore();
   const onlineAvailable = store?.accepts_online_payment !== false;
-  const scheduled = S.orderMode === 'scheduled';
   const payNow = document.getElementById('preorder-pay-now')?.checked;
-  const willPayNow = onlineAvailable && (!scheduled || payNow);
-  btn.textContent = willPayNow ? 'Оплатить' : 'Заказать';
+  const willPayNow = onlineAvailable && (!S.pickupIso || payNow);
+  const verb = willPayNow ? 'Оплатить' : 'Заказать';
+  btn.textContent = S.pickupIso ? `${verb} к ${S.pickupLabel}` : verb;
 }
 
 function renderPreorderToggle() {
@@ -7139,49 +7212,44 @@ function renderPreorderToggle() {
   const store = getCartStore();
   const onlineAvailable = store?.accepts_online_payment !== false;
   const show = !!(store?.preorder_enabled && S.cart.length && S.deliveryMode !== 'delivery');
-  wrap.style.display = show ? '' : 'none';
   const closedMsg = document.getElementById('preorder-closed-msg');
   const payBtn = document.getElementById('cart-pay-btn');
+  wrap.style.display = show ? '' : 'none';
+
   if (!show) {
-    S.orderMode = onlineAvailable ? 'now' : 'scheduled';
+    // Доставка/самовывоз без предзаказа — время неприменимо.
+    S.pickupIso = null; S.pickupLabel = null;
     if (closedMsg) closedMsg.style.display = 'none';
-    // Доставка сама управляет disabled (зона/адрес) чуть выше по стеку — не перетираем.
+    // Доставка сама управляет disabled (зона/адрес) выше по стеку — не перетираем.
     if (S.deliveryMode !== 'delivery' && payBtn) payBtn.disabled = false;
     updateCartPayBtnLabel();
     return;
   }
 
-  const modeRow = document.getElementById('preorder-mode-row');
-  // Без онлайн-оплаты «Сейчас» вообще не вариант — переключатель не нужен,
-  // единственный путь всегда «ко времени».
-  if (!onlineAvailable) { S.orderMode = 'scheduled'; if (modeRow) modeRow.style.display = 'none'; }
-  else if (modeRow) modeRow.style.display = 'flex';
-
-  const isSched = S.orderMode === 'scheduled';
-  const nowBtn = document.getElementById('po-now-btn');
-  const schedBtn = document.getElementById('po-sched-btn');
-  if (nowBtn) nowBtn.style.opacity = isSched ? '0.45' : '1';
-  if (schedBtn) schedBtn.style.opacity = isSched ? '1' : '0.45';
-  const timeWrap = document.getElementById('preorder-time-wrap');
-  if (timeWrap) timeWrap.style.display = isSched ? '' : 'none';
-
-  const slotsOk = isSched ? populatePreorderSlots(store) : true;
-  if (isSched && !slotsOk) {
-    if (onlineAvailable) {
-      // Окно предзаказа сегодня закрыто, но можно просто оплатить сейчас.
-      S.orderMode = 'now';
-      if (timeWrap) timeWrap.style.display = 'none';
-      if (nowBtn) nowBtn.style.opacity = '1';
-      if (schedBtn) schedBtn.style.opacity = '0.45';
-    }
+  const hasSlots = getPreorderSlots(store).length > 0;
+  // Выбранное время могло протухнуть, пока корзина висела открытой.
+  if (S.pickupIso && new Date(S.pickupIso).getTime() < Date.now()) {
+    S.pickupIso = null; S.pickupLabel = null;
   }
-  // Тупик: онлайн-оплаты нет и слотов на сегодня тоже нет — заказать нечем.
-  const deadEnd = !onlineAvailable && isSched && !slotsOk;
-  if (closedMsg) closedMsg.style.display = deadEnd ? '' : 'none';
-  if (payBtn) payBtn.disabled = deadEnd;
+
+  const chosenRow = document.getElementById('preorder-chosen-row');
+  const pickBtn   = document.getElementById('preorder-pick-btn');
+  const pickLbl   = document.getElementById('preorder-pick-lbl');
+  if (chosenRow) chosenRow.style.display = S.pickupIso ? 'flex' : 'none';
+  if (S.pickupIso) document.getElementById('preorder-chosen-time').textContent = S.pickupLabel;
+  if (pickBtn) pickBtn.style.display = hasSlots ? '' : 'none';
+  if (pickLbl) pickLbl.textContent = S.pickupIso ? 'Изменить время' : 'Заказать ко времени';
 
   const payNowRow = document.getElementById('preorder-paynow-row');
-  if (payNowRow) payNowRow.style.display = (S.orderMode === 'scheduled' && onlineAvailable) ? 'flex' : 'none';
+  if (payNowRow) payNowRow.style.display = (S.pickupIso && onlineAvailable) ? 'flex' : 'none';
+
+  // Без онлайн-оплаты заказать можно только ко времени: пока время не выбрано,
+  // оформлять нечего, а если слотов нет вовсе — сегодня уже никак.
+  const needsTime = !onlineAvailable;
+  const deadEnd = needsTime && !hasSlots && !S.pickupIso;
+  if (closedMsg) closedMsg.style.display = deadEnd ? '' : 'none';
+  if (payBtn) payBtn.disabled = needsTime && !S.pickupIso;
+
   updateCartPayBtnLabel();
 }
 
@@ -9529,12 +9597,13 @@ async function doCheckout(useSubscription = false) {
   const deliveryFee = S.deliveryMode === 'delivery' ? (S.deliveryFee || 0) : 0;
   const totalAmount = Math.max(0, fullAmount - subDiscount) + deliveryFee;
 
-  const orderMode = S.orderMode === 'scheduled' ? 'scheduled' : 'now';
-  let pickupTimeISO = null;
-  if (orderMode === 'scheduled') {
-    pickupTimeISO = preorderTimeToISO(document.getElementById('preorder-time-select')?.value);
-    if (!pickupTimeISO) { showGeoToast('Выберите время получения заказа'); return; }
+  const store = getCartStore();
+  const orderMode = S.pickupIso ? 'scheduled' : 'now';
+  if (orderMode === 'now' && store?.accepts_online_payment === false) {
+    showGeoToast('Выберите время получения заказа');
+    return;
   }
+  const pickupTimeISO = S.pickupIso || null;
   const payNow = orderMode !== 'scheduled' || !!document.getElementById('preorder-pay-now')?.checked;
 
   const payBtn = document.getElementById('cart-pay-btn');
@@ -9568,7 +9637,7 @@ async function doCheckout(useSubscription = false) {
     if (result.free) {
       const _oc_store = S.store?.name || null;
       const _oc_del = S.deliveryMode === 'delivery';
-      S.deliveryMode = null; S.deliveryFee = 0; S.orderMode = 'now';
+      S.deliveryMode = null; S.deliveryFee = 0; S.pickupIso = null; S.pickupLabel = null;
       S.cart = []; S.cartStoreId = null; saveCart(); updateCartCount(); renderCart();
       _orderNotifCount++; _updateBkBadge();
       showOrderConfirm(_oc_store, _oc_del);
@@ -9577,7 +9646,7 @@ async function doCheckout(useSubscription = false) {
     }
     if (result.pending) {
       const _oc_store = S.store?.name || null;
-      S.deliveryMode = null; S.deliveryFee = 0; S.orderMode = 'now';
+      S.deliveryMode = null; S.deliveryFee = 0; S.pickupIso = null; S.pickupLabel = null;
       S.cart = []; S.cartStoreId = null; saveCart(); updateCartCount(); renderCart();
       _orderNotifCount++; _updateBkBadge();
       showOrderConfirm(_oc_store, false, 'Заказ принят! Оплата при получении');

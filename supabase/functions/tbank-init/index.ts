@@ -5,6 +5,7 @@ import { decryptPaymentKey } from "../_shared/payment-crypto.ts"
 import { logKeyAccess } from "../_shared/audit.ts"
 
 const TBANK_INIT_URL = "https://securepay.tinkoff.ru/v2/Init"
+const MAX_OPEN_UNPAID_ORDERS = 3
 const NOTIFY_URL     = "https://alliby.ru/functions/v1/tbank-store-notify"
 const SUCCESS_BASE   = "https://alliby.ru/?tpay=store_success"
 const FAIL_BASE      = "https://alliby.ru/?tpay=store_fail"
@@ -17,26 +18,77 @@ async function calcToken(params: Record<string, string | number>, password: stri
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("")
 }
 
-// Все проверки «сегодня / рабочий день / рабочее время» — по московскому
-// времени, как и остальные time_rules платформы (см. подписки).
-function mskParts(date: Date) {
+// Окно приёма заказов ко времени владелец задаёт в своём местном времени,
+// поэтому все проверки идут в зоне заведения (stores.timezone), а не в МСК:
+// иначе заведение в Самаре (UTC+4) принимало бы заказы на час позже закрытия.
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number)
+  return h * 60 + (m || 0)
+}
+
+function zoneParts(date: Date, tz: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Europe/Moscow", weekday: "short", year: "numeric", month: "2-digit", day: "2-digit",
+    timeZone: tz, weekday: "short", year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", hour12: false,
   }).formatToParts(date)
   const map: Record<string, string> = {}
   for (const p of parts) map[p.type] = p.value
   const wdMap: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }
+  // hour12:false в части сборок ICU отдаёт "24" вместо "00" для полуночи.
+  const hour = parseInt(map.hour, 10) % 24
   return {
-    date: `${map.year}-${map.month}-${map.day}`,
-    minutes: parseInt(map.hour, 10) * 60 + parseInt(map.minute, 10),
+    y: +map.year, mo: +map.month, d: +map.day,
+    minutes: hour * 60 + parseInt(map.minute, 10),
     weekday: wdMap[map.weekday],
   }
 }
 
-function timeToMinutes(t: string): number {
-  const [h, m] = t.split(":").map(Number)
-  return h * 60 + (m || 0)
+function zoneOffsetMinutes(date: Date, tz: string): number {
+  const name = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" })
+    .formatToParts(date).find(p => p.type === "timeZoneName")?.value ?? "GMT+00:00"
+  const m = /GMT([+-])(\d{1,2})(?::(\d{2}))?/.exec(name)
+  if (!m) return 0
+  return (m[1] === "-" ? -1 : 1) * (parseInt(m[2], 10) * 60 + parseInt(m[3] ?? "0", 10))
+}
+
+// «Стенное» время в зоне заведения → момент UTC. Смещение уточняем вторым
+// проходом: у границы перевода часов первая догадка может попасть не в ту зону.
+function zonedWallToUtc(y: number, mo: number, d: number, minutes: number, tz: string): Date {
+  const guess = Date.UTC(y, mo - 1, d, 0, minutes)
+  const off1  = zoneOffsetMinutes(new Date(guess), tz)
+  const ts1   = guess - off1 * 60000
+  const off2  = zoneOffsetMinutes(new Date(ts1), tz)
+  return new Date(off2 === off1 ? ts1 : guess - off2 * 60000)
+}
+
+// Границы текущего рабочего дня заведения. Если closes <= opens, окно идёт
+// через полночь (например 22:00–02:00) и рабочий день мог начаться вчера.
+function preorderWindow(store: {
+  timezone?: string | null; preorder_opens?: string | null
+  preorder_closes?: string | null; preorder_weekdays?: number[] | null
+}, now: Date): { start: Date; end: Date } | null {
+  const tz     = store.timezone || "Europe/Moscow"
+  const opens  = store.preorder_opens  ? timeToMinutes(store.preorder_opens)  : 0
+  const closes = store.preorder_closes ? timeToMinutes(store.preorder_closes) : 24 * 60 - 1
+  const days   = store.preorder_weekdays?.length ? store.preorder_weekdays : [1, 2, 3, 4, 5, 6, 7]
+  const n      = zoneParts(now, tz)
+
+  const at = (dayShift: number, mins: number) => {
+    const base = new Date(Date.UTC(n.y, n.mo - 1, n.d + dayShift))
+    return zonedWallToUtc(base.getUTCFullYear(), base.getUTCMonth() + 1, base.getUTCDate(), mins, tz)
+  }
+
+  if (closes > opens) {
+    return days.includes(n.weekday) ? { start: at(0, opens), end: at(0, closes) } : null
+  }
+  if (n.minutes >= opens) {
+    return days.includes(n.weekday) ? { start: at(0, opens), end: at(1, closes) } : null
+  }
+  if (n.minutes <= closes) {
+    const prevWeekday = ((n.weekday + 5) % 7) + 1
+    return days.includes(prevWeekday) ? { start: at(-1, opens), end: at(0, closes) } : null
+  }
+  return null
 }
 
 Deno.serve(async (req: Request) => {
@@ -100,7 +152,7 @@ Deno.serve(async (req: Request) => {
     // Get store owner
     const { data: storeData } = await serviceClient
       .from("stores")
-      .select("owner_user_id, preorder_enabled, preorder_opens, preorder_closes, preorder_weekdays, preorder_prep_minutes")
+      .select("owner_user_id, timezone, preorder_enabled, preorder_opens, preorder_closes, preorder_weekdays, preorder_prep_minutes")
       .eq("id", store_id).maybeSingle()
 
     if (!storeData) return jsonResponse({ error: "Store not found" }, 404)
@@ -119,24 +171,33 @@ Deno.serve(async (req: Request) => {
       if (isNaN(pickupAt.getTime()))
         return jsonResponse({ error: "Некорректное время получения" }, 400)
 
-      const nowP    = mskParts(new Date())
-      const pickupP = mskParts(pickupAt)
-
-      if (pickupP.date !== nowP.date)
-        return jsonResponse({ error: "Заказ ко времени можно оформить только на сегодня" }, 400)
-
-      const weekdays: number[] = storeData.preorder_weekdays || []
-      if (!weekdays.includes(nowP.weekday))
-        return jsonResponse({ error: "Сегодня заказ ко времени недоступен" }, 400)
+      // Границы «текущего рабочего дня» разом закрывают и проверку даты, и
+      // рабочий день недели, и попадание в часы приёма — включая окна,
+      // переходящие через полночь.
+      const win = preorderWindow(storeData, new Date())
+      if (!win)
+        return jsonResponse({ error: "Сейчас заказ ко времени недоступен" }, 400)
 
       const prep = Number(storeData.preorder_prep_minutes) || 0
       if (pickupAt.getTime() < Date.now() + prep * 60_000)
         return jsonResponse({ error: `Раньше, чем через ${prep} мин, заказ не приготовят` }, 400)
+      if (pickupAt.getTime() < win.start.getTime() || pickupAt.getTime() > win.end.getTime())
+        return jsonResponse({ error: "Указанное время вне часов приёма заказов заведения" }, 400)
 
-      if (storeData.preorder_opens && pickupP.minutes < timeToMinutes(storeData.preorder_opens))
-        return jsonResponse({ error: "Указанное время раньше начала приёма заказов ко времени" }, 400)
-      if (storeData.preorder_closes && pickupP.minutes > timeToMinutes(storeData.preorder_closes))
-        return jsonResponse({ error: "Указанное время позже конца приёма заказов ко времени" }, 400)
+      // Заказ без предоплаты не стоит клиенту ничего, поэтому его можно
+      // штамповать пачками — ограничиваем число незакрытых.
+      if (!pay_now) {
+        const { count } = await serviceClient
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("payment_method", "later")
+          .in("status", ["pending", "in_progress", "ready"])
+        if ((count ?? 0) >= MAX_OPEN_UNPAID_ORDERS)
+          return jsonResponse({
+            error: `У вас уже ${count} незакрытых заказов с оплатой при получении. Заберите их, прежде чем оформлять новый.`,
+          }, 400)
+      }
     }
 
     // Check owner's platform subscription
@@ -311,6 +372,7 @@ Deno.serve(async (req: Request) => {
           user_id: user.id, store_id, total_amount: isFree ? 0 : Math.round(serverTotal),
           status: isFree ? "paid" : "pending",
           payment_method: isFree ? serverPaymentMethod : "later",
+          payment_status: isFree ? "not_required" : "unpaid",
           subscription_discount: Math.round(serverDiscount),
           applied_user_subscription_id: subIdApplied,
           is_delivery, delivery_fee: serverDeliveryFee, delivery_address, delivery_lat, delivery_lng,

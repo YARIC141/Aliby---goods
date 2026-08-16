@@ -2606,13 +2606,29 @@ ol.hlp-steps>li ul{margin:6px 0 0}
         </label>
       </div>
       <div id="ms-preorder-wrap" style="display:none">
+        <div class="fg" style="margin-bottom:10px">
+          <label>Часовой пояс заведения<span class="hint" data-tip="В этом поясе понимаются часы приёма заказов ниже и «текущий рабочий день»">?</span></label>
+          <select id="ms-timezone">
+            <option value="Europe/Kaliningrad">Калининград (UTC+2)</option>
+            <option value="Europe/Moscow">Москва (UTC+3)</option>
+            <option value="Europe/Samara">Самара (UTC+4)</option>
+            <option value="Asia/Yekaterinburg">Екатеринбург (UTC+5)</option>
+            <option value="Asia/Omsk">Омск (UTC+6)</option>
+            <option value="Asia/Krasnoyarsk">Красноярск (UTC+7)</option>
+            <option value="Asia/Irkutsk">Иркутск (UTC+8)</option>
+            <option value="Asia/Yakutsk">Якутск (UTC+9)</option>
+            <option value="Asia/Vladivostok">Владивосток (UTC+10)</option>
+            <option value="Asia/Magadan">Магадан (UTC+11)</option>
+            <option value="Asia/Kamchatka">Камчатка (UTC+12)</option>
+          </select>
+        </div>
         <div class="grid2" style="margin-bottom:10px">
           <div class="fg">
-            <label>Приём заказов с</label>
+            <label>Приём заказов с *</label>
             <input type="time" id="ms-preorder-opens">
           </div>
           <div class="fg">
-            <label>Приём заказов до</label>
+            <label>Приём заказов до *<span class="hint" data-tip="Если «до» раньше «с» — окно считается переходящим через полночь, например 22:00–02:00">?</span></label>
             <input type="time" id="ms-preorder-closes">
           </div>
         </div>
@@ -5018,6 +5034,7 @@ async function openStoreModal(store) {
     document.getElementById('ms-preorder-opens').value  = store?.preorder_opens  ? store.preorder_opens.slice(0,5)  : '';
     document.getElementById('ms-preorder-closes').value = store?.preorder_closes ? store.preorder_closes.slice(0,5) : '';
     document.getElementById('ms-preorder-prep').value   = store?.preorder_prep_minutes ?? 20;
+    document.getElementById('ms-timezone').value        = store?.timezone || 'Europe/Moscow';
     const _poDays = store?.preorder_weekdays || [1,2,3,4,5,6,7];
     document.querySelectorAll('.ms-preorder-wd').forEach(cb => { cb.checked = _poDays.includes(parseInt(cb.value)); });
     onMsPreorderChange();
@@ -5238,6 +5255,23 @@ async function saveStore() {
   const restore = btnLoad(btn);
   const id   = document.getElementById('ms-id').value;
 
+  // Без часов приёма «Заказ ко времени» означал бы круглосуточный приём —
+  // сервер при пустом окне проверку пропускает, поэтому требуем явные часы.
+  if (document.getElementById('ms-preorder-enabled')?.checked) {
+    const _po = document.getElementById('ms-preorder-opens').value;
+    const _pc = document.getElementById('ms-preorder-closes').value;
+    if (!_po || !_pc) {
+      restore();
+      alert('Укажите часы приёма заказов ко времени («с» и «до»)');
+      return;
+    }
+    if (!document.querySelectorAll('.ms-preorder-wd:checked').length) {
+      restore();
+      alert('Отметьте хотя бы один рабочий день для заказа ко времени');
+      return;
+    }
+  }
+
   // Fetch actual store count — S.stores starts as [] and may be unloaded when coming from subscription screen
   let current = S.stores?.length;
   if (!current) {
@@ -5294,6 +5328,7 @@ async function saveStore() {
     preorder_closes:          document.getElementById('ms-preorder-enabled')?.checked ? (document.getElementById('ms-preorder-closes').value || null) : null,
     preorder_prep_minutes:    parseInt(document.getElementById('ms-preorder-prep')?.value) || 20,
     preorder_weekdays:        [...document.querySelectorAll('.ms-preorder-wd:checked')].map(cb => parseInt(cb.value)),
+    timezone:                 document.getElementById('ms-timezone')?.value || 'Europe/Moscow',
     delivery_courier_mode:    document.getElementById('ms-courier-mode')?.value || 'manual',
     delivery_carry_bid_mode:  document.getElementById('ms-courier-mode')?.value === 'carry'
       ? (document.getElementById('ms-carry-bid-mode')?.value || 'auction') : null,
@@ -6573,7 +6608,8 @@ function openOrderModal(orderId) {
   if (o.status === 'pending' || o.status === 'paid') {
     if (needTime) {
       rtSect.style.display = '';
-      const def = new Date(Date.now() + 30 * 60000);
+      // Для заказа ко времени подставляем время, которое назвал клиент.
+      const def = o.pickup_time ? new Date(o.pickup_time) : new Date(Date.now() + 30 * 60000);
       document.getElementById('m-order-ready-time').value = String(def.getHours()).padStart(2, '0') + ':' + String(def.getMinutes()).padStart(2, '0');
     }
     ft.innerHTML = `<button class="btn" onclick="closeModal('m-order')">Закрыть</button>
@@ -6669,7 +6705,9 @@ async function quickAdvance(orderId, newStatus) {
   const o = _orders.find(x => x.id === orderId);
   const body = { status: newStatus };
   if (newStatus === 'in_progress' && (o?.stores?.direction || 'food') !== 'services') {
-    body.estimated_ready_at = new Date(Date.now() + 30 * 60000).toISOString();
+    // Клиент уже назвал время в заказе ко времени — «сейчас+30» затёрло бы его
+    // и показало бы покупателю время, о котором он не просил.
+    body.estimated_ready_at = o?.pickup_time || new Date(Date.now() + 30 * 60000).toISOString();
   }
   const btn = event.currentTarget;
   const restore = btnLoad(btn);
@@ -6760,7 +6798,7 @@ function adminRealtimeConnect() {
           // gate client-side so platform-owner RLS visibility doesn't leak other tenants' orders.
           if (!record?.store_id || !_myStoreIds().has(record.store_id)) return;
           const newStatus = record?.status;
-          const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'handed_to_courier', 'accepted_by_courier', 'on_the_way', 'ready']);
+          const ACTIVE = new Set(['pending', 'paid', 'in_progress', 'looking_for_courier', 'handed_to_courier', 'accepted_by_courier', 'on_the_way', 'ready']);
           if (type === 'INSERT') {
             showAdminToast('Новый заказ!');
             if (record?.id) { _newOrderIds.add(record.id); updateNavBadge(); }
