@@ -1401,7 +1401,7 @@ document.addEventListener('deviceready',function(){
           <div id="delivery-eta-wrap" style="display:none;margin-top:6px;font-size:12px;color:var(--fg-3)"></div>
         </div>
         <div id="preorder-toggle-wrap" style="display:none;margin-top:12px">
-          <div style="display:flex;gap:8px">
+          <div id="preorder-mode-row" style="display:flex;gap:8px">
             <button id="po-now-btn" class="btn btn-p" style="flex:1;min-height:44px" onclick="setOrderMode('now')">Сейчас</button>
             <button id="po-sched-btn" class="btn btn-p" style="flex:1;min-height:44px" onclick="setOrderMode('scheduled')">Ко времени</button>
           </div>
@@ -1413,6 +1413,7 @@ document.addEventListener('deviceready',function(){
               <span>Оплатить сейчас онлайн</span>
             </label>
           </div>
+          <div id="preorder-closed-msg" style="display:none;margin-top:8px;font-size:12px;color:var(--warn)">Сегодня приём заказов ко времени уже закрыт</div>
         </div>
         <div id="store-inactive-banner" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:var(--bg-muted);border:1px solid var(--border);color:var(--muted);font-size:13px;text-align:center">Заведение временно приостановило продажи</div>
         <button id="cart-pay-btn" class="btn btn-p btn-full" style="margin-top:12px" onclick="startCheckout()">Оплатить</button>
@@ -7117,21 +7118,44 @@ function setOrderMode(mode) {
   renderPreorderToggle();
 }
 
+// Кнопка называется «Оплатить» только когда клик действительно уйдёт в
+// онлайн-оплату (T-Bank) — иначе (нет онлайн-оплаты у заведения, либо выбран
+// заказ ко времени без галочки «Оплатить сейчас») деньги берут при выдаче,
+// и подписывать кнопку «Оплатить» было бы враньём.
 function updateCartPayBtnLabel() {
   const btn = document.getElementById('cart-pay-btn');
   if (!btn) return;
+  const store = getCartStore();
+  const onlineAvailable = store?.accepts_online_payment !== false;
   const scheduled = S.orderMode === 'scheduled';
   const payNow = document.getElementById('preorder-pay-now')?.checked;
-  btn.textContent = (scheduled && !payNow) ? 'Оформить заказ' : 'Оплатить';
+  const willPayNow = onlineAvailable && (!scheduled || payNow);
+  btn.textContent = willPayNow ? 'Оплатить' : 'Заказать';
 }
 
 function renderPreorderToggle() {
   const wrap = document.getElementById('preorder-toggle-wrap');
   if (!wrap) return;
   const store = getCartStore();
+  const onlineAvailable = store?.accepts_online_payment !== false;
   const show = !!(store?.preorder_enabled && S.cart.length && S.deliveryMode !== 'delivery');
   wrap.style.display = show ? '' : 'none';
-  if (!show) { S.orderMode = 'now'; updateCartPayBtnLabel(); return; }
+  const closedMsg = document.getElementById('preorder-closed-msg');
+  const payBtn = document.getElementById('cart-pay-btn');
+  if (!show) {
+    S.orderMode = onlineAvailable ? 'now' : 'scheduled';
+    if (closedMsg) closedMsg.style.display = 'none';
+    // Доставка сама управляет disabled (зона/адрес) чуть выше по стеку — не перетираем.
+    if (S.deliveryMode !== 'delivery' && payBtn) payBtn.disabled = false;
+    updateCartPayBtnLabel();
+    return;
+  }
+
+  const modeRow = document.getElementById('preorder-mode-row');
+  // Без онлайн-оплаты «Сейчас» вообще не вариант — переключатель не нужен,
+  // единственный путь всегда «ко времени».
+  if (!onlineAvailable) { S.orderMode = 'scheduled'; if (modeRow) modeRow.style.display = 'none'; }
+  else if (modeRow) modeRow.style.display = 'flex';
 
   const isSched = S.orderMode === 'scheduled';
   const nowBtn = document.getElementById('po-now-btn');
@@ -7140,14 +7164,24 @@ function renderPreorderToggle() {
   if (schedBtn) schedBtn.style.opacity = isSched ? '1' : '0.45';
   const timeWrap = document.getElementById('preorder-time-wrap');
   if (timeWrap) timeWrap.style.display = isSched ? '' : 'none';
-  if (isSched && !populatePreorderSlots(store)) {
-    S.orderMode = 'now';
-    if (timeWrap) timeWrap.style.display = 'none';
-    if (nowBtn) nowBtn.style.opacity = '1';
-    if (schedBtn) schedBtn.style.opacity = '0.45';
+
+  const slotsOk = isSched ? populatePreorderSlots(store) : true;
+  if (isSched && !slotsOk) {
+    if (onlineAvailable) {
+      // Окно предзаказа сегодня закрыто, но можно просто оплатить сейчас.
+      S.orderMode = 'now';
+      if (timeWrap) timeWrap.style.display = 'none';
+      if (nowBtn) nowBtn.style.opacity = '1';
+      if (schedBtn) schedBtn.style.opacity = '0.45';
+    }
   }
+  // Тупик: онлайн-оплаты нет и слотов на сегодня тоже нет — заказать нечем.
+  const deadEnd = !onlineAvailable && isSched && !slotsOk;
+  if (closedMsg) closedMsg.style.display = deadEnd ? '' : 'none';
+  if (payBtn) payBtn.disabled = deadEnd;
+
   const payNowRow = document.getElementById('preorder-paynow-row');
-  if (payNowRow) payNowRow.style.display = (S.orderMode === 'scheduled' && store?.accepts_online_payment !== false) ? 'flex' : 'none';
+  if (payNowRow) payNowRow.style.display = (S.orderMode === 'scheduled' && onlineAvailable) ? 'flex' : 'none';
   updateCartPayBtnLabel();
 }
 
