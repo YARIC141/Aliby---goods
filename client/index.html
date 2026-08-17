@@ -676,6 +676,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
 }
 </style>
 <script>
+try{
 if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
 (function(){var bg=localStorage.getItem('alliby_bg')||'fluid';if(bg==='fluid')document.documentElement.classList.add('bg-fluid');if(bg==='custom'){var i=localStorage.getItem('alliby_bg_img');if(i){document.documentElement.classList.add('bg-custom');document.documentElement.style.setProperty('--bg-custom-img','url("'+i+'")')}}if(localStorage.getItem('alliby_ornament')!=='1')document.documentElement.classList.add('no-ornament')})();
 (function(){
@@ -683,6 +684,7 @@ if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classL
   document.documentElement.style.setProperty('--fzoom',s);
   if(s!==1)document.documentElement.classList.add('has-fzoom');
 })();
+}catch(e){}
 </script>
 <script>
 // ─── NATIVE BRIDGE ───
