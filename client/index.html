@@ -4399,7 +4399,7 @@ async function shareStore() {
   const st = S.store;
   if (!st?.id) return;
   const url = `https://alliby.ru/?promo_store=${st.id}`;
-  const shareData = { title: st.name || 'Alliby', text: `Загляните в «${st.name || 'это заведение'}» на Alliby`, url };
+  const shareData = { title: st.name || 'Alliby', text: `Загляните в «${st.name || 'это заведение'}» на Alliby\n${url}` };
   if (navigator.share) {
     try { await navigator.share(shareData); } catch(e) {}
     return;
