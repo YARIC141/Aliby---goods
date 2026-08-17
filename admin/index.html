@@ -6058,6 +6058,10 @@ function _renderMmiOptGroups() {
             <input type="number" step="0.01" value="${o.price_add}" placeholder="Надбавка ₽"
               style="width:90px;padding:5px 8px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg);font-size:13px"
               oninput="_optField(${gi},${oi},'price_add',parseFloat(this.value)||0)">
+            <label style="display:flex;align-items:center;gap:3px;font-size:12px;white-space:nowrap;cursor:pointer;flex-shrink:0" title="Снимите, если этой опции сейчас нет в наличии">
+              <input type="checkbox" ${o.is_available !== false ? 'checked' : ''} style="width:auto"
+                onchange="_optField(${gi},${oi},'is_available',this.checked)"> В наличии
+            </label>
             <button class="btn btn-sm" type="button" onclick="_removeOpt(${gi},${oi})" style="padding:0 8px;flex-shrink:0">−</button>
           </div>`).join('')}
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
@@ -6072,7 +6076,7 @@ function _optGroupField(gi, f, v) { if (_editOptGroups[gi]) _editOptGroups[gi][f
 function _optField(gi, oi, f, v) { if (_editOptGroups[gi]?.options[oi]) _editOptGroups[gi].options[oi][f] = v; }
 function addOptionGroup() { _editOptGroups.push({ name:'', type:'radio', required:false, options:[] }); _renderMmiOptGroups(); }
 function _removeOptGroup(gi) { _editOptGroups.splice(gi, 1); _renderMmiOptGroups(); }
-function _addOpt(gi) { if (_editOptGroups[gi]) { _editOptGroups[gi].options.push({ name:'', price_add:0 }); _renderMmiOptGroups(); } }
+function _addOpt(gi) { if (_editOptGroups[gi]) { _editOptGroups[gi].options.push({ name:'', price_add:0, is_available:true }); _renderMmiOptGroups(); } }
 function _removeOpt(gi, oi) { _editOptGroups[gi]?.options.splice(oi, 1); _renderMmiOptGroups(); }
 
 async function _loadOptGroupsForItem(itemId) {
@@ -6082,7 +6086,7 @@ async function _loadOptGroupsForItem(itemId) {
       name: g.name, type: g.type, required: g.required,
       options: (g.menu_item_options || [])
         .sort((a, b) => a.sort_order - b.sort_order)
-        .map(o => ({ name: o.name, price_add: Number(o.price_add) || 0 })),
+        .map(o => ({ name: o.name, price_add: Number(o.price_add) || 0, is_available: o.is_available !== false })),
     }));
   } catch(e) { _editOptGroups = []; }
   _renderMmiOptGroups();
@@ -6102,6 +6106,7 @@ async function _saveOptGroupsForItem(itemId) {
     if (!groupId) continue;
     const validOpts = g.options.filter(o => o.name.trim()).map((o, oi) => ({
       group_id: groupId, name: o.name.trim(), price_add: o.price_add || 0, sort_order: oi,
+      is_available: o.is_available !== false,
     }));
     if (validOpts.length) {
       await req('/rest/v1/menu_item_options', { method: 'POST', body: JSON.stringify(validOpts) });

@@ -242,11 +242,11 @@ Deno.serve(async (req: Request) => {
     if (optionIds.length) {
       const { data: opts } = await serviceClient
         .from("menu_item_options")
-        .select("id, name, price_add, menu_item_option_groups(menu_item_id)")
+        .select("id, name, price_add, is_available, menu_item_option_groups(menu_item_id)")
         .in("id", optionIds)
       for (const o of opts ?? []) {
         const grp = o.menu_item_option_groups as unknown as { menu_item_id: string } | null
-        if (grp) optionById.set(o.id as string, {
+        if (grp && o.is_available !== false) optionById.set(o.id as string, {
           price_add: Number(o.price_add) || 0, menu_item_id: grp.menu_item_id, name: o.name as string,
         })
       }

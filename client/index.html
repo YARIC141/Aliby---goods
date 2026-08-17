@@ -6033,15 +6033,17 @@ async function _getOptionGroups(itemId) {
 function _renderItemOptionGroups(groups) {
   return groups.map((g, gi) => {
     const isRadio = g.type === 'radio';
+    const firstAvailIdx = (g.menu_item_options || []).findIndex(o => o.is_available !== false);
     const opts = (g.menu_item_options || []).map((o, oi) => {
-      const sel = isRadio && oi === 0;
+      const available = o.is_available !== false;
+      const sel = isRadio && available && oi === firstAvailIdx;
       return `<button type="button" class="opt-btn"
         data-radio="${isRadio ? 1 : 0}" data-sel="${sel}"
         data-group-id="${g.id}" data-option-id="${o.id}"
         data-option-name="${esc(o.name)}" data-price-add="${o.price_add}"
-        onclick="_selectOpt(this)"
-        style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:7px 12px;border-radius:var(--r-2);border:1px solid var(--line);cursor:pointer;font:400 14px/1.4 var(--font-sans);margin-bottom:4px;${sel ? 'background:var(--accent);border-color:var(--accent);color:#fff' : 'background:transparent;color:var(--fg);border-color:var(--line)'}">
-        <span>${esc(o.name)}</span>
+        ${available ? `onclick="_selectOpt(this)"` : 'disabled'}
+        style="display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;padding:7px 12px;border-radius:var(--r-2);border:1px solid var(--line);cursor:${available ? 'pointer' : 'not-allowed'};font:400 14px/1.4 var(--font-sans);margin-bottom:4px;${!available ? 'opacity:.45;background:transparent;color:var(--fg-4)' : sel ? 'background:var(--accent);border-color:var(--accent);color:#fff' : 'background:transparent;color:var(--fg);border-color:var(--line)'}">
+        <span>${esc(o.name)}${!available ? ' <span style="font-size:12px">(нет в наличии)</span>' : ''}</span>
         ${o.price_add !== 0 ? `<span style="font-size:13px;margin-left:8px;flex-shrink:0;opacity:.9">${o.price_add > 0 ? '+' : ''}${o.price_add} ₽</span>` : ''}
       </button>`;
     }).join('');
