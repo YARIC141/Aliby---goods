@@ -106,7 +106,7 @@ Deno.serve(async (req: Request) => {
     }
   })
 
-  const { data: createdUserSubs, error: userSubsError } = await userClient
+  const { data: createdUserSubs, error: userSubsError } = await serviceClient
     .from("user_subscriptions")
     .insert(userSubInserts)
     .select("id")
