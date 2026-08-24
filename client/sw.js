@@ -1,9 +1,21 @@
-// v33
+// v34
 const APP_CACHE  = 'alliby-app-v17';
 const API_CACHE  = 'alliby-api-v1';
 const IMG_CACHE  = 'alliby-img-v1';
 const MAX_IMG    = 200;
 const MAX_API    = 120;
+
+// Safari/WebKit bug: after a tab is backgrounded and resumed, the CacheStorage
+// IPC channel can come back broken — caches.open()/cache.match() then hang
+// forever (never resolve, never reject), which freezes navigation entirely.
+// Race every cache call against a timeout and fall back to network on trip.
+const CACHE_TIMEOUT_MS = 2000;
+function withTimeout(promise, ms = CACHE_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('sw-cache-timeout')), ms);
+    promise.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+  });
+}
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -28,8 +40,8 @@ self.addEventListener('fetch', e => {
   // ── Images: cache-first, max 200 ─────────────────────────────────────────
   if (e.request.destination === 'image') {
     e.respondWith(
-      caches.open(IMG_CACHE).then(cache =>
-        cache.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+      withTimeout(caches.open(IMG_CACHE).then(cache => cache.match(e.request).then(cached => ({ cache, cached }))))
+        .then(({ cache, cached }) => cached || fetch(e.request).then(resp => {
           if (resp.ok) {
             cache.put(e.request, resp.clone());
             cache.keys().then(keys => {
@@ -39,7 +51,7 @@ self.addEventListener('fetch', e => {
           }
           return resp;
         }))
-      )
+        .catch(() => fetch(e.request))
     );
     return;
   }
@@ -54,18 +66,20 @@ self.addEventListener('fetch', e => {
   const SW_API_TTL = 30000;
   if (e.request.method === 'GET' && e.request.url.includes('/rest/v1/') && !e.request.url.includes('promo_notifications')) {
     e.respondWith(
-      caches.open(API_CACHE).then(async cache => {
-        const cached = await cache.match(e.request);
-        const age = cached ? Date.now() - new Date(cached.headers.get('date') || 0).getTime() : Infinity;
-        if (cached && age < SW_API_TTL) return cached; // свежий — отдаём сразу, без сети
-        try {
-          const resp = await fetch(e.request.clone());
-          if (resp.ok) { cache.put(e.request, resp.clone()); trimApiCache(); }
-          return resp;
-        } catch (err) {
-          return cached || Response.error();
-        }
-      })
+      withTimeout(caches.open(API_CACHE))
+        .then(async cache => {
+          const cached = await withTimeout(cache.match(e.request));
+          const age = cached ? Date.now() - new Date(cached.headers.get('date') || 0).getTime() : Infinity;
+          if (cached && age < SW_API_TTL) return cached; // свежий — отдаём сразу, без сети
+          try {
+            const resp = await fetch(e.request.clone());
+            if (resp.ok) { cache.put(e.request, resp.clone()); trimApiCache(); }
+            return resp;
+          } catch (err) {
+            return cached || Response.error();
+          }
+        })
+        .catch(() => fetch(e.request)) // cache API hung (Safari resume bug) — bypass entirely
     );
     return;
   }
@@ -73,37 +87,44 @@ self.addEventListener('fetch', e => {
   // ── App shell (HTML navigate): stale-while-revalidate ─────────────────────
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      caches.open(APP_CACHE).then(async cache => {
-        const cached = await cache.match(e.request);
+      withTimeout(caches.open(APP_CACHE).then(async cache => ({ cache, cached: await cache.match(e.request) })))
+        .then(({ cache, cached }) => {
+          if (cached) {
+            // Serve from cache immediately, revalidate in background
+            fetch(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
+              if (!resp.ok) return;
+              const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
+              const newTag = getTag(resp);
+              const oldTag = getTag(cached);
+              await cache.put(e.request, resp.clone());
+              if (!newTag || !oldTag || newTag !== oldTag) {
+                const clients = await self.clients.matchAll({ includeUncontrolled: true });
+                clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
+              }
+            }).catch(() => {});
+            return cached;
+          }
 
-        if (cached) {
-          // Serve from cache immediately, revalidate in background
-          fetch(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
-            if (!resp.ok) return;
-            const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
-            const newTag = getTag(resp);
-            const oldTag = getTag(cached);
-            await cache.put(e.request, resp.clone());
-            if (!newTag || !oldTag || newTag !== oldTag) {
-              const clients = await self.clients.matchAll({ includeUncontrolled: true });
-              clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
-            }
-          }).catch(() => {});
-          return cached;
-        }
-
-        // First load — fetch from network and cache
-        return fetch(e.request).then(resp => {
-          if (resp.ok) cache.put(e.request, resp.clone());
-          return resp;
-        }).catch(async () => {
-          // Network failed and no cache — return any cached shell as fallback
-          const fallback = await caches.match('/') || await caches.match('/index.html');
-          return fallback || new Response('<html><body style="font:16px sans-serif;padding:32px">Нет соединения. Обновите страницу.</body></html>', {
-            status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          // First load — fetch from network and cache
+          return fetch(e.request).then(resp => {
+            if (resp.ok) cache.put(e.request, resp.clone());
+            return resp;
           });
-        });
-      })
+        })
+        // Cache API hung (Safari: CacheStorage IPC breaks after tab resumes from
+        // background) or network failed — bypass cache and go straight to network,
+        // falling back to a cached shell (best-effort) only if that also fails.
+        .catch(async () => {
+          try {
+            return await fetch(e.request);
+          } catch {
+            const fallback = await withTimeout(caches.match('/'), 1000).catch(() => null)
+              || await withTimeout(caches.match('/index.html'), 1000).catch(() => null);
+            return fallback || new Response('<html><body style="font:16px sans-serif;padding:32px">Нет соединения. Обновите страницу.</body></html>', {
+              status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' },
+            });
+          }
+        })
     );
     return;
   }
