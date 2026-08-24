@@ -2234,7 +2234,7 @@ document.addEventListener('deviceready',function(){
       </select>
     </div>
     <div id="mbs-loading" style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Загрузка расписания…</div>
-    <div id="mbs-pick-master-hint" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Сначала выберите мастера — свободное время покажем для него</div>
+    <div id="mbs-pick-master-hint" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Сначала выберите <span id="mbs-pick-master-hint-word">мастера</span> — свободное время покажем для него</div>
     <div id="mbs-main" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <button class="btn btn-sm" onclick="bookingCalPrevMonth()">←</button>
@@ -2250,7 +2250,7 @@ document.addEventListener('deviceready',function(){
       <div id="mbs-date-label" style="font:600 14px/1.3 var(--font-sans);margin-bottom:8px"></div>
       <div id="mbs-slots" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px"></div>
       <div id="mbs-master-chosen" style="display:none;margin-bottom:12px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2);font-size:13px;color:var(--fg-2)">
-        Мастер: <strong id="mbs-master-chosen-name"></strong>
+        <span id="mbs-master-chosen-lbl">Мастер</span>: <strong id="mbs-master-chosen-name"></strong>
       </div>
     </div>
     <div id="mbs-no-sched" style="display:none;text-align:center;padding:24px 0;color:var(--muted);font-size:13px">Расписание не задано</div>
@@ -2767,6 +2767,12 @@ const BG_ORBS = {
 };
 const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
 const _SVC_DIRS = new Set(['services','sport','entertainment']);
+// sport & entertainment venues call their "masters" (мастер) coaches (тренер) instead —
+// table tennis / computer clubs etc. book a "тренер", salons/studios keep "мастер".
+function _isCoachDir(dir) { return dir === 'sport' || dir === 'entertainment'; }
+const _MW = dir => _isCoachDir(dir)
+  ? { nom: 'Тренер', nomPl: 'Тренеры', gen: 'тренера', genPl: 'тренеров', any: 'Любой тренер' }
+  : { nom: 'Мастер', nomPl: 'Мастера', gen: 'мастера', genPl: 'мастеров', any: 'Любой мастер' };
 
 const HEADER_TINTS = {
   food:          'rgba(232,116,59,.52)',
@@ -2942,7 +2948,7 @@ function updateDirectionLabels(dir) {
   const svcLbl = document.getElementById('svc-lbl-services');
   const mstLbl = document.getElementById('svc-lbl-masters');
   if (svcLbl) svcLbl.textContent = isSport ? 'Активности' : 'Услуги';
-  if (mstLbl) mstLbl.textContent = isSport ? 'Тренеры' : 'Мастера';
+  if (mstLbl) mstLbl.textContent = _MW(dir).nomPl;
   if (!_SVC_DIRS.has(dir)) {
     document.getElementById('svc-pane-sched')?.style.setProperty('display', 'none');
     document.getElementById('svc-tab-services')?.classList.add('active');
@@ -3787,8 +3793,9 @@ async function loadCaScheduleScreen() {
       const sel = document.getElementById('ca-sched-master-sel');
       const row = document.getElementById('ca-sched-master-row');
       if (sel && row) {
-        sel.innerHTML = '<option value="">Любой мастер</option>'
-          + masters.map(m => `<option value="${m.id}">${esc(m.full_name || 'Мастер')}</option>`).join('');
+        const mw = _MW(store.direction);
+        sel.innerHTML = `<option value="">${mw.any}</option>`
+          + masters.map(m => `<option value="${m.id}">${esc(m.full_name || mw.nom)}</option>`).join('');
         sel.value = '';
         row.style.display = masters.length ? '' : 'none';
       }
@@ -9776,7 +9783,7 @@ async function loadStoreMasters() {
   }
   const { masters } = _mastersCache;
   if (!masters.length) {
-    el.innerHTML = '<div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:14px">В этом заведении пока нет мастеров</div>';
+    el.innerHTML = `<div style="text-align:center;padding:32px 16px;color:var(--muted);font-size:14px">В этом заведении пока нет ${_MW(S.store?.direction).genPl}</div>`;
     return;
   }
   el.innerHTML = masters.map(m => {
@@ -10000,6 +10007,9 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   document.getElementById('mbs-total-row').style.display = 'none';
   openModal('m-book-slot');
   const storeId = S.store?.id || item.store_id;
+  const mw = _MW(S.store?.direction);
+  document.getElementById('mbs-pick-master-hint-word').textContent = mw.gen;
+  document.getElementById('mbs-master-chosen-lbl').textContent = mw.nom;
   if (!storeId) { document.getElementById('mbs-loading').style.display = 'none'; document.getElementById('mbs-no-sched').style.display = ''; return; }
   const today = todayInCity();
   const endDate = _fmtD(new Date(nowInCity().getTime() + 60 * 24 * 60 * 60 * 1000));
@@ -10030,7 +10040,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
       });
       _buildSlotMasterMap();
       const sel = document.getElementById('mbs-master-select');
-      sel.innerHTML = `<option value="" disabled${_booking.selectedMasterId ? '' : ' selected'}>Выберите мастера</option>` +
+      sel.innerHTML = `<option value="" disabled${_booking.selectedMasterId ? '' : ' selected'}>Выберите ${mw.gen}</option>` +
         profiles.map(m => `<option value="${m.id}">${esc(m.full_name||'—')}</option>`).join('');
       // Pre-select master if passed from master profile
       sel.value = _booking.selectedMasterId || '';
@@ -10255,7 +10265,7 @@ function bookingToggleSub(checked) {
 
 async function confirmBooking(payNow) {
   if (!S.session || !_booking.item || !_booking.currentDate || !_booking.selectedSlot) return;
-  if (_booking.masters.length > 0 && !_booking.autoMasterId) { showGeoToast('Выберите мастера'); return; }
+  if (_booking.masters.length > 0 && !_booking.autoMasterId) { showGeoToast('Выберите ' + _MW(S.store?.direction).gen); return; }
   const storeId = S.store?.id || _booking.item.store_id;
   const masterPrice = _booking.autoMasterId != null ? _booking.masterPrices[_booking.autoMasterId] : null;
   const bookingData = {

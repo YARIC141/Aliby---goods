@@ -7353,6 +7353,7 @@ async function renderBkTabDayView(dateStr) {
 
     const ST  = { booked:{lbl:'Активна',cls:'b-paid'}, completed:{lbl:'Завершена',cls:'b-ok'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
     const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, unpaid:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
+    const roleNom = _roleWords((S.stores || []).find(s => s.id === _bkTab.storeId)?.direction).nom;
 
     // Cancelled at the bottom
     const active    = bks.filter(b => b.status !== 'cancelled');
@@ -7387,7 +7388,7 @@ async function renderBkTabDayView(dateStr) {
               <span class="badge ${pay.cls}">${pay.lbl}</span>
             </div>
             <div style="font:500 13px/1.3 var(--font-sans);margin-bottom:3px">${esc(b.menu_items?.name||'—')}</div>
-            ${m?.full_name?`<div style="font-size:12px;color:var(--fg-2)">Мастер: ${esc(m.full_name)}</div>`:''}
+            ${m?.full_name?`<div style="font-size:12px;color:var(--fg-2)">${roleNom}: ${esc(m.full_name)}</div>`:''}
             ${p?`<div style="font-size:12px;color:var(--fg-3)">${[p.full_name,p.phone].filter(Boolean).map(esc).join(' · ')}</div>`:''}
             ${b.notes?`<div style="font-size:12px;color:var(--fg-4);margin-top:3px;font-style:italic">${esc(b.notes)}</div>`:''}
           </div>
@@ -7517,27 +7518,35 @@ function applyRoleRestrictions() {
   if (schedEditBtn) schedEditBtn.style.display = 'none';
   const schedNavBtn = document.getElementById('sn-btn-schedule');
   if (schedNavBtn) schedNavBtn.style.display = '';
-  // Уточнить роль для мастеров
+  // Уточнить роль для мастеров/тренеров
   if (S.profile?.is_master) {
     const roleEl = document.querySelector('.sn-role');
-    if (roleEl) roleEl.textContent = 'Мастер';
+    if (roleEl) roleEl.textContent = 'Мастер'; // updated to the correct word once direction resolves below
+    const empStoreId = S.profile?.employee_store_id;
+    if (empStoreId) {
+      req(`/rest/v1/stores?id=eq.${empStoreId}&select=direction&limit=1`)
+        .then(rows => { if (roleEl) roleEl.textContent = _roleWords(rows?.[0]?.direction).nom; })
+        .catch(() => {});
+    }
   }
 }
 
 async function openEmployeeSchedule() {
   const storeId = S.profile?.employee_store_id;
   if (!storeId) return;
-  if (S.profile?.is_master) { openMasterSchedule(storeId); return; }
   try {
-    const rows = await req(`/rest/v1/stores?id=eq.${storeId}&select=id,name&limit=1`);
-    if (rows?.[0]) openSchedule(rows[0]);
+    const rows = await req(`/rest/v1/stores?id=eq.${storeId}&select=id,name,direction&limit=1`);
+    if (!rows?.[0]) return;
+    if (S.profile?.is_master) { openMasterSchedule(storeId, rows[0].direction); return; }
+    openSchedule(rows[0]);
   } catch(e) { alert('Не удалось загрузить расписание'); }
 }
 
-function openMasterSchedule(storeId) {
+function openMasterSchedule(storeId, storeDirection) {
   _sched.storeId   = storeId;
   _sched.isMaster  = true;
-  _sched.storeName = S.profile?.full_name || 'Мастер';
+  _sched.storeDirection = storeDirection ?? null;
+  _sched.storeName = S.profile?.full_name || _roleWords(storeDirection).nom;
   const now = new Date();
   _sched.year   = now.getFullYear();
   _sched.month  = now.getMonth();
@@ -8024,6 +8033,15 @@ async function openEmployeesModal() {
   goTo('employees');
 }
 
+// sport & entertainment venues call their "masters" (мастер) coaches (тренер) instead —
+// table tennis / computer clubs etc. book a "тренер", salons/studios keep "мастер".
+function _isCoachDir(dir) { return dir === 'sport' || dir === 'entertainment'; }
+function _roleWords(dir) {
+  return _isCoachDir(dir)
+    ? { nom: 'Тренер', gen: 'тренера', soj: 'тренером' }
+    : { nom: 'Мастер', gen: 'мастера', soj: 'мастером' };
+}
+
 function _renderEmpList(emps) {
   const el = document.getElementById('emp-list');
   if (!el) return;
@@ -8035,7 +8053,7 @@ function _renderEmpList(emps) {
     const storeName = storeMap[e.employee_store_id] || '—';
     const storeDir = storeDirMap[e.employee_store_id];
     const isSvcStore = ['services','sport','entertainment'].includes(storeDir);
-    const roleLabel = storeDir === 'sport' ? 'Тренер' : 'Мастер';
+    const roleLabel = _roleWords(storeDir).nom;
     const masterBadge = e.is_master
       ? `<span style="font-size:10px;font-weight:700;background:var(--accent);color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">${roleLabel}</span>`
       : '';
@@ -8181,10 +8199,7 @@ function onMasterToggle(checked) {
 async function openMasterModal(empId) {
   const emp = (S._cachedEmps || []).find(e => e.id === empId) || {};
   const storeDir = (S.stores || []).find(s => s.id === emp.employee_store_id)?.direction;
-  const isSport = storeDir === 'sport';
-  const roleNom = isSport ? 'Тренер' : 'Мастер';
-  const roleGen = isSport ? 'тренера' : 'мастера';
-  const roleSoj = isSport ? 'тренером' : 'мастером';
+  const { nom: roleNom, gen: roleGen, soj: roleSoj } = _roleWords(storeDir);
   document.getElementById('master-modal-title').textContent = `${roleNom}: ${emp.full_name || ''}`;
   const toggleLbl = document.getElementById('master-toggle-label');
   if (toggleLbl) toggleLbl.textContent = `Является ${roleSoj}`;
@@ -9103,6 +9118,7 @@ const _sched = {
   templates: [],
   openDate: null,
   isMaster: false,
+  storeDirection: null,
 };
 
 function _fmtD(d) {
@@ -9112,6 +9128,7 @@ function _fmtD(d) {
 function openSchedule(store) {
   _sched.storeId   = store.id;
   _sched.storeName = store.name;
+  _sched.storeDirection = store.direction;
   _sched.isMaster  = false;
   const now = new Date();
   _sched.year   = now.getFullYear();
@@ -9311,7 +9328,7 @@ function openBookingDetail(bookingId) {
     </div>
     ${m ? `
     <div>
-      <div class="lbl" style="margin-bottom:6px">Мастер</div>
+      <div class="lbl" style="margin-bottom:6px">${_roleWords((S.stores || []).find(s => s.id === b.store_id)?.direction).nom}</div>
       ${m.full_name ? `<div style="font:600 14px/1.3 var(--font-sans);margin-bottom:5px">${esc(m.full_name)}</div>` : ''}
       ${m.phone ? `<div style="font:600 16px/1 var(--font-sans)">${esc(m.phone)}</div>` : ''}
     </div>` : ''}
@@ -9364,6 +9381,7 @@ async function renderDayBookings(dateStr) {
 
     const ST  = { booked:{lbl:'Активна',cls:'b-paid'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'}, completed:{lbl:'Завершена',cls:'b-ok'} };
     const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, unpaid:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
+    const roleNom = _roleWords(_sched.storeDirection).nom;
 
     bkEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
       <span style="font:600 13px/1 var(--font-sans);color:var(--fg-2)">Записи · ${bks.length}</span>
@@ -9387,7 +9405,7 @@ async function renderDayBookings(dateStr) {
               <span class="badge ${pay.cls}">${pay.lbl}</span>
             </div>
             <div style="font:500 13px/1.3 var(--font-sans);margin-bottom:3px">${esc(b.menu_items?.name || '—')}</div>
-            ${m?.full_name ? `<div style="font-size:12px;color:var(--fg-2)">Мастер: ${esc(m.full_name)}</div>` : ''}
+            ${m?.full_name ? `<div style="font-size:12px;color:var(--fg-2)">${roleNom}: ${esc(m.full_name)}</div>` : ''}
             ${p ? `<div style="font-size:12px;color:var(--fg-3)">${[p.full_name, p.phone].filter(Boolean).map(esc).join(' · ')}</div>` : ''}
             ${b.notes ? `<div style="font-size:12px;color:var(--fg-4);margin-top:3px;font-style:italic">${esc(b.notes)}</div>` : ''}
           </div>
