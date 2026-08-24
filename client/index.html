@@ -2938,7 +2938,7 @@ function setDirection(dir) {
 }
 
 function updateDirectionLabels(dir) {
-  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги<br>и запись', sport: 'Тренировки', entertainment: 'Развлечения<br>и запись' }[dir] || 'Меню';
+  const storeLbl = { food: 'Меню', goods: 'Товары', services: 'Услуги<br>и запись', sport: 'Тренировки<br>и инвентарь', entertainment: 'Развлечения<br>и запись' }[dir] || 'Меню';
   document.querySelectorAll('.nav-store-lbl').forEach(el => { el.innerHTML = storeLbl; });
   const svcTabBar = document.getElementById('svc-tab-bar');
   if (svcTabBar) svcTabBar.style.display = _SVC_DIRS.has(dir) ? '' : 'none';
