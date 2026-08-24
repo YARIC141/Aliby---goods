@@ -3566,7 +3566,7 @@ function rentCalcTotal() {
   const canPay = S.storeSubActive !== false;
   const useSubNow = !!(_rentFullSub && _rentUseSub);
   if (addBtn)  addBtn.style.display  = (!isTimeUnit && canPay && !useSubNow) ? '' : 'none';
-  if (bookBtn) bookBtn.style.display = '';
+  if (bookBtn) bookBtn.style.display = S.store?.allow_unpaid_booking ? '' : 'none';
   if (payBtn)  payBtn.style.display  = canPay ? '' : 'none';
   if (payBtn)  payBtn.textContent    = useSubNow ? 'Оплатить абонементом' : 'Оплатить';
 
@@ -10010,6 +10010,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   const mw = _MW(S.store?.direction);
   document.getElementById('mbs-pick-master-hint-word').textContent = mw.gen;
   document.getElementById('mbs-master-chosen-lbl').textContent = mw.nom;
+  document.getElementById('mbs-book-btn').style.display = S.store?.allow_unpaid_booking ? '' : 'none';
   if (!storeId) { document.getElementById('mbs-loading').style.display = 'none'; document.getElementById('mbs-no-sched').style.display = ''; return; }
   const today = todayInCity();
   const endDate = _fmtD(new Date(nowInCity().getTime() + 60 * 24 * 60 * 60 * 1000));

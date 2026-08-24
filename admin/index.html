@@ -2595,6 +2595,16 @@ ol.hlp-steps>li ul{margin:6px 0 0}
         <span class="toggle-track"></span>
       </label>
     </div>
+    <div style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <span style="font:600 13px/1 var(--font-sans)">Бронь и запись</span>
+        <span class="hint" data-tip="Разрешает клиенту бронировать / записываться без оплаты (кнопка «Забронировать») — запись создаётся неоплаченной, оплата отдельно. Если выключено, доступна только оплата сразу («Оплатить и записаться»).">?</span>
+      </div>
+      <label class="toggle-sw">
+        <input type="checkbox" id="ms-allow-unpaid-booking">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
     <div id="ms-preorder-section" style="padding-top:12px;border-top:1px solid var(--line-soft);margin-bottom:12px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div>
@@ -5029,6 +5039,8 @@ async function openStoreModal(store) {
   }
   const opEl = document.getElementById('ms-online-payment');
   if (opEl) opEl.checked = store?.accepts_online_payment !== false;
+  const aubEl = document.getElementById('ms-allow-unpaid-booking');
+  if (aubEl) aubEl.checked = !!store?.allow_unpaid_booking;
   const poEl = document.getElementById('ms-preorder-enabled');
   if (poEl) {
     poEl.checked = !!store?.preorder_enabled;
@@ -5324,6 +5336,7 @@ async function saveStore() {
     image_url:          document.getElementById('ms-image-url').value || null,
     delivery_enabled:         !!_activePlatSub && (document.getElementById('ms-delivery-enabled')?.checked ?? false),
     accepts_online_payment:   document.getElementById('ms-online-payment')?.checked ?? true,
+    allow_unpaid_booking:     document.getElementById('ms-allow-unpaid-booking')?.checked ?? false,
     preorder_enabled:         document.getElementById('ms-preorder-enabled')?.checked ?? false,
     preorder_opens:           document.getElementById('ms-preorder-enabled')?.checked ? (document.getElementById('ms-preorder-opens').value || null) : null,
     preorder_closes:          document.getElementById('ms-preorder-enabled')?.checked ? (document.getElementById('ms-preorder-closes').value || null) : null,
