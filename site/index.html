@@ -973,6 +973,10 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 .scenario-stat-l{font:400 12.5px/1.4 var(--font-sans);color:var(--fg-2)}
 @media(max-width:520px){.scenario-stats{grid-template-columns:1fr}}
 @media(max-width:600px){.scenario-modal{padding:24px 12px}.scenario-scroll{max-height:66vh}}
+.video-panel{position:relative;width:100%;max-width:900px;background:#000;border-radius:var(--r-4);box-shadow:0 30px 90px rgba(0,0,0,.55);overflow:hidden;animation:scenario-in .22s cubic-bezier(.2,.8,.3,1)}
+.video-panel video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.video-close{position:absolute;top:14px;right:14px;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(15,14,12,.6);border:1px solid rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .16s,color .16s}
+.video-close:hover{background:rgba(15,14,12,.85)}
 </style>
 <script type="application/ld+json">
 [
@@ -1107,6 +1111,12 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
       <span class="seg-eyebrow"><span class="sc-dot"></span>Для клиентов · <b class="nl-app c-client">Alliby</b></span>
       <h2 class="seg-h2">Пять направлений, <em>один аккаунт</em></h2>
       <p class="seg-sub">Находите заведения на карте, заказывайте с доставкой или самовывозом, записывайтесь к мастеру и берите вещи напрокат. Сервисного сбора нет — вы платите ровно ту цену, что стоит в каталоге.</p>
+      <div style="text-align:center;margin:6px 0 22px">
+        <button type="button" class="btn-orange" onclick="openVideoModal('video-alliby-client.mp4')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>
+          Посмотреть ролик — как это работает для клиентов
+        </button>
+      </div>
       <div class="legend">
         <span class="legend-pill"><span class="legend-dot" style="background:var(--brand)"></span>Еда</span>
         <span class="legend-pill"><span class="legend-dot" style="background:var(--green)"></span>Товары</span>
@@ -1820,6 +1830,16 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
   </div>
 </div>
 
+<!-- VIDEO MODAL -->
+<div class="scenario-modal" id="video-modal" onclick="if(event.target===this)closeVideoModal()">
+  <div class="video-panel" role="dialog" aria-modal="true" aria-label="Видеоролик">
+    <button class="video-close" onclick="closeVideoModal()" aria-label="Закрыть">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
+    </button>
+    <video id="video-modal-player" controls playsinline></video>
+  </div>
+</div>
+
 </div><!-- #page-wrap -->
 
 <script src="image-slot.js"></script>
@@ -2216,6 +2236,22 @@ function closeScenario() {
   document.getElementById('scenario-modal').classList.remove('open');
   document.body.style.overflow = '';
 }
+function openVideoModal(src) {
+  var modal = document.getElementById('video-modal');
+  var video = document.getElementById('video-modal-player');
+  video.src = src;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  video.play().catch(function(){});
+}
+function closeVideoModal() {
+  var video = document.getElementById('video-modal-player');
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  document.getElementById('video-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
 
 // Пункт сценария в меню: пролистать к карточке направления и открыть её сценарий.
 // С подстраниц ссылка ведёт на /#dir-…, поэтому тот же разбор нужен и при загрузке.
@@ -2273,7 +2309,7 @@ function goToBusinessTerms() {
   if (pricing) pricing.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeScenario();
+  if (e.key === 'Escape') { closeScenario(); closeVideoModal(); }
   if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList.contains('dir-card')) {
     e.preventDefault();
     document.activeElement.click();
