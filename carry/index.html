@@ -307,7 +307,7 @@ ol.hlp-steps>li::before{content:counter(hlpstep);position:absolute;left:0;top:1p
   <!-- ════════ MAIN ════════ -->
   <div id="screen-main" class="screen">
     <div class="ph">
-      <h2>Alliby Carry</h2>
+      <h2>Alliby Carry<span id="carry-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span></h2>
       <div style="display:flex;gap:8px">
         <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn" title="Тема"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
         <button class="icon-btn" onclick="openProfileModal()" title="Профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></button>
@@ -2263,6 +2263,12 @@ async function confirmMarkDelivered() {
 // ─── REALTIME ───
 let _rtWs = null, _rtHb = null, _rtRef = 0;
 
+function _setCarryRtDot() {
+  const dot = document.getElementById('carry-rt-dot');
+  if (!dot) return;
+  dot.style.background = _rtWs?.readyState === WebSocket.OPEN ? '#22c55e' : '#ef4444';
+}
+
 function realtimeSubscribeMyOrders(userId) {
   realtimeUnsubscribe();
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
@@ -2283,6 +2289,7 @@ function realtimeSubscribeMyOrders(userId) {
       _rtHb = setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtRef) }));
       }, 25000);
+      _setCarryRtDot();
     };
     ws.onmessage = (e) => {
       try {
@@ -2290,13 +2297,14 @@ function realtimeSubscribeMyOrders(userId) {
         if (msg.event === 'postgres_changes') loadActiveOrders();
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtHb); _rtWs = null; };
+    ws.onclose = ws.onerror = () => { clearInterval(_rtHb); _rtWs = null; _setCarryRtDot(); };
   } catch {}
 }
 
 function realtimeUnsubscribe() {
   clearInterval(_rtHb);
   if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
+  _setCarryRtDot();
 }
 
 document.addEventListener('visibilitychange', () => {
