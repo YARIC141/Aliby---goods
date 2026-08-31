@@ -4,4 +4,8 @@
     <string name="title_activity_main">Alliby Carry</string>
     <string name="package_name">ru.alliby_carry.app</string>
     <string name="custom_url_scheme">ru.alliby_carry.app</string>
+    <!-- FCM notification channel -->
+    <string name="default_notification_channel_id">alliby_orders</string>
+    <string name="channel_orders_name">Заказы</string>
+    <string name="channel_orders_desc">Предложения заказов и статус доставки</string>
 </resources>
