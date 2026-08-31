@@ -1897,13 +1897,16 @@ async function loadActiveOrders() {
 
   // Sound fires once per newly-seen offer, not on every realtime poll of the
   // same still-pending offer (a busy realtime channel would otherwise beep
-  // repeatedly for one unanswered order).
-  const offerIds = new Set(S.activeOrders
+  // repeatedly for one unanswered order). Keyed on id+expires_at, not just
+  // id — a timed-out order keeps the same id when re-offered (possibly to
+  // the same courier as a last resort), but each (re-)dispatch stamps a
+  // fresh carry_offer_expires_at, so that's what actually marks "new".
+  const offerKeys = new Set(S.activeOrders
     .filter(o => o.status === 'looking_for_courier' && o.carry_dispatch_status === 'assigned' && o.carry_offer_expires_at && new Date(o.carry_offer_expires_at) > new Date())
-    .map(o => o.id));
-  if (!S._seenOfferIds) S._seenOfferIds = new Set();
-  const hasNewOffer = [...offerIds].some(id => !S._seenOfferIds.has(id));
-  S._seenOfferIds = offerIds;
+    .map(o => `${o.id}:${o.carry_offer_expires_at}`));
+  if (!S._seenOfferKeys) S._seenOfferKeys = new Set();
+  const hasNewOffer = [...offerKeys].some(key => !S._seenOfferKeys.has(key));
+  S._seenOfferKeys = offerKeys;
   if (hasNewOffer) _playOfferSound();
 
   renderOrderCard();
