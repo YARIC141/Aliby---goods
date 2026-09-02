@@ -2471,6 +2471,20 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+<!-- VPN blocking our server -->
+<div class="overlay" id="m-vpn-block">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd">
+      <h3>Сервер недоступен</h3>
+      <button class="modal-x" onclick="closeModal('m-vpn-block')">✕</button>
+    </div>
+    <p style="font-size:13px;color:var(--fg-3);line-height:1.5">Похоже, у вас включён VPN. Наш сервер расположен в России, и через некоторые VPN-подключения он может быть недоступен. Отключите VPN и попробуйте снова.</p>
+    <div class="modal-ft">
+      <button class="btn btn-p btn-full" onclick="closeModal('m-vpn-block'); location.reload();">Обновить страницу</button>
+    </div>
+  </div>
+</div>
+
 <!-- Store schedule modal -->
 <div class="overlay" id="m-store-sched">
   <div class="modal" style="max-width:400px">
@@ -2829,13 +2843,52 @@ function buildOsmStyle() {
 }
 
 // ─── HELPERS ───
+// Server-unreachable heuristic: our VPS is in Russia, and some VPN routes can't
+// reach it while the rest of the internet works fine. When a request to SB_URL
+// fails at the network level, probe an always-up external endpoint — if that
+// succeeds, the block is specific to our server (likely VPN), so nudge the user
+// to turn it off. In-flight guard + cooldown keep this to at most one extra
+// tiny request per minute, never a background poll.
+let _vpnCheckRunning = false;
+let _vpnCooldownUntil = 0;
+let _vpnModalShown = false;
+async function _externalNetOk() {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 3000);
+  try {
+    await fetch('https://www.gstatic.com/generate_204', { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+    return true;
+  } catch { return false; }
+  finally { clearTimeout(t); }
+}
+async function _checkVpnBlock() {
+  if (_vpnCheckRunning || _vpnModalShown || Date.now() < _vpnCooldownUntil || !navigator.onLine) return;
+  _vpnCheckRunning = true;
+  try {
+    if (await _externalNetOk()) { _vpnModalShown = true; openModal('m-vpn-block'); }
+  } finally {
+    _vpnCheckRunning = false;
+    _vpnCooldownUntil = Date.now() + 60000;
+  }
+}
+function _clearVpnBlock() {
+  if (_vpnModalShown) { _vpnModalShown = false; closeModal('m-vpn-block'); }
+  _vpnCooldownUntil = 0;
+}
 async function req(path, opts = {}, _retried = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
     await refreshSession();
   }
   const h = { 'Content-Type': 'application/json', apikey: SB_ANON, ...opts.headers };
   if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
-  const r = await fetch(SB_URL + path, { ...opts, headers: h });
+  let r;
+  try {
+    r = await fetch(SB_URL + path, { ...opts, headers: h });
+  } catch (e) {
+    _checkVpnBlock();
+    throw { message: 'Нет соединения' };
+  }
+  _clearVpnBlock();
   const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
   if (r.status === 401 && !_retried) {
     if (!S.session) throw { message: 'Требуется авторизация' };
@@ -4748,8 +4801,10 @@ async function refreshSession() {
     });
   } catch(e) {
     // Network error — token may still be valid; return null so callers don't logout
+    _checkVpnBlock();
     return null;
   }
+  _clearVpnBlock();
   if (!r.ok) return false; // HTTP 4xx: token definitively invalid/revoked
   const d = await r.json();
   if (!d.access_token) return false;
