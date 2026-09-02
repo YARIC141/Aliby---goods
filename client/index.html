@@ -2471,16 +2471,15 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
-<!-- VPN blocking our server -->
-<div class="overlay" id="m-vpn-block">
-  <div class="modal" style="max-width:380px">
+<!-- VPN notice -->
+<div class="overlay" id="m-vpn-notice">
+  <div class="modal" style="max-width:340px">
     <div class="modal-hd">
-      <h3>Сервер недоступен</h3>
-      <button class="modal-x" onclick="closeModal('m-vpn-block')">✕</button>
+      <h3>VPN</h3>
     </div>
-    <p style="font-size:13px;color:var(--fg-3);line-height:1.5">Похоже, у вас включён VPN. Наш сервер расположен в России, и через некоторые VPN-подключения он может быть недоступен. Отключите VPN и попробуйте снова.</p>
+    <p style="font-size:13px;color:var(--fg-3);line-height:1.5">Для корректной работы отключите VPN.</p>
     <div class="modal-ft">
-      <button class="btn btn-p btn-full" onclick="closeModal('m-vpn-block'); location.reload();">Обновить страницу</button>
+      <button class="btn btn-p btn-full" onclick="closeModal('m-vpn-notice')">ОК</button>
     </div>
   </div>
 </div>
@@ -2843,62 +2842,13 @@ function buildOsmStyle() {
 }
 
 // ─── HELPERS ───
-// Server-unreachable heuristic: our VPS is in Russia, and some VPN routes can't
-// reach it while the rest of the internet works fine. When a request to SB_URL
-// fails at the network level, probe an always-up external endpoint — if that
-// succeeds, the block is specific to our server (likely VPN), so nudge the user
-// to turn it off. In-flight guard + cooldown keep this to at most one extra
-// tiny request per minute, never a background poll.
-let _vpnCheckRunning = false;
-let _vpnCooldownUntil = 0;
-let _vpnModalShown = false;
-// AbortController-based timeout — plain fetch() never rejects on its own if a
-// VPN blackholes packets instead of refusing the connection outright, so
-// without this the request just hangs forever and no error handler ever runs.
-function _timeoutSignal(ms) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  return { signal: ctrl.signal, done: () => clearTimeout(t) };
-}
-async function _externalNetOk() {
-  const to = _timeoutSignal(3000);
-  try {
-    await fetch('https://www.gstatic.com/generate_204', { mode: 'no-cors', cache: 'no-store', signal: to.signal });
-    return true;
-  } catch { return false; }
-  finally { to.done(); }
-}
-async function _checkVpnBlock() {
-  if (_vpnCheckRunning || _vpnModalShown || Date.now() < _vpnCooldownUntil || !navigator.onLine) return;
-  _vpnCheckRunning = true;
-  try {
-    if (await _externalNetOk()) { _vpnModalShown = true; openModal('m-vpn-block'); }
-  } finally {
-    _vpnCheckRunning = false;
-    _vpnCooldownUntil = Date.now() + 60000;
-  }
-}
-function _clearVpnBlock() {
-  if (_vpnModalShown) { _vpnModalShown = false; closeModal('m-vpn-block'); }
-  _vpnCooldownUntil = 0;
-}
 async function req(path, opts = {}, _retried = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
     await refreshSession();
   }
   const h = { 'Content-Type': 'application/json', apikey: SB_ANON, ...opts.headers };
   if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
-  let r;
-  const _to = _timeoutSignal(10000);
-  try {
-    r = await fetch(SB_URL + path, { ...opts, headers: h, signal: _to.signal });
-  } catch (e) {
-    _checkVpnBlock();
-    throw { message: 'Нет соединения' };
-  } finally {
-    _to.done();
-  }
-  _clearVpnBlock();
+  const r = await fetch(SB_URL + path, { ...opts, headers: h });
   const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
   if (r.status === 401 && !_retried) {
     if (!S.session) throw { message: 'Требуется авторизация' };
@@ -4803,22 +4753,16 @@ async function blockIfEmployee() {
 async function refreshSession() {
   if (!S.session?.refresh_token) return false;
   let r;
-  const _to = _timeoutSignal(10000);
   try {
     r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
       body: JSON.stringify({ refresh_token: S.session.refresh_token }),
-      signal: _to.signal,
     });
   } catch(e) {
     // Network error — token may still be valid; return null so callers don't logout
-    _checkVpnBlock();
     return null;
-  } finally {
-    _to.done();
   }
-  _clearVpnBlock();
   if (!r.ok) return false; // HTTP 4xx: token definitively invalid/revoked
   const d = await r.json();
   if (!d.access_token) return false;
@@ -9213,6 +9157,7 @@ window.addEventListener('hashchange', () => {
 
 // ─── INIT ───
 (async function init() {
+  openModal('m-vpn-notice');
   const _initDark = document.documentElement.classList.contains('dark');
   document.getElementById('theme-chk').checked = _initDark;
   _updateThemeIcon(_initDark);
