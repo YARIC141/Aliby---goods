@@ -120,7 +120,11 @@ self.addEventListener('fetch', e => {
           } catch {
             const fallback = await withTimeout(caches.match('/'), 1000).catch(() => null)
               || await withTimeout(caches.match('/index.html'), 1000).catch(() => null);
-            return fallback || new Response('<html><body style="font:16px sans-serif;padding:32px">Нет соединения. Обновите страницу.</body></html>', {
+            return fallback || new Response(`<html><body style="font:16px sans-serif;padding:32px;text-align:center">
+<p>Сервер недоступен.</p>
+<p style="color:#666;font-size:14px;margin-top:8px">Наш сервер расположен в России — если у вас включён VPN, попробуйте его отключить.</p>
+<button onclick="location.reload()" style="margin-top:20px;padding:10px 24px;font-size:16px;border:none;border-radius:8px;background:#e8743b;color:#fff">Обновить страницу</button>
+</body></html>`, {
               status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' },
             });
           }
