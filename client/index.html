@@ -2852,14 +2852,21 @@ function buildOsmStyle() {
 let _vpnCheckRunning = false;
 let _vpnCooldownUntil = 0;
 let _vpnModalShown = false;
-async function _externalNetOk() {
+// AbortController-based timeout — plain fetch() never rejects on its own if a
+// VPN blackholes packets instead of refusing the connection outright, so
+// without this the request just hangs forever and no error handler ever runs.
+function _timeoutSignal(ms) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 3000);
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return { signal: ctrl.signal, done: () => clearTimeout(t) };
+}
+async function _externalNetOk() {
+  const to = _timeoutSignal(3000);
   try {
-    await fetch('https://www.gstatic.com/generate_204', { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal });
+    await fetch('https://www.gstatic.com/generate_204', { mode: 'no-cors', cache: 'no-store', signal: to.signal });
     return true;
   } catch { return false; }
-  finally { clearTimeout(t); }
+  finally { to.done(); }
 }
 async function _checkVpnBlock() {
   if (_vpnCheckRunning || _vpnModalShown || Date.now() < _vpnCooldownUntil || !navigator.onLine) return;
@@ -2882,11 +2889,14 @@ async function req(path, opts = {}, _retried = false) {
   const h = { 'Content-Type': 'application/json', apikey: SB_ANON, ...opts.headers };
   if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
   let r;
+  const _to = _timeoutSignal(10000);
   try {
-    r = await fetch(SB_URL + path, { ...opts, headers: h });
+    r = await fetch(SB_URL + path, { ...opts, headers: h, signal: _to.signal });
   } catch (e) {
     _checkVpnBlock();
     throw { message: 'Нет соединения' };
+  } finally {
+    _to.done();
   }
   _clearVpnBlock();
   const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
@@ -4793,16 +4803,20 @@ async function blockIfEmployee() {
 async function refreshSession() {
   if (!S.session?.refresh_token) return false;
   let r;
+  const _to = _timeoutSignal(10000);
   try {
     r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
       body: JSON.stringify({ refresh_token: S.session.refresh_token }),
+      signal: _to.signal,
     });
   } catch(e) {
     // Network error — token may still be valid; return null so callers don't logout
     _checkVpnBlock();
     return null;
+  } finally {
+    _to.done();
   }
   _clearVpnBlock();
   if (!r.ok) return false; // HTTP 4xx: token definitively invalid/revoked
