@@ -774,11 +774,13 @@ async function _doSyncReminders(uid){
     var rs=_remSettings();
     // Android-каналы неизменяемы после создания — вместо пересоздания под
     // текущую вибрацию заводим оба варианта один раз и просто выбираем id.
+    // v2 — с фирменным звуком (res/raw/alliby_reminder.mp3); старые v1-каналы
+    // без кастомного звука у уже установивших APK не трогаем, просто больше не используем.
     try{
-      await LN.createChannel({id:'alliby_rem_vib',name:'Напоминания (с вибрацией)',importance:4,vibration:true});
-      await LN.createChannel({id:'alliby_rem_novib',name:'Напоминания (без вибрации)',importance:3,vibration:false});
+      await LN.createChannel({id:'alliby_rem_vib_v2',name:'Напоминания (с вибрацией)',importance:4,vibration:true,sound:'alliby_reminder.mp3'});
+      await LN.createChannel({id:'alliby_rem_novib_v2',name:'Напоминания (без вибрации)',importance:3,vibration:false,sound:'alliby_reminder.mp3'});
     }catch(e){}
-    var channelId=rs.vibration?'alliby_rem_vib':'alliby_rem_novib';
+    var channelId=rs.vibration?'alliby_rem_vib_v2':'alliby_rem_novib_v2';
     var nowDate=new Date();
     var nowIso=nowDate.toISOString();
     var today=nowIso.slice(0,10);
