@@ -18,6 +18,7 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
     static final String ACTION_PREV_DAY = "ru.alliby.app.widget.ACTION_PREV_DAY";
     static final String ACTION_NEXT_DAY = "ru.alliby.app.widget.ACTION_NEXT_DAY";
     static final String ACTION_TODAY = "ru.alliby.app.widget.ACTION_TODAY";
+    static final String ACTION_TOGGLE_THEME = "ru.alliby.app.widget.ACTION_TOGGLE_THEME";
     static final String EXTRA_APPWIDGET_ID = AppWidgetManager.EXTRA_APPWIDGET_ID;
 
     @Override
@@ -73,14 +74,17 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
         );
         views.setOnClickPendingIntent(R.id.widget_btn_add, addPending);
 
-        Intent settingsIntent = new Intent(context, WidgetSettingsActivity.class);
-        settingsIntent.putExtra(EXTRA_APPWIDGET_ID, appWidgetId);
-        settingsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Intent settingsIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("alliby://open?screen=reminders"));
+        settingsIntent.setPackage(context.getPackageName());
+        settingsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent settingsPending = PendingIntent.getActivity(
             context, 3000 + appWidgetId, settingsIntent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
         views.setOnClickPendingIntent(R.id.widget_btn_settings, settingsPending);
+
+        views.setOnClickPendingIntent(R.id.widget_btn_theme,
+            navPendingIntent(context, appWidgetId, ACTION_TOGGLE_THEME, 7000));
 
         views.setOnClickPendingIntent(R.id.widget_btn_prev_day,
             navPendingIntent(context, appWidgetId, ACTION_PREV_DAY, 4000));

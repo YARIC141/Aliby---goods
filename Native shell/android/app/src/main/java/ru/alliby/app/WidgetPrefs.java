@@ -27,6 +27,13 @@ class WidgetPrefs {
         prefs(ctx).edit().putString(KEY_THEME, mode).apply();
     }
 
+    /** Циклический переход "система" -> "светлая" -> "тёмная" -> "система" по кнопке на самом виджете. */
+    static void cycleThemeMode(Context ctx) {
+        String mode = themeMode(ctx);
+        String next = "system".equals(mode) ? "light" : "light".equals(mode) ? "dark" : "system";
+        setThemeMode(ctx, next);
+    }
+
     static boolean isDark(Context ctx) {
         String mode = themeMode(ctx);
         if ("dark".equals(mode)) return true;

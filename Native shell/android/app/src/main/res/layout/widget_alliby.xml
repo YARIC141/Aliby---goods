@@ -27,11 +27,20 @@
             android:textStyle="bold" />
 
         <ImageButton
+            android:id="@+id/widget_btn_theme"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Сменить тему"
+            android:padding="7dp"
+            android:src="@drawable/ic_widget_theme" />
+
+        <ImageButton
             android:id="@+id/widget_btn_settings"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Настройки виджета"
+            android:contentDescription="Напоминания"
             android:padding="7dp"
             android:src="@drawable/ic_widget_settings" />
 

@@ -32,12 +32,37 @@ public class AllibyWidgetPlugin extends Plugin {
                     item.put("id", src.optString("id"));
                     item.put("type", src.optString("type", "booking"));
                     item.put("title", src.optString("title"));
+                    item.put("store", src.optString("store"));
+                    item.put("address", src.optString("address"));
                     item.put("atMillis", src.optLong("atMillis"));
                     out.put(item);
                 } catch (JSONException ignored) {}
             }
         }
         PersonalEventsStore.saveAllibyEvents(getContext(), out);
+        AllibyWidgetProvider.refreshAll(getContext());
+        call.resolve(new JSObject());
+    }
+
+    @PluginMethod
+    public void updateOrders(PluginCall call) {
+        JSArray orders = call.getArray("orders");
+        JSONArray out = new JSONArray();
+        if (orders != null) {
+            for (int i = 0; i < orders.length(); i++) {
+                try {
+                    JSONObject src = orders.getJSONObject(i);
+                    JSONObject item = new JSONObject();
+                    item.put("id", src.optString("id"));
+                    item.put("type", "order");
+                    item.put("store", src.optString("store"));
+                    item.put("status", src.optString("status"));
+                    item.put("atMillis", src.optLong("atMillis"));
+                    out.put(item);
+                } catch (JSONException ignored) {}
+            }
+        }
+        PersonalEventsStore.saveOrders(getContext(), out);
         AllibyWidgetProvider.refreshAll(getContext());
         call.resolve(new JSObject());
     }

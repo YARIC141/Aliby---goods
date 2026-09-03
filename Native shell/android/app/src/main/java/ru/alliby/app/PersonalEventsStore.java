@@ -13,13 +13,16 @@ import org.json.JSONObject;
  *  - "personal_events" — события, которые пользователь создаёт прямо с виджета
  *    (не связаны с аккаунтом/Supabase, живут только на этом устройстве);
  *  - "alliby_events" — снимок ближайших записей/аренды, который пушит JS
- *    (client/index.html, _doSyncReminders) через AllibyWidgetPlugin.
+ *    (client/index.html, _doSyncReminders) через AllibyWidgetPlugin;
+ *  - "alliby_orders" — снимок текущих (активных) заказов, который пушит JS
+ *    (_pushOrdersToWidget) через AllibyWidgetPlugin.updateOrders.
  */
 class PersonalEventsStore {
 
     private static final String PREFS = "alliby_widget_prefs";
     private static final String KEY_PERSONAL = "personal_events";
     private static final String KEY_ALLIBY = "alliby_events";
+    private static final String KEY_ORDERS = "alliby_orders";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -35,6 +38,14 @@ class PersonalEventsStore {
 
     static void saveAllibyEvents(Context ctx, JSONArray events) {
         prefs(ctx).edit().putString(KEY_ALLIBY, events.toString()).apply();
+    }
+
+    static JSONArray listOrders(Context ctx) {
+        return readArray(ctx, KEY_ORDERS);
+    }
+
+    static void saveOrders(Context ctx, JSONArray orders) {
+        prefs(ctx).edit().putString(KEY_ORDERS, orders.toString()).apply();
     }
 
     static JSONObject findPersonal(Context ctx, String id) {

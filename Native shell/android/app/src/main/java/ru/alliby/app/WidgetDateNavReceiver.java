@@ -13,6 +13,11 @@ public class WidgetDateNavReceiver extends BroadcastReceiver {
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return;
 
         String action = intent.getAction();
+        if (AllibyWidgetProvider.ACTION_TOGGLE_THEME.equals(action)) {
+            WidgetPrefs.cycleThemeMode(context);
+            AllibyWidgetProvider.refreshAllFull(context);
+            return;
+        }
         if (AllibyWidgetProvider.ACTION_PREV_DAY.equals(action)) {
             WidgetPrefs.shiftSelectedDate(context, appWidgetId, -1);
         } else if (AllibyWidgetProvider.ACTION_NEXT_DAY.equals(action)) {

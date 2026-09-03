@@ -6,8 +6,10 @@ import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -72,6 +74,22 @@ public class AddPersonalEventActivity extends Activity {
         btnCancel.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> save());
         btnDelete.setOnClickListener(v -> delete());
+
+        maybeRequestExactAlarmPermission();
+    }
+
+    // На Android 12+ точные alarm'ы (иначе система откладывает их в Doze — напоминание
+    // может не сработать/не прозвучать вовремя, пока телефон "спит") требуют разрешения
+    // "Будильники и напоминания", которое дают только через системный экран настроек.
+    private void maybeRequestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+        AlarmManager am = (AlarmManager) getSystemService(ALARM_SERVICE);
+        if (am != null && !am.canScheduleExactAlarms()) {
+            Toast.makeText(this, "Разрешите «Будильники и напоминания», чтобы напоминание звучало вовремя", Toast.LENGTH_LONG).show();
+            try {
+                startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) {}
+        }
     }
 
     private void selectLeadRadio(int minutes) {

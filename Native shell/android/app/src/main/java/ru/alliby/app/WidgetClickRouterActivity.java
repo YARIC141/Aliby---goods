@@ -27,6 +27,9 @@ public class WidgetClickRouterActivity extends Activity {
         } else if ("rent".equals(type)) {
             target = new Intent(Intent.ACTION_VIEW, Uri.parse("alliby://open?screen=rent&id=" + Uri.encode(id)));
             target.setPackage(getPackageName());
+        } else if ("order".equals(type)) {
+            target = new Intent(Intent.ACTION_VIEW, Uri.parse("alliby://open?screen=order&id=" + Uri.encode(id)));
+            target.setPackage(getPackageName());
         } else {
             target = new Intent(Intent.ACTION_VIEW, Uri.parse("alliby://open?screen=booking&id=" + Uri.encode(id)));
             target.setPackage(getPackageName());

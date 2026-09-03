@@ -32,6 +32,15 @@
             android:textSize="14sp" />
 
         <TextView
+            android:id="@+id/item_meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="#999999"
+            android:textSize="12sp" />
+
+        <TextView
             android:id="@+id/item_time"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
