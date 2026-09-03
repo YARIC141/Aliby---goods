@@ -13,7 +13,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(AllibyWidgetPlugin.class);
         super.onCreate(savedInstanceState);
         applyStatusBar();
-        ExactAlarmPermission.maybeRequest(this);
+        if (!ExactAlarmPermission.maybeRequest(this)) {
+            BatteryOptimizationPermission.maybeRequest(this);
+        }
     }
 
     @Override

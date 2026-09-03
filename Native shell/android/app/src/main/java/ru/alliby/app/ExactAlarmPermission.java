@@ -18,14 +18,17 @@ import android.widget.Toast;
 final class ExactAlarmPermission {
     private ExactAlarmPermission() {}
 
-    static void maybeRequest(Activity activity) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return;
+    /** @return true если разрешения не было и был запущен запрос (экран настроек ещё откроется/открылся). */
+    static boolean maybeRequest(Activity activity) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return false;
         AlarmManager am = (AlarmManager) activity.getSystemService(Activity.ALARM_SERVICE);
         if (am != null && !am.canScheduleExactAlarms()) {
             Toast.makeText(activity, "Разрешите «Будильники и напоминания», чтобы напоминания звучали вовремя", Toast.LENGTH_LONG).show();
             try {
                 activity.startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + activity.getPackageName())));
             } catch (Exception e) {}
+            return true;
         }
+        return false;
     }
 }

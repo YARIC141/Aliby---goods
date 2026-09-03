@@ -121,4 +121,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Точные alarm'ы для личных напоминаний виджета (иначе на API 31+ ОС всегда откладывает их в Doze) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Запрос на исключение из оптимизации батареи (звук напоминаний в спящем режиме) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 </manifest>
