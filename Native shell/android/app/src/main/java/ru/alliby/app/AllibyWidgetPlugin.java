@@ -34,6 +34,8 @@ public class AllibyWidgetPlugin extends Plugin {
                     item.put("title", src.optString("title"));
                     item.put("store", src.optString("store"));
                     item.put("address", src.optString("address"));
+                    item.put("phase", src.optString("phase"));
+                    item.put("period", src.optString("period"));
                     item.put("atMillis", src.optLong("atMillis"));
                     out.put(item);
                 } catch (JSONException ignored) {}

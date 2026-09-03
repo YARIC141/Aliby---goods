@@ -20,6 +20,8 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
     private static final int COLOR_ALLIBY = Color.parseColor("#e8743b");
     private static final int COLOR_PERSONAL = Color.parseColor("#3b82f6");
     private static final int COLOR_ORDER = Color.parseColor("#22c55e");
+    private static final int COLOR_RENT = Color.parseColor("#ef4444");
+    private static final int COLOR_RENT_PICKUP = Color.parseColor("#22c55e");
     private static final int TEXT_LIGHT_PRIMARY = Color.parseColor("#1a1a1a");
     private static final int TEXT_LIGHT_SECONDARY = Color.parseColor("#999999");
     private static final int TEXT_DARK_PRIMARY = Color.parseColor("#f0f0f0");
@@ -106,6 +108,8 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         String type = o.optString("type", "personal");
         boolean isPersonal = "personal".equals(type);
         boolean isOrder = "order".equals(type);
+        boolean isRent = "rent".equals(type);
+        boolean isRentPickup = isRent && "pickup".equals(o.optString("phase"));
         long atMillis = o.optLong("atMillis");
         boolean dark = WidgetPrefs.isDark(context);
 
@@ -120,15 +124,21 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
             title = o.optString("title", isPersonal ? "Событие" : "Запись");
             String store = o.optString("store", "");
             String address = o.optString("address", "");
-            meta = store.isEmpty() ? address : (address.isEmpty() ? store : store + ", " + address);
-            dotColor = isPersonal ? COLOR_PERSONAL : COLOR_ALLIBY;
+            String storeAddr = store.isEmpty() ? address : (address.isEmpty() ? store : store + ", " + address);
+            if (isRent) {
+                String period = o.optString("period", "");
+                meta = storeAddr.isEmpty() ? period : (period.isEmpty() ? storeAddr : storeAddr + " · " + period);
+                dotColor = COLOR_RENT;
+            } else {
+                meta = storeAddr;
+                dotColor = isPersonal ? COLOR_PERSONAL : COLOR_ALLIBY;
+            }
         }
 
         rv.setTextViewText(R.id.item_title, title);
         rv.setInt(R.id.item_dot, "setColorFilter", dotColor);
         rv.setTextColor(R.id.item_title, dark ? TEXT_DARK_PRIMARY : TEXT_LIGHT_PRIMARY);
         rv.setTextColor(R.id.item_meta, dark ? TEXT_DARK_SECONDARY : TEXT_LIGHT_SECONDARY);
-        rv.setTextColor(R.id.item_time, dark ? TEXT_DARK_SECONDARY : TEXT_LIGHT_SECONDARY);
 
         if (meta.isEmpty()) {
             rv.setViewVisibility(R.id.item_meta, android.view.View.GONE);
@@ -138,7 +148,13 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         }
 
         rv.setViewVisibility(R.id.item_time, android.view.View.VISIBLE);
-        rv.setTextViewText(R.id.item_time, formatTime(atMillis));
+        if (isRent) {
+            rv.setTextViewText(R.id.item_time, isRentPickup ? "Забрать" : "Отдать");
+            rv.setTextColor(R.id.item_time, isRentPickup ? COLOR_RENT_PICKUP : COLOR_RENT);
+        } else {
+            rv.setTextColor(R.id.item_time, dark ? TEXT_DARK_SECONDARY : TEXT_LIGHT_SECONDARY);
+            rv.setTextViewText(R.id.item_time, formatTime(atMillis));
+        }
 
         Intent fillInIntent = new Intent();
         fillInIntent.putExtra("type", type);
@@ -167,7 +183,8 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
 
     @Override
     public long getItemId(int position) {
-        return items.get(position).optString("id").hashCode();
+        JSONObject o = items.get(position);
+        return (o.optString("id") + "|" + o.optString("type") + "|" + o.optString("phase") + "|" + o.optLong("atMillis")).hashCode();
     }
 
     @Override

@@ -761,6 +761,24 @@ function _remLabel(ms){
 // и планируем заново по актуальному списку будущих записей/аренды пользователя.
 // Так проще и надёжнее, чем ловить каждое место в коде, где брони создаются,
 // отменяются или переносятся (таких мест 7+, разбросаны по файлу).
+function _fmtRentPeriod(startIso,endIso){
+  try{
+    function pad(n){return n<10?'0'+n:''+n;}
+    var s=new Date(startIso);
+    if(isNaN(s.getTime()))return '';
+    var sTime=pad(s.getHours())+':'+pad(s.getMinutes());
+    if(!endIso)return sTime;
+    var e=new Date(endIso);
+    if(isNaN(e.getTime()))return sTime;
+    var eTime=pad(e.getHours())+':'+pad(e.getMinutes());
+    var sameDay=s.getFullYear()===e.getFullYear()&&s.getMonth()===e.getMonth()&&s.getDate()===e.getDate();
+    if(sameDay)return sTime+'–'+eTime;
+    var sDate=pad(s.getDate())+'.'+pad(s.getMonth()+1);
+    var eDate=pad(e.getDate())+'.'+pad(e.getMonth()+1);
+    return sDate+' '+sTime+' – '+eDate+' '+eTime;
+  }catch(e){return '';}
+}
+
 async function _doSyncReminders(uid){
   if(!_isNative()||!uid)return;
   var LN=_P().LocalNotifications;
@@ -785,7 +803,7 @@ async function _doSyncReminders(uid){
     var nowIso=nowDate.toISOString();
     var today=nowIso.slice(0,10);
     var bookings=rs.bookings.enabled?await req('/rest/v1/bookings?user_id=eq.'+uid+'&status=eq.booked&slot_date=gte.'+today+'&select=id,slot_date,slot_start,menu_items(name),stores(name,address)').catch(function(){return [];}):[];
-    var rents=rs.rent.enabled?await req('/rest/v1/rent_reservations?user_id=eq.'+uid+'&status=neq.cancelled&end_at=gte.'+nowIso+'&select=id,start_at,menu_items(name),stores(name,address)').catch(function(){return [];}):[];
+    var rents=rs.rent.enabled?await req('/rest/v1/rent_reservations?user_id=eq.'+uid+'&status=neq.cancelled&end_at=gte.'+nowIso+'&select=id,start_at,end_at,menu_items(name),stores(name,address)').catch(function(){return [];}):[];
     var pending=await LN.getPending();
     if(pending&&pending.notifications&&pending.notifications.length){
       await LN.cancel({notifications:pending.notifications.map(function(n){return{id:n.id};})});
@@ -841,7 +859,17 @@ async function _doSyncReminders(uid){
         if(!r.start_at)return;
         var at=new Date(r.start_at);
         if(isNaN(at.getTime()))return;
-        widgetEvents.push({type:'rent',id:String(r.id),title:(r.menu_items&&r.menu_items.name)||'Аренда',store:(r.stores&&r.stores.name)||'',address:(r.stores&&r.stores.address)||'',atMillis:at.getTime()});
+        var storeName=(r.stores&&r.stores.name)||'';
+        var address=(r.stores&&r.stores.address)||'';
+        var itemName=(r.menu_items&&r.menu_items.name)||'Аренда';
+        var period=_fmtRentPeriod(r.start_at,r.end_at);
+        widgetEvents.push({type:'rent',phase:'pickup',id:String(r.id),title:itemName,store:storeName,address:address,period:period,atMillis:at.getTime()});
+        if(r.end_at){
+          var endAt=new Date(r.end_at);
+          if(!isNaN(endAt.getTime())){
+            widgetEvents.push({type:'rent',phase:'return',id:String(r.id),title:itemName,store:storeName,address:address,period:period,atMillis:endAt.getTime()});
+          }
+        }
       });
       widgetEvents.sort(function(a,b){return a.atMillis-b.atMillis;});
       var AW=_P().AllibyWidget;
