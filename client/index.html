@@ -7623,6 +7623,10 @@ function dzvCancelPick() {
 
 async function dzvConfirmPick() {
   if (!_dzvPickResult) return;
+  if (_dzvPickResult.addr == null) {
+    clearTimeout(_dzvPickTimer);
+    await _dzvGeocode(_dzvPickResult.lat, _dzvPickResult.lng);
+  }
   const { lat, lng, addr } = _dzvPickResult;
   S.userAddrLat = lat;
   S.userAddrLng = lng;
