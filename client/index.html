@@ -1582,8 +1582,8 @@ document.addEventListener('deviceready',function(){
   </div>
   <!-- Расписание pane -->
   <div id="ca-pane-bk" style="display:none;flex:1;flex-direction:column;overflow:hidden">
-    <!-- календарь — не скроллится -->
-    <div style="flex-shrink:0;padding:20px 20px 0">
+    <!-- единое поле скролла: календарь, фильтры и список за день -->
+    <div id="mbk-scroll-area" class="sl-list" style="padding:20px 20px 0">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <button class="btn btn-sm" onclick="myBookingsPrevMonth()">←</button>
         <span id="mbk-month-label" style="font:600 15px/1 var(--font-sans)"></span>
@@ -1607,9 +1607,6 @@ document.addEventListener('deviceready',function(){
           <option value="">Любой мастер</option>
         </select>
       </div>
-    </div>
-    <!-- список за день — скроллится -->
-    <div id="mbk-scroll-area" class="sl-list" style="padding:0 20px">
       <div id="mbk-placeholder" style="text-align:center;color:var(--fg-3);font-size:14px;padding:36px 0">Выберите дату</div>
       <div id="mbk-day-view" style="display:none;padding-top:12px">
         <div id="mbk-day-title" style="font:600 15px/1 var(--font-sans);margin-bottom:10px"></div>
