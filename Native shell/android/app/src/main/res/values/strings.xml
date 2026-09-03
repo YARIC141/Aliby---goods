@@ -10,4 +10,5 @@
     <string name="channel_orders_desc">Уведомления о статусе ваших заказов</string>
     <string name="channel_bookings_name">Записи</string>
     <string name="channel_bookings_desc">Уведомления о бронированиях</string>
+    <string name="widget_description">Ближайшие записи Alliby и личные события</string>
 </resources>

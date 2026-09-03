@@ -60,6 +60,37 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
+
+        <!-- Домашний виджет: ближайшие события Alliby + личный ежедневник -->
+        <receiver
+            android:name=".AllibyWidgetProvider"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/alliby_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".AllibyWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <receiver
+            android:name=".PersonalEventAlarmReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".WidgetClickRouterActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <activity
+            android:name=".AddPersonalEventActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.Dialog" />
     </application>
 
     <!-- Permissions -->
