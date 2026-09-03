@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/calendar_cell_root"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingTop="3dp"
+    android:paddingBottom="3dp">
+
+    <TextView
+        android:id="@+id/calendar_cell_day"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="20dp"
+        android:minHeight="20dp"
+        android:gravity="center"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/calendar_cell_dots"
+        android:layout_width="wrap_content"
+        android:layout_height="6dp"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal"
+        android:gravity="center" />
+</LinearLayout>

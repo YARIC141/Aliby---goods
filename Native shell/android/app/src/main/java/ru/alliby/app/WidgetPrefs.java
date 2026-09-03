@@ -14,6 +14,8 @@ class WidgetPrefs {
     private static final String PREFS = "alliby_widget_prefs";
     private static final String KEY_THEME = "widget_theme"; // "system" | "light" | "dark"
     private static final String KEY_DATE_PREFIX = "widget_date_";
+    private static final String KEY_MODE_PREFIX = "widget_mode_"; // "agenda" | "calendar"
+    private static final String KEY_CAL_YM_PREFIX = "widget_calym_"; // "yyyy-MM"
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -60,8 +62,43 @@ class WidgetPrefs {
         setSelectedDate(ctx, appWidgetId, new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.getTime()));
     }
 
+    static String viewMode(Context ctx, int appWidgetId) {
+        return prefs(ctx).getString(KEY_MODE_PREFIX + appWidgetId, "agenda");
+    }
+
+    static void setViewMode(Context ctx, int appWidgetId, String mode) {
+        prefs(ctx).edit().putString(KEY_MODE_PREFIX + appWidgetId, mode).apply();
+    }
+
+    static String calendarYearMonth(Context ctx, int appWidgetId) {
+        String stored = prefs(ctx).getString(KEY_CAL_YM_PREFIX + appWidgetId, null);
+        if (stored != null) return stored;
+        return selectedDate(ctx, appWidgetId).substring(0, 7);
+    }
+
+    static void setCalendarYearMonth(Context ctx, int appWidgetId, String yearMonth) {
+        prefs(ctx).edit().putString(KEY_CAL_YM_PREFIX + appWidgetId, yearMonth).apply();
+    }
+
+    static void shiftCalendarMonth(Context ctx, int appWidgetId, int deltaMonths) {
+        String[] parts = calendarYearMonth(ctx, appWidgetId).split("-");
+        Calendar cal = Calendar.getInstance();
+        cal.set(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]) - 1, 1);
+        cal.add(Calendar.MONTH, deltaMonths);
+        setCalendarYearMonth(ctx, appWidgetId, new SimpleDateFormat("yyyy-MM", Locale.US).format(cal.getTime()));
+    }
+
+    static void resetToToday(Context ctx, int appWidgetId) {
+        setSelectedDate(ctx, appWidgetId, todayStr());
+        setCalendarYearMonth(ctx, appWidgetId, todayStr().substring(0, 7));
+    }
+
     static void clearWidget(Context ctx, int appWidgetId) {
-        prefs(ctx).edit().remove(KEY_DATE_PREFIX + appWidgetId).apply();
+        prefs(ctx).edit()
+            .remove(KEY_DATE_PREFIX + appWidgetId)
+            .remove(KEY_MODE_PREFIX + appWidgetId)
+            .remove(KEY_CAL_YM_PREFIX + appWidgetId)
+            .apply();
     }
 
     static String todayStr() {

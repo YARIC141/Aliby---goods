@@ -23,7 +23,20 @@ public class WidgetDateNavReceiver extends BroadcastReceiver {
         } else if (AllibyWidgetProvider.ACTION_NEXT_DAY.equals(action)) {
             WidgetPrefs.shiftSelectedDate(context, appWidgetId, 1);
         } else if (AllibyWidgetProvider.ACTION_TODAY.equals(action)) {
-            WidgetPrefs.setSelectedDate(context, appWidgetId, WidgetPrefs.todayStr());
+            WidgetPrefs.resetToToday(context, appWidgetId);
+        } else if (AllibyWidgetProvider.ACTION_PREV_MONTH.equals(action)) {
+            WidgetPrefs.shiftCalendarMonth(context, appWidgetId, -1);
+        } else if (AllibyWidgetProvider.ACTION_NEXT_MONTH.equals(action)) {
+            WidgetPrefs.shiftCalendarMonth(context, appWidgetId, 1);
+        } else if (AllibyWidgetProvider.ACTION_SET_MODE_AGENDA.equals(action)) {
+            WidgetPrefs.setViewMode(context, appWidgetId, "agenda");
+        } else if (AllibyWidgetProvider.ACTION_SET_MODE_CALENDAR.equals(action)) {
+            WidgetPrefs.setViewMode(context, appWidgetId, "calendar");
+        } else if (AllibyWidgetProvider.ACTION_SELECT_DAY.equals(action)) {
+            String date = intent.getStringExtra(AllibyWidgetProvider.EXTRA_DATE);
+            if (date == null) return;
+            WidgetPrefs.setSelectedDate(context, appWidgetId, date);
+            WidgetPrefs.setViewMode(context, appWidgetId, "agenda");
         } else {
             return;
         }
