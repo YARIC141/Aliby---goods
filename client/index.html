@@ -834,17 +834,18 @@ async function _doSyncReminders(uid){
       (bookings||[]).forEach(function(b){
         if(!b.slot_date||!b.slot_start)return;
         var at=new Date(b.slot_date+'T'+b.slot_start);
-        if(isNaN(at.getTime())||at.getTime()<=now)return;
-        widgetEvents.push({id:'b:'+b.id,title:(b.menu_items&&b.menu_items.name)||'Запись',atMillis:at.getTime()});
+        if(isNaN(at.getTime()))return;
+        widgetEvents.push({type:'booking',id:String(b.id),title:(b.menu_items&&b.menu_items.name)||'Запись',atMillis:at.getTime()});
       });
       (rents||[]).forEach(function(r){
         if(!r.start_at)return;
         var at=new Date(r.start_at);
-        if(isNaN(at.getTime())||at.getTime()<=now)return;
-        widgetEvents.push({id:'r:'+r.id,title:(r.menu_items&&r.menu_items.name)||'Аренда',atMillis:at.getTime()});
+        if(isNaN(at.getTime()))return;
+        widgetEvents.push({type:'rent',id:String(r.id),title:(r.menu_items&&r.menu_items.name)||'Аренда',atMillis:at.getTime()});
       });
+      widgetEvents.sort(function(a,b){return a.atMillis-b.atMillis;});
       var AW=_P().AllibyWidget;
-      if(AW)await AW.updateAllibyEvents({events:widgetEvents});
+      if(AW)await AW.updateAllibyEvents({events:widgetEvents.slice(0,50)});
     }catch(e){}
   }catch(e){}
 }
@@ -1022,8 +1023,14 @@ document.addEventListener('deviceready',function(){
       var url=event.url||'';
       var qs=url.includes('?')?url.slice(url.indexOf('?')):'';
       if(url.indexOf('open')!==-1&&qs.indexOf('screen=')!==-1){
-        var m=/screen=([a-z0-9_-]+)/i.exec(qs);
-        if(m&&typeof goTo==='function'){goTo(m[1]);return;}
+        var sm=/screen=([a-z0-9_-]+)/i.exec(qs);
+        var screen=sm&&sm[1];
+        var idm=/[?&]id=([^&]+)/i.exec(qs);
+        var id=idm&&decodeURIComponent(idm[1]);
+        if(screen==='booking'&&id&&typeof openBookingById==='function'){openBookingById(id);return;}
+        if(screen==='rent'&&id&&typeof openRentById==='function'){openRentById(id);return;}
+        if(screen==='reminders'&&typeof openReminders==='function'){goTo('profile');openReminders();return;}
+        if(screen&&typeof goTo==='function'){goTo(screen);return;}
       }
       if(qs&&typeof handlePaymentReturn==='function')handlePaymentReturn(qs);
     });
@@ -9296,11 +9303,24 @@ async function openOrderById(orderId) {
 }
 
 async function openBookingById(bookingId) {
-  goTo('calenabs');
+  goTo('bookings');
   try {
     var rows = await req('/rest/v1/bookings?id=eq.' + bookingId + '&select=slot_date');
     if (!rows || !rows[0]) return;
     var ds = rows[0].slot_date;
+    var parts = ds.split('-').map(Number);
+    _myBk.year = parts[0]; _myBk.month = parts[1] - 1;
+    await loadBookingsScreen();
+    setTimeout(function(){ openMyBookingsDay(ds); }, 100);
+  } catch(e) {}
+}
+
+async function openRentById(reservationId) {
+  goTo('bookings');
+  try {
+    var rows = await req('/rest/v1/rent_reservations?id=eq.' + reservationId + '&select=start_at');
+    if (!rows || !rows[0]) return;
+    var ds = String(rows[0].start_at).slice(0, 10);
     var parts = ds.split('-').map(Number);
     _myBk.year = parts[0]; _myBk.month = parts[1] - 1;
     await loadBookingsScreen();
