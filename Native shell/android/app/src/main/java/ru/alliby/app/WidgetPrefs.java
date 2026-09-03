@@ -16,6 +16,7 @@ class WidgetPrefs {
     private static final String KEY_DATE_PREFIX = "widget_date_";
     private static final String KEY_MODE_PREFIX = "widget_mode_"; // "agenda" | "calendar"
     private static final String KEY_CAL_YM_PREFIX = "widget_calym_"; // "yyyy-MM"
+    private static final String KEY_SHOW_ORDERS = "widget_show_orders"; // global, как тема
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -91,6 +92,14 @@ class WidgetPrefs {
     static void resetToToday(Context ctx, int appWidgetId) {
         setSelectedDate(ctx, appWidgetId, todayStr());
         setCalendarYearMonth(ctx, appWidgetId, todayStr().substring(0, 7));
+    }
+
+    static boolean showOrders(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_SHOW_ORDERS, true);
+    }
+
+    static void toggleShowOrders(Context ctx) {
+        prefs(ctx).edit().putBoolean(KEY_SHOW_ORDERS, !showOrders(ctx)).apply();
     }
 
     static void clearWidget(Context ctx, int appWidgetId) {

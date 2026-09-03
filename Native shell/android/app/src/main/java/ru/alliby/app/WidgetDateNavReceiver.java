@@ -18,6 +18,11 @@ public class WidgetDateNavReceiver extends BroadcastReceiver {
             AllibyWidgetProvider.refreshAllFull(context);
             return;
         }
+        if (AllibyWidgetProvider.ACTION_TOGGLE_ORDERS.equals(action)) {
+            WidgetPrefs.toggleShowOrders(context);
+            AllibyWidgetProvider.refreshAllFull(context);
+            return;
+        }
         if (AllibyWidgetProvider.ACTION_PREV_DAY.equals(action)) {
             WidgetPrefs.shiftSelectedDate(context, appWidgetId, -1);
         } else if (AllibyWidgetProvider.ACTION_NEXT_DAY.equals(action)) {

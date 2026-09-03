@@ -6,23 +6,23 @@
     android:layout_weight="1"
     android:gravity="center"
     android:orientation="vertical"
-    android:paddingTop="3dp"
-    android:paddingBottom="3dp">
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
     <TextView
         android:id="@+id/calendar_cell_day"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:minWidth="20dp"
-        android:minHeight="20dp"
+        android:minWidth="34dp"
+        android:minHeight="34dp"
         android:gravity="center"
-        android:textSize="12sp" />
+        android:textSize="17sp" />
 
     <LinearLayout
         android:id="@+id/calendar_cell_dots"
         android:layout_width="wrap_content"
-        android:layout_height="6dp"
-        android:layout_marginTop="2dp"
+        android:layout_height="7dp"
+        android:layout_marginTop="3dp"
         android:orientation="horizontal"
         android:gravity="center" />
 </LinearLayout>

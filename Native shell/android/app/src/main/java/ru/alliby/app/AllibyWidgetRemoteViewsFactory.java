@@ -57,7 +57,7 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
         // atMillis у заказа — время последней смены статуса, поэтому заказ показываем
         // только в тот день, когда статус реально поменялся (как обычное событие),
         // но выводим его первым в списке этого дня.
-        JSONArray orders = PersonalEventsStore.listOrders(context);
+        JSONArray orders = WidgetPrefs.showOrders(context) ? PersonalEventsStore.listOrders(context) : null;
         ArrayList<JSONObject> orderItems = new ArrayList<>();
         if (orders != null) {
             SimpleDateFormat dayFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);

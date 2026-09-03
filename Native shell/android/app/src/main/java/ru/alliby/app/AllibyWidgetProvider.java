@@ -32,6 +32,7 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
     static final String ACTION_SET_MODE_AGENDA = "ru.alliby.app.widget.ACTION_SET_MODE_AGENDA";
     static final String ACTION_SET_MODE_CALENDAR = "ru.alliby.app.widget.ACTION_SET_MODE_CALENDAR";
     static final String ACTION_SELECT_DAY = "ru.alliby.app.widget.ACTION_SELECT_DAY";
+    static final String ACTION_TOGGLE_ORDERS = "ru.alliby.app.widget.ACTION_TOGGLE_ORDERS";
     static final String EXTRA_APPWIDGET_ID = AppWidgetManager.EXTRA_APPWIDGET_ID;
     static final String EXTRA_DATE = "date";
 
@@ -71,12 +72,22 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_empty, isCalendar ? View.GONE : View.VISIBLE);
         views.setViewVisibility(R.id.widget_calendar, isCalendar ? View.VISIBLE : View.GONE);
 
-        views.setInt(R.id.widget_btn_mode_note, "setColorFilter", isCalendar ? textSecondary : COLOR_ACCENT);
-        views.setInt(R.id.widget_btn_mode_calendar, "setColorFilter", isCalendar ? COLOR_ACCENT : textSecondary);
+        views.setInt(R.id.widget_mode_switch, "setBackgroundResource",
+            dark ? R.drawable.widget_switch_track_dark : R.drawable.widget_switch_track);
+        views.setInt(R.id.widget_mode_note_wrap, "setBackgroundResource", isCalendar ? 0 : R.drawable.widget_switch_thumb);
+        views.setInt(R.id.widget_mode_calendar_wrap, "setBackgroundResource", isCalendar ? R.drawable.widget_switch_thumb : 0);
+        views.setInt(R.id.widget_btn_mode_note, "setColorFilter", isCalendar ? textSecondary : 0xffffffff);
+        views.setInt(R.id.widget_btn_mode_calendar, "setColorFilter", isCalendar ? 0xffffffff : textSecondary);
         views.setOnClickPendingIntent(R.id.widget_btn_mode_note,
             navPendingIntent(context, appWidgetId, ACTION_SET_MODE_AGENDA, 10000));
         views.setOnClickPendingIntent(R.id.widget_btn_mode_calendar,
             navPendingIntent(context, appWidgetId, ACTION_SET_MODE_CALENDAR, 11000));
+
+        boolean showOrders = WidgetPrefs.showOrders(context);
+        views.setImageViewResource(R.id.widget_btn_orders_toggle,
+            showOrders ? R.drawable.ic_widget_checkbox_checked : R.drawable.ic_widget_checkbox_unchecked);
+        views.setOnClickPendingIntent(R.id.widget_btn_orders_toggle,
+            navPendingIntent(context, appWidgetId, ACTION_TOGGLE_ORDERS, 12000));
 
         if (isCalendar) {
             String yearMonth = WidgetPrefs.calendarYearMonth(context, appWidgetId);
@@ -268,7 +279,9 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
         Map<String, LinkedHashSet<String>> map = new HashMap<>();
         addDayTypes(map, PersonalEventsStore.listPersonal(context));
         addDayTypes(map, PersonalEventsStore.listAlliby(context));
-        addDayTypes(map, PersonalEventsStore.listOrders(context));
+        if (WidgetPrefs.showOrders(context)) {
+            addDayTypes(map, PersonalEventsStore.listOrders(context));
+        }
         return map;
     }
 
