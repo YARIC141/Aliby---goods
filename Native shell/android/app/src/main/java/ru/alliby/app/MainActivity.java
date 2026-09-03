@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(AllibyWidgetPlugin.class);
         super.onCreate(savedInstanceState);
         applyStatusBar();
+        ExactAlarmPermission.maybeRequest(this);
     }
 
     @Override
