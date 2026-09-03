@@ -91,6 +91,15 @@
             android:name=".AddPersonalEventActivity"
             android:exported="false"
             android:theme="@style/AppTheme.Dialog" />
+
+        <activity
+            android:name=".WidgetSettingsActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.Dialog" />
+
+        <receiver
+            android:name=".WidgetDateNavReceiver"
+            android:exported="false" />
     </application>
 
     <!-- Permissions -->

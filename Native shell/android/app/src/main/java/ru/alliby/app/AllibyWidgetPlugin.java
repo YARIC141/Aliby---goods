@@ -30,6 +30,7 @@ public class AllibyWidgetPlugin extends Plugin {
                     JSONObject src = events.getJSONObject(i);
                     JSONObject item = new JSONObject();
                     item.put("id", src.optString("id"));
+                    item.put("type", src.optString("type", "booking"));
                     item.put("title", src.optString("title"));
                     item.put("atMillis", src.optLong("atMillis"));
                     out.put(item);

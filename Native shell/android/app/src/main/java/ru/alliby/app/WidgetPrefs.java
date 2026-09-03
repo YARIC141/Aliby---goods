@@ -1,0 +1,63 @@
+package ru.alliby.app;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
+/** Тема виджета и выбранный день (по каждому экземпляру виджета отдельно). */
+class WidgetPrefs {
+
+    private static final String PREFS = "alliby_widget_prefs";
+    private static final String KEY_THEME = "widget_theme"; // "system" | "light" | "dark"
+    private static final String KEY_DATE_PREFIX = "widget_date_";
+
+    private static SharedPreferences prefs(Context ctx) {
+        return ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    static String themeMode(Context ctx) {
+        return prefs(ctx).getString(KEY_THEME, "system");
+    }
+
+    static void setThemeMode(Context ctx, String mode) {
+        prefs(ctx).edit().putString(KEY_THEME, mode).apply();
+    }
+
+    static boolean isDark(Context ctx) {
+        String mode = themeMode(ctx);
+        if ("dark".equals(mode)) return true;
+        if ("light".equals(mode)) return false;
+        int uiMode = ctx.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return uiMode == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    static String selectedDate(Context ctx, int appWidgetId) {
+        String d = prefs(ctx).getString(KEY_DATE_PREFIX + appWidgetId, null);
+        return d != null ? d : todayStr();
+    }
+
+    static void setSelectedDate(Context ctx, int appWidgetId, String ds) {
+        prefs(ctx).edit().putString(KEY_DATE_PREFIX + appWidgetId, ds).apply();
+    }
+
+    static void shiftSelectedDate(Context ctx, int appWidgetId, int deltaDays) {
+        String current = selectedDate(ctx, appWidgetId);
+        Calendar cal = Calendar.getInstance();
+        String[] parts = current.split("-");
+        cal.set(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]) - 1, Integer.parseInt(parts[2]));
+        cal.add(Calendar.DAY_OF_YEAR, deltaDays);
+        setSelectedDate(ctx, appWidgetId, new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.getTime()));
+    }
+
+    static void clearWidget(Context ctx, int appWidgetId) {
+        prefs(ctx).edit().remove(KEY_DATE_PREFIX + appWidgetId).apply();
+    }
+
+    static String todayStr() {
+        return new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Calendar.getInstance().getTime());
+    }
+}

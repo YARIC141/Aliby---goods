@@ -41,6 +41,17 @@
         android:textColor="#666666"
         android:textSize="14sp" />
 
+    <EditText
+        android:id="@+id/input_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="top"
+        android:hint="Заметка (необязательно)"
+        android:inputType="textMultiLine"
+        android:minLines="2"
+        android:maxLines="4" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

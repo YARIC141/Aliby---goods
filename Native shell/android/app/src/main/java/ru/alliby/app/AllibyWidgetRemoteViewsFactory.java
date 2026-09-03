@@ -11,22 +11,26 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
 
 class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
 
-    private static final int MAX_ITEMS = 20;
     private static final int COLOR_ALLIBY = Color.parseColor("#e8743b");
     private static final int COLOR_PERSONAL = Color.parseColor("#3b82f6");
+    private static final int TEXT_LIGHT_PRIMARY = Color.parseColor("#1a1a1a");
+    private static final int TEXT_LIGHT_SECONDARY = Color.parseColor("#999999");
+    private static final int TEXT_DARK_PRIMARY = Color.parseColor("#f0f0f0");
+    private static final int TEXT_DARK_SECONDARY = Color.parseColor("#9a9a9a");
 
     private final Context context;
+    private final int appWidgetId;
     private final ArrayList<JSONObject> items = new ArrayList<>();
 
-    AllibyWidgetRemoteViewsFactory(Context context) {
+    AllibyWidgetRemoteViewsFactory(Context context, int appWidgetId) {
         this.context = context;
+        this.appWidgetId = appWidgetId;
     }
 
     @Override
@@ -35,10 +39,10 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
     @Override
     public void onDataSetChanged() {
         items.clear();
-        long now = System.currentTimeMillis();
+        String selectedDate = WidgetPrefs.selectedDate(context, appWidgetId);
 
-        appendUpcoming(PersonalEventsStore.listPersonal(context), "personal", now);
-        appendUpcoming(PersonalEventsStore.listAlliby(context), "alliby", now);
+        appendForDate(PersonalEventsStore.listPersonal(context), selectedDate);
+        appendForDate(PersonalEventsStore.listAlliby(context), selectedDate);
 
         Collections.sort(items, new Comparator<JSONObject>() {
             @Override
@@ -46,22 +50,18 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
                 return Long.compare(a.optLong("atMillis"), b.optLong("atMillis"));
             }
         });
-        while (items.size() > MAX_ITEMS) {
-            items.remove(items.size() - 1);
-        }
     }
 
-    private void appendUpcoming(JSONArray arr, String kind, long now) {
+    private void appendForDate(JSONArray arr, String selectedDate) {
         if (arr == null) return;
+        SimpleDateFormat dayFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         for (int i = 0; i < arr.length(); i++) {
             JSONObject o = arr.optJSONObject(i);
             if (o == null) continue;
-            if (o.optLong("atMillis") < now) continue;
-            try {
-                JSONObject copy = new JSONObject(o.toString());
-                copy.put("kind", kind);
-                items.add(copy);
-            } catch (Exception ignored) {}
+            long at = o.optLong("atMillis");
+            String ds = dayFmt.format(new java.util.Date(at));
+            if (!selectedDate.equals(ds)) continue;
+            items.add(o);
         }
     }
 
@@ -79,16 +79,20 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
     public RemoteViews getViewAt(int position) {
         RemoteViews rv = new RemoteViews(context.getPackageName(), R.layout.widget_alliby_item);
         JSONObject o = items.get(position);
-        String kind = o.optString("kind");
-        String title = o.optString("title", kind.equals("alliby") ? "Запись" : "Событие");
+        String type = o.optString("type", "personal");
+        boolean isPersonal = "personal".equals(type);
+        String title = o.optString("title", isPersonal ? "Событие" : "Запись");
         long atMillis = o.optLong("atMillis");
+        boolean dark = WidgetPrefs.isDark(context);
 
         rv.setTextViewText(R.id.item_title, title);
         rv.setTextViewText(R.id.item_time, formatTime(atMillis));
-        rv.setInt(R.id.item_dot, "setColorFilter", kind.equals("alliby") ? COLOR_ALLIBY : COLOR_PERSONAL);
+        rv.setInt(R.id.item_dot, "setColorFilter", isPersonal ? COLOR_PERSONAL : COLOR_ALLIBY);
+        rv.setTextColor(R.id.item_title, dark ? TEXT_DARK_PRIMARY : TEXT_LIGHT_PRIMARY);
+        rv.setTextColor(R.id.item_time, dark ? TEXT_DARK_SECONDARY : TEXT_LIGHT_SECONDARY);
 
         Intent fillInIntent = new Intent();
-        fillInIntent.putExtra("kind", kind);
+        fillInIntent.putExtra("type", type);
         fillInIntent.putExtra("id", o.optString("id"));
         rv.setOnClickFillInIntent(R.id.item_dot, fillInIntent);
         rv.setOnClickFillInIntent(R.id.item_title, fillInIntent);
@@ -98,26 +102,7 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
     }
 
     private String formatTime(long atMillis) {
-        Calendar target = Calendar.getInstance();
-        target.setTimeInMillis(atMillis);
-        Calendar today = Calendar.getInstance();
-        Calendar tomorrow = Calendar.getInstance();
-        tomorrow.add(Calendar.DAY_OF_YEAR, 1);
-
-        SimpleDateFormat time = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        if (sameDay(target, today)) {
-            return "Сегодня, " + time.format(target.getTime());
-        } else if (sameDay(target, tomorrow)) {
-            return "Завтра, " + time.format(target.getTime());
-        } else {
-            SimpleDateFormat full = new SimpleDateFormat("d MMM, HH:mm", Locale.getDefault());
-            return full.format(target.getTime());
-        }
-    }
-
-    private boolean sameDay(Calendar a, Calendar b) {
-        return a.get(Calendar.YEAR) == b.get(Calendar.YEAR)
-            && a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR);
+        return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new java.util.Date(atMillis));
     }
 
     @Override

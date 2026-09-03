@@ -26,6 +26,7 @@ public class AddPersonalEventActivity extends Activity {
     private String editingId;
     private Calendar selected;
     private EditText inputTitle;
+    private EditText inputDetails;
     private TextView labelSelectedDatetime;
     private TextView labelScreenTitle;
     private RadioGroup leadGroup;
@@ -37,6 +38,7 @@ public class AddPersonalEventActivity extends Activity {
         setContentView(R.layout.activity_add_personal_event);
 
         inputTitle = findViewById(R.id.input_title);
+        inputDetails = findViewById(R.id.input_details);
         labelSelectedDatetime = findViewById(R.id.label_selected_datetime);
         labelScreenTitle = findViewById(R.id.label_screen_title);
         leadGroup = findViewById(R.id.lead_group);
@@ -56,6 +58,7 @@ public class AddPersonalEventActivity extends Activity {
             if (existing != null) {
                 labelScreenTitle.setText("Редактировать событие");
                 inputTitle.setText(existing.optString("title"));
+                inputDetails.setText(existing.optString("details"));
                 selected.setTimeInMillis(existing.optLong("atMillis"));
                 selectLeadRadio(existing.optInt("leadMinutes", 30));
                 btnDelete.setVisibility(View.VISIBLE);
@@ -129,7 +132,9 @@ public class AddPersonalEventActivity extends Activity {
         try {
             JSONObject event = new JSONObject();
             event.put("id", id);
+            event.put("type", "personal");
             event.put("title", title);
+            event.put("details", inputDetails.getText().toString().trim());
             event.put("atMillis", atMillis);
             event.put("leadMinutes", leadMinutes);
             PersonalEventsStore.upsertPersonal(this, event);
