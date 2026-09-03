@@ -612,6 +612,8 @@ html.bg-custom body,html.dark.bg-custom body{background-image:var(--bg-custom-im
 html.bg-custom #bg-fluid{display:none}
 #panel-customize{position:fixed;inset:0;z-index:9999;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .25s var(--ease-out,ease);display:flex;flex-direction:column;overscroll-behavior-y:none}
 #panel-customize.open{transform:translateX(0)}
+#panel-reminders{position:fixed;inset:0;z-index:9999;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .25s var(--ease-out,ease);display:flex;flex-direction:column;overscroll-behavior-y:none}
+#panel-reminders.open{transform:translateX(0)}
 .bg-picker{display:flex;gap:8px;margin-top:8px}
 .bg-opt{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;border:2px solid var(--line);border-radius:var(--r-md);padding:8px;cursor:pointer;background:var(--bg-1);font:500 12px/1 var(--font-sans);color:var(--fg-2);transition:border-color .15s,color .15s}
 .bg-opt.active{border-color:var(--accent);color:var(--accent)}
@@ -729,6 +731,32 @@ function _debouncedSyncReminders(uid){
   _remindersTimer=setTimeout(function(){_doSyncReminders(uid);},1500);
 }
 
+// Настройки пользователя (тогглы/период/вибрация) хранятся в localStorage
+// под ключом alliby_reminders — пишет их экран "Профиль → Напоминания"
+// (см. getReminderSettings/saveReminderSettings в основном скрипте).
+// Читаем напрямую, а не через window.getReminderSettings, чтобы модуль
+// оставался самодостаточным независимо от порядка загрузки скриптов.
+function _remSettings(){
+  var s={};
+  try{s=JSON.parse(localStorage.getItem('alliby_reminders')||'{}');}catch(e){}
+  return {
+    bookings:{enabled:!(s.bookings&&s.bookings.enabled===false),hours:(s.bookings&&s.bookings.hours!=null)?s.bookings.hours:1,minutes:(s.bookings&&s.bookings.minutes!=null)?s.bookings.minutes:0},
+    rent:{enabled:!(s.rent&&s.rent.enabled===false),hours:(s.rent&&s.rent.hours!=null)?s.rent.hours:1,minutes:(s.rent&&s.rent.minutes!=null)?s.rent.minutes:0},
+    vibration:s.vibration!==false
+  };
+}
+
+// "Через 1 ч 30 мин: ", "Через 45 мин: " и т.п. — по фактически настроенному периоду.
+function _remLabel(ms){
+  var totalMin=Math.round(ms/60000);
+  if(totalMin<=0)return 'Сейчас: ';
+  var h=Math.floor(totalMin/60),m=totalMin%60;
+  var parts=[];
+  if(h)parts.push(h+' ч');
+  if(m||!h)parts.push(m+' мин');
+  return 'Через '+parts.join(' ')+': ';
+}
+
 // Полная пересборка локальных уведомлений с нуля: снимаем все запланированные
 // и планируем заново по актуальному списку будущих записей/аренды пользователя.
 // Так проще и надёжнее, чем ловить каждое место в коде, где брони создаются,
@@ -743,47 +771,59 @@ async function _doSyncReminders(uid){
       perm=await LN.requestPermissions();
       if(perm.display!=='granted')return;
     }
+    var rs=_remSettings();
+    // Android-каналы неизменяемы после создания — вместо пересоздания под
+    // текущую вибрацию заводим оба варианта один раз и просто выбираем id.
+    try{
+      await LN.createChannel({id:'alliby_rem_vib',name:'Напоминания (с вибрацией)',importance:4,vibration:true});
+      await LN.createChannel({id:'alliby_rem_novib',name:'Напоминания (без вибрации)',importance:3,vibration:false});
+    }catch(e){}
+    var channelId=rs.vibration?'alliby_rem_vib':'alliby_rem_novib';
     var nowDate=new Date();
     var nowIso=nowDate.toISOString();
     var today=nowIso.slice(0,10);
-    var bookings=await req('/rest/v1/bookings?user_id=eq.'+uid+'&status=eq.booked&slot_date=gte.'+today+'&select=id,slot_date,slot_start,menu_items(name),stores(name)').catch(function(){return [];});
-    var rents=await req('/rest/v1/rent_reservations?user_id=eq.'+uid+'&status=neq.cancelled&end_at=gte.'+nowIso+'&select=id,start_at,menu_items(name),stores(name)').catch(function(){return [];});
+    var bookings=rs.bookings.enabled?await req('/rest/v1/bookings?user_id=eq.'+uid+'&status=eq.booked&slot_date=gte.'+today+'&select=id,slot_date,slot_start,menu_items(name),stores(name)').catch(function(){return [];}):[];
+    var rents=rs.rent.enabled?await req('/rest/v1/rent_reservations?user_id=eq.'+uid+'&status=neq.cancelled&end_at=gte.'+nowIso+'&select=id,start_at,menu_items(name),stores(name)').catch(function(){return [];}):[];
     var pending=await LN.getPending();
     if(pending&&pending.notifications&&pending.notifications.length){
       await LN.cancel({notifications:pending.notifications.map(function(n){return{id:n.id};})});
     }
     var now=nowDate.getTime();
     var notifs=[];
+    var bkLeadMs=((rs.bookings.hours||0)*60+(rs.bookings.minutes||0))*60000;
+    var rentLeadMs=((rs.rent.hours||0)*60+(rs.rent.minutes||0))*60000;
     (bookings||[]).forEach(function(b){
       if(!b.slot_date||!b.slot_start)return;
       var at=new Date(b.slot_date+'T'+b.slot_start);
-      var remindAt=new Date(at.getTime()-60*60*1000);
+      var remindAt=new Date(at.getTime()-bkLeadMs);
       if(isNaN(remindAt.getTime())||remindAt.getTime()<=now)return;
       var storeName=(b.stores&&b.stores.name)||'';
       var itemName=(b.menu_items&&b.menu_items.name)||'Запись';
       notifs.push({
         id:_hashId('b:'+b.id),
-        title:'Через час: '+itemName,
+        title:_remLabel(bkLeadMs)+itemName,
         body:(storeName?storeName+', ':'')+'начало в '+String(b.slot_start).slice(0,5),
         schedule:{at:remindAt},
         smallIcon:'ic_notification',
-        iconColor:'#f09560'
+        iconColor:'#f09560',
+        channelId:channelId
       });
     });
     (rents||[]).forEach(function(r){
       if(!r.start_at)return;
       var at=new Date(r.start_at);
-      var remindAt=new Date(at.getTime()-60*60*1000);
+      var remindAt=new Date(at.getTime()-rentLeadMs);
       if(isNaN(remindAt.getTime())||remindAt.getTime()<=now)return;
       var storeName=(r.stores&&r.stores.name)||'';
       var itemName=(r.menu_items&&r.menu_items.name)||'Аренда';
       notifs.push({
         id:_hashId('r:'+r.id),
-        title:'Через час: '+itemName,
+        title:_remLabel(rentLeadMs)+itemName,
         body:(storeName?storeName+', ':'')+'начало аренды',
         schedule:{at:remindAt},
         smallIcon:'ic_notification',
-        iconColor:'#f09560'
+        iconColor:'#f09560',
+        channelId:channelId
       });
     });
     if(notifs.length)await LN.schedule({notifications:notifs});
@@ -1733,6 +1773,13 @@ document.addEventListener('deviceready',function(){
     </div>
 
     <div class="sec">
+      <button class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between" onclick="openReminders()">
+        <span>Напоминания</span>
+        <span style="color:var(--fg-4);font-size:18px">›</span>
+      </button>
+    </div>
+
+    <div class="sec">
       <button class="btn btn-full" onclick="togglePwdForm()">Сменить пароль</button>
       <div id="pwd-change-panel" style="display:none;margin-top:10px">
         <div class="row">
@@ -2271,6 +2318,77 @@ document.addEventListener('deviceready',function(){
           <span class="toggle-track"></span>
         </label>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ REMINDERS SETTINGS ════════════════ -->
+<div id="panel-reminders">
+  <div class="ph" style="padding-right:16px">
+    <button class="btn-back" onclick="closeReminders()" aria-label="Назад">←</button>
+    <h2>Напоминания</h2>
+  </div>
+  <div class="pb">
+    <div class="sec">
+      <div class="sec-title">Записи</div>
+      <div class="theme-row">
+        <span>Напоминать о записях</span>
+        <label class="toggle-sw">
+          <input type="checkbox" id="rem-bk-chk" onchange="toggleRemEnabled('bookings',this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="rem-bk-period" style="display:none;margin-top:10px">
+        <div class="lbl">За сколько напомнить</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="rem-bk-hours" onchange="setRemPeriod('bookings','hours',this.value)" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
+            <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="12">12</option><option value="24">24</option>
+          </select>
+          <span style="color:var(--fg-3);font-size:13px">ч</span>
+          <select id="rem-bk-minutes" onchange="setRemPeriod('bookings','minutes',this.value)" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
+            <option value="0">0</option><option value="5">5</option><option value="10">10</option><option value="15">15</option>
+            <option value="20">20</option><option value="30">30</option><option value="45">45</option>
+          </select>
+          <span style="color:var(--fg-3);font-size:13px">мин</span>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">Аренда</div>
+      <div class="theme-row">
+        <span>Напоминать об аренде</span>
+        <label class="toggle-sw">
+          <input type="checkbox" id="rem-rent-chk" onchange="toggleRemEnabled('rent',this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div id="rem-rent-period" style="display:none;margin-top:10px">
+        <div class="lbl">За сколько напомнить</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="rem-rent-hours" onchange="setRemPeriod('rent','hours',this.value)" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
+            <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="6">6</option><option value="8">8</option><option value="12">12</option><option value="24">24</option>
+          </select>
+          <span style="color:var(--fg-3);font-size:13px">ч</span>
+          <select id="rem-rent-minutes" onchange="setRemPeriod('rent','minutes',this.value)" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
+            <option value="0">0</option><option value="5">5</option><option value="10">10</option><option value="15">15</option>
+            <option value="20">20</option><option value="30">30</option><option value="45">45</option>
+          </select>
+          <span style="color:var(--fg-3);font-size:13px">мин</span>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">Вибрация</div>
+      <div class="theme-row">
+        <span>Вибрировать при напоминании</span>
+        <label class="toggle-sw">
+          <input type="checkbox" id="rem-vibration-chk" onchange="toggleRemVibration(this.checked)">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <p class="txt-sm" style="margin-top:8px;color:var(--fg-3)">Звук уведомления — системный, заданный в настройках телефона.</p>
     </div>
   </div>
 </div>
@@ -4291,6 +4409,52 @@ function _resizeBgImg(file) {
     };
     img.onerror = rej; img.src = blob;
   });
+}
+
+// ─── REMINDERS SETTINGS ───
+// Настройки локальные (без бэкенда) — читает и планирует их AllibyBridge.syncReminders.
+function getReminderSettings() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem('alliby_reminders') || '{}'); } catch(e) {}
+  return {
+    bookings: { enabled: s.bookings?.enabled !== false, hours: s.bookings?.hours ?? 1, minutes: s.bookings?.minutes ?? 0 },
+    rent:     { enabled: s.rent?.enabled !== false,     hours: s.rent?.hours ?? 1,     minutes: s.rent?.minutes ?? 0 },
+    vibration: s.vibration !== false,
+  };
+}
+function saveReminderSettings(s) {
+  localStorage.setItem('alliby_reminders', JSON.stringify(s));
+  if (S.session?.user?.id) window.AllibyBridge?.syncReminders(S.session.user.id);
+}
+function openReminders() {
+  const s = getReminderSettings();
+  document.getElementById('rem-bk-chk').checked = s.bookings.enabled;
+  document.getElementById('rem-bk-hours').value = s.bookings.hours;
+  document.getElementById('rem-bk-minutes').value = s.bookings.minutes;
+  document.getElementById('rem-bk-period').style.display = s.bookings.enabled ? '' : 'none';
+  document.getElementById('rem-rent-chk').checked = s.rent.enabled;
+  document.getElementById('rem-rent-hours').value = s.rent.hours;
+  document.getElementById('rem-rent-minutes').value = s.rent.minutes;
+  document.getElementById('rem-rent-period').style.display = s.rent.enabled ? '' : 'none';
+  document.getElementById('rem-vibration-chk').checked = s.vibration;
+  document.getElementById('panel-reminders').classList.add('open');
+}
+function closeReminders() { document.getElementById('panel-reminders').classList.remove('open'); }
+function toggleRemEnabled(type, checked) {
+  const s = getReminderSettings();
+  s[type].enabled = checked;
+  saveReminderSettings(s);
+  document.getElementById(type === 'bookings' ? 'rem-bk-period' : 'rem-rent-period').style.display = checked ? '' : 'none';
+}
+function setRemPeriod(type, field, value) {
+  const s = getReminderSettings();
+  s[type][field] = parseInt(value, 10) || 0;
+  saveReminderSettings(s);
+}
+function toggleRemVibration(checked) {
+  const s = getReminderSettings();
+  s.vibration = checked;
+  saveReminderSettings(s);
 }
 
 function applyNavPos() {
