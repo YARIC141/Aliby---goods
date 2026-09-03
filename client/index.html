@@ -784,8 +784,8 @@ async function _doSyncReminders(uid){
     var nowDate=new Date();
     var nowIso=nowDate.toISOString();
     var today=nowIso.slice(0,10);
-    var bookings=rs.bookings.enabled?await req('/rest/v1/bookings?user_id=eq.'+uid+'&status=eq.booked&slot_date=gte.'+today+'&select=id,slot_date,slot_start,menu_items(name),stores(name)').catch(function(){return [];}):[];
-    var rents=rs.rent.enabled?await req('/rest/v1/rent_reservations?user_id=eq.'+uid+'&status=neq.cancelled&end_at=gte.'+nowIso+'&select=id,start_at,menu_items(name),stores(name)').catch(function(){return [];}):[];
+    var bookings=rs.bookings.enabled?await req('/rest/v1/bookings?user_id=eq.'+uid+'&status=eq.booked&slot_date=gte.'+today+'&select=id,slot_date,slot_start,menu_items(name),stores(name,address)').catch(function(){return [];}):[];
+    var rents=rs.rent.enabled?await req('/rest/v1/rent_reservations?user_id=eq.'+uid+'&status=neq.cancelled&end_at=gte.'+nowIso+'&select=id,start_at,menu_items(name),stores(name,address)').catch(function(){return [];}):[];
     var pending=await LN.getPending();
     if(pending&&pending.notifications&&pending.notifications.length){
       await LN.cancel({notifications:pending.notifications.map(function(n){return{id:n.id};})});
@@ -835,18 +835,37 @@ async function _doSyncReminders(uid){
         if(!b.slot_date||!b.slot_start)return;
         var at=new Date(b.slot_date+'T'+b.slot_start);
         if(isNaN(at.getTime()))return;
-        widgetEvents.push({type:'booking',id:String(b.id),title:(b.menu_items&&b.menu_items.name)||'Запись',atMillis:at.getTime()});
+        widgetEvents.push({type:'booking',id:String(b.id),title:(b.menu_items&&b.menu_items.name)||'Запись',store:(b.stores&&b.stores.name)||'',address:(b.stores&&b.stores.address)||'',atMillis:at.getTime()});
       });
       (rents||[]).forEach(function(r){
         if(!r.start_at)return;
         var at=new Date(r.start_at);
         if(isNaN(at.getTime()))return;
-        widgetEvents.push({type:'rent',id:String(r.id),title:(r.menu_items&&r.menu_items.name)||'Аренда',atMillis:at.getTime()});
+        widgetEvents.push({type:'rent',id:String(r.id),title:(r.menu_items&&r.menu_items.name)||'Аренда',store:(r.stores&&r.stores.name)||'',address:(r.stores&&r.stores.address)||'',atMillis:at.getTime()});
       });
       widgetEvents.sort(function(a,b){return a.atMillis-b.atMillis;});
       var AW=_P().AllibyWidget;
       if(AW)await AW.updateAllibyEvents({events:widgetEvents.slice(0,50)});
     }catch(e){}
+    _pushOrdersToWidget(uid);
+  }catch(e){}
+}
+
+var ORDER_ACTIVE_STATUSES=['paid','in_progress','looking_for_courier','handed_to_courier','accepted_by_courier','on_the_way','ready'];
+
+async function _pushOrdersToWidget(uid){
+  if(!_isNative()||!uid||typeof req!=='function')return;
+  try{
+    var AW=_P().AllibyWidget;
+    if(!AW)return;
+    var rows=await req('/rest/v1/orders?user_id=eq.'+uid+'&status=in.('+ORDER_ACTIVE_STATUSES.join(',')+')&select=id,order_time,status,courier_phone,stores(name)&order=order_time.desc&limit=20').catch(function(){return [];});
+    var orders=(rows||[]).map(function(o){
+      var courierFound=o.status==='looking_for_courier'&&!!o.courier_phone;
+      var label=courierFound?'Курьер найден':(statusMap[o.status]||o.status);
+      var at=new Date(o.order_time);
+      return {type:'order',id:String(o.id),store:(o.stores&&o.stores.name)||'',status:label,atMillis:isNaN(at.getTime())?Date.now():at.getTime()};
+    });
+    await AW.updateOrders({orders:orders});
   }catch(e){}
 }
 
@@ -1029,6 +1048,7 @@ document.addEventListener('deviceready',function(){
         var id=idm&&decodeURIComponent(idm[1]);
         if(screen==='booking'&&id&&typeof openBookingById==='function'){openBookingById(id);return;}
         if(screen==='rent'&&id&&typeof openRentById==='function'){openRentById(id);return;}
+        if(screen==='order'&&id&&typeof openOrderById==='function'){openOrderById(id);return;}
         if(screen==='reminders'&&typeof openReminders==='function'){goTo('profile');openReminders();return;}
         if(screen&&typeof goTo==='function'){goTo(screen);return;}
       }
@@ -6875,7 +6895,7 @@ async function _loadOrderStores() {
 
 function _onRealtimeOrder(record) {
   const status = record?.status;
-  const ACTIVE = new Set(['paid', 'in_progress', 'looking_for_courier', 'handed_to_courier', 'accepted_by_courier', 'on_the_way', 'ready']);
+  const ACTIVE = new Set(ORDER_ACTIVE_STATUSES);
   const calenabsActive = document.getElementById('screen-calenabs')?.classList.contains('active');
   const isVisible = calenabsActive && _calenabsTab === 'ord';
   if (status && ACTIVE.has(status)) {
@@ -6886,6 +6906,7 @@ function _onRealtimeOrder(record) {
     }
   }
   if (isVisible) loadActiveOrders();
+  _pushOrdersToWidget(S.session?.user?.id);
 }
 
 document.addEventListener('visibilitychange', () => {
