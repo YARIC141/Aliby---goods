@@ -6477,8 +6477,8 @@ async function loadOrders(append = false) {
   _ordLoading = true;
   const el = document.getElementById('ord-list');
   if (!append) {
-    _ordPage = 0; _orders = [];
-    el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
+    _ordPage = 0;
+    if (!_orders.length) el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
     loadOrdCounts();
   }
   try {
