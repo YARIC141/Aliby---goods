@@ -52,14 +52,19 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
             }
         });
 
-        // Текущие заказы не привязаны к выбранному дню — показываем их всегда сверху,
-        // независимо от того, какой день сейчас пролистан в виджете.
+        // atMillis у заказа — время последней смены статуса, поэтому заказ показываем
+        // только в тот день, когда статус реально поменялся (как обычное событие),
+        // но выводим его первым в списке этого дня.
         JSONArray orders = PersonalEventsStore.listOrders(context);
         ArrayList<JSONObject> orderItems = new ArrayList<>();
         if (orders != null) {
+            SimpleDateFormat dayFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
             for (int i = 0; i < orders.length(); i++) {
                 JSONObject o = orders.optJSONObject(i);
-                if (o != null) orderItems.add(o);
+                if (o == null) continue;
+                String ds = dayFmt.format(new java.util.Date(o.optLong("atMillis")));
+                if (!selectedDate.equals(ds)) continue;
+                orderItems.add(o);
             }
         }
         Collections.sort(orderItems, new Comparator<JSONObject>() {
