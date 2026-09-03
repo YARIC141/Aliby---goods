@@ -132,12 +132,8 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
             rv.setTextViewText(R.id.item_meta, meta);
         }
 
-        if (isOrder) {
-            rv.setViewVisibility(R.id.item_time, android.view.View.GONE);
-        } else {
-            rv.setViewVisibility(R.id.item_time, android.view.View.VISIBLE);
-            rv.setTextViewText(R.id.item_time, formatTime(atMillis));
-        }
+        rv.setViewVisibility(R.id.item_time, android.view.View.VISIBLE);
+        rv.setTextViewText(R.id.item_time, formatTime(atMillis));
 
         Intent fillInIntent = new Intent();
         fillInIntent.putExtra("type", type);

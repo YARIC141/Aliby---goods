@@ -858,11 +858,11 @@ async function _pushOrdersToWidget(uid){
   try{
     var AW=_P().AllibyWidget;
     if(!AW)return;
-    var rows=await req('/rest/v1/orders?user_id=eq.'+uid+'&status=in.('+ORDER_ACTIVE_STATUSES.join(',')+')&select=id,order_time,status,courier_phone,stores(name)&order=order_time.desc&limit=20').catch(function(){return [];});
+    var rows=await req('/rest/v1/orders?user_id=eq.'+uid+'&status=in.('+ORDER_ACTIVE_STATUSES.join(',')+')&select=id,order_time,status_updated_at,status,courier_phone,stores(name)&order=order_time.desc&limit=20').catch(function(){return [];});
     var orders=(rows||[]).map(function(o){
       var courierFound=o.status==='looking_for_courier'&&!!o.courier_phone;
       var label=courierFound?'Курьер найден':(statusMap[o.status]||o.status);
-      var at=new Date(o.order_time);
+      var at=new Date(o.status_updated_at||o.order_time);
       return {type:'order',id:String(o.id),store:(o.stores&&o.stores.name)||'',status:label,atMillis:isNaN(at.getTime())?Date.now():at.getTime()};
     });
     await AW.updateOrders({orders:orders});
