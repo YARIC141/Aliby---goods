@@ -128,10 +128,19 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
         }
     }
 
+    private static int[] allWidgetIds(Context context, AppWidgetManager mgr) {
+        int[] a = mgr.getAppWidgetIds(new ComponentName(context, AllibyWidgetProvider.class));
+        int[] b = mgr.getAppWidgetIds(new ComponentName(context, AllibyWidgetProviderTall.class));
+        int[] all = new int[a.length + b.length];
+        System.arraycopy(a, 0, all, 0, a.length);
+        System.arraycopy(b, 0, all, a.length, b.length);
+        return all;
+    }
+
     /** Вызывается из AllibyWidgetPlugin и AddPersonalEventActivity после изменения данных (без смены темы/даты). */
     static void refreshAll(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
-        int[] ids = mgr.getAppWidgetIds(new ComponentName(context, AllibyWidgetProvider.class));
+        int[] ids = allWidgetIds(context, mgr);
         if (ids.length > 0) {
             mgr.notifyAppWidgetViewDataChanged(ids, R.id.widget_list);
         }
@@ -140,8 +149,7 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
     /** Полная перерисовка всех виджетов (шапка + список) — после смены темы. */
     static void refreshAllFull(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
-        int[] ids = mgr.getAppWidgetIds(new ComponentName(context, AllibyWidgetProvider.class));
-        for (int id : ids) {
+        for (int id : allWidgetIds(context, mgr)) {
             updateOne(context, mgr, id);
         }
     }

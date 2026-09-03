@@ -64,6 +64,7 @@
         <!-- Домашний виджет: ближайшие события Alliby + личный ежедневник -->
         <receiver
             android:name=".AllibyWidgetProvider"
+            android:label="@string/app_name"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -71,6 +72,20 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/alliby_widget_info" />
+        </receiver>
+
+        <!-- Второй вариант того же виджета в пикере — тот же провайдер, другой дефолтный
+             размер (5 ячеек по вертикали, см. AllibyWidgetProviderTall). -->
+        <receiver
+            android:name=".AllibyWidgetProviderTall"
+            android:label="@string/widget_tall_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/alliby_widget_info_tall" />
         </receiver>
 
         <service

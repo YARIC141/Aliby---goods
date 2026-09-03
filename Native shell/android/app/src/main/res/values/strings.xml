@@ -11,4 +11,6 @@
     <string name="channel_bookings_name">Записи</string>
     <string name="channel_bookings_desc">Уведомления о бронированиях</string>
     <string name="widget_description">Ближайшие записи Alliby и личные события</string>
+    <string name="widget_tall_label">Alliby (высокий)</string>
+    <string name="widget_tall_description">Ближайшие записи Alliby и личные события — высокий вид, 5 ячеек</string>
 </resources>
