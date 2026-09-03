@@ -3306,8 +3306,7 @@ function switchCalenabsTab(tab) {
   else if (tab === 'rent') loadRentTab();
   else if (tab === 'ord') {
     _orderNotifCount = 0; _updateBkBadge();
-    const _firstNotif = _ORD_STATUS_PRIORITY.find(s => _ordNotif.has(s));
-    setOrderFilter(_firstNotif || 'all');
+    setOrderFilter('all');
   }
 }
 function loadCalenabsScreen() { switchCalenabsTab(_calenabsTab); }
@@ -6840,7 +6839,6 @@ function _onRealtimeBooking(record, type) {
 let _ordFilter = 'all';
 let _ordStoreFilter = 'all';
 const _ordNotif = new Set();
-const _ORD_STATUS_PRIORITY = ['paid', 'in_progress', 'looking_for_courier', 'handed_to_courier', 'accepted_by_courier', 'on_the_way', 'ready'];
 let _activeOrders = [];
 let _ordPage = 0, _ordHasMore = false, _ordLoading = false, _ordObserver = null;
 
