@@ -14,6 +14,12 @@ const config: CapacitorConfig = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
+    LocalNotifications: {
+      // Напоминания о записях/аренде планируются полностью на клиенте
+      // (см. AllibyBridge.syncReminders в index.html) — без бэкенда и FCM.
+      smallIcon: 'ic_notification',
+      iconColor: '#f09560',
+    },
     StatusBar: {
       style: 'LIGHT',
       backgroundColor: '#e8743b',

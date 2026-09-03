@@ -713,6 +713,83 @@ function _savePushToken(token,uid){
   }).catch(function(){});
 }
 
+// Простой детерминированный хеш строки → положительный 31-битный int,
+// т.к. LocalNotifications требует числовой id, а брони/аренда — UUID.
+// Разные префиксы (b:/r:) разводят booking и rent_reservation по разным
+// значениям, даже если сами UUID случайно совпадут по хвосту.
+function _hashId(str){
+  var h=0;
+  for(var i=0;i<str.length;i++){h=(h*31+str.charCodeAt(i))|0;}
+  return Math.abs(h)%2147483647;
+}
+
+var _remindersTimer=null;
+function _debouncedSyncReminders(uid){
+  clearTimeout(_remindersTimer);
+  _remindersTimer=setTimeout(function(){_doSyncReminders(uid);},1500);
+}
+
+// Полная пересборка локальных уведомлений с нуля: снимаем все запланированные
+// и планируем заново по актуальному списку будущих записей/аренды пользователя.
+// Так проще и надёжнее, чем ловить каждое место в коде, где брони создаются,
+// отменяются или переносятся (таких мест 7+, разбросаны по файлу).
+async function _doSyncReminders(uid){
+  if(!_isNative()||!uid)return;
+  var LN=_P().LocalNotifications;
+  if(!LN||typeof req!=='function')return;
+  try{
+    var perm=await LN.checkPermissions();
+    if(perm.display!=='granted'){
+      perm=await LN.requestPermissions();
+      if(perm.display!=='granted')return;
+    }
+    var nowDate=new Date();
+    var nowIso=nowDate.toISOString();
+    var today=nowIso.slice(0,10);
+    var bookings=await req('/rest/v1/bookings?user_id=eq.'+uid+'&status=eq.booked&slot_date=gte.'+today+'&select=id,slot_date,slot_start,menu_items(name),stores(name)').catch(function(){return [];});
+    var rents=await req('/rest/v1/rent_reservations?user_id=eq.'+uid+'&status=neq.cancelled&end_at=gte.'+nowIso+'&select=id,start_at,menu_items(name),stores(name)').catch(function(){return [];});
+    var pending=await LN.getPending();
+    if(pending&&pending.notifications&&pending.notifications.length){
+      await LN.cancel({notifications:pending.notifications.map(function(n){return{id:n.id};})});
+    }
+    var now=nowDate.getTime();
+    var notifs=[];
+    (bookings||[]).forEach(function(b){
+      if(!b.slot_date||!b.slot_start)return;
+      var at=new Date(b.slot_date+'T'+b.slot_start);
+      var remindAt=new Date(at.getTime()-60*60*1000);
+      if(isNaN(remindAt.getTime())||remindAt.getTime()<=now)return;
+      var storeName=(b.stores&&b.stores.name)||'';
+      var itemName=(b.menu_items&&b.menu_items.name)||'Запись';
+      notifs.push({
+        id:_hashId('b:'+b.id),
+        title:'Через час: '+itemName,
+        body:(storeName?storeName+', ':'')+'начало в '+String(b.slot_start).slice(0,5),
+        schedule:{at:remindAt},
+        smallIcon:'ic_notification',
+        iconColor:'#f09560'
+      });
+    });
+    (rents||[]).forEach(function(r){
+      if(!r.start_at)return;
+      var at=new Date(r.start_at);
+      var remindAt=new Date(at.getTime()-60*60*1000);
+      if(isNaN(remindAt.getTime())||remindAt.getTime()<=now)return;
+      var storeName=(r.stores&&r.stores.name)||'';
+      var itemName=(r.menu_items&&r.menu_items.name)||'Аренда';
+      notifs.push({
+        id:_hashId('r:'+r.id),
+        title:'Через час: '+itemName,
+        body:(storeName?storeName+', ':'')+'начало аренды',
+        schedule:{at:remindAt},
+        smallIcon:'ic_notification',
+        iconColor:'#f09560'
+      });
+    });
+    if(notifs.length)await LN.schedule({notifications:notifs});
+  }catch(e){}
+}
+
 function _showNativeToast(title,body){
   var prev=document.getElementById('_alliby_toast');
   if(prev)prev.remove();
@@ -861,6 +938,11 @@ window.AllibyBridge={
     _P().StatusBar.setStyle({style:'LIGHT'});
     _P().StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#e8743b'});
   },
+
+  syncReminders:function(uid){
+    if(!_isNative()||!uid)return;
+    _debouncedSyncReminders(uid);
+  },
 };
 
 // Capacitor инжектируется после загрузки страницы — ждём deviceready.
@@ -872,6 +954,7 @@ document.addEventListener('deviceready',function(){
     App.addListener('appStateChange',function(s){
       if(s.isActive&&typeof realtimeSubscribeOrders==='function'&&typeof S!=='undefined'&&S.session&&S.session.user){
         realtimeSubscribeOrders(S.session.user.id);
+        window.AllibyBridge.syncReminders(S.session.user.id);
       }
     });
     App.addListener('backButton',function(){if(typeof goBack==='function')goBack();});
@@ -896,6 +979,7 @@ document.addEventListener('deviceready',function(){
   // Если сессия уже восстановлена из localStorage до deviceready — регистрируем пуш
   if(typeof S!=='undefined'&&S.session&&S.session.user&&S.session.user.id){
     window.AllibyBridge.registerPush(S.session.user.id);
+    window.AllibyBridge.syncReminders(S.session.user.id);
   }
 },{once:true});
 })();
@@ -4722,6 +4806,7 @@ function setSession(d) {
     window.AllibyBridge?.registerPush(uid);
     _registerWebPush(uid);
     _syncPromoNotifications(uid);
+    window.AllibyBridge?.syncReminders(uid);
     // Quick-restore may have rendered the store screen before the session was known
     // (loadStoreNotifState hid the bell because uid wasn't available yet) — re-sync now.
     if (S.store?.id && document.getElementById('screen-store')?.classList.contains('active')) {
@@ -6515,6 +6600,7 @@ function _onRealtimeRent(record, type) {
   } else if (isVisible) {
     loadMyRentReservations();
   }
+  if (S.session?.user?.id) window.AllibyBridge?.syncReminders(S.session.user.id);
 }
 
 function _onRealtimeBooking(record, type) {
@@ -6528,6 +6614,7 @@ function _onRealtimeBooking(record, type) {
       else arr.push(record);
     }
     if (isVisible) renderMyBookingsDay(record.slot_date);
+    if (S.session?.user?.id) window.AllibyBridge?.syncReminders(S.session.user.id);
     return;
   }
   if (isVisible) {
@@ -6536,6 +6623,7 @@ function _onRealtimeBooking(record, type) {
     _bkNotifCount++;
     _updateBkBadge();
   }
+  if (S.session?.user?.id) window.AllibyBridge?.syncReminders(S.session.user.id);
 }
 
 let _ordFilter = 'all';
