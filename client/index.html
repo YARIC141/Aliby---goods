@@ -829,6 +829,23 @@ async function _doSyncReminders(uid){
       });
     });
     if(notifs.length)await LN.schedule({notifications:notifs});
+    try{
+      var widgetEvents=[];
+      (bookings||[]).forEach(function(b){
+        if(!b.slot_date||!b.slot_start)return;
+        var at=new Date(b.slot_date+'T'+b.slot_start);
+        if(isNaN(at.getTime())||at.getTime()<=now)return;
+        widgetEvents.push({id:'b:'+b.id,title:(b.menu_items&&b.menu_items.name)||'Запись',atMillis:at.getTime()});
+      });
+      (rents||[]).forEach(function(r){
+        if(!r.start_at)return;
+        var at=new Date(r.start_at);
+        if(isNaN(at.getTime())||at.getTime()<=now)return;
+        widgetEvents.push({id:'r:'+r.id,title:(r.menu_items&&r.menu_items.name)||'Аренда',atMillis:at.getTime()});
+      });
+      var AW=_P().AllibyWidget;
+      if(AW)await AW.updateAllibyEvents({events:widgetEvents});
+    }catch(e){}
   }catch(e){}
 }
 
@@ -1004,6 +1021,10 @@ document.addEventListener('deviceready',function(){
     App.addListener('appUrlOpen',function(event){
       var url=event.url||'';
       var qs=url.includes('?')?url.slice(url.indexOf('?')):'';
+      if(url.indexOf('open')!==-1&&qs.indexOf('screen=')!==-1){
+        var m=/screen=([a-z0-9_-]+)/i.exec(qs);
+        if(m&&typeof goTo==='function'){goTo(m[1]);return;}
+      }
       if(qs&&typeof handlePaymentReturn==='function')handlePaymentReturn(qs);
     });
   }
