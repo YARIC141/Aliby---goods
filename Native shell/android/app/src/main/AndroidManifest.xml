@@ -105,6 +105,8 @@
         <activity
             android:name=".AddPersonalEventActivity"
             android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
             android:theme="@style/AppTheme.Dialog" />
 
         <receiver

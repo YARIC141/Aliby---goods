@@ -6,11 +6,15 @@ import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,25 +31,31 @@ public class AddPersonalEventActivity extends Activity {
     private Calendar selected;
     private EditText inputTitle;
     private EditText inputDetails;
-    private TextView labelSelectedDatetime;
+    private TextView btnPickDatetime;
     private TextView labelScreenTitle;
+    private TextView labelLead;
     private RadioGroup leadGroup;
     private Button btnDelete;
+    private boolean dark;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        dark = WidgetPrefs.isDark(this);
+        setTheme(dark ? R.style.AppTheme_Dialog_Dark : R.style.AppTheme_Dialog);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_personal_event);
 
         inputTitle = findViewById(R.id.input_title);
         inputDetails = findViewById(R.id.input_details);
-        labelSelectedDatetime = findViewById(R.id.label_selected_datetime);
         labelScreenTitle = findViewById(R.id.label_screen_title);
+        labelLead = findViewById(R.id.label_lead);
         leadGroup = findViewById(R.id.lead_group);
         btnDelete = findViewById(R.id.btn_delete);
-        Button btnPickDatetime = findViewById(R.id.btn_pick_datetime);
-        Button btnCancel = findViewById(R.id.btn_cancel);
+        btnPickDatetime = findViewById(R.id.btn_pick_datetime);
+        ImageButton btnClose = findViewById(R.id.btn_close);
         Button btnSave = findViewById(R.id.btn_save);
+
+        applyTheme();
 
         selected = Calendar.getInstance();
         selected.add(Calendar.HOUR_OF_DAY, 1);
@@ -69,11 +79,49 @@ public class AddPersonalEventActivity extends Activity {
         updateDatetimeLabel();
 
         btnPickDatetime.setOnClickListener(v -> pickDate());
-        btnCancel.setOnClickListener(v -> finish());
+        btnClose.setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> save());
         btnDelete.setOnClickListener(v -> delete());
 
         ExactAlarmPermission.maybeRequest(this);
+    }
+
+    private void applyTheme() {
+        int textPrimary = dark ? 0xfff0f0f0 : 0xff1a1a1a;
+        int textSecondary = dark ? 0xff9a9a9a : 0xff666666;
+        int fieldBg = dark ? R.drawable.dialog_field_bg_dark : R.drawable.dialog_field_bg;
+        int chipBg = dark ? R.drawable.dialog_chip_bg_dark : R.drawable.dialog_chip_bg;
+        ColorStateList chipText = getColorStateList(
+            dark ? R.color.dialog_chip_text_dark : R.color.dialog_chip_text);
+
+        findViewById(R.id.dialog_root).setBackgroundResource(
+            dark ? R.drawable.dialog_card_bg_dark : R.drawable.dialog_card_bg);
+
+        labelScreenTitle.setTextColor(textPrimary);
+        labelLead.setTextColor(textSecondary);
+
+        inputTitle.setTextColor(textPrimary);
+        inputTitle.setHintTextColor(textSecondary);
+        inputTitle.setBackgroundResource(fieldBg);
+
+        inputDetails.setTextColor(textPrimary);
+        inputDetails.setHintTextColor(textSecondary);
+        inputDetails.setBackgroundResource(fieldBg);
+
+        btnPickDatetime.setTextColor(textPrimary);
+        btnPickDatetime.setBackgroundResource(fieldBg);
+        Drawable[] compound = btnPickDatetime.getCompoundDrawables();
+        if (compound[0] != null) compound[0].setColorFilter(textSecondary, android.graphics.PorterDuff.Mode.SRC_IN);
+
+        ImageButton btnClose = findViewById(R.id.btn_close);
+        btnClose.setColorFilter(textSecondary);
+
+        int[] leadIds = { R.id.lead_15, R.id.lead_30, R.id.lead_60 };
+        for (int id : leadIds) {
+            RadioButton rb = findViewById(id);
+            rb.setBackgroundResource(chipBg);
+            rb.setTextColor(chipText);
+        }
     }
 
     private void selectLeadRadio(int minutes) {
@@ -113,7 +161,7 @@ public class AddPersonalEventActivity extends Activity {
 
     private void updateDatetimeLabel() {
         SimpleDateFormat fmt = new SimpleDateFormat("d MMMM yyyy, HH:mm", Locale.getDefault());
-        labelSelectedDatetime.setText(fmt.format(selected.getTime()));
+        btnPickDatetime.setText(fmt.format(selected.getTime()));
     }
 
     private void save() {

@@ -1,92 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dialog_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/white"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="20dp">
 
-    <TextView
-        android:id="@+id/label_screen_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Новое событие"
-        android:textColor="#1a1a1a"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/label_screen_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Новое событие"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Закрыть"
+            android:padding="4dp"
+            android:src="@drawable/ic_dialog_close" />
+    </LinearLayout>
 
     <EditText
         android:id="@+id/input_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/dialog_field_bg"
         android:hint="Название события"
         android:inputType="text"
-        android:maxLines="2" />
-
-    <Button
-        android:id="@+id/btn_pick_datetime"
-        style="?android:attr/buttonBarButtonStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:gravity="left|center_vertical"
-        android:text="Выбрать дату и время" />
+        android:maxLines="2"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp"
+        android:textSize="15sp" />
 
     <TextView
-        android:id="@+id/label_selected_datetime"
+        android:id="@+id/btn_pick_datetime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:textColor="#666666"
-        android:textSize="14sp" />
+        android:layout_marginTop="10dp"
+        android:background="@drawable/dialog_field_bg"
+        android:clickable="true"
+        android:drawableStart="@drawable/ic_widget_calendar"
+        android:drawablePadding="10dp"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp"
+        android:textSize="15sp" />
 
     <EditText
         android:id="@+id/input_details"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/dialog_field_bg"
         android:gravity="top"
         android:hint="Заметка (необязательно)"
         android:inputType="textMultiLine"
+        android:maxLines="4"
         android:minLines="2"
-        android:maxLines="4" />
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="12dp"
+        android:textSize="14sp" />
 
     <TextView
+        android:id="@+id/label_lead"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Напомнить за:"
-        android:textColor="#666666"
+        android:layout_marginTop="16dp"
+        android:text="Напомнить за"
         android:textSize="13sp" />
 
     <RadioGroup
         android:id="@+id/lead_group"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
         <RadioButton
             android:id="@+id/lead_15"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:text="15 мин" />
+            android:background="@drawable/dialog_chip_bg"
+            android:button="@null"
+            android:gravity="center"
+            android:text="15 мин"
+            android:textColor="@color/dialog_chip_text"
+            android:textSize="13sp" />
 
         <RadioButton
             android:id="@+id/lead_30"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginEnd="8dp"
             android:layout_weight="1"
+            android:background="@drawable/dialog_chip_bg"
+            android:button="@null"
             android:checked="true"
-            android:text="30 мин" />
+            android:gravity="center"
+            android:text="30 мин"
+            android:textColor="@color/dialog_chip_text"
+            android:textSize="13sp" />
 
         <RadioButton
             android:id="@+id/lead_60"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="40dp"
             android:layout_weight="1"
-            android:text="1 час" />
+            android:background="@drawable/dialog_chip_bg"
+            android:button="@null"
+            android:gravity="center"
+            android:text="1 час"
+            android:textColor="@color/dialog_chip_text"
+            android:textSize="13sp" />
     </RadioGroup>
 
     <LinearLayout
@@ -101,8 +141,9 @@
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
             android:text="Удалить"
-            android:textColor="#cc3333"
+            android:textColor="#e0484f"
             android:visibility="gone" />
 
         <View
@@ -111,19 +152,14 @@
             android:layout_weight="1" />
 
         <Button
-            android:id="@+id/btn_cancel"
-            style="?android:attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Отмена" />
-
-        <Button
             android:id="@+id/btn_save"
-            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="44dp"
+            android:background="@drawable/dialog_btn_primary_bg"
+            android:paddingHorizontal="24dp"
             android:text="Сохранить"
-            android:textColor="#e8743b"
+            android:textAllCaps="false"
+            android:textColor="#ffffff"
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>
