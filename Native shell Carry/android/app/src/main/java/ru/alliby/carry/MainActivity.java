@@ -20,7 +20,9 @@ public class MainActivity extends BridgeActivity {
         handleIncomingOrderIntent(getIntent());
         // Не показываем модалку поверх экрана срочного принятия заказа — не мешаем таймеру оффера.
         if (!isIncomingOrder) {
-            BatteryOptimizationPermission.maybeRequest(this);
+            if (!FullScreenIntentPermission.maybeRequest(this)) {
+                BatteryOptimizationPermission.maybeRequest(this);
+            }
         }
     }
 
