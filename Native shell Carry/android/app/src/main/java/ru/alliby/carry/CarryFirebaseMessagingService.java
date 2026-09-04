@@ -31,7 +31,9 @@ public class CarryFirebaseMessagingService extends com.capacitorjs.plugins.pushn
 
     private static final String CHANNEL_ID = "alliby_orders_incoming";
     private static final String TYPE_ORDER_ASSIGNED = "carry_order_assigned";
-    private static final int NOTIFICATION_ID = 9100;
+    // Package-visible: MainActivity cancels this notification (and its
+    // ringtone-style sound) once the courier responds to the offer in JS.
+    static final int NOTIFICATION_ID = 9100;
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {

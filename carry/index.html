@@ -943,17 +943,26 @@ window.AllibyBridge={
     }).catch(function(){});
   },
   requestLocation:function(){
+    var toPos=function(r){return{lat:r.coords.latitude,lng:r.coords.longitude};};
     if(_isNative()&&_P().Geolocation){
-      return _P().Geolocation.getCurrentPosition({enableHighAccuracy:true,timeout:8000})
-        .then(function(r){return{lat:r.coords.latitude,lng:r.coords.longitude};});
+      var Geo=_P().Geolocation;
+      // GPS-фикс на этом устройстве часто не успевает за 8с (слабый сигнал в помещении,
+      // а сетевая геолокация Play Services у некоторых Xiaomi-прошивок ненадёжна) —
+      // без фолбэка courier_location_updated_at зависает на часы, и курьер выпадает
+      // из подбора (dispatch_order_courier требует свежесть <5 мин).
+      return Geo.getCurrentPosition({enableHighAccuracy:true,timeout:8000}).then(toPos)
+        .catch(function(){
+          return Geo.getCurrentPosition({enableHighAccuracy:false,timeout:8000,maximumAge:120000}).then(toPos);
+        });
     }
-    return new Promise(function(res,rej){
-      if(!navigator.geolocation){rej(new Error('no geolocation'));return;}
-      navigator.geolocation.getCurrentPosition(
-        function(p){res({lat:p.coords.latitude,lng:p.coords.longitude});},
-        rej,{enableHighAccuracy:true,timeout:8000}
-      );
-    });
+    var getPos=function(opts){
+      return new Promise(function(res,rej){
+        if(!navigator.geolocation){rej(new Error('no geolocation'));return;}
+        navigator.geolocation.getCurrentPosition(function(p){res(toPos(p));},rej,opts);
+      });
+    };
+    return getPos({enableHighAccuracy:true,timeout:8000})
+      .catch(function(){return getPos({enableHighAccuracy:false,timeout:8000,maximumAge:120000});});
   },
   haptic:function(style){
     if(_isNative()&&_P().Haptics){
@@ -967,6 +976,14 @@ window.AllibyBridge={
     if(!_isNative()||!_P().StatusBar)return;
     _P().StatusBar.setStyle({style:'LIGHT'});
     _P().StatusBar.setBackgroundColor({color:dark?'#0f0f0f':'#14b8a6'});
+  },
+  // Останавливает звонок-уведомление о новом заказе (CarryFirebaseMessagingService,
+  // id 9100) в момент, когда курьер уже ответил на оффер — иначе мелодия звонит
+  // как входящий вызов и сама не гаснет от открытия экрана.
+  cancelIncomingOrderNotification:function(){
+    if(window.CarryNotifications&&window.CarryNotifications.cancelIncomingOrder){
+      try{window.CarryNotifications.cancelIncomingOrder();}catch(e){}
+    }
   },
 };
 
@@ -1977,6 +1994,7 @@ function _tickOfferCountdowns() {
       const orderId = el.dataset.orderId;
       if (!_offerTimeoutInFlight.has(orderId)) {
         _offerTimeoutInFlight.add(orderId);
+        window.AllibyBridge.cancelIncomingOrderNotification();
         req('/rest/v1/rpc/courier_timeout_order', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) })
           .catch(() => {})
           .finally(() => { _offerTimeoutInFlight.delete(orderId); loadActiveOrders(); });
@@ -2243,6 +2261,7 @@ async function declineOrder(orderId) {
   if (!confirm('Отказаться от заказа?')) return;
   try {
     await req('/rest/v1/rpc/courier_decline_order', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
+    window.AllibyBridge.cancelIncomingOrderNotification();
     await loadActiveOrders();
   } catch(e) { alert(e.message || 'Ошибка'); }
 }
@@ -2261,6 +2280,7 @@ async function acceptOrder(orderId) {
 async function confirmOffer(orderId) {
   try {
     await req('/rest/v1/rpc/courier_confirm_offer', { method: 'POST', body: JSON.stringify({ p_order_id: orderId }) });
+    window.AllibyBridge.cancelIncomingOrderNotification();
     await loadActiveOrders();
   } catch(e) { alert(e.error || e.message || 'Ошибка'); }
 }

@@ -1,10 +1,14 @@
 package ru.alliby.carry;
 
 import android.app.KeyguardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
+
+import androidx.core.app.NotificationManagerCompat;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -23,6 +27,27 @@ public class MainActivity extends BridgeActivity {
             if (!FullScreenIntentPermission.maybeRequest(this)) {
                 BatteryOptimizationPermission.maybeRequest(this);
             }
+        }
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().addJavascriptInterface(
+                new NotificationBridge(this), "CarryNotifications");
+        }
+    }
+
+    // Позволяет JS (carry/index.html) остановить мелодию оффера ровно в момент
+    // ответа курьера (принял/отказался/истёк таймер) — до этого уведомление
+    // 9100 у CarryFirebaseMessagingService звонит как входящий вызов и само
+    // по себе не гаснет от открытия экрана.
+    private static class NotificationBridge {
+        private final Context appCtx;
+
+        NotificationBridge(Context ctx) {
+            this.appCtx = ctx.getApplicationContext();
+        }
+
+        @JavascriptInterface
+        public void cancelIncomingOrder() {
+            NotificationManagerCompat.from(appCtx).cancel(CarryFirebaseMessagingService.NOTIFICATION_ID);
         }
     }
 
