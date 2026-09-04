@@ -1208,6 +1208,7 @@ async function afterAuth() {
   if (!S.profile) { goToAuth(); return; }
 
   if (S.profile.is_courier) {
+    window.AllibyBridge?.registerPush(S.session.user.id);
     initMainScreen();
   } else {
     document.getElementById('ob-name').value = S.profile.full_name || '';
