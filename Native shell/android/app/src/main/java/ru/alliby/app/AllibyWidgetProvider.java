@@ -314,12 +314,31 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
         return all;
     }
 
-    /** Вызывается из AllibyWidgetPlugin и AddPersonalEventActivity после изменения данных (без смены темы/даты). */
+    /**
+     * Вызывается из AllibyWidgetPlugin и AddPersonalEventActivity после изменения данных
+     * (без смены темы/даты). Для виджетов в режиме календаря лёгкого
+     * notifyAppWidgetViewDataChanged недостаточно — точки-маркеры дней рисуются
+     * в updateOne()/buildCalendarWeeks(), а не через RemoteViewsFactory, поэтому
+     * такие экземпляры перерисовываются полностью, иначе новое личное событие
+     * не появится на календаре до следующей навигации.
+     */
     static void refreshAll(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
         int[] ids = allWidgetIds(context, mgr);
-        if (ids.length > 0) {
-            mgr.notifyAppWidgetViewDataChanged(ids, R.id.widget_list);
+        if (ids.length == 0) return;
+
+        java.util.List<Integer> agendaIds = new java.util.ArrayList<>();
+        for (int id : ids) {
+            if ("calendar".equals(WidgetPrefs.viewMode(context, id))) {
+                updateOne(context, mgr, id);
+            } else {
+                agendaIds.add(id);
+            }
+        }
+        if (!agendaIds.isEmpty()) {
+            int[] arr = new int[agendaIds.size()];
+            for (int i = 0; i < arr.length; i++) arr[i] = agendaIds.get(i);
+            mgr.notifyAppWidgetViewDataChanged(arr, R.id.widget_list);
         }
     }
 
