@@ -14,29 +14,29 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.mode !== 'navigate') return;
 
-  e.respondWith(
-    caches.open(APP_CACHE).then(async cache => {
-      const cached = await cache.match(e.request);
+  e.respondWith((async () => {
+    const cache = await caches.open(APP_CACHE);
+    const cached = await cache.match(e.request);
 
-      if (cached) {
-        fetch(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
-          if (!resp.ok) return;
-          const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
-          const newTag = getTag(resp);
-          const oldTag = getTag(cached);
-          await cache.put(e.request, resp.clone());
-          if (!newTag || !oldTag || newTag !== oldTag) {
-            const clients = await self.clients.matchAll({ includeUncontrolled: true });
-            clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
-          }
-        }).catch(() => {});
-        return cached;
+    // waitUntil держит воркер живым до конца ревалидации — без него фоновый
+    // fetch обрывается, если приложение закрывают сразу после открытия
+    // (обычный сценарий), и кэш никогда не обновляется до свежей версии.
+    const refresh = (async () => {
+      const resp = await fetch(new Request(e.request.url, { cache: 'no-cache' })).catch(() => null);
+      if (!resp || !resp.ok) return;
+      const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
+      const newTag = getTag(resp);
+      const oldTag = cached ? getTag(cached) : null;
+      await cache.put(e.request, resp.clone());
+      if (cached && (!newTag || !oldTag || newTag !== oldTag)) {
+        const clients = await self.clients.matchAll({ includeUncontrolled: true });
+        clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
       }
+    })();
+    e.waitUntil(refresh);
 
-      return fetch(e.request).then(resp => {
-        if (resp.ok) cache.put(e.request, resp.clone());
-        return resp;
-      });
-    })
-  );
+    if (cached) return cached;
+    await refresh;
+    return (await cache.match(e.request)) || fetch(e.request);
+  })());
 });
