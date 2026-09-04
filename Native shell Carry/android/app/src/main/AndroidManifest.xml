@@ -73,4 +73,6 @@
     <!-- Для будильника поверх блокировки при новом заказе (Android 14+ требует ручного
          включения пользователем в настройках приложения). -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <!-- Для запроса исключения из оптимизации батареи, см. BatteryOptimizationPermission -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 </manifest>

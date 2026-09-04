@@ -15,7 +15,13 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        boolean isIncomingOrder = getIntent() != null
+            && getIntent().getBooleanExtra(EXTRA_OPEN_INCOMING_ORDER, false);
         handleIncomingOrderIntent(getIntent());
+        // Не показываем модалку поверх экрана срочного принятия заказа — не мешаем таймеру оффера.
+        if (!isIncomingOrder) {
+            BatteryOptimizationPermission.maybeRequest(this);
+        }
     }
 
     @Override
