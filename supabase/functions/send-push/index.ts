@@ -68,9 +68,18 @@ async function sendFcm(
   token: string,
   title: string,
   body: string,
-  data: Record<string, string>
+  data: Record<string, string>,
+  dataOnly = false
 ) {
   const accessToken = await getFcmAccessToken()
+  // carry_order_assigned идёт как чистый data-message (без message.notification):
+  // так Android гарантированно вызывает onMessageReceived() в нативном коде даже
+  // когда приложение свёрнуто/убито, что нужно для будильника поверх блокировки
+  // (CarryFirebaseMessagingService). Для notification-payload сообщений в фоне
+  // систему показывает уведомление сама, минуя код приложения.
+  const message: Record<string, unknown> = dataOnly
+    ? { token, data: { ...data, title, body } }
+    : { token, notification: { title, body }, data }
   const resp = await fetch(
     `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`,
     {
@@ -81,16 +90,16 @@ async function sendFcm(
       },
       body: JSON.stringify({
         message: {
-          token,
-          notification: { title, body },
-          data,
+          ...message,
           android: {
             priority: 'high',
-            notification: {
-              sound: 'default',
-              channel_id: 'alliby_orders',
-              image: 'https://alliby.ru/icons/notification-large.png',
-            },
+            ...(dataOnly ? {} : {
+              notification: {
+                sound: 'default',
+                channel_id: 'alliby_orders',
+                image: 'https://alliby.ru/icons/notification-large.png',
+              },
+            }),
           },
           apns: {
             payload: { aps: { sound: 'default', badge: 1 } },
@@ -179,7 +188,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    await sendFcm(sub.device_token, title, body, { type, ...data })
+    const dataOnly = type === 'carry_order_assigned'
+    await sendFcm(sub.device_token, title, body, { type, ...data }, dataOnly)
     return new Response(JSON.stringify({ sent: true }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     })
