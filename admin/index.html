@@ -3005,6 +3005,26 @@ ol.hlp-steps>li ul{margin:6px 0 0}
 </div>
 
 <script>
+// ─── FATAL ERROR BANNER ───
+// На iPhone нет доступа к консоли без Mac — единственный способ узнать,
+// что именно упало, это показать ошибку прямо на экране.
+function _showFatalError(err) {
+  if (document.getElementById('_fatal-err')) return;
+  const msg = (err && err.stack) || (err && err.message) || String(err);
+  const el = document.createElement('div');
+  el.id = '_fatal-err';
+  el.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#1a1a1a;color:#fff;padding:16px;font:12px/1.4 monospace;overflow:auto;white-space:pre-wrap';
+  el.textContent = 'Ошибка загрузки:\n\n' + msg;
+  const btn = document.createElement('button');
+  btn.textContent = 'Закрыть';
+  btn.style.cssText = 'display:block;margin-top:16px;padding:10px 20px;background:#333;color:#fff;border:none;border-radius:8px;font-size:14px';
+  btn.onclick = () => el.remove();
+  el.appendChild(btn);
+  document.body.appendChild(el);
+}
+window.addEventListener('error', e => _showFatalError(e.error || e.message));
+window.addEventListener('unhandledrejection', e => _showFatalError(e.reason));
+
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
 const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
