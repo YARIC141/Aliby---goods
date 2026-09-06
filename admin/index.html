@@ -3029,6 +3029,11 @@ window.addEventListener('unhandledrejection', e => _showFatalError(e.reason));
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
 const SB_URL  = _LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
 const SB_ANON = _LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
+// Резервный домен на том же сервере — на случай если провайдер рвёт именно
+// соединение до alliby.ru (см. client/index.html). req() один раз переключится
+// на него при сетевой ошибке и дальше уже сразу ходит туда.
+const SB_URL_FALLBACK = _LOCAL ? null : 'https://edge.alliby.ru';
+let _sbActiveUrl = SB_URL;
 
 function svgIco(key, sz) {
   sz = sz || 16;
@@ -3141,7 +3146,7 @@ function _timeoutSignal(ms) {
   const t = setTimeout(() => ctrl.abort(), ms);
   return { signal: ctrl.signal, done: () => clearTimeout(t) };
 }
-async function req(path, opts = {}, _retried = false) {
+async function req(path, opts = {}, _retried = false, _hostFallback = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
     await refreshSession();
   }
@@ -3150,8 +3155,13 @@ async function req(path, opts = {}, _retried = false) {
   let r;
   const _to = _timeoutSignal(10000);
   try {
-    r = await fetch(SB_URL + path, { ...opts, headers: h, signal: _to.signal });
+    r = await fetch(_sbActiveUrl + path, { ...opts, headers: h, signal: _to.signal });
   } catch (e) {
+    _to.done();
+    if (!_hostFallback && SB_URL_FALLBACK && _sbActiveUrl !== SB_URL_FALLBACK) {
+      _sbActiveUrl = SB_URL_FALLBACK;
+      return req(path, opts, _retried, true);
+    }
     throw { message: 'Нет соединения' };
   } finally {
     _to.done();
@@ -3579,18 +3589,23 @@ function setSession(d) {
   document.getElementById('sn-email').textContent = d.user?.email || '';
 }
 
-async function refreshSession() {
+async function refreshSession(_hostFallback = false) {
   if (!S.session?.refresh_token) return false;
   let r;
   const _to = _timeoutSignal(10000);
   try {
-    r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+    r = await fetch(`${_sbActiveUrl}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
       body: JSON.stringify({ refresh_token: S.session.refresh_token }),
       signal: _to.signal,
     });
   } catch(e) {
+    _to.done();
+    if (!_hostFallback && SB_URL_FALLBACK && _sbActiveUrl !== SB_URL_FALLBACK) {
+      _sbActiveUrl = SB_URL_FALLBACK;
+      return refreshSession(true);
+    }
     return null; // network error (or timeout) — token may still be valid
   } finally {
     _to.done();
