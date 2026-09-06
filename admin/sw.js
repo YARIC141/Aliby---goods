@@ -4,6 +4,17 @@ const TILE_CACHE = 'aliby-admin-tiles-v2';
 const TILE_PATH  = '/functions/v1/vector-tiles/';
 const MAX_TILES  = 300;
 
+// Plain fetch() never rejects on its own when a connection is blackholed
+// (packets silently dropped instead of cleanly refused) — without this,
+// a network fetch inside the SW can hang forever and freeze the whole
+// page navigation before index.html's own JS ever gets a chance to run.
+const NET_TIMEOUT_MS = 10000;
+function fetchTimeout(request, ms = NET_TIMEOUT_MS) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(request, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
@@ -26,7 +37,7 @@ async function trimTiles() {
 self.addEventListener('fetch', e => {
   if (e.request.url.includes(TILE_PATH)) {
     e.respondWith(
-      caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+      caches.match(e.request).then(cached => cached || fetchTimeout(e.request).then(resp => {
         if (resp.ok) caches.open(TILE_CACHE).then(c => { c.put(e.request, resp.clone()); trimTiles(); });
         return resp;
       }))
@@ -40,7 +51,7 @@ self.addEventListener('fetch', e => {
         const cached = await cache.match(e.request);
 
         if (cached) {
-          fetch(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
+          fetchTimeout(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
             if (!resp.ok) return;
             const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
             const newTag = getTag(resp);
@@ -54,7 +65,7 @@ self.addEventListener('fetch', e => {
           return cached;
         }
 
-        return fetch(e.request).then(resp => {
+        return fetchTimeout(e.request).then(resp => {
           if (resp.ok) cache.put(e.request, resp.clone());
           return resp;
         });

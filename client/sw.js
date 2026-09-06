@@ -17,6 +17,17 @@ function withTimeout(promise, ms = CACHE_TIMEOUT_MS) {
   });
 }
 
+// Plain fetch() never rejects on its own when a connection is blackholed
+// (packets silently dropped instead of cleanly refused) — without this,
+// a network fetch inside the SW can hang forever and freeze the whole
+// page navigation before index.html's own JS ever gets a chance to run.
+const NET_TIMEOUT_MS = 10000;
+function fetchTimeout(request, ms = NET_TIMEOUT_MS) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(request, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+
 self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
@@ -41,7 +52,7 @@ self.addEventListener('fetch', e => {
   if (e.request.destination === 'image') {
     e.respondWith(
       withTimeout(caches.open(IMG_CACHE).then(cache => cache.match(e.request).then(cached => ({ cache, cached }))))
-        .then(({ cache, cached }) => cached || fetch(e.request).then(resp => {
+        .then(({ cache, cached }) => cached || fetchTimeout(e.request).then(resp => {
           if (resp.ok) {
             cache.put(e.request, resp.clone());
             cache.keys().then(keys => {
@@ -51,7 +62,7 @@ self.addEventListener('fetch', e => {
           }
           return resp;
         }))
-        .catch(() => fetch(e.request))
+        .catch(() => fetchTimeout(e.request))
     );
     return;
   }
@@ -72,7 +83,7 @@ self.addEventListener('fetch', e => {
           const age = cached ? Date.now() - new Date(cached.headers.get('date') || 0).getTime() : Infinity;
           if (cached && age < SW_API_TTL) return cached; // свежий — отдаём сразу, без сети
           try {
-            const resp = await fetch(e.request.clone());
+            const resp = await fetchTimeout(e.request.clone());
             if (resp.ok) { cache.put(e.request, resp.clone()); trimApiCache(); }
             return resp;
           } catch (err) {
@@ -91,7 +102,7 @@ self.addEventListener('fetch', e => {
         .then(({ cache, cached }) => {
           if (cached) {
             // Serve from cache immediately, revalidate in background
-            fetch(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
+            fetchTimeout(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
               if (!resp.ok) return;
               const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
               const newTag = getTag(resp);
@@ -106,7 +117,7 @@ self.addEventListener('fetch', e => {
           }
 
           // First load — fetch from network and cache
-          return fetch(e.request).then(resp => {
+          return fetchTimeout(e.request).then(resp => {
             if (resp.ok) cache.put(e.request, resp.clone());
             return resp;
           });
@@ -116,7 +127,7 @@ self.addEventListener('fetch', e => {
         // falling back to a cached shell (best-effort) only if that also fails.
         .catch(async () => {
           try {
-            return await fetch(e.request);
+            return await fetchTimeout(e.request);
           } catch {
             const fallback = await withTimeout(caches.match('/'), 1000).catch(() => null)
               || await withTimeout(caches.match('/index.html'), 1000).catch(() => null);
