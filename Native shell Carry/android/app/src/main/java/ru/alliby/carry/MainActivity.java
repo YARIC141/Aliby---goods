@@ -3,6 +3,7 @@ package ru.alliby.carry;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -52,6 +53,24 @@ public class MainActivity extends BridgeActivity {
         public void cancelIncomingOrder() {
             Log.d("CarryNotif", "cancelIncomingOrder() called from JS");
             NotificationManagerCompat.from(appCtx).cancel(CarryFirebaseMessagingService.NOTIFICATION_ID);
+        }
+
+        // Экран "Профиль" в carry/index.html — выбор мелодии оффера ("Ваш текущий
+        // звонок" / "8-bit"). Читается в фоновом CarryFirebaseMessagingService,
+        // поэтому хранится в SharedPreferences, а не в localStorage WebView.
+        @JavascriptInterface
+        public void setOrderSound(String sound) {
+            appCtx.getSharedPreferences(CarryFirebaseMessagingService.PREFS_NAME, Context.MODE_PRIVATE)
+                .edit()
+                .putString(CarryFirebaseMessagingService.PREF_ORDER_SOUND, sound)
+                .apply();
+        }
+
+        @JavascriptInterface
+        public String getOrderSound() {
+            SharedPreferences prefs = appCtx.getSharedPreferences(
+                CarryFirebaseMessagingService.PREFS_NAME, Context.MODE_PRIVATE);
+            return prefs.getString(CarryFirebaseMessagingService.PREF_ORDER_SOUND, "default");
         }
     }
 

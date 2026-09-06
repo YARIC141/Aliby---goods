@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
@@ -30,8 +31,12 @@ import java.util.Map;
  */
 public class CarryFirebaseMessagingService extends com.capacitorjs.plugins.pushnotifications.MessagingService {
 
-    private static final String CHANNEL_ID = "alliby_orders_incoming";
+    private static final String CHANNEL_ID_DEFAULT = "alliby_orders_incoming";
+    private static final String CHANNEL_ID_8BIT = "alliby_orders_incoming_8bit";
     private static final String TYPE_ORDER_ASSIGNED = "carry_order_assigned";
+    // Тот же ключ, что пишет MainActivity.NotificationBridge.setOrderSound() из JS (Профиль).
+    static final String PREFS_NAME = "carry_prefs";
+    static final String PREF_ORDER_SOUND = "order_sound";
     // Package-visible: MainActivity cancels this notification (and its
     // ringtone-style sound) once the courier responds to the offer in JS.
     static final int NOTIFICATION_ID = 9100;
@@ -47,7 +52,10 @@ public class CarryFirebaseMessagingService extends com.capacitorjs.plugins.pushn
 
     private void showIncomingOrderNotification(Map<String, String> data) {
         Context ctx = getApplicationContext();
-        ensureChannel(ctx);
+        ensureChannels(ctx);
+        SharedPreferences prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String channelId = "8bit".equals(prefs.getString(PREF_ORDER_SOUND, "default"))
+            ? CHANNEL_ID_8BIT : CHANNEL_ID_DEFAULT;
 
         String title = data.containsKey("title") ? data.get("title") : "🚴 Новый заказ";
         String body = data.containsKey("body") ? data.get("body") : "Вам назначена доставка";
@@ -68,7 +76,7 @@ public class CarryFirebaseMessagingService extends com.capacitorjs.plugins.pushn
         );
 
         Resources res = ctx.getResources();
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(ctx, channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(ContextCompat.getColor(ctx, R.color.colorAccent))
             .setContentTitle(title)
@@ -84,21 +92,35 @@ public class CarryFirebaseMessagingService extends com.capacitorjs.plugins.pushn
     }
 
     /** Идемпотентно: пересоздание уже существующего канала с тем же id — no-op. */
-    private void ensureChannel(Context ctx) {
+    private void ensureChannels(Context ctx) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm == null || nm.getNotificationChannel(CHANNEL_ID) != null) return;
-
-        NotificationChannel channel = new NotificationChannel(
-            CHANNEL_ID, "Новые заказы", NotificationManager.IMPORTANCE_HIGH
-        );
-        channel.setDescription("Будит телефон при новом предложении заказа");
-        channel.enableVibration(true);
-        channel.setVibrationPattern(new long[]{0, 500, 250, 500, 250, 500});
-        Uri sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-        channel.setSound(sound, new AudioAttributes.Builder()
+        if (nm == null) return;
+        AudioAttributes attrs = new AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-            .build());
-        nm.createNotificationChannel(channel);
+            .build();
+
+        if (nm.getNotificationChannel(CHANNEL_ID_DEFAULT) == null) {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID_DEFAULT, "Новые заказы (ваш звонок)", NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Будит телефон при новом предложении заказа");
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 500, 250, 500, 250, 500});
+            channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE), attrs);
+            nm.createNotificationChannel(channel);
+        }
+
+        if (nm.getNotificationChannel(CHANNEL_ID_8BIT) == null) {
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID_8BIT, "Новые заказы (8-bit)", NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Будит телефон при новом предложении заказа");
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 500, 250, 500, 250, 500});
+            Uri sound = Uri.parse("android.resource://" + ctx.getPackageName() + "/" + R.raw.alliby_reminder);
+            channel.setSound(sound, attrs);
+            nm.createNotificationChannel(channel);
+        }
     }
 }

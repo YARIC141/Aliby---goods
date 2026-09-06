@@ -742,7 +742,8 @@ function _remSettings(){
   return {
     bookings:{enabled:!(s.bookings&&s.bookings.enabled===false),hours:(s.bookings&&s.bookings.hours!=null)?s.bookings.hours:1,minutes:(s.bookings&&s.bookings.minutes!=null)?s.bookings.minutes:0},
     rent:{enabled:!(s.rent&&s.rent.enabled===false),hours:(s.rent&&s.rent.hours!=null)?s.rent.hours:1,minutes:(s.rent&&s.rent.minutes!=null)?s.rent.minutes:0},
-    vibration:s.vibration!==false
+    vibration:s.vibration!==false,
+    sound:s.sound==='default'?'default':'8bit'
   };
 }
 
@@ -794,11 +795,16 @@ async function _doSyncReminders(uid){
     // текущую вибрацию заводим оба варианта один раз и просто выбираем id.
     // v2 — с фирменным звуком (res/raw/alliby_reminder.mp3); старые v1-каналы
     // без кастомного звука у уже установивших APK не трогаем, просто больше не используем.
+    // _def_v1 — тот же набор, но с системным звонком вместо фирменного (выбор в настройках).
     try{
       await LN.createChannel({id:'alliby_rem_vib_v2',name:'Напоминания (с вибрацией)',importance:4,vibration:true,sound:'alliby_reminder.mp3'});
       await LN.createChannel({id:'alliby_rem_novib_v2',name:'Напоминания (без вибрации)',importance:3,vibration:false,sound:'alliby_reminder.mp3'});
+      await LN.createChannel({id:'alliby_rem_vib_def_v1',name:'Напоминания (с вибрацией, звонок)',importance:4,vibration:true});
+      await LN.createChannel({id:'alliby_rem_novib_def_v1',name:'Напоминания (без вибрации, звонок)',importance:3,vibration:false});
     }catch(e){}
-    var channelId=rs.vibration?'alliby_rem_vib_v2':'alliby_rem_novib_v2';
+    var channelId=rs.sound==='default'
+      ?(rs.vibration?'alliby_rem_vib_def_v1':'alliby_rem_novib_def_v1')
+      :(rs.vibration?'alliby_rem_vib_v2':'alliby_rem_novib_v2');
     var nowDate=new Date();
     var nowIso=nowDate.toISOString();
     var today=nowIso.slice(0,10);
@@ -2463,7 +2469,14 @@ document.addEventListener('deviceready',function(){
           <span class="toggle-track"></span>
         </label>
       </div>
-      <p class="txt-sm" style="margin-top:8px;color:var(--fg-3)">Звук уведомления — системный, заданный в настройках телефона.</p>
+    </div>
+    <div class="sec">
+      <div class="sec-title">Звук</div>
+      <div class="lbl">Мелодия напоминания</div>
+      <select id="rem-sound-sel" onchange="setRemSound(this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
+        <option value="8bit">8-bit</option>
+        <option value="default">Ваш текущий звонок</option>
+      </select>
     </div>
   </div>
 </div>
@@ -4544,6 +4557,7 @@ function getReminderSettings() {
     bookings: { enabled: s.bookings?.enabled !== false, hours: s.bookings?.hours ?? 1, minutes: s.bookings?.minutes ?? 0 },
     rent:     { enabled: s.rent?.enabled !== false,     hours: s.rent?.hours ?? 1,     minutes: s.rent?.minutes ?? 0 },
     vibration: s.vibration !== false,
+    sound: s.sound === 'default' ? 'default' : '8bit',
   };
 }
 function saveReminderSettings(s) {
@@ -4561,6 +4575,7 @@ function openReminders() {
   document.getElementById('rem-rent-minutes').value = s.rent.minutes;
   document.getElementById('rem-rent-period').style.display = s.rent.enabled ? '' : 'none';
   document.getElementById('rem-vibration-chk').checked = s.vibration;
+  document.getElementById('rem-sound-sel').value = s.sound;
   document.getElementById('panel-reminders').classList.add('open');
 }
 function closeReminders() { document.getElementById('panel-reminders').classList.remove('open'); }
@@ -4578,6 +4593,11 @@ function setRemPeriod(type, field, value) {
 function toggleRemVibration(checked) {
   const s = getReminderSettings();
   s.vibration = checked;
+  saveReminderSettings(s);
+}
+function setRemSound(value) {
+  const s = getReminderSettings();
+  s.sound = value === 'default' ? 'default' : '8bit';
   saveReminderSettings(s);
 }
 

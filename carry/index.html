@@ -817,6 +817,13 @@ ol.hlp-steps>li::before{content:counter(hlpstep);position:absolute;left:0;top:1p
     <div class="fg"><label>Имя и фамилия</label><input type="text" id="pf-name"></div>
     <div class="fg"><label>Телефон</label><input type="tel" id="pf-phone"></div>
     <div class="fg"><label>Город</label><input type="text" id="pf-city"></div>
+    <div class="fg">
+      <label>Мелодия нового заказа</label>
+      <select id="pf-order-sound" onchange="setOrderSound(this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:14px">
+        <option value="default">Ваш текущий звонок</option>
+        <option value="8bit">8-bit</option>
+      </select>
+    </div>
     <div class="modal-ft">
       <button class="btn btn-d" onclick="logout()">Выйти</button>
       <button class="btn btn-p" id="pf-save-btn" onclick="saveProfile()">Сохранить</button>
@@ -1621,6 +1628,7 @@ function openProfileModal() {
   document.getElementById('pf-name').value   = S.profile?.full_name || '';
   document.getElementById('pf-phone').value  = S.profile?.phone || '';
   document.getElementById('pf-city').value   = S.profile?.courier_city || '';
+  document.getElementById('pf-order-sound').value = getOrderSoundPref();
   document.getElementById('err-profile').style.display = 'none';
   const statusEl = document.getElementById('pf-status-alert');
   if (S.profile?.courier_banned) {
@@ -1632,6 +1640,20 @@ function openProfileModal() {
   }
   statusEl.style.display = 'block';
   openModal('m-profile');
+}
+
+// Хранится native-стороной (SharedPreferences), т.к. её читает фоновый
+// CarryFirebaseMessagingService — до этого экрана WebView может не доходить,
+// если приложение свёрнуто/убито. localStorage — только резервный кэш для UI.
+function getOrderSoundPref() {
+  try {
+    if (window.CarryNotifications?.getOrderSound) return window.CarryNotifications.getOrderSound();
+  } catch(e) {}
+  try { return localStorage.getItem('carry_order_sound') || 'default'; } catch(e) { return 'default'; }
+}
+function setOrderSound(value) {
+  try { localStorage.setItem('carry_order_sound', value); } catch(e) {}
+  try { window.CarryNotifications?.setOrderSound(value); } catch(e) {}
 }
 
 function copyCourierId() {
