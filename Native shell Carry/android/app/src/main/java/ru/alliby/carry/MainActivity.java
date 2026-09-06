@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 
@@ -38,15 +39,18 @@ public class MainActivity extends BridgeActivity {
     // ответа курьера (принял/отказался/истёк таймер) — до этого уведомление
     // 9100 у CarryFirebaseMessagingService звонит как входящий вызов и само
     // по себе не гаснет от открытия экрана.
-    private static class NotificationBridge {
+    // Класс объявлен public — reflection-вызов addJavascriptInterface на части
+    // WebView-версий ненадёжен для приватных/вложенных классов.
+    public static class NotificationBridge {
         private final Context appCtx;
 
-        NotificationBridge(Context ctx) {
+        public NotificationBridge(Context ctx) {
             this.appCtx = ctx.getApplicationContext();
         }
 
         @JavascriptInterface
         public void cancelIncomingOrder() {
+            Log.d("CarryNotif", "cancelIncomingOrder() called from JS");
             NotificationManagerCompat.from(appCtx).cancel(CarryFirebaseMessagingService.NOTIFICATION_ID);
         }
     }

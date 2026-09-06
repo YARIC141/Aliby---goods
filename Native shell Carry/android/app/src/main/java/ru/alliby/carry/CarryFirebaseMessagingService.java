@@ -10,6 +10,7 @@ import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
@@ -78,6 +79,7 @@ public class CarryFirebaseMessagingService extends com.capacitorjs.plugins.pushn
             .setContentIntent(pendingIntent)
             .setFullScreenIntent(pendingIntent, true);
 
+        Log.d("CarryNotif", "showIncomingOrderNotification() posting id=" + NOTIFICATION_ID);
         NotificationManagerCompat.from(ctx).notify(NOTIFICATION_ID, builder.build());
     }
 
