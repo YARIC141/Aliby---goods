@@ -3119,13 +3119,31 @@ function buildOsmStyle() {
 }
 
 // ─── HELPERS ───
+// Plain fetch() never rejects on its own if a connection is blackholed (VPN,
+// flaky mobile network) instead of cleanly refused — without an explicit
+// timeout the request (and anything awaiting it, e.g. init()'s session
+// checks) hangs forever with no error and no fallback, which looks like the
+// app "won't open" on the client's end.
+function _timeoutSignal(ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return { signal: ctrl.signal, done: () => clearTimeout(t) };
+}
 async function req(path, opts = {}, _retried = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
     await refreshSession();
   }
   const h = { 'Content-Type': 'application/json', apikey: SB_ANON, ...opts.headers };
   if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
-  const r = await fetch(SB_URL + path, { ...opts, headers: h });
+  let r;
+  const _to = _timeoutSignal(10000);
+  try {
+    r = await fetch(SB_URL + path, { ...opts, headers: h, signal: _to.signal });
+  } catch (e) {
+    throw { message: 'Нет соединения' };
+  } finally {
+    _to.done();
+  }
   const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
   if (r.status === 401 && !_retried) {
     if (!S.session) throw { message: 'Требуется авторизация' };
@@ -5076,15 +5094,19 @@ async function blockIfEmployee() {
 async function refreshSession() {
   if (!S.session?.refresh_token) return false;
   let r;
+  const _to = _timeoutSignal(10000);
   try {
     r = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
       body: JSON.stringify({ refresh_token: S.session.refresh_token }),
+      signal: _to.signal,
     });
   } catch(e) {
-    // Network error — token may still be valid; return null so callers don't logout
+    // Network error (or timeout) — token may still be valid; return null so callers don't logout
     return null;
+  } finally {
+    _to.done();
   }
   if (!r.ok) return false; // HTTP 4xx: token definitively invalid/revoked
   const d = await r.json();

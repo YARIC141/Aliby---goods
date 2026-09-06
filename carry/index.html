@@ -1034,13 +1034,30 @@ function _updateThemeIcon(dark) {
     : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
 }
 
+// Plain fetch() never rejects on its own if a connection is blackholed (VPN,
+// flaky network) instead of cleanly refused — without an explicit timeout the
+// request (and anything awaiting it, e.g. init()'s session checks) hangs
+// forever with no error and no fallback.
+function _timeoutSignal(ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return { signal: ctrl.signal, done: () => clearTimeout(t) };
+}
 async function req(path, opts = {}, _retried = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
     await refreshSession();
   }
   const h = { 'Content-Type': 'application/json', apikey: SB_ANON, ...opts.headers };
   if (S.session?.access_token) h['Authorization'] = 'Bearer ' + S.session.access_token;
-  const r = await fetch(SB_URL + path, { ...opts, headers: h });
+  let r;
+  const _to = _timeoutSignal(10000);
+  try {
+    r = await fetch(SB_URL + path, { ...opts, headers: h, signal: _to.signal });
+  } catch (e) {
+    throw { message: 'Нет соединения' };
+  } finally {
+    _to.done();
+  }
   const body = r.headers.get('content-type')?.includes('json') ? await r.json() : null;
   if (r.status === 401 && !_retried) {
     if (!S.session) throw { message: 'Требуется авторизация' };
@@ -1059,17 +1076,19 @@ async function req(path, opts = {}, _retried = false) {
 async function refreshSession() {
   const rt = S.session?.refresh_token;
   if (!rt) return false;
+  const _to = _timeoutSignal(10000);
   try {
     const r = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
       body: JSON.stringify({ refresh_token: rt }),
+      signal: _to.signal,
     });
     if (!r.ok) return r.status >= 500 ? null : false;
     const d = await r.json();
     setSession(d);
     return true;
-  } catch { return null; }
+  } catch { return null; } finally { _to.done(); }
 }
 
 function setSession(d) {
