@@ -90,7 +90,7 @@ self.addEventListener('fetch', e => {
             return cached || Response.error();
           }
         })
-        .catch(() => fetch(e.request)) // cache API hung (Safari resume bug) — bypass entirely
+        .catch(() => fetchTimeout(e.request)) // cache API hung — bypass entirely, but still bounded
     );
     return;
   }
