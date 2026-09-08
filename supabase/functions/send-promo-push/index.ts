@@ -57,9 +57,8 @@ async function getFcmAccessToken(): Promise<string> {
   return access_token
 }
 
-async function sendFcm(token: string, title: string, body: string, storeId: string, storeDir: string): Promise<boolean> {
+async function sendFcm(accessToken: string, token: string, title: string, body: string, storeId: string, storeDir: string): Promise<boolean> {
   try {
-    const accessToken = await getFcmAccessToken()
     const resp = await fetch(
       `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`,
       {
@@ -212,12 +211,19 @@ Deno.serve(async (req: Request) => {
 
   const fcmData = { type: 'promo', store_id, store_direction: storeDirection }
 
+  // One access token authorizes the whole project for up to an hour — it's not
+  // tied to a recipient (that's the per-call `token` field below), so fetching
+  // it once here instead of per-recipient avoids up to 1000 redundant concurrent
+  // OAuth round-trips to Google for a single broadcast.
+  const needsFcm = validSubs.some(s => s.platform !== 'web')
+  const accessToken = needsFcm ? await getFcmAccessToken() : ''
+
   const results = await Promise.allSettled(
     validSubs.map(s => {
       if (s.platform === 'web') {
         return sendWebPush(s.endpoint!, s.p256dh!, s.auth_key!, pushTitle, body, fcmData)
       }
-      return sendFcm(s.device_token!, pushTitle, body, store_id, storeDirection)
+      return sendFcm(accessToken, s.device_token!, pushTitle, body, store_id, storeDirection)
     })
   )
 
