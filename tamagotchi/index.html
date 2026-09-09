@@ -31,8 +31,16 @@
   .hidden{display:none !important}
   .name{font-size:26px;font-weight:700;margin:0 0 2px}
   .mood{color:var(--accent);font-size:15px;margin:0 0 20px}
-  .stat{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #232b33;font-size:16px}
-  .stat span:last-child{color:var(--text2)}
+  .stat{padding:10px 0;border-bottom:1px solid #232b33;font-size:16px}
+  .stat-row{display:flex;justify-content:space-between;margin-bottom:6px}
+  .stat-row span:last-child{color:var(--text2)}
+  .progress-track{width:100%;height:8px;border-radius:4px;background:#232b33;overflow:hidden}
+  .progress-fill{height:100%;width:0;border-radius:4px;transition:width .3s ease, background-color .3s ease}
+  .bio-card{margin:18px 0}
+  .bio-label{display:block;font-size:14px;color:var(--text2);margin-bottom:6px}
+  textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #2a323b;background:#151a1f;
+    color:var(--text);font-size:14px;font-family:inherit;line-height:1.4;resize:vertical}
+  textarea::placeholder{color:var(--text2)}
   .steps-card{background:var(--card);border-radius:12px;padding:14px;margin:18px 0;font-size:14px;color:var(--text2)}
   .actions{margin-top:20px}
   .footer-hint{font-size:12px;color:var(--text2);line-height:1.5;margin-top:18px}
@@ -78,15 +86,35 @@
     <div class="name" id="text-name"></div>
     <div class="mood" id="text-mood"></div>
 
-    <div class="stat"><span>Сытость</span><span id="text-satiety"></span></div>
-    <div class="stat"><span>Жир</span><span id="text-fat"></span></div>
-    <div class="stat"><span>Энергия</span><span id="text-energy"></span></div>
-    <div class="stat"><span>Веселье</span><span id="text-fun"></span></div>
-    <div class="stat"><span>Активность</span><span id="text-activity"></span></div>
+    <div class="stat">
+      <div class="stat-row"><span>Сытость</span><span id="text-satiety"></span></div>
+      <div class="progress-track"><div class="progress-fill" id="bar-satiety"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-row"><span>Жир</span><span id="text-fat"></span></div>
+      <div class="progress-track"><div class="progress-fill" id="bar-fat"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-row"><span>Энергия</span><span id="text-energy"></span></div>
+      <div class="progress-track"><div class="progress-fill" id="bar-energy"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-row"><span>Веселье</span><span id="text-fun"></span></div>
+      <div class="progress-track"><div class="progress-fill" id="bar-fun"></div></div>
+    </div>
+    <div class="stat">
+      <div class="stat-row"><span>Активность</span><span id="text-activity"></span></div>
+      <div class="progress-track"><div class="progress-fill" id="bar-activity"></div></div>
+    </div>
 
     <div class="steps-card">
       <div>Шагов сегодня: <b id="text-steps" style="color:var(--text)"></b></div>
       <div id="sensor-status" class="sensor-status off">Датчик шагов выключен</div>
+    </div>
+
+    <div class="bio-card">
+      <label for="input-bio" class="bio-label">Биография</label>
+      <textarea id="input-bio" rows="4" maxlength="2000" placeholder="Характер, история, привычки питомца..."></textarea>
     </div>
 
     <div class="actions">
@@ -250,6 +278,28 @@
   }
 
   function clamp(v){ return Math.max(0, Math.min(100, v)); }
+
+  // ── Цвет прогресс-бара: ниже 15% — красный, ниже 60% — жёлтый, выше —
+  // плавный переход от жёлтого к зелёному по мере роста заполнения. ─────────
+  var BAR_RED = 'rgb(239,68,68)';
+  var BAR_YELLOW = [234, 179, 8];
+  var BAR_GREEN = [34, 197, 94];
+  function mixColor(c1, c2, t){
+    return 'rgb(' + Math.round(c1[0] + (c2[0]-c1[0])*t) + ',' +
+      Math.round(c1[1] + (c2[1]-c1[1])*t) + ',' +
+      Math.round(c1[2] + (c2[2]-c1[2])*t) + ')';
+  }
+  function barColor(pct){
+    if (pct < 15) return BAR_RED;
+    if (pct < 60) return mixColor(BAR_YELLOW, BAR_YELLOW, 0);
+    return mixColor(BAR_YELLOW, BAR_GREEN, (pct-60)/40);
+  }
+  function setBar(id, pct){
+    pct = clamp(pct);
+    var el = document.getElementById(id);
+    el.style.width = pct + '%';
+    el.style.backgroundColor = barColor(pct);
+  }
 
   function settle(pet, now, activityLevel){
     var hours = Math.max(0, (now - pet.lastUpdatedAt) / 3600000);
@@ -547,6 +597,11 @@
     document.getElementById('text-energy').textContent = Math.round(pet.energy) + '%';
     document.getElementById('text-fun').textContent = Math.round(pet.fun) + '%';
     document.getElementById('text-activity').textContent = activity + '%';
+    setBar('bar-satiety', pet.satiety);
+    setBar('bar-fat', pet.fat);
+    setBar('bar-energy', pet.energy);
+    setBar('bar-fun', pet.fun);
+    setBar('bar-activity', activity);
     document.getElementById('text-steps').textContent = (s.steps + s.bonus) + ' из ' + DAILY_STEP_GOAL;
     document.getElementById('text-hint').textContent =
       'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
@@ -558,15 +613,21 @@
     if (hasPet()){
       showScreen('status');
       renderStatus();
+      document.getElementById('input-bio').value = lsGet('bio', '');
       if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
       showScreen('create');
     }
 
+    document.getElementById('input-bio').addEventListener('input', function(){
+      lsSet('bio', this.value);
+    });
+
     document.getElementById('btn-create').addEventListener('click', function(){
       var name = document.getElementById('input-name').value.trim();
       if (!name){ showToast('Введите имя питомца'); return; }
       createPet(name);
+      document.getElementById('input-bio').value = '';
       showScreen('status');
       renderStatus();
     });
@@ -677,6 +738,7 @@
       delete btn.dataset.confirming;
       resetAll();
       stopSensor();
+      document.getElementById('input-bio').value = '';
       showScreen('create');
     });
 
