@@ -1,10 +1,12 @@
 /**
  * Edge Function: tamagotchi-chat
  *
- * Прокси между статической страницей tamagotchi/index.html и Gemini через
- * OpenRouter (прямой Google AI Studio недоступен из РФ — см. обсуждение).
- * Ключ (OPENROUTER_API_KEY) живёт только здесь, на сервере — страница
- * тамагочи статическая и не может держать секреты в открытом виде.
+ * Прокси между статической страницей tamagotchi/index.html и YandexGPT
+ * (Yandex AI Studio) — единственный вариант, доступный без блокировок
+ * напрямую с российского VPS (Gemini/OpenRouter блокируют доступ из РФ).
+ * Ключ (YANDEX_API_KEY) и folder_id (YANDEX_FOLDER_ID) живут только здесь,
+ * на сервере — страница тамагочи статическая и не может держать секреты
+ * в открытом виде.
  *
  * Доступ ограничен одним аккаунтом (yarich92@gmail.com): вызывающий обязан
  * прислать Authorization: Bearer <JWT> текущей Alliby-сессии; личность
@@ -108,8 +110,9 @@ Deno.serve(async (req: Request) => {
   if (!message) return jsonResponse({ error: 'message is required' }, 400, origin)
   if (message.length > 500) return jsonResponse({ error: 'message too long' }, 400, origin)
 
-  const apiKey = Deno.env.get('OPENROUTER_API_KEY')
-  if (!apiKey) return jsonResponse({ error: 'OpenRouter API key not configured' }, 503, origin)
+  const apiKey = Deno.env.get('YANDEX_API_KEY')
+  const folderId = Deno.env.get('YANDEX_FOLDER_ID')
+  if (!apiKey || !folderId) return jsonResponse({ error: 'YandexGPT API key not configured' }, 503, origin)
 
   const history = Array.isArray(body.history) ? body.history.slice(-8) : []
   const messages = [
@@ -121,34 +124,35 @@ Deno.serve(async (req: Request) => {
     { role: 'user', content: message },
   ]
 
-  let orRes: Response
+  let ygRes: Response
   try {
-    orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    ygRes = await fetch('https://ai.api.cloud.yandex.net/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'HTTP-Referer': 'https://alliby.ru',
-        'X-Title': 'Alliby Tamagotchi',
+        Authorization: `Api-Key ${apiKey}`,
+        'OpenAI-Project': folderId,
       },
       body: JSON.stringify({
-        model: 'google/gemini-3.8-flash',
+        model: `gpt://${folderId}/yandexgpt-5-pro/latest`,
         messages,
         max_tokens: 200,
         temperature: 0.9,
       }),
     })
   } catch {
-    return jsonResponse({ error: 'OpenRouter service unavailable' }, 503, origin)
+    return jsonResponse({ error: 'YandexGPT service unavailable' }, 503, origin)
   }
 
-  if (!orRes.ok) {
-    return jsonResponse({ error: 'OpenRouter returned an error', status: orRes.status }, 502, origin)
+  if (!ygRes.ok) {
+    const errText = await ygRes.text().catch(() => '')
+    console.error('YandexGPT error', ygRes.status, errText)
+    return jsonResponse({ error: 'YandexGPT returned an error', status: ygRes.status }, 502, origin)
   }
 
-  const data = await orRes.json()
+  const data = await ygRes.json()
   const reply = data?.choices?.[0]?.message?.content?.trim()
-  if (!reply) return jsonResponse({ error: 'Empty response from OpenRouter' }, 502, origin)
+  if (!reply) return jsonResponse({ error: 'Empty response from YandexGPT' }, 502, origin)
 
   return jsonResponse({ reply }, 200, origin)
 })
