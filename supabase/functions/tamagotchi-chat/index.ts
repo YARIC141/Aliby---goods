@@ -1,8 +1,9 @@
 /**
  * Edge Function: tamagotchi-chat
  *
- * Прокси между статической страницей tamagotchi/index.html и Gemini API.
- * Ключ Gemini (GEMINI_API_KEY) живёт только здесь, на сервере — страница
+ * Прокси между статической страницей tamagotchi/index.html и Gemini через
+ * OpenRouter (прямой Google AI Studio недоступен из РФ — см. обсуждение).
+ * Ключ (OPENROUTER_API_KEY) живёт только здесь, на сервере — страница
  * тамагочи статическая и не может держать секреты в открытом виде.
  *
  * Доступ ограничен одним аккаунтом (yarich92@gmail.com): вызывающий обязан
@@ -107,43 +108,47 @@ Deno.serve(async (req: Request) => {
   if (!message) return jsonResponse({ error: 'message is required' }, 400, origin)
   if (message.length > 500) return jsonResponse({ error: 'message too long' }, 400, origin)
 
-  const apiKey = Deno.env.get('GEMINI_API_KEY')
-  if (!apiKey) return jsonResponse({ error: 'Gemini API key not configured' }, 503, origin)
+  const apiKey = Deno.env.get('OPENROUTER_API_KEY')
+  if (!apiKey) return jsonResponse({ error: 'OpenRouter API key not configured' }, 503, origin)
 
   const history = Array.isArray(body.history) ? body.history.slice(-8) : []
-  const contents = [
+  const messages = [
+    { role: 'system', content: buildSystemPrompt(body.pet) },
     ...history.map((m) => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.text }],
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.text,
     })),
-    { role: 'user', parts: [{ text: message }] },
+    { role: 'user', content: message },
   ]
 
-  const geminiUrl =
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`
-
-  let geminiRes: Response
+  let orRes: Response
   try {
-    geminiRes = await fetch(geminiUrl, {
+    orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://alliby.ru',
+        'X-Title': 'Alliby Tamagotchi',
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: buildSystemPrompt(body.pet) }] },
-        contents,
-        generationConfig: { maxOutputTokens: 200, temperature: 0.9 },
+        model: 'google/gemini-3.8-flash',
+        messages,
+        max_tokens: 200,
+        temperature: 0.9,
       }),
     })
   } catch {
-    return jsonResponse({ error: 'Gemini service unavailable' }, 503, origin)
+    return jsonResponse({ error: 'OpenRouter service unavailable' }, 503, origin)
   }
 
-  if (!geminiRes.ok) {
-    return jsonResponse({ error: 'Gemini returned an error', status: geminiRes.status }, 502, origin)
+  if (!orRes.ok) {
+    return jsonResponse({ error: 'OpenRouter returned an error', status: orRes.status }, 502, origin)
   }
 
-  const data = await geminiRes.json()
-  const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim()
-  if (!reply) return jsonResponse({ error: 'Empty response from Gemini' }, 502, origin)
+  const data = await orRes.json()
+  const reply = data?.choices?.[0]?.message?.content?.trim()
+  if (!reply) return jsonResponse({ error: 'Empty response from OpenRouter' }, 502, origin)
 
   return jsonResponse({ reply }, 200, origin)
 })
