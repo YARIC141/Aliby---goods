@@ -31,11 +31,17 @@
   .hidden{display:none !important}
   .name{font-size:26px;font-weight:700;margin:0 0 2px}
   .mood{color:var(--accent);font-size:15px;margin:0 0 20px}
-  .stat{padding:10px 0;border-bottom:1px solid #232b33;font-size:16px}
-  .stat-row{display:flex;justify-content:space-between;margin-bottom:6px}
-  .stat-row span:last-child{color:var(--text2)}
-  .progress-track{width:100%;height:8px;border-radius:4px;background:#232b33;overflow:hidden}
-  .progress-fill{height:100%;width:0;border-radius:4px;transition:width .3s ease, background-color .3s ease}
+  .rings-row{display:flex;justify-content:space-between;gap:4px;margin:16px 0 20px}
+  .ring-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0}
+  .ring-wrap{position:relative;width:52px;height:52px;flex-shrink:0}
+  .ring-svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ring-track{fill:none;stroke:#232b33;stroke-width:5}
+  .ring-fill{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:175.9;stroke-dashoffset:175.9;
+    transition:stroke-dashoffset .3s ease, stroke .3s ease}
+  .ring-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text)}
+  .ring-icon svg{width:20px;height:20px}
+  .ring-label{font-size:10px;color:var(--text2);text-align:center;line-height:1.2}
+  .ring-value{font-size:11px;font-weight:600;color:var(--text)}
   .bio-card{margin:18px 0}
   .bio-label{display:block;font-size:14px;color:var(--text2);margin-bottom:6px}
   textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #2a323b;background:#151a1f;
@@ -83,29 +89,77 @@
       <span class="sprite-placeholder" id="sprite-placeholder">🦝</span>
       <img id="sprite-img" class="hidden" alt="">
     </div>
+
+    <div class="rings-row">
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-satiety" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon" title="Сытость">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 6c0-1.5 1-2.5 2-3"/></svg>
+          </div>
+        </div>
+        <div class="ring-label">Сытость</div>
+        <div class="ring-value" id="text-satiety"></div>
+      </div>
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-fat" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon" title="Жир">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c4 5 6 8.5 6 11.5A6 6 0 0112 21a6 6 0 01-6-6.5C6 11.5 8 8 12 3z"/></svg>
+          </div>
+        </div>
+        <div class="ring-label">Жир</div>
+        <div class="ring-value" id="text-fat"></div>
+      </div>
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-energy" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon" title="Энергия">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+          </div>
+        </div>
+        <div class="ring-label">Энергия</div>
+        <div class="ring-value" id="text-energy"></div>
+      </div>
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-fun" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon" title="Веселье">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.1 6.1-.6z"/></svg>
+          </div>
+        </div>
+        <div class="ring-label">Веселье</div>
+        <div class="ring-value" id="text-fun"></div>
+      </div>
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-activity" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon" title="Активность">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+          </div>
+        </div>
+        <div class="ring-label">Активность</div>
+        <div class="ring-value" id="text-activity"></div>
+      </div>
+    </div>
+
     <div class="name" id="text-name"></div>
     <div class="mood" id="text-mood"></div>
-
-    <div class="stat">
-      <div class="stat-row"><span>Сытость</span><span id="text-satiety"></span></div>
-      <div class="progress-track"><div class="progress-fill" id="bar-satiety"></div></div>
-    </div>
-    <div class="stat">
-      <div class="stat-row"><span>Жир</span><span id="text-fat"></span></div>
-      <div class="progress-track"><div class="progress-fill" id="bar-fat"></div></div>
-    </div>
-    <div class="stat">
-      <div class="stat-row"><span>Энергия</span><span id="text-energy"></span></div>
-      <div class="progress-track"><div class="progress-fill" id="bar-energy"></div></div>
-    </div>
-    <div class="stat">
-      <div class="stat-row"><span>Веселье</span><span id="text-fun"></span></div>
-      <div class="progress-track"><div class="progress-fill" id="bar-fun"></div></div>
-    </div>
-    <div class="stat">
-      <div class="stat-row"><span>Активность</span><span id="text-activity"></span></div>
-      <div class="progress-track"><div class="progress-fill" id="bar-activity"></div></div>
-    </div>
 
     <div class="steps-card">
       <div>Шагов сегодня: <b id="text-steps" style="color:var(--text)"></b></div>
@@ -200,10 +254,10 @@
 
   // ── Спрайты: по кадру на действие (не полноценная покадровая анимация —
   // см. Native shell/советы по анимации на будущее). Показываем кадр действия
-  // на несколько секунд после нажатия кнопки, в покое — картинку состояния
-  // (голоден/устал), если показатель просел; нейтральной "довольной" картинки
-  // художник не рисовал, поэтому по умолчанию — плейсхолдер-эмодзи. ─────────
+  // на несколько секунд после нажатия кнопки, в покое — картинку по умолчанию,
+  // либо состояния (голоден/устал), если соответствующий показатель ниже 50%. ─
   var SPRITE_ACTION_MS = 3000;
+  var SPRITE_DEFAULT = './assets/default.png';
   var spriteActionSrc = '';
   var spriteActionUntil = 0;
   function setSprite(src){
@@ -220,9 +274,9 @@
   }
   function applySprite(pet){
     if (Date.now() < spriteActionUntil){ setSprite(spriteActionSrc); return; }
-    if (pet.satiety < 30) setSprite('./assets/hungry.png');
-    else if (pet.energy < 30) setSprite('./assets/tired.png');
-    else setSprite(null);
+    if (pet.satiety < 50) setSprite('./assets/hungry.png');
+    else if (pet.energy < 50) setSprite('./assets/tired.png');
+    else setSprite(SPRITE_DEFAULT);
   }
 
   var LS_PREFIX = 'tama_';
@@ -294,11 +348,13 @@
     if (pct < 60) return mixColor(BAR_YELLOW, BAR_YELLOW, 0);
     return mixColor(BAR_YELLOW, BAR_GREEN, (pct-60)/40);
   }
-  function setBar(id, pct){
+  var RING_R = 28;
+  var RING_C = 2 * Math.PI * RING_R;
+  function setRing(id, pct){
     pct = clamp(pct);
     var el = document.getElementById(id);
-    el.style.width = pct + '%';
-    el.style.backgroundColor = barColor(pct);
+    el.style.strokeDashoffset = RING_C * (1 - pct / 100);
+    el.style.stroke = barColor(pct);
   }
 
   function settle(pet, now, activityLevel){
@@ -597,11 +653,11 @@
     document.getElementById('text-energy').textContent = Math.round(pet.energy) + '%';
     document.getElementById('text-fun').textContent = Math.round(pet.fun) + '%';
     document.getElementById('text-activity').textContent = activity + '%';
-    setBar('bar-satiety', pet.satiety);
-    setBar('bar-fat', pet.fat);
-    setBar('bar-energy', pet.energy);
-    setBar('bar-fun', pet.fun);
-    setBar('bar-activity', activity);
+    setRing('ring-satiety', pet.satiety);
+    setRing('ring-fat', pet.fat);
+    setRing('ring-energy', pet.energy);
+    setRing('ring-fun', pet.fun);
+    setRing('ring-activity', activity);
     document.getElementById('text-steps').textContent = (s.steps + s.bonus) + ' из ' + DAILY_STEP_GOAL;
     document.getElementById('text-hint').textContent =
       'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +

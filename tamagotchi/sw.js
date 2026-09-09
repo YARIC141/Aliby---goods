@@ -2,7 +2,7 @@
 const CACHE = 'tamagotchi-v4';
 const SHELL = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
   './assets/feed.png', './assets/hungry.png', './assets/walk.png', './assets/exercise.png',
-  './assets/play.png', './assets/tired.png', './assets/rest.png'];
+  './assets/play.png', './assets/tired.png', './assets/rest.png', './assets/default.png'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
