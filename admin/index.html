@@ -220,6 +220,11 @@ tr:hover td{background:var(--bg-1)}
 /* ── MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:oklch(0 0 0 / .65);backdrop-filter:blur(4px);z-index:200;align-items:flex-start;justify-content:center;padding:50px 12px 20px;overflow-y:auto}
 .overlay.open{display:flex}
+.vpn-drop{position:fixed;left:50%;top:0;z-index:300;pointer-events:none;
+  padding-top:env(safe-area-inset-top,0px);transform:translate(-50%,-140px);
+  transition:transform .35s cubic-bezier(.34,1.3,.64,1)}
+.vpn-drop.show{transform:translate(-50%,10px)}
+.vpn-drop svg{display:block;filter:drop-shadow(0 4px 14px oklch(0 0 0 / .35))}
 .modal{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:var(--r-3);padding:22px;width:100%;max-width:560px;flex-shrink:0;box-shadow:var(--shadow-2)}
 .modal-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--line-soft)}
 .modal-hd h3{font:400 24px/1.1 var(--font-display);margin:0}
@@ -2977,17 +2982,13 @@ ol.hlp-steps>li ul{margin:6px 0 0}
   </div>
 </div>
 
-<!-- Confirm delete modal -->
-<div class="overlay" id="m-vpn-notice">
-  <div class="modal" style="max-width:340px">
-    <div class="modal-hd">
-      <h3>VPN</h3>
-    </div>
-    <p style="font-size:13px;color:var(--fg-3);line-height:1.5">Для корректной работы отключите VPN.</p>
-    <div class="modal-ft">
-      <button class="btn btn-p btn-full" onclick="closeModal('m-vpn-notice')">ОК</button>
-    </div>
-  </div>
+<!-- VPN notice -->
+<div class="vpn-drop" id="m-vpn-notice" aria-hidden="true">
+  <svg width="60" height="60" viewBox="0 0 64 64">
+    <circle cx="32" cy="32" r="30" fill="var(--glass)" stroke="var(--err)" stroke-width="2.5"/>
+    <text x="32" y="37" text-anchor="middle" font-size="14" font-weight="700" font-family="inherit" fill="var(--fg)">VPN</text>
+    <line x1="10" y1="52" x2="54" y2="12" stroke="var(--err)" stroke-width="3" stroke-linecap="round"/>
+  </svg>
 </div>
 
 <div class="overlay" id="m-confirm">
@@ -3198,6 +3199,15 @@ const VAPID_PUBLIC_KEY = 'BAqiEa54OoLDA-bJ74rSG-4C_au7IbwXL3ZEybKY-GqlQEcwnRHJrZ
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function showVpnNotice() {
+  const el = document.getElementById('m-vpn-notice');
+  if (!el) return;
+  requestAnimationFrame(() => {
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 550);
+  });
+}
 
 function filterTable(tableId, q) {
   document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
@@ -8484,7 +8494,7 @@ async function saveMaster() {
 
 // ─── INIT ───
 (async function init() {
-  openModal('m-vpn-notice');
+  showVpnNotice();
   const _initDark = document.documentElement.classList.contains('dark');
   document.getElementById('theme-chk').checked = _initDark;
   _updateThemeIcon(_initDark);
