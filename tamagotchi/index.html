@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Тамагочи</title>
+<meta name="theme-color" content="#101418">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Тамагочи">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<style>
+  :root{
+    --bg:#101418; --card:#1b2128; --text:#f0f0f0; --text2:#9aa4ad; --accent:#2dd4bf;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+    min-height:100vh;display:flex;align-items:flex-start;justify-content:center}
+  .wrap{width:100%;max-width:420px;padding:28px 20px;padding-top:max(28px,env(safe-area-inset-top))}
+  h1{font-size:22px;margin:0 0 8px}
+  p.hint{color:var(--text2);font-size:14px;line-height:1.4;margin:0 0 22px}
+  input[type=text],input[type=email],input[type=password]{width:100%;padding:14px;border-radius:10px;border:1px solid #2a323b;background:#151a1f;
+    color:var(--text);font-size:16px;margin-bottom:18px}
+  input[type=text]::placeholder,input[type=email]::placeholder,input[type=password]::placeholder{color:var(--text2)}
+  button{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#04201c;
+    font-size:16px;font-weight:600;margin-bottom:12px;cursor:pointer}
+  button.secondary{background:#232b33;color:var(--text)}
+  button.ghost{background:transparent;color:var(--text2);font-size:13px;font-weight:400;padding:8px}
+  .hidden{display:none !important}
+  .name{font-size:26px;font-weight:700;margin:0 0 2px}
+  .mood{color:var(--accent);font-size:15px;margin:0 0 20px}
+  .stat{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #232b33;font-size:16px}
+  .stat span:last-child{color:var(--text2)}
+  .steps-card{background:var(--card);border-radius:12px;padding:14px;margin:18px 0;font-size:14px;color:var(--text2)}
+  .actions{margin-top:20px}
+  .footer-hint{font-size:12px;color:var(--text2);line-height:1.5;margin-top:18px}
+  .sensor-status{font-size:12px;margin-top:8px}
+  .sensor-status.on{color:var(--accent)}
+  .sensor-status.off{color:var(--text2)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#232b33;color:var(--text);
+    padding:12px 18px;border-radius:10px;font-size:14px;max-width:360px;text-align:center;
+    box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:10}
+  .sprite-card{background:var(--card);border-radius:14px;overflow:hidden;margin-bottom:18px;
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
+  .sprite-card img{width:100%;height:100%;object-fit:cover;display:block}
+  .sprite-placeholder{font-size:72px}
+  .chat-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .chat-header button{width:auto;margin:0;padding:8px 12px;background:#232b33;color:var(--text)}
+  .chat-header h1{font-size:18px;margin:0}
+  .chat-log{display:flex;flex-direction:column;gap:8px;min-height:200px;max-height:52vh;overflow-y:auto;
+    background:var(--card);border-radius:12px;padding:12px;margin-bottom:12px}
+  .msg{max-width:80%;padding:9px 12px;border-radius:12px;font-size:14px;line-height:1.4}
+  .msg.pet{align-self:flex-start;background:#232b33;color:var(--text)}
+  .msg.user{align-self:flex-end;background:var(--accent);color:#04201c}
+  .msg.pending{opacity:.6}
+  .chat-input-row{display:flex;gap:8px}
+  .chat-input-row input{flex:1;margin:0}
+  .chat-input-row button{width:auto;margin:0;padding:14px 18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="screen-create">
+    <h1>Заведи питомца</h1>
+    <p class="hint">Придумай ему имя — характер появится из того, как ты будешь за ним ухаживать.</p>
+    <input type="text" id="input-name" placeholder="Имя питомца" maxlength="16">
+    <button id="btn-create">Создать</button>
+  </div>
+
+  <div id="screen-status" class="hidden">
+    <div class="sprite-card" id="sprite-card">
+      <span class="sprite-placeholder" id="sprite-placeholder">🦝</span>
+      <img id="sprite-img" class="hidden" alt="">
+    </div>
+    <div class="name" id="text-name"></div>
+    <div class="mood" id="text-mood"></div>
+
+    <div class="stat"><span>Сытость</span><span id="text-satiety"></span></div>
+    <div class="stat"><span>Жир</span><span id="text-fat"></span></div>
+    <div class="stat"><span>Энергия</span><span id="text-energy"></span></div>
+    <div class="stat"><span>Веселье</span><span id="text-fun"></span></div>
+    <div class="stat"><span>Активность</span><span id="text-activity"></span></div>
+
+    <div class="steps-card">
+      <div>Шагов сегодня: <b id="text-steps" style="color:var(--text)"></b></div>
+      <div id="sensor-status" class="sensor-status off">Датчик шагов выключен</div>
+    </div>
+
+    <div class="actions">
+      <button id="btn-feed">Покормить</button>
+      <button id="btn-walk" class="secondary">Погулять</button>
+      <button id="btn-exercise" class="secondary">Позаниматься спортом</button>
+      <button id="btn-play" class="secondary">Играть</button>
+      <button id="btn-rest" class="secondary">Отдыхать</button>
+      <button id="btn-chat" class="secondary">Поговорить</button>
+      <button id="btn-sensor" class="secondary">Включить датчик шагов</button>
+    </div>
+
+    <p class="footer-hint" id="text-hint"></p>
+    <button id="btn-reset" class="ghost">Начать заново</button>
+  </div>
+
+  <div id="screen-chat" class="hidden">
+    <div class="chat-header">
+      <button id="btn-chat-back">←</button>
+      <h1 id="chat-title">Питомец</h1>
+    </div>
+    <div id="chat-login">
+      <p class="hint">Чат доступен только с аккаунта Alliby yarich92@gmail.com. Войдите, чтобы поговорить с питомцем.</p>
+      <input type="email" id="chat-login-email" placeholder="Email" autocomplete="username">
+      <input type="password" id="chat-login-password" placeholder="Пароль" autocomplete="current-password">
+      <button id="btn-chat-login">Войти</button>
+    </div>
+    <div class="chat-log hidden" id="chat-log"></div>
+    <div class="chat-input-row hidden" id="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Напишите питомцу..." maxlength="300">
+      <button id="btn-chat-send">Отправить</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script>
+(function(){
+  var toastTimer = null;
+  function showToast(msg, ms){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.add('hidden'); }, ms || 2600);
+  }
+  'use strict';
+
+  // ── Модель питомца — та же схема таймстемп-настройки (settle), что в нативном
+  // MVP, расширенная под сытость/энергию/веселье и новые активности. ─────────
+  var SATIETY_DECAY_PER_HOUR = 4.2;
+  var FEED_AMOUNT = 35;
+  var FEED_COOLDOWN_MS = 20 * 60 * 1000;
+
+  var FAT_RATE_PER_HOUR = 1.6;
+
+  var WALK_COOLDOWN_MS = 15 * 60 * 1000;
+  var WALK_STEP_BONUS = 400;
+  var WALK_FAT_DROP = 2;
+  var WALK_SATIETY_COST = 5;
+  var WALK_ENERGY_COST = 10;
+  var WALK_FUN_GAIN = 8;
+
+  var EXERCISE_COOLDOWN_MS = 30 * 60 * 1000;
+  var EXERCISE_STEP_BONUS = 800;
+  var EXERCISE_FAT_DROP = 6;
+  var EXERCISE_SATIETY_COST = 8;
+  var EXERCISE_ENERGY_COST = 18;
+
+  var PLAY_COOLDOWN_MS = 15 * 60 * 1000;
+  var PLAY_FUN_GAIN = 30;
+  var PLAY_ENERGY_COST = 8;
+
+  var REST_COOLDOWN_MS = 15 * 60 * 1000;
+  var REST_ENERGY_GAIN = 35;
+
+  var ENERGY_DECAY_PER_HOUR = 3.0;
+  var FUN_DECAY_PER_HOUR = 3.5;
+
+  var DAILY_STEP_GOAL = 6000;
+
+  // ── Спрайты: по кадру на действие (не полноценная покадровая анимация —
+  // см. Native shell/советы по анимации на будущее). Показываем кадр действия
+  // на несколько секунд после нажатия кнопки, в покое — картинку состояния
+  // (голоден/устал), если показатель просел; нейтральной "довольной" картинки
+  // художник не рисовал, поэтому по умолчанию — плейсхолдер-эмодзи. ─────────
+  var SPRITE_ACTION_MS = 3000;
+  var spriteActionSrc = '';
+  var spriteActionUntil = 0;
+  function setSprite(src){
+    var img = document.getElementById('sprite-img');
+    var ph = document.getElementById('sprite-placeholder');
+    if (src){ img.src = src; img.classList.remove('hidden'); ph.classList.add('hidden'); }
+    else { img.classList.add('hidden'); ph.classList.remove('hidden'); }
+  }
+  function showActionSprite(src){
+    spriteActionSrc = src;
+    spriteActionUntil = Date.now() + SPRITE_ACTION_MS;
+    setSprite(spriteActionSrc);
+    setTimeout(renderStatus, SPRITE_ACTION_MS + 50);
+  }
+  function applySprite(pet){
+    if (Date.now() < spriteActionUntil){ setSprite(spriteActionSrc); return; }
+    if (pet.satiety < 30) setSprite('./assets/hungry.png');
+    else if (pet.energy < 30) setSprite('./assets/tired.png');
+    else setSprite(null);
+  }
+
+  var LS_PREFIX = 'tama_';
+  function lsGet(key, fallback){
+    var v = localStorage.getItem(LS_PREFIX + key);
+    return v === null ? fallback : v;
+  }
+  function lsSet(key, val){ localStorage.setItem(LS_PREFIX + key, String(val)); }
+  function lsNum(key, fallback){ var v = lsGet(key, null); return v === null ? fallback : parseFloat(v); }
+
+  function todayKey(){
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function hasPet(){ return localStorage.getItem(LS_PREFIX + 'name') !== null; }
+
+  function loadPet(){
+    return {
+      name: lsGet('name', 'Питомец'),
+      satiety: lsNum('satiety', 75),
+      fat: lsNum('fat', 20),
+      energy: lsNum('energy', 80),
+      fun: lsNum('fun', 60),
+      createdAt: lsNum('createdAt', Date.now()),
+      lastUpdatedAt: lsNum('lastUpdatedAt', Date.now()),
+      lastFedAt: lsNum('lastFedAt', 0),
+      lastWalkAt: lsNum('lastWalkAt', 0),
+      lastExerciseAt: lsNum('lastExerciseAt', 0),
+      lastPlayAt: lsNum('lastPlayAt', 0),
+      lastRestAt: lsNum('lastRestAt', 0)
+    };
+  }
+  function savePet(p){
+    lsSet('name', p.name); lsSet('satiety', p.satiety); lsSet('fat', p.fat);
+    lsSet('energy', p.energy); lsSet('fun', p.fun);
+    lsSet('createdAt', p.createdAt); lsSet('lastUpdatedAt', p.lastUpdatedAt);
+    lsSet('lastFedAt', p.lastFedAt); lsSet('lastWalkAt', p.lastWalkAt);
+    lsSet('lastExerciseAt', p.lastExerciseAt); lsSet('lastPlayAt', p.lastPlayAt);
+    lsSet('lastRestAt', p.lastRestAt);
+  }
+  function createPet(name){
+    var now = Date.now();
+    savePet({
+      name: name, satiety: 75, fat: 20, energy: 80, fun: 60,
+      createdAt: now, lastUpdatedAt: now,
+      lastFedAt: 0, lastWalkAt: 0, lastExerciseAt: 0, lastPlayAt: 0, lastRestAt: 0
+    });
+  }
+  function resetAll(){
+    Object.keys(localStorage).filter(function(k){ return k.indexOf(LS_PREFIX) === 0; })
+      .forEach(function(k){ localStorage.removeItem(k); });
+  }
+
+  function clamp(v){ return Math.max(0, Math.min(100, v)); }
+
+  function settle(pet, now, activityLevel){
+    var hours = Math.max(0, (now - pet.lastUpdatedAt) / 3600000);
+    if (hours <= 0) return pet;
+    pet.satiety = clamp(pet.satiety - SATIETY_DECAY_PER_HOUR * hours);
+    var imbalance = (pet.satiety/100) - (activityLevel/100);
+    pet.fat = clamp(pet.fat + FAT_RATE_PER_HOUR * hours * imbalance);
+    pet.energy = clamp(pet.energy - ENERGY_DECAY_PER_HOUR * hours);
+    pet.fun = clamp(pet.fun - FUN_DECAY_PER_HOUR * hours);
+    pet.lastUpdatedAt = now;
+    return pet;
+  }
+  function feed(pet, now){
+    if (now - pet.lastFedAt < FEED_COOLDOWN_MS) return false;
+    pet.satiety = clamp(pet.satiety + FEED_AMOUNT);
+    pet.lastFedAt = now;
+    return true;
+  }
+  function walk(pet, now){
+    if (now - pet.lastWalkAt < WALK_COOLDOWN_MS) return false;
+    pet.fat = clamp(pet.fat - WALK_FAT_DROP);
+    pet.satiety = clamp(pet.satiety - WALK_SATIETY_COST);
+    pet.energy = clamp(pet.energy - WALK_ENERGY_COST);
+    pet.fun = clamp(pet.fun + WALK_FUN_GAIN);
+    pet.lastWalkAt = now;
+    return true;
+  }
+  function exercise(pet, now){
+    if (now - pet.lastExerciseAt < EXERCISE_COOLDOWN_MS) return false;
+    pet.fat = clamp(pet.fat - EXERCISE_FAT_DROP);
+    pet.satiety = clamp(pet.satiety - EXERCISE_SATIETY_COST);
+    pet.energy = clamp(pet.energy - EXERCISE_ENERGY_COST);
+    pet.lastExerciseAt = now;
+    return true;
+  }
+  function play(pet, now){
+    if (now - pet.lastPlayAt < PLAY_COOLDOWN_MS) return false;
+    pet.fun = clamp(pet.fun + PLAY_FUN_GAIN);
+    pet.energy = clamp(pet.energy - PLAY_ENERGY_COST);
+    pet.lastPlayAt = now;
+    return true;
+  }
+  function rest(pet, now){
+    if (now - pet.lastRestAt < REST_COOLDOWN_MS) return false;
+    pet.energy = clamp(pet.energy + REST_ENERGY_GAIN);
+    pet.lastRestAt = now;
+    return true;
+  }
+  function moodLabel(satiety, fat, energy, fun, activityLevel){
+    // Взвешенное среднее пяти нормированных 0..100 показателей — так ни один
+    // отдельный нулевой показатель (например, активность в день создания
+    // питомца) не утягивает итог в минус сам по себе.
+    var wellbeing = 0.30*satiety + 0.20*(100-fat) + 0.15*energy + 0.15*fun + 0.20*activityLevel;
+    if (wellbeing >= 70) return 'Отличное настроение';
+    if (wellbeing >= 50) return 'Хорошее настроение';
+    if (wellbeing >= 30) return 'Так себе';
+    if (wellbeing >= 15) return 'Плохое настроение';
+    return 'Совсем грустит';
+  }
+
+  // ── Шаги: акселерометр в браузере считает только пока страница открыта и
+  // видима — в отличие от нативного сервиса, у веб-страницы нет фонового
+  // выполнения на телефоне. Это единственный источник активности в веб-версии. ──
+  function getStepsState(){
+    var date = lsGet('stepsDate', '');
+    var today = todayKey();
+    if (date !== today){
+      lsSet('stepsDate', today);
+      lsSet('stepsToday', 0);
+      lsSet('bonusToday', 0);
+      return { steps: 0, bonus: 0 };
+    }
+    return { steps: lsNum('stepsToday', 0), bonus: lsNum('bonusToday', 0) };
+  }
+  function addStep(){
+    var s = getStepsState();
+    lsSet('stepsToday', s.steps + 1);
+  }
+  function addManualBonus(amount){
+    var s = getStepsState();
+    lsSet('bonusToday', s.bonus + amount);
+  }
+  function getActivityLevel(){
+    var s = getStepsState();
+    var total = s.steps + s.bonus;
+    return Math.max(0, Math.min(100, Math.round(100 * total / DAILY_STEP_GOAL)));
+  }
+
+  // Наивное пик-детектирование по модулю ускорения — тот же принцип, что в
+  // простых шагомерных приложениях: считаем локальный максимум выше порога
+  // с антидребезгом по времени, чтобы не считать один шаг несколько раз.
+  var sensorActive = false;
+  var lastStepTs = 0;
+  var lastMagnitude = 0;
+  var rising = false;
+  var STEP_THRESHOLD = 11.5; // м/с², подобрано эмпирически под ходьбу в кармане/руке
+  var STEP_MIN_INTERVAL_MS = 280;
+
+  function handleMotion(e){
+    var a = e.accelerationIncludingGravity;
+    if (!a || a.x === null) return;
+    var mag = Math.sqrt(a.x*a.x + a.y*a.y + a.z*a.z);
+    var now = Date.now();
+    if (mag > STEP_THRESHOLD && !rising && (now - lastStepTs) > STEP_MIN_INTERVAL_MS){
+      rising = true;
+      lastStepTs = now;
+      addStep();
+      renderStatus();
+    } else if (mag < STEP_THRESHOLD - 2){
+      rising = false;
+    }
+    lastMagnitude = mag;
+  }
+
+  function enableSensor(){
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+      DeviceMotionEvent.requestPermission().then(function(state){
+        if (state === 'granted'){ startSensor(); } else { showToast('Без разрешения на датчик движения шаги считать нельзя.'); }
+      }).catch(function(){ showToast('Не удалось запросить доступ к датчику движения.'); });
+    } else if (typeof DeviceMotionEvent !== 'undefined'){
+      startSensor();
+    } else {
+      showToast('Этот браузер не поддерживает датчик движения.');
+    }
+  }
+  function startSensor(){
+    window.addEventListener('devicemotion', handleMotion);
+    sensorActive = true;
+    lsSet('sensorEnabled', '1');
+    updateSensorStatusUI();
+  }
+  function stopSensor(){
+    window.removeEventListener('devicemotion', handleMotion);
+    sensorActive = false;
+    updateSensorStatusUI();
+  }
+  function updateSensorStatusUI(){
+    var el = document.getElementById('sensor-status');
+    var btn = document.getElementById('btn-sensor');
+    if (sensorActive){
+      el.textContent = 'Датчик шагов включён (считает, пока страница открыта)';
+      el.className = 'sensor-status on';
+      btn.textContent = 'Выключить датчик шагов';
+    } else {
+      el.textContent = 'Датчик шагов выключен';
+      el.className = 'sensor-status off';
+      btn.textContent = 'Включить датчик шагов';
+    }
+  }
+
+  // ── UI ───────────────────────────────────────────────────────────────────
+  function showScreen(id){
+    document.getElementById('screen-create').classList.toggle('hidden', id !== 'create');
+    document.getElementById('screen-status').classList.toggle('hidden', id !== 'status');
+    document.getElementById('screen-chat').classList.toggle('hidden', id !== 'chat');
+  }
+
+  // ── Чат с питомцем — прокси на Gemini через Edge Function tamagotchi-chat,
+  // доступ ограничен одним аккаунтом Alliby (yarich92@gmail.com), поэтому
+  // перед первым сообщением нужен обычный email+password логин через тот же
+  // Supabase Auth (GoTrue), что использует client/. ──────────────────────────
+  var SB_URL = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+    ? 'http://127.0.0.1:54321' : 'https://alliby.ru';
+  var SB_ANON = 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
+  var CHAT_ENDPOINT = SB_URL + '/functions/v1/tamagotchi-chat';
+  var CHAT_HISTORY_LIMIT = 20;
+
+  function loadSession(){
+    try { return JSON.parse(lsGet('session', 'null')); } catch(e){ return null; }
+  }
+  function saveSession(s){ lsSet('session', JSON.stringify(s)); }
+  function clearSession(){ localStorage.removeItem(LS_PREFIX + 'session'); }
+
+  function loadChatHistory(){
+    try { return JSON.parse(lsGet('chat', '[]')); } catch(e){ return []; }
+  }
+  function saveChatHistory(hist){
+    lsSet('chat', JSON.stringify(hist.slice(-CHAT_HISTORY_LIMIT)));
+  }
+  function renderChatLog(){
+    var log = document.getElementById('chat-log');
+    var hist = loadChatHistory();
+    log.innerHTML = '';
+    hist.forEach(function(m){
+      var el = document.createElement('div');
+      el.className = 'msg ' + (m.role === 'user' ? 'user' : 'pet');
+      el.textContent = m.text;
+      log.appendChild(el);
+    });
+    log.scrollTop = log.scrollHeight;
+  }
+  function updateChatAuthUI(){
+    var loggedIn = !!loadSession();
+    document.getElementById('chat-login').classList.toggle('hidden', loggedIn);
+    document.getElementById('chat-log').classList.toggle('hidden', !loggedIn);
+    document.getElementById('chat-input-row').classList.toggle('hidden', !loggedIn);
+  }
+  function openChat(){
+    var pet = loadPet();
+    document.getElementById('chat-title').textContent = pet.name;
+    showScreen('chat');
+    updateChatAuthUI();
+    renderChatLog();
+  }
+  function chatLogin(){
+    var email = document.getElementById('chat-login-email').value.trim();
+    var password = document.getElementById('chat-login-password').value;
+    if (!email || !password){ showToast('Введите email и пароль'); return; }
+    var btn = document.getElementById('btn-chat-login');
+    btn.disabled = true;
+    fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
+      body: JSON.stringify({ email: email, password: password })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+      .then(function(res){
+        btn.disabled = false;
+        if (!res.ok || !res.data.access_token){
+          showToast('Не удалось войти — проверьте email и пароль');
+          return;
+        }
+        saveSession({ access_token: res.data.access_token, email: email });
+        document.getElementById('chat-login-password').value = '';
+        updateChatAuthUI();
+      }).catch(function(){
+        btn.disabled = false;
+        showToast('Нет связи с сервером входа');
+      });
+  }
+  function sendChatMessage(){
+    var session = loadSession();
+    if (!session){ showToast('Сначала войдите в аккаунт'); return; }
+    var input = document.getElementById('chat-input');
+    var text = input.value.trim();
+    if (!text) return;
+    var hist = loadChatHistory();
+    hist.push({ role: 'user', text: text });
+    saveChatHistory(hist);
+    renderChatLog();
+    input.value = '';
+
+    var now = Date.now();
+    var pet = loadPet();
+    settle(pet, now, getActivityLevel());
+    fetch(CHAT_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({
+        message: text,
+        pet: {
+          name: pet.name, satiety: Math.round(pet.satiety), fat: Math.round(pet.fat),
+          energy: Math.round(pet.energy), fun: Math.round(pet.fun),
+          mood: moodLabel(pet.satiety, pet.fat, pet.energy, pet.fun, getActivityLevel())
+        },
+        history: hist.slice(-8)
+      })
+    }).then(function(r){
+      if (r.status === 401 || r.status === 403){
+        clearSession();
+        updateChatAuthUI();
+        throw new Error('unauthorized');
+      }
+      return r.json();
+    }).then(function(data){
+      var h = loadChatHistory();
+      h.push({ role: 'pet', text: data.reply || '...' });
+      saveChatHistory(h);
+      renderChatLog();
+    }).catch(function(err){
+      if (err && err.message === 'unauthorized'){
+        showToast('Сессия истекла — войдите снова');
+      } else {
+        showToast('Не удалось связаться с питомцем — проверьте интернет');
+      }
+    });
+  }
+
+  function renderStatus(){
+    var now = Date.now();
+    var pet = loadPet();
+    settle(pet, now, getActivityLevel());
+    savePet(pet);
+
+    var activity = getActivityLevel();
+    var s = getStepsState();
+
+    applySprite(pet);
+    document.getElementById('text-name').textContent = pet.name;
+    document.getElementById('text-mood').textContent = moodLabel(pet.satiety, pet.fat, pet.energy, pet.fun, activity);
+    document.getElementById('text-satiety').textContent = Math.round(pet.satiety) + '%';
+    document.getElementById('text-fat').textContent = Math.round(pet.fat) + '%';
+    document.getElementById('text-energy').textContent = Math.round(pet.energy) + '%';
+    document.getElementById('text-fun').textContent = Math.round(pet.fun) + '%';
+    document.getElementById('text-activity').textContent = activity + '%';
+    document.getElementById('text-steps').textContent = (s.steps + s.bonus) + ' из ' + DAILY_STEP_GOAL;
+    document.getElementById('text-hint').textContent =
+      'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
+      ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) +
+      ' мин. Шаги считаются только пока эта страница открыта в браузере.';
+  }
+
+  function init(){
+    if (hasPet()){
+      showScreen('status');
+      renderStatus();
+      if (lsGet('sensorEnabled', '') === '1') startSensor();
+    } else {
+      showScreen('create');
+    }
+
+    document.getElementById('btn-create').addEventListener('click', function(){
+      var name = document.getElementById('input-name').value.trim();
+      if (!name){ showToast('Введите имя питомца'); return; }
+      createPet(name);
+      showScreen('status');
+      renderStatus();
+    });
+
+    document.getElementById('btn-feed').addEventListener('click', function(){
+      var now = Date.now();
+      var pet = loadPet();
+      settle(pet, now, getActivityLevel());
+      if (feed(pet, now)){
+        savePet(pet);
+        showActionSprite('./assets/feed.png');
+      } else {
+        var min = Math.ceil((FEED_COOLDOWN_MS - (now - pet.lastFedAt)) / 60000) + 1;
+        showToast('Питомец пока не хочет есть, подождите ' + min + ' мин');
+      }
+      renderStatus();
+    });
+
+    document.getElementById('btn-walk').addEventListener('click', function(){
+      var now = Date.now();
+      var pet = loadPet();
+      settle(pet, now, getActivityLevel());
+      if (walk(pet, now)){
+        addManualBonus(WALK_STEP_BONUS);
+        savePet(pet);
+        showActionSprite('./assets/walk.png');
+      } else {
+        var min = Math.ceil((WALK_COOLDOWN_MS - (now - pet.lastWalkAt)) / 60000) + 1;
+        showToast('Питомец пока не хочет гулять, подождите ' + min + ' мин');
+      }
+      renderStatus();
+    });
+
+    document.getElementById('btn-exercise').addEventListener('click', function(){
+      var now = Date.now();
+      var pet = loadPet();
+      settle(pet, now, getActivityLevel());
+      if (exercise(pet, now)){
+        addManualBonus(EXERCISE_STEP_BONUS);
+        savePet(pet);
+        showActionSprite('./assets/exercise.png');
+      } else {
+        var min = Math.ceil((EXERCISE_COOLDOWN_MS - (now - pet.lastExerciseAt)) / 60000) + 1;
+        showToast('Питомец ещё не отдохнул после тренировки, подождите ' + min + ' мин');
+      }
+      renderStatus();
+    });
+
+    document.getElementById('btn-play').addEventListener('click', function(){
+      var now = Date.now();
+      var pet = loadPet();
+      settle(pet, now, getActivityLevel());
+      if (play(pet, now)){
+        savePet(pet);
+        showActionSprite('./assets/play.png');
+      } else {
+        var min = Math.ceil((PLAY_COOLDOWN_MS - (now - pet.lastPlayAt)) / 60000) + 1;
+        showToast('Питомец пока не хочет играть, подождите ' + min + ' мин');
+      }
+      renderStatus();
+    });
+
+    document.getElementById('btn-rest').addEventListener('click', function(){
+      var now = Date.now();
+      var pet = loadPet();
+      settle(pet, now, getActivityLevel());
+      if (rest(pet, now)){
+        savePet(pet);
+        showActionSprite('./assets/rest.png');
+      } else {
+        var min = Math.ceil((REST_COOLDOWN_MS - (now - pet.lastRestAt)) / 60000) + 1;
+        showToast('Питомцу пока не нужно отдыхать, подождите ' + min + ' мин');
+      }
+      renderStatus();
+    });
+
+    document.getElementById('btn-chat').addEventListener('click', openChat);
+    document.getElementById('btn-chat-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
+    document.getElementById('btn-chat-send').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') sendChatMessage();
+    });
+    document.getElementById('btn-chat-login').addEventListener('click', chatLogin);
+    document.getElementById('chat-login-password').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') chatLogin();
+    });
+
+    document.getElementById('btn-sensor').addEventListener('click', function(){
+      if (sensorActive){ stopSensor(); lsSet('sensorEnabled', '0'); }
+      else { enableSensor(); }
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', function(){
+      var btn = this;
+      if (!btn.dataset.confirming){
+        btn.dataset.confirming = '1';
+        btn.dataset.originalText = btn.textContent;
+        btn.textContent = 'Точно? Нажмите ещё раз';
+        clearTimeout(btn._resetTimer);
+        btn._resetTimer = setTimeout(function(){
+          btn.textContent = btn.dataset.originalText;
+          delete btn.dataset.confirming;
+        }, 4000);
+        return;
+      }
+      clearTimeout(btn._resetTimer);
+      btn.textContent = btn.dataset.originalText;
+      delete btn.dataset.confirming;
+      resetAll();
+      stopSensor();
+      showScreen('create');
+    });
+
+    updateSensorStatusUI();
+    setInterval(renderStatus, 30000); // досчитывать голод/жир, даже если не взаимодействуют с кнопками
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) renderStatus(); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('./sw.js').catch(function(){});
+    });
+  }
+})();
+</script>
+</body>
+</html>

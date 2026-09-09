@@ -27,10 +27,13 @@ jobs:
           sed -i "s/aliby-admin-app-v[0-9]*/aliby-admin-app-v${TS}/" admin/sw.js
           sed -i "1s/.*/\/\/ v${TS}/" carry/sw.js
           sed -i "s/alliby-carry-app-v[0-9]*/alliby-carry-app-v${TS}/" carry/sw.js
-          rsync -az --delete -e "ssh -p 2222" client/ root@${{ secrets.VPS_HOST }}:/var/www/alliby/client/
-          rsync -az --delete -e "ssh -p 2222" admin/  root@${{ secrets.VPS_HOST }}:/var/www/alliby/admin/
-          rsync -az --delete -e "ssh -p 2222" site/   root@${{ secrets.VPS_HOST }}:/var/www/alliby/site/
-          rsync -az --delete -e "ssh -p 2222" carry/  root@${{ secrets.VPS_HOST }}:/var/www/alliby/carry/
+          sed -i "1s/.*/\/\/ v${TS}/" tamagotchi/sw.js
+          sed -i "s/tamagotchi-v[0-9]*/tamagotchi-v${TS}/" tamagotchi/sw.js
+          rsync -az --delete -e "ssh -p 2222" client/     root@${{ secrets.VPS_HOST }}:/var/www/alliby/client/
+          rsync -az --delete -e "ssh -p 2222" admin/      root@${{ secrets.VPS_HOST }}:/var/www/alliby/admin/
+          rsync -az --delete -e "ssh -p 2222" site/       root@${{ secrets.VPS_HOST }}:/var/www/alliby/site/
+          rsync -az --delete -e "ssh -p 2222" carry/      root@${{ secrets.VPS_HOST }}:/var/www/alliby/carry/
+          rsync -az --delete -e "ssh -p 2222" tamagotchi/ root@${{ secrets.VPS_HOST }}:/var/www/alliby/tamagotchi/
 
       - name: Apply database migrations
         run: |
