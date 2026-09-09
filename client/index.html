@@ -5465,6 +5465,7 @@ function renderMapMarkers(stores) {
 async function loadMapData() {
   if (S.map) { setTimeout(() => S.map.resize(), 0); applyMapFilter(); return; }
   await new Promise(r => setTimeout(r, 0));
+  await new Promise(resolve => _waitForMaplibre(resolve));
   const _ci = _cityInfo();
   S.map = new maplibregl.Map({
     container: 'map-gl', style: buildOsmStyle(),
@@ -7224,20 +7225,22 @@ function openCourierMap(orderId) {
   openModal('m-courier-map');
   const destLat = o.delivery_lat, destLng = o.delivery_lng;
   setTimeout(() => {
-    if (!_courierMap) {
-      _courierMap = new maplibregl.Map({
-        container: 'courier-map', style: buildOsmStyle(),
-        center: [destLng ?? 50.10, destLat ?? 53.20], zoom: 13, attributionControl: false,
-      });
-    } else {
-      _courierMap.resize();
-    }
-    if (destLat != null && destLng != null) {
-      const el = document.createElement('div');
-      el.innerHTML = `<svg class="ico" width="26" height="26" style="color:var(--accent);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))"><use href="#i-pushpin"/></svg>`;
-      if (_courierMapDestMarker) _courierMapDestMarker.remove();
-      _courierMapDestMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([destLng, destLat]).addTo(_courierMap);
-    }
+    _waitForMaplibre(() => {
+      if (!_courierMap) {
+        _courierMap = new maplibregl.Map({
+          container: 'courier-map', style: buildOsmStyle(),
+          center: [destLng ?? 50.10, destLat ?? 53.20], zoom: 13, attributionControl: false,
+        });
+      } else {
+        _courierMap.resize();
+      }
+      if (destLat != null && destLng != null) {
+        const el = document.createElement('div');
+        el.innerHTML = `<svg class="ico" width="26" height="26" style="color:var(--accent);filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))"><use href="#i-pushpin"/></svg>`;
+        if (_courierMapDestMarker) _courierMapDestMarker.remove();
+        _courierMapDestMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([destLng, destLat]).addTo(_courierMap);
+      }
+    });
   }, 50);
   const statusEl = document.getElementById('courier-map-status');
   if (statusEl) statusEl.textContent = 'Ищем курьера на карте…';
@@ -7703,18 +7706,20 @@ async function openDzViewer(store) {
   const sLng = store.lng ?? store.longitude ?? 37.6;
   const sLat = store.lat ?? store.latitude ?? 55.75;
   setTimeout(() => {
-    if (!_dzvMap) {
-      _dzvMap = new maplibregl.Map({
-        container: 'dz-viewer-map',
-        style: { version:8, sources:{ osm:{ type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize:256, attribution:'© OpenStreetMap' } }, layers:[{ id:'osm', type:'raster', source:'osm' }] },
-        center: [sLng, sLat], zoom: 13, attributionControl: false,
-      });
-      _dzvMap.on('load', () => _dzvRenderZones(zones, store));
-    } else {
-      _dzvMap.resize();
-      if (_dzvMap.loaded()) _dzvRenderZones(zones, store);
-      else _dzvMap.once('load', () => _dzvRenderZones(zones, store));
-    }
+    _waitForMaplibre(() => {
+      if (!_dzvMap) {
+        _dzvMap = new maplibregl.Map({
+          container: 'dz-viewer-map',
+          style: { version:8, sources:{ osm:{ type:'raster', tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize:256, attribution:'© OpenStreetMap' } }, layers:[{ id:'osm', type:'raster', source:'osm' }] },
+          center: [sLng, sLat], zoom: 13, attributionControl: false,
+        });
+        _dzvMap.on('load', () => _dzvRenderZones(zones, store));
+      } else {
+        _dzvMap.resize();
+        if (_dzvMap.loaded()) _dzvRenderZones(zones, store);
+        else _dzvMap.once('load', () => _dzvRenderZones(zones, store));
+      }
+    });
   }, 50);
 }
 
@@ -8909,15 +8914,36 @@ function openAddressPicker(cb) {
   const lat = (S.userAddrLat ?? parseFloat(document.getElementById('p-addr-lat')?.value)) || (S.cityData?.lat ?? 53.19);
   const lng = (S.userAddrLng ?? parseFloat(document.getElementById('p-addr-lng')?.value)) || (S.cityData?.lng ?? 50.15);
   setTimeout(() => {
-    if (_addrPickMap) { _addrPickMap.resize(); _addrPickMap.setCenter([lng, lat]); return; }
-    _addrPickMap = new maplibregl.Map({
-      container: 'addr-pick-gl',
-      style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
-      center: [lng, lat], zoom: 15, attributionControl: false,
+    _waitForMaplibre(() => {
+      if (_addrPickMap) { _addrPickMap.resize(); _addrPickMap.setCenter([lng, lat]); return; }
+      _addrPickMap = new maplibregl.Map({
+        container: 'addr-pick-gl',
+        style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
+        center: [lng, lat], zoom: 15, attributionControl: false,
+      });
+      _addrPickMap.on('moveend', _addrPickGeocode);
+      _addrPickGeocode();
+    }, () => {
+      closeAddrPicker();
+      alert('Не удалось загрузить карту — проверьте интернет-соединение и попробуйте ещё раз');
     });
-    _addrPickMap.on('moveend', _addrPickGeocode);
-    _addrPickGeocode();
   }, 50);
+}
+
+// maplibre-gl.js грузится с внешнего CDN через <script defer> — на медленной/
+// нестабильной мобильной сети (частый случай на iPhone) к моменту вызова
+// карто-инициализирующих функций библиотека может быть ещё не готова; без
+// этой проверки `new maplibregl.Map(...)` кидает необработанный ReferenceError,
+// который ловит глобальный _showFatalError и закрывает весь экран приложения.
+function _waitForMaplibre(cb, onFail, attempt) {
+  attempt = attempt || 0;
+  if (typeof maplibregl !== 'undefined') { cb(); return; }
+  if (attempt >= 25) { // ~5s опроса
+    if (onFail) onFail();
+    else alert('Не удалось загрузить карту — проверьте интернет-соединение и попробуйте ещё раз');
+    return;
+  }
+  setTimeout(() => _waitForMaplibre(cb, onFail, attempt + 1), 200);
 }
 
 function closeAddrPicker() {
