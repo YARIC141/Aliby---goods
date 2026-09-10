@@ -108,6 +108,15 @@
   .cp.pl{background:#e8e8e8;color:#1b2128}
   .cp.pd{background:#3a4552;color:#f0f0f0;box-shadow:inset 0 0 0 2px #1b2128}
   .cp.king::after{content:'♛';font-size:16px}
+  .gp{position:relative;width:78%;height:78%;border-radius:8px;display:flex;align-items:center;
+    justify-content:center;font-size:min(6vw,22px)}
+  .gp.side-w{background:#e8e8e8;color:#1b2128}
+  .gp.side-b{background:#3a4552;color:#f0f0f0;box-shadow:inset 0 0 0 2px #1b2128}
+  .gp-hp{position:absolute;bottom:2px;left:10%;right:10%;height:3px;background:rgba(0,0,0,.35);
+    border-radius:2px;overflow:hidden}
+  .gp-hp-fill{height:100%;background:#22c55e}
+  .gp-lvl{position:absolute;top:0;right:1px;font-size:9px;font-weight:700;color:var(--accent);
+    text-shadow:0 0 2px rgba(0,0,0,.8)}
   .go-wrap{width:100%;aspect-ratio:1/1;margin-bottom:16px;background:#b98a4e14;border-radius:10px;
     padding:4%;box-sizing:border-box}
   .go-grid{width:100%;height:100%;display:grid;position:relative}
@@ -295,6 +304,7 @@
       <button type="button" data-game="chess"><span class="g-icon">♟️</span> Шахматы</button>
       <button type="button" data-game="checkers"><span class="g-icon">🔴</span> Шашки</button>
       <button type="button" data-game="go"><span class="g-icon">⚫</span> Го</button>
+      <button type="button" data-game="guard"><span class="g-icon">🛡️</span> Страж и клинок</button>
     </div>
   </div>
 
@@ -865,6 +875,18 @@
         '<li>Счёт — очки за захваченные (снятые с доски) камни соперника и за территорию — пустые точки, окружённые только своим цветом. У кого больше очков — тот и победил.</li>' +
         '</ul>' +
         '<p>Совет: не оставляйте свои группы без свобод и старайтесь окружать пустые области, а не только ловить камни соперника.</p>'
+    },
+    guard: {
+      title: 'Страж и клинок — правила',
+      html: '<p>Своя тактическая игра на доске 8×8. Побеждает тот, кто уничтожит все фигуры соперника.</p>' +
+        '<ul>' +
+        '<li>🛡 Защитник — ходит на 1 клетку по вертикали/горизонтали, сам не атакует. Закрывает щитом 3 клетки прямо перед собой (5 клеток с уровня 2) — стоящую там союзную фигуру нельзя атаковать.</li>' +
+        '<li>🏹 Стрелок — ходит на 1 клетку по вертикали/горизонтали. Атакует по прямой и диагонали (как ферзь) на расстояние 4 клетки (5 с уровня 2, 6 с уровня 3), бьёт первую фигуру на луче.</li>' +
+        '<li>⚔ Мечник — ходит до 3 клеток в любом из 8 направлений (не может проходить сквозь фигуры). Атакует только вперёд по прямой на 2 клетки (3 с уровня 2), а с уровня 3 — ещё и по двум диагоналям вперёд на 1 клетку.</li>' +
+        '<li>🗡 Убийца — ходит до 2 клеток в любом из 8 направлений. Атакует любую соседнюю клетку и мгновенно убивает цель независимо от её HP и уровня, но сам очень хрупкий (1-2 HP, максимум 2 уровня).</li>' +
+        '</ul>' +
+        '<p>Ход и атака — разные действия: атака не двигает фигуру с её клетки. У каждой фигуры есть HP (полоска под ней); убийство цели поднимает фигуре уровень (сила и HP растут, здоровье полностью восстанавливается). Щит Защитника не спасает от Убийцы.</p>' +
+        '<p>Если 60 полуходов подряд никто никого не убивает — партия завершается вничью.</p>'
     }
   };
 
@@ -897,7 +919,7 @@
 
   function openGameSetup(kind){
     curGame = kind;
-    var titles = { chess: 'Шахматы', checkers: 'Шашки', go: 'Го' };
+    var titles = { chess: 'Шахматы', checkers: 'Шашки', go: 'Го', guard: 'Страж и клинок' };
     document.getElementById('setup-title').textContent = titles[kind];
     curDiff = 2; curColor = 'w';
     document.querySelectorAll('#setup-difficulty .chip').forEach(function(c){ c.classList.toggle('selected', c.dataset.diff === '2'); });
@@ -912,6 +934,7 @@
     if (curGame === 'chess') startChess();
     else if (curGame === 'checkers') startCheckers();
     else if (curGame === 'go') startGo();
+    else if (curGame === 'guard') startGuard();
   }
 
   // ── Шахматы ────────────────────────────────────────────────────────────
@@ -1329,6 +1352,362 @@
       return;
     }
     setGameStatus(isGoPlayerTurn() ? 'Ваш ход' : 'Ход соперника...');
+  }
+
+  // ── Страж и клинок — своя тактическая игра на шахматной доске 8×8:────────
+  // Защитник/Стрелок/Мечник/Убийца, у фигур HP и уровни (за убийство +1
+  // уровень и полное лечение). Атака никогда не двигает фигуру — это
+  // отдельное от хода действие, в отличие от шахмат/шашек.
+  var GUARD_TYPES = {
+    defender:  { name:'Защитник', glyph:'🛡', hp:[4,5,6], move:1, moveAll8:false },
+    archer:    { name:'Стрелок',  glyph:'🏹', hp:[2,3,4], move:1, moveAll8:false, atkRange:[4,5,6], dmg:[1,2,3] },
+    swordsman: { name:'Мечник',   glyph:'⚔', hp:[3,4,5], move:3, moveAll8:true,  atkRange:[2,3,3], dmg:[1,2,3] },
+    assassin:  { name:'Убийца',   glyph:'🗡', hp:[1,2],   move:2, moveAll8:true }
+  };
+  var GUARD_MAX_LEVEL = { defender:3, archer:3, swordsman:3, assassin:2 };
+  var GUARD_BASE_VALUE = { defender:30, archer:35, swordsman:30, assassin:40 };
+  var GUARD_DIRS8 = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  var GUARD_DIRS_ORTH = [[-1,0],[1,0],[0,-1],[0,1]];
+
+  function guardEnemySide(side){ return side === 'w' ? 'b' : 'w'; }
+  function guardInBounds(r, c){ return r >= 0 && r < 8 && c >= 0 && c < 8; }
+  function guardZoneWidth(level){ return level >= 2 ? 5 : 3; }
+
+  function guardBuildBoard(){
+    var board = [];
+    for (var r = 0; r < 8; r++) board.push([null,null,null,null,null,null,null,null]);
+    var backRank = [ {type:'archer',col:1}, {type:'defender',col:3}, {type:'defender',col:4}, {type:'archer',col:6} ];
+    var frontRank = [ {type:'swordsman',col:0}, {type:'assassin',col:2}, {type:'swordsman',col:5}, {type:'swordsman',col:7} ];
+    function place(side, row, list){
+      list.forEach(function(item){
+        var hp = GUARD_TYPES[item.type].hp[0];
+        board[row][item.col] = { type:item.type, side:side, level:1, hp:hp, maxHp:hp };
+      });
+    }
+    place('w', 7, backRank); place('w', 6, frontRank);
+    place('b', 0, backRank); place('b', 1, frontRank);
+    return board;
+  }
+
+  function guardCloneBoard(board){
+    return board.map(function(row){
+      return row.map(function(p){ return p ? { type:p.type, side:p.side, level:p.level, hp:p.hp, maxHp:p.maxHp } : null; });
+    });
+  }
+
+  function guardGenMoves(board, r, c){
+    var piece = board[r][c];
+    var def = GUARD_TYPES[piece.type];
+    var dirs = def.moveAll8 ? GUARD_DIRS8 : GUARD_DIRS_ORTH;
+    var moves = [];
+    dirs.forEach(function(d){
+      for (var step = 1; step <= def.move; step++){
+        var rr = r + d[0]*step, cc = c + d[1]*step;
+        if (!guardInBounds(rr,cc) || board[rr][cc]) break;
+        moves.push({ r:rr, c:cc });
+      }
+    });
+    return moves;
+  }
+
+  function guardGenAttacks(board, r, c){
+    var piece = board[r][c];
+    var def = GUARD_TYPES[piece.type];
+    var lvl = piece.level;
+    var enemy = guardEnemySide(piece.side);
+    var targets = [];
+    if (piece.type === 'archer'){
+      GUARD_DIRS8.forEach(function(d){
+        var range = def.atkRange[lvl-1];
+        for (var step = 1; step <= range; step++){
+          var rr = r + d[0]*step, cc = c + d[1]*step;
+          if (!guardInBounds(rr,cc)) break;
+          var target = board[rr][cc];
+          if (target){ if (target.side === enemy) targets.push({ r:rr, c:cc }); break; }
+        }
+      });
+    } else if (piece.type === 'swordsman'){
+      var fwd = piece.side === 'w' ? -1 : 1;
+      var range = def.atkRange[lvl-1];
+      for (var step = 1; step <= range; step++){
+        var rr = r + fwd*step, cc = c;
+        if (!guardInBounds(rr,cc)) break;
+        var target = board[rr][cc];
+        if (target){ if (target.side === enemy) targets.push({ r:rr, c:cc }); break; }
+      }
+      if (lvl >= 3){
+        [[fwd,-1],[fwd,1]].forEach(function(d){
+          var rr = r + d[0], cc = c + d[1];
+          if (guardInBounds(rr,cc)){
+            var target = board[rr][cc];
+            if (target && target.side === enemy) targets.push({ r:rr, c:cc });
+          }
+        });
+      }
+    } else if (piece.type === 'assassin'){
+      GUARD_DIRS8.forEach(function(d){
+        var rr = r + d[0], cc = c + d[1];
+        if (guardInBounds(rr,cc)){
+          var target = board[rr][cc];
+          if (target && target.side === enemy) targets.push({ r:rr, c:cc });
+        }
+      });
+    }
+    return targets;
+  }
+
+  function guardCellProtected(board, r, c, side){
+    for (var rr = 0; rr < 8; rr++){
+      for (var cc = 0; cc < 8; cc++){
+        var p = board[rr][cc];
+        if (!p || p.type !== 'defender' || p.side !== side) continue;
+        var fwd = p.side === 'w' ? -1 : 1;
+        if (rr + fwd !== r) continue;
+        var half = (guardZoneWidth(p.level) - 1) / 2;
+        if (Math.abs(cc - c) <= half) return true;
+      }
+    }
+    return false;
+  }
+
+  function guardApplyMove(board, from, to){
+    board[to.r][to.c] = board[from.r][from.c];
+    board[from.r][from.c] = null;
+  }
+
+  function guardApplyAttack(board, from, to){
+    var attacker = board[from.r][from.c];
+    var target = board[to.r][to.c];
+    if (!target) return { blocked:false, killed:false };
+    var killed;
+    if (attacker.type === 'assassin'){
+      killed = true;
+    } else {
+      if (guardCellProtected(board, to.r, to.c, target.side)) return { blocked:true, killed:false };
+      target.hp -= GUARD_TYPES[attacker.type].dmg[attacker.level-1];
+      killed = target.hp <= 0;
+    }
+    if (killed){
+      board[to.r][to.c] = null;
+      var maxLvl = GUARD_MAX_LEVEL[attacker.type];
+      if (attacker.level < maxLvl){
+        attacker.level++;
+        attacker.maxHp = GUARD_TYPES[attacker.type].hp[attacker.level-1];
+        attacker.hp = attacker.maxHp;
+      }
+    }
+    return { blocked:false, killed:killed };
+  }
+
+  function guardAllActions(board, side){
+    var actions = [];
+    for (var r = 0; r < 8; r++){
+      for (var c = 0; c < 8; c++){
+        var p = board[r][c];
+        if (!p || p.side !== side) continue;
+        guardGenMoves(board, r, c).forEach(function(m){ actions.push({ from:{r:r,c:c}, to:m, kind:'move' }); });
+        guardGenAttacks(board, r, c).forEach(function(m){ actions.push({ from:{r:r,c:c}, to:m, kind:'attack' }); });
+      }
+    }
+    return actions;
+  }
+
+  function guardApplyAction(board, action){
+    if (action.kind === 'move') guardApplyMove(board, action.from, action.to);
+    else return guardApplyAttack(board, action.from, action.to);
+  }
+
+  function guardCountSide(board, side){
+    var n = 0;
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++) if (board[r][c] && board[r][c].side === side) n++;
+    return n;
+  }
+
+  function guardEvalBoard(board, side){
+    var score = 0;
+    for (var r = 0; r < 8; r++){
+      for (var c = 0; c < 8; c++){
+        var p = board[r][c];
+        if (!p) continue;
+        var val = GUARD_BASE_VALUE[p.type] + (p.level-1)*15 + (p.hp/p.maxHp)*10;
+        score += p.side === side ? val : -val;
+      }
+    }
+    return score;
+  }
+
+  function guardMinimax(board, depth, alpha, beta, maximizing, aiSide, deadline){
+    if (depth === 0 || Date.now() > deadline) return guardEvalBoard(board, aiSide);
+    var side = maximizing ? aiSide : guardEnemySide(aiSide);
+    var actions = guardAllActions(board, side);
+    if (!actions.length) return guardEvalBoard(board, aiSide);
+    var best = maximizing ? -Infinity : Infinity;
+    for (var i = 0; i < actions.length; i++){
+      var next = guardCloneBoard(board);
+      guardApplyAction(next, actions[i]);
+      var score = guardMinimax(next, depth-1, alpha, beta, !maximizing, aiSide, deadline);
+      if (maximizing){ best = Math.max(best, score); alpha = Math.max(alpha, best); }
+      else { best = Math.min(best, score); beta = Math.min(beta, best); }
+      if (beta <= alpha || Date.now() > deadline) break;
+    }
+    return best;
+  }
+
+  function guardPickAiAction(board, aiSide, timeBudgetMs){
+    var deadline = Date.now() + timeBudgetMs;
+    var actions = guardAllActions(board, aiSide);
+    if (!actions.length) return null;
+    actions.sort(function(a,b){ return (b.kind==='attack') - (a.kind==='attack'); });
+    var bestAction = actions[0];
+    for (var depth = 1; Date.now() < deadline && depth <= 4; depth++){
+      var curBest = null, curBestScore = -Infinity;
+      for (var i = 0; i < actions.length; i++){
+        var next = guardCloneBoard(board);
+        guardApplyAction(next, actions[i]);
+        var score = guardMinimax(next, depth-1, -Infinity, Infinity, false, aiSide, deadline) + Math.random()*0.01;
+        if (score > curBestScore){ curBestScore = score; curBest = actions[i]; }
+        if (Date.now() > deadline) break;
+      }
+      if (curBest) bestAction = curBest;
+    }
+    return bestAction;
+  }
+
+  function startGuard(){
+    document.getElementById('go-wrap').classList.add('hidden');
+    document.getElementById('board-wrap').classList.remove('hidden');
+    document.getElementById('btn-game-pass').classList.add('hidden');
+    document.getElementById('board-title').textContent = 'Страж и клинок';
+    hideGameResult();
+    var playerSide = curColor === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : curColor;
+    gameState = { type:'guard', board:guardBuildBoard(), turn:'w', playerSide:playerSide, diff:curDiff,
+      selected:null, moveTargets:null, atkTargets:null, noKillCount:0, over:false };
+    renderGuardBoard();
+    updateGuardStatus();
+    if (playerSide !== gameState.turn) scheduleAi(guardAiMove, 500);
+  }
+
+  function renderGuardBoard(){
+    var st = gameState;
+    var el = document.getElementById('board-wrap');
+    el.style.gridTemplateColumns = 'repeat(8,1fr)';
+    el.style.gridTemplateRows = 'repeat(8,1fr)';
+    el.innerHTML = '';
+    var flip = st.playerSide === 'b';
+    for (var r = 0; r < 8; r++){
+      for (var c = 0; c < 8; c++){
+        var rr = flip ? 7-r : r, cc = flip ? 7-c : c;
+        var piece = st.board[rr][cc];
+        var div = document.createElement('div');
+        div.className = 'sq ' + ((rr+cc)%2===0 ? 'light' : 'dark');
+        div.dataset.row = rr; div.dataset.col = cc;
+        if (piece){
+          var gp = document.createElement('div');
+          gp.className = 'gp side-' + piece.side;
+          gp.textContent = GUARD_TYPES[piece.type].glyph;
+          var hp = document.createElement('div'); hp.className = 'gp-hp';
+          var fill = document.createElement('div'); fill.className = 'gp-hp-fill';
+          fill.style.width = Math.max(0, piece.hp/piece.maxHp*100) + '%';
+          hp.appendChild(fill); gp.appendChild(hp);
+          if (piece.level > 1){
+            var lvl = document.createElement('div'); lvl.className = 'gp-lvl'; lvl.textContent = '★'+piece.level;
+            gp.appendChild(lvl);
+          }
+          div.appendChild(gp);
+        }
+        if (st.selected){
+          if (st.selected.r === rr && st.selected.c === cc) div.classList.add('sel');
+          if (st.moveTargets && st.moveTargets.some(function(m){ return m.r===rr && m.c===cc; })){
+            var dot = document.createElement('div'); dot.className = 'dot'; div.appendChild(dot);
+          }
+          if (st.atkTargets && st.atkTargets.some(function(m){ return m.r===rr && m.c===cc; })) div.classList.add('dot-capture');
+        }
+        el.appendChild(div);
+      }
+    }
+    el.onclick = onGuardSquareClick;
+  }
+
+  function guardClearSelection(st){ st.selected = null; st.moveTargets = null; st.atkTargets = null; }
+
+  function guardSelect(st, r, c){
+    st.selected = { r:r, c:c };
+    st.moveTargets = guardGenMoves(st.board, r, c);
+    st.atkTargets = guardGenAttacks(st.board, r, c);
+    renderGuardBoard();
+  }
+
+  function guardEndTurn(st){
+    guardClearSelection(st);
+    st.turn = guardEnemySide(st.turn);
+    renderGuardBoard();
+    updateGuardStatus();
+    if (!st.over && st.turn !== st.playerSide) scheduleAi(guardAiMove, 400);
+  }
+
+  function onGuardSquareClick(e){
+    var st = gameState;
+    if (st.over || st.turn !== st.playerSide) return;
+    var div = e.target.closest('.sq');
+    if (!div) return;
+    var r = +div.dataset.row, c = +div.dataset.col;
+    if (st.selected){
+      if (st.selected.r === r && st.selected.c === c){ guardClearSelection(st); renderGuardBoard(); return; }
+      var isMove = st.moveTargets && st.moveTargets.some(function(m){ return m.r===r && m.c===c; });
+      var isAtk = st.atkTargets && st.atkTargets.some(function(m){ return m.r===r && m.c===c; });
+      if (isMove){
+        guardApplyMove(st.board, st.selected, { r:r, c:c });
+        st.noKillCount++;
+        guardEndTurn(st);
+        return;
+      }
+      if (isAtk){
+        var result = guardApplyAttack(st.board, st.selected, { r:r, c:c });
+        st.noKillCount = result.killed ? 0 : st.noKillCount + 1;
+        guardEndTurn(st);
+        return;
+      }
+      var piece = st.board[r][c];
+      if (piece && piece.side === st.playerSide) guardSelect(st, r, c);
+      else { guardClearSelection(st); renderGuardBoard(); }
+    } else {
+      var piece2 = st.board[r][c];
+      if (piece2 && piece2.side === st.playerSide) guardSelect(st, r, c);
+    }
+  }
+
+  function guardAiMove(){
+    var st = gameState;
+    var aiSide = guardEnemySide(st.playerSide);
+    var timeBudget = st.diff === 1 ? 150 : (st.diff === 2 ? 350 : 700);
+    var action = guardPickAiAction(st.board, aiSide, timeBudget);
+    if (!action) return;
+    var killed = false;
+    if (action.kind === 'attack') killed = guardApplyAttack(st.board, action.from, action.to).killed;
+    else guardApplyMove(st.board, action.from, action.to);
+    st.noKillCount = killed ? 0 : st.noKillCount + 1;
+    st.turn = st.playerSide;
+    renderGuardBoard();
+    updateGuardStatus();
+  }
+
+  function updateGuardStatus(){
+    var st = gameState;
+    var wAlive = guardCountSide(st.board, 'w') > 0, bAlive = guardCountSide(st.board, 'b') > 0;
+    if (!wAlive || !bAlive){
+      st.over = true;
+      var winnerSide = wAlive ? 'w' : 'b';
+      setGameStatus('');
+      showGameResult(winnerSide === st.playerSide ? 'Вы победили!' : 'Победил ИИ.');
+      return;
+    }
+    if (st.noKillCount >= 60){
+      st.over = true;
+      setGameStatus('');
+      showGameResult('Ничья — слишком долго без убийств.');
+      return;
+    }
+    setGameStatus(st.turn === st.playerSide ? 'Ваш ход' : 'Ход соперника...');
   }
 
   // ── Билеты ПДД (категория A,B, датасет etspring/pdd_russia) — вопросы и
