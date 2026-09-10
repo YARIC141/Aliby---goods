@@ -9,7 +9,7 @@ const COFFEE = '3f486b97-c61e-4683-9894-7d60ef964d62';
 section('Бургерная «Грильяж» — витрина общепита с доставкой');
 
 sql(`UPDATE stores SET
-  address='Самара, ул. Ленинградская, 42',
+  address='Самара, ул. Полевая, 14',
   phone='+7 846 220-11-42',
   working_hours='Ежедневно 10:00–00:00',
   is_visible=true, archived_at=NULL,

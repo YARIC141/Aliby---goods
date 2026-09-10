@@ -3113,6 +3113,12 @@ const BG_ORBS = {
 };
 const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
 const _SVC_DIRS = new Set(['services','sport','entertainment']);
+// Открытое заведение может не совпадать с выбранным направлением (переход с главной,
+// из «недавних», по ссылке) — вкладки и кнопки решаются направлением самого заведения.
+function _isSvcStore(st) { return _SVC_DIRS.has((st || S.store)?.direction || S.direction); }
+// объявлено здесь, а не рядом с loadStoreMasters: loadStore() сбрасывает кэш ещё до того,
+// как выполнение доходит до конца скрипта — при let ниже это TDZ-ошибка на старте.
+let _mastersCache = null;
 // sport & entertainment venues call their "masters" (мастер) coaches (тренер) instead —
 // table tennis / computer clubs etc. book a "тренер", salons/studios keep "мастер".
 function _isCoachDir(dir) { return dir === 'sport' || dir === 'entertainment'; }
@@ -3515,7 +3521,7 @@ function openRentModal(itemId) {
 
   document.getElementById('mrent-name').textContent = item.name;
   document.getElementById('mrent-avail-now').textContent = item.total_quantity ?? item.quantity_available ?? 0;
-  const step = item.rent_period_step > 1 ? item.rent_period_step + ' ' : '';
+  const step = (item.rent_period_step > 1 ? item.rent_period_step : 1) + ' ';
   const unitLabel = RENT_UNIT_RU[item.rent_period_unit] || '';
   document.getElementById('mrent-unit-hint').textContent = `Шаг: ${step}${unitLabel}`;
   document.getElementById('mrent-qty-val').textContent = _rentQty;
@@ -3687,11 +3693,29 @@ function _parseStoreHours(store) {
   return { open: '09:00', close: '21:00' };
 }
 
+// Окна работы на конкретную дату: store_schedules точнее свободного текста working_hours —
+// учитывает выходные, праздники и перерыв. Строки на дату нет → падаем на текст часов.
+async function _rentDayWindows(storeId, dateStr) {
+  try {
+    // Берём окно вокруг даты: так видно, ведёт ли заведение расписание вообще.
+    // Есть строки рядом, но не на эту дату — значит выходной, а не «расписания нет».
+    const shift = n => new Date(new Date(dateStr + 'T00:00:00Z').getTime() + n * 86400000).toISOString().slice(0, 10);
+    const rows = await req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${shift(-14)}&date=lte.${shift(14)}&select=date,slots`);
+    if (rows && rows.length) {
+      const row = rows.find(r => r.date === dateStr);
+      const slots = row && Array.isArray(row.slots) ? row.slots : [];
+      return slots
+        .map(w => ({ open: String(w.start || '').slice(0, 5), close: String(w.end || '').slice(0, 5) }))
+        .filter(w => w.open && w.close && w.open < w.close);
+    }
+  } catch {}
+  const st = S.allStores?.find(s => s.id === storeId) || (S.store?.id === storeId ? S.store : null);
+  return [_parseStoreHours(st)];
+}
+
 async function _rentShowSlots(dateStr) {
   const item  = _rentItem;
   if (!item) return;
-  const store = S.allStores?.find(s => s.id === item.store_id);
-  const { open, close } = _parseStoreHours(store);
   const unit    = item.rent_period_unit;
   const stepMin = unit === 'hour' ? (item.rent_period_step || 1) * 60 : (item.rent_period_step || 1);
 
@@ -3703,11 +3727,12 @@ async function _rentShowSlots(dateStr) {
   if (hint)    hint.textContent = '';
 
   try {
-    const rows = await req('/rest/v1/rpc/get_rent_slots_availability', {
+    const windows = await _rentDayWindows(item.store_id, dateStr);
+    const parts = await Promise.all(windows.map(w => req('/rest/v1/rpc/get_rent_slots_availability', {
       method: 'POST',
-      body: JSON.stringify({ p_item_id: item.id, p_date: dateStr, p_open: open, p_close: close, p_step_min: stepMin }),
-    });
-    _rentSlots = rows || [];
+      body: JSON.stringify({ p_item_id: item.id, p_date: dateStr, p_open: w.open, p_close: w.close, p_step_min: stepMin }),
+    })));
+    _rentSlots = parts.flat().filter(Boolean).sort((a, b) => a.slot_time < b.slot_time ? -1 : 1);
   } catch {
     _rentSlots = [];
     if (hint) hint.textContent = 'Ошибка загрузки слотов';
@@ -3802,7 +3827,17 @@ function _rentClickSlot(idx) {
 
   // Extend single selection forward
   if (_rentSlotA !== null && idx > _rentSlotA) {
+    const _min = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+    const _step = _rentItem?.rent_period_unit === 'hour'
+      ? (_rentItem?.rent_period_step || 1) * 60
+      : (_rentItem?.rent_period_step || 1);
     for (let i = _rentSlotA; i <= idx; i++) {
+      // Между окнами работы (перерыв) слоты не подряд — диапазон через дырку не собираем.
+      if (i > _rentSlotA && _min(_rentSlots[i].slot_time) - _min(_rentSlots[i - 1].slot_time) !== _step) {
+        const hint = document.getElementById('mrent-time-hint');
+        if (hint) { hint.textContent = 'В это время перерыв — выберите слоты подряд'; hint.style.color = 'var(--err)'; }
+        return;
+      }
       if (_rentSlots[i].available < qty) {
         const hint = document.getElementById('mrent-time-hint');
         if (hint) { hint.textContent = `Слот ${_rentSlots[i].slot_time} недоступен для ${qty} шт.`; hint.style.color = 'var(--err)'; }
@@ -5868,8 +5903,8 @@ async function loadStore() {
   updateMenuSearchPlaceholder();
   // Show services tab bar and reset to services pane
   const svcTabBar = document.getElementById('svc-tab-bar');
-  if (svcTabBar) svcTabBar.style.display = _SVC_DIRS.has(S.direction) ? '' : 'none';
-  if (_SVC_DIRS.has(S.direction)) {
+  if (svcTabBar) svcTabBar.style.display = _isSvcStore(st) ? '' : 'none';
+  if (_isSvcStore(st)) {
     const _prevSvcStore = localStorage.getItem('alliby_svc_store');
     if (_prevSvcStore !== st.id) {
       // Store changed — reset tab to default and clear masters cache
@@ -10292,7 +10327,7 @@ function _fmtD(d) {
 }
 // ─── BOOKINGS ───
 // ─── STORE MASTERS LIST ───
-let _mastersCache = null;
+// _mastersCache объявлен рядом с _SVC_DIRS — см. комментарий там.
 
 async function loadStoreMasters() {
   const el = document.getElementById('masters-list');
