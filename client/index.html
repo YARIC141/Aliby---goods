@@ -1452,7 +1452,7 @@ document.addEventListener('deviceready',function(){
   <!-- Food/goods tabs (only shown when direction=food or goods) -->
   <div id="fg-tab-bar" style="display:none;flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)" class="cart-tabs">
     <button class="cart-tab active" id="fg-tab-items" onclick="switchFgTab('items')"><span id="fg-lbl-items">Товары</span></button>
-    <button class="cart-tab" id="fg-tab-rental" onclick="switchFgTab('rental')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Запись</button>
+    <button class="cart-tab" id="fg-tab-rental" onclick="switchFgTab('rental')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-calendar"/></svg>Аренда</button>
   </div>
   <!-- Услуги pane -->
   <div id="svc-pane-services">
@@ -4156,13 +4156,13 @@ async function switchFgTab(tab) {
     _renderMenuGrid(el, _allMenuItems);
     return;
   }
-  // "Запись": rental items only. _allMenuItems is a paginated, category-scoped slice of the
+  // "Аренда": rental items only. _allMenuItems is a paginated, category-scoped slice of the
   // catalog (not the full item set), so this needs its own unpaginated fetch by item_type.
   _detachCliObserver();
   const storeId = S.store?.id;
   if (!storeId) return;
   if (_rentalItemsStoreId === storeId && _rentalItems) {
-    el.innerHTML = _rentalItems.length ? _rentalItems.map(renderItemCard).join('') : '<div class="empty">Нет позиций для записи</div>';
+    el.innerHTML = _rentalItems.length ? _rentalItems.map(renderItemCard).join('') : '<div class="empty">Нет позиций для аренды</div>';
     updateCartCount();
     return;
   }
@@ -4173,7 +4173,7 @@ async function switchFgTab(tab) {
     items.forEach(it => cacheItem(it));
     _rentalItems = items;
     _rentalItemsStoreId = storeId;
-    el.innerHTML = items.length ? items.map(renderItemCard).join('') : '<div class="empty">Нет позиций для записи</div>';
+    el.innerHTML = items.length ? items.map(renderItemCard).join('') : '<div class="empty">Нет позиций для аренды</div>';
     updateCartCount();
   } catch (e) {
     el.innerHTML = '<div class="empty">Ошибка загрузки</div>';
