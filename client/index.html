@@ -375,6 +375,11 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .price-orig{font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:line-through}
 .price-sub{font:400 19px/1 var(--font-sans);color:var(--ok)}
 .hit-badge{position:absolute;left:0;right:0;bottom:0;background:var(--accent);color:#fff;font:600 12px/1 var(--font-sans);text-align:center;padding:5px 0;letter-spacing:.02em}
+.nutri{display:flex;gap:6px;flex-wrap:wrap}
+.nutri-cell{flex:1;min-width:58px;text-align:center;padding:6px 4px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--bg-2)}
+.nutri-val{font:600 14px/1.2 var(--font-sans);color:var(--fg)}
+.nutri-lbl{font:400 10px/1.2 var(--font-sans);color:var(--fg-4);margin-top:2px}
+.nutri-portion{font:400 12px/1.2 var(--font-sans);color:var(--fg-3);margin-bottom:5px}
 .item-unavail{font:500 12px/1 var(--font-sans);color:var(--err);text-transform:uppercase;letter-spacing:.05em}
 #mi-img{position:relative;width:100%;height:180px;background:var(--bg-2);border-radius:var(--r-2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;font:400 40px/1 var(--font-display);font-style:italic;color:var(--fg-4)}
 #mi-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:var(--r-2)}
@@ -2624,6 +2629,7 @@ document.addEventListener('deviceready',function(){
     <div id="mi-img"></div>
     <div id="mi-desc" class="item-desc" style="margin-bottom:8px"></div>
     <div id="mi-allergens" style="display:none;margin-bottom:8px;padding:6px 10px;border-radius:var(--r-2);background:color-mix(in oklch,var(--warn) 12%,var(--bg));font:400 12px/1.4 var(--font-sans);color:var(--fg-3)"></div>
+    <div id="mi-nutrition" style="display:none;margin-bottom:10px"></div>
     <div id="mi-price" class="item-price" style="margin-bottom:10px"></div>
     <div id="mi-subs"></div>
     <div id="mi-options" style="margin-top:10px"></div>
@@ -6427,6 +6433,29 @@ function updateItemCardInPlace(id) {
   if (actions) actions.innerHTML = itemActions(item, _cartQtyForItem(id));
 }
 
+// КБЖУ показываем, только если владелец заполнил хоть одно поле — у услуг,
+// аренды и непищевых товаров блок просто не появляется.
+function renderNutrition(item) {
+  const el = document.getElementById('mi-nutrition');
+  if (!el) return;
+  const cells = [
+    ['calories', 'ккал'],
+    ['protein',  'белки, г'],
+    ['fat',      'жиры, г'],
+    ['carbs',    'углеводы, г'],
+  ].filter(([k]) => item[k] != null);
+  if (!cells.length && item.portion_g == null) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const fmt = n => (Number(n) % 1 === 0 ? String(Number(n)) : String(Number(n)));
+  el.innerHTML =
+    (item.portion_g != null ? `<div class="nutri-portion">Порция ${item.portion_g} г</div>` : '')
+    + (cells.length
+        ? `<div class="nutri">${cells.map(([k, lbl]) =>
+            `<div class="nutri-cell"><div class="nutri-val">${fmt(item[k])}</div><div class="nutri-lbl">${lbl}</div></div>`
+          ).join('')}</div>`
+        : '');
+  el.style.display = '';
+}
+
 function hitBadgeHtml(item) {
   return item.is_hit ? `<div class="hit-badge">🔥 ХИТ</div>` : '';
 }
@@ -6583,6 +6612,8 @@ function openItemDetail(id) {
   } else {
     allerEl.style.display = 'none';
   }
+
+  renderNutrition(item);
 
   document.getElementById('mi-price').innerHTML = `<div class="price-wrap">${itemPriceHtml(item)}</div>`;
 

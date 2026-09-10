@@ -2835,6 +2835,33 @@ ol.hlp-steps>li ul{margin:6px 0 0}
         <label>Цена до скидки (₽) <span class="hint" data-tip="Прежняя цена — будет показана зачёркнутой рядом с текущей ценой">?</span></label>
         <input type="number" step="0.01" min="0" id="mmi-old-price" placeholder="Прежняя цена">
       </div>
+      <div id="mmi-nutrition-fields" style="grid-column:1/-1;border:1px solid var(--line);border-radius:var(--r-2);padding:12px">
+        <div style="font:600 13px/1 var(--font-sans);margin-bottom:10px">
+          Пищевая ценность <span class="hint" data-tip="Необязательно. Показывается клиенту в карточке товара — вес порции и КБЖУ на порцию">?</span>
+        </div>
+        <div class="grid2" style="gap:10px">
+          <div class="fg">
+            <label>Вес порции (г) <span class="hint" data-tip="Вес готовой порции в граммах">?</span></label>
+            <input type="number" min="1" step="1" id="mmi-portion-g" placeholder="Не указан">
+          </div>
+          <div class="fg">
+            <label>Калорийность (ккал) <span class="hint" data-tip="Ккал на порцию">?</span></label>
+            <input type="number" min="0" step="0.1" id="mmi-calories" placeholder="Не указана">
+          </div>
+          <div class="fg">
+            <label>Белки (г) <span class="hint" data-tip="Белки на порцию, граммы">?</span></label>
+            <input type="number" min="0" step="0.1" id="mmi-protein" placeholder="Не указаны">
+          </div>
+          <div class="fg">
+            <label>Жиры (г) <span class="hint" data-tip="Жиры на порцию, граммы">?</span></label>
+            <input type="number" min="0" step="0.1" id="mmi-fat" placeholder="Не указаны">
+          </div>
+          <div class="fg">
+            <label>Углеводы (г) <span class="hint" data-tip="Углеводы на порцию, граммы">?</span></label>
+            <input type="number" min="0" step="0.1" id="mmi-carbs" placeholder="Не указаны">
+          </div>
+        </div>
+      </div>
       <div id="mmi-rent-fields" style="display:none;grid-column:1/-1;border:1px solid var(--line);border-radius:var(--r-2);padding:12px;gap:10px;display:none">
         <div class="grid2" style="gap:10px">
           <div class="fg" style="grid-column:1/-1">
@@ -5930,6 +5957,15 @@ function togglePriceRulesSection(show) {
   if (show && !_editPriceRules.length) addPriceRule();
 }
 
+// Пустое поле КБЖУ должно сохраняться как NULL («не указано»), а не как 0 —
+// иначе клиент показал бы «0 ккал» вместо того, чтобы скрыть блок.
+function _numOrNull(id) {
+  const v = document.getElementById(id).value.trim();
+  if (v === '') return null;
+  const n = parseFloat(v);
+  return isNaN(n) ? null : n;
+}
+
 function toggleMmiDiscount(show) {
   document.getElementById('mmi-old-price-field').style.display = show ? '' : 'none';
   if (!show) document.getElementById('mmi-old-price').value = '';
@@ -6082,6 +6118,11 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-discount-toggle').checked = item?.old_price != null;
   document.getElementById('mmi-old-price').value  = item?.old_price ?? '';
   toggleMmiDiscount(item?.old_price != null);
+  document.getElementById('mmi-portion-g').value  = item?.portion_g ?? '';
+  document.getElementById('mmi-calories').value   = item?.calories  ?? '';
+  document.getElementById('mmi-protein').value    = item?.protein   ?? '';
+  document.getElementById('mmi-fat').value        = item?.fat       ?? '';
+  document.getElementById('mmi-carbs').value      = item?.carbs     ?? '';
   document.getElementById('mmi-item-type').value  = item?.item_type || 'product';
   onMmiItemTypeChange();
   document.getElementById('mmi-rent-unit').value   = item?.rent_period_unit  || 'hour';
@@ -6466,6 +6507,11 @@ async function saveMenuItem() {
     duration_minutes: itemType === 'service' ? (parseInt(document.getElementById('mmi-duration').value, 10) || null) : null,
     is_available:     document.getElementById('mmi-avail').checked,
     is_hit:           document.getElementById('mmi-hit').checked,
+    portion_g:        _numOrNull('mmi-portion-g'),
+    calories:         _numOrNull('mmi-calories'),
+    protein:          _numOrNull('mmi-protein'),
+    fat:              _numOrNull('mmi-fat'),
+    carbs:            _numOrNull('mmi-carbs'),
     old_price:        discountOn ? oldPrice : null,
     image_url:        document.getElementById('mmi-image-url').value || null,
     rent_period_unit: itemType === 'rental' ? (document.getElementById('mmi-rent-unit').value || null) : null,
