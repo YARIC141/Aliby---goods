@@ -5747,7 +5747,7 @@ async function toggleItemVisible(table, id, val, cardEl) {
   }
 }
 
-function _menuItemCard(i, isEmp, showCat) {
+function _menuItemCard(i, isEmp, showCat, canReorder) {
   const sd = JSON.stringify(i).replace(/"/g, '&quot;');
   const thumb = i.image_url
     ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
@@ -5756,6 +5756,11 @@ function _menuItemCard(i, isEmp, showCat) {
     ? `<span style="font-size:12px;color:var(--ok);display:inline-flex;align-items:center;gap:3px">${svgIco('check',11)} В наличии</span>`
     : `<span style="font-size:12px;color:var(--fg-4)">— Нет в наличии</span>`;
   const vis = i.is_visible !== false;
+  const reorderBtns = canReorder && !isEmp ? `
+        <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0" onclick="event.stopPropagation()">
+          <button class="btn btn-sm" style="padding:2px 7px;line-height:1.2" title="Выше" onclick="miMoveItem('${i.id}',-1)">▲</button>
+          <button class="btn btn-sm" style="padding:2px 7px;line-height:1.2" title="Ниже" onclick="miMoveItem('${i.id}',1)">▼</button>
+        </div>` : '';
   const editBtns = isEmp ? '' : `
         <div style="display:flex;flex-direction:column;gap:6px;align-items:center;flex-shrink:0">
           <label class="toggle-sw" title="${vis ? 'Скрыть от клиентов' : 'Показать клиентам'}" style="margin:0" onclick="event.stopPropagation()">
@@ -5769,8 +5774,9 @@ function _menuItemCard(i, isEmp, showCat) {
   const subtitle = (showCat
     ? `${esc(i.categories?.name || '—')} · ${i.price} ₽`
     : `${i.price} ₽`) + typeLabel;
-  return `<div class="card" style="margin-bottom:6px;padding:10px 12px${vis ? '' : ';opacity:0.45'}">
+  return `<div class="card" data-mi-id="${i.id}" style="margin-bottom:6px;padding:10px 12px${vis ? '' : ';opacity:0.45'}">
       <div style="display:flex;gap:10px;align-items:flex-start">
+        ${reorderBtns}
         ${thumb}
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;min-width:0">
@@ -5784,13 +5790,22 @@ function _menuItemCard(i, isEmp, showCat) {
     </div>`;
 }
 
+let _miItems = [];
+
 function _renderMenuItems(items, append = false) {
   const el = document.getElementById('mi-list');
   if (!el) return;
   const isEmp = S.profile?.role === 'employee';
+  _miItems = append ? _miItems.concat(items) : items.slice();
   if (!append && !items.length) { el.innerHTML = '<div class="empty" style="padding:16px 0">Нет позиций</div>'; return; }
 
   const catFilter = document.getElementById('mi-cat-filter')?.value;
+  const storeFilter = document.getElementById('mi-store-filter')?.value;
+  const search = (document.getElementById('mi-search')?.value || '').trim();
+  // Стрелки переставляют позицию внутри категории — включаем их только когда
+  // список гарантированно полон (выбрано конкретное заведение) и не отфильтрован
+  // поиском, иначе "соседняя" карточка на экране не соседняя по факту.
+  const canReorder = !!storeFilter && !search;
   const grouped = !catFilter && items.some(i => i.category_id);
 
   let html = '';
@@ -5803,10 +5818,10 @@ function _renderMenuItems(items, append = false) {
     });
     groups.forEach(g => {
       html += `<div style="font:600 12px/1 var(--font-sans);color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;padding:14px 0 6px;border-top:1px solid var(--line-soft);margin-top:2px">${esc(g.name)} <span style="font-weight:400;opacity:.6">${g.items.length}</span></div>`;
-      html += g.items.map(i => _menuItemCard(i, isEmp, false)).join('');
+      html += g.items.map(i => _menuItemCard(i, isEmp, false, canReorder)).join('');
     });
   } else {
-    html = items.map(i => _menuItemCard(i, isEmp, true)).join('');
+    html = items.map(i => _menuItemCard(i, isEmp, true, canReorder)).join('');
   }
 
   if (append) {
@@ -5822,6 +5837,27 @@ function _renderMenuItems(items, append = false) {
     }
     _attachMiObserver();
   }
+}
+
+// Меняет позицию товара с соседом в пределах его категории (или всего списка,
+// если уже отфильтровано по одной категории) и сразу сохраняет sort_order на сервер.
+function miMoveItem(id, dir) {
+  const item = _miItems.find(x => x.id === id);
+  if (!item) return;
+  const catFilter = document.getElementById('mi-cat-filter')?.value;
+  const sameGroup = x => catFilter ? true : x.category_id === item.category_id;
+  const peers = _miItems.filter(sameGroup);
+  const pos = peers.indexOf(item);
+  const newPos = pos + dir;
+  if (newPos < 0 || newPos >= peers.length) return;
+  [peers[pos], peers[newPos]] = [peers[newPos], peers[pos]];
+  peers.forEach((p, i) => { p.sort_order = i; });
+  let pi = 0;
+  _miItems = _miItems.map(x => sameGroup(x) ? peers[pi++] : x);
+  _renderMenuItems(_miItems);
+  Promise.all(peers.map(p => req(`/rest/v1/menu_items?id=eq.${p.id}`, {
+    method: 'PATCH', body: JSON.stringify({ sort_order: p.sort_order })
+  }))).catch(() => showToast('Ошибка сохранения порядка'));
 }
 
 let _miObserver = null;
@@ -5876,7 +5912,7 @@ async function loadMenuItems() {
     el.innerHTML = '<div class="txt-muted" style="padding:16px 0">Загрузка…</div>';
   }
   try {
-    let baseUrl = '/rest/v1/menu_items?select=*,categories(name)&order=category_id.asc.nullslast,name.asc';
+    let baseUrl = '/rest/v1/menu_items?select=*,categories(name)&order=category_id.asc.nullslast,sort_order.asc,name.asc';
     if (isEmp) {
       baseUrl += `&store_id=eq.${S.profile.employee_store_id}`;
       if (storeFilter) { storeFilter.value = S.profile.employee_store_id; storeFilter.disabled = true; }
