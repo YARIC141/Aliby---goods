@@ -115,7 +115,10 @@
   .go-pt::before,.go-pt::after{content:'';position:absolute;background:#5b6672}
   .go-pt::before{left:50%;top:0;bottom:0;width:1px;transform:translateX(-.5px)}
   .go-pt::after{top:50%;left:0;right:0;height:1px;transform:translateY(-.5px)}
-  .go-pt.edge-l::before,.go-pt.edge-r::before,.go-pt.edge-t::after,.go-pt.edge-b::after{opacity:0}
+  .go-pt.edge-t::before{top:50%}
+  .go-pt.edge-b::before{bottom:50%}
+  .go-pt.edge-l::after{left:50%}
+  .go-pt.edge-r::after{right:50%}
   .go-pt .stone{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82%;height:82%;
     border-radius:50%;z-index:2}
   .go-pt .stone.black{background:radial-gradient(circle at 35% 32%,#4a4a4a,#0a0a0a)}
