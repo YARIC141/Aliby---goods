@@ -1,8 +1,9 @@
 // v1 — статичный app-shell, все данные в localStorage, сети не требуется в принципе
-const CACHE = 'tamagotchi-v4';
+const CACHE = 'tamagotchi-v5';
 const SHELL = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
   './assets/feed.png', './assets/hungry.png', './assets/walk.png', './assets/exercise.png',
-  './assets/play.png', './assets/tired.png', './assets/rest.png', './assets/default.png'];
+  './assets/play.png', './assets/tired.png', './assets/rest.png', './assets/default.png',
+  './assets/lib/chess.js', './assets/lib/draughts.js', './assets/lib/tenuki.js'];
 
 self.addEventListener('install', e => {
   self.skipWaiting();

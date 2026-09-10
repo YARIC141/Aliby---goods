@@ -76,6 +76,53 @@
   .chat-input-row{display:flex;gap:8px}
   .chat-input-row input{flex:1;margin:0}
   .chat-input-row button{width:auto;margin:0;padding:14px 18px}
+
+  .game-header{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .game-header button{width:auto;margin:0;padding:8px 12px;background:#232b33;color:var(--text)}
+  .game-header h1{font-size:18px;margin:0;flex:1}
+  .game-hub-grid{display:grid;grid-template-columns:1fr;gap:10px}
+  .game-hub-grid button{display:flex;align-items:center;gap:12px;padding:16px;text-align:left;
+    background:var(--card);color:var(--text);font-size:15px}
+  .game-hub-grid button .g-icon{font-size:26px;flex-shrink:0}
+  .setup-block{margin-bottom:22px}
+  .setup-block h2{font-size:14px;color:var(--text2);margin:0 0 10px;font-weight:600}
+  .chip-row{display:flex;gap:8px}
+  .chip{flex:1;padding:12px 6px;border-radius:10px;background:var(--card);color:var(--text2);
+    font-size:13px;text-align:center;cursor:pointer;border:2px solid transparent;transition:border-color .15s}
+  .chip.selected{border-color:var(--accent);color:var(--text)}
+  .game-status-line{text-align:center;font-size:14px;color:var(--text2);margin-bottom:12px;min-height:20px}
+  .board-wrap{width:100%;aspect-ratio:1/1;margin-bottom:16px;border-radius:10px;overflow:hidden;
+    background:var(--card);display:grid}
+  .sq{display:flex;align-items:center;justify-content:center;position:relative;font-size:min(7vw,28px);
+    user-select:none;cursor:pointer}
+  .sq.light{background:#2a323b}
+  .sq.dark{background:#1b2128}
+  .sq.chess-white{color:#f0f0f0}
+  .sq.chess-black{color:#f0f0f0;text-shadow:0 0 0 currentColor}
+  .sq .dot{position:absolute;width:22%;height:22%;border-radius:50%;background:var(--accent);opacity:.55}
+  .sq.dot-capture{box-shadow:inset 0 0 0 3px var(--accent)}
+  .sq.sel{box-shadow:inset 0 0 0 3px #fff}
+  .piece-lt{color:#f0f0f0}
+  .piece-dk{color:#0a0e12}
+  .cp{width:70%;height:70%;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .cp.pl{background:#e8e8e8;color:#1b2128}
+  .cp.pd{background:#3a4552;color:#f0f0f0;box-shadow:inset 0 0 0 2px #1b2128}
+  .cp.king::after{content:'♛';font-size:16px}
+  .go-wrap{width:100%;aspect-ratio:1/1;margin-bottom:16px;background:#b98a4e14;border-radius:10px;
+    padding:4%;box-sizing:border-box}
+  .go-grid{width:100%;height:100%;display:grid;position:relative}
+  .go-pt{position:relative;cursor:pointer}
+  .go-pt::before,.go-pt::after{content:'';position:absolute;background:#5b6672}
+  .go-pt::before{left:50%;top:0;bottom:0;width:1px;transform:translateX(-.5px)}
+  .go-pt::after{top:50%;left:0;right:0;height:1px;transform:translateY(-.5px)}
+  .go-pt.edge-l::before,.go-pt.edge-r::before,.go-pt.edge-t::after,.go-pt.edge-b::after{opacity:0}
+  .go-pt .stone{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82%;height:82%;
+    border-radius:50%;z-index:2}
+  .go-pt .stone.black{background:radial-gradient(circle at 35% 32%,#4a4a4a,#0a0a0a)}
+  .go-pt .stone.white{background:radial-gradient(circle at 35% 32%,#fff,#c9c9c9)}
+  .game-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .game-controls button{margin-bottom:0}
+  .game-result{text-align:center;font-size:16px;font-weight:700;margin:0 0 14px;color:var(--accent)}
 </style>
 </head>
 <body>
@@ -182,6 +229,7 @@
       <button id="btn-rest" class="secondary">Отдыхать</button>
       <button id="btn-chat" class="secondary">Поговорить</button>
       <button id="btn-sensor" class="secondary">Включить датчик шагов</button>
+      <button id="btn-games" class="secondary">Игры</button>
     </div>
 
     <p class="footer-hint" id="text-hint"></p>
@@ -203,6 +251,57 @@
     <div class="chat-input-row hidden" id="chat-input-row">
       <input type="text" id="chat-input" placeholder="Напишите питомцу..." maxlength="300">
       <button id="btn-chat-send">Отправить</button>
+    </div>
+  </div>
+
+  <div id="screen-games" class="hidden">
+    <div class="game-header">
+      <button id="btn-games-back">←</button>
+      <h1>Игры</h1>
+    </div>
+    <div class="game-hub-grid">
+      <button type="button" data-game="chess"><span class="g-icon">♟️</span> Шахматы</button>
+      <button type="button" data-game="checkers"><span class="g-icon">🔴</span> Шашки</button>
+      <button type="button" data-game="go"><span class="g-icon">⚫</span> Го</button>
+    </div>
+  </div>
+
+  <div id="screen-game-setup" class="hidden">
+    <div class="game-header">
+      <button id="btn-setup-back">←</button>
+      <h1 id="setup-title">Настройка</h1>
+    </div>
+    <div class="setup-block">
+      <h2>Сложность</h2>
+      <div class="chip-row" id="setup-difficulty">
+        <div class="chip" data-diff="1">Лёгкая</div>
+        <div class="chip" data-diff="2">Средняя</div>
+        <div class="chip" data-diff="3">Сложная</div>
+      </div>
+    </div>
+    <div class="setup-block">
+      <h2>Играть за</h2>
+      <div class="chip-row" id="setup-color">
+        <div class="chip" data-color="w">Белые</div>
+        <div class="chip" data-color="b">Чёрные</div>
+        <div class="chip" data-color="r">Случайно</div>
+      </div>
+    </div>
+    <button id="btn-game-start">Начать игру</button>
+  </div>
+
+  <div id="screen-game-board" class="hidden">
+    <div class="game-header">
+      <button id="btn-board-back">←</button>
+      <h1 id="board-title">Игра</h1>
+    </div>
+    <div class="game-status-line" id="game-status-line"></div>
+    <div class="game-result hidden" id="game-result"></div>
+    <div class="board-wrap hidden" id="board-wrap"></div>
+    <div class="go-wrap hidden" id="go-wrap"><div class="go-grid" id="go-grid"></div></div>
+    <div class="game-controls">
+      <button id="btn-game-pass" class="secondary hidden">Пас</button>
+      <button id="btn-game-resign" class="secondary">Сдаться</button>
     </div>
   </div>
 
@@ -514,6 +613,9 @@
     document.getElementById('screen-create').classList.toggle('hidden', id !== 'create');
     document.getElementById('screen-status').classList.toggle('hidden', id !== 'status');
     document.getElementById('screen-chat').classList.toggle('hidden', id !== 'chat');
+    document.getElementById('screen-games').classList.toggle('hidden', id !== 'games');
+    document.getElementById('screen-game-setup').classList.toggle('hidden', id !== 'game-setup');
+    document.getElementById('screen-game-board').classList.toggle('hidden', id !== 'game-board');
   }
 
   // ── Чат с питомцем — прокси на Gemini через Edge Function tamagotchi-chat,
@@ -637,6 +739,471 @@
         showToast('Не удалось связаться с питомцем — проверьте интернет');
       }
     });
+  }
+
+  // ── Игры: шахматы/шашки/го для тренировки. Правила и ИИ подключены как
+  // готовые библиотеки (chess.js, rapid-draughts, tenuki) — самостоятельно
+  // захостены в assets/lib и подгружаются через dynamic import только при
+  // первом заходе в раздел «Игры», чтобы не раздувать стартовую загрузку.
+  // Для шашек используются английские (американские) правила — они реализо-
+  // ваны в готовой библиотеке; от русских шашек отличаются тем, что бой
+  // возможен только вперёд, а дамка не «летающая». Для Го нет готовых лёгких
+  // ИИ-движков в природе — используется собственный простой эвристический
+  // бот (захваты/свободы/близость к своим камням), а не полноценный ИИ. ────
+  var GO_SIZE = 9;
+  var gameLibs = {};
+  function loadLib(name, path){
+    if (!gameLibs[name]) gameLibs[name] = import(path);
+    return gameLibs[name];
+  }
+
+  var curGame = null, curDiff = 2, curColor = 'w';
+  var gameState = {};
+
+  function scheduleAi(fn, ms){
+    var st = gameState;
+    setTimeout(function(){ if (gameState === st && !st.over) fn(); }, ms);
+  }
+  function setGameStatus(text){ document.getElementById('game-status-line').textContent = text; }
+  function hideGameResult(){ document.getElementById('game-result').classList.add('hidden'); }
+  function showGameResult(text){
+    var el = document.getElementById('game-result');
+    el.textContent = text;
+    el.classList.remove('hidden');
+  }
+
+  function openGameSetup(kind){
+    curGame = kind;
+    var titles = { chess: 'Шахматы', checkers: 'Шашки', go: 'Го' };
+    document.getElementById('setup-title').textContent = titles[kind];
+    curDiff = 2; curColor = 'w';
+    document.querySelectorAll('#setup-difficulty .chip').forEach(function(c){ c.classList.toggle('selected', c.dataset.diff === '2'); });
+    document.querySelectorAll('#setup-color .chip').forEach(function(c){ c.classList.toggle('selected', c.dataset.color === 'w'); });
+    showScreen('game-setup');
+  }
+
+  function startSelectedGame(){
+    showScreen('game-board');
+    document.getElementById('board-wrap').innerHTML = '';
+    document.getElementById('go-grid').innerHTML = '';
+    if (curGame === 'chess') startChess();
+    else if (curGame === 'checkers') startCheckers();
+    else if (curGame === 'go') startGo();
+  }
+
+  // ── Шахматы ────────────────────────────────────────────────────────────
+  var PIECE_GLYPH = { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' };
+  var CHESS_VAL = { p:100, n:320, b:330, r:500, q:900, k:0 };
+  function sqName(rr, cc){ return 'abcdefgh'[cc] + (8 - rr); }
+
+  function startChess(){
+    document.getElementById('go-wrap').classList.add('hidden');
+    document.getElementById('board-wrap').classList.remove('hidden');
+    document.getElementById('btn-game-pass').classList.add('hidden');
+    document.getElementById('board-title').textContent = 'Шахматы';
+    hideGameResult();
+    setGameStatus('Загрузка...');
+    loadLib('chess', './assets/lib/chess.js').then(function(mod){
+      var Chess = mod.Chess;
+      var playerColor = curColor === 'r' ? (Math.random() < 0.5 ? 'w' : 'b') : curColor;
+      gameState = { type:'chess', chess:new Chess(), playerColor:playerColor, diff:curDiff, selected:null, legalTargets:null, over:false };
+      renderChessBoard();
+      updateChessStatus();
+      if (playerColor !== gameState.chess.turn()) scheduleAi(chessAiMove, 500);
+    });
+  }
+  function renderChessBoard(){
+    var st = gameState;
+    var board = st.chess.board();
+    var el = document.getElementById('board-wrap');
+    el.style.gridTemplateColumns = 'repeat(8,1fr)';
+    el.innerHTML = '';
+    var flip = st.playerColor === 'b';
+    for (var r = 0; r < 8; r++){
+      for (var c = 0; c < 8; c++){
+        var rr = flip ? 7 - r : r, cc = flip ? 7 - c : c;
+        var sq = board[rr][cc];
+        var div = document.createElement('div');
+        div.className = 'sq ' + ((rr + cc) % 2 === 0 ? 'light' : 'dark');
+        div.dataset.row = rr; div.dataset.col = cc;
+        if (sq){
+          var span = document.createElement('span');
+          span.textContent = PIECE_GLYPH[sq.type];
+          span.className = sq.color === 'w' ? 'piece-lt' : 'piece-dk';
+          div.appendChild(span);
+        }
+        el.appendChild(div);
+      }
+    }
+    if (st.selected){
+      Array.prototype.forEach.call(el.children, function(div){
+        var name = sqName(+div.dataset.row, +div.dataset.col);
+        if (name === st.selected) div.classList.add('sel');
+        if (st.legalTargets && st.legalTargets[name]){
+          var dot = document.createElement('div'); dot.className = 'dot'; div.appendChild(dot);
+        }
+      });
+    }
+    el.onclick = onChessSquareClick;
+  }
+  function selectChessSquare(name){
+    var st = gameState;
+    st.selected = name;
+    var moves = st.chess.moves({ square:name, verbose:true });
+    st.legalTargets = {};
+    moves.forEach(function(m){ st.legalTargets[m.to] = true; });
+    renderChessBoard();
+  }
+  function onChessSquareClick(e){
+    var st = gameState;
+    if (st.over || st.playerColor !== st.chess.turn()) return;
+    var div = e.target.closest('.sq'); if (!div) return;
+    var name = sqName(+div.dataset.row, +div.dataset.col);
+    if (st.selected){
+      if (st.selected === name){ st.selected = null; st.legalTargets = null; renderChessBoard(); return; }
+      if (st.legalTargets && st.legalTargets[name]){
+        st.chess.move({ from:st.selected, to:name, promotion:'q' });
+        st.selected = null; st.legalTargets = null;
+        renderChessBoard();
+        updateChessStatus();
+        if (!st.over) scheduleAi(chessAiMove, 400);
+        return;
+      }
+      var piece = st.chess.get(name);
+      if (piece && piece.color === st.playerColor) selectChessSquare(name);
+      else { st.selected = null; st.legalTargets = null; renderChessBoard(); }
+    } else {
+      var piece2 = st.chess.get(name);
+      if (piece2 && piece2.color === st.playerColor) selectChessSquare(name);
+    }
+  }
+  function evalChessBoard(chess){
+    var board = chess.board(), score = 0;
+    for (var r = 0; r < 8; r++) for (var c = 0; c < 8; c++){
+      var sq = board[r][c]; if (!sq) continue;
+      score += sq.color === 'w' ? CHESS_VAL[sq.type] : -CHESS_VAL[sq.type];
+    }
+    return score;
+  }
+  function chessMinimax(chess, depth, alpha, beta, maximizing){
+    if (depth === 0 || chess.isGameOver()) return evalChessBoard(chess);
+    var moves = chess.moves();
+    if (maximizing){
+      var best = -Infinity;
+      for (var i = 0; i < moves.length; i++){
+        chess.move(moves[i]);
+        best = Math.max(best, chessMinimax(chess, depth - 1, alpha, beta, false));
+        chess.undo();
+        alpha = Math.max(alpha, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    }
+    var worst = Infinity;
+    for (var j = 0; j < moves.length; j++){
+      chess.move(moves[j]);
+      worst = Math.min(worst, chessMinimax(chess, depth - 1, alpha, beta, true));
+      chess.undo();
+      beta = Math.min(beta, worst);
+      if (beta <= alpha) break;
+    }
+    return worst;
+  }
+  function chessAiMove(){
+    var st = gameState;
+    var chess = st.chess;
+    var moves = chess.moves({ verbose:true });
+    if (!moves.length){ updateChessStatus(); return; }
+    var aiIsWhite = chess.turn() === 'w';
+    var candidates = moves.map(function(m){
+      chess.move(m);
+      var score = chessMinimax(chess, st.diff - 1, -Infinity, Infinity, !aiIsWhite);
+      chess.undo();
+      return { m:m, score:score };
+    });
+    candidates.sort(function(a, b){ return aiIsWhite ? b.score - a.score : a.score - b.score; });
+    var poolSize = st.diff === 1 ? 4 : (st.diff === 2 ? 2 : 1);
+    var pool = candidates.slice(0, Math.min(poolSize, candidates.length));
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    chess.move(pick.m);
+    renderChessBoard();
+    updateChessStatus();
+  }
+  function updateChessStatus(){
+    var st = gameState, chess = st.chess;
+    if (chess.isGameOver()){
+      st.over = true;
+      var msg;
+      if (chess.isCheckmate()){
+        var winner = chess.turn() === 'w' ? 'b' : 'w';
+        msg = winner === st.playerColor ? 'Мат! Вы победили.' : 'Мат! Победил ИИ.';
+      } else if (chess.isStalemate()) msg = 'Пат — ничья.';
+      else msg = 'Ничья.';
+      setGameStatus('');
+      showGameResult(msg);
+      return;
+    }
+    setGameStatus(chess.turn() === st.playerColor ? 'Ваш ход' : 'Ход соперника...');
+  }
+
+  // ── Шашки (английские/американские правила, готовый движок rapid-draughts) ─
+  function startCheckers(){
+    document.getElementById('go-wrap').classList.add('hidden');
+    document.getElementById('board-wrap').classList.remove('hidden');
+    document.getElementById('btn-game-pass').classList.add('hidden');
+    document.getElementById('board-title').textContent = 'Шашки';
+    hideGameResult();
+    setGameStatus('Загрузка...');
+    loadLib('draughts', './assets/lib/draughts.js').then(function(mod){
+      var Draughts = mod.EnglishDraughts, CF = mod.EnglishDraughtsComputerFactory;
+      var playerLight = curColor === 'r' ? (Math.random() < 0.5) : (curColor === 'w');
+      var ai = curDiff === 1 ? CF.random() : CF.alphaBeta({ maxDepth: curDiff === 2 ? 3 : 6 });
+      gameState = { type:'checkers', draughts:Draughts.setup(), ai:ai, playerLight:playerLight, selected:null, posMap:{}, over:false };
+      renderCheckersBoard();
+      updateCheckersStatus();
+      if (!isCheckersPlayerTurn()) scheduleAi(checkersAiMove, 500);
+    });
+  }
+  function isCheckersPlayerTurn(){
+    var st = gameState;
+    return (st.draughts.player === 'light') === st.playerLight;
+  }
+  function renderCheckersBoard(){
+    var st = gameState;
+    var el = document.getElementById('board-wrap');
+    el.style.gridTemplateColumns = 'repeat(8,1fr)';
+    el.innerHTML = '';
+    var board = st.draughts.board;
+    st.posMap = {};
+    var flip = !st.playerLight;
+    for (var r = 0; r < 8; r++){
+      for (var c = 0; c < 8; c++){
+        var rr = flip ? 7 - r : r, cc = flip ? 7 - c : c;
+        var sq = board[rr * 8 + cc];
+        var div = document.createElement('div');
+        div.className = 'sq ' + (sq.dark ? 'dark' : 'light');
+        if (sq.dark){
+          div.dataset.pos = sq.position;
+          st.posMap[sq.position] = sq.piece || null;
+          if (sq.piece){
+            var cp = document.createElement('div');
+            cp.className = 'cp ' + (sq.piece.player === 'light' ? 'pl' : 'pd') + (sq.piece.king ? ' king' : '');
+            div.appendChild(cp);
+          }
+        }
+        el.appendChild(div);
+      }
+    }
+    if (st.selected != null){
+      var dests = st.draughts.moves.filter(function(m){ return m.origin === st.selected; }).map(function(m){ return m.destination; });
+      Array.prototype.forEach.call(el.children, function(div){
+        var pos = div.dataset.pos !== undefined ? +div.dataset.pos : null;
+        if (pos === st.selected) div.classList.add('sel');
+        if (pos !== null && dests.indexOf(pos) !== -1){
+          var dot = document.createElement('div'); dot.className = 'dot'; div.appendChild(dot);
+        }
+      });
+    }
+    el.onclick = onCheckersSquareClick;
+  }
+  function onCheckersSquareClick(e){
+    var st = gameState;
+    if (st.over || !isCheckersPlayerTurn()) return;
+    var div = e.target.closest('.sq');
+    if (!div || div.dataset.pos === undefined) return;
+    var pos = +div.dataset.pos;
+    var myPlayer = st.playerLight ? 'light' : 'dark';
+    if (st.selected != null){
+      var move = st.draughts.moves.filter(function(m){ return m.origin === st.selected && m.destination === pos; })[0];
+      if (move){
+        st.draughts.move(move);
+        st.selected = null;
+        renderCheckersBoard();
+        updateCheckersStatus();
+        if (!st.over && !isCheckersPlayerTurn()) scheduleAi(checkersAiMove, 400);
+        return;
+      }
+      var piece = st.posMap[pos];
+      st.selected = (piece && piece.player === myPlayer) ? pos : null;
+      renderCheckersBoard();
+    } else {
+      var piece2 = st.posMap[pos];
+      if (piece2 && piece2.player === myPlayer){ st.selected = pos; renderCheckersBoard(); }
+    }
+  }
+  function checkersAiMove(){
+    var st = gameState;
+    Promise.resolve(st.ai(st.draughts)).then(function(move){
+      if (gameState !== st || st.over) return;
+      if (move) st.draughts.move(move);
+      renderCheckersBoard();
+      updateCheckersStatus();
+    });
+  }
+  function updateCheckersStatus(){
+    var st = gameState;
+    var status = st.draughts.status;
+    if (status !== 'playing'){
+      st.over = true;
+      var msg;
+      if (status === 'draw') msg = 'Ничья.';
+      else {
+        var playerWon = (status === 'light_won') === st.playerLight;
+        msg = playerWon ? 'Вы победили!' : 'Победил ИИ.';
+      }
+      setGameStatus('');
+      showGameResult(msg);
+      return;
+    }
+    setGameStatus(isCheckersPlayerTurn() ? 'Ваш ход' : 'Ход соперника...');
+  }
+
+  // ── Го (правила и хранение состояния — tenuki, без встроенного рендерера;
+  // доска рисуется своими минималистичными стилями; ИИ — простая эвристика) ─
+  function startGo(){
+    document.getElementById('board-wrap').classList.add('hidden');
+    document.getElementById('go-wrap').classList.remove('hidden');
+    document.getElementById('btn-game-pass').classList.remove('hidden');
+    document.getElementById('board-title').textContent = 'Го';
+    hideGameResult();
+    setGameStatus('Загрузка...');
+    loadLib('tenuki', './assets/lib/tenuki.js').then(function(mod){
+      var Game = mod.Game;
+      var playerBlack = curColor === 'r' ? (Math.random() < 0.5) : (curColor === 'b');
+      gameState = { type:'go', game:new Game({ boardSize:GO_SIZE }), playerBlack:playerBlack, diff:curDiff, passCount:0, over:false };
+      renderGoBoard();
+      updateGoStatus();
+      if (!isGoPlayerTurn()) scheduleAi(goAiMove, 500);
+    });
+  }
+  function isGoPlayerTurn(){
+    var st = gameState;
+    return (st.game.currentPlayer() === 'black') === st.playerBlack;
+  }
+  function renderGoBoard(){
+    var st = gameState;
+    var grid = document.getElementById('go-grid');
+    grid.style.gridTemplateColumns = 'repeat(' + GO_SIZE + ',1fr)';
+    grid.style.gridTemplateRows = 'repeat(' + GO_SIZE + ',1fr)';
+    grid.innerHTML = '';
+    for (var y = 0; y < GO_SIZE; y++){
+      for (var x = 0; x < GO_SIZE; x++){
+        var cell = document.createElement('div');
+        cell.className = 'go-pt';
+        if (x === 0) cell.classList.add('edge-l');
+        if (x === GO_SIZE - 1) cell.classList.add('edge-r');
+        if (y === 0) cell.classList.add('edge-t');
+        if (y === GO_SIZE - 1) cell.classList.add('edge-b');
+        cell.dataset.y = y; cell.dataset.x = x;
+        var val = st.game.intersectionAt(y, x).value;
+        if (val === 'black' || val === 'white'){
+          var stone = document.createElement('div');
+          stone.className = 'stone ' + val;
+          cell.appendChild(stone);
+        }
+        grid.appendChild(cell);
+      }
+    }
+    grid.onclick = onGoPointClick;
+  }
+  function onGoPointClick(e){
+    var st = gameState;
+    if (st.over || !isGoPlayerTurn()) return;
+    var cell = e.target.closest('.go-pt'); if (!cell) return;
+    var y = +cell.dataset.y, x = +cell.dataset.x;
+    if (!st.game.playAt(y, x, { render:false })){ showToast('Так ходить нельзя'); return; }
+    st.passCount = 0;
+    renderGoBoard();
+    updateGoStatus();
+    if (!st.over) scheduleAi(goAiMove, 400);
+  }
+  function goCountStones(game){
+    var c = { black:0, white:0 };
+    for (var y = 0; y < GO_SIZE; y++) for (var x = 0; x < GO_SIZE; x++){
+      var v = game.intersectionAt(y, x).value;
+      if (v === 'black' || v === 'white') c[v]++;
+    }
+    return c;
+  }
+  function goNeighborBonus(game, y, x){
+    var n = 0;
+    [[y-1,x],[y+1,x],[y,x-1],[y,x+1]].forEach(function(p){
+      if (p[0] >= 0 && p[0] < GO_SIZE && p[1] >= 0 && p[1] < GO_SIZE && game.intersectionAt(p[0], p[1]).value !== 'empty') n++;
+    });
+    return n;
+  }
+  function goGroupLiberties(game, y, x){
+    var color = game.intersectionAt(y, x).value;
+    var seen = {}, libs = {}, stack = [[y, x]];
+    while (stack.length){
+      var p = stack.pop(), key = p[0] + ',' + p[1];
+      if (seen[key]) continue;
+      seen[key] = true;
+      [[p[0]-1,p[1]],[p[0]+1,p[1]],[p[0],p[1]-1],[p[0],p[1]+1]].forEach(function(n){
+        if (n[0] < 0 || n[0] >= GO_SIZE || n[1] < 0 || n[1] >= GO_SIZE) return;
+        var v = game.intersectionAt(n[0], n[1]).value;
+        if (v === 'empty') libs[n[0] + ',' + n[1]] = true;
+        else if (v === color) stack.push(n);
+      });
+    }
+    return Object.keys(libs).length;
+  }
+  function goAiMove(){
+    var st = gameState, game = st.game;
+    var before = goCountStones(game);
+    var candidates = [];
+    for (var y = 0; y < GO_SIZE; y++){
+      for (var x = 0; x < GO_SIZE; x++){
+        if (game.intersectionAt(y, x).value !== 'empty') continue;
+        if (!game.playAt(y, x, { render:false })) continue;
+        var after = goCountStones(game);
+        var myColor = game.currentPlayer() === 'black' ? 'white' : 'black';
+        var opp = myColor === 'black' ? 'white' : 'black';
+        var captured = Math.max(0, before[opp] - after[opp]);
+        var libs = goGroupLiberties(game, y, x);
+        var score = captured * 20 + libs * 2 + goNeighborBonus(game, y, x) + Math.random() * 2 - (libs <= 1 ? 15 : 0);
+        candidates.push({ y:y, x:x, score:score });
+        game.undo();
+      }
+    }
+    if (!candidates.length){
+      game.pass({ render:false }); st.passCount++;
+      renderGoBoard(); updateGoStatus();
+      return;
+    }
+    candidates.sort(function(a, b){ return b.score - a.score; });
+    if (st.passCount > 0 && candidates[0].score <= 0){
+      game.pass({ render:false }); st.passCount++;
+      renderGoBoard(); updateGoStatus();
+      return;
+    }
+    var pool = st.diff === 1 ? candidates.slice(0, Math.max(1, Math.ceil(candidates.length * 0.6)))
+      : st.diff === 2 ? candidates.slice(0, Math.min(6, candidates.length))
+      : candidates.slice(0, Math.min(2, candidates.length));
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    game.playAt(pick.y, pick.x, { render:false });
+    st.passCount = 0;
+    renderGoBoard();
+    updateGoStatus();
+  }
+  function updateGoStatus(){
+    var st = gameState;
+    if (st.game.isOver()){
+      st.over = true;
+      var score = st.game.score();
+      var winner = score.black > score.white ? 'black' : (score.white > score.black ? 'white' : null);
+      var scoreStr = 'Чёрные ' + score.black.toFixed(1) + ' — Белые ' + score.white.toFixed(1);
+      var msg;
+      if (!winner) msg = 'Ничья! ' + scoreStr;
+      else {
+        var playerWon = (winner === 'black') === st.playerBlack;
+        msg = (playerWon ? 'Вы победили! ' : 'Победил ИИ. ') + scoreStr;
+      }
+      setGameStatus('');
+      showGameResult(msg);
+      return;
+    }
+    setGameStatus(isGoPlayerTurn() ? 'Ваш ход' : 'Ход соперника...');
   }
 
   function renderStatus(){
@@ -782,6 +1349,47 @@
     document.getElementById('btn-sensor').addEventListener('click', function(){
       if (sensorActive){ stopSensor(); lsSet('sensorEnabled', '0'); }
       else { enableSensor(); }
+    });
+
+    document.getElementById('btn-games').addEventListener('click', function(){ showScreen('games'); });
+    document.getElementById('btn-games-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
+    document.getElementById('btn-setup-back').addEventListener('click', function(){ showScreen('games'); });
+    document.getElementById('btn-board-back').addEventListener('click', function(){
+      if (gameState) gameState.over = true;
+      showScreen('games');
+    });
+    document.querySelector('.game-hub-grid').addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-game]'); if (!btn) return;
+      openGameSetup(btn.dataset.game);
+    });
+    document.getElementById('setup-difficulty').addEventListener('click', function(e){
+      var chip = e.target.closest('.chip'); if (!chip) return;
+      document.querySelectorAll('#setup-difficulty .chip').forEach(function(c){ c.classList.remove('selected'); });
+      chip.classList.add('selected');
+      curDiff = parseInt(chip.dataset.diff, 10);
+    });
+    document.getElementById('setup-color').addEventListener('click', function(e){
+      var chip = e.target.closest('.chip'); if (!chip) return;
+      document.querySelectorAll('#setup-color .chip').forEach(function(c){ c.classList.remove('selected'); });
+      chip.classList.add('selected');
+      curColor = chip.dataset.color;
+    });
+    document.getElementById('btn-game-start').addEventListener('click', startSelectedGame);
+    document.getElementById('btn-game-pass').addEventListener('click', function(){
+      var st = gameState;
+      if (st.type !== 'go' || st.over || !isGoPlayerTurn()) return;
+      st.game.pass({ render:false });
+      st.passCount++;
+      renderGoBoard();
+      updateGoStatus();
+      if (!st.over) scheduleAi(goAiMove, 400);
+    });
+    document.getElementById('btn-game-resign').addEventListener('click', function(){
+      var st = gameState;
+      if (!st || !st.type || st.over) return;
+      st.over = true;
+      setGameStatus('');
+      showGameResult('Вы сдались.');
     });
 
     document.getElementById('btn-reset').addEventListener('click', function(){
