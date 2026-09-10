@@ -117,6 +117,8 @@
   .gp-hp-fill{height:100%;background:#22c55e}
   .gp-lvl{position:absolute;top:0;right:1px;font-size:9px;font-weight:700;color:var(--accent);
     text-shadow:0 0 2px rgba(0,0,0,.8)}
+  .shield-hint{position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;
+    background:#9aa3ad;opacity:.75;z-index:1}
   .go-wrap{width:100%;aspect-ratio:1/1;margin-bottom:16px;background:#b98a4e14;border-radius:10px;
     padding:4%;box-sizing:border-box}
   .go-grid{width:100%;height:100%;display:grid;position:relative}
@@ -878,14 +880,16 @@
     },
     guard: {
       title: 'Страж и клинок — правила',
-      html: '<p>Своя тактическая игра на доске 8×8. Побеждает тот, кто уничтожит все фигуры соперника.</p>' +
+      html: '<p>Своя тактическая игра на доске 8×8, пять типов фигур. Побеждает тот, кто уничтожит все фигуры соперника.</p>' +
         '<ul>' +
-        '<li>🛡 Защитник — ходит на 1 клетку по вертикали/горизонтали, сам не атакует. Закрывает щитом 3 клетки прямо перед собой (5 клеток с уровня 2) — стоящую там союзную фигуру нельзя атаковать.</li>' +
-        '<li>🏹 Стрелок — ходит на 1 клетку по вертикали/горизонтали. Атакует по прямой и диагонали (как ферзь) на расстояние 4 клетки (5 с уровня 2, 6 с уровня 3), бьёт первую фигуру на луче.</li>' +
-        '<li>⚔ Мечник — ходит до 3 клеток в любом из 8 направлений (не может проходить сквозь фигуры). Атакует только вперёд по прямой на 2 клетки (3 с уровня 2), а с уровня 3 — ещё и по двум диагоналям вперёд на 1 клетку.</li>' +
-        '<li>🗡 Убийца — ходит до 2 клеток в любом из 8 направлений. Атакует любую соседнюю клетку и мгновенно убивает цель независимо от её HP и уровня, но сам очень хрупкий (1-2 HP, максимум 2 уровня).</li>' +
+        '<li>🛡 Защитник — ходит на 1 клетку по вертикали/горизонтали, сам не атакует. Прикрывает щитом свои фигуры по той же горизонтали слева и справа (на 1 клетку, с уровня 2 — на 2, с уровня 3 — на 3) — щит не действует на клетки впереди/позади.</li>' +
+        '<li>🏹 Стрелок — ходит на 2 клетки в любом из 8 направлений. Атакует только по прямой (вертикаль/горизонталь) на расстояние 4 клетки (5 с уровня 2, 6 с уровня 3), бьёт первую фигуру на луче.</li>' +
+        '<li>🪨 Катапульта — ходит на 1 клетку в любом из 8 направлений. Атакует только по диагонали на расстояние 3 клетки (4 с уровня 2, 5 с уровня 3), бьёт сильнее Стрелка, но менее подвижна.</li>' +
+        '<li>⚔ Мечник — ходит до 3 клеток в любом из 8 направлений (не может проходить сквозь фигуры). Атакует в любом из 8 направлений на 1 клетку (2 клетки с уровня 2).</li>' +
+        '<li>🗡 Убийца — ходит до 2 клеток в любом из 8 направлений. Атакует любую соседнюю клетку и мгновенно убивает цель независимо от её HP, уровня и щита Защитника, но сам очень хрупкий (1-2 HP, максимум 2 уровня).</li>' +
         '</ul>' +
-        '<p>Ход и атака — разные действия: атака не двигает фигуру с её клетки. У каждой фигуры есть HP (полоска под ней); убийство цели поднимает фигуре уровень (сила и HP растут, здоровье полностью восстанавливается). Щит Защитника не спасает от Убийцы.</p>' +
+        '<p>Серые точки на доске — клетки, которые прямо сейчас прикрыты чьим-то щитом (атака по стоящей там фигуре не пройдёт, кроме атаки Убийцы).</p>' +
+        '<p>Ход и атака — разные действия: атака не двигает фигуру с её клетки. У каждой фигуры есть HP (полоска под ней); убийство цели поднимает фигуре уровень (сила и HP растут, здоровье полностью восстанавливается).</p>' +
         '<p>Если 60 полуходов подряд никто никого не убивает — партия завершается вничью.</p>'
     }
   };
@@ -1359,25 +1363,31 @@
   // уровень и полное лечение). Атака никогда не двигает фигуру — это
   // отдельное от хода действие, в отличие от шахмат/шашек.
   var GUARD_TYPES = {
-    defender:  { name:'Защитник', glyph:'🛡', hp:[4,5,6], move:1, moveAll8:false },
-    archer:    { name:'Стрелок',  glyph:'🏹', hp:[2,3,4], move:1, moveAll8:false, atkRange:[4,5,6], dmg:[1,2,3] },
-    swordsman: { name:'Мечник',   glyph:'⚔', hp:[3,4,5], move:3, moveAll8:true,  atkRange:[2,3,3], dmg:[1,2,3] },
-    assassin:  { name:'Убийца',   glyph:'🗡', hp:[1,2],   move:2, moveAll8:true }
+    defender:  { name:'Защитник',   glyph:'🛡', hp:[4,5,6], move:1, moveDirs:'orth' },
+    archer:    { name:'Стрелок',    glyph:'🏹', hp:[2,3,4], move:2, moveDirs:'all8', atkDirs:'orth', atkRange:[4,5,6], dmg:[1,2,3] },
+    catapult:  { name:'Катапульта', glyph:'🪨', hp:[3,4,5], move:1, moveDirs:'all8', atkDirs:'diag', atkRange:[3,4,5], dmg:[2,3,4] },
+    swordsman: { name:'Мечник',     glyph:'⚔', hp:[3,4,5], move:3, moveDirs:'all8', atkDirs:'all8', atkRange:[1,2,2], dmg:[1,2,3] },
+    assassin:  { name:'Убийца',     glyph:'🗡', hp:[1,2],   move:2, moveDirs:'all8' }
   };
-  var GUARD_MAX_LEVEL = { defender:3, archer:3, swordsman:3, assassin:2 };
-  var GUARD_BASE_VALUE = { defender:30, archer:35, swordsman:30, assassin:40 };
+  var GUARD_MAX_LEVEL = { defender:3, archer:3, catapult:3, swordsman:3, assassin:2 };
+  var GUARD_BASE_VALUE = { defender:28, archer:33, catapult:33, swordsman:34, assassin:40 };
   var GUARD_DIRS8 = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
   var GUARD_DIRS_ORTH = [[-1,0],[1,0],[0,-1],[0,1]];
+  var GUARD_DIRS_DIAG = [[-1,-1],[-1,1],[1,-1],[1,1]];
 
   function guardEnemySide(side){ return side === 'w' ? 'b' : 'w'; }
   function guardInBounds(r, c){ return r >= 0 && r < 8 && c >= 0 && c < 8; }
-  function guardZoneWidth(level){ return level >= 2 ? 5 : 3; }
+  function guardDirsFor(key){
+    if (key === 'orth') return GUARD_DIRS_ORTH;
+    if (key === 'diag') return GUARD_DIRS_DIAG;
+    return GUARD_DIRS8;
+  }
 
   function guardBuildBoard(){
     var board = [];
     for (var r = 0; r < 8; r++) board.push([null,null,null,null,null,null,null,null]);
-    var backRank = [ {type:'archer',col:1}, {type:'defender',col:3}, {type:'defender',col:4}, {type:'archer',col:6} ];
-    var frontRank = [ {type:'swordsman',col:0}, {type:'assassin',col:2}, {type:'swordsman',col:5}, {type:'swordsman',col:7} ];
+    var backRank = [ {type:'archer',col:1}, {type:'defender',col:3}, {type:'defender',col:4}, {type:'catapult',col:6} ];
+    var frontRank = [ {type:'swordsman',col:0}, {type:'assassin',col:2}, {type:'archer',col:5}, {type:'swordsman',col:7} ];
     function place(side, row, list){
       list.forEach(function(item){
         var hp = GUARD_TYPES[item.type].hp[0];
@@ -1398,7 +1408,7 @@
   function guardGenMoves(board, r, c){
     var piece = board[r][c];
     var def = GUARD_TYPES[piece.type];
-    var dirs = def.moveAll8 ? GUARD_DIRS8 : GUARD_DIRS_ORTH;
+    var dirs = guardDirsFor(def.moveDirs);
     var moves = [];
     dirs.forEach(function(d){
       for (var step = 1; step <= def.move; step++){
@@ -1410,41 +1420,15 @@
     return moves;
   }
 
+  // Стрелок/Катапульта/Мечник — луч в заданных направлениях, бьёт первую
+  // фигуру на пути (перебросить через фигуру нельзя); Убийца — особый случай
+  // (см. ниже, мгновенное убийство любой соседней цели в упор).
   function guardGenAttacks(board, r, c){
     var piece = board[r][c];
     var def = GUARD_TYPES[piece.type];
-    var lvl = piece.level;
     var enemy = guardEnemySide(piece.side);
     var targets = [];
-    if (piece.type === 'archer'){
-      GUARD_DIRS8.forEach(function(d){
-        var range = def.atkRange[lvl-1];
-        for (var step = 1; step <= range; step++){
-          var rr = r + d[0]*step, cc = c + d[1]*step;
-          if (!guardInBounds(rr,cc)) break;
-          var target = board[rr][cc];
-          if (target){ if (target.side === enemy) targets.push({ r:rr, c:cc }); break; }
-        }
-      });
-    } else if (piece.type === 'swordsman'){
-      var fwd = piece.side === 'w' ? -1 : 1;
-      var range = def.atkRange[lvl-1];
-      for (var step = 1; step <= range; step++){
-        var rr = r + fwd*step, cc = c;
-        if (!guardInBounds(rr,cc)) break;
-        var target = board[rr][cc];
-        if (target){ if (target.side === enemy) targets.push({ r:rr, c:cc }); break; }
-      }
-      if (lvl >= 3){
-        [[fwd,-1],[fwd,1]].forEach(function(d){
-          var rr = r + d[0], cc = c + d[1];
-          if (guardInBounds(rr,cc)){
-            var target = board[rr][cc];
-            if (target && target.side === enemy) targets.push({ r:rr, c:cc });
-          }
-        });
-      }
-    } else if (piece.type === 'assassin'){
+    if (piece.type === 'assassin'){
       GUARD_DIRS8.forEach(function(d){
         var rr = r + d[0], cc = c + d[1];
         if (guardInBounds(rr,cc)){
@@ -1452,19 +1436,31 @@
           if (target && target.side === enemy) targets.push({ r:rr, c:cc });
         }
       });
+      return targets;
     }
+    if (!def.atkDirs) return targets;
+    var range = def.atkRange[piece.level-1];
+    guardDirsFor(def.atkDirs).forEach(function(d){
+      for (var step = 1; step <= range; step++){
+        var rr = r + d[0]*step, cc = c + d[1]*step;
+        if (!guardInBounds(rr,cc)) break;
+        var target = board[rr][cc];
+        if (target){ if (target.side === enemy) targets.push({ r:rr, c:cc }); break; }
+      }
+    });
     return targets;
   }
 
+  // Защитник больше не прикрывает клетки впереди себя — только свои фигуры
+  // по той же горизонтали слева и справа, дальность щита растёт с уровнем.
   function guardCellProtected(board, r, c, side){
     for (var rr = 0; rr < 8; rr++){
       for (var cc = 0; cc < 8; cc++){
         var p = board[rr][cc];
         if (!p || p.type !== 'defender' || p.side !== side) continue;
-        var fwd = p.side === 'w' ? -1 : 1;
-        if (rr + fwd !== r) continue;
-        var half = (guardZoneWidth(p.level) - 1) / 2;
-        if (Math.abs(cc - c) <= half) return true;
+        if (rr !== r) continue;
+        var dist = Math.abs(cc - c);
+        if (dist >= 1 && dist <= p.level) return true;
       }
     }
     return false;
@@ -1594,6 +1590,12 @@
     el.style.gridTemplateRows = 'repeat(8,1fr)';
     el.innerHTML = '';
     var flip = st.playerSide === 'b';
+    // Подсказка: серые точки на клетках, которые щит какого-либо Защитника
+    // прикрывает от атак (по горизонтали слева/справа от него).
+    var shielded = {};
+    for (var sr = 0; sr < 8; sr++) for (var sc = 0; sc < 8; sc++){
+      if (guardCellProtected(st.board, sr, sc, 'w') || guardCellProtected(st.board, sr, sc, 'b')) shielded[sr+'_'+sc] = true;
+    }
     for (var r = 0; r < 8; r++){
       for (var c = 0; c < 8; c++){
         var rr = flip ? 7-r : r, cc = flip ? 7-c : c;
@@ -1601,6 +1603,9 @@
         var div = document.createElement('div');
         div.className = 'sq ' + ((rr+cc)%2===0 ? 'light' : 'dark');
         div.dataset.row = rr; div.dataset.col = cc;
+        if (shielded[rr+'_'+cc]){
+          var hint = document.createElement('div'); hint.className = 'shield-hint'; div.appendChild(hint);
+        }
         if (piece){
           var gp = document.createElement('div');
           gp.className = 'gp side-' + piece.side;
