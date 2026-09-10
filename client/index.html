@@ -374,6 +374,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .price-val{font:400 19px/1 var(--font-sans);color:var(--fg)}
 .price-orig{font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:line-through}
 .price-sub{font:400 19px/1 var(--font-sans);color:var(--ok)}
+.hit-badge{position:absolute;left:0;right:0;bottom:0;background:var(--accent);color:#fff;font:600 12px/1 var(--font-sans);text-align:center;padding:5px 0;letter-spacing:.02em}
 .item-unavail{font:500 12px/1 var(--font-sans);color:var(--err);text-transform:uppercase;letter-spacing:.05em}
 #mi-img{position:relative;width:100%;height:180px;background:var(--bg-2);border-radius:var(--r-2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;font:400 40px/1 var(--font-display);font-style:italic;color:var(--fg-4)}
 #mi-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:var(--r-2)}
@@ -6426,28 +6427,49 @@ function updateItemCardInPlace(id) {
   if (actions) actions.innerHTML = itemActions(item, _cartQtyForItem(id));
 }
 
+function hitBadgeHtml(item) {
+  return item.is_hit ? `<div class="hit-badge">🔥 ХИТ</div>` : '';
+}
+
+// Собирает HTML цены с учётом двух независимых скидок: заданной владельцем
+// заведения (item.old_price, для всех покупателей) и подобранного для
+// текущего пользователя абонемента (getBestDisc) — если действуют обе,
+// показываем цепочку old_price → price → discPrice, а не теряем одну из них.
+function itemPriceHtml(item, opts = {}) {
+  const best = getBestDisc(item);
+  const discPrice = best ? Math.max(0, item.price - best.disc) : null;
+  const hasOldPrice = item.old_price != null && item.old_price > item.price;
+  if (best) {
+    return hasOldPrice
+      ? `<span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.old_price} ₽</span><span class="price-orig">${item.price} ₽</span>`
+      : `<span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.price} ₽</span>`;
+  }
+  if (hasOldPrice) {
+    return `<span class="price-sub">${item.price} ₽</span><span class="price-orig">${item.old_price} ₽</span>`;
+  }
+  if (opts.fromPrice != null) {
+    return `<span class="price-val"><span style="font-size:11px;color:var(--fg-3)">от </span>${opts.fromPrice} ₽</span>`;
+  }
+  return `<span class="price-val">${item.price} ₽</span>`;
+}
+
 function renderItemCard(item) {
   itemCache.set(item.id, item);
   const qty = _cartQtyForItem(item.id);
   const imgHtml = itemFallbackImg(item);
   const best = getBestDisc(item);
   const hint = !best ? getBestUnownedDiscForItem(item) : null;
-  const discPrice = best ? Math.max(0, item.price - best.disc) : null;
   const _rules = item.item_price_rules || [];
   const _minRulePrice = _rules.length ? Math.min(..._rules.map(r => r.price)) : null;
   const _fromPrice = _minRulePrice !== null && _minRulePrice < item.price ? _minRulePrice : null;
-  const priceHtml = best
-    ? `<span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.price} ₽</span>`
-    : _fromPrice !== null
-      ? `<span class="price-val"><span style="font-size:11px;color:var(--fg-3)">от </span>${_fromPrice} ₽</span>`
-      : `<span class="price-val">${item.price} ₽</span>`;
+  const priceHtml = itemPriceHtml(item, { fromPrice: _fromPrice });
   const subNoteHtml = best
     ? `<span class="sub-note">По абонементу «${esc(best.sub.name)}»</span>`
     : hint
       ? `<span class="sub-note sub-hint">«${esc(hint.sub.name)}»: ${hint.price} ₽</span>`
       : '';
   return `<div class="item-card" data-id="${item.id}" onclick="openItemDetail('${item.id}')">
-    <div class="item-img">${imgHtml}</div>
+    <div class="item-img">${imgHtml}${hitBadgeHtml(item)}</div>
     <div class="item-body">
       <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
       ${item.description ? `<div class="item-desc item-card-desc">${esc(item.description)}</div>` : ''}
@@ -6545,7 +6567,7 @@ function openItemDetail(id) {
   _detailBasePrice = item.price;
   trackEvent('item_click', S.store?.id, { item_id: item.id, item_name: item.name });
   document.getElementById('mi-name').textContent = item.name;
-  document.getElementById('mi-img').innerHTML = itemFallbackImg(item);
+  document.getElementById('mi-img').innerHTML = itemFallbackImg(item) + hitBadgeHtml(item);
   const descEl = document.getElementById('mi-desc');
   const prepLabel = { food: 'Время приготовления', goods: 'Время подготовки', services: 'Время на услугу', sport: 'Время на услугу', entertainment: 'Время на услугу' }[S.direction] || 'Время';
   descEl.innerHTML = [
@@ -6562,11 +6584,7 @@ function openItemDetail(id) {
     allerEl.style.display = 'none';
   }
 
-  const best = getBestDisc(item);
-  const discPrice = best ? Math.max(0, item.price - best.disc) : null;
-  document.getElementById('mi-price').innerHTML = best
-    ? `<div class="price-wrap"><span class="price-sub">${discPrice} ₽</span><span class="price-orig">${item.price} ₽</span></div>`
-    : `<div class="price-wrap"><span class="price-val">${item.price} ₽</span></div>`;
+  document.getElementById('mi-price').innerHTML = `<div class="price-wrap">${itemPriceHtml(item)}</div>`;
 
   const applicable = getApplicableSubs(item);
   const subsEl = document.getElementById('mi-subs');
