@@ -232,6 +232,28 @@ S.storeYear(PHARM, {
   6: [['08:00', '22:00']], 0: [['08:00', '22:00']],
 }, { closeOnHolidays: false });
 
+// ─────────────────── подписка владельцев на платформу ───────────────────
+section('Подписка на платформу у владельцев демо-заведений');
+
+// Без активной platform-подписки владельца is_store_subscription_active() = false,
+// и клиент прячет «Оплатить»/«В корзину», показывая «заведение приостановило продажи».
+// У Демо Кофейни срок истёк, у Аптеки подписка провалилась — витрину посмотреть можно,
+// а оформить заказ нельзя, то есть половина функционала недоступна для проверки.
+// Метка в tbank_payment_id делает вставку идемпотентной: перед ней сносим прошлую.
+const DEMO_STORES = [BURG, COFFEE, TECH, PHARM, BARB, FIT, PEARL, KNTS, APEX];
+sql(`DELETE FROM platform_subscriptions WHERE tbank_payment_id LIKE 'demo-realism:%';`);
+sql(`INSERT INTO platform_subscriptions
+  (id, user_id, plan, plan_type, status, start_date, end_date, amount_paid, monthly_amount_kopecks, tbank_payment_id)
+SELECT md5('demo-realism-psub:' || o.owner_user_id::text)::uuid, o.owner_user_id,
+       'yearly', 'platform', 'active', CURRENT_DATE - 30, CURRENT_DATE + 365, 10000, 100000,
+       'demo-realism:' || o.owner_user_id::text
+FROM (SELECT DISTINCT owner_user_id FROM stores WHERE id IN (${DEMO_STORES.map(q).join(', ')})) o
+WHERE o.owner_user_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM platform_subscriptions ps
+    WHERE ps.user_id = o.owner_user_id AND ps.plan_type = 'platform'
+      AND ps.status IN ('active', 'grace') AND ps.end_date >= CURRENT_DATE + 30);`);
+
 // ─────────────────────── уборка мусорных заведений ───────────────────────
 section('Мусорные заведения — убираем из выдачи');
 
