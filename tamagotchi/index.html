@@ -122,6 +122,16 @@
   .go-pt .stone.white{background:radial-gradient(circle at 35% 32%,#fff,#c9c9c9)}
   .game-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .game-controls button{margin-bottom:0}
+  .btn-rules{margin-left:auto;flex-shrink:0}
+  .rules-overlay{position:fixed;inset:0;background:rgba(8,10,12,.72);z-index:20;display:flex;
+    align-items:flex-end;justify-content:center}
+  .rules-sheet{width:100%;max-width:420px;max-height:82vh;overflow-y:auto;background:var(--bg);
+    border-radius:16px 16px 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom))}
+  .rules-sheet h2{font-size:18px;margin:0 0 12px}
+  .rules-sheet p,.rules-sheet li{font-size:14px;color:var(--text2);line-height:1.5}
+  .rules-sheet ul{margin:0 0 12px;padding-left:20px}
+  .rules-sheet p{margin:0 0 12px}
+  .rules-sheet button{margin-top:4px}
   .game-result{text-align:center;font-size:16px;font-weight:700;margin:0 0 14px;color:var(--accent)}
 
   .pdd-ticket-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -313,6 +323,7 @@
     <div class="game-header">
       <button id="btn-board-back">←</button>
       <h1 id="board-title">Игра</h1>
+      <button id="btn-game-rules" class="btn-rules">Правила</button>
     </div>
     <div class="game-status-line" id="game-status-line"></div>
     <div class="game-result hidden" id="game-result"></div>
@@ -321,6 +332,14 @@
     <div class="game-controls">
       <button id="btn-game-pass" class="secondary hidden">Пас</button>
       <button id="btn-game-resign" class="secondary">Сдаться</button>
+    </div>
+  </div>
+
+  <div id="rules-overlay" class="rules-overlay hidden">
+    <div class="rules-sheet">
+      <h2 id="rules-title">Правила</h2>
+      <div id="rules-body"></div>
+      <button id="btn-rules-close">Понятно</button>
     </div>
   </div>
 
@@ -666,6 +685,7 @@
     document.getElementById('screen-game-board').classList.toggle('hidden', id !== 'game-board');
     document.getElementById('screen-pdd-tickets').classList.toggle('hidden', id !== 'pdd-tickets');
     document.getElementById('screen-pdd-question').classList.toggle('hidden', id !== 'pdd-question');
+    document.getElementById('rules-overlay').classList.add('hidden');
   }
 
   // ── Чат с питомцем — прокси на Gemini через Edge Function tamagotchi-chat,
@@ -807,6 +827,56 @@
     return gameLibs[name];
   }
 
+  var RULES = {
+    chess: {
+      title: 'Шахматы — правила',
+      html: '<p>Обычные классические шахматы. Цель — поставить мат королю соперника.</p>' +
+        '<ul>' +
+        '<li>Пешка ходит на 1 клетку вперёд (на 2 с начальной позиции), бьёт по диагонали; дойдя до последней горизонтали, превращается в любую фигуру (в игре — всегда в ферзя).</li>' +
+        '<li>Ладья ходит по горизонтали и вертикали на любое число клеток.</li>' +
+        '<li>Слон ходит по диагонали на любое число клеток.</li>' +
+        '<li>Ферзь ходит как ладья и слон вместе.</li>' +
+        '<li>Конь ходит буквой «Г» и перепрыгивает через фигуры.</li>' +
+        '<li>Король ходит на 1 клетку в любую сторону; его нельзя подставлять под шах.</li>' +
+        '</ul>' +
+        '<p>Мат — королю объявлен шах и нет хода, снимающего угрозу. Пат (нет шаха, но и нет ходов) — ничья.</p>'
+    },
+    checkers: {
+      title: 'Шашки — правила',
+      html: '<p>Английские (американские) шашки, 8×8, играют только по тёмным клеткам.</p>' +
+        '<ul>' +
+        '<li>Обычная шашка ходит на 1 клетку по диагонали только вперёд.</li>' +
+        '<li>Бой — прыжок через шашку соперника на свободную клетку за ней, тоже только вперёд; если после боя возможен ещё один прыжок, бить нужно продолжать.</li>' +
+        '<li>Если есть возможность бить — бой обязателен.</li>' +
+        '<li>Дойдя до последней горизонтали, шашка становится дамкой (♛) и после этого может ходить и бить по диагонали на любое число клеток вперёд и назад.</li>' +
+        '</ul>' +
+        '<p>Побеждает тот, у кого соперник не может сделать ход — все шашки взяты или заблокированы.</p>'
+    },
+    go: {
+      title: 'Го — правила',
+      html: '<p>Доска 9×9. Игроки по очереди ставят камни на пересечения линий; чёрные ходят первыми.</p>' +
+        '<ul>' +
+        '<li>Группа камней одного цвета захватывается и снимается с доски, если у неё не осталось ни одной свободной соседней точки (свободы/«дыхания»).</li>' +
+        '<li>Ставить камень в точку, где группа сразу лишится последней свободы, нельзя, если это не бьёт вражескую группу.</li>' +
+        '<li>Игрок может пропустить ход (Пас). Игра заканчивается, когда оба игрока подряд пасуют.</li>' +
+        '<li>Счёт — очки за захваченные (снятые с доски) камни соперника и за территорию — пустые точки, окружённые только своим цветом. У кого больше очков — тот и победил.</li>' +
+        '</ul>' +
+        '<p>Совет: не оставляйте свои группы без свобод и старайтесь окружать пустые области, а не только ловить камни соперника.</p>'
+    }
+  };
+
+  function openRules(){
+    var type = gameState && gameState.type;
+    var r = RULES[type];
+    if (!r) return;
+    document.getElementById('rules-title').textContent = r.title;
+    document.getElementById('rules-body').innerHTML = r.html;
+    document.getElementById('rules-overlay').classList.remove('hidden');
+  }
+  function closeRules(){
+    document.getElementById('rules-overlay').classList.add('hidden');
+  }
+
   var curGame = null, curDiff = 2, curColor = 'w';
   var gameState = {};
 
@@ -867,6 +937,7 @@
     var board = st.chess.board();
     var el = document.getElementById('board-wrap');
     el.style.gridTemplateColumns = 'repeat(8,1fr)';
+    el.style.gridTemplateRows = 'repeat(8,1fr)';
     el.innerHTML = '';
     var flip = st.playerColor === 'b';
     for (var r = 0; r < 8; r++){
@@ -1022,6 +1093,7 @@
     var st = gameState;
     var el = document.getElementById('board-wrap');
     el.style.gridTemplateColumns = 'repeat(8,1fr)';
+    el.style.gridTemplateRows = 'repeat(8,1fr)';
     el.innerHTML = '';
     var board = st.draughts.board;
     st.posMap = {};
@@ -1531,6 +1603,11 @@
     document.getElementById('btn-board-back').addEventListener('click', function(){
       if (gameState) gameState.over = true;
       showScreen('games');
+    });
+    document.getElementById('btn-game-rules').addEventListener('click', openRules);
+    document.getElementById('btn-rules-close').addEventListener('click', closeRules);
+    document.getElementById('rules-overlay').addEventListener('click', function(e){
+      if (e.target.id === 'rules-overlay') closeRules();
     });
     document.querySelector('.game-hub-grid').addEventListener('click', function(e){
       var btn = e.target.closest('button[data-game]'); if (!btn) return;
