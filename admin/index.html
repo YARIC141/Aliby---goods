@@ -7545,12 +7545,13 @@ async function renderBkTabDayView(dateStr) {
       const isCompleted  = b.status === 'completed';
       const isPaid       = b.payment_status === 'paid';
       const isNew        = _newBookingIds.has(b.id);
+      const stLbl = isCancelled ? _cancelledLabel(b, (S.stores || []).find(s => s.id === _bkTab.storeId)?.direction) : st.lbl;
       return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid ${isNew?'var(--accent)':'var(--line-soft)'};margin-bottom:8px;background:var(--bg);opacity:${isCancelled?'.5':'1'};cursor:pointer${isNew?';box-shadow:0 0 0 1px var(--accent)':''}" onclick="openBookingDetail('${esc(b.id)}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
               <span style="font:700 13px/1 var(--font-sans)">${ts} — ${te}</span>
-              <span class="badge ${st.cls}">${st.lbl}</span>
+              <span class="badge ${st.cls}">${stLbl}</span>
               <span class="badge ${pay.cls}">${pay.lbl}</span>
             </div>
             <div style="font:500 13px/1.3 var(--font-sans);margin-bottom:3px">${esc(b.menu_items?.name||'—')}</div>
@@ -8206,6 +8207,11 @@ function _roleWords(dir) {
   return _isCoachDir(dir)
     ? { nom: 'Тренер', gen: 'тренера', soj: 'тренером' }
     : { nom: 'Мастер', gen: 'мастера', soj: 'мастером' };
+}
+function _cancelledLabel(b, dir) {
+  if (b.cancelled_by_role === 'master') return `Отменена ${_roleWords(dir).soj}`;
+  if (b.cancelled_by_role === 'admin')  return 'Отменена администратором';
+  return 'Отменена';
 }
 
 function _renderEmpList(emps) {
@@ -9563,12 +9569,13 @@ async function renderDayBookings(dateStr) {
       const cancelled  = b.status === 'cancelled';
       const completedB = b.status === 'completed';
       const paid       = b.payment_status === 'paid';
+      const stLbl = cancelled ? _cancelledLabel(b, _sched.storeDirection) : st.lbl;
       return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--bg);opacity:${cancelled ? '.5' : '1'};cursor:pointer" onclick="openBookingDetail('${b.id}')">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
               <span style="font:700 13px/1 var(--font-sans)">${ts} — ${te}</span>
-              <span class="badge ${st.cls}">${st.lbl}</span>
+              <span class="badge ${st.cls}">${stLbl}</span>
               <span class="badge ${pay.cls}">${pay.lbl}</span>
             </div>
             <div style="font:500 13px/1.3 var(--font-sans);margin-bottom:3px">${esc(b.menu_items?.name || '—')}</div>
@@ -9609,7 +9616,8 @@ async function completeBooking(bookingId, dateStr) {
 async function cancelBooking(bookingId, dateStr) {
   if (!confirm('Отменить запись клиента?')) return;
   try {
-    await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ status:'cancelled' }) });
+    const role = S.profile?.is_master ? 'master' : 'admin';
+    await req(`/rest/v1/bookings?id=eq.${bookingId}`, { method:'PATCH', body:JSON.stringify({ status:'cancelled', cancelled_by: S.profile?.id || null, cancelled_by_role: role }) });
     showAdminToast('Запись отменена');
     if (_sched.openDate === dateStr) renderDayBookings(dateStr);
     if (_bkTab.openDate === dateStr) renderBkTabDayView(dateStr);

@@ -10976,7 +10976,7 @@ async function loadBookingsScreen() {
   const firstDay = `${_myBk.year}-${mm}-01`;
   const lastDay = new Date(_myBk.year, _myBk.month + 1, 0).toISOString().slice(0, 10);
   try {
-    const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&select=*,stores(name,address),menu_items(name,price,preparation_time)&order=slot_date.asc,slot_start.asc`);
+    const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&select=*,stores(name,address,direction),menu_items(name,price,preparation_time)&order=slot_date.asc,slot_start.asc`);
     _myBk.byDate = {};
     _myBk.masterMap = {};
     rows.forEach(r => {
@@ -11109,8 +11109,12 @@ function renderMyBookingsDay(ds) {
     const isCancelled = b.status === 'cancelled';
     const isPastBk   = b.slot_date < _todayStr ||
       (b.slot_date === _todayStr && sEnd && _timeToMin(sEnd) <= _nowCity.getHours()*60+_nowCity.getMinutes());
+    const _cancelSoj = b.stores?.direction === 'sport' || b.stores?.direction === 'entertainment' ? 'тренером' : 'мастером';
+    const cancelLabel = b.cancelled_by_role === 'master' ? `Отменена ${_cancelSoj}`
+      : b.cancelled_by_role === 'admin' ? 'Отменена администратором'
+      : 'Отменена';
     const statusBadge = isCancelled
-      ? `<span style="color:var(--err)">Отменена</span>`
+      ? `<span style="color:var(--err)">${cancelLabel}</span>`
       : completed
         ? `<span style="color:var(--ok);font-weight:700">✓ Завершена</span>`
         : isPastBk
@@ -11194,7 +11198,7 @@ async function cancelBooking(id) {
   if (!confirm('Отменить запись?')) return;
   try {
     await req(`/rest/v1/bookings?id=eq.${id}&user_id=eq.${S.session.user.id}`, {
-      method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }),
+      method: 'PATCH', body: JSON.stringify({ status: 'cancelled', cancelled_by: S.session.user.id, cancelled_by_role: 'client' }),
     });
     showGeoToast('Запись отменена');
     _invalidateApiCache('bookings');

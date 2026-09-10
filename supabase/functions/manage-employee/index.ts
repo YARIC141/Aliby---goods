@@ -107,6 +107,14 @@ Deno.serve(async (req: Request) => {
       .from('profiles').select('role').eq('id', body.employee_id).single()
     if (emp && emp.role !== 'employee') return jsonResponse({ error: 'Not an employee' }, 400)
 
+    // Отменяем незавершённые записи на этого мастера — иначе FK bookings_master_id_fkey
+    // (ON DELETE SET NULL) просто обнулит master_id, и запись останется висеть активной
+    // без исполнителя, а клиент не узнает об отмене.
+    await serviceClient.from('bookings')
+      .update({ status: 'cancelled', cancelled_by: caller.id, cancelled_by_role: 'admin' })
+      .eq('master_id', body.employee_id)
+      .in('status', ['booked', 'rescheduled'])
+
     // Удаляем auth-пользователя; игнорируем 404 (уже удалён)
     const { error: authErr } = await serviceClient.auth.admin.deleteUser(body.employee_id)
     if (authErr && !authErr.message.toLowerCase().includes('not found')) {
