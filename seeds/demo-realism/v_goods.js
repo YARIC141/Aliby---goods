@@ -11,7 +11,7 @@ section('ТехноМаркет — товары, доставка и аренд
 sql(`UPDATE stores SET
   address='Самара, Московское шоссе, 81',
   phone='+7 846 300-45-12',
-  working_hours='Пн–Вс 10:00–20:00',
+  working_hours='Пн–Сб 10:00–20:00, Вс 10:00–18:00',
   is_visible=true, archived_at=NULL,
   delivery_enabled=true, accepts_online_payment=true,
   delivery_courier_mode='carry', delivery_search_radius_m=8000,

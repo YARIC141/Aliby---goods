@@ -11,7 +11,7 @@ section('Бургерная «Грильяж» — витрина общепит
 sql(`UPDATE stores SET
   address='Самара, ул. Полевая, 14',
   phone='+7 846 220-11-42',
-  working_hours='Ежедневно 10:00–00:00',
+  working_hours='Пн–Чт 11:00–23:00, Пт–Сб 11:00–00:00, Вс 11:00–22:00',
   is_visible=true, archived_at=NULL,
   delivery_enabled=true, accepts_online_payment=true,
   delivery_courier_mode='carry', delivery_search_radius_m=5000,
@@ -152,7 +152,7 @@ section('Демо Кофейня Alliby — предзаказ и абонеме
 sql(`UPDATE stores SET
   address='Самара, ул. Куйбышева, 91',
   phone='+7 846 205-77-30',
-  working_hours='Пн–Пт 8:00–21:00, Сб–Вс 9:00–21:00',
+  working_hours='Пн–Пт 08:00–21:00, Сб 09:00–21:00, Вс 09:00–20:00',
   is_visible=true, archived_at=NULL,
   delivery_enabled=true, delivery_courier_mode='carry', delivery_search_radius_m=3000,
   accepts_online_payment=true,

@@ -14,7 +14,7 @@ section('Барбершоп «Стриж» — услуги, барберы, а�
 sql(`UPDATE stores SET
   address='Самара, ул. Ленинградская, 42',
   phone='+7 846 331-77-08',
-  working_hours='Пн–Сб 10:00–21:00, Вс 11:00–19:00',
+  working_hours='Пн–Сб 10:00–21:00, Вс 11:00–19:00 (перерыв 15:00–16:00)',
   is_visible=true, archived_at=NULL, allow_unpaid_booking=true,
   accepts_online_payment=true, delivery_enabled=false,
   avg_order_amount=1150,
@@ -227,7 +227,7 @@ section('Студия красоты «Жемчуг» — услуги, маст
 sql(`UPDATE stores SET
   address='Самара, ул. Молодогвардейская, 204',
   phone='+7 846 279-15-33',
-  working_hours='Ежедневно 09:00–21:00',
+  working_hours='Пн–Пт 09:00–21:00 (перерыв 14:00–15:00), Сб 09:00–20:00, Вс 10:00–19:00',
   is_visible=true, archived_at=NULL, allow_unpaid_booking=true,
   accepts_online_payment=true, delivery_enabled=false,
   avg_order_amount=2100,
@@ -296,8 +296,8 @@ item(pHair, 'Окрашивание в один тон', {
   desc: 'Окрашивание корней и длины, уход после окрашивания. 150 минут.',
   price: 4200, dur: 150, type: 'service', img: 'haircolor' });
 item(pHair, 'Air Touch / сложное окрашивание', {
-  desc: 'Сложное окрашивание с растяжкой цвета, тонирование и уход. 300 минут.',
-  price: 9500, dur: 300, type: 'service', img: 'haircolor' });
+  desc: 'Сложное окрашивание с растяжкой цвета, тонирование и уход. 240 минут.',
+  price: 9500, dur: 240, type: 'service', img: 'haircolor' });
 item(pHair, 'Укладка', {
   desc: 'Укладка феном или плойкой на любую длину. 45 минут.',
   price: 1200, dur: 45, type: 'service', img: 'hairstyle' });
