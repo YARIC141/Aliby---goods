@@ -123,6 +123,24 @@
   .game-controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .game-controls button{margin-bottom:0}
   .game-result{text-align:center;font-size:16px;font-weight:700;margin:0 0 14px;color:var(--accent)}
+
+  .pdd-ticket-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .pdd-ticket-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;padding:12px 4px;background:var(--card);color:var(--text);font-size:13px;aspect-ratio:1/1}
+  .pdd-ticket-grid button .pdd-badge{font-size:11px;color:var(--text2)}
+  .pdd-ticket-grid button.pdd-done .pdd-badge{color:var(--accent)}
+  .pdd-progress-line{text-align:center;font-size:14px;color:var(--text2);margin-bottom:12px}
+  .pdd-image{width:100%;border-radius:10px;margin-bottom:14px;display:block;background:var(--card)}
+  .pdd-question{font-size:16px;line-height:1.4;margin:0 0 16px}
+  .pdd-answers{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+  .pdd-answer{background:var(--card);color:var(--text);text-align:left;font-size:14px;font-weight:400;
+    border:2px solid transparent}
+  .pdd-answer.correct{border-color:#22c55e;background:#16321f}
+  .pdd-answer.wrong{border-color:#ef4444;background:#331a1a}
+  .pdd-tip{background:var(--card);border-radius:10px;padding:12px;font-size:13px;color:var(--text2);
+    line-height:1.4;margin-bottom:14px}
+  .pdd-result{text-align:center;padding:30px 0}
+  .pdd-result .pdd-score{font-size:32px;font-weight:700;color:var(--accent);margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -230,6 +248,7 @@
       <button id="btn-chat" class="secondary">Поговорить</button>
       <button id="btn-sensor" class="secondary">Включить датчик шагов</button>
       <button id="btn-games" class="secondary">Игры</button>
+      <button id="btn-pdd" class="secondary">Билеты ПДД</button>
     </div>
 
     <p class="footer-hint" id="text-hint"></p>
@@ -302,6 +321,35 @@
     <div class="game-controls">
       <button id="btn-game-pass" class="secondary hidden">Пас</button>
       <button id="btn-game-resign" class="secondary">Сдаться</button>
+    </div>
+  </div>
+
+  <div id="screen-pdd-tickets" class="hidden">
+    <div class="game-header">
+      <button id="btn-pdd-back">←</button>
+      <h1>Билеты ПДД</h1>
+    </div>
+    <p class="hint">Категория A,B — 40 билетов по 20 вопросов, как на настоящем экзамене.</p>
+    <div class="pdd-ticket-grid" id="pdd-ticket-grid"></div>
+  </div>
+
+  <div id="screen-pdd-question" class="hidden">
+    <div class="game-header">
+      <button id="btn-pdd-question-back">←</button>
+      <h1 id="pdd-question-title">Билет</h1>
+    </div>
+    <div id="pdd-question-view">
+      <div class="pdd-progress-line" id="pdd-progress-line"></div>
+      <img class="pdd-image hidden" id="pdd-image">
+      <p class="pdd-question" id="pdd-question-text"></p>
+      <div class="pdd-answers" id="pdd-answers"></div>
+      <div class="pdd-tip hidden" id="pdd-tip"></div>
+      <button id="btn-pdd-next" class="hidden">Следующий вопрос</button>
+    </div>
+    <div id="pdd-result-view" class="pdd-result hidden">
+      <div class="pdd-score" id="pdd-score"></div>
+      <p class="hint" id="pdd-result-text"></p>
+      <button id="btn-pdd-result-back">К списку билетов</button>
     </div>
   </div>
 
@@ -616,6 +664,8 @@
     document.getElementById('screen-games').classList.toggle('hidden', id !== 'games');
     document.getElementById('screen-game-setup').classList.toggle('hidden', id !== 'game-setup');
     document.getElementById('screen-game-board').classList.toggle('hidden', id !== 'game-board');
+    document.getElementById('screen-pdd-tickets').classList.toggle('hidden', id !== 'pdd-tickets');
+    document.getElementById('screen-pdd-question').classList.toggle('hidden', id !== 'pdd-question');
   }
 
   // ── Чат с питомцем — прокси на Gemini через Edge Function tamagotchi-chat,
@@ -1206,6 +1256,130 @@
     setGameStatus(isGoPlayerTurn() ? 'Ваш ход' : 'Ход соперника...');
   }
 
+  // ── Билеты ПДД (категория A,B, датасет etspring/pdd_russia) — вопросы и
+  // структура билетов лежат статикой в assets/pdd/tickets.json (кэшируется
+  // service worker'ом как обычный app-shell файл), а картинки к вопросам —
+  // в БД на VPS, отдаются через Edge Function pdd-image (см. supabase/functions),
+  // не через объектное хранилище, чтобы не платить трафик за S3-прокси
+  // ради статичного набора картинок. ──────────────────────────────────────
+  var PDD_IMAGE_ENDPOINT = SB_URL + '/functions/v1/pdd-image';
+  var pddTicketsPromise = null;
+  var pddState = null;
+
+  function loadPddTickets(){
+    if (!pddTicketsPromise){
+      pddTicketsPromise = fetch('./assets/pdd/tickets.json').then(function(r){ return r.json(); });
+    }
+    return pddTicketsPromise;
+  }
+  function loadPddProgress(){
+    try { return JSON.parse(lsGet('pdd_progress', '{}')); } catch(e){ return {}; }
+  }
+  function savePddProgress(ticketNum, correct, total){
+    var progress = loadPddProgress();
+    progress[ticketNum] = { correct: correct, total: total, at: Date.now() };
+    lsSet('pdd_progress', JSON.stringify(progress));
+  }
+
+  function openPddTickets(){
+    showScreen('pdd-tickets');
+    var grid = document.getElementById('pdd-ticket-grid');
+    grid.innerHTML = '<p class="hint">Загрузка...</p>';
+    loadPddTickets().then(function(tickets){
+      var progress = loadPddProgress();
+      grid.innerHTML = '';
+      tickets.forEach(function(t){
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.ticket = t.n;
+        var p = progress[t.n];
+        var badge = p ? (p.correct + '/' + p.total) : '';
+        if (p) btn.classList.add('pdd-done');
+        btn.innerHTML = '<span>Билет ' + t.n + '</span><span class="pdd-badge">' + badge + '</span>';
+        grid.appendChild(btn);
+      });
+    }).catch(function(){
+      grid.innerHTML = '<p class="hint">Не удалось загрузить билеты.</p>';
+    });
+  }
+
+  function startPddTicket(n){
+    loadPddTickets().then(function(tickets){
+      var ticket = tickets.filter(function(t){ return t.n === n; })[0];
+      if (!ticket) return;
+      pddState = { ticket: ticket, idx: 0, correct: 0, answered: false };
+      showScreen('pdd-question');
+      document.getElementById('pdd-question-title').textContent = 'Билет ' + n;
+      document.getElementById('pdd-question-view').classList.remove('hidden');
+      document.getElementById('pdd-result-view').classList.add('hidden');
+      renderPddQuestion();
+    });
+  }
+
+  function renderPddQuestion(){
+    var st = pddState;
+    var q = st.ticket.questions[st.idx];
+    st.answered = false;
+    document.getElementById('pdd-progress-line').textContent = 'Вопрос ' + (st.idx + 1) + '/' + st.ticket.questions.length;
+    var img = document.getElementById('pdd-image');
+    if (q.img){
+      img.src = PDD_IMAGE_ENDPOINT + '?id=' + encodeURIComponent(q.img);
+      img.classList.remove('hidden');
+    } else {
+      img.classList.add('hidden');
+      img.removeAttribute('src');
+    }
+    document.getElementById('pdd-question-text').textContent = q.q;
+    var answersEl = document.getElementById('pdd-answers');
+    answersEl.innerHTML = '';
+    q.answers.forEach(function(a, i){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pdd-answer';
+      btn.dataset.idx = i;
+      btn.textContent = a.text;
+      answersEl.appendChild(btn);
+    });
+    document.getElementById('pdd-tip').classList.add('hidden');
+    var nextBtn = document.getElementById('btn-pdd-next');
+    nextBtn.classList.add('hidden');
+    nextBtn.textContent = (st.idx + 1 >= st.ticket.questions.length) ? 'Завершить билет' : 'Следующий вопрос';
+  }
+
+  function onPddAnswerClick(idx){
+    var st = pddState;
+    if (st.answered) return;
+    st.answered = true;
+    var q = st.ticket.questions[st.idx];
+    if (q.answers[idx].correct) st.correct++;
+    document.querySelectorAll('#pdd-answers .pdd-answer').forEach(function(btn){
+      var i = parseInt(btn.dataset.idx, 10);
+      if (q.answers[i].correct) btn.classList.add('correct');
+      else if (i === idx) btn.classList.add('wrong');
+    });
+    if (q.tip){
+      var tip = document.getElementById('pdd-tip');
+      tip.textContent = q.tip;
+      tip.classList.remove('hidden');
+    }
+    document.getElementById('btn-pdd-next').classList.remove('hidden');
+  }
+
+  function onPddNextClick(){
+    var st = pddState;
+    if (st.idx + 1 >= st.ticket.questions.length){
+      savePddProgress(st.ticket.n, st.correct, st.ticket.questions.length);
+      document.getElementById('pdd-question-view').classList.add('hidden');
+      document.getElementById('pdd-result-view').classList.remove('hidden');
+      document.getElementById('pdd-score').textContent = st.correct + '/' + st.ticket.questions.length;
+      document.getElementById('pdd-result-text').textContent = st.correct === st.ticket.questions.length
+        ? 'Отлично, все ответы верные!' : 'Пересдайте билет, если хотите закрепить материал.';
+      return;
+    }
+    st.idx++;
+    renderPddQuestion();
+  }
+
   function renderStatus(){
     var now = Date.now();
     var pet = loadPet();
@@ -1391,6 +1565,20 @@
       setGameStatus('');
       showGameResult('Вы сдались.');
     });
+
+    document.getElementById('btn-pdd').addEventListener('click', openPddTickets);
+    document.getElementById('btn-pdd-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
+    document.getElementById('btn-pdd-question-back').addEventListener('click', function(){ showScreen('pdd-tickets'); });
+    document.getElementById('btn-pdd-result-back').addEventListener('click', function(){ showScreen('pdd-tickets'); openPddTickets(); });
+    document.getElementById('pdd-ticket-grid').addEventListener('click', function(e){
+      var btn = e.target.closest('button[data-ticket]'); if (!btn) return;
+      startPddTicket(parseInt(btn.dataset.ticket, 10));
+    });
+    document.getElementById('pdd-answers').addEventListener('click', function(e){
+      var btn = e.target.closest('.pdd-answer'); if (!btn) return;
+      onPddAnswerClick(parseInt(btn.dataset.idx, 10));
+    });
+    document.getElementById('btn-pdd-next').addEventListener('click', onPddNextClick);
 
     document.getElementById('btn-reset').addEventListener('click', function(){
       var btn = this;
