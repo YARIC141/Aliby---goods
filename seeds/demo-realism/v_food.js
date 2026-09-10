@@ -16,7 +16,7 @@ sql(`UPDATE stores SET
   delivery_enabled=true, accepts_online_payment=true,
   delivery_courier_mode='carry', delivery_search_radius_m=5000,
   preorder_enabled=true, preorder_opens='10:00', preorder_closes='22:30',
-  preorder_weekdays='{0,1,2,3,4,5,6}', preorder_prep_minutes=25,
+  preorder_weekdays='{1,2,3,4,5,6,7}', preorder_prep_minutes=25,
   avg_order_amount=850,
   legal_name='ООО «Грильяж»', inn='6316123456', ogrn='1156316012345',
   image_url=${q(L.img('burger3'))}
@@ -150,13 +150,14 @@ priceRule(s1, 'Бизнес-ланч', 120, [1, 2, 3, 4, 5], '12:00', '16:00');
 section('Демо Кофейня Alliby — предзаказ и абонементы');
 
 sql(`UPDATE stores SET
-  address='Самара, ул. Молодогвардейская, 204',
+  address='Самара, ул. Куйбышева, 91',
   phone='+7 846 205-77-30',
-  working_hours='Пн–Пт 7:30–21:00, Сб–Вс 9:00–21:00',
+  working_hours='Пн–Пт 8:00–21:00, Сб–Вс 9:00–21:00',
   is_visible=true, archived_at=NULL,
-  delivery_enabled=false, accepts_online_payment=true,
+  delivery_enabled=true, delivery_courier_mode='carry', delivery_search_radius_m=3000,
+  accepts_online_payment=true,
   preorder_enabled=true, preorder_opens='07:30', preorder_closes='20:30',
-  preorder_weekdays='{0,1,2,3,4,5,6}', preorder_prep_minutes=10,
+  preorder_weekdays='{1,2,3,4,5,6,7}', preorder_prep_minutes=10,
   avg_order_amount=420,
   legal_name='ИП Соколова А. В.', inn='631812345678', ogrn='318631800012345',
   image_url=${q(L.img('coffee_cappuccino'))}

@@ -17,13 +17,15 @@ const APEX = 'd7878acb-2ed1-4c88-b677-ef186fbaa9a1';
 // ─────────────────────── координаты (только если не заданы) ───────────────────────
 section('Координаты заведений');
 
+// Адреса заведений мы переписали здесь же, поэтому координаты выставляем
+// принудительно — иначе точка на карте не совпадёт с адресом в карточке.
 const COORDS = [
-  [BURG, 53.2010, 50.1120], [COFFEE, 53.1985, 50.1005], [TECH, 53.2262, 50.1934],
+  [BURG, 53.2010, 50.1120], [COFFEE, 53.1878, 50.0995], [TECH, 53.2262, 50.1934],
   [PHARM, 53.5148, 49.4182], [BARB, 53.1932, 50.0978], [FIT, 53.2281, 50.1748],
   [PEARL, 53.1991, 50.1052], [KNTS, 53.2302, 50.2204], [APEX, 53.2358, 50.2341],
 ];
 COORDS.forEach(([id, lat, lng]) => {
-  sql(`UPDATE stores SET latitude=COALESCE(latitude, ${lat}), longitude=COALESCE(longitude, ${lng}) WHERE id=${q(id)};`);
+  sql(`UPDATE stores SET latitude=${lat}, longitude=${lng} WHERE id=${q(id)};`);
 });
 
 // ────────────────────────────── зоны доставки ──────────────────────────────
@@ -45,7 +47,7 @@ zones(BURG, 53.2010, 50.1120, [
   ['Ближние районы', 4000, 149, '#3b82f6'],
   ['Дальняя доставка', 9000, 299, '#f59e0b'],
 ]);
-zones(COFFEE, 53.1985, 50.1005, [
+zones(COFFEE, 53.1878, 50.0995, [
   ['Пешая доставка', 1200, 0, '#22c55e'],
   ['По району', 3000, 129, '#3b82f6'],
 ]);
@@ -64,10 +66,8 @@ zones(APEX, 53.2358, 50.2341, [
 // ─────────────────────────────── предзаказ ───────────────────────────────
 section('Предзаказ');
 
-sql(`UPDATE stores SET preorder_enabled=true, preorder_opens='10:00', preorder_closes='21:30',
-  preorder_weekdays='{1,2,3,4,5,6,7}', preorder_prep_minutes=25 WHERE id=${q(BURG)};`);
-sql(`UPDATE stores SET preorder_enabled=true, preorder_opens='07:30', preorder_closes='19:00',
-  preorder_weekdays='{1,2,3,4,5}', preorder_prep_minutes=10 WHERE id=${q(COFFEE)};`);
+// Предзаказ у еды настроен в v_food.js вместе с остальными полями заведения —
+// здесь только магазины. preorder_weekdays в ISO-конвенции: 1=Пн ... 7=Вс.
 sql(`UPDATE stores SET preorder_enabled=true, preorder_opens='10:00', preorder_closes='19:30',
   preorder_weekdays='{1,2,3,4,5,6,7}', preorder_prep_minutes=30 WHERE id=${q(TECH)};`);
 sql(`UPDATE stores SET preorder_enabled=false WHERE id=${q(PHARM)};`);
@@ -240,3 +240,11 @@ sql(`UPDATE stores SET is_visible=false, archived_at=COALESCE(archived_at, now()
 WHERE id IN (${JUNK.map(q).join(', ')});`);
 sql(`UPDATE subscriptions SET is_visible=false, deleted_at=COALESCE(deleted_at, now())
 WHERE store_id IN (${JUNK.map(q).join(', ')});`);
+
+// Пустые категории от прошлых итераций и зоны доставки у заведений,
+// которые вообще не доставляют, — только мешают в интерфейсе.
+sql(`DELETE FROM categories c
+WHERE NOT EXISTS (SELECT 1 FROM menu_items m WHERE m.category_id=c.id)
+  AND c.store_id IN (SELECT id FROM stores WHERE is_visible);`);
+sql(`DELETE FROM delivery_zones dz USING stores s
+WHERE s.id=dz.store_id AND s.delivery_enabled=false;`);

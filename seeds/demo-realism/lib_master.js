@@ -1,6 +1,11 @@
 // Мастера/тренеры и расписания. Мастер — это profiles с role='employee',
 // employee_store_id и is_master. Привязка к услуге — master_services,
-// рабочие часы — master_schedules (day_of_week в конвенции JS getDay(): 0=Вс).
+// рабочие часы — master_schedules.
+//
+// Осторожно: в базе две разные конвенции дней недели. item_price_rules.days —
+// это JS getDay() (0=Вс), а master_schedules.day_of_week — 0=Пн ... 6=Вс
+// (клиент считает его как (getDay()+6)%7). Витрины пишем в единой JS-конвенции,
+// а перевод делаем здесь, в одном месте.
 const L = require('./lib');
 const { sql, q, uid, img } = L;
 
@@ -22,12 +27,13 @@ WHERE employee_store_id=${q(storeId)} AND full_name=${q(o.name)};`);
   return { storeId, name: o.name, sel };
 }
 
-// Недельный график. shifts: [[dow, 'HH:MM', 'HH:MM'], ...]
+// Недельный график. shifts: [[dow, 'HH:MM', 'HH:MM'], ...], dow в JS-конвенции.
 function schedule(m, shifts) {
   sql(`DELETE FROM master_schedules WHERE master_id=${m.sel};`);
   shifts.forEach(([dow, from, to]) => {
+    const dbDow = (dow + 6) % 7; // JS getDay() → 0=Пн
     sql(`INSERT INTO master_schedules (id, master_id, day_of_week, start_time, end_time)
-VALUES (${q(uid(`ms:${m.storeId}:${m.name}:${dow}:${from}`))}, ${m.sel}, ${q(dow)}, ${q(from)}, ${q(to)});`);
+VALUES (${q(uid(`ms:${m.storeId}:${m.name}:${dow}:${from}`))}, ${m.sel}, ${q(dbDow)}, ${q(from)}, ${q(to)});`);
   });
 }
 
