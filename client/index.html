@@ -6555,7 +6555,7 @@ function renderItemCard(item) {
   const subNoteHtml = best
     ? `<span class="sub-note">По абонементу «${esc(best.sub.name)}»</span>`
     : hint
-      ? `<span class="sub-note sub-hint">«${esc(hint.sub.name)}»: ${hint.price} ₽</span>`
+      ? `<span class="sub-note sub-hint">По абонементу «${esc(hint.sub.name)}»: ${hint.price} ₽</span>`
       : '';
   return `<div class="item-card${item.is_hit ? ' is-hit' : ''}" data-id="${item.id}" onclick="openItemDetail('${item.id}')">
     <div class="item-img">${imgHtml}</div>
