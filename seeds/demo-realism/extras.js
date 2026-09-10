@@ -19,13 +19,23 @@ section('Координаты заведений');
 
 // Адреса заведений мы переписали здесь же, поэтому координаты выставляем
 // принудительно — иначе точка на карте не совпадёт с адресом в карточке.
+// Цвет метки — по направлению, чтобы карта читалась без легенды.
 const COORDS = [
-  [BURG, 53.2010, 50.1120], [COFFEE, 53.1878, 50.0995], [TECH, 53.2262, 50.1934],
-  [PHARM, 53.5148, 49.4182], [BARB, 53.1932, 50.0978], [FIT, 53.2281, 50.1748],
-  [PEARL, 53.1991, 50.1052], [KNTS, 53.2302, 50.2204], [APEX, 53.2358, 50.2341],
+  [BURG,   53.2010, 50.1120, '#e8430a'], [COFFEE, 53.1878, 50.0995, '#b45309'],
+  [TECH,   53.2262, 50.1934, '#2563eb'], [PHARM,  53.5148, 49.4182, '#16a34a'],
+  [BARB,   53.1932, 50.0978, '#7c3aed'], [PEARL,  53.1991, 50.1052, '#db2777'],
+  [FIT,    53.2281, 50.1748, '#0891b2'], [KNTS,   53.2302, 50.2204, '#0d9488'],
+  [APEX,   53.2358, 50.2341, '#4f46e5'],
 ];
-COORDS.forEach(([id, lat, lng]) => {
+COORDS.forEach(([id, lat, lng, color]) => {
   sql(`UPDATE stores SET latitude=${lat}, longitude=${lng} WHERE id=${q(id)};`);
+  // Карта берёт точку не из stores, а из vector_map.store_locations
+  // (RPC get_stores_with_locations) — без этой строки заведения нет на карте
+  // вовсе, а со старой строкой метка стоит в стороне от своего адреса.
+  sql(`INSERT INTO vector_map.store_locations (store_id, geom, marker_color)
+VALUES (${q(id)}, ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326), ${q(color)})
+ON CONFLICT (store_id) DO UPDATE
+  SET geom = EXCLUDED.geom, marker_color = EXCLUDED.marker_color, updated_at = now();`);
 });
 
 // ────────────────────────────── зоны доставки ──────────────────────────────
