@@ -1,0 +1,242 @@
+// Всё, что не ассортимент: координаты, зоны доставки, предзаказ, абонементы,
+// расписание на год вперёд и уборка мусорных заведений.
+const L = require('./lib');
+const { sql, section, q, uid } = L;
+const S = require('./lib_sched');
+
+const BURG = 'e20925a7-6790-4c4c-996c-3e33f38d83f9';
+const COFFEE = '3f486b97-c61e-4683-9894-7d60ef964d62';
+const TECH = 'e946ae49-4f35-4aaf-9998-aee183b58672';
+const PHARM = 'f3bfb05a-ca5c-47a4-9fb6-8e27b6b4e8ad';
+const BARB = '03c220e3-2cd1-40a6-bd67-f4932ee8b14b';
+const FIT = 'b388c526-061b-4ff5-95c0-9c9ebf611d31';
+const PEARL = 'a3256a09-312e-47ca-90ef-f37dcedf5d7b';
+const KNTS = '60b7a9af-905f-4b9d-9195-7f78c22dbf61';
+const APEX = 'd7878acb-2ed1-4c88-b677-ef186fbaa9a1';
+
+// ─────────────────────── координаты (только если не заданы) ───────────────────────
+section('Координаты заведений');
+
+const COORDS = [
+  [BURG, 53.2010, 50.1120], [COFFEE, 53.1985, 50.1005], [TECH, 53.2262, 50.1934],
+  [PHARM, 53.5148, 49.4182], [BARB, 53.1932, 50.0978], [FIT, 53.2281, 50.1748],
+  [PEARL, 53.1991, 50.1052], [KNTS, 53.2302, 50.2204], [APEX, 53.2358, 50.2341],
+];
+COORDS.forEach(([id, lat, lng]) => {
+  sql(`UPDATE stores SET latitude=COALESCE(latitude, ${lat}), longitude=COALESCE(longitude, ${lng}) WHERE id=${q(id)};`);
+});
+
+// ────────────────────────────── зоны доставки ──────────────────────────────
+section('Зоны доставки');
+
+// Вложенные круги: клиент выбирает самую дешёвую подходящую зону,
+// поэтому ближний круг дешевле дальнего.
+function zones(storeId, lat, lng, list) {
+  sql(`DELETE FROM delivery_zones WHERE store_id=${q(storeId)};`);
+  list.forEach(([name, radius, price, color], i) => {
+    sql(`INSERT INTO delivery_zones (id, store_id, name, color, price, type, radius_m, center_lat, center_lng, sort_order)
+VALUES (${q(uid(`dz:${storeId}:${name}`))}, ${q(storeId)}, ${q(name)}, ${q(color)}, ${q(price)}, 'radius',
+        ${q(radius)}, ${lat}, ${lng}, ${q(i)});`);
+  });
+}
+
+zones(BURG, 53.2010, 50.1120, [
+  ['Центр — бесплатно', 1500, 0, '#22c55e'],
+  ['Ближние районы', 4000, 149, '#3b82f6'],
+  ['Дальняя доставка', 9000, 299, '#f59e0b'],
+]);
+zones(COFFEE, 53.1985, 50.1005, [
+  ['Пешая доставка', 1200, 0, '#22c55e'],
+  ['По району', 3000, 129, '#3b82f6'],
+]);
+zones(TECH, 53.2262, 50.1934, [
+  ['Самара, доставка курьером', 12000, 0, '#22c55e'],
+  ['Пригород', 25000, 590, '#f59e0b'],
+]);
+zones(PHARM, 53.5148, 49.4182, [
+  ['Автозаводский район', 5000, 99, '#3b82f6'],
+  ['Тольятти, остальные районы', 14000, 249, '#f59e0b'],
+]);
+zones(APEX, 53.2358, 50.2341, [
+  ['Доставка снэков по кварталу', 2500, 0, '#22c55e'],
+]);
+
+// ─────────────────────────────── предзаказ ───────────────────────────────
+section('Предзаказ');
+
+sql(`UPDATE stores SET preorder_enabled=true, preorder_opens='10:00', preorder_closes='21:30',
+  preorder_weekdays='{1,2,3,4,5,6,7}', preorder_prep_minutes=25 WHERE id=${q(BURG)};`);
+sql(`UPDATE stores SET preorder_enabled=true, preorder_opens='07:30', preorder_closes='19:00',
+  preorder_weekdays='{1,2,3,4,5}', preorder_prep_minutes=10 WHERE id=${q(COFFEE)};`);
+sql(`UPDATE stores SET preorder_enabled=true, preorder_opens='10:00', preorder_closes='19:30',
+  preorder_weekdays='{1,2,3,4,5,6,7}', preorder_prep_minutes=30 WHERE id=${q(TECH)};`);
+sql(`UPDATE stores SET preorder_enabled=false WHERE id=${q(PHARM)};`);
+
+// ────────────────────────────── абонементы ──────────────────────────────
+section('Абонементы');
+
+function sub(storeId, name, o) {
+  const id = uid(`sub:${storeId}:${name}`);
+  const cov = o.items
+    ? `jsonb_build_object('type', ${q(o.covType ?? 'include_items')}, 'item_ids',
+       COALESCE((SELECT jsonb_agg(id) FROM menu_items WHERE store_id=${q(storeId)} AND name = ANY(${q(o.items)}::text[])), '[]'::jsonb))`
+    : `'{"type": "all"}'::jsonb`;
+  // q() отдал бы text[] — здесь нужен именно jsonb-массив чисел.
+  const time = `'${JSON.stringify({ weekdays: o.weekdays ?? [1, 2, 3, 4, 5, 6, 7] })}'::jsonb`;
+  const lim = o.dailyLimit ? `jsonb_build_object('daily_limit', ${o.dailyLimit})` : `'{}'::jsonb`;
+  const cols = `price=${q(o.price)}, duration_days=${q(o.days)}, total_uses=${q(o.uses ?? 0)},
+    coverage_rules=${cov}, time_rules=${time}, usage_limits=${lim},
+    discount_type=${q(o.discType ?? 'percent')}, discount_value=${q(o.discValue ?? 100)},
+    description=${q(o.desc ?? null)}, items_per_use=${q(o.perUse ?? 1)},
+    stock_total=${q(o.stock ?? null)}, is_visible=true, deleted_at=NULL,
+    image_url=${q(o.img ? L.img(o.img) : null)}`;
+  sql(`INSERT INTO subscriptions (id, store_id, name, price, duration_days)
+SELECT ${q(id)}, ${q(storeId)}, ${q(name)}, ${q(o.price)}, ${q(o.days)}
+WHERE NOT EXISTS (SELECT 1 FROM subscriptions WHERE store_id=${q(storeId)} AND name=${q(name)});
+UPDATE subscriptions SET ${cols} WHERE store_id=${q(storeId)} AND name=${q(name)};`);
+}
+
+// Барбершоп: пакет визитов и «безлимит на бороду».
+sub(BARB, 'Пакет 5 стрижек', { price: 3800, days: 120, uses: 5, img: 'haircut',
+  items: ['Мужская стрижка'], desc: 'Пять мужских стрижек по цене четырёх. Действует 4 месяца, можно ходить к любому барберу.' });
+sub(BARB, 'Борода без границ', { price: 2900, days: 30, uses: 8, dailyLimit: 1, img: 'beard',
+  items: ['Моделирование бороды', 'Тонирование бороды'], desc: 'До восьми визитов на бороду за месяц, не чаще одного в день.' });
+sub(BARB, 'Утренний абонемент', { price: 2400, days: 60, uses: 4, weekdays: [1, 2, 3, 4, 5], img: 'barber2',
+  items: ['Мужская стрижка', 'Стрижка машинкой (одна насадка)'], desc: 'Четыре стрижки по будням до 13:00. Дешевле обычного пакета.' });
+
+// FitLife: классическая сетка клубных карт.
+sub(FIT, 'Абонемент на месяц', { price: 2800, days: 30, uses: 0, img: 'gym',
+  items: ['Разовое посещение зала'], desc: 'Безлимитный тренажёрный и кардиозал на 30 дней.' });
+sub(FIT, 'Абонемент Зал + Бассейн', { price: 3990, days: 30, uses: 0, img: 'pool_swim',
+  items: ['Разовое посещение зала', 'Разовое посещение бассейна', 'Финская сауна, 60 мин'],
+  desc: 'Зал, бассейн и сауна без ограничений на 30 дней.' });
+sub(FIT, 'Утренний безлимит', { price: 1990, days: 30, uses: 0, weekdays: [1, 2, 3, 4, 5], img: 'treadmill',
+  items: ['Разовое посещение зала'], desc: 'Зал по будням до 16:00. Для тех, кто тренируется до работы.' });
+sub(FIT, '8 групповых занятий', { price: 4500, days: 45, uses: 8, img: 'yoga',
+  items: ['Йога', 'Стретчинг', 'Кроссфит', 'Бокс', 'Аквааэробика'],
+  desc: 'Любые восемь групповых занятий за полтора месяца.' });
+sub(FIT, '10 персональных тренировок', { price: 15900, days: 90, uses: 10, img: 'trainer',
+  items: ['Персональная тренировка'], desc: 'Десять персоналок с тренером на выбор. Экономия 2100 ₽.' });
+sub(FIT, 'Годовая карта', { price: 24900, days: 365, uses: 0, img: 'gym2', stock: 50,
+  desc: 'Всё включено на год: зал, бассейн, групповые, сауна. Ограниченный тираж — 50 карт.' });
+
+// Студия красоты: пакеты процедур.
+sub(PEARL, 'Маникюр ×10', { price: 14000, days: 120, uses: 10, img: 'nails',
+  covType: 'specific', items: ['Маникюр с гель-лаком'], desc: 'Десять маникюров с гель-лаком. Записываться можно к любому мастеру.' });
+sub(PEARL, 'Маникюр + педикюр ×5', { price: 15900, days: 120, uses: 5, perUse: 2, img: 'pedicure',
+  covType: 'specific', items: ['Маникюр с гель-лаком', 'Педикюр с гель-лаком'],
+  desc: 'Пять комплексов «руки + ноги» с гель-лаком.' });
+sub(PEARL, 'VIP-абонемент', { price: 18500, days: 120, uses: 0, discType: 'percent', discValue: 20, img: 'spa',
+  desc: 'Скидка 20% на любые услуги студии в течение четырёх месяцев.' });
+sub(PEARL, 'Ресницы на сезон', { price: 8900, days: 90, uses: 4, img: 'eyelash',
+  items: ['Наращивание ресниц (классика)', 'Наращивание ресниц (2D–3D объём)', 'Ламинирование ресниц'],
+  desc: 'Четыре визита к лешмейкеру за три месяца — как раз на цикл коррекций.' });
+
+// КНТС: почасовые абонементы на стол и тренировки.
+sub(KNTS, 'Абонемент без инструктора (дневной)', { price: 3500, days: 30, uses: 10,
+  discType: 'fixed', discValue: 350, weekdays: [1, 2, 3, 4, 5], img: 'pingpong',
+  items: ['Теннисный стол, 1 час'], desc: 'Десять часов стола по будням до 16:00.' });
+sub(KNTS, 'Абонемент без инструктора (вечерний)', { price: 5000, days: 30, uses: 10,
+  discType: 'fixed', discValue: 700, img: 'sport_hall',
+  items: ['Теннисный стол, 1 час'], desc: 'Десять часов стола в любое время, включая вечер и выходные.' });
+sub(KNTS, 'Абонемент с инструктором 1 кат. (дневной)', { price: 8500, days: 45, uses: 8,
+  discType: 'fixed', discValue: 1200, weekdays: [1, 2, 3, 4, 5], img: 'trainer',
+  items: ['Занятия с инструктором 1 кат.'], desc: 'Восемь индивидуальных тренировок с тренером высшей категории.' });
+sub(KNTS, 'Детская секция, месяц', { price: 3200, days: 30, uses: 12, dailyLimit: 1, img: 'pingpong',
+  items: ['Детская секция (7–14 лет)'], desc: 'Двенадцать занятий детской группы — три раза в неделю.' });
+
+// Компьютерный клуб: время за ПК.
+sub(APEX, 'Безлимитный доступ на месяц', { price: 4990, days: 30, uses: 0, img: 'gaming_setup',
+  items: ['Игровой ПК Standard (RTX 3060)', 'Игровой ПК Pro (RTX 4080)', 'PlayStation 5 + 2 геймпада', 'Xbox Series X + 2 геймпада'],
+  desc: 'Любые ПК и приставки без ограничения по времени в течение месяца.' });
+sub(APEX, 'Пакет 20 часов', { price: 2400, days: 60, uses: 20, img: 'gaming_pc',
+  items: ['Игровой ПК Standard (RTX 3060)'], desc: 'Двадцать часов на ПК Standard по 120 ₽ вместо 150 ₽.' });
+sub(APEX, 'Ночной абонемент', { price: 1500, days: 30, uses: 6, img: 'esports',
+  items: ['Игровой ПК Standard (RTX 3060)', 'Игровой ПК Pro (RTX 4080)'],
+  desc: 'Шесть ночных заходов с 22:00 до 08:00. Проверяем возраст на входе.' });
+
+// Еда: то, ради чего вообще заводят подписку в кофейне.
+sub(COFFEE, 'Кофе на месяц', { price: 1490, days: 30, uses: 30, dailyLimit: 1, img: 'coffee_latte',
+  items: ['Капучино', 'Латте', 'Американо'], desc: 'Один напиток в день в течение месяца. Любой размер.' });
+sub(BURG, 'Бургер месяца', { price: 2400, days: 30, uses: 8, discType: 'percent', discValue: 100, img: 'burger',
+  items: ['Классик', 'Двойной Чиз'], desc: 'Восемь бургеров «Классик» или «Двойной Чиз» за месяц.' });
+sub(BURG, 'Бизнес-ланч на неделю', { price: 1290, days: 7, uses: 5, dailyLimit: 1, weekdays: [1, 2, 3, 4, 5],
+  img: 'burger2', items: ['Классик', 'Чикен Криспи'], desc: 'Пять обедов по будням — по одному в день.' });
+
+// ──────────────────────── расписание на год вперёд ────────────────────────
+section('Расписание работы на год вперёд');
+
+// Барбершоп: воскресенье короче и с техническим перерывом.
+S.storeYear(BARB, {
+  1: [['10:00', '21:00']], 2: [['10:00', '21:00']], 3: [['10:00', '21:00']],
+  4: [['10:00', '21:00']], 5: [['10:00', '21:00']], 6: [['10:00', '21:00']],
+  0: [['11:00', '15:00'], ['16:00', '19:00']],
+}, { shortEnd: '17:00' });
+
+S.storeYear(FIT, {
+  1: [['07:00', '23:00']], 2: [['07:00', '23:00']], 3: [['07:00', '23:00']],
+  4: [['07:00', '23:00']], 5: [['07:00', '23:00']],
+  6: [['09:00', '22:00']], 0: [['09:00', '22:00']],
+}, { shortEnd: '18:00' });
+
+// Студия красоты: обеденный перерыв по будням.
+S.storeYear(PEARL, {
+  1: [['09:00', '14:00'], ['15:00', '21:00']], 2: [['09:00', '14:00'], ['15:00', '21:00']],
+  3: [['09:00', '14:00'], ['15:00', '21:00']], 4: [['09:00', '14:00'], ['15:00', '21:00']],
+  5: [['09:00', '14:00'], ['15:00', '21:00']],
+  6: [['09:00', '20:00']], 0: [['10:00', '19:00']],
+}, { shortEnd: '17:00' });
+
+S.storeYear(KNTS, {
+  1: [['08:00', '23:00']], 2: [['08:00', '23:00']], 3: [['08:00', '23:00']],
+  4: [['08:00', '23:00']], 5: [['08:00', '23:00']],
+  6: [['09:00', '22:00']], 0: [['09:00', '22:00']],
+}, { shortEnd: '18:00' });
+
+// Клуб работает круглосуточно — в праздники тоже.
+S.storeYear(APEX, {
+  0: [['00:00', '23:59']], 1: [['00:00', '23:59']], 2: [['00:00', '23:59']], 3: [['00:00', '23:59']],
+  4: [['00:00', '23:59']], 5: [['00:00', '23:59']], 6: [['00:00', '23:59']],
+}, { closeOnHolidays: false });
+
+// Бургерная: столики бронируются, пятница и суббота до ночи.
+S.storeYear(BURG, {
+  1: [['11:00', '23:00']], 2: [['11:00', '23:00']], 3: [['11:00', '23:00']], 4: [['11:00', '23:00']],
+  5: [['11:00', '23:59']], 6: [['11:00', '23:59']], 0: [['11:00', '22:00']],
+}, { closeOnHolidays: false });
+
+S.storeYear(COFFEE, {
+  1: [['08:00', '21:00']], 2: [['08:00', '21:00']], 3: [['08:00', '21:00']],
+  4: [['08:00', '21:00']], 5: [['08:00', '21:00']],
+  6: [['09:00', '21:00']], 0: [['09:00', '20:00']],
+}, { shortEnd: '17:00' });
+
+// Магазины: аренда инструмента и выдача заказов тоже по расписанию.
+S.storeYear(TECH, {
+  1: [['10:00', '20:00']], 2: [['10:00', '20:00']], 3: [['10:00', '20:00']],
+  4: [['10:00', '20:00']], 5: [['10:00', '20:00']],
+  6: [['10:00', '20:00']], 0: [['10:00', '18:00']],
+}, { shortEnd: '17:00' });
+
+S.storeYear(PHARM, {
+  1: [['08:00', '22:00']], 2: [['08:00', '22:00']], 3: [['08:00', '22:00']],
+  4: [['08:00', '22:00']], 5: [['08:00', '22:00']],
+  6: [['08:00', '22:00']], 0: [['08:00', '22:00']],
+}, { closeOnHolidays: false });
+
+// ─────────────────────── уборка мусорных заведений ───────────────────────
+section('Мусорные заведения — убираем из выдачи');
+
+const JUNK = [
+  'a3b1e167-be42-422b-9aed-821cf439825e', // Test Store 1779965219
+  '488db638-44f5-4c41-bf31-ad2e326a4c50', // Test Store 1779965753
+  'b6a58bb6-872f-480a-8296-4a76ecde24a8', // Папа
+  'ab6018e2-3414-4da7-87a3-b101da6fb5e8', // Пупа
+  '3318496b-79e7-464b-98a8-30236779f590', // Биба
+  'fb964ba7-6905-4b99-b57e-89a30982b322', // Роо
+  'e3472e01-ebd0-460c-b1e7-92324ea6911d', // Магазик
+];
+sql(`UPDATE stores SET is_visible=false, archived_at=COALESCE(archived_at, now())
+WHERE id IN (${JUNK.map(q).join(', ')});`);
+sql(`UPDATE subscriptions SET is_visible=false, deleted_at=COALESCE(deleted_at, now())
+WHERE store_id IN (${JUNK.map(q).join(', ')});`);
