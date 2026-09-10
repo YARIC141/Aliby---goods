@@ -356,11 +356,13 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .item-card{border:1px solid var(--line-soft);border-radius:var(--r-3);cursor:pointer;overflow:hidden;background:var(--glass-card);transition:border-color var(--t-fast),transform var(--t-fast);display:flex;flex-direction:column}
 .item-card:hover{border-color:var(--line);transform:translateY(-1px)}
 .item-card:active{background:var(--bg-2)}
+.item-card.is-hit{background:color-mix(in oklch,var(--accent) 12%,var(--glass-card))}
 .item-img{position:relative;width:100%;height:auto;aspect-ratio:16/9;background:var(--bg-2);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--fg-3);overflow:hidden}
 .item-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .item-body{padding:10px;flex:1;display:flex;flex-direction:column}
-.item-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);margin-bottom:2px}
+.item-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);margin-bottom:2px;display:flex;align-items:baseline;justify-content:space-between;gap:6px}
 .item-name.sub-on{color:var(--ok)}
+.hit-badge-inline{flex-shrink:0;font-size:15px;line-height:1}
 .item-desc{font:400 13px/1.3 var(--font-sans);color:var(--fg-3);margin-bottom:6px}
 @media(max-width:600px){
   .item-img{height:auto;aspect-ratio:1/1}
@@ -374,7 +376,6 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .price-val{font:400 19px/1 var(--font-sans);color:var(--fg)}
 .price-orig{font:400 12px/1 var(--font-sans);color:var(--fg-4);text-decoration:line-through}
 .price-sub{font:400 19px/1 var(--font-sans);color:var(--ok)}
-.hit-badge{position:absolute;left:0;right:0;bottom:0;background:var(--accent);color:#fff;font:600 12px/1 var(--font-sans);text-align:center;padding:5px 0;letter-spacing:.02em}
 .nutri{display:flex;gap:6px;flex-wrap:wrap}
 .nutri-cell{flex:1;min-width:58px;text-align:center;padding:6px 4px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--bg-2)}
 .nutri-val{font:600 14px/1.2 var(--font-sans);color:var(--fg)}
@@ -6515,7 +6516,7 @@ function renderNutrition(item) {
 }
 
 function hitBadgeHtml(item) {
-  return item.is_hit ? `<div class="hit-badge">🔥 ХИТ</div>` : '';
+  return item.is_hit ? `<span class="hit-badge-inline" title="Хит продаж">🔥</span>` : '';
 }
 
 // Собирает HTML цены с учётом двух независимых скидок: заданной владельцем
@@ -6555,10 +6556,10 @@ function renderItemCard(item) {
     : hint
       ? `<span class="sub-note sub-hint">«${esc(hint.sub.name)}»: ${hint.price} ₽</span>`
       : '';
-  return `<div class="item-card" data-id="${item.id}" onclick="openItemDetail('${item.id}')">
-    <div class="item-img">${imgHtml}${hitBadgeHtml(item)}</div>
+  return `<div class="item-card${item.is_hit ? ' is-hit' : ''}" data-id="${item.id}" onclick="openItemDetail('${item.id}')">
+    <div class="item-img">${imgHtml}</div>
     <div class="item-body">
-      <div class="item-name${best ? ' sub-on' : ''}">${esc(item.name)}</div>
+      <div class="item-name${best ? ' sub-on' : ''}"><span>${esc(item.name)}</span>${hitBadgeHtml(item)}</div>
       ${item.description ? `<div class="item-desc item-card-desc">${esc(item.description)}</div>` : ''}
       ${item.allergens ? `<div class="item-desc" style="color:var(--warn,#e8a020)">⚠ Аллергены: ${esc(item.allergens)}</div>` : ''}
       ${item.preparation_time > 0 ? `<div class="item-desc" style="color:var(--fg-4)">⏱ ${item.preparation_time} мин</div>` : ''}
@@ -6654,7 +6655,7 @@ function openItemDetail(id) {
   _detailBasePrice = item.price;
   trackEvent('item_click', S.store?.id, { item_id: item.id, item_name: item.name });
   document.getElementById('mi-name').textContent = item.name;
-  document.getElementById('mi-img').innerHTML = itemFallbackImg(item) + hitBadgeHtml(item);
+  document.getElementById('mi-img').innerHTML = itemFallbackImg(item);
   const descEl = document.getElementById('mi-desc');
   const prepLabel = { food: 'Время приготовления', goods: 'Время подготовки', services: 'Время на услугу', sport: 'Время на услугу', entertainment: 'Время на услугу' }[S.direction] || 'Время';
   descEl.innerHTML = [

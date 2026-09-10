@@ -168,6 +168,7 @@ const cTea = cat(COFFEE, 'Чай и какао');
 const cBake = cat(COFFEE, 'Выпечка');
 const cDess = cat(COFFEE, 'Десерты');
 const cBreak = cat(COFFEE, 'Завтраки');
+const cTables = cat(COFFEE, 'Бронь столика');
 
 const k1 = item(cCoffee, 'Американо', { desc: 'Двойной эспрессо с горячей водой.', price: 180,
   img: 'coffee_americano', prep: 4, g: 250, kcal: 10, p: 0.3, f: 0, c: 1.7 });
@@ -225,6 +226,14 @@ item(cBreak, 'Завтрак «Классический»', { desc: 'Яични�
   img: 'breakfast', prep: 14, hit: true, allerg: 'глютен, яйца, молоко', g: 280, kcal: 540, p: 26, f: 34, c: 30 });
 item(cBreak, 'Скрэмбл с авокадо', { desc: 'Нежный скрэмбл, авокадо, зерновой тост.', price: 420,
   img: 'breakfast', prep: 12, allerg: 'глютен, яйца, молоко', g: 260, kcal: 470, p: 20, f: 30, c: 28 });
+
+// Аренда столика — как в бургерной, но без депозита и на меньшие компании.
+item(cTables, 'Столик на 2 персоны', {
+  desc: 'Бронь столика у окна на 2 персоны.',
+  price: 150, img: 'coffee_cappuccino', type: 'rental', rentUnit: 'hour', rentStep: 1, qty: 8 });
+item(cTables, 'Столик на 4 персоны', {
+  desc: 'Бронь столика в общем зале на 4 персоны.',
+  price: 250, img: 'coffee_cappuccino', type: 'rental', rentUnit: 'hour', rentStep: 1, qty: 4 });
 
 // Утренний кофе дешевле — повод показать правила цены и в общепите.
 priceRule(k1, 'Утренний кофе до 11:00', 120, [1, 2, 3, 4, 5], '07:30', '11:00');
