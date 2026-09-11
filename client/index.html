@@ -3207,6 +3207,14 @@ function _timeoutSignal(ms) {
   const t = setTimeout(() => ctrl.abort(), ms);
   return { signal: ctrl.signal, done: () => clearTimeout(t) };
 }
+// Session definitively invalid (refresh token expired/revoked) — used both by req()'s
+// 401 handling and by the realtime WS join-error handler below, so an expired session
+// kicks the user to the login screen regardless of which channel noticed it first.
+function _forceReauth() {
+  localStorage.removeItem('alliby_s');
+  S.session = null; S.profile = null;
+  goTo('auth');
+}
 async function req(path, opts = {}, _retried = false, _hostFallback = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
     await refreshSession();
@@ -3233,9 +3241,7 @@ async function req(path, opts = {}, _retried = false, _hostFallback = false) {
     const ok = await refreshSession();
     if (ok === true) return req(path, opts, true);
     if (ok === null) throw { message: 'Нет соединения' }; // network error — keep session
-    localStorage.removeItem('alliby_s');
-    S.session = null; S.profile = null;
-    goTo('auth');
+    _forceReauth();
     throw { message: 'Сессия истекла, войдите снова' };
   }
   if (!r.ok) throw body || { message: r.statusText };
@@ -6847,7 +6853,21 @@ function _setClientRtDot() {
   dot.style.background = ok ? '#22c55e' : '#ef4444';
 }
 
-function realtimeSubscribeOrders(userId) {
+// A realtime channel join is rejected (phx_reply status "error") whenever the access_token
+// sent in phx_join has expired — the underlying WebSocket stays OPEN (Phoenix just refuses
+// the subscription), so without this the connection looked "alive" while silently receiving
+// no more order/booking/rent/sub updates and the user got no warning at all. Mirrors req()'s
+// 401 handling: refresh and rejoin on success, force the user back to the login screen when
+// the refresh token itself is dead. `retried` prevents looping if the rejoin fails again.
+async function _handleRealtimeAuthError(userId, resubscribe, retried) {
+  if (retried) { _forceReauth(); return; }
+  const ok = await refreshSession();
+  if (ok === true) resubscribe(userId, true);
+  else if (ok === false) _forceReauth();
+  // ok === null (network hiccup): leave it, the next visibilitychange/reconnect will retry.
+}
+
+function realtimeSubscribeOrders(userId, _retried = false) {
   realtimeUnsubscribe();
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
@@ -6872,6 +6892,11 @@ function realtimeSubscribeOrders(userId) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          try { ws.close(); } catch {}
+          _handleRealtimeAuthError(userId, realtimeSubscribeOrders, _retried);
+          return;
+        }
         if (msg.event === 'postgres_changes') {
           const data = msg.payload?.data ?? msg.payload;
           const record = data?.new ?? data?.record;
@@ -6895,7 +6920,7 @@ function realtimeUnsubscribe() {
   _setClientRtDot();
 }
 
-function realtimeSubscribeBookings(userId) {
+function realtimeSubscribeBookings(userId, _retried = false) {
   clearInterval(_rtBkHb);
   if (_rtBkWs) { try { _rtBkWs.close(); } catch {} _rtBkWs = null; }
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
@@ -6921,6 +6946,11 @@ function realtimeSubscribeBookings(userId) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          try { ws.close(); } catch {}
+          _handleRealtimeAuthError(userId, realtimeSubscribeBookings, _retried);
+          return;
+        }
         if (msg.event === 'postgres_changes') {
           const data   = msg.payload?.data ?? msg.payload;
           const type   = (data?.eventType || data?.type || '').toUpperCase();
@@ -6933,7 +6963,7 @@ function realtimeSubscribeBookings(userId) {
   } catch {}
 }
 
-function realtimeSubscribeSubs(userId) {
+function realtimeSubscribeSubs(userId, _retried = false) {
   clearInterval(_rtSubHb);
   if (_rtSubWs) { try { _rtSubWs.close(); } catch {} _rtSubWs = null; }
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
@@ -6959,6 +6989,11 @@ function realtimeSubscribeSubs(userId) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          try { ws.close(); } catch {}
+          _handleRealtimeAuthError(userId, realtimeSubscribeSubs, _retried);
+          return;
+        }
         if (msg.event === 'postgres_changes') {
           const data   = msg.payload?.data ?? msg.payload;
           const type   = (data?.eventType || data?.type || '').toUpperCase();
@@ -6991,7 +7026,7 @@ function _onRealtimeSub(record, type) {
   if (isVisible) renderSubUnifiedList();
 }
 
-function realtimeSubscribeRent(userId) {
+function realtimeSubscribeRent(userId, _retried = false) {
   clearInterval(_rtRentHb);
   if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
@@ -7017,6 +7052,11 @@ function realtimeSubscribeRent(userId) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          try { ws.close(); } catch {}
+          _handleRealtimeAuthError(userId, realtimeSubscribeRent, _retried);
+          return;
+        }
         if (msg.event === 'postgres_changes') {
           const data   = msg.payload?.data ?? msg.payload;
           const type   = (data?.eventType || data?.type || '').toUpperCase();
@@ -8719,9 +8759,9 @@ function removeFromRentCart(i) {
   updateCartCount();
 }
 async function checkoutRent() {
-  const uid = S.session?.user?.id;
-  if (!uid) { alert('Войдите в аккаунт'); return; }
   if (!S.rentCart?.length) return;
+  if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
+  const uid = S.session.user.id;
   const btn = document.getElementById('rent-cart-pay-btn');
   const restore = btn ? btnLoad(btn) : () => {};
   let createdIds = [];
@@ -8819,7 +8859,7 @@ async function checkoutSubs() {
 async function checkoutGiftSubs() {
   const dirItems = S.giftSubCart.filter(c => (c.direction || 'food') === S.direction);
   if (!dirItems.length) return;
-  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
   const totalAmount = dirItems.reduce((s, { sub }) => s + (Number(sub.price) || 0), 0);
   const label = dirItems.length === 1
     ? `${svgIco('gift',13)} Абонемент «${dirItems[0].sub.name}»`
