@@ -9964,7 +9964,12 @@ if ('serviceWorker' in navigator) {
         // SW keeps working fine. Swallow it.
         reg.update().catch(() => {});
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') reg.update().catch(() => {});
+          if (document.visibilityState !== 'visible') return;
+          reg.update().catch(() => {});
+          // Mobile OSes usually resume a suspended tab/PWA instead of re-navigating
+          // it, so the SW's own 'navigate'-triggered shell revalidation can go
+          // uncalled for a long time. Ask it to check explicitly on every resume.
+          navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_APP_UPDATE' });
         });
         // Flush promos that arrived while app was closed (stored in SW IndexedDB)
         _flushSwPromos();

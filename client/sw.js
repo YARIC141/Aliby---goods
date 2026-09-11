@@ -47,6 +47,35 @@ async function trimApiCache() {
     await Promise.all(keys.slice(0, keys.length - MAX_API).map(k => cache.delete(k)));
 }
 
+// Revalidates the cached app shell against the network and notifies clients via
+// APP_UPDATED when it changed. Normally runs as a side effect of a real navigation
+// (see the 'navigate' fetch handler below) — but mobile OSes routinely resume a
+// suspended tab/PWA instead of re-navigating it, so a device can sit on a stale
+// cached shell indefinitely across many "close and reopen" cycles. The 'message'
+// listener lets the page trigger this check explicitly on every foreground resume.
+async function checkAppShellUpdate(url) {
+  const cache = await withTimeout(caches.open(APP_CACHE));
+  const req = new Request(url);
+  const cached = await withTimeout(cache.match(req));
+  if (!cached) return;
+  const resp = await fetchTimeout(new Request(url, { cache: 'no-cache' }));
+  if (!resp.ok) return;
+  const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
+  const newTag = getTag(resp);
+  const oldTag = getTag(cached);
+  await cache.put(req, resp.clone());
+  if (!newTag || !oldTag || newTag !== oldTag) {
+    const clients = await self.clients.matchAll({ includeUncontrolled: true });
+    clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
+  }
+}
+
+self.addEventListener('message', e => {
+  if (e.data?.type !== 'CHECK_APP_UPDATE') return;
+  const p = checkAppShellUpdate(self.registration.scope).catch(() => {});
+  if (e.waitUntil) e.waitUntil(p);
+});
+
 self.addEventListener('fetch', e => {
   // ── Images: cache-first, max 200 ─────────────────────────────────────────
   if (e.request.destination === 'image') {
@@ -102,17 +131,7 @@ self.addEventListener('fetch', e => {
         .then(({ cache, cached }) => {
           if (cached) {
             // Serve from cache immediately, revalidate in background
-            fetchTimeout(new Request(e.request.url, { cache: 'no-cache' })).then(async resp => {
-              if (!resp.ok) return;
-              const getTag = r => r.headers.get('etag') || r.headers.get('last-modified') || r.headers.get('content-length');
-              const newTag = getTag(resp);
-              const oldTag = getTag(cached);
-              await cache.put(e.request, resp.clone());
-              if (!newTag || !oldTag || newTag !== oldTag) {
-                const clients = await self.clients.matchAll({ includeUncontrolled: true });
-                clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
-              }
-            }).catch(() => {});
+            checkAppShellUpdate(e.request.url).catch(() => {});
             return cached;
           }
 

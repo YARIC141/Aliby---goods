@@ -2532,8 +2532,15 @@ if ('serviceWorker' in navigator) {
         // Floating promise — a failed background update check (flaky network) must not
         // become an unhandled rejection and trigger the fatal-error overlay.
         reg.update().catch(() => {});
+        // Mobile OSes usually resume a suspended app instead of re-navigating it, so
+        // the SW's own 'navigate'-triggered shell revalidation can go uncalled for a
+        // long time. Ask it to check explicitly on every resume, not just for a new
+        // sw.js (reg.update()) but for a changed cached index.html too.
+        const checkAppUpdate = () => navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_APP_UPDATE' });
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') reg.update().catch(() => {});
+          if (document.visibilityState !== 'visible') return;
+          reg.update().catch(() => {});
+          checkAppUpdate();
         });
         // Capacitor's native resume event is more reliable than the browser's
         // visibilitychange inside a WebView — Android can suspend/resume the
@@ -2543,6 +2550,7 @@ if ('serviceWorker' in navigator) {
           window.Capacitor.Plugins?.App?.addListener('resume', () => {
             if (_pendingUpdate) { window.location.reload(); return; }
             reg.update().catch(() => {});
+            checkAppUpdate();
           });
         }
       })
