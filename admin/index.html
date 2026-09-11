@@ -10332,9 +10332,11 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { scope: '/admin/', updateViaCache: 'none' })
       .then(reg => {
-        reg.update();
+        // Floating promise — a failed background update check (flaky network) must not
+        // become an unhandled rejection and trigger the fatal-error overlay.
+        reg.update().catch(() => {});
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') reg.update();
+          if (document.visibilityState === 'visible') reg.update().catch(() => {});
         });
       })
       .catch(() => {});

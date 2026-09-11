@@ -2529,9 +2529,11 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
       .then(reg => {
-        reg.update();
+        // Floating promise — a failed background update check (flaky network) must not
+        // become an unhandled rejection and trigger the fatal-error overlay.
+        reg.update().catch(() => {});
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') reg.update();
+          if (document.visibilityState === 'visible') reg.update().catch(() => {});
         });
         // Capacitor's native resume event is more reliable than the browser's
         // visibilitychange inside a WebView — Android can suspend/resume the
@@ -2540,7 +2542,7 @@ if ('serviceWorker' in navigator) {
         if (window.Capacitor?.isNativePlatform?.()) {
           window.Capacitor.Plugins?.App?.addListener('resume', () => {
             if (_pendingUpdate) { window.location.reload(); return; }
-            reg.update();
+            reg.update().catch(() => {});
           });
         }
       })

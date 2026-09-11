@@ -9957,9 +9957,14 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
       .then(reg => {
-        reg.update();
+        // reg.update() is a background check, not user-facing — on a flaky connection
+        // it rejects with "Failed to update a ServiceWorker... unknown error", and being
+        // a floating promise that surfaced as an unhandled rejection into the fatal-error
+        // overlay (see window 'unhandledrejection' listener above) even though the current
+        // SW keeps working fine. Swallow it.
+        reg.update().catch(() => {});
         document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') reg.update();
+          if (document.visibilityState === 'visible') reg.update().catch(() => {});
         });
         // Flush promos that arrived while app was closed (stored in SW IndexedDB)
         _flushSwPromos();
