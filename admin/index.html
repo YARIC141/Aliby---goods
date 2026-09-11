@@ -3222,6 +3222,16 @@ async function req(path, opts = {}, _retried = false, _hostFallback = false) {
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+// Раздаём фото через собственный домен (nginx-прокси /media/), а не напрямую
+// с s3.ru1.storage.beget.cloud — см. mediaUrl() в client/index.html. У части
+// пользователей сторонний домен S3 бывает заблокирован на устройстве/сети,
+// а собственный домен нет.
+const _MEDIA_ORIGIN = 'https://s3.ru1.storage.beget.cloud/7e1578c73dcc-alliby-media/';
+function mediaUrl(url) {
+  return typeof url === 'string' && url.startsWith(_MEDIA_ORIGIN)
+    ? 'https://alliby.ru/media/' + url.slice(_MEDIA_ORIGIN.length)
+    : url;
+}
 function btnLoad(el, label = 'Сохранение…') {
   if (!el) return () => {};
   const prev = el.innerHTML;
@@ -5750,7 +5760,7 @@ async function toggleItemVisible(table, id, val, cardEl) {
 function _menuItemCard(i, isEmp, showCat, canReorder) {
   const sd = JSON.stringify(i).replace(/"/g, '&quot;');
   const thumb = i.image_url
-    ? `<img src="${esc(i.image_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
+    ? `<img src="${esc(mediaUrl(i.image_url))}" style="width:40px;height:40px;object-fit:cover;border-radius:var(--r-1);flex-shrink:0">`
     : `<div style="width:40px;height:40px;border-radius:var(--r-1);background:var(--bg-2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--fg-4)">${svgIco('food',20)}</div>`;
   const avail = i.is_available
     ? `<span style="font-size:12px;color:var(--ok);display:inline-flex;align-items:center;gap:3px">${svgIco('check',11)} В наличии</span>`
@@ -6171,7 +6181,7 @@ function openMenuItemModal(item) {
 
   const preview = document.getElementById('mmi-preview');
   if (item?.image_url) {
-    preview.innerHTML = `<img src="${esc(item.image_url)}" style="width:100%;height:100%;object-fit:cover">`;
+    preview.innerHTML = `<img src="${esc(mediaUrl(item.image_url))}" style="width:100%;height:100%;object-fit:cover">`;
     document.getElementById('mmi-delete-photo-btn').style.display = 'inline-flex';
   } else {
     preview.innerHTML = '<span id="mmi-preview-hint" style="color:var(--fg-4);font-size:13px">Нажмите чтобы выбрать фото</span>';
@@ -6382,7 +6392,7 @@ function _restoreStoreImgPreview(url) {
   const prev = document.getElementById('ms-img-preview');
   if (!prev) return;
   if (url) {
-    prev.innerHTML = `<img src="${esc(url)}" style="width:64px;height:64px;object-fit:cover">`;
+    prev.innerHTML = `<img src="${esc(mediaUrl(url))}" style="width:64px;height:64px;object-fit:cover">`;
     document.getElementById('ms-img-del-btn').style.display = 'inline-flex';
   } else {
     prev.textContent = 'Фото';
@@ -8443,7 +8453,7 @@ async function openMasterModal(empId) {
     document.getElementById('master-bio').value = profile?.master_bio || '';
     document.getElementById('master-photo-url').value = profile?.master_photo_url || '';
     if (profile?.master_photo_url) {
-      document.getElementById('master-photo-preview').innerHTML = `<img src="${esc(profile.master_photo_url)}" style="width:100%;height:100%;object-fit:cover">`;
+      document.getElementById('master-photo-preview').innerHTML = `<img src="${esc(mediaUrl(profile.master_photo_url))}" style="width:100%;height:100%;object-fit:cover">`;
       document.getElementById('master-delete-photo-btn').style.display = 'inline-flex';
     }
     document.getElementById('master-profile-section').style.display = isMaster ? '' : 'none';
