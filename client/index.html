@@ -11495,16 +11495,19 @@ function closeStoreSchedDay() {
 
   document.addEventListener('touchstart', e => {
     if (!scrollTop()) return;
-    // Anchor the swipe-start zone to the top of the actual scroll pane, not the header —
-    // screens like store detail (menu) insert an extra tab bar between .ph and .pb, which
-    // pushed the real content well past header+INIT_ZONE and made the gesture nearly
-    // impossible to start there. Screens without a .pb (e.g. home's own scroll container)
-    // fall back to the header, same as before.
+    // The zone's *end* is anchored to the scroll pane's own top, not the header —
+    // screens like store detail insert a tab bar between .ph and .pb, and the
+    // gesture needs to still trigger from a touch that lands right at the top of
+    // the actual content. But the zone's *start* stays at the header's top: users
+    // naturally begin the pull gesture from the title/name row itself, well above
+    // the tab bar, and anchoring the start to pb too made the touch land outside
+    // the zone entirely — the gesture silently never engaged there.
     const pb = activePb();
     const ph = document.querySelector('.screen.active .ph');
-    const zoneTop = pb ? pb.getBoundingClientRect().top : (ph ? ph.getBoundingClientRect().top : 0);
+    const zoneEnd = pb ? pb.getBoundingClientRect().top : (ph ? ph.getBoundingClientRect().top : 0);
+    const zoneStart = ph ? ph.getBoundingClientRect().top : zoneEnd;
     const t = e.touches[0];
-    if (t.clientY < zoneTop || t.clientY > zoneTop + INIT_ZONE) return;
+    if (t.clientY < zoneStart || t.clientY > zoneEnd + INIT_ZONE) return;
     startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
   }, { passive: true });
 
