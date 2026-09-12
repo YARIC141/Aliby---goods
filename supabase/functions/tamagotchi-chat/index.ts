@@ -134,9 +134,9 @@ Deno.serve(async (req: Request) => {
         'OpenAI-Project': folderId,
       },
       body: JSON.stringify({
-        model: `gpt://${folderId}/yandexgpt-5-pro/latest`,
+        model: `gpt://${folderId}/yandexgpt-lite/latest`,
         messages,
-        max_tokens: 200,
+        max_tokens: 80,
         temperature: 0.9,
       }),
     })
