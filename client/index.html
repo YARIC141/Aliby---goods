@@ -1078,7 +1078,12 @@ document.addEventListener('deviceready',function(){
   var App=_P().App;
   if(App){
     App.addListener('appStateChange',function(s){
-      if(s.isActive&&typeof realtimeSubscribeOrders==='function'&&typeof S!=='undefined'&&S.session&&S.session.user){
+      if(!s.isActive)return;
+      // Page Visibility API (visibilitychange) не всегда надёжно срабатывает
+      // в нативной WebView при возврате из фона — appStateChange это настоящее
+      // нативное событие Capacitor, поэтому дублируем проверку обновления сюда.
+      if(typeof window._checkAppUpdate==='function')window._checkAppUpdate();
+      if(typeof realtimeSubscribeOrders==='function'&&typeof S!=='undefined'&&S.session&&S.session.user){
         realtimeSubscribeOrders(S.session.user.id);
         window.AllibyBridge.syncReminders(S.session.user.id);
       }
@@ -9945,6 +9950,17 @@ function dismissPwaBanner() {
 
 if ('serviceWorker' in navigator) {
   let _pendingUpdate = false;
+  let _swReg = null;
+  // Mobile OSes usually resume a suspended tab/PWA/native WebView instead of
+  // re-navigating it, so the SW's own 'navigate'-triggered shell revalidation
+  // can go uncalled for a long time. Exposed on window so both the
+  // visibilitychange handler below and Capacitor's native appStateChange
+  // listener (visibilitychange isn't always reliable inside a native WebView)
+  // can trigger it explicitly on every foreground resume.
+  window._checkAppUpdate = () => {
+    _swReg?.update().catch(() => {});
+    navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_APP_UPDATE' });
+  };
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data?.type !== 'APP_UPDATED') return;
     _pendingUpdate = true;
@@ -9957,6 +9973,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
       .then(reg => {
+        _swReg = reg;
         // reg.update() is a background check, not user-facing — on a flaky connection
         // it rejects with "Failed to update a ServiceWorker... unknown error", and being
         // a floating promise that surfaced as an unhandled rejection into the fatal-error
@@ -9965,11 +9982,7 @@ if ('serviceWorker' in navigator) {
         reg.update().catch(() => {});
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState !== 'visible') return;
-          reg.update().catch(() => {});
-          // Mobile OSes usually resume a suspended tab/PWA instead of re-navigating
-          // it, so the SW's own 'navigate'-triggered shell revalidation can go
-          // uncalled for a long time. Ask it to check explicitly on every resume.
-          navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_APP_UPDATE' });
+          window._checkAppUpdate();
         });
         // Flush promos that arrived while app was closed (stored in SW IndexedDB)
         _flushSwPromos();
