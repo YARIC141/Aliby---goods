@@ -558,7 +558,10 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sn-badge{display:none;min-width:17px;height:17px;border-radius:9px;background:var(--accent);font:700 10px/1 var(--font-sans);color:#fff;padding:0 4px;align-items:center;justify-content:center;box-sizing:border-box;flex-shrink:0}
 .sn-badge.on{display:inline-flex}
 /* ── STORE SCHEDULE CALENDAR ── */
-.sched-cal-wrap{border-radius:var(--r-2);overflow:hidden;border:1px solid var(--border)}
+/* max-width caps the grid at a phone-like width: cell height is driven by aspect-ratio
+   off the column width, so on a wide container (desktop layout, roomy modal) columns —
+   and with them every row — grow tall enough to push the calendar past the viewport. */
+.sched-cal-wrap{border-radius:var(--r-2);overflow:hidden;border:1px solid var(--border);max-width:380px;margin:0 auto}
 .sched-cal-table{width:100%;border-collapse:collapse;table-layout:fixed}
 .sched-cal-table thead th{text-align:center;padding:8px 0 7px;font:600 11px/1 var(--font-sans);color:var(--fg-sec);background:var(--bg-2);border-bottom:1px solid var(--border)}
 .sched-day{height:40px;text-align:center;vertical-align:middle;font:400 13px/1 var(--font-sans);border-bottom:1px solid var(--border-light);position:relative;cursor:pointer;transition:background var(--t-fast);user-select:none}
