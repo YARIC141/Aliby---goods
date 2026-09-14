@@ -7151,15 +7151,21 @@ async function loadRentTabMonth() {
   const y = _rentTab.year, mo = _rentTab.month;
   const mm = String(mo + 1).padStart(2, '0');
   const lastDay = new Date(y, mo + 1, 0).getDate();
-  const from = new Date(`${y}-${mm}-01T00:00:00`).toISOString();
-  const to   = new Date(`${y}-${mm}-${String(lastDay).padStart(2,'0')}T23:59:59`).toISOString();
+  const firstDayStr = `${y}-${mm}-01`;
+  const lastDayStr  = `${y}-${mm}-${String(lastDay).padStart(2,'0')}`;
+  const from = new Date(`${firstDayStr}T00:00:00`).toISOString();
+  const to   = new Date(`${lastDayStr}T23:59:59`).toISOString();
   _rentTab.counts = {};
   if (_rentTab.storeId) {
     try {
-      const rows = await req(`/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=gte.${from}&start_at=lte.${to}&status=neq.cancelled&select=start_at`);
+      // multi-day аренда должна учитываться на каждом дне периода, а не только в день начала
+      const rows = await req(`/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=lte.${to}&end_at=gte.${from}&status=neq.cancelled&select=start_at,end_at`);
       rows.forEach(r => {
-        const d = new Date(r.start_at).toLocaleDateString('en-CA');
-        _rentTab.counts[d] = (_rentTab.counts[d] || 0) + 1;
+        const sd0 = _localDateOf(r.start_at), ed0 = _localDateOf(r.end_at);
+        const sd = sd0 < firstDayStr ? firstDayStr : sd0;
+        const ed = ed0 > lastDayStr ? lastDayStr : ed0;
+        for (let ds = sd; ds <= ed; ds = _addDaysStr(ds, 1))
+          _rentTab.counts[ds] = (_rentTab.counts[ds] || 0) + 1;
       });
     } catch {}
   }
@@ -7229,7 +7235,8 @@ async function renderRentDayView(dateStr) {
   const dayStart = new Date(dateStr + 'T00:00:00').toISOString();
   const dayEnd   = new Date(dateStr + 'T23:59:59').toISOString();
   try {
-    let url = `/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=gte.${dayStart}&start_at=lte.${dayEnd}&select=id,start_at,end_at,quantity,total_price,status,payment_status,notes,menu_items(name,rent_period_unit,rent_period_step),profiles(full_name,phone)&order=start_at.asc`;
+    // multi-day аренда должна показываться на каждом дне периода, не только в день начала
+    let url = `/rest/v1/rent_reservations?store_id=eq.${_rentTab.storeId}&start_at=lte.${dayEnd}&end_at=gte.${dayStart}&select=id,start_at,end_at,quantity,total_price,status,payment_status,notes,menu_items(name,rent_period_unit,rent_period_step),profiles(full_name,phone)&order=start_at.asc`;
     if (_rentTab.statusFilter !== 'all') url += `&status=eq.${_rentTab.statusFilter}`;
     const rows = await req(url);
     _rentTab.counts[dateStr] = rows.filter(r => r.status !== 'cancelled').length;
@@ -9335,6 +9342,13 @@ const _sched = {
 
 function _fmtD(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function _localDateOf(iso) {
+  return _fmtD(new Date(iso));
+}
+function _addDaysStr(ds, n) {
+  const [y, m, d] = ds.split('-').map(Number);
+  return _fmtD(new Date(y, m - 1, d + n));
 }
 
 function openSchedule(store) {
