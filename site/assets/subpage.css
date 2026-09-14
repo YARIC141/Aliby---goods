@@ -149,6 +149,7 @@ nav.open .nav-burger .bx-close{display:block}
 .tag.client{color:var(--brand)}
 .tag.business{color:var(--blue)}
 .tag.carry{color:var(--teal)}
+.tag.blog{color:var(--gold)}
 h1{font:400 32px/1.25 var(--font-display);margin-bottom:10px}
 .meta{color:var(--fg-3);font-size:13px;margin-bottom:28px}
 .place-date{color:var(--fg-3);font-size:14px;margin-bottom:24px}
@@ -190,6 +191,7 @@ th{font-size:12px;text-transform:uppercase;letter-spacing:.02em;color:var(--fg-3
 .article-tag.client{color:var(--brand)}
 .article-tag.business{color:var(--blue)}
 .article-tag.carry{color:var(--teal)}
+.article-tag.blog{color:var(--gold)}
 .empty{border:1px dashed var(--line);border-radius:var(--r-3);padding:32px 24px;text-align:center;color:var(--fg-3);font-size:14px}
 
 /* ── читайте также ── */
