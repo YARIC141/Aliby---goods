@@ -4233,7 +4233,7 @@ async function loadCaScheduleScreen() {
     _caSched.month = now.getMonth();
     // Загружаем мастеров с их недельным расписанием
     try {
-      const masters = await req(`/rest/v1/profiles?employee_store_id=eq.${store.id}&is_master=eq.true&select=id,full_name,master_schedules(day_of_week,start_time,end_time)&order=full_name.asc`);
+      const masters = await req(`/rest/v1/public_masters?employee_store_id=eq.${store.id}&select=id,full_name,master_schedules(day_of_week,start_time,end_time)&order=full_name.asc`);
       _caSched.masters = masters || [];
       masters.forEach(m => { _caSched.masterScheds[m.id] = m.master_schedules || []; });
       const sel = document.getElementById('ca-sched-master-sel');
@@ -10488,7 +10488,7 @@ async function loadStoreMasters() {
   if (!_mastersCache || _mastersCache.storeId !== storeId) {
     el.innerHTML = SK.masterCards();
     try {
-      const masters = await req(`/rest/v1/profiles?employee_store_id=eq.${storeId}&is_master=eq.true&select=id,full_name,master_bio,master_photo_url&order=full_name.asc`);
+      const masters = await req(`/rest/v1/public_masters?employee_store_id=eq.${storeId}&select=id,full_name,master_bio,master_photo_url&order=full_name.asc`);
       _mastersCache = { storeId, masters };
     } catch(e) {
       el.innerHTML = '<div class="loading">Ошибка загрузки</div>';
@@ -10739,7 +10739,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
     if (masterIds.length > 0) {
       masterSvcs.forEach(s => { _booking.masterPrices[s.master_id] = s.price; });
       const [profiles, mScheds, mBookings] = await Promise.all([
-        req(`/rest/v1/profiles?id=in.(${masterIds.join(',')})&is_master=eq.true&select=id,full_name,master_bio,master_photo_url`),
+        req(`/rest/v1/public_masters?id=in.(${masterIds.join(',')})&select=id,full_name,master_bio,master_photo_url`),
         req(`/rest/v1/master_schedules?master_id=in.(${masterIds.join(',')})&select=*`),
         req(`/rest/v1/bookings?master_id=in.(${masterIds.join(',')})&slot_date=gte.${today}&slot_date=lte.${endDate}&status=neq.cancelled${rscExclude}&select=master_id,slot_date,slot_start,slot_end`),
       ]);
@@ -11107,7 +11107,7 @@ async function loadBookingsScreen() {
     const masterIds = [...new Set(rows.map(r => r.master_id).filter(Boolean))];
     if (masterIds.length) {
       try {
-        const profs = await req(`/rest/v1/profiles?id=in.(${masterIds.join(',')})&select=id,full_name`);
+        const profs = await req(`/rest/v1/public_masters?id=in.(${masterIds.join(',')})&select=id,full_name`);
         profs.forEach(p => { _myBk.masterMap[p.id] = p.full_name || 'Мастер'; });
       } catch {}
     }
