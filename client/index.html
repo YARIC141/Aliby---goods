@@ -1550,10 +1550,10 @@ document.addEventListener('deviceready',function(){
         <button class="btn btn-sm" onclick="caSchedNextMonth()">→</button>
       </div>
       <div class="sched-cal-wrap" style="margin-bottom:14px">
-        <table class="sched-cal-table">
-          <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
-          <tbody id="ca-sched-cal"></tbody>
-        </table>
+        <div class="sched-cal-grid">
+          <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
+        </div>
+        <div class="sched-cal-grid" id="ca-sched-cal"></div>
       </div>
       <div id="ca-sched-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1698,10 +1698,10 @@ document.addEventListener('deviceready',function(){
         <button class="btn btn-sm" onclick="myBookingsNextMonth()">→</button>
       </div>
       <div class="sched-cal-wrap">
-        <table class="sched-cal-table">
-          <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
-          <tbody id="mbk-calendar"></tbody>
-        </table>
+        <div class="sched-cal-grid">
+          <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
+        </div>
+        <div class="sched-cal-grid" id="mbk-calendar"></div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
         <button class="chip active" data-mbk-status="all"       onclick="setMbkStatusFilter('all')">Все</button>
@@ -1783,10 +1783,10 @@ document.addEventListener('deviceready',function(){
         </div>
         <div id="mrent-day-hint" style="display:none;font-size:13px;font-weight:500;margin-bottom:6px">Выберите день начала и день конца периода</div>
         <div class="sched-cal-wrap" style="margin-bottom:10px">
-          <table class="sched-cal-table">
-            <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
-            <tbody id="mrent-cal-body"></tbody>
-          </table>
+          <div class="sched-cal-grid">
+            <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
+          </div>
+          <div class="sched-cal-grid" id="mrent-cal-body"></div>
         </div>
         <div id="mrent-time-row" style="display:none;margin-bottom:12px">
           <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">Выберите слот начала и слот конца периода</label>
@@ -2815,10 +2815,10 @@ document.addEventListener('deviceready',function(){
       <button class="btn btn-sm" onclick="storeSchedNext()">→</button>
     </div>
     <div class="sched-cal-wrap" style="margin-bottom:12px">
-      <table class="sched-cal-table">
-        <thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead>
-        <tbody id="mss-calendar"></tbody>
-      </table>
+      <div class="sched-cal-grid">
+        <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
+      </div>
+      <div class="sched-cal-grid" id="mss-calendar"></div>
     </div>
     <div id="mss-day-view" style="display:none;padding:10px 12px;background:var(--bg-1);border-radius:var(--r-2);border:1px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -3194,6 +3194,12 @@ const SK = {
   ).join(''),
   usubCards: (n=3) => Array.from({length:n}, () =>
     `<div class="usub-card" style="cursor:default"><div style="display:flex;justify-content:space-between;margin-bottom:6px">${SK._b(14,'55%',0)}<div style="width:8px"></div>${SK._b(14,'60px',0)}</div>${SK._b(10,'40%')}${SK._b(10,'60px',0)}</div>`
+  ).join(''),
+  masterCards: (n=3) => Array.from({length:n}, () =>
+    `<div style="display:flex;align-items:center;gap:12px;padding:14px;border:1px solid var(--line-soft);border-radius:var(--r-3);background:var(--glass)">
+      <div class="sk" style="width:54px;height:54px;border-radius:50%;flex-shrink:0;margin-bottom:0"></div>
+      <div style="flex:1;min-width:0">${SK._b(15,'60%')}${SK._b(13,'85%',0)}</div>
+    </div>`
   ).join(''),
 };
 
@@ -3629,8 +3635,8 @@ function _rentRenderCal() {
   const firstDay = new Date(year, month, 1);
   const totalDays = new Date(year, month + 1, 0).getDate();
   let dow = (firstDay.getDay() + 6) % 7; // Mon=0
-  let html = '<tr>';
-  for (let i = 0; i < dow; i++) html += '<td></td>';
+  let html = '';
+  for (let i = 0; i < dow; i++) html += '<div class="sched-day empty"></div>';
   for (let d = 1; d <= totalDays; d++) {
     const date = new Date(year, month, d);
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -3646,18 +3652,15 @@ function _rentRenderCal() {
     else if (inRange) cls += ' sched-day--range';
     else cls += ' sched-day--free';
     const onclick = (!isPast && hasEnough) ? `onclick="rentPickDay('${dateStr}')"` : '';
-    html += `<td class="${cls}" ${onclick}>${d}`;
+    html += `<div class="${cls}" ${onclick}>${d}`;
     if (!isPast && hasEnough && avail < ((_rentItem?.total_quantity) || 99)) {
       html += `<span style="font-size:9px;display:block;color:var(--fg-3)">${avail}</span>`;
     }
-    html += '</td>';
-    if ((dow + d) % 7 === 0 && d < totalDays) html += '</tr><tr>';
-    dow = dow; // keep track implicitly
+    html += '</div>';
   }
-  // pad last row
+  // pad trailing empty cells to complete the last row
   const filled = (dow + totalDays) % 7;
-  if (filled !== 0) for (let i = filled; i < 7; i++) html += '<td></td>';
-  html += '</tr>';
+  if (filled !== 0) for (let i = filled; i < 7; i++) html += '<div class="sched-day empty"></div>';
   const body = document.getElementById('mrent-cal-body');
   if (body) body.innerHTML = html;
 }
@@ -4299,10 +4302,9 @@ function renderCaSchedCalendar() {
   const lastDate = new Date(year, month + 1, 0).getDate();
   const today = todayInCity();
   let dow = firstDay.getDay(); dow = dow === 0 ? 6 : dow - 1;
-  const tbody = document.getElementById('ca-sched-cal');
-  tbody.innerHTML = '';
-  let row = document.createElement('tr');
-  for (let i = 0; i < dow; i++) { const td = document.createElement('td'); td.className = 'sched-day empty'; row.appendChild(td); }
+  const body = document.getElementById('ca-sched-cal');
+  body.innerHTML = '';
+  for (let i = 0; i < dow; i++) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
   for (let d = 1; d <= lastDate; d++) {
     const pad = n => String(n).padStart(2, '0');
     const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
@@ -4317,19 +4319,15 @@ function renderCaSchedCalendar() {
     const isToday = ds === today;
     const hasSched = !!windows;
     const isFull = hasSched && !isPast && availCount === 0;
-    const td = document.createElement('td');
+    const td = document.createElement('div');
     td.className = `sched-day${!hasSched || isPast ? ' empty' : ''}${isToday ? ' today' : ''}${hasSched && !isPast && availCount > 0 ? ' has-sched' : ''}${isFull ? ' bk-full' : ''}`;
     let badge = '';
     if (hasSched && !isPast && availCount > 0) badge = `<span class="sched-bk-cnt">${availCount}</span>`;
     td.innerHTML = `<span class="sd-n">${d}</span>${badge}`;
     if (hasSched && !isPast && availCount > 0) td.onclick = () => openCaSchedDay(ds);
-    row.appendChild(td);
-    if (new Date(year, month, d).getDay() === 0) { tbody.appendChild(row); row = document.createElement('tr'); }
+    body.appendChild(td);
   }
-  if (row.children.length > 0) {
-    while (row.children.length < 7) { const td = document.createElement('td'); td.className = 'sched-day empty'; row.appendChild(td); }
-    tbody.appendChild(row);
-  }
+  while (body.children.length % 7 !== 0) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
   if (_caSched.openDate && _caSched.schedData[_caSched.openDate]) openCaSchedDay(_caSched.openDate);
   else document.getElementById('ca-sched-day-view').style.display = 'none';
 }
@@ -6839,6 +6837,25 @@ let _rtWs = null, _rtRef = 0, _rtHb = null;
 let _rtBkWs = null, _rtBkRef = 0, _rtBkHb = null;
 let _rtRentWs = null, _rtRentRef = 0, _rtRentHb = null;
 let _rtSubWs  = null, _rtSubRef  = 0, _rtSubHb  = null;
+
+// A dropped socket only ever got reconnected on the next visibilitychange (hide→show) —
+// a WS that drops while the tab stays foregrounded (server restart, network blip) just sat
+// closed indefinitely with the status dot stuck red, since nothing else nudged a retry.
+// _rtWant tracks which sockets should be connected (cleared on logout/unsubscribe) so a
+// stale onclose from an already-torn-down socket can't schedule a reconnect after the fact.
+let _rtWant = { orders: false, bk: false, sub: false, rent: false };
+let _rtReconnDelay = { orders: 3000, bk: 3000, sub: 3000, rent: 3000 };
+let _rtReconnT = { orders: null, bk: null, sub: null, rent: null };
+function _clearRtReconnect(key) { if (_rtReconnT[key]) { clearTimeout(_rtReconnT[key]); _rtReconnT[key] = null; } }
+function _scheduleRtReconnect(key, userId, fn) {
+  _clearRtReconnect(key);
+  const delay = _rtReconnDelay[key];
+  _rtReconnT[key] = setTimeout(() => {
+    _rtReconnT[key] = null;
+    if (_rtWant[key] && S.session?.user?.id === userId) fn(userId);
+  }, delay);
+  _rtReconnDelay[key] = Math.min(delay * 2, 30000);
+}
 let _bkNotifCount = 0;
 let _orderNotifCount = 0;
 function _updateBkBadge() {
@@ -6879,13 +6896,20 @@ async function _handleRealtimeAuthError(userId, resubscribe, retried) {
 }
 
 function realtimeSubscribeOrders(userId, _retried = false) {
-  realtimeUnsubscribe();
+  // NB: only tears down the orders socket — must NOT call the shared realtimeUnsubscribe()
+  // here, since that closes all four sockets and used to silently kill a still-healthy
+  // bookings/rent/subs connection every time only the orders one needed reconnecting.
+  clearInterval(_rtHb);
+  if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
+  _rtWant.orders = true;
+  let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
     const ws = new WebSocket(wsUrl);
     _rtWs = ws;
     ws.onopen = () => {
       _rtRef = 0;
+      _rtReconnDelay.orders = 3000;
       ws.send(JSON.stringify({
         topic: 'realtime:orders-watch',
         event: 'phx_join',
@@ -6904,6 +6928,7 @@ function realtimeSubscribeOrders(userId, _retried = false) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          closedForAuthError = true;
           try { ws.close(); } catch {}
           _handleRealtimeAuthError(userId, realtimeSubscribeOrders, _retried);
           return;
@@ -6915,11 +6940,16 @@ function realtimeSubscribeOrders(userId, _retried = false) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtHb); _rtWs = null; _setClientRtDot(); };
+    ws.onclose = ws.onerror = () => {
+      clearInterval(_rtHb); _rtWs = null; _setClientRtDot();
+      if (!closedForAuthError && _rtWant.orders && S.session?.user?.id) _scheduleRtReconnect('orders', userId, realtimeSubscribeOrders);
+    };
   } catch {}
 }
 
 function realtimeUnsubscribe() {
+  _rtWant = { orders: false, bk: false, sub: false, rent: false };
+  ['orders', 'bk', 'sub', 'rent'].forEach(_clearRtReconnect);
   clearInterval(_rtHb);
   if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
   clearInterval(_rtBkHb);
@@ -6934,12 +6964,15 @@ function realtimeUnsubscribe() {
 function realtimeSubscribeBookings(userId, _retried = false) {
   clearInterval(_rtBkHb);
   if (_rtBkWs) { try { _rtBkWs.close(); } catch {} _rtBkWs = null; }
+  _rtWant.bk = true;
+  let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
     const ws = new WebSocket(wsUrl);
     _rtBkWs = ws;
     ws.onopen = () => {
       _rtBkRef = 0;
+      _rtReconnDelay.bk = 3000;
       ws.send(JSON.stringify({
         topic: 'realtime:client-bk-watch',
         event: 'phx_join',
@@ -6958,6 +6991,7 @@ function realtimeSubscribeBookings(userId, _retried = false) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          closedForAuthError = true;
           try { ws.close(); } catch {}
           _handleRealtimeAuthError(userId, realtimeSubscribeBookings, _retried);
           return;
@@ -6970,19 +7004,25 @@ function realtimeSubscribeBookings(userId, _retried = false) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtBkHb); _rtBkWs = null; _setClientRtDot(); };
+    ws.onclose = ws.onerror = () => {
+      clearInterval(_rtBkHb); _rtBkWs = null; _setClientRtDot();
+      if (!closedForAuthError && _rtWant.bk && S.session?.user?.id) _scheduleRtReconnect('bk', userId, realtimeSubscribeBookings);
+    };
   } catch {}
 }
 
 function realtimeSubscribeSubs(userId, _retried = false) {
   clearInterval(_rtSubHb);
   if (_rtSubWs) { try { _rtSubWs.close(); } catch {} _rtSubWs = null; }
+  _rtWant.sub = true;
+  let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
     const ws = new WebSocket(wsUrl);
     _rtSubWs = ws;
     ws.onopen = () => {
       _rtSubRef = 0;
+      _rtReconnDelay.sub = 3000;
       ws.send(JSON.stringify({
         topic: 'realtime:client-sub-watch',
         event: 'phx_join',
@@ -7001,6 +7041,7 @@ function realtimeSubscribeSubs(userId, _retried = false) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          closedForAuthError = true;
           try { ws.close(); } catch {}
           _handleRealtimeAuthError(userId, realtimeSubscribeSubs, _retried);
           return;
@@ -7013,7 +7054,10 @@ function realtimeSubscribeSubs(userId, _retried = false) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtSubHb); _rtSubWs = null; _setClientRtDot(); };
+    ws.onclose = ws.onerror = () => {
+      clearInterval(_rtSubHb); _rtSubWs = null; _setClientRtDot();
+      if (!closedForAuthError && _rtWant.sub && S.session?.user?.id) _scheduleRtReconnect('sub', userId, realtimeSubscribeSubs);
+    };
   } catch {}
 }
 
@@ -7040,12 +7084,15 @@ function _onRealtimeSub(record, type) {
 function realtimeSubscribeRent(userId, _retried = false) {
   clearInterval(_rtRentHb);
   if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
+  _rtWant.rent = true;
+  let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
     const ws = new WebSocket(wsUrl);
     _rtRentWs = ws;
     ws.onopen = () => {
       _rtRentRef = 0;
+      _rtReconnDelay.rent = 3000;
       ws.send(JSON.stringify({
         topic: 'realtime:client-rent-watch',
         event: 'phx_join',
@@ -7064,6 +7111,7 @@ function realtimeSubscribeRent(userId, _retried = false) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
+          closedForAuthError = true;
           try { ws.close(); } catch {}
           _handleRealtimeAuthError(userId, realtimeSubscribeRent, _retried);
           return;
@@ -7076,7 +7124,10 @@ function realtimeSubscribeRent(userId, _retried = false) {
         }
       } catch {}
     };
-    ws.onclose = ws.onerror = () => { clearInterval(_rtRentHb); _rtRentWs = null; _setClientRtDot(); };
+    ws.onclose = ws.onerror = () => {
+      clearInterval(_rtRentHb); _rtRentWs = null; _setClientRtDot();
+      if (!closedForAuthError && _rtWant.rent && S.session?.user?.id) _scheduleRtReconnect('rent', userId, realtimeSubscribeRent);
+    };
   } catch {}
 }
 
@@ -10432,7 +10483,7 @@ async function loadStoreMasters() {
     return;
   }
   if (!_mastersCache || _mastersCache.storeId !== storeId) {
-    el.innerHTML = '<div class="loading">Загрузка…</div>';
+    el.innerHTML = SK.masterCards();
     try {
       const masters = await req(`/rest/v1/profiles?employee_store_id=eq.${storeId}&is_master=eq.true&select=id,full_name,master_bio,master_photo_url&order=full_name.asc`);
       _mastersCache = { storeId, masters };
@@ -11113,7 +11164,6 @@ function renderMyBookingsCalendar() {
     cells.push({ d: i, cls: 'sched-day empty', ds: null });
   let html = '';
   cells.forEach((c, i) => {
-    if (i % 7 === 0) html += '<tr>';
     const selected = c.ds && c.ds === _myBk.openDate ? ' selected' : '';
     const dayBks = c.ds ? (_myBk.byDate[c.ds] || []) : [];
     const isRentMode = _mbkStatusFilter === 'rental';
@@ -11126,8 +11176,7 @@ function renderMyBookingsCalendar() {
     const badgeDone      = done      > 0 ? `<span class="sched-bk-done">${done}</span>`         : '';
     const badgeCancelled = cancelled > 0 ? `<span class="sched-bk-cancelled">${cancelled}</span>` : '';
     const badgeRent      = (isRentMode || isAllMode) && dayRents.some(r => r.status !== 'cancelled') ? `<span class="sched-rent-dot"></span>` : '';
-    html += `<td class="${c.cls}${selected}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}>${badgeDone}<span class="sd-n">${c.d}</span>${badgeTotal}${badgeCancelled}${badgeRent}</td>`;
-    if (i % 7 === 6) html += '</tr>';
+    html += `<div class="${c.cls}${selected}"${c.ds ? ` onclick="openMyBookingsDay('${c.ds}')"` : ''}>${badgeDone}<span class="sd-n">${c.d}</span>${badgeTotal}${badgeCancelled}${badgeRent}</div>`;
   });
   document.getElementById('mbk-calendar').innerHTML = html;
 }
@@ -11412,10 +11461,8 @@ function renderStoreSchedCal() {
     cells.push({ d: i, cls: 'sched-day empty', ds: null });
   let html = '';
   cells.forEach((c, i) => {
-    if (i % 7 === 0) html += '<tr>';
     const onclick = c.ds ? ` onclick="openStoreSchedDay('${c.ds}')"` : '';
-    html += `<td class="${c.cls}"${onclick}><span class="sd-n">${c.d}</span></td>`;
-    if (i % 7 === 6) html += '</tr>';
+    html += `<div class="${c.cls}"${onclick}><span class="sd-n">${c.d}</span></div>`;
   });
   document.getElementById('mss-calendar').innerHTML = html;
 }
