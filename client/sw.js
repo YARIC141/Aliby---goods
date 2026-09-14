@@ -30,13 +30,28 @@ function fetchTimeout(request, ms = NET_TIMEOUT_MS) {
 
 self.addEventListener('install', () => self.skipWaiting());
 
+// The deploy pipeline renames APP_CACHE (alliby-app-v<timestamp>) on every push, so every
+// activation here starts from a brand-new, empty cache. That silently broke update detection:
+// checkAppShellUpdate() below only notifies clients when it finds a *stale* cached entry to
+// diff against, but right after an activate the cache has no entry at all yet, so it no-ops —
+// and a suspended/resumed PWA (no real 'navigate' fetch to populate the cache) could then sit
+// on old JS/HTML indefinitely, with the update banner never appearing. Presence of an
+// old-versioned cache at activate time is itself proof this is a real update (not a first
+// install), so notify directly here instead of relying on the empty-cache diff.
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== APP_CACHE && k !== API_CACHE && k !== IMG_CACHE).map(k => caches.delete(k))
-      ))
-      .then(() => self.clients.claim())
+      .then(async keys => {
+        const isUpdate = keys.some(k => k.startsWith('alliby-app-v') && k !== APP_CACHE);
+        await Promise.all(
+          keys.filter(k => k !== APP_CACHE && k !== API_CACHE && k !== IMG_CACHE).map(k => caches.delete(k))
+        );
+        await self.clients.claim();
+        if (isUpdate) {
+          const clients = await self.clients.matchAll({ includeUncontrolled: true });
+          clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
+        }
+      })
   );
 });
 
