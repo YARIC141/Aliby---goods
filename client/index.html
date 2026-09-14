@@ -1660,7 +1660,7 @@ document.addEventListener('deviceready',function(){
 
 <!-- ════════════════ CALENDAR & SUBSCRIPTIONS ════════════════ -->
 <div id="screen-calenabs" class="screen">
-  <div class="ph"><h2>Алиби<span id="cal-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Ваши заказы, записи и абонементы в одном месте">?</span></h2></div>
+  <div class="ph"><h2>Алиби<span id="cal-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#9ca3af;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Ваши заказы, записи и абонементы в одном месте">?</span></h2></div>
   <div class="screen-tip"></div>
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
     <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord')"><svg class="ico" width="16" height="16" style="margin-right:4px"><use href="#i-list"/></svg>Заказы<span class="tab-badge" id="ca-badge-ord"></span></button>
@@ -6838,6 +6838,12 @@ let _rtSubWs  = null, _rtSubRef  = 0, _rtSubHb  = null;
 // _rtWant tracks which sockets should be connected (cleared on logout/unsubscribe) so a
 // stale onclose from an already-torn-down socket can't schedule a reconnect after the fact.
 let _rtWant = { orders: false, bk: false, sub: false, rent: false };
+// Red only ever meant "not all 4 channels are open right now" — including the first few
+// hundred ms after login/app start while every socket is still mid-handshake, which painted
+// the dot red on every single login even though nothing was actually wrong. Track whether we've
+// ever reached a fully-connected state so the dot can show a neutral "connecting" color instead
+// of an alarming red until the first real connection succeeds.
+let _rtEverConnected = false;
 let _rtReconnDelay = { orders: 3000, bk: 3000, sub: 3000, rent: 3000 };
 let _rtReconnT = { orders: null, bk: null, sub: null, rent: null };
 function _clearRtReconnect(key) { if (_rtReconnT[key]) { clearTimeout(_rtReconnT[key]); _rtReconnT[key] = null; } }
@@ -6872,7 +6878,8 @@ function _setClientRtDot() {
   if (!dot) return;
   const ok = _rtWs?.readyState === WebSocket.OPEN && _rtBkWs?.readyState === WebSocket.OPEN &&
              _rtSubWs?.readyState === WebSocket.OPEN && _rtRentWs?.readyState === WebSocket.OPEN;
-  dot.style.background = ok ? '#22c55e' : '#ef4444';
+  if (ok) _rtEverConnected = true;
+  dot.style.background = ok ? '#22c55e' : (_rtEverConnected ? '#ef4444' : '#9ca3af');
 }
 
 // A realtime channel join is rejected (phx_reply status "error") whenever the access_token
@@ -6943,6 +6950,7 @@ function realtimeSubscribeOrders(userId, _retried = false) {
 
 function realtimeUnsubscribe() {
   _rtWant = { orders: false, bk: false, sub: false, rent: false };
+  _rtEverConnected = false;
   ['orders', 'bk', 'sub', 'rent'].forEach(_clearRtReconnect);
   clearInterval(_rtHb);
   if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
