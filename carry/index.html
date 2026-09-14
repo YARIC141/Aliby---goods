@@ -84,6 +84,8 @@ input,select,textarea{width:100%;border:1px solid var(--line);padding:9px 11px;f
 .btn:disabled{opacity:.5;cursor:default}
 .btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rt-dot-blink{0%,100%{opacity:1}50%{opacity:.25}}
+.rt-dot-connecting{background:#eab308!important;animation:rt-dot-blink 1s ease-in-out infinite}
 
 .card{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:16px;background:var(--glass);margin-bottom:14px}
 .alert{padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);margin-bottom:12px;font:400 14px/1.4 var(--font-sans)}
@@ -312,7 +314,7 @@ ol.hlp-steps>li::before{content:counter(hlpstep);position:absolute;left:0;top:1p
   <!-- ════════ MAIN ════════ -->
   <div id="screen-main" class="screen">
     <div class="ph">
-      <h2>Alliby Carry<span id="carry-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span></h2>
+      <h2>Alliby Carry<span id="carry-rt-dot" class="rt-dot-connecting" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:8px;vertical-align:middle;transition:background .3s"></span></h2>
       <div style="display:flex;gap:8px">
         <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn" title="Тема"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg></button>
         <button class="icon-btn" onclick="openProfileModal()" title="Профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></button>
@@ -2402,7 +2404,9 @@ let _rtWs = null, _rtHb = null, _rtRef = 0;
 function _setCarryRtDot() {
   const dot = document.getElementById('carry-rt-dot');
   if (!dot) return;
-  dot.style.background = _rtWs?.readyState === WebSocket.OPEN ? '#22c55e' : '#ef4444';
+  const ok = _rtWs?.readyState === WebSocket.OPEN;
+  dot.classList.toggle('rt-dot-connecting', !ok);
+  dot.style.background = ok ? '#22c55e' : '';
 }
 
 function realtimeSubscribeMyOrders(userId) {

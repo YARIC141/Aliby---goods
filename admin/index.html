@@ -184,6 +184,8 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .loading{text-align:center;padding:28px;color:var(--fg-4);font:400 12px/1.5 var(--font-sans)}
 @keyframes _spin{to{transform:rotate(360deg)}}
 .btn-spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:_spin .6s linear infinite;vertical-align:-2px;margin-right:5px;flex-shrink:0}
+@keyframes rt-dot-blink{0%,100%{opacity:1}50%{opacity:.25}}
+.rt-dot-connecting{background:#eab308!important;animation:rt-dot-blink 1s ease-in-out infinite}
 .alert{padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);margin-bottom:10px;font:400 13px/1.4 var(--font-sans)}
 .alert-e{background:oklch(from var(--err) l c h / .1);border-color:oklch(from var(--err) l c h / .35);color:var(--err)}
 .alert-ok{background:oklch(from var(--ok) l c h / .1);border-color:oklch(from var(--ok) l c h / .35);color:var(--ok)}
@@ -739,7 +741,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
 <div id="screen-schedule" class="screen">
   <div class="ph">
     <button class="btn-back" onclick="goTo('stores')">← Заведения</button>
-    <h2><span id="sched-store-name">Расписание</span><span id="sched-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Шаблон рабочего расписания заведения по дням недели. Задайте временные слоты — они будут доступны клиентам для записи.">?</span></h2>
+    <h2><span id="sched-store-name">Расписание</span><span id="sched-rt-dot" class="rt-dot-connecting" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Шаблон рабочего расписания заведения по дням недели. Задайте временные слоты — они будут доступны клиентам для записи.">?</span></h2>
   </div>
   <div class="pb">
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
@@ -1011,7 +1013,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
 
 <!-- ════════════════ ORDERS ════════════════ -->
 <div id="screen-orders" class="screen">
-  <div class="ph"><h2>Заказы и записи<span id="ord-rt-dot" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Заказы: оплаченные заказы покупателей. Записи: входящие бронирования по услугам.">?</span></h2></div>
+  <div class="ph"><h2>Заказы и записи<span id="ord-rt-dot" class="rt-dot-connecting" title="Realtime" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:8px;vertical-align:middle;transition:background .3s"></span><span class="screen-help" data-info="Заказы: оплаченные заказы покупателей. Записи: входящие бронирования по услугам.">?</span></h2></div>
   <div class="obt-tabs">
     <button class="obt-tab active" id="obt-orders" onclick="switchAdminTab('orders')">Заказы<span class="obt-badge" id="ord-tab-badge" style="display:none">0</span></button>
     <button class="obt-tab" id="obt-bookings" onclick="switchAdminTab('bookings')">Записи<span class="obt-badge" id="bk-tab-badge" style="display:none">0</span></button>
@@ -6960,7 +6962,9 @@ function showAdminToast(msg) {
 
 function _setOrdDot(ok) {
   const dot = document.getElementById('ord-rt-dot');
-  if (dot) dot.style.background = ok ? '#22c55e' : '#ef4444';
+  if (!dot) return;
+  dot.classList.toggle('rt-dot-connecting', !ok);
+  dot.style.background = ok ? '#22c55e' : '';
 }
 
 function _myStoreIds() {
@@ -10109,7 +10113,9 @@ function setSchedLiveDot(on) {
   const el = document.getElementById('sched-live-dot');
   if (el) el.style.display = on ? '' : 'none';
   const dot = document.getElementById('sched-rt-dot');
-  if (dot) dot.style.background = on ? '#22c55e' : '#ef4444';
+  if (!dot) return;
+  dot.classList.toggle('rt-dot-connecting', !on);
+  dot.style.background = on ? '#22c55e' : '';
 }
 
 function schedRealtimeConnect() {
