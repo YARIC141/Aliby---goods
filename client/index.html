@@ -1553,9 +1553,6 @@ document.addEventListener('deviceready',function(){
         <button class="btn btn-sm" onclick="caSchedNextMonth()">→</button>
       </div>
       <div class="sched-cal-wrap" style="margin-bottom:14px">
-        <div class="sched-cal-grid">
-          <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
-        </div>
         <div class="sched-cal-grid" id="ca-sched-cal"></div>
       </div>
       <div id="ca-sched-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
@@ -1701,9 +1698,6 @@ document.addEventListener('deviceready',function(){
         <button class="btn btn-sm" onclick="myBookingsNextMonth()">→</button>
       </div>
       <div class="sched-cal-wrap">
-        <div class="sched-cal-grid">
-          <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
-        </div>
         <div class="sched-cal-grid" id="mbk-calendar"></div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
@@ -1786,9 +1780,6 @@ document.addEventListener('deviceready',function(){
         </div>
         <div id="mrent-day-hint" style="display:none;font-size:13px;font-weight:500;margin-bottom:6px">Выберите день начала и день конца периода</div>
         <div class="sched-cal-wrap" style="margin-bottom:10px">
-          <div class="sched-cal-grid">
-            <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
-          </div>
           <div class="sched-cal-grid" id="mrent-cal-body"></div>
         </div>
         <div id="mrent-time-row" style="display:none;margin-bottom:12px">
@@ -2567,9 +2558,6 @@ document.addEventListener('deviceready',function(){
         <button class="btn btn-sm" onclick="bookingCalNextMonth()">→</button>
       </div>
       <div class="sched-cal-wrap" style="margin-bottom:14px">
-        <div class="sched-cal-grid">
-          <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
-        </div>
         <div class="sched-cal-grid" id="mbs-cal-body"></div>
       </div>
       <div id="mbs-date-label" style="font:600 14px/1.3 var(--font-sans);margin-bottom:8px"></div>
@@ -2818,9 +2806,6 @@ document.addEventListener('deviceready',function(){
       <button class="btn btn-sm" onclick="storeSchedNext()">→</button>
     </div>
     <div class="sched-cal-wrap" style="margin-bottom:12px">
-      <div class="sched-cal-grid">
-        <div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>
-      </div>
       <div class="sched-cal-grid" id="mss-calendar"></div>
     </div>
     <div id="mss-day-view" style="display:none;padding:10px 12px;background:var(--bg-1);border-radius:var(--r-2);border:1px solid var(--border)">
@@ -2902,6 +2887,12 @@ document.addEventListener('deviceready',function(){
 </div>
 
 <script>
+// Общая разметка строки дней недели для календарей записи/расписания/аренды.
+// Раньше жила в отдельном .sched-cal-grid рядом с сеткой чисел — два независимых
+// grid-контейнера могли разъезжаться по ширине колонок. Теперь строка дней недели —
+// первая строка ТОЙ ЖЕ сетки, что и числа, поэтому колонки гарантированно совпадают.
+const SCHED_CAL_HD_HTML = '<div class="sched-cal-hd">Пн</div><div class="sched-cal-hd">Вт</div><div class="sched-cal-hd">Ср</div><div class="sched-cal-hd">Чт</div><div class="sched-cal-hd">Пт</div><div class="sched-cal-hd">Сб</div><div class="sched-cal-hd">Вс</div>';
+
 // ─── FATAL ERROR BANNER ───
 // На iPhone нет доступа к консоли без Mac — единственный способ узнать,
 // что именно упало, это показать ошибку прямо на экране.
@@ -3638,7 +3629,7 @@ function _rentRenderCal() {
   const firstDay = new Date(year, month, 1);
   const totalDays = new Date(year, month + 1, 0).getDate();
   let dow = (firstDay.getDay() + 6) % 7; // Mon=0
-  let html = '';
+  let html = SCHED_CAL_HD_HTML;
   for (let i = 0; i < dow; i++) html += '<div class="sched-day empty"></div>';
   for (let d = 1; d <= totalDays; d++) {
     const date = new Date(year, month, d);
@@ -4306,7 +4297,7 @@ function renderCaSchedCalendar() {
   const today = todayInCity();
   let dow = firstDay.getDay(); dow = dow === 0 ? 6 : dow - 1;
   const body = document.getElementById('ca-sched-cal');
-  body.innerHTML = '';
+  body.innerHTML = SCHED_CAL_HD_HTML;
   for (let i = 0; i < dow; i++) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
   for (let d = 1; d <= lastDate; d++) {
     const pad = n => String(n).padStart(2, '0');
@@ -10817,7 +10808,7 @@ function _renderBookingCal() {
   const today = todayInCity();
   let dow = firstDay.getDay(); dow = dow === 0 ? 6 : dow - 1;
   const body = document.getElementById('mbs-cal-body');
-  body.innerHTML = '';
+  body.innerHTML = SCHED_CAL_HD_HTML;
   for (let i = 0; i < dow; i++) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
   for (let d = 1; d <= lastDate; d++) {
     const pad = n => String(n).padStart(2, '0');
@@ -11083,7 +11074,7 @@ async function confirmBooking(payNow) {
 // ── My Bookings Screen ──
 async function loadBookingsScreen() {
   if (!S.session) {
-    document.getElementById('mbk-calendar').innerHTML = '';
+    document.getElementById('mbk-calendar').innerHTML = SCHED_CAL_HD_HTML;
     document.getElementById('mbk-day-view').style.display = 'none';
     document.getElementById('mbk-month-label').textContent = '';
     const tip = document.querySelector('#screen-calenabs .screen-tip');
@@ -11165,7 +11156,7 @@ function renderMyBookingsCalendar() {
   const trailing = (7 - (cells.length % 7)) % 7;
   for (let i = 1; i <= trailing; i++)
     cells.push({ d: i, cls: 'sched-day empty', ds: null });
-  let html = '';
+  let html = SCHED_CAL_HD_HTML;
   cells.forEach((c, i) => {
     const selected = c.ds && c.ds === _myBk.openDate ? ' selected' : '';
     const dayBks = c.ds ? (_myBk.byDate[c.ds] || []) : [];
@@ -11462,7 +11453,7 @@ function renderStoreSchedCal() {
   const trailing = (7 - (cells.length % 7)) % 7;
   for (let i = 1; i <= trailing; i++)
     cells.push({ d: i, cls: 'sched-day empty', ds: null });
-  let html = '';
+  let html = SCHED_CAL_HD_HTML;
   cells.forEach((c, i) => {
     const onclick = c.ds ? ` onclick="openStoreSchedDay('${c.ds}')"` : '';
     html += `<div class="${c.cls}"${onclick}><span class="sd-n">${c.d}</span></div>`;
