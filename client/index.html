@@ -568,7 +568,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 /* Booking time-picker calendar (CSS grid, not <table>): aspect-ratio needs a
    non-table box to actually apply — it's silently ignored on <td>/<tr> in every
    engine, so the fixed-height table version above can't express a ratio at all. */
-.sched-cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+.sched-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
 .sched-cal-grid .sched-day{aspect-ratio:3/4;height:auto}
 .sched-cal-hd{text-align:center;padding:8px 0 7px;font:600 11px/1 var(--font-sans);color:var(--fg-sec);background:var(--bg-2);border-bottom:1px solid var(--border)}
 .sched-day:hover:not(.empty):not(.selected){background:var(--bg-2)}
