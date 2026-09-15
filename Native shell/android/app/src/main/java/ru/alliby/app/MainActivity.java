@@ -7,10 +7,13 @@ import android.view.View;
 import android.view.Window;
 import com.getcapacitor.BridgeActivity;
 
+import ru.alliby.app.tamagotchi.TamagotchiPlugin;
+
 public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(AllibyWidgetPlugin.class);
+        registerPlugin(TamagotchiPlugin.class);
         super.onCreate(savedInstanceState);
         applyStatusBar();
         if (!ExactAlarmPermission.maybeRequest(this)) {

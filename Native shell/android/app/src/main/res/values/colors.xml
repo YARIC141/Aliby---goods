@@ -3,4 +3,11 @@
     <color name="colorPrimary">#e8743b</color>
     <color name="colorPrimaryDark">#bf4f1a</color>
     <color name="colorAccent">#f09560</color>
+
+    <!-- Цвета маркеров календаря виджета — должны совпадать с COLOR_* в AllibyWidgetProvider/AllibyWidgetRemoteViewsFactory -->
+    <color name="marker_booking">#e8743b</color>
+    <color name="marker_personal">#3b82f6</color>
+    <color name="marker_order">#22c55e</color>
+    <color name="marker_rent">#ef4444</color>
+
 </resources>

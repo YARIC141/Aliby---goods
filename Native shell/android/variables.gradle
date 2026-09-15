@@ -1,5 +1,7 @@
 ext {
-    minSdkVersion = 24
+    // Поднято с 24 до 26: Health Connect (connect-client) и foreground-сервис
+    // с типом "health" для тамагочи требуют минимум API 26.
+    minSdkVersion = 26
     compileSdkVersion = 36
     targetSdkVersion = 36
     androidxActivityVersion = '1.11.0'

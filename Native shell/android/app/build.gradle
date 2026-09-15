@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     namespace = "ru.alliby.app"
@@ -15,6 +16,12 @@ android {
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
+    }
+    // sourceCompatibility/targetCompatibility приходят из capacitor.build.gradle (JDK 21,
+    // не трогать — файл перегенерируется). Kotlin должен совпадать с ними, иначе AGP
+    // ругается на "Inconsistent JVM-target compatibility".
+    kotlinOptions {
+        jvmTarget = "21"
     }
     signingConfigs {
         release {
@@ -52,6 +59,10 @@ dependencies {
     // Firebase Cloud Messaging (для push-уведомлений)
     implementation platform('com.google.firebase:firebase-bom:33.7.0')
     implementation 'com.google.firebase:firebase-messaging'
+    // Тамагочи (Профиль → Тамагочи): подсчёт шагов через Health Connect
+    implementation "androidx.activity:activity:$androidxActivityVersion"
+    implementation 'androidx.health.connect:connect-client:1.1.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
 }
 
 apply from: 'capacitor.build.gradle'
