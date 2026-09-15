@@ -11607,7 +11607,10 @@ function closeStoreSchedDay() {
 
   function scrollTop() {
     const pb = activePb();
-    return !pb || pb.scrollTop === 0;
+    // Momentum scroll can still be settling toward 0 (sub-pixel/rounding) at the
+    // moment a new touch lands right after a quick upward flick — a strict ===0
+    // rejected that touch even though the pane looked fully scrolled-up already.
+    return !pb || pb.scrollTop <= 2;
   }
 
   document.addEventListener('touchstart', e => {
@@ -11633,7 +11636,10 @@ function closeStoreSchedDay() {
     const t = e.touches[0];
     const rawDy = t.clientY - startY;
     const rawDx = Math.abs(t.clientX - startX);
-    if (rawDx > rawDy && rawDy < THRESH / 4) { tracking = false; return; }
+    // A real vertical pull still wobbles sideways by a few px in its first frames —
+    // bailing on the bare rawDx>rawDy ratio killed tracking on that noise alone,
+    // seemingly at random, before the gesture had a chance to declare itself.
+    if (rawDx > rawDy + 12 && rawDy < THRESH / 4) { tracking = false; return; }
     dy = Math.max(0, rawDy);
     const p = Math.min(dy / THRESH, 1);
     pill.style.transform = `translateX(-50%) translateY(${Math.round((p - 1) * 56)}px)`;
