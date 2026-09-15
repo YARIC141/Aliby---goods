@@ -147,7 +147,7 @@
   .rules-sheet p{margin:0 0 12px}
   .rules-sheet button{margin-top:4px}
   .game-result{text-align:center;font-size:16px;font-weight:700;margin:0 0 14px;color:var(--accent)}
-  .assess-shape-fill{fill:var(--accent);transition:ry .3s ease}
+  .assess-shape-fill{fill:var(--accent);transition:rx .3s ease}
 
   .pdd-ticket-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .pdd-ticket-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -364,8 +364,8 @@
   <div id="assess-overlay" class="rules-overlay hidden">
     <div class="rules-sheet" style="text-align:center">
       <h2 id="assess-title">Состояние</h2>
-      <svg id="assess-svg" viewBox="0 0 160 320" style="width:100%;max-width:160px;height:280px;display:block;margin:0 auto 14px">
-        <ellipse id="assess-shape" class="assess-shape-fill" cx="80" cy="160" rx="60" ry="140"></ellipse>
+      <svg id="assess-svg" viewBox="0 0 320 320" style="width:100%;max-width:240px;aspect-ratio:1/1;display:block;margin:0 auto 14px">
+        <ellipse id="assess-shape" class="assess-shape-fill" cx="160" cy="160" rx="60" ry="140"></ellipse>
       </svg>
       <p id="assess-text"></p>
       <button id="btn-assess-close">Понятно</button>
@@ -1947,16 +1947,16 @@
       (isNative ? 'Шаги берутся из Health Connect.' : 'Шаги считаются только пока эта страница открыта в браузере.');
   }
 
-  // Овал состояния (повёрнут на 90°): ширина фиксирована (rx всегда 60), высота
-  // (ry) сжимается от вытянутого по вертикали овала при 0% жира до идеального
-  // круга (ry === rx) при 100%.
-  var ASSESS_RX = 60;
-  var ASSESS_RY_MAX = 140;
+  // Овал состояния: высота фиксирована (ry всегда 140, большая сторона овала —
+  // вертикаль при низком % жира), ширина (rx) растёт от узкой при 0% жира до
+  // идеального круга (rx === ry) при 100%.
+  var ASSESS_RY = 140;
+  var ASSESS_RX_MIN = 60;
   function openAssess(){
     var pet = loadPet();
     var fat = Math.max(0, Math.min(100, pet.fat));
-    var ry = ASSESS_RY_MAX - (ASSESS_RY_MAX - ASSESS_RX) * (fat / 100);
-    document.getElementById('assess-shape').setAttribute('ry', ry.toFixed(1));
+    var rx = ASSESS_RX_MIN + (ASSESS_RY - ASSESS_RX_MIN) * (fat / 100);
+    document.getElementById('assess-shape').setAttribute('rx', rx.toFixed(1));
     document.getElementById('assess-title').textContent = 'Состояние: ' + pet.name;
     document.getElementById('assess-text').textContent = 'Жир: ' + Math.round(fat) + '%';
     document.getElementById('assess-overlay').classList.remove('hidden');
