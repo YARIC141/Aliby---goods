@@ -182,7 +182,8 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .btn-full{width:100%;justify-content:center}
 .btn-back{background:none;border:none;cursor:pointer;font:400 20px/1 var(--font-sans);color:var(--fg-3);padding:8px 10px;border-radius:var(--r-1);flex-shrink:0;transition:background var(--t-fast),color var(--t-fast)}
 .btn-back:hover{background:var(--bg-2);color:var(--fg)}
-.card{border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--glass)}
+.card{position:relative;border:1px solid var(--line-soft);border-radius:var(--r-3);padding:14px;background:var(--glass)}
+.unseen-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:#f97316;box-shadow:0 0 0 2px var(--bg)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row{display:flex;gap:8px;align-items:flex-end}
 .row .fg{flex:1;margin-bottom:0}
@@ -624,7 +625,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .booking-slot.active{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 12%,var(--bg));color:var(--accent);font-weight:600}
 .booking-slot:disabled{opacity:.38;cursor:not-allowed;pointer-events:none}
 /* ── BOOKING LIST ── */
-.bk-item{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.bk-item{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .bk-item-main{flex:1;min-width:0}
 .bk-item-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
 .reschedule-rule{padding:8px 12px;border-radius:var(--r-2);font:400 13px/1.4 var(--font-sans);margin-bottom:6px}
@@ -1674,8 +1675,8 @@ document.addEventListener('deviceready',function(){
   <div class="cart-tabs" style="flex-shrink:0;padding:0 16px;border-bottom:1px solid var(--line-soft)">
     <button class="cart-tab active" id="ca-tab-ord" onclick="switchCalenabsTab('ord',this)"><svg class="ico" width="16" height="16" style="margin-right:4px;flex-shrink:0"><use href="#i-list"/></svg><span class="cart-tab-lbl">Заказы</span><span class="tab-badge" id="ca-badge-ord"></span></button>
     <button class="cart-tab" id="ca-tab-bk" onclick="switchCalenabsTab('bk',this)"><svg class="ico" width="16" height="16" style="margin-right:4px;flex-shrink:0"><use href="#i-calendar"/></svg><span class="cart-tab-lbl">Записи</span><span class="tab-badge" id="ca-badge-bk"></span></button>
-    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub',this)"><svg class="ico" width="16" height="16" style="margin-right:4px;flex-shrink:0"><use href="#i-ticket"/></svg><span class="cart-tab-lbl">Абонементы</span></button>
-    <button class="cart-tab" id="ca-tab-rent" onclick="switchCalenabsTab('rent',this)"><svg class="ico" width="16" height="16" style="margin-right:4px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v4M16 4v4M3 12h18"/><circle cx="12" cy="17" r="1.5"/></svg><span class="cart-tab-lbl">Аренда</span></button>
+    <button class="cart-tab" id="ca-tab-sub" onclick="switchCalenabsTab('sub',this)"><svg class="ico" width="16" height="16" style="margin-right:4px;flex-shrink:0"><use href="#i-ticket"/></svg><span class="cart-tab-lbl">Абонементы</span><span class="tab-badge" id="ca-badge-sub"></span></button>
+    <button class="cart-tab" id="ca-tab-rent" onclick="switchCalenabsTab('rent',this)"><svg class="ico" width="16" height="16" style="margin-right:4px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v4M16 4v4M3 12h18"/><circle cx="12" cy="17" r="1.5"/></svg><span class="cart-tab-lbl">Аренда</span><span class="tab-badge" id="ca-badge-rent"></span></button>
   </div>
   <!-- История заказов pane -->
   <div id="ca-pane-ord" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
@@ -3507,8 +3508,56 @@ function switchCalenabsTab(tab, btnEl) {
     setOrderFilter('all');
   }
 }
-function loadCalenabsScreen() { switchCalenabsTab(_calenabsTab); }
+function loadCalenabsScreen() { switchCalenabsTab(_calenabsTab); refreshUnseenBadges(); }
 function _calenabsIsActive() { return document.getElementById('screen-calenabs')?.classList.contains('active'); }
+
+// ── "Оформлено, но не просмотрено" — бейджи и оранжевые точки на позициях ──
+let _unseenCounts = { ord: 0, bk: 0, sub: 0, rent: 0 };
+function _seenStorageKey(kind) { return `alliby_seen_${kind}_${S.session?.user?.id || 'anon'}`; }
+function _seenSet(kind) {
+  try { return new Set(JSON.parse(localStorage.getItem(_seenStorageKey(kind)) || '[]')); }
+  catch(e) { return new Set(); }
+}
+function _isSeen(kind, id) { return _seenSet(kind).has(id); }
+function _markSeen(kind, id) {
+  if (!id) return;
+  const key = _seenStorageKey(kind);
+  const s = _seenSet(kind);
+  if (s.has(id)) return;
+  s.add(id);
+  try { localStorage.setItem(key, JSON.stringify([...s])); } catch(e) {}
+  document.querySelectorAll(`[data-unseen-for="${kind}:${id}"]`).forEach(el => el.remove());
+  if (_unseenCounts[kind] > 0) _unseenCounts[kind]--;
+  _applyCaBadges();
+}
+function _applyCaBadges() {
+  const ob = document.getElementById('ca-badge-ord');
+  if (ob) { const n = _ordNotif.size + _unseenCounts.ord; ob.textContent = n || ''; ob.classList.toggle('on', n > 0); }
+  const bkEl = document.getElementById('ca-badge-bk');
+  if (bkEl) { const n = _bkNotifCount + _unseenCounts.bk; bkEl.textContent = n || ''; bkEl.classList.toggle('on', n > 0); }
+  const subEl = document.getElementById('ca-badge-sub');
+  if (subEl) { const n = _unseenCounts.sub; subEl.textContent = n || ''; subEl.classList.toggle('on', n > 0); }
+  const rentEl = document.getElementById('ca-badge-rent');
+  if (rentEl) { const n = _unseenCounts.rent; rentEl.textContent = n || ''; rentEl.classList.toggle('on', n > 0); }
+}
+async function refreshUnseenBadges() {
+  const uid = S.session?.user?.id;
+  if (!uid) { _unseenCounts = { ord: 0, bk: 0, sub: 0, rent: 0 }; _applyCaBadges(); return; }
+  try {
+    const [ords, bks, subs, rents] = await Promise.all([
+      req(`/rest/v1/orders?user_id=eq.${uid}&status=neq.cancelled&select=id&order=order_time.desc&limit=100`),
+      req(`/rest/v1/bookings?user_id=eq.${uid}&status=neq.cancelled&select=id&order=created_at.desc&limit=100`),
+      req(`/rest/v1/user_subscriptions?user_id=eq.${uid}&gift_status=is.null&select=id&order=purchase_date.desc&limit=100`),
+      req(`/rest/v1/rent_reservations?user_id=eq.${uid}&status=neq.cancelled&select=id&order=created_at.desc&limit=100`),
+    ]);
+    const seenOrd = _seenSet('ord'), seenBk = _seenSet('bk'), seenSub = _seenSet('sub'), seenRent = _seenSet('rent');
+    _unseenCounts.ord  = ords.filter(o => !seenOrd.has(o.id)).length;
+    _unseenCounts.bk   = bks.filter(b => !seenBk.has(b.id)).length;
+    _unseenCounts.sub  = subs.filter(s => !seenSub.has(s.id)).length;
+    _unseenCounts.rent = rents.filter(r => !seenRent.has(r.id)).length;
+  } catch(e) {}
+  _applyCaBadges();
+}
 
 // ══════════════════════════════════════════════════════════════
 // RENT FEATURE
@@ -3572,7 +3621,9 @@ async function loadMyRentReservations() {
       const sc = RENT_STATUS_COLOR[r.status] || 'var(--fg-3)';
       const sl = RENT_STATUS_RU[r.status] || r.status;
       const periodStr = _rentPeriodStr(r);
-      return `<div class="card" data-rent-id="${r.id}" style="margin-bottom:10px;padding:12px 14px">
+      const unseenDot = r.status !== 'cancelled' && !_isSeen('rent', r.id) ? `<span class="unseen-dot" data-unseen-for="rent:${r.id}"></span>` : '';
+      return `<div class="card" data-rent-id="${r.id}" style="margin-bottom:10px;padding:12px 14px" onclick="_markSeen('rent','${r.id}')">
+        ${unseenDot}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
           <div style="display:flex;align-items:center;flex-shrink:0">${_rentPaidBadge(r)}<span data-rent-status style="font-size:11px;color:${sc};border:1px solid currentColor;border-radius:4px;padding:2px 5px;flex-shrink:0;margin-left:6px">${sl}</span></div>
@@ -5254,6 +5305,7 @@ function setSession(d) {
     _registerWebPush(uid);
     _syncPromoNotifications(uid);
     window.AllibyBridge?.syncReminders(uid);
+    refreshUnseenBadges();
     // Quick-restore may have rendered the store screen before the session was known
     // (loadStoreNotifState hid the bell because uid wasn't available yet) — re-sync now.
     if (S.store?.id && document.getElementById('screen-store')?.classList.contains('active')) {
@@ -6911,8 +6963,7 @@ function _updateBkBadge() {
     el.textContent = txt;
     el.classList.toggle('on', on);
   });
-  const bkEl = document.getElementById('ca-badge-bk');
-  if (bkEl) { bkEl.textContent = _bkNotifCount || ''; bkEl.classList.toggle('on', _bkNotifCount > 0); }
+  _applyCaBadges();
   window.AllibyBridge?.setBadge(total);
 }
 
@@ -7274,8 +7325,7 @@ function _renderOrdNotifDots() {
     const has = s === 'all' ? _ordNotif.size > 0 : _ordNotif.has(s);
     btn.querySelector('.ord-notif-dot')?.classList.toggle('on', has);
   });
-  const ob = document.getElementById('ca-badge-ord');
-  if (ob) { const n = _ordNotif.size; ob.textContent = n || ''; ob.classList.toggle('on', n > 0); }
+  _applyCaBadges();
 }
 
 function setOrderFilter(status) {
@@ -7436,7 +7486,9 @@ function renderActiveOrderCard(o) {
   const isPendingPickup = o.status === 'pending' && !!o.pickup_time;
   const delivBorder = o.is_delivery ? 'border:2px solid #f5c518;' : '';
   const hasExtra = isReady || isOnTheWay || isLooking || isIssued || courierFound || o.estimated_ready_at || isPendingPickup;
+  const unseenDot = o.status !== 'cancelled' && !_isSeen('ord', o.id) ? `<span class="unseen-dot" data-unseen-for="ord:${o.id}"></span>` : '';
   return `<div class="card" style="margin:10px 16px;padding:14px;cursor:pointer;${delivBorder}" onclick="openActiveOrderDetail('${esc(o.id)}')">
+    ${unseenDot}
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:${hasExtra ? '10px' : '0'}">
       <div>
         <div style="font:500 15px/1.2 var(--font-sans)">${esc(o.stores?.name || 'Заведение')}</div>
@@ -7458,6 +7510,7 @@ function renderActiveOrderCard(o) {
 function openActiveOrderDetail(orderId) {
   const o = _activeOrders.find(x => x.id === orderId);
   if (!o) return;
+  _markSeen('ord', orderId);
   const storeName = o.stores?.name || '';
   const amount = Number(o.total_amount) || 0;
   const disc = Number(o.subscription_discount || 0);
@@ -8527,7 +8580,9 @@ function renderSubUnifiedList() {
 
 function renderUserSub(us) {
   const plan = us.subscriptions;
+  const unseenDot = !_isSeen('sub', us.id) ? `<span class="unseen-dot" data-unseen-for="sub:${us.id}"></span>` : '';
   return `<div class="usub-card" onclick="openSubModal('${us.id}')">
+    ${unseenDot}
     ${plan?.stores?.name ? `<div class="usub-store">${esc(plan.stores.name)}</div>` : ''}
     <div class="usub-hd">
       <span class="usub-name">${esc(plan?.name || 'Абонемент')}</span>
@@ -8585,6 +8640,7 @@ async function activateGift() {
 }
 
 async function openSubModal(id) {
+  _markSeen('sub', id);
   openModal('m-usub');
   document.getElementById('mu-name').textContent = 'Загрузка…';
   document.getElementById('mu-store').textContent = '';
@@ -11330,7 +11386,9 @@ function renderMyBookingsDay(ds) {
           ? `<span style="color:var(--fg-3)">Прошла</span>`
           : `<span style="color:${paid?'var(--ok)':'var(--warn)'}">${paid?'Оплачено':'Не оплачено'}</span>`;
     const dimmed = isCancelled || isPastBk;
-    return `<div class="bk-item" style="${dimmed?'opacity:.5':''}">
+    const unseenDot = !isCancelled && !_isSeen('bk', b.id) ? `<span class="unseen-dot" data-unseen-for="bk:${b.id}"></span>` : '';
+    return `<div class="bk-item" style="${dimmed?'opacity:.5':''}" onclick="_markSeen('bk','${b.id}')">
+      ${unseenDot}
       <div class="bk-item-main">
         <div style="font:600 14px/1.3 var(--font-sans)">${esc(b.menu_items?.name||'')}</div>
         <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:3px">${esc(b.stores?.name||'')}</div>
@@ -11365,7 +11423,9 @@ function _rentDayItemsHtml(ds) {
     const sl = RENT_STATUS_RU[r.status] || r.status;
     const periodStr = _rentPeriodStr(r);
     const dimmed = r.status === 'cancelled';
-    return `<div class="bk-item" style="${dimmed ? 'opacity:.5' : ''}">
+    const unseenDot = !dimmed && !_isSeen('rent', r.id) ? `<span class="unseen-dot" data-unseen-for="rent:${r.id}"></span>` : '';
+    return `<div class="bk-item" style="${dimmed ? 'opacity:.5' : ''}" onclick="_markSeen('rent','${r.id}')">
+      ${unseenDot}
       <div class="bk-item-main">
         <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
         <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-top:3px">${esc(store.name || '')}</div>
