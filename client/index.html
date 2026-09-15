@@ -6927,13 +6927,17 @@ function _armVpnHeuristic() {
 // Вызывается перед оплатой: если WS не держится при рабочем HTTP, вместо запроса
 // к tbank-init* показываем модалку с просьбой отключить VPN — платёжный шлюз банка
 // такие соединения блокирует чаще всего именно так (см. диагностику nginx-логов).
+let _vpnModalTimer = null;
 function _vpnPayGuard() {
   if (!_vpnSuspected) return true;
   _showVpnBanner();
   openModal('m-vpn-pay');
+  clearTimeout(_vpnModalTimer);
+  _vpnModalTimer = setTimeout(closeVpnPayModal, 3000);
   return false;
 }
 function closeVpnPayModal() {
+  clearTimeout(_vpnModalTimer);
   closeModal('m-vpn-pay');
   _hideVpnBanner();
 }
