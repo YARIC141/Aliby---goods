@@ -281,6 +281,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .map-legend .leg-lbl{font:400 11px/1.3 var(--font-sans);color:var(--fg-2)}
 .geo-toast{position:fixed;top:max(env(safe-area-inset-top,0px) + 14px,14px);left:50%;transform:translateX(-50%);background:var(--bg-1);border:1px solid var(--line);padding:9px 16px;border-radius:var(--r-pill);font:400 14px/1 var(--font-sans);color:var(--fg);z-index:700;white-space:nowrap;box-shadow:var(--shadow-1);pointer-events:none;opacity:0;transition:opacity var(--t-med)}
 .geo-toast.show{opacity:1}
+.vpn-banner{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:9px;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 11px) 16px 11px;background:color-mix(in oklch,var(--warn) 18%,var(--bg-1));border-bottom:1px solid oklch(from var(--warn) l c h / .4);font:500 13px/1.35 var(--font-sans);color:var(--fg);z-index:900;transform:translateY(-100%);transition:transform var(--t-med);text-align:center}
+.vpn-banner.show{transform:translateY(0)}
+.vpn-banner .vpn-ico{flex-shrink:0;color:var(--warn)}
 #m-bk-success{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:oklch(0 0 0 / .55);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s}
 #m-bk-success.show{opacity:1;pointer-events:auto}
 .bks-card{background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:var(--r-3);padding:32px 28px;text-align:center;max-width:320px;width:calc(100% - 40px);box-shadow:var(--shadow-2);transform:scale(.88);transition:transform .25s}
@@ -2509,6 +2512,7 @@ document.addEventListener('deviceready',function(){
 </div>
 
 <div id="geo-toast" class="geo-toast"></div>
+<div id="vpn-banner" class="vpn-banner"><svg class="vpn-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="4" y1="4" x2="20" y2="20"/></svg><span>Похоже, включён VPN — часть функций может работать нестабильно</span></div>
 
 <!-- Booking success popup -->
 <div id="m-bk-success" onclick="closeBkSuccess()"><div class="bks-card" onclick="event.stopPropagation()"><div class="bks-check"><svg viewBox="0 0 24 24"><polyline points="4 13 9 18 20 7"/></svg></div><p class="bks-title" id="bks-title">Запись создана!</p><p class="bks-sub" id="bks-sub-text"></p><button class="btn" style="width:100%" onclick="closeBkSuccess()">Готово</button></div></div>
@@ -2711,6 +2715,19 @@ document.addEventListener('deviceready',function(){
     </div>
     <p id="msw-text" style="font-size:15px;line-height:1.6;margin-bottom:8px"></p>
     <div id="msw-actions" class="modal-ft" style="flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+<div class="overlay" id="m-vpn-pay">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Отключите VPN</h3>
+      <button class="modal-x" onclick="closeVpnPayModal()">✕</button>
+    </div>
+    <p style="font-size:15px;line-height:1.6;margin-bottom:8px">Похоже, у вас включён VPN. Платёжный сервис блокирует такие соединения, поэтому оплата может не пройти. Отключите VPN и попробуйте ещё раз.</p>
+    <div class="modal-ft">
+      <button class="btn btn-p btn-full" onclick="closeVpnPayModal()">Понятно</button>
+    </div>
   </div>
 </div>
 
@@ -3259,6 +3276,7 @@ async function req(path, opts = {}, _retried = false, _hostFallback = false) {
     throw { message: 'Сессия истекла, войдите снова' };
   }
   if (!r.ok) throw body || { message: r.statusText };
+  _lastReqOkAt = Date.now();
   return body;
 }
 function esc(s) {
@@ -4092,6 +4110,7 @@ async function rentBookNow() {
 }
 
 async function rentPayNow() {
+  if (!_vpnPayGuard()) return;
   const item = _rentItem;
   if (!item?._pendingStart || !item?._pendingEnd) return;
   const uid = S.session?.user?.id;
@@ -5200,6 +5219,7 @@ function setSession(d) {
     realtimeSubscribeBookings(uid);
     realtimeSubscribeRent(uid);
     realtimeSubscribeSubs(uid);
+    _armVpnHeuristic();
     const _cp = _readProfileCache(uid); if (_cp) S.profile = _cp;
     _profileReady = req(`/rest/v1/profiles?id=eq.${uid}&select=*&limit=1`).then(p => { if (p[0]) { S.profile = p[0]; _writeProfileCache(uid, p[0]); } }).catch(() => {});
     window.AllibyBridge?.registerPush(uid);
@@ -6879,6 +6899,45 @@ function _setClientRtDot() {
   dot.style.background = ok ? '#22c55e' : '';
 }
 
+// ─── VPN HEURISTIC ───
+// Обычные HTTPS-запросы к API проходят, а realtime WS не может установиться/подтвердиться —
+// такой паттерн типичен именно для VPN (плохо держит долгоживущие соединения), в отличие
+// от обычных обрывов сети, когда рвётся всё разом. См. память project_vpn_heuristic.
+let _vpnSuspected = false;
+let _vpnCheckTimer = null;
+let _lastReqOkAt = 0;
+
+function _showVpnBanner() { document.getElementById('vpn-banner')?.classList.add('show'); }
+function _hideVpnBanner() { document.getElementById('vpn-banner')?.classList.remove('show'); }
+
+function _checkVpnHeuristic() {
+  const httpOk = Date.now() - _lastReqOkAt < 15000;
+  const wsOk = _rtWs?.readyState === WebSocket.OPEN && _rtBkWs?.readyState === WebSocket.OPEN &&
+               _rtSubWs?.readyState === WebSocket.OPEN && _rtRentWs?.readyState === WebSocket.OPEN;
+  _vpnSuspected = httpOk && !wsOk;
+  if (_vpnSuspected) _showVpnBanner(); else _hideVpnBanner();
+}
+
+function _armVpnHeuristic() {
+  clearInterval(_vpnCheckTimer);
+  setTimeout(_checkVpnHeuristic, 8000); // даём WS время подключиться после логина, прежде чем судить
+  _vpnCheckTimer = setInterval(_checkVpnHeuristic, 10000);
+}
+
+// Вызывается перед оплатой: если WS не держится при рабочем HTTP, вместо запроса
+// к tbank-init* показываем модалку с просьбой отключить VPN — платёжный шлюз банка
+// такие соединения блокирует чаще всего именно так (см. диагностику nginx-логов).
+function _vpnPayGuard() {
+  if (!_vpnSuspected) return true;
+  _showVpnBanner();
+  openModal('m-vpn-pay');
+  return false;
+}
+function closeVpnPayModal() {
+  closeModal('m-vpn-pay');
+  _hideVpnBanner();
+}
+
 // A realtime channel join is rejected (phx_reply status "error") whenever the access_token
 // sent in phx_join has expired — the underlying WebSocket stays OPEN (Phoenix just refuses
 // the subscription), so without this the connection looked "alive" while silently receiving
@@ -6957,6 +7016,9 @@ function realtimeUnsubscribe() {
   clearInterval(_rtSubHb);
   if (_rtSubWs)  { try { _rtSubWs.close();  } catch {} _rtSubWs  = null; }
   _setClientRtDot();
+  clearInterval(_vpnCheckTimer);
+  _vpnSuspected = false;
+  _hideVpnBanner();
 }
 
 function realtimeSubscribeBookings(userId, _retried = false) {
@@ -8821,6 +8883,7 @@ function removeFromRentCart(i) {
 async function checkoutRent() {
   if (!S.rentCart?.length) return;
   if (!S.session) { _pendingNavAfterAuth = 'cart'; goTo('auth'); return; }
+  if (!_vpnPayGuard()) return;
   const uid = S.session.user.id;
   const btn = document.getElementById('rent-cart-pay-btn');
   const restore = btn ? btnLoad(btn) : () => {};
@@ -8886,6 +8949,7 @@ function renderGiftCartSection() {
 }
 
 async function _initSubPayment(subIds, isGift, pendingPayment, amountText, orderText) {
+  if (!_vpnPayGuard()) return;
   try {
     const result = await req('/functions/v1/tbank-init-sub', {
       method: 'POST',
@@ -10325,6 +10389,7 @@ async function doCheckout(useSubscription = false) {
   }
   const pickupTimeISO = S.pickupIso || null;
   const payNow = orderMode !== 'scheduled' || !!document.getElementById('preorder-pay-now')?.checked;
+  if (payNow && !_vpnPayGuard()) return;
 
   const payBtn = document.getElementById('cart-pay-btn');
   payBtn.disabled = true;
@@ -11045,6 +11110,7 @@ async function confirmBooking(payNow) {
     return;
   }
   // Real T-Bank payment: create booking with unpaid status, then redirect to T-Bank
+  if (!_vpnPayGuard()) return;
   const btn3 = document.getElementById('mbs-pay-btn');
   const restorePay = btnLoad(btn3, '…');
   try {
@@ -11292,6 +11358,7 @@ function closeMyBookingsDay() {
 }
 
 async function payExistingBooking(id) {
+  if (!_vpnPayGuard()) return;
   try {
     const result = await req('/functions/v1/tbank-init-booking', {
       method: 'POST',
