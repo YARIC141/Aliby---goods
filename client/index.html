@@ -1889,7 +1889,7 @@ document.addEventListener('deviceready',function(){
     </div>
 
     <div class="sec">
-      <a href="/tamagotchi/index.html" onclick="return openTamagotchi(event)" class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none">
+      <a href="/tamagotchi/index.html" class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between;text-decoration:none">
         <span>Тамагочи</span>
         <span style="color:var(--fg-4);font-size:18px">›</span>
       </a>
@@ -4703,17 +4703,6 @@ function helpJump(id) {
 }
 function helpTop() {
   document.getElementById('help-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// В нативном приложении открываем экран тамагочи (пит + шаги из Health Connect)
-// через Capacitor-плагин; в обычном браузере Health Connect недоступен, поэтому
-// там ссылка ведёт на веб-версию /tamagotchi/index.html как раньше (см. href).
-function openTamagotchi(e) {
-  const isNative = window.Capacitor?.isNativePlatform?.() ?? false;
-  if (!isNative) return true;
-  e.preventDefault();
-  window.Capacitor.Plugins.Tamagotchi?.open();
-  return false;
 }
 function openCustomize() { document.getElementById('panel-customize').classList.add('open'); }
 function closeCustomize() { document.getElementById('panel-customize').classList.remove('open'); }

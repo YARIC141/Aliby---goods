@@ -600,9 +600,14 @@
     return 'Совсем грустит';
   }
 
-  // ── Шаги: акселерометр в браузере считает только пока страница открыта и
-  // видима — в отличие от нативного сервиса, у веб-страницы нет фонового
-  // выполнения на телефоне. Это единственный источник активности в веб-версии. ──
+  // ── Шаги: в вебе — акселерометр (считает только пока страница открыта и
+  // видима — у веб-страницы нет фонового выполнения на телефоне). В нативном
+  // приложении — Health Connect через Capacitor-плагин Tamagotchi (см.
+  // Native shell/android/.../tamagotchi/TamagotchiPlugin.java): туда уже
+  // агрегированы шаги со всех источников (телефон/часы/браслет), поэтому
+  // счётчик там не инкрементируется, а просто перезаписывается свежим числом. ──
+  var isNative = window.Capacitor?.isNativePlatform?.() ?? false;
+
   function getStepsState(){
     var date = lsGet('stepsDate', '');
     var today = todayKey();
@@ -617,6 +622,10 @@
   function addStep(){
     var s = getStepsState();
     lsSet('stepsToday', s.steps + 1);
+  }
+  function setStepsFromHealthConnect(steps){
+    lsSet('stepsDate', todayKey());
+    lsSet('stepsToday', steps);
   }
   function addManualBonus(amount){
     var s = getStepsState();
@@ -676,10 +685,48 @@
     sensorActive = false;
     updateSensorStatusUI();
   }
+
+  // Health Connect (только нативное приложение) — заменяет акселерометр.
+  function refreshHealthConnectSteps(){
+    if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return;
+    window.Capacitor.Plugins.Tamagotchi.getTodaySteps().then(function(res){
+      if (res && res.available) setStepsFromHealthConnect(res.steps);
+      renderStatus();
+    }).catch(function(){});
+  }
+  function enableHealthConnect(){
+    window.Capacitor.Plugins.Tamagotchi.isAvailable().then(function(res){
+      if (!res || !res.available){
+        showToast('Установите приложение Health Connect и попробуйте снова');
+        window.Capacitor.Plugins.Tamagotchi.openHealthConnectSetup();
+        return;
+      }
+      window.Capacitor.Plugins.Tamagotchi.requestPermission().then(function(perm){
+        if (perm && perm.granted){
+          lsSet('healthConnectEnabled', '1');
+          refreshHealthConnectSteps();
+          showToast('Готово, шаги из Health Connect будут учитываться');
+        } else {
+          showToast('Разрешение не выдано');
+        }
+        updateSensorStatusUI();
+      });
+    }).catch(function(){ showToast('Health Connect недоступен на этом устройстве'); });
+  }
+  function disableHealthConnect(){
+    lsSet('healthConnectEnabled', '0');
+    updateSensorStatusUI();
+  }
+
   function updateSensorStatusUI(){
     var el = document.getElementById('sensor-status');
     var btn = document.getElementById('btn-sensor');
-    if (sensorActive){
+    if (isNative){
+      var on = lsGet('healthConnectEnabled', '') === '1';
+      el.textContent = on ? 'Шаги считаются через Health Connect' : 'Health Connect не подключён';
+      el.className = 'sensor-status ' + (on ? 'on' : 'off');
+      btn.textContent = on ? 'Health Connect подключён' : 'Подключить Health Connect';
+    } else if (sensorActive){
       el.textContent = 'Датчик шагов включён (считает, пока страница открыта)';
       el.className = 'sensor-status on';
       btn.textContent = 'Выключить датчик шагов';
@@ -1863,8 +1910,8 @@
     setRing('ring-steps', activity);
     document.getElementById('text-hint').textContent =
       'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
-      ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) +
-      ' мин. Шаги считаются только пока эта страница открыта в браузере.';
+      ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) + ' мин. ' +
+      (isNative ? 'Шаги берутся из Health Connect.' : 'Шаги считаются только пока эта страница открыта в браузере.');
   }
 
   function init(){
@@ -1872,7 +1919,8 @@
       showScreen('status');
       renderStatus();
       document.getElementById('input-bio').value = lsGet('bio', '');
-      if (lsGet('sensorEnabled', '') === '1') startSensor();
+      if (isNative){ refreshHealthConnectSteps(); }
+      else if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
       showScreen('create');
     }
@@ -1980,8 +2028,11 @@
     });
 
     document.getElementById('btn-sensor').addEventListener('click', function(){
-      if (sensorActive){ stopSensor(); lsSet('sensorEnabled', '0'); }
-      else { enableSensor(); }
+      if (isNative){
+        if (lsGet('healthConnectEnabled', '') === '1'){ disableHealthConnect(); }
+        else { enableHealthConnect(); }
+      } else if (sensorActive){ stopSensor(); lsSet('sensorEnabled', '0'); updateSensorStatusUI(); }
+      else { enableSensor(); updateSensorStatusUI(); }
     });
 
     document.getElementById('btn-games').addEventListener('click', function(){ showScreen('games'); });
@@ -2068,8 +2119,12 @@
     });
 
     updateSensorStatusUI();
-    setInterval(renderStatus, 30000); // досчитывать голод/жир, даже если не взаимодействуют с кнопками
-    document.addEventListener('visibilitychange', function(){ if (!document.hidden) renderStatus(); });
+    setInterval(function(){ renderStatus(); if (isNative) refreshHealthConnectSteps(); }, 30000); // досчитывать голод/жир, и (в нативном приложении) шаги из Health Connect
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) return;
+      renderStatus();
+      if (isNative) refreshHealthConnectSteps();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
