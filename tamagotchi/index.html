@@ -147,6 +147,7 @@
   .rules-sheet p{margin:0 0 12px}
   .rules-sheet button{margin-top:4px}
   .game-result{text-align:center;font-size:16px;font-weight:700;margin:0 0 14px;color:var(--accent)}
+  .assess-shape-fill{fill:var(--accent);transition:rx .3s ease}
 
   .pdd-ticket-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .pdd-ticket-grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -270,6 +271,7 @@
       <button id="btn-play" class="secondary">Играть</button>
       <button id="btn-rest" class="secondary">Отдыхать</button>
       <button id="btn-chat" class="secondary">Поговорить</button>
+      <button id="btn-assess" class="secondary">Оценить состояние</button>
       <button id="btn-sensor" class="secondary">Включить датчик шагов</button>
       <button id="btn-sync-steps" class="secondary hidden">Обновить шаги сейчас</button>
       <button id="btn-games" class="secondary">Игры</button>
@@ -356,6 +358,17 @@
       <h2 id="rules-title">Правила</h2>
       <div id="rules-body"></div>
       <button id="btn-rules-close">Понятно</button>
+    </div>
+  </div>
+
+  <div id="assess-overlay" class="rules-overlay hidden">
+    <div class="rules-sheet" style="text-align:center">
+      <h2 id="assess-title">Состояние</h2>
+      <svg id="assess-svg" viewBox="0 0 320 140" style="width:100%;max-width:300px;height:140px;display:block;margin:0 auto 14px">
+        <ellipse id="assess-shape" class="assess-shape-fill" cx="160" cy="70" rx="156" ry="65"></ellipse>
+      </svg>
+      <p id="assess-text"></p>
+      <button id="btn-assess-close">Понятно</button>
     </div>
   </div>
 
@@ -1922,6 +1935,7 @@
     document.getElementById('text-energy').textContent = Math.round(pet.energy) + '%';
     document.getElementById('text-fun').textContent = Math.round(pet.fun) + '%';
     document.getElementById('text-steps').textContent = String(s.steps + s.bonus);
+    document.getElementById('btn-assess').textContent = 'Оценить состояние ' + pet.name;
     setRing('ring-satiety', pet.satiety);
     setRing('ring-fat', pet.fat);
     setRing('ring-energy', pet.energy);
@@ -1931,6 +1945,23 @@
       'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
       ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) + ' мин. ' +
       (isNative ? 'Шаги берутся из Health Connect.' : 'Шаги считаются только пока эта страница открыта в браузере.');
+  }
+
+  // Овал состояния: высота фиксирована (ry всегда 65), ширина (rx) сжимается
+  // от вытянутого овала при 0% жира до идеального круга (rx === ry) при 100%.
+  var ASSESS_RY = 65;
+  var ASSESS_RX_MAX = 156;
+  function openAssess(){
+    var pet = loadPet();
+    var fat = Math.max(0, Math.min(100, pet.fat));
+    var rx = ASSESS_RX_MAX - (ASSESS_RX_MAX - ASSESS_RY) * (fat / 100);
+    document.getElementById('assess-shape').setAttribute('rx', rx.toFixed(1));
+    document.getElementById('assess-title').textContent = 'Состояние: ' + pet.name;
+    document.getElementById('assess-text').textContent = 'Жир: ' + Math.round(fat) + '%';
+    document.getElementById('assess-overlay').classList.remove('hidden');
+  }
+  function closeAssess(){
+    document.getElementById('assess-overlay').classList.add('hidden');
   }
 
   function init(){
@@ -1946,6 +1977,12 @@
 
     document.getElementById('btn-sync-steps').addEventListener('click', function(){
       refreshHealthConnectSteps(true);
+    });
+
+    document.getElementById('btn-assess').addEventListener('click', openAssess);
+    document.getElementById('btn-assess-close').addEventListener('click', closeAssess);
+    document.getElementById('assess-overlay').addEventListener('click', function(e){
+      if (e.target.id === 'assess-overlay') closeAssess();
     });
 
     document.getElementById('input-bio').addEventListener('input', function(){
