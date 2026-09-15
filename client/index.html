@@ -3518,7 +3518,27 @@ function _seenSet(kind) {
   try { return new Set(JSON.parse(localStorage.getItem(_seenStorageKey(kind)) || '[]')); }
   catch(e) { return new Set(); }
 }
-function _isSeen(kind, id) { return _seenSet(kind).has(id); }
+function _baselineKey(kind) { return `alliby_seen_baseline_${kind}_${S.session?.user?.id || 'anon'}`; }
+// Пока не прошёл первичный baseline-снимок для этого вида позиций — считаем
+// всё просмотренным (не показываем точки), чтобы не словить гонку с refreshUnseenBadges.
+function _isSeen(kind, id) {
+  if (!localStorage.getItem(_baselineKey(kind))) return true;
+  return _seenSet(kind).has(id);
+}
+// Первый прогон фичи на устройстве пользователя: всё, что уже существует на
+// момент появления бейджей, считаем просмотренным — иначе непросмотренными
+// оказались бы вообще все старые заказы/записи/абонементы/аренды.
+function _seedOrCountUnseen(kind, ids) {
+  if (!localStorage.getItem(_baselineKey(kind))) {
+    try {
+      localStorage.setItem(_seenStorageKey(kind), JSON.stringify(ids));
+      localStorage.setItem(_baselineKey(kind), '1');
+    } catch(e) {}
+    return 0;
+  }
+  const seen = _seenSet(kind);
+  return ids.filter(id => !seen.has(id)).length;
+}
 function _markSeen(kind, id) {
   if (!id) return;
   const key = _seenStorageKey(kind);
@@ -3550,11 +3570,10 @@ async function refreshUnseenBadges() {
       req(`/rest/v1/user_subscriptions?user_id=eq.${uid}&gift_status=is.null&select=id&order=purchase_date.desc&limit=100`),
       req(`/rest/v1/rent_reservations?user_id=eq.${uid}&status=neq.cancelled&select=id&order=created_at.desc&limit=100`),
     ]);
-    const seenOrd = _seenSet('ord'), seenBk = _seenSet('bk'), seenSub = _seenSet('sub'), seenRent = _seenSet('rent');
-    _unseenCounts.ord  = ords.filter(o => !seenOrd.has(o.id)).length;
-    _unseenCounts.bk   = bks.filter(b => !seenBk.has(b.id)).length;
-    _unseenCounts.sub  = subs.filter(s => !seenSub.has(s.id)).length;
-    _unseenCounts.rent = rents.filter(r => !seenRent.has(r.id)).length;
+    _unseenCounts.ord  = _seedOrCountUnseen('ord', ords.map(o => o.id));
+    _unseenCounts.bk   = _seedOrCountUnseen('bk', bks.map(b => b.id));
+    _unseenCounts.sub  = _seedOrCountUnseen('sub', subs.map(s => s.id));
+    _unseenCounts.rent = _seedOrCountUnseen('rent', rents.map(r => r.id));
   } catch(e) {}
   _applyCaBadges();
 }
