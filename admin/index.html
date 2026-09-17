@@ -2909,7 +2909,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
           </div>
         </div>
         <div id="mmi-training-schedule-wrap">
-          <label>Дни и время занятий <span class="hint" data-tip="У каждого выбранного дня своё время начала занятия">?</span></label>
+          <label id="mmi-training-schedule-label">Дни и время занятий <span class="hint" id="mmi-training-schedule-hint" data-tip="У каждого выбранного дня своё время начала занятия">?</span></label>
           <div id="mmi-training-schedule-list" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
         </div>
       </div>
@@ -6169,7 +6169,9 @@ function onMmiItemTypeChange() {
 }
 
 // ─── ITEM TRAINING (спорт/развлечения: групповые/персональные занятия) ───
-let _editTrainingSchedule = []; // [{day_of_week, start_time}], day_of_week 0=Пн..6=Вс
+let _editTrainingSchedule = []; // [{day_of_week, start_time, end_time}], day_of_week 0=Пн..6=Вс
+// Групповое: start_time — время начала занятия (end_time не используется, конец = +duration_minutes).
+// Персональное: start_time/end_time — диапазон приёма клиентов в этот день.
 const _TRAINING_DAY_LABELS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
 function _updateTrainingVisibility() {
@@ -6191,33 +6193,44 @@ function onMmiTrainingToggle(show) {
 
 function onMmiTrainingModeChange() {
   const mode = document.getElementById('mmi-training-mode').value;
-  document.getElementById('mmi-training-schedule-wrap').style.display = mode === 'group' ? '' : 'none';
   const label = document.getElementById('mmi-max-group-label');
   const hint = label.querySelector('.hint');
   label.firstChild.textContent = mode === 'group' ? 'Максимальный размер группы ' : 'Макс. клиентов в одной сессии ';
   if (hint) label.appendChild(hint);
-  if (mode === 'group' && !_editTrainingSchedule.length) _renderTrainingSchedule();
+  const schedLabel = document.getElementById('mmi-training-schedule-label');
+  const schedHint = document.getElementById('mmi-training-schedule-hint');
+  schedLabel.firstChild.textContent = mode === 'group' ? 'Дни и время занятий ' : 'Дни и часы приёма ';
+  schedHint.dataset.tip = mode === 'group'
+    ? 'У каждого выбранного дня своё время начала занятия'
+    : 'Диапазон времени, в который тренер готов принимать клиентов на персональные тренировки в этот день. Клиент выбирает удобное время внутри диапазона';
+  schedLabel.appendChild(schedHint);
+  _renderTrainingSchedule();
 }
 
 function _renderTrainingSchedule() {
   const el = document.getElementById('mmi-training-schedule-list');
   if (!el) return;
+  const mode = document.getElementById('mmi-training-mode').value;
   el.innerHTML = _TRAINING_DAY_LABELS.map((label, d) => {
     const row = _editTrainingSchedule.find(r => r.day_of_week === d);
     const on = !!row;
+    const timesHtml = mode === 'personal'
+      ? `<input type="time" value="${row?.start_time || ''}" ${on ? '' : 'disabled'} style="width:100px" onchange="_setTrainingDayTime(${d},this.value)">
+         <span style="font-size:12px;color:var(--fg-3)">–</span>
+         <input type="time" value="${row?.end_time || ''}" ${on ? '' : 'disabled'} style="width:100px" onchange="_setTrainingDayEndTime(${d},this.value)">`
+      : `<input type="time" value="${row?.start_time || ''}" ${on ? '' : 'disabled'} style="width:110px" onchange="_setTrainingDayTime(${d},this.value)">`;
     return `<div style="display:flex;align-items:center;gap:8px">
       <label style="display:flex;align-items:center;gap:4px;width:38px;flex-shrink:0;cursor:pointer;font-size:12px">
         <input type="checkbox" style="width:auto;margin:0" ${on ? 'checked' : ''} onchange="_toggleTrainingDay(${d},this.checked)"> ${label}
       </label>
-      <input type="time" value="${row?.start_time || ''}" ${on ? '' : 'disabled'} style="width:110px"
-        onchange="_setTrainingDayTime(${d},this.value)">
+      ${timesHtml}
     </div>`;
   }).join('');
 }
 
 function _toggleTrainingDay(day, checked) {
   if (checked) {
-    if (!_editTrainingSchedule.find(r => r.day_of_week === day)) _editTrainingSchedule.push({ day_of_week: day, start_time: '' });
+    if (!_editTrainingSchedule.find(r => r.day_of_week === day)) _editTrainingSchedule.push({ day_of_week: day, start_time: '', end_time: '' });
   } else {
     _editTrainingSchedule = _editTrainingSchedule.filter(r => r.day_of_week !== day);
   }
@@ -6229,13 +6242,21 @@ function _setTrainingDayTime(day, value) {
   if (row) row.start_time = value;
 }
 
+function _setTrainingDayEndTime(day, value) {
+  const row = _editTrainingSchedule.find(r => r.day_of_week === day);
+  if (row) row.end_time = value;
+}
+
 function _getTrainingErrors() {
   if (!document.getElementById('mmi-training-toggle').checked) return null;
   const maxGroup = parseInt(document.getElementById('mmi-max-group-size').value, 10);
   if (!maxGroup || maxGroup < 1) return 'Тренировка: укажите максимальный размер группы';
-  if (document.getElementById('mmi-training-mode').value === 'group') {
-    if (!_editTrainingSchedule.length) return 'Тренировка: выберите хотя бы один день занятий';
-    if (_editTrainingSchedule.some(r => !r.start_time)) return 'Тренировка: укажите время для каждого выбранного дня';
+  const mode = document.getElementById('mmi-training-mode').value;
+  if (!_editTrainingSchedule.length) return mode === 'group' ? 'Тренировка: выберите хотя бы один день занятий' : 'Тренировка: выберите хотя бы один день приёма';
+  if (mode === 'group' && _editTrainingSchedule.some(r => !r.start_time)) return 'Тренировка: укажите время для каждого выбранного дня';
+  if (mode === 'personal') {
+    if (_editTrainingSchedule.some(r => !r.start_time || !r.end_time)) return 'Тренировка: укажите начало и конец диапазона для каждого выбранного дня';
+    if (_editTrainingSchedule.some(r => r.end_time <= r.start_time)) return 'Тренировка: конец диапазона должен быть позже начала';
   }
   return null;
 }
@@ -6243,12 +6264,17 @@ function _getTrainingErrors() {
 async function _saveTrainingSchedule(itemId) {
   const isTraining = document.getElementById('mmi-training-toggle').checked;
   const mode = document.getElementById('mmi-training-mode').value;
-  const rows = (isTraining && mode === 'group') ? _editTrainingSchedule : [];
+  const rows = isTraining ? _editTrainingSchedule : [];
   await req(`/rest/v1/training_schedules?menu_item_id=eq.${itemId}`, { method: 'DELETE' });
   if (rows.length) {
     await req('/rest/v1/training_schedules', {
       method: 'POST',
-      body: JSON.stringify(rows.map(r => ({ menu_item_id: itemId, day_of_week: r.day_of_week, start_time: r.start_time }))),
+      body: JSON.stringify(rows.map(r => ({
+        menu_item_id: itemId,
+        day_of_week: r.day_of_week,
+        start_time: r.start_time,
+        end_time: mode === 'personal' ? r.end_time : null,
+      }))),
     });
   }
 }
@@ -6330,7 +6356,7 @@ function openMenuItemModal(item) {
         _renderPriceRules();
       }
     }).catch(() => {});
-    if (item.is_training && item.training_mode === 'group') {
+    if (item.is_training) {
       req(`/rest/v1/training_schedules?menu_item_id=eq.${item.id}&order=day_of_week.asc`).then(rows => {
         _editTrainingSchedule = rows || [];
         _renderTrainingSchedule();

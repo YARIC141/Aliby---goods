@@ -10957,6 +10957,7 @@ let _booking = {
   masterScheds: {},    // masterId → [{day_of_week, start_time, end_time}]
   masterBooked: {},    // masterId → date → [{slot_start, slot_end}]
   masterPrices: {},    // masterId → price
+  personalSchedule: [], // [{day_of_week, start_time, end_time}] — диапазон приёма для персональной тренировки (товар)
   slotMasterMap: {},   // date → slotStart → {end, masterIds:[]}
   selectedMasterId: '',
   autoMasterId: null,
@@ -11063,6 +11064,17 @@ function _personalWorkWindow(masterId, ds) {
     if (we > ws) { if (lo === null || ws < lo) lo = ws; if (hi === null || we > hi) hi = we; }
   }
   if (lo === null) return null;
+  // Товар может ограничивать приём персональных тренировок конкретными днями/диапазоном
+  // (training_schedules). Если для товара расписание не задано вовсе (легаси-позиции
+  // до этой фичи) — ограничение не применяется, доступны все дни по графику мастера.
+  const itemSched = _booking.personalSchedule || [];
+  if (itemSched.length) {
+    const dayRange = itemSched.find(r => r.day_of_week === dow);
+    if (!dayRange) return null;
+    lo = Math.max(lo, _timeToMin(dayRange.start_time));
+    hi = Math.min(hi, _timeToMin(dayRange.end_time));
+    if (hi <= lo) return null;
+  }
   const durMin = Math.max(_booking.item?.duration_minutes || 30, 5);
   if (hi - lo < durMin) return null;
   return { start: _minToTime(lo), end: _minToTime(hi) };
@@ -11083,6 +11095,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   _booking.masterScheds = {};
   _booking.masterBooked = {};
   _booking.masterPrices = {};
+  _booking.personalSchedule = [];
   _booking.slotMasterMap = {};
   _booking.trainingMode = (item.is_training && ['group','personal'].includes(item.training_mode)) ? item.training_mode : null;
   _booking.trainingSchedule = [];
@@ -11148,7 +11161,13 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
 
   if (_booking.trainingMode === 'personal') {
     try {
-      const masterSvcs = await req(`/rest/v1/master_services?service_id=eq.${item.id}&select=master_id,price`);
+      const [masterSvcs, schedRows, personalSched] = await Promise.all([
+        req(`/rest/v1/master_services?service_id=eq.${item.id}&select=master_id,price`),
+        req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${today}&date=lte.${endDate}&select=date,slots`),
+        req(`/rest/v1/training_schedules?menu_item_id=eq.${item.id}&select=day_of_week,start_time,end_time`),
+      ]);
+      _booking.personalSchedule = personalSched || [];
+      schedRows.forEach(r => { _booking.schedData[r.date] = r.slots; });
       const masterIds = masterSvcs.map(s => s.master_id);
       if (masterIds.length > 0) {
         masterSvcs.forEach(s => { _booking.masterPrices[s.master_id] = s.price; });
@@ -11167,8 +11186,6 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
         sel.value = _booking.selectedMasterId || '';
         document.getElementById('mbs-master-filter').style.display = '';
       }
-      const schedRows = await req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${today}&date=lte.${endDate}&select=date,slots`);
-      schedRows.forEach(r => { _booking.schedData[r.date] = r.slots; });
     } catch(e) {}
     document.getElementById('mbs-loading').style.display = 'none';
     if (_booking.masters.length > 0) {
@@ -11449,11 +11466,18 @@ function _renderPersonalPendingTotal() {
   const item = _booking.item;
   if (!item) return;
   const masterPrice = _booking.selectedMasterId ? _booking.masterPrices[_booking.selectedMasterId] : null;
-  const price = masterPrice != null ? masterPrice : item.price;
+  const fullPrice = masterPrice != null ? masterPrice : item.price;
+  const maxGroup = _booking.maxGroupSize || 1;
   document.getElementById('mbs-subtotal-row').style.display = 'none';
   document.getElementById('mbs-sub-toggle-row').style.display = 'none';
   document.getElementById('mbs-total-row').style.display = '';
-  document.getElementById('mbs-total-price').textContent = `${Number(price).toFixed(0)} ₽ (после подтверждения тренером)`;
+  if (maxGroup > 1) {
+    const perPersonAtMax = fullPrice / maxGroup;
+    document.getElementById('mbs-total-price').textContent =
+      `от ${Number(perPersonAtMax).toFixed(0)} до ${Number(fullPrice).toFixed(0)} ₽ на человека — зависит от того, сколько клиентов тренер объединит на это время (после подтверждения тренером)`;
+  } else {
+    document.getElementById('mbs-total-price').textContent = `${Number(fullPrice).toFixed(0)} ₽ (после подтверждения тренером)`;
+  }
 }
 
 async function confirmPersonalTrainingRequest() {
