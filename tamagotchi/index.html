@@ -928,10 +928,19 @@
   }
   function refreshHealthConnectMetrics(){
     if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return;
-    window.Capacitor.Plugins.Tamagotchi.getTodayHealthMetrics().then(function(res){
-      lsSet('hcMetrics', JSON.stringify(res || {}));
-      renderHealthMetrics();
-    }).catch(function(){});
+    // Плагин может ещё не содержать этот метод, если веб-часть уже задеплоена,
+    // а нативное приложение (APK) — ещё нет: деплой веб-ассетов и сборка APK
+    // не связаны (см. Native shell/...). Без этой проверки вызов несуществующего
+    // метода бросает синхронное исключение и в init() ломает регистрацию
+    // всех последующих обработчиков кнопок.
+    var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
+    if (!plugin || typeof plugin.getTodayHealthMetrics !== 'function') return;
+    try {
+      plugin.getTodayHealthMetrics().then(function(res){
+        lsSet('hcMetrics', JSON.stringify(res || {}));
+        renderHealthMetrics();
+      }).catch(function(){});
+    } catch (e) {}
   }
   function renderHealthMetrics(){
     var el = document.getElementById('hc-metrics');
@@ -2275,7 +2284,7 @@
       showScreen('status');
       renderStatus();
       document.getElementById('input-bio').value = lsGet('bio', '');
-      if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); }
+      if (isNative){ try { refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } catch (e) {} }
       else if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
       showScreen('create');
