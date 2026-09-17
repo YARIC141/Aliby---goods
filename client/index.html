@@ -1557,10 +1557,18 @@ document.addEventListener('deviceready',function(){
         <button class="chip"        data-ca-mode="group"    onclick="setCaSchedMode('group')">Групповые занятия</button>
         <button class="chip"        data-ca-mode="personal" onclick="setCaSchedMode('personal')">Персональные тренировки</button>
       </div>
+      <div id="ca-sched-item-row" style="display:none;margin-bottom:10px">
+        <select id="ca-sched-item-sel" onchange="setCaSchedItem(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
+          <option value="">Выберите тренировку</option>
+        </select>
+      </div>
       <div id="ca-sched-master-row" style="display:none;margin-bottom:12px">
         <select id="ca-sched-master-sel" onchange="setCaSchedMaster(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
           <option value="">Любой мастер</option>
         </select>
+      </div>
+      <div id="ca-sched-book-row" style="display:none;margin-bottom:12px">
+        <button class="btn btn-p btn-full" onclick="bookTrainingFromSched()">Записаться на тренировку</button>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <button class="btn btn-sm" onclick="caSchedPrevMonth()">←</button>
@@ -2580,13 +2588,8 @@ document.addEventListener('deviceready',function(){
       <div id="mbs-date-label" style="font:600 14px/1.3 var(--font-sans);margin-bottom:8px"></div>
       <div id="mbs-slots" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;min-height:36px"></div>
       <div id="mbs-personal-range" style="display:none;margin-bottom:14px">
-        <div style="font-size:13px;color:var(--fg-3);margin-bottom:8px">Укажите диапазон времени, в который вам удобно заниматься. Если у другого клиента диапазон пересечётся с вашим, тренер объединит вас в одну тренировку.</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="time" id="mbs-pref-start" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg)" onchange="onBookingPrefRangeChange()">
-          <span>—</span>
-          <input type="time" id="mbs-pref-end" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg)" onchange="onBookingPrefRangeChange()">
-        </div>
-        <div id="mbs-pref-hint" style="font-size:12px;color:var(--fg-3);margin-top:6px"></div>
+        <div style="font-size:13px;color:var(--fg-3);margin-bottom:8px">Отметьте на календаре один или несколько удобных дней и укажите для каждого диапазон времени. Если у другого клиента диапазон пересечётся с вашим, тренер объединит вас в одну тренировку.</div>
+        <div id="mbs-personal-days-list"></div>
       </div>
       <div id="mbs-master-chosen" style="display:none;margin-bottom:12px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2);font-size:13px;color:var(--fg-2)">
         <span id="mbs-master-chosen-lbl">Мастер</span>: <strong id="mbs-master-chosen-name"></strong>
@@ -3486,7 +3489,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 
 let _calenabsTab = 'ord';
 let _schedulePreselect = null;
-const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {} };
+const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {} };
 
 function peekTab(btn) {
   if (!btn) return;
@@ -4363,6 +4366,7 @@ async function loadCaScheduleScreen() {
     _caSched.bookedData = {};
     _caSched.openDate = null;
     _caSched.masterId = '';
+    _caSched.itemId = '';
     _caSched.masters = [];
     _caSched.masterScheds = {};
     _caSched.mode = 'all';
@@ -4390,10 +4394,29 @@ async function loadCaScheduleScreen() {
       });
       const modeRow = document.getElementById('ca-sched-mode-row');
       if (modeRow) modeRow.style.display = (trainItems || []).length ? 'flex' : 'none';
+      _populateCaSchedItemSelect();
       _populateCaSchedMasterSelect();
     } catch {}
   }
   await _loadCaSchedMonth();
+}
+
+function _populateCaSchedItemSelect() {
+  const sel = document.getElementById('ca-sched-item-sel');
+  const row = document.getElementById('ca-sched-item-row');
+  if (!sel || !row) return;
+  const mode = _caSched.mode;
+  let items = mode === 'all' ? _caSched.trainingItems : _caSched.trainingItems.filter(it => it.training_mode === mode);
+  if (_caSched.masterId) {
+    const master = _caSched.masters.find(m => m.id === _caSched.masterId);
+    const svcIds = new Set((master?.master_services || []).map(ms => ms.service_id));
+    items = items.filter(it => svcIds.has(it.id));
+  }
+  sel.innerHTML = `<option value="">Выберите тренировку</option>` + items.map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('');
+  if (!items.some(it => it.id === _caSched.itemId)) { _caSched.itemId = ''; sel.value = ''; }
+  else sel.value = _caSched.itemId;
+  row.style.display = items.length ? '' : 'none';
+  document.getElementById('ca-sched-book-row').style.display = _caSched.itemId ? '' : 'none';
 }
 
 function _populateCaSchedMasterSelect() {
@@ -4402,7 +4425,8 @@ function _populateCaSchedMasterSelect() {
   const row = document.getElementById('ca-sched-master-row');
   if (!sel || !row || !store) return;
   const mode = _caSched.mode;
-  const masters = mode === 'all' ? _caSched.masters : _caSched.masters.filter(m => (_caSched.masterModes[m.id] || new Set()).has(mode));
+  let masters = mode === 'all' ? _caSched.masters : _caSched.masters.filter(m => (_caSched.masterModes[m.id] || new Set()).has(mode));
+  if (_caSched.itemId) masters = masters.filter(m => (m.master_services || []).some(ms => ms.service_id === _caSched.itemId));
   const mw = _MW(store.direction);
   sel.innerHTML = `<option value="">${mw.any}</option>` + masters.map(m => `<option value="${m.id}">${esc(m.full_name || mw.nom)}</option>`).join('');
   if (!masters.some(m => m.id === _caSched.masterId)) { _caSched.masterId = ''; sel.value = ''; }
@@ -4413,6 +4437,7 @@ function _populateCaSchedMasterSelect() {
 function setCaSchedMode(mode) {
   _caSched.mode = mode;
   document.querySelectorAll('#ca-sched-mode-row .chip').forEach(b => b.classList.toggle('active', b.dataset.caMode === mode));
+  _populateCaSchedItemSelect();
   _populateCaSchedMasterSelect();
   _caSched.openDate = null;
   document.getElementById('ca-sched-day-view').style.display = 'none';
@@ -4421,9 +4446,34 @@ function setCaSchedMode(mode) {
 
 function setCaSchedMaster(masterId) {
   _caSched.masterId = masterId;
+  _populateCaSchedItemSelect();
   _caSched.openDate = null;
   document.getElementById('ca-sched-day-view').style.display = 'none';
   _loadCaSchedMonth();
+}
+
+function setCaSchedItem(itemId) {
+  _caSched.itemId = itemId;
+  _populateCaSchedMasterSelect();
+  document.getElementById('ca-sched-book-row').style.display = itemId ? '' : 'none';
+  _caSched.openDate = null;
+  document.getElementById('ca-sched-day-view').style.display = 'none';
+  _loadCaSchedMonth();
+}
+
+async function bookTrainingFromSched() {
+  const id = _caSched.itemId;
+  if (!id) return;
+  let item = itemCache.get(id);
+  if (!item) {
+    try {
+      const rows = await req(`/rest/v1/menu_items?id=eq.${id}&select=*`);
+      item = rows?.[0];
+      if (item) itemCache.set(id, item);
+    } catch (e) {}
+  }
+  if (!item) { showGeoToast('Ошибка загрузки тренировки'); return; }
+  openBookingSlotModal(item, null, _caSched.masterId || null);
 }
 
 async function _loadCaSchedMonth() {
@@ -4438,7 +4488,7 @@ async function _loadCaSchedMonth() {
     if (mode === 'group') {
       // Групповые занятия: фиксированное расписание по дням недели + вместимость группы
       const masterItemIds = masterId ? new Set((_caSched.masters.find(m => m.id === masterId)?.master_services || []).map(ms => ms.service_id)) : null;
-      const items = _caSched.trainingItems.filter(it => it.training_mode === 'group' && (!masterItemIds || masterItemIds.has(it.id)));
+      const items = _caSched.trainingItems.filter(it => it.training_mode === 'group' && (!masterItemIds || masterItemIds.has(it.id)) && (!_caSched.itemId || it.id === _caSched.itemId));
       if (items.length) {
         const ids = items.map(it => it.id);
         const itemById = {}; items.forEach(it => { itemById[it.id] = it; });
@@ -11096,6 +11146,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   _booking.masterBooked = {};
   _booking.masterPrices = {};
   _booking.personalSchedule = [];
+  _booking.personalDays = {};
   _booking.slotMasterMap = {};
   _booking.trainingMode = (item.is_training && ['group','personal'].includes(item.training_mode)) ? item.training_mode : null;
   _booking.trainingSchedule = [];
@@ -11113,8 +11164,7 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   document.getElementById('mbs-pick-master-hint').style.display = 'none';
   document.getElementById('mbs-master-filter').style.display = 'none';
   document.getElementById('mbs-personal-range').style.display = 'none';
-  document.getElementById('mbs-pref-start').value = '';
-  document.getElementById('mbs-pref-end').value = '';
+  document.getElementById('mbs-date-label').textContent = '';
   document.getElementById('mbs-book-btn').disabled = true;
   document.getElementById('mbs-pay-btn').disabled = true;
   document.getElementById('mbs-pay-btn').textContent = 'Оплатить и записаться';
@@ -11292,18 +11342,19 @@ function _renderBookingCal() {
   const body = document.getElementById('mbs-cal-body');
   body.innerHTML = SCHED_CAL_HD_HTML;
   for (let i = 0; i < dow; i++) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
+  const isPersonal = _booking.trainingMode === 'personal';
   for (let d = 1; d <= lastDate; d++) {
     const pad = n => String(n).padStart(2, '0');
     const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
     const availCount = _bookingDayAvailCount(ds);
     const hasAny = availCount > 0;
     const isToday = ds === today;
-    const isSelected = ds === _booking.currentDate;
+    const isSelected = isPersonal ? !!_booking.personalDays[ds] : ds === _booking.currentDate;
     const td = document.createElement('div');
     td.className = `sched-day${!hasAny ? ' empty' : ''}${isToday ? ' today' : ''}${hasAny ? ' has-sched' : ''}${isSelected ? ' selected' : ''}`;
-    const badge = hasAny ? `<span class="sched-bk-cnt">${availCount}</span>` : '';
+    const badge = (hasAny && !isPersonal) ? `<span class="sched-bk-cnt">${availCount}</span>` : '';
     td.innerHTML = `<span class="sd-n">${d}</span>${badge}`;
-    if (hasAny) td.onclick = () => { _booking.currentDate = ds; renderBookingDateView(); };
+    if (hasAny) td.onclick = isPersonal ? () => _personalDayToggle(ds) : () => { _booking.currentDate = ds; renderBookingDateView(); };
     body.appendChild(td);
   }
   while (body.children.length % 7 !== 0) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
@@ -11341,25 +11392,6 @@ function renderBookingDateView() {
     document.getElementById('mbs-slots').innerHTML = slots.length
       ? slots.map(s => `<button class="booking-slot" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start} · своб. ${s.free}</button>`).join('')
       : `<span style="color:var(--muted);font-size:13px">Нет свободных групп на этот день</span>`;
-    _renderBookingCal();
-    return;
-  }
-  if (_booking.trainingMode === 'personal') {
-    document.getElementById('mbs-slots').style.display = 'none';
-    document.getElementById('mbs-personal-range').style.display = '';
-    const w = _personalWorkWindow(_booking.selectedMasterId, ds);
-    const startInp = document.getElementById('mbs-pref-start');
-    const endInp = document.getElementById('mbs-pref-end');
-    if (!w) {
-      startInp.removeAttribute('min'); startInp.removeAttribute('max'); startInp.value = '';
-      endInp.removeAttribute('min'); endInp.removeAttribute('max'); endInp.value = '';
-      document.getElementById('mbs-pref-hint').textContent = 'Нет рабочего времени в этот день';
-    } else {
-      startInp.min = w.start; startInp.max = w.end;
-      endInp.min = w.start; endInp.max = w.end;
-      startInp.value = w.start; endInp.value = w.end;
-      onBookingPrefRangeChange();
-    }
     _renderBookingCal();
     return;
   }
@@ -11403,9 +11435,23 @@ function onBookingMasterChange(masterId) {
   }
   document.getElementById('mbs-pick-master-hint').style.display = 'none';
   const dates = Object.keys(_booking.schedData).sort();
-  const firstAvail = _booking.trainingMode === 'personal'
-    ? dates.find(ds => _personalWorkWindow(masterId, ds))
-    : dates.find(ds => _hasMasterSlots(ds, masterId));
+  if (_booking.trainingMode === 'personal') {
+    _booking.personalDays = {};
+    if (!dates.some(ds => _personalWorkWindow(masterId, ds))) {
+      document.getElementById('mbs-main').style.display = 'none';
+      document.getElementById('mbs-no-sched').style.display = '';
+      return;
+    }
+    document.getElementById('mbs-no-sched').style.display = 'none';
+    document.getElementById('mbs-main').style.display = '';
+    document.getElementById('mbs-date-label').textContent = '';
+    document.getElementById('mbs-slots').style.display = 'none';
+    document.getElementById('mbs-personal-range').style.display = '';
+    _renderBookingCal();
+    _renderPersonalDaysList();
+    return;
+  }
+  const firstAvail = dates.find(ds => _hasMasterSlots(ds, masterId));
   if (!firstAvail) {
     document.getElementById('mbs-main').style.display = 'none';
     document.getElementById('mbs-no-sched').style.display = '';
@@ -11439,26 +11485,81 @@ function selectBookingSlot(start, end) {
   _renderBookingTotal();
 }
 
-function onBookingPrefRangeChange() {
-  const startInp = document.getElementById('mbs-pref-start');
-  const endInp = document.getElementById('mbs-pref-end');
-  const durMin = Math.max(_booking.item?.duration_minutes || 30, 5);
-  const s = startInp.value, e = endInp.value;
-  const bookBtn = document.getElementById('mbs-book-btn');
-  const hint = document.getElementById('mbs-pref-hint');
-  let ok = false, msg = '';
-  if (s && e) {
-    const sM = _timeToMin(s), eM = _timeToMin(e);
-    if (eM <= sM) msg = 'Время «до» должно быть позже «от»';
-    else if (eM - sM < durMin) msg = `Диапазон должен быть не короче ${durMin} мин`;
-    else if (startInp.min && sM < _timeToMin(startInp.min)) msg = `Не раньше ${startInp.min}`;
-    else if (endInp.max && eM > _timeToMin(endInp.max)) msg = `Не позже ${endInp.max}`;
-    else ok = true;
+function _personalDayToggle(ds) {
+  if (_booking.personalDays[ds]) {
+    delete _booking.personalDays[ds];
+  } else {
+    const w = _personalWorkWindow(_booking.selectedMasterId, ds);
+    if (!w) return;
+    _booking.personalDays[ds] = { start: w.start, end: w.end };
   }
-  if (hint) hint.textContent = msg || (startInp.min && endInp.max ? `Рабочее время: ${startInp.min}–${endInp.max}. Длительность занятия: ${durMin} мин` : '');
-  bookBtn.disabled = !ok;
-  _booking.selectedSlot = ok ? { start: s, end: e } : null;
-  if (ok) _renderPersonalPendingTotal();
+  _renderBookingCal();
+  _renderPersonalDaysList();
+}
+
+function removePersonalDay(ds) {
+  delete _booking.personalDays[ds];
+  _renderBookingCal();
+  _renderPersonalDaysList();
+}
+
+const _PD_DOW = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const _PD_MON = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+
+function _renderPersonalDaysList() {
+  const wrap = document.getElementById('mbs-personal-days-list');
+  const dsList = Object.keys(_booking.personalDays).sort();
+  if (!dsList.length) {
+    wrap.innerHTML = `<span style="color:var(--muted);font-size:13px">Отметьте на календаре день (или несколько), когда вам удобно</span>`;
+  } else {
+    wrap.innerHTML = dsList.map(ds => {
+      const [y, m, d] = ds.split('-').map(Number);
+      const label = `${_PD_DOW[new Date(y, m - 1, d).getDay()]}, ${d} ${_PD_MON[m - 1]}`;
+      const day = _booking.personalDays[ds];
+      const w = _personalWorkWindow(_booking.selectedMasterId, ds) || { start: '00:00', end: '23:59' };
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:600;min-width:76px">${label}</span>
+        <input type="time" value="${day.start}" min="${w.start}" max="${w.end}" onchange="onPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+        <span style="color:var(--muted);font-size:13px">–</span>
+        <input type="time" value="${day.end}" min="${w.start}" max="${w.end}" onchange="onPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+        <button type="button" class="btn btn-sm" onclick="removePersonalDay('${ds}')" style="margin-left:auto">✕</button>
+        <div class="personal-day-err" data-ds="${ds}" style="width:100%;font-size:12px;color:#e05252"></div>
+      </div>`;
+    }).join('');
+  }
+  _updatePersonalSubmitState();
+}
+
+function onPersonalDayRangeChange(ds, which, value) {
+  const day = _booking.personalDays[ds];
+  if (!day) return;
+  day[which] = value;
+  _updatePersonalSubmitState();
+}
+
+function _updatePersonalSubmitState() {
+  const durMin = Math.max(_booking.item?.duration_minutes || 30, 5);
+  const dsList = Object.keys(_booking.personalDays);
+  let allOk = dsList.length > 0;
+  dsList.forEach(ds => {
+    const day = _booking.personalDays[ds];
+    const w = _personalWorkWindow(_booking.selectedMasterId, ds);
+    const errEl = document.querySelector(`.personal-day-err[data-ds="${ds}"]`);
+    let msg = '';
+    if (!day.start || !day.end) msg = 'Укажите время';
+    else if (!w) msg = 'Нет рабочего времени в этот день';
+    else {
+      const sM = _timeToMin(day.start), eM = _timeToMin(day.end);
+      if (eM <= sM) msg = 'Время «до» должно быть позже «от»';
+      else if (eM - sM < durMin) msg = `Не короче ${durMin} мин`;
+      else if (sM < _timeToMin(w.start)) msg = `Не раньше ${w.start}`;
+      else if (eM > _timeToMin(w.end)) msg = `Не позже ${w.end}`;
+    }
+    if (errEl) errEl.textContent = msg;
+    if (msg) allOk = false;
+  });
+  document.getElementById('mbs-book-btn').disabled = !allOk;
+  if (allOk) _renderPersonalPendingTotal();
   else document.getElementById('mbs-total-row').style.display = 'none';
 }
 
@@ -11482,26 +11583,31 @@ function _renderPersonalPendingTotal() {
 
 async function confirmPersonalTrainingRequest() {
   if (!_booking.selectedMasterId) { showGeoToast('Выберите ' + _MW(S.store?.direction).gen); return; }
+  const dsList = Object.keys(_booking.personalDays);
+  if (!dsList.length) return;
   const storeId = S.store?.id || _booking.item.store_id;
   const masterPrice = _booking.masterPrices[_booking.selectedMasterId];
   const price = masterPrice != null ? masterPrice : _booking.item.price;
   const btn = document.getElementById('mbs-book-btn');
   const restore = btnLoad(btn, '…');
   try {
-    await req('/rest/v1/bookings', {
-      method: 'POST', headers: { Prefer: 'return=minimal' },
-      body: JSON.stringify({
-        user_id: S.session.user.id, store_id: storeId,
-        menu_item_id: _booking.item.id, slot_date: _booking.currentDate,
-        master_id: _booking.selectedMasterId,
-        preferred_start: _booking.selectedSlot.start + ':00',
-        preferred_end:   _booking.selectedSlot.end   + ':00',
-        status: 'pending_approval', payment_status: 'unpaid',
-        total_price: price,
-      }),
-    });
+    await Promise.all(dsList.map(ds => {
+      const day = _booking.personalDays[ds];
+      return req('/rest/v1/bookings', {
+        method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          user_id: S.session.user.id, store_id: storeId,
+          menu_item_id: _booking.item.id, slot_date: ds,
+          master_id: _booking.selectedMasterId,
+          preferred_start: day.start + ':00',
+          preferred_end:   day.end   + ':00',
+          status: 'pending_approval', payment_status: 'unpaid',
+          total_price: price,
+        }),
+      });
+    }));
     closeModal('m-book-slot');
-    showGeoToast('Заявка отправлена — тренер подберёт общее время и подтвердит запись');
+    showGeoToast(dsList.length > 1 ? 'Заявки отправлены — тренер подберёт общее время и подтвердит запись' : 'Заявка отправлена — тренер подберёт общее время и подтвердит запись');
     if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
     if (_calenabsIsActive() && _calenabsTab === 'bk') loadBookingsScreen();
   } catch(e) {
@@ -11550,8 +11656,9 @@ function bookingToggleSub(checked) {
 }
 
 async function confirmBooking(payNow) {
-  if (!S.session || !_booking.item || !_booking.currentDate || !_booking.selectedSlot) return;
+  if (!S.session || !_booking.item) return;
   if (_booking.trainingMode === 'personal') return confirmPersonalTrainingRequest();
+  if (!_booking.currentDate || !_booking.selectedSlot) return;
   if (_booking.trainingMode !== 'group' && _booking.masters.length > 0 && !_booking.autoMasterId) { showGeoToast('Выберите ' + _MW(S.store?.direction).gen); return; }
   const storeId = S.store?.id || _booking.item.store_id;
   const masterPrice = _booking.autoMasterId != null ? _booking.masterPrices[_booking.autoMasterId] : null;
