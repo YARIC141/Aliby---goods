@@ -53,8 +53,8 @@
   .sensor-status{font-size:12px;text-align:center;margin:2px 0 14px}
   .sensor-status.on{color:var(--accent)}
   .sensor-status.off{color:var(--text2)}
-  .hc-metrics{display:flex;flex-wrap:wrap;justify-content:center;gap:5px 12px;
-    font-size:12px;color:var(--text2);margin:-8px 0 14px;font-variant-numeric:tabular-nums}
+  #hc-metrics{margin-top:-8px}
+  .ring-icon.emoji{font-size:20px;line-height:1}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#232b33;color:var(--text);
     padding:12px 18px;border-radius:10px;font-size:14px;max-width:360px;text-align:center;
     box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:10}
@@ -283,7 +283,64 @@
     <div class="name" id="text-name"></div>
     <div class="mood" id="text-mood"></div>
     <div id="sensor-status" class="sensor-status off">Датчик шагов выключен</div>
-    <div id="hc-metrics" class="hc-metrics hidden"></div>
+
+    <div class="rings-row hidden" id="hc-metrics">
+      <div class="ring-item" id="ring-item-hc-distance">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-hc-distance" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Дистанция">🚶</div>
+        </div>
+        <div class="ring-label">Дистанция</div>
+        <div class="ring-value" id="text-hc-distance"></div>
+      </div>
+      <div class="ring-item" id="ring-item-hc-calories">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-hc-calories" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Активные калории">🔥</div>
+        </div>
+        <div class="ring-label">Калории</div>
+        <div class="ring-value" id="text-hc-calories"></div>
+      </div>
+      <div class="ring-item" id="ring-item-hc-sleep">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-hc-sleep" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Сон">😴</div>
+        </div>
+        <div class="ring-label">Сон</div>
+        <div class="ring-value" id="text-hc-sleep"></div>
+      </div>
+      <div class="ring-item" id="ring-item-hc-exercise">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-hc-exercise" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Тренировка">🏋️</div>
+        </div>
+        <div class="ring-label">Тренировка</div>
+        <div class="ring-value" id="text-hc-exercise"></div>
+      </div>
+      <div class="ring-item" id="ring-item-hc-heart">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-hc-heart" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Пульс">❤️</div>
+        </div>
+        <div class="ring-label">Пульс</div>
+        <div class="ring-value" id="text-hc-heart"></div>
+      </div>
+    </div>
 
     <div class="bio-card hidden" id="bio-card">
       <label for="input-bio" class="bio-label">Биография</label>
@@ -539,6 +596,17 @@
   var FUN_DECAY_PER_HOUR = 3.5;
 
   var DAILY_STEP_GOAL = 6000;
+
+  // ── Дневные ориентиры для колец остальных метрик Health Connect (сверх
+  // шагов) — чисто для наполнения кольца, не завязаны на геймплей. Пульс —
+  // не "цель", а условная шкала 40-180 уд/мин (от почти состояния покоя до
+  // пиковой нагрузки), чтобы визуально тоже влезал в кольцо-прогресс. ──────
+  var DAILY_DISTANCE_GOAL_M = 5000;
+  var DAILY_ACTIVE_CALORIES_GOAL = 500;
+  var DAILY_SLEEP_GOAL_MIN = 480;
+  var DAILY_EXERCISE_GOAL_MIN = 30;
+  var HEART_RATE_SCALE_MIN = 40;
+  var HEART_RATE_SCALE_MAX = 180;
 
   // ── Спрайты: по кадру на действие (не полноценная покадровая анимация —
   // см. Native shell/советы по анимации на будущее). Показываем кадр действия
@@ -942,17 +1010,44 @@
       }).catch(function(){});
     } catch (e) {}
   }
+  function setHealthRing(key, present, pct, text){
+    document.getElementById('ring-item-hc-' + key).classList.toggle('hidden', !present);
+    if (!present) return;
+    setRing('ring-hc-' + key, pct);
+    document.getElementById('text-hc-' + key).textContent = text;
+  }
+
   function renderHealthMetrics(){
     var el = document.getElementById('hc-metrics');
     var m = (isNative && lsGet('healthConnectEnabled', '') === '1') ? getHealthMetrics() : null;
-    var parts = [];
-    if (m && typeof m.distanceMeters === 'number') parts.push('🚶 ' + (m.distanceMeters/1000).toFixed(1) + ' км');
-    if (m && typeof m.activeCaloriesKcal === 'number') parts.push('🔥 ' + Math.round(m.activeCaloriesKcal) + ' ккал');
-    if (m && typeof m.sleepMinutes === 'number') parts.push('😴 ' + Math.floor(m.sleepMinutes/60) + 'ч ' + (m.sleepMinutes%60) + 'м');
-    if (m && typeof m.exerciseMinutes === 'number') parts.push('🏋️ ' + m.exerciseMinutes + ' мин');
-    if (m && typeof m.avgHeartRateBpm === 'number') parts.push('❤️ ' + m.avgHeartRateBpm + ' уд/мин');
-    el.innerHTML = parts.map(function(p){ return '<span>' + p + '</span>'; }).join('');
-    el.classList.toggle('hidden', parts.length === 0);
+    var any = false;
+
+    var hasDistance = !!(m && typeof m.distanceMeters === 'number');
+    if (hasDistance) any = true;
+    setHealthRing('distance', hasDistance, hasDistance ? 100 * m.distanceMeters / DAILY_DISTANCE_GOAL_M : 0,
+      hasDistance ? (m.distanceMeters/1000).toFixed(1) + ' км' : '');
+
+    var hasCalories = !!(m && typeof m.activeCaloriesKcal === 'number');
+    if (hasCalories) any = true;
+    setHealthRing('calories', hasCalories, hasCalories ? 100 * m.activeCaloriesKcal / DAILY_ACTIVE_CALORIES_GOAL : 0,
+      hasCalories ? Math.round(m.activeCaloriesKcal) + ' ккал' : '');
+
+    var hasSleep = !!(m && typeof m.sleepMinutes === 'number');
+    if (hasSleep) any = true;
+    setHealthRing('sleep', hasSleep, hasSleep ? 100 * m.sleepMinutes / DAILY_SLEEP_GOAL_MIN : 0,
+      hasSleep ? Math.floor(m.sleepMinutes/60) + 'ч ' + (m.sleepMinutes%60) + 'м' : '');
+
+    var hasExercise = !!(m && typeof m.exerciseMinutes === 'number');
+    if (hasExercise) any = true;
+    setHealthRing('exercise', hasExercise, hasExercise ? 100 * m.exerciseMinutes / DAILY_EXERCISE_GOAL_MIN : 0,
+      hasExercise ? m.exerciseMinutes + ' мин' : '');
+
+    var hasHeart = !!(m && typeof m.avgHeartRateBpm === 'number');
+    if (hasHeart) any = true;
+    var heartPct = 100 * (m && m.avgHeartRateBpm - HEART_RATE_SCALE_MIN) / (HEART_RATE_SCALE_MAX - HEART_RATE_SCALE_MIN);
+    setHealthRing('heart', hasHeart, heartPct, hasHeart ? m.avgHeartRateBpm + ' уд/мин' : '');
+
+    el.classList.toggle('hidden', !any);
   }
 
   function updateSensorStatusUI(){
