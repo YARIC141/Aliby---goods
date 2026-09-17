@@ -795,13 +795,20 @@
     el.style.stroke = barColor(pct);
   }
 
-  function settle(pet, now, activityLevel){
+  function settle(pet, now, activityLevel, hc){
     var hours = Math.max(0, (now - pet.lastUpdatedAt) / 3600000);
     if (hours <= 0) return pet;
     pet.satiety = clamp(pet.satiety - SATIETY_DECAY_PER_HOUR * hours);
-    var imbalance = (pet.satiety/100) - (activityLevel/100);
+    var fatActivity = getFatActivityLevel(hc);
+    if (fatActivity === null) fatActivity = activityLevel;
+    var imbalance = (pet.satiety/100) - (fatActivity/100);
     pet.fat = clamp(pet.fat + FAT_RATE_PER_HOUR * hours * imbalance);
-    pet.energy = clamp(pet.energy - ENERGY_DECAY_PER_HOUR * hours);
+    var sleepEnergy = getSleepEnergyLevel(hc);
+    if (sleepEnergy !== null) {
+      pet.energy = sleepEnergy;
+    } else {
+      pet.energy = clamp(pet.energy - ENERGY_DECAY_PER_HOUR * hours);
+    }
     pet.fun = clamp(pet.fun - FUN_DECAY_PER_HOUR * hours);
     pet.lastUpdatedAt = now;
     return pet;
@@ -812,33 +819,35 @@
     pet.lastFedAt = now;
     return true;
   }
-  function walk(pet, now){
+  // hc-стат уже занят Health Connect → кнопка всё равно "срабатывает" (кулдаун/золото/спрайт),
+  // но больше не двигает сам стат напрямую — см. project_tamagotchi_health_connect.
+  function walk(pet, now, hc){
     if (now - pet.lastWalkAt < WALK_COOLDOWN_MS) return false;
-    pet.fat = clamp(pet.fat - WALK_FAT_DROP);
+    if (getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - WALK_FAT_DROP);
     pet.satiety = clamp(pet.satiety - WALK_SATIETY_COST);
-    pet.energy = clamp(pet.energy - WALK_ENERGY_COST);
+    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - WALK_ENERGY_COST);
     pet.fun = clamp(pet.fun + WALK_FUN_GAIN);
     pet.lastWalkAt = now;
     return true;
   }
-  function exercise(pet, now){
+  function exercise(pet, now, hc){
     if (now - pet.lastExerciseAt < EXERCISE_COOLDOWN_MS) return false;
-    pet.fat = clamp(pet.fat - EXERCISE_FAT_DROP);
+    if (getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - EXERCISE_FAT_DROP);
     pet.satiety = clamp(pet.satiety - EXERCISE_SATIETY_COST);
-    pet.energy = clamp(pet.energy - EXERCISE_ENERGY_COST);
+    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - EXERCISE_ENERGY_COST);
     pet.lastExerciseAt = now;
     return true;
   }
-  function play(pet, now){
+  function play(pet, now, hc){
     if (now - pet.lastPlayAt < PLAY_COOLDOWN_MS) return false;
     pet.fun = clamp(pet.fun + PLAY_FUN_GAIN);
-    pet.energy = clamp(pet.energy - PLAY_ENERGY_COST);
+    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - PLAY_ENERGY_COST);
     pet.lastPlayAt = now;
     return true;
   }
-  function rest(pet, now){
+  function rest(pet, now, hc){
     if (now - pet.lastRestAt < REST_COOLDOWN_MS) return false;
-    pet.energy = clamp(pet.energy + REST_ENERGY_GAIN);
+    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy + REST_ENERGY_GAIN);
     pet.lastRestAt = now;
     return true;
   }
@@ -993,6 +1002,28 @@
   // чтобы сразу показать последние известные значения без ожидания сети.
   function getHealthMetrics(){
     try { return JSON.parse(lsGet('hcMetrics', 'null')); } catch(e){ return null; }
+  }
+  // Метрики учитываются для геймплея только если пользователь подключил Health Connect —
+  // иначе возвращаем null и весь код ниже работает по старой логике (декей + кнопки).
+  function getActiveHealthMetrics(){
+    if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return null;
+    return getHealthMetrics();
+  }
+  // Калории + минуты тренировки → «уровень активности» для баланса Жира.
+  // null, если ни одна из двух метрик не пришла (разрешение не выдано на обе) — тогда
+  // settle() откатывается на старый шаго-based imbalance.
+  function getFatActivityLevel(hc){
+    if (!hc) return null;
+    var parts = [];
+    if (typeof hc.activeCaloriesKcal === 'number') parts.push(clamp(100 * hc.activeCaloriesKcal / DAILY_ACTIVE_CALORIES_GOAL));
+    if (typeof hc.exerciseMinutes === 'number') parts.push(clamp(100 * hc.exerciseMinutes / DAILY_EXERCISE_GOAL_MIN));
+    if (!parts.length) return null;
+    return parts.reduce(function(a, b){ return a + b; }, 0) / parts.length;
+  }
+  // Сон → Энергия напрямую (без декея и кнопок), пока метрика доступна.
+  function getSleepEnergyLevel(hc){
+    if (!hc || typeof hc.sleepMinutes !== 'number') return null;
+    return clamp(100 * hc.sleepMinutes / DAILY_SLEEP_GOAL_MIN);
   }
   function refreshHealthConnectMetrics(){
     if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return;
@@ -1177,7 +1208,7 @@
 
     var now = Date.now();
     var pet = loadPet();
-    settle(pet, now, getActivityLevel());
+    settle(pet, now, getActivityLevel(), getActiveHealthMetrics());
     fetch(CHAT_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -2237,18 +2268,21 @@
   function renderStatus(){
     var now = Date.now();
     var pet = loadPet();
-    settle(pet, now, getActivityLevel());
+    var hc = getActiveHealthMetrics();
+    settle(pet, now, getActivityLevel(), hc);
     savePet(pet);
 
     var activity = getActivityLevel();
     var s = getStepsState();
+    var fatFromHC = getFatActivityLevel(hc) !== null;
+    var energyFromHC = getSleepEnergyLevel(hc) !== null;
 
     applySprite(pet);
     document.getElementById('text-name').textContent = pet.name;
     document.getElementById('text-mood').textContent = moodLabel(pet.satiety, pet.fat, pet.energy, pet.fun, activity);
     document.getElementById('text-satiety').textContent = Math.round(pet.satiety) + '%';
-    document.getElementById('text-fat').textContent = Math.round(pet.fat) + '%';
-    document.getElementById('text-energy').textContent = Math.round(pet.energy) + '%';
+    document.getElementById('text-fat').textContent = Math.round(pet.fat) + '%' + (fatFromHC ? ' 🔗' : '');
+    document.getElementById('text-energy').textContent = Math.round(pet.energy) + '%' + (energyFromHC ? ' 🔗' : '');
     document.getElementById('text-fun').textContent = Math.round(pet.fun) + '%';
     document.getElementById('text-steps').textContent = String(s.steps + s.bonus);
     document.getElementById('btn-assess').textContent = 'Оценить состояние ' + pet.name;
@@ -2259,10 +2293,14 @@
     setRing('ring-steps', activity);
     updateGoldDisplay();
     renderHealthMetrics();
+    var hcHint = [];
+    if (energyFromHC) hcHint.push('Энергия считается по сну из Health Connect и не меняется кнопками.');
+    if (fatFromHC) hcHint.push('Жир считается по калориям/тренировкам из Health Connect и не меняется кнопками напрямую.');
     document.getElementById('text-hint').textContent =
       'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
       ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) + ' мин. ' +
-      (isNative ? 'Шаги берутся из Health Connect.' : 'Шаги считаются только пока эта страница открыта в браузере.');
+      (isNative ? 'Шаги берутся из Health Connect.' : 'Шаги считаются только пока эта страница открыта в браузере.') +
+      (hcHint.length ? ' ' + hcHint.join(' ') : '');
   }
 
   // Овал состояния: высота фиксирована (ry всегда 140, большая сторона овала —
@@ -2418,7 +2456,8 @@
     document.getElementById('btn-feed').addEventListener('click', function(){
       var now = Date.now();
       var pet = loadPet();
-      settle(pet, now, getActivityLevel());
+      var hc = getActiveHealthMetrics();
+      settle(pet, now, getActivityLevel(), hc);
       if (feed(pet, now)){
         savePet(pet);
         addGold(1);
@@ -2433,8 +2472,9 @@
     document.getElementById('btn-walk').addEventListener('click', function(){
       var now = Date.now();
       var pet = loadPet();
-      settle(pet, now, getActivityLevel());
-      if (walk(pet, now)){
+      var hc = getActiveHealthMetrics();
+      settle(pet, now, getActivityLevel(), hc);
+      if (walk(pet, now, hc)){
         addManualBonus(WALK_STEP_BONUS);
         savePet(pet);
         addGold(1);
@@ -2449,8 +2489,9 @@
     document.getElementById('btn-exercise').addEventListener('click', function(){
       var now = Date.now();
       var pet = loadPet();
-      settle(pet, now, getActivityLevel());
-      if (exercise(pet, now)){
+      var hc = getActiveHealthMetrics();
+      settle(pet, now, getActivityLevel(), hc);
+      if (exercise(pet, now, hc)){
         addManualBonus(EXERCISE_STEP_BONUS);
         savePet(pet);
         addGold(1);
@@ -2465,8 +2506,9 @@
     document.getElementById('btn-play').addEventListener('click', function(){
       var now = Date.now();
       var pet = loadPet();
-      settle(pet, now, getActivityLevel());
-      if (play(pet, now)){
+      var hc = getActiveHealthMetrics();
+      settle(pet, now, getActivityLevel(), hc);
+      if (play(pet, now, hc)){
         savePet(pet);
         addGold(1);
         showActionSprite('./assets/play.png');
@@ -2480,8 +2522,9 @@
     document.getElementById('btn-rest').addEventListener('click', function(){
       var now = Date.now();
       var pet = loadPet();
-      settle(pet, now, getActivityLevel());
-      if (rest(pet, now)){
+      var hc = getActiveHealthMetrics();
+      settle(pet, now, getActivityLevel(), hc);
+      if (rest(pet, now, hc)){
         savePet(pet);
         addGold(1);
         showActionSprite('./assets/rest.png');
