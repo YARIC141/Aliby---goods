@@ -1562,6 +1562,16 @@ document.addEventListener('deviceready',function(){
           <option value="">Выберите тренировку</option>
         </select>
       </div>
+      <div id="ca-sched-multiperson-row" style="display:none;margin-bottom:10px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2)">
+        <div class="theme-row" style="padding:0">
+          <span style="font:500 13px/1.3 var(--font-sans)">Для нескольких человек</span>
+          <label class="toggle-sw">
+            <input type="checkbox" id="ca-sched-multiperson-chk" onchange="setCaSchedMultiPerson(this.checked)">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div id="ca-sched-multiperson-hint" style="display:none;color:var(--muted);font-size:12px;margin-top:6px"></div>
+      </div>
       <div id="ca-sched-master-row" style="display:none;margin-bottom:12px">
         <select id="ca-sched-master-sel" onchange="setCaSchedMaster(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
           <option value="">Любой мастер</option>
@@ -1578,12 +1588,18 @@ document.addEventListener('deviceready',function(){
       <div class="sched-cal-wrap" style="margin-bottom:14px">
         <div class="sched-cal-grid" id="ca-sched-cal"></div>
       </div>
+      <div id="ca-sched-personal-days" style="display:none;margin-bottom:14px">
+        <div id="ca-sched-personal-days-list" style="margin-bottom:10px"></div>
+        <div id="ca-sched-personal-total" style="display:none;font-size:13px;color:var(--muted);margin-bottom:10px"></div>
+        <button class="btn btn-p btn-full" id="ca-sched-personal-submit" onclick="confirmCaPersonalTrainingRequest()" disabled>Отправить заявку</button>
+      </div>
       <div id="ca-sched-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div id="ca-sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
           <button class="btn btn-sm" onclick="closeCaSchedDay()">✕</button>
         </div>
         <div id="ca-sched-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div id="ca-sched-item-picker" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>
       </div>
     </div>
   </div>
@@ -3489,7 +3505,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 
 let _calenabsTab = 'ord';
 let _schedulePreselect = null;
-const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {} };
+const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {}, multiPerson: false, personalDays: {}, masterItemPrice: {}, bookableItems: [] };
 
 function peekTab(btn) {
   if (!btn) return;
@@ -4372,18 +4388,27 @@ async function loadCaScheduleScreen() {
     _caSched.mode = 'all';
     _caSched.trainingItems = [];
     _caSched.masterModes = {};
+    _caSched.multiPerson = false;
+    _caSched.personalDays = {};
+    _caSched.masterItemPrice = {};
+    _caSched.bookableItems = [];
     const now = new Date();
     _caSched.year = now.getFullYear();
     _caSched.month = now.getMonth();
     document.querySelectorAll('#ca-sched-mode-row .chip').forEach(b => b.classList.toggle('active', b.dataset.caMode === 'all'));
+    const chk = document.getElementById('ca-sched-multiperson-chk');
+    if (chk) chk.checked = false;
     // Загружаем мастеров с их недельным расписанием
     try {
-      const [masters, trainItems] = await Promise.all([
-        req(`/rest/v1/public_masters?employee_store_id=eq.${store.id}&select=id,full_name,master_schedules(day_of_week,start_time,end_time),master_services(service_id)&order=full_name.asc`),
-        req(`/rest/v1/menu_items?store_id=eq.${store.id}&is_training=eq.true&is_available=eq.true&select=id,training_mode,max_group_size,duration_minutes,name`),
+      const [masters, trainItems, bookableItems] = await Promise.all([
+        req(`/rest/v1/public_masters?employee_store_id=eq.${store.id}&select=id,full_name,master_schedules(day_of_week,start_time,end_time),master_services(service_id,price)&order=full_name.asc`),
+        req(`/rest/v1/menu_items?store_id=eq.${store.id}&is_training=eq.true&is_available=eq.true&select=id,training_mode,max_group_size,duration_minutes,name,price`),
+        req(`/rest/v1/menu_items?store_id=eq.${store.id}&item_type=eq.service&is_available=eq.true&select=id,name,price,duration_minutes,preparation_time,item_type,is_training`),
       ]);
       _caSched.masters = masters || [];
       _caSched.trainingItems = trainItems || [];
+      _caSched.bookableItems = (bookableItems || []).filter(it => !it.is_training);
+      _caSched.bookableItems.forEach(it => itemCache.set(it.id, it));
       const itemModeById = {};
       (trainItems || []).forEach(it => { itemModeById[it.id] = it.training_mode; });
       masters.forEach(m => {
@@ -4391,6 +4416,8 @@ async function loadCaScheduleScreen() {
         const modes = new Set();
         (m.master_services || []).forEach(ms => { const md = itemModeById[ms.service_id]; if (md) modes.add(md); });
         _caSched.masterModes[m.id] = modes;
+        _caSched.masterItemPrice[m.id] = {};
+        (m.master_services || []).forEach(ms => { _caSched.masterItemPrice[m.id][ms.service_id] = ms.price; });
       });
       const modeRow = document.getElementById('ca-sched-mode-row');
       if (modeRow) modeRow.style.display = (trainItems || []).length ? 'flex' : 'none';
@@ -4401,12 +4428,51 @@ async function loadCaScheduleScreen() {
   await _loadCaSchedMonth();
 }
 
+function _caPersonalItem() {
+  if (_caSched.mode === 'group') return null;
+  const item = _caSched.trainingItems.find(it => it.id === _caSched.itemId);
+  return (item && item.training_mode === 'personal') ? item : null;
+}
+
+function _caPersonalPrice(item) {
+  const p = _caSched.masterItemPrice[_caSched.masterId]?.[item.id];
+  return p != null ? p : item.price;
+}
+
+function _updateCaSchedMultiPersonUI() {
+  const row = document.getElementById('ca-sched-multiperson-row');
+  const hint = document.getElementById('ca-sched-multiperson-hint');
+  if (!row || !hint) return;
+  const hasMulti = _caSched.trainingItems.some(it => it.training_mode === 'personal' && (it.max_group_size || 1) > 1);
+  row.style.display = hasMulti && _caSched.mode !== 'group' ? '' : 'none';
+  const chk = document.getElementById('ca-sched-multiperson-chk');
+  if (chk) chk.checked = _caSched.multiPerson;
+  const item = _caSched.trainingItems.find(it => it.id === _caSched.itemId);
+  if (_caSched.multiPerson && item && item.training_mode === 'personal' && (item.max_group_size || 1) > 1) {
+    hint.style.display = '';
+    hint.textContent = `Для данного занятия можно пригласить ещё ${item.max_group_size - 1} человек`;
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
+function setCaSchedMultiPerson(checked) {
+  _caSched.multiPerson = checked;
+  _populateCaSchedItemSelect();
+  _populateCaSchedMasterSelect();
+  _caSched.personalDays = {};
+  _caSched.openDate = null;
+  document.getElementById('ca-sched-day-view').style.display = 'none';
+  _loadCaSchedMonth();
+}
+
 function _populateCaSchedItemSelect() {
   const sel = document.getElementById('ca-sched-item-sel');
   const row = document.getElementById('ca-sched-item-row');
   if (!sel || !row) return;
   const mode = _caSched.mode;
   let items = mode === 'all' ? _caSched.trainingItems : _caSched.trainingItems.filter(it => it.training_mode === mode);
+  items = items.filter(it => it.training_mode !== 'personal' || _caSched.multiPerson || (it.max_group_size || 1) <= 1);
   if (_caSched.masterId) {
     const master = _caSched.masters.find(m => m.id === _caSched.masterId);
     const svcIds = new Set((master?.master_services || []).map(ms => ms.service_id));
@@ -4416,7 +4482,9 @@ function _populateCaSchedItemSelect() {
   if (!items.some(it => it.id === _caSched.itemId)) { _caSched.itemId = ''; sel.value = ''; }
   else sel.value = _caSched.itemId;
   row.style.display = items.length ? '' : 'none';
-  document.getElementById('ca-sched-book-row').style.display = _caSched.itemId ? '' : 'none';
+  const selectedItem = items.find(it => it.id === _caSched.itemId);
+  document.getElementById('ca-sched-book-row').style.display = (selectedItem && selectedItem.training_mode === 'group') ? '' : 'none';
+  _updateCaSchedMultiPersonUI();
 }
 
 function _populateCaSchedMasterSelect() {
@@ -4440,6 +4508,7 @@ function setCaSchedMode(mode) {
   _populateCaSchedItemSelect();
   _populateCaSchedMasterSelect();
   _caSched.openDate = null;
+  _caSched.personalDays = {};
   document.getElementById('ca-sched-day-view').style.display = 'none';
   _loadCaSchedMonth();
 }
@@ -4448,6 +4517,7 @@ function setCaSchedMaster(masterId) {
   _caSched.masterId = masterId;
   _populateCaSchedItemSelect();
   _caSched.openDate = null;
+  _caSched.personalDays = {};
   document.getElementById('ca-sched-day-view').style.display = 'none';
   _loadCaSchedMonth();
 }
@@ -4455,8 +4525,11 @@ function setCaSchedMaster(masterId) {
 function setCaSchedItem(itemId) {
   _caSched.itemId = itemId;
   _populateCaSchedMasterSelect();
-  document.getElementById('ca-sched-book-row').style.display = itemId ? '' : 'none';
+  const item = _caSched.trainingItems.find(it => it.id === itemId);
+  document.getElementById('ca-sched-book-row').style.display = (item && item.training_mode === 'group') ? '' : 'none';
+  _updateCaSchedMultiPersonUI();
   _caSched.openDate = null;
+  _caSched.personalDays = {};
   document.getElementById('ca-sched-day-view').style.display = 'none';
   _loadCaSchedMonth();
 }
@@ -4515,6 +4588,34 @@ async function _loadCaSchedMonth() {
           if (daySlots.length) _caSched.schedData[ds] = daySlots;
         }
       }
+    } else if (masterId && _caPersonalItem()) {
+      // Персональная тренировка с выбранным мастером: полное пересечение часов
+      // заведения × недельного графика мастера × диапазона приёма товара (как в модалке).
+      const item = _caPersonalItem();
+      const durMin = Math.max(item.duration_minutes || 30, 5);
+      const [schedRows, itemSchedRows, bkRows] = await Promise.all([
+        req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`),
+        req(`/rest/v1/training_schedules?menu_item_id=eq.${item.id}&select=day_of_week,start_time,end_time`),
+        req(`/rest/v1/bookings?master_id=eq.${masterId}&slot_date=gte.${from}&slot_date=lte.${to}&status=eq.booked&select=slot_date,slot_start,slot_end`),
+      ]);
+      const storeByDate = {};
+      schedRows.forEach(r => { storeByDate[r.date] = r.slots; });
+      const mScheds = _caSched.masterScheds[masterId] || [];
+      const dayMap = {}; mScheds.forEach(s => { dayMap[s.day_of_week] = s; });
+      const itemDayMap = {}; (itemSchedRows || []).forEach(r => { itemDayMap[r.day_of_week] = r; });
+      for (let d = 1; d <= lastDay; d++) {
+        const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
+        const dbDow = (new Date(year, month, d).getDay() + 6) % 7; // 0=Пн
+        const daySched = dayMap[dbDow];
+        if (!daySched) continue;
+        const dayRange = (itemSchedRows || []).length ? itemDayMap[dbDow] : null;
+        if ((itemSchedRows || []).length && !dayRange) continue;
+        const w = _computePersonalWindow(storeByDate[ds], daySched, dayRange, durMin);
+        if (w) _caSched.schedData[ds] = [w];
+      }
+      (bkRows || []).forEach(r => {
+        (_caSched.bookedData[r.slot_date] = _caSched.bookedData[r.slot_date] || []).push(r);
+      });
     } else if (masterId) {
       // Раскладываем недельный паттерн мастера по датам
       const mScheds = _caSched.masterScheds[masterId] || [];
@@ -4560,39 +4661,192 @@ function renderCaSchedCalendar() {
   const body = document.getElementById('ca-sched-cal');
   body.innerHTML = SCHED_CAL_HD_HTML;
   for (let i = 0; i < dow; i++) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
+  const personalSelected = !!_caPersonalItem();
   for (let d = 1; d <= lastDate; d++) {
     const pad = n => String(n).padStart(2, '0');
     const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
     const windows = _caSched.schedData[ds];
-    const booked = _caSched.bookedData[ds] || [];
     const isPast = ds < today;
-    let availCount = 0;
-    if (windows && !isPast) {
-      const nowMinToday = ds === today ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
-      if (_caSched.mode === 'group') {
-        availCount = windows.filter(w => w.free > 0 && (ds !== today || _timeToMin(w.start) > nowMinToday)).length;
-      } else {
-        availCount = getAvailableSlots(windows, booked, 30, nowMinToday).length;
-      }
-    }
     const isToday = ds === today;
     const hasSched = !!windows;
-    const isFull = hasSched && !isPast && availCount === 0;
     const td = document.createElement('div');
-    td.className = `sched-day${!hasSched || isPast ? ' empty' : ''}${isToday ? ' today' : ''}${hasSched && !isPast && availCount > 0 ? ' has-sched' : ''}${isFull ? ' bk-full' : ''}`;
-    let badge = '';
-    if (hasSched && !isPast && availCount > 0) badge = `<span class="sched-bk-cnt">${availCount}</span>`;
-    td.innerHTML = `<span class="sd-n">${d}</span>${badge}`;
-    if (hasSched && !isPast && availCount > 0) td.onclick = () => openCaSchedDay(ds);
+    if (personalSelected) {
+      const hasAny = hasSched && !isPast;
+      const isSelected = !!_caSched.personalDays[ds];
+      td.className = `sched-day${!hasAny ? ' empty' : ''}${isToday ? ' today' : ''}${hasAny ? ' has-sched' : ''}${isSelected ? ' selected' : ''}`;
+      td.innerHTML = `<span class="sd-n">${d}</span>`;
+      if (hasAny) td.onclick = () => _caPersonalDayToggle(ds);
+    } else {
+      const booked = _caSched.bookedData[ds] || [];
+      let availCount = 0;
+      if (windows && !isPast) {
+        const nowMinToday = ds === today ? (() => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); })() : 0;
+        if (_caSched.mode === 'group') {
+          availCount = windows.filter(w => w.free > 0 && (ds !== today || _timeToMin(w.start) > nowMinToday)).length;
+        } else {
+          availCount = getAvailableSlots(windows, booked, 30, nowMinToday).length;
+        }
+      }
+      const isFull = hasSched && !isPast && availCount === 0;
+      td.className = `sched-day${!hasSched || isPast ? ' empty' : ''}${isToday ? ' today' : ''}${hasSched && !isPast && availCount > 0 ? ' has-sched' : ''}${isFull ? ' bk-full' : ''}`;
+      let badge = '';
+      if (hasSched && !isPast && availCount > 0) badge = `<span class="sched-bk-cnt">${availCount}</span>`;
+      td.innerHTML = `<span class="sd-n">${d}</span>${badge}`;
+      if (hasSched && !isPast && availCount > 0) td.onclick = () => openCaSchedDay(ds);
+    }
     body.appendChild(td);
   }
   while (body.children.length % 7 !== 0) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
-  if (_caSched.openDate && _caSched.schedData[_caSched.openDate]) openCaSchedDay(_caSched.openDate);
-  else document.getElementById('ca-sched-day-view').style.display = 'none';
+  if (personalSelected) {
+    document.getElementById('ca-sched-day-view').style.display = 'none';
+    document.getElementById('ca-sched-personal-days').style.display = '';
+    _renderCaPersonalDaysList();
+  } else {
+    document.getElementById('ca-sched-personal-days').style.display = 'none';
+    if (_caSched.openDate && _caSched.schedData[_caSched.openDate]) openCaSchedDay(_caSched.openDate);
+    else document.getElementById('ca-sched-day-view').style.display = 'none';
+  }
+}
+
+function _caPersonalDayToggle(ds) {
+  if (_caSched.personalDays[ds]) {
+    delete _caSched.personalDays[ds];
+  } else {
+    const w = (_caSched.schedData[ds] || [])[0];
+    if (!w) return;
+    _caSched.personalDays[ds] = { start: w.start, end: w.end };
+  }
+  renderCaSchedCalendar();
+}
+
+function removeCaPersonalDay(ds) {
+  delete _caSched.personalDays[ds];
+  renderCaSchedCalendar();
+}
+
+function _renderCaPersonalDaysList() {
+  const listEl = document.getElementById('ca-sched-personal-days-list');
+  const submitBtn = document.getElementById('ca-sched-personal-submit');
+  if (!listEl || !submitBtn) return;
+  if (!_caSched.masterId) {
+    listEl.innerHTML = `<span style="color:var(--muted);font-size:13px">Выберите ${_MW(S.store?.direction).gen}, чтобы увидеть доступное время</span>`;
+    submitBtn.style.display = 'none';
+    document.getElementById('ca-sched-personal-total').style.display = 'none';
+    return;
+  }
+  submitBtn.style.display = '';
+  const dsList = Object.keys(_caSched.personalDays).sort();
+  if (!dsList.length) {
+    listEl.innerHTML = `<span style="color:var(--muted);font-size:13px">Отметьте на календаре день (или несколько), когда вам удобно</span>`;
+  } else {
+    listEl.innerHTML = dsList.map(ds => {
+      const [y, m, d] = ds.split('-').map(Number);
+      const label = `${_PD_DOW[new Date(y, m - 1, d).getDay()]}, ${d} ${_PD_MON[m - 1]}`;
+      const day = _caSched.personalDays[ds];
+      const w = (_caSched.schedData[ds] || [])[0] || { start: '00:00', end: '23:59' };
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:600;min-width:76px">${label}</span>
+        <input type="time" value="${day.start}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+        <span style="color:var(--muted);font-size:13px">–</span>
+        <input type="time" value="${day.end}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+        <button type="button" class="btn btn-sm" onclick="removeCaPersonalDay('${ds}')" style="margin-left:auto">✕</button>
+        <div class="ca-personal-day-err" data-ds="${ds}" style="width:100%;font-size:12px;color:#e05252"></div>
+      </div>`;
+    }).join('');
+  }
+  _updateCaPersonalSubmitState();
+}
+
+function onCaPersonalDayRangeChange(ds, which, value) {
+  const day = _caSched.personalDays[ds];
+  if (!day) return;
+  day[which] = value;
+  _updateCaPersonalSubmitState();
+}
+
+function _updateCaPersonalSubmitState() {
+  const item = _caPersonalItem();
+  const durMin = Math.max(item?.duration_minutes || 30, 5);
+  const dsList = Object.keys(_caSched.personalDays);
+  let allOk = dsList.length > 0;
+  dsList.forEach(ds => {
+    const day = _caSched.personalDays[ds];
+    const w = (_caSched.schedData[ds] || [])[0];
+    const errEl = document.querySelector(`.ca-personal-day-err[data-ds="${ds}"]`);
+    let msg = '';
+    if (!day.start || !day.end) msg = 'Укажите время';
+    else if (!w) msg = 'Нет рабочего времени в этот день';
+    else {
+      const sM = _timeToMin(day.start), eM = _timeToMin(day.end);
+      if (eM <= sM) msg = 'Время «до» должно быть позже «от»';
+      else if (eM - sM < durMin) msg = `Не короче ${durMin} мин`;
+      else if (sM < _timeToMin(w.start)) msg = `Не раньше ${w.start}`;
+      else if (eM > _timeToMin(w.end)) msg = `Не позже ${w.end}`;
+    }
+    if (errEl) errEl.textContent = msg;
+    if (msg) allOk = false;
+  });
+  const btn = document.getElementById('ca-sched-personal-submit');
+  if (btn) btn.disabled = !allOk;
+  const totalEl = document.getElementById('ca-sched-personal-total');
+  if (allOk && item) {
+    const price = _caPersonalPrice(item);
+    const maxGroup = item.max_group_size || 1;
+    totalEl.style.display = '';
+    if (maxGroup > 1) {
+      const perPersonAtMax = price / maxGroup;
+      totalEl.textContent = `от ${Number(perPersonAtMax).toFixed(0)} до ${Number(price).toFixed(0)} ₽ на человека — зависит от того, сколько клиентов тренер объединит на это время (после подтверждения тренером)`;
+    } else {
+      totalEl.textContent = `${Number(price).toFixed(0)} ₽ (после подтверждения тренером)`;
+    }
+  } else if (totalEl) {
+    totalEl.style.display = 'none';
+  }
+}
+
+async function confirmCaPersonalTrainingRequest() {
+  if (!S.session) { _pendingNavAfterAuth = 'store'; goTo('auth'); return; }
+  const item = _caPersonalItem();
+  if (!item || !_caSched.masterId) return;
+  const dsList = Object.keys(_caSched.personalDays);
+  if (!dsList.length) return;
+  const storeId = _caSched.storeId;
+  const price = _caPersonalPrice(item);
+  const btn = document.getElementById('ca-sched-personal-submit');
+  const restore = btnLoad(btn, '…');
+  try {
+    await Promise.all(dsList.map(ds => {
+      const day = _caSched.personalDays[ds];
+      return req('/rest/v1/bookings', {
+        method: 'POST', headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          user_id: S.session.user.id, store_id: storeId,
+          menu_item_id: item.id, slot_date: ds,
+          master_id: _caSched.masterId,
+          preferred_start: day.start + ':00',
+          preferred_end: day.end + ':00',
+          status: 'pending_approval', payment_status: 'unpaid',
+          total_price: price,
+        }),
+      });
+    }));
+    _caSched.personalDays = {};
+    showGeoToast(dsList.length > 1 ? 'Заявки отправлены — тренер подберёт общее время и подтвердит запись' : 'Заявка отправлена — тренер подберёт общее время и подтвердит запись');
+    if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
+    else loadBookingsScreen();
+    renderCaSchedCalendar();
+  } catch (e) {
+    showGeoToast('Ошибка при отправке заявки');
+  } finally {
+    restore();
+  }
 }
 
 function openCaSchedDay(dateStr) {
   _caSched.openDate = dateStr;
+  _schedulePreselect = null;
+  const picker = document.getElementById('ca-sched-item-picker');
+  if (picker) { picker.style.display = 'none'; picker.innerHTML = ''; }
   const [y, m, d] = dateStr.split('-').map(Number);
   const DOW = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -4608,7 +4862,7 @@ function openCaSchedDay(dateStr) {
       btn.className = 'booking-slot';
       btn.textContent = `${w.start} · ${w.itemName} · своб. ${w.free}`;
       btn.disabled = w.free <= 0;
-      if (w.free > 0) btn.onclick = () => selectCaSchedSlot(dateStr, w.start, w.end);
+      if (w.free > 0) btn.onclick = () => selectCaSchedSlot(dateStr, w.start, w.end, w.itemId);
       slotsEl.appendChild(btn);
     });
   } else {
@@ -4625,6 +4879,7 @@ function openCaSchedDay(dateStr) {
         const btn = document.createElement('button');
         btn.className = 'booking-slot';
         btn.textContent = start;
+        btn.dataset.start = start;
         btn.disabled = isTaken;
         if (!isTaken) btn.onclick = () => selectCaSchedSlot(dateStr, start, end);
         slotsEl.appendChild(btn);
@@ -4637,6 +4892,9 @@ function openCaSchedDay(dateStr) {
 
 function closeCaSchedDay() {
   _caSched.openDate = null;
+  _schedulePreselect = null;
+  const picker = document.getElementById('ca-sched-item-picker');
+  if (picker) { picker.style.display = 'none'; picker.innerHTML = ''; }
   document.getElementById('ca-sched-day-view').style.display = 'none';
 }
 
@@ -4654,14 +4912,41 @@ function caSchedNextMonth() {
   _loadCaSchedMonth();
 }
 
-function selectCaSchedSlot(date, start, end) {
+function selectCaSchedSlot(date, start, end, itemId) {
   _schedulePreselect = { date, start, end, masterId: _caSched.masterId || null };
-  const DOW = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-  const MON = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-  const d = new Date(date + 'T00:00:00');
-  document.getElementById('preselect-label').textContent = `Выбрано: ${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} в ${start}`;
-  switchSvcTab('services');
-  document.getElementById('preselect-banner').style.display = 'flex';
+  if (itemId) { _openCaGroupBookingFor(itemId, date, start, end); return; }
+  document.querySelectorAll('#ca-sched-slots .booking-slot').forEach(b => b.classList.toggle('active', b.dataset.start === start));
+  _renderCaSchedItemPicker(date, start, end);
+}
+
+async function _openCaGroupBookingFor(itemId, date, start, end) {
+  let item = itemCache.get(itemId);
+  if (!item) {
+    try {
+      const rows = await req(`/rest/v1/menu_items?id=eq.${itemId}&select=*`);
+      item = rows?.[0];
+      if (item) itemCache.set(itemId, item);
+    } catch (e) {}
+  }
+  if (!item) { showGeoToast('Ошибка загрузки тренировки'); return; }
+  openBookingSlotModal(item, null, _caSched.masterId || null, { date, start, end });
+}
+
+function _renderCaSchedItemPicker(date, start, end) {
+  const wrap = document.getElementById('ca-sched-item-picker');
+  if (!wrap) return;
+  const items = (_caSched.bookableItems || []).filter(it => {
+    if (!_caSched.masterId) return true;
+    const master = _caSched.masters.find(m => m.id === _caSched.masterId);
+    return (master?.master_services || []).some(ms => ms.service_id === it.id);
+  });
+  wrap.style.display = '';
+  if (!items.length) {
+    wrap.innerHTML = `<div style="font-size:12px;color:var(--muted)">Нет доступных позиций для записи на это время</div>`;
+    return;
+  }
+  wrap.innerHTML = `<div style="font-size:12px;color:var(--fg-3);margin-bottom:6px">Выберите позицию для записи на ${esc(start)}:</div>` +
+    items.map(it => `<button type="button" class="btn btn-sm" style="margin:0 6px 6px 0" onclick="bookWithPreselect(this, itemCache.get('${it.id}'))">${esc(it.name)}</button>`).join('');
 }
 
 function clearPreselect() {
@@ -4673,7 +4958,11 @@ function clearPreselect() {
 async function bookWithPreselect(btn, item) {
   if (!item || !_schedulePreselect) { openBookingSlotModal(item); return; }
   // Services with masters must go through the full booking modal (master selection required)
-  if (item.duration_minutes) { openBookingSlotModal(item, null, _schedulePreselect.masterId || null); return; }
+  if (item.duration_minutes) {
+    const { date, start, end } = _schedulePreselect;
+    openBookingSlotModal(item, null, _schedulePreselect.masterId || null, { date, start, end });
+    return;
+  }
   const { date, start } = _schedulePreselect;
   const prepMin = (item.preparation_time >= 5) ? item.preparation_time : 30;
   const end = _minToTime(_timeToMin(start) + prepMin);
@@ -11101,12 +11390,10 @@ function _groupSlotsForDate(ds) {
     .sort((a, b) => a.start < b.start ? -1 : 1);
 }
 
-function _personalWorkWindow(masterId, ds) {
-  const storeWindows = _booking.schedData[ds];
-  if (!storeWindows || !masterId) return null;
-  const dow = _trainingDayOfWeek(ds);
-  const daySched = (_booking.masterScheds[masterId] || []).find(r => r.day_of_week === dow);
-  if (!daySched) return null;
+// Пересечение часов заведения × дневного графика мастера × (опционального) диапазона
+// приёма товара — общая математика для модалки записи и экрана «Запись».
+function _computePersonalWindow(storeWindows, daySched, dayRange, durMin) {
+  if (!storeWindows || !daySched) return null;
   const ms = _timeToMin(daySched.start_time), me = _timeToMin(daySched.end_time);
   let lo = null, hi = null;
   for (const w of storeWindows) {
@@ -11114,27 +11401,37 @@ function _personalWorkWindow(masterId, ds) {
     if (we > ws) { if (lo === null || ws < lo) lo = ws; if (hi === null || we > hi) hi = we; }
   }
   if (lo === null) return null;
-  // Товар может ограничивать приём персональных тренировок конкретными днями/диапазоном
-  // (training_schedules). Если для товара расписание не задано вовсе (легаси-позиции
-  // до этой фичи) — ограничение не применяется, доступны все дни по графику мастера.
-  const itemSched = _booking.personalSchedule || [];
-  if (itemSched.length) {
-    const dayRange = itemSched.find(r => r.day_of_week === dow);
-    if (!dayRange) return null;
+  if (dayRange) {
     lo = Math.max(lo, _timeToMin(dayRange.start_time));
     hi = Math.min(hi, _timeToMin(dayRange.end_time));
     if (hi <= lo) return null;
   }
-  const durMin = Math.max(_booking.item?.duration_minutes || 30, 5);
   if (hi - lo < durMin) return null;
   return { start: _minToTime(lo), end: _minToTime(hi) };
 }
 
-async function openBookingSlotModal(item, rescheduleId = null, preselectedMasterId = null) {
+function _personalWorkWindow(masterId, ds) {
+  const storeWindows = _booking.schedData[ds];
+  if (!storeWindows || !masterId) return null;
+  const dow = _trainingDayOfWeek(ds);
+  const daySched = (_booking.masterScheds[masterId] || []).find(r => r.day_of_week === dow);
+  if (!daySched) return null;
+  // Товар может ограничивать приём персональных тренировок конкретными днями/диапазоном
+  // (training_schedules). Если для товара расписание не задано вовсе (легаси-позиции
+  // до этой фичи) — ограничение не применяется, доступны все дни по графику мастера.
+  const itemSched = _booking.personalSchedule || [];
+  const dayRange = itemSched.length ? itemSched.find(r => r.day_of_week === dow) : null;
+  if (itemSched.length && !dayRange) return null;
+  const durMin = Math.max(_booking.item?.duration_minutes || 30, 5);
+  return _computePersonalWindow(storeWindows, daySched, dayRange, durMin);
+}
+
+async function openBookingSlotModal(item, rescheduleId = null, preselectedMasterId = null, preselectedSlot = null) {
   if (!S.session) { _pendingNavAfterAuth = 'store'; goTo('auth'); return; }
   if (!item) return;
   _booking.item = item;
   _booking.rescheduleId = rescheduleId || null;
+  _booking.preselectedSlot = preselectedSlot || null;
   _booking.currentDate = null;
   _booking.selectedSlot = null;
   _booking.autoMasterId = null;
@@ -11198,14 +11495,21 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
     document.getElementById('mbs-loading').style.display = 'none';
     document.getElementById('mbs-master-filter').style.display = 'none';
     let firstAvail = null;
-    for (let dt = new Date(today + 'T12:00:00'); _fmtD(dt) <= endDate; dt.setDate(dt.getDate() + 1)) {
-      const ds = _fmtD(dt);
-      if (_groupSlotsForDate(ds).some(s => s.free > 0)) { firstAvail = ds; break; }
+    const pre = _booking.preselectedSlot;
+    if (pre && pre.date >= today && pre.date <= endDate && _groupSlotsForDate(pre.date).some(s => s.start === pre.start && s.free > 0)) {
+      firstAvail = pre.date;
+    }
+    if (!firstAvail) {
+      for (let dt = new Date(today + 'T12:00:00'); _fmtD(dt) <= endDate; dt.setDate(dt.getDate() + 1)) {
+        const ds = _fmtD(dt);
+        if (_groupSlotsForDate(ds).some(s => s.free > 0)) { firstAvail = ds; break; }
+      }
     }
     if (!firstAvail) { document.getElementById('mbs-no-sched').style.display = ''; return; }
     _booking.currentDate = firstAvail;
     _syncBookingCalToCurrentDate();
     renderBookingDateView();
+    if (pre && firstAvail === pre.date) selectBookingSlot(pre.start, pre.end);
     return;
   }
 
@@ -11300,11 +11604,17 @@ async function openBookingSlotModal(item, rescheduleId = null, preselectedMaster
   const dates = Object.keys(_booking.schedData).sort();
   const _nowForSlots = () => { const n = nowInCity(); return n.getHours()*60+n.getMinutes(); };
   const prepMin = Math.max(item.preparation_time || 30, 5);
-  const firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
+  const preG = _booking.preselectedSlot;
+  let firstAvail = null;
+  if (preG && _booking.schedData[preG.date] && getAvailableSlots(_booking.schedData[preG.date], _booking.bookedData[preG.date], prepMin, preG.date === today ? _nowForSlots() : 0).some(s => s.start === preG.start)) {
+    firstAvail = preG.date;
+  }
+  if (!firstAvail) firstAvail = dates.find(ds => getAvailableSlots(_booking.schedData[ds], _booking.bookedData[ds], prepMin, ds === today ? _nowForSlots() : 0).length > 0);
   if (!firstAvail) { document.getElementById('mbs-no-sched').style.display = ''; return; }
   _booking.currentDate = firstAvail;
   _syncBookingCalToCurrentDate();
   renderBookingDateView();
+  if (preG && firstAvail === preG.date) selectBookingSlot(preG.start, preG.end);
 }
 
 function _hasMasterSlots(ds, masterId) {
@@ -11451,7 +11761,9 @@ function onBookingMasterChange(masterId) {
     _renderPersonalDaysList();
     return;
   }
-  const firstAvail = dates.find(ds => _hasMasterSlots(ds, masterId));
+  const preM = _booking.preselectedSlot;
+  let firstAvail = preM && _hasMasterSlots(preM.date, masterId) ? preM.date : null;
+  if (!firstAvail) firstAvail = dates.find(ds => _hasMasterSlots(ds, masterId));
   if (!firstAvail) {
     document.getElementById('mbs-main').style.display = 'none';
     document.getElementById('mbs-no-sched').style.display = '';
@@ -11461,6 +11773,7 @@ function onBookingMasterChange(masterId) {
   _booking.currentDate = firstAvail;
   _syncBookingCalToCurrentDate();
   renderBookingDateView();
+  if (preM && firstAvail === preM.date) selectBookingSlot(preM.start, preM.end);
 }
 
 function selectBookingSlot(start, end) {
