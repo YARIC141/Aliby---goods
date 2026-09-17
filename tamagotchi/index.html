@@ -276,6 +276,7 @@
       <button id="btn-sync-steps" class="secondary hidden">Обновить шаги сейчас</button>
       <button id="btn-games" class="secondary">Игры</button>
       <button id="btn-pdd" class="secondary">Билеты ПДД</button>
+      <button id="btn-dog" class="secondary">🐶 Собака</button>
     </div>
 
     <p class="footer-hint" id="text-hint"></p>
@@ -311,6 +312,21 @@
       <button type="button" data-game="go"><span class="g-icon">⚫</span> Го</button>
       <button type="button" data-game="guard"><span class="g-icon">🛡️</span> Страж и клинок</button>
     </div>
+  </div>
+
+  <div id="screen-dog" class="hidden">
+    <div class="game-header">
+      <button id="btn-dog-back">←</button>
+      <h1>Собака</h1>
+    </div>
+    <div class="sprite-card">
+      <canvas id="dog-canvas" width="600" height="600" style="width:100%;height:100%;display:block"></canvas>
+    </div>
+    <p class="footer-hint">
+      Ассет: «Interactive Dog Mascot for Mobile Apps» — автор PraneethKawyaThathsara,
+      <a href="https://rive.app/marketplace/27226-51415-interactive-dog-mascot-for-mobile-apps-rive-state-machine/" target="_blank" rel="noopener">Rive Marketplace</a>,
+      лицензия CC BY 4.0.
+    </p>
   </div>
 
   <div id="screen-game-setup" class="hidden">
@@ -775,6 +791,7 @@
     document.getElementById('screen-status').classList.toggle('hidden', id !== 'status');
     document.getElementById('screen-chat').classList.toggle('hidden', id !== 'chat');
     document.getElementById('screen-games').classList.toggle('hidden', id !== 'games');
+    document.getElementById('screen-dog').classList.toggle('hidden', id !== 'dog');
     document.getElementById('screen-game-setup').classList.toggle('hidden', id !== 'game-setup');
     document.getElementById('screen-game-board').classList.toggle('hidden', id !== 'game-board');
     document.getElementById('screen-pdd-tickets').classList.toggle('hidden', id !== 'pdd-tickets');
@@ -1965,6 +1982,38 @@
     document.getElementById('assess-overlay').classList.add('hidden');
   }
 
+  // ── Собака (Rive) — готовый бесплатный маскот с Rive Marketplace, показан
+  // как есть: своих управляемых входов у файла нет (ни State Machine Inputs,
+  // ни Data Binding), только собственные таймлайн-анимации моргания/дыхания.
+  // Рантайм подгружается лениво при первом открытии экрана, по тому же
+  // принципу, что и игровые библиотеки выше. ────────────────────────────────
+  var dogRiveInstance = null;
+  function openDogScreen(){
+    showScreen('dog');
+    if (dogRiveInstance) return;
+    function start(){
+      var canvas = document.getElementById('dog-canvas');
+      dogRiveInstance = new rive.Rive({
+        src: './dog-mascot.riv',
+        canvas: canvas,
+        autoplay: true,
+        stateMachines: ['State Machine 1'],
+        layout: new rive.Layout({ fit: rive.Fit.Contain, alignment: rive.Alignment.Center }),
+        onLoad: function(){
+          dogRiveInstance.resizeDrawingSurfaceToCanvas();
+        }
+      });
+      window.addEventListener('resize', function(){
+        if (dogRiveInstance) dogRiveInstance.resizeDrawingSurfaceToCanvas();
+      });
+    }
+    if (window.rive){ start(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://unpkg.com/@rive-app/canvas@latest';
+    s.onload = start;
+    document.head.appendChild(s);
+  }
+
   function init(){
     if (hasPet()){
       showScreen('status');
@@ -2095,6 +2144,9 @@
       } else if (sensorActive){ stopSensor(); lsSet('sensorEnabled', '0'); updateSensorStatusUI(); }
       else { enableSensor(); updateSensorStatusUI(); }
     });
+
+    document.getElementById('btn-dog').addEventListener('click', openDogScreen);
+    document.getElementById('btn-dog-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
 
     document.getElementById('btn-games').addEventListener('click', function(){ showScreen('games'); });
     document.getElementById('btn-games-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
