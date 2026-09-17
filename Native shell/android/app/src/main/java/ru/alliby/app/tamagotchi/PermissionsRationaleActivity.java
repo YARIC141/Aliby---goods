@@ -18,9 +18,10 @@ public class PermissionsRationaleActivity extends Activity {
         int padding = (int) (24 * getResources().getDisplayMetrics().density);
         text.setPadding(padding, padding, padding, padding);
         text.setTextSize(16);
-        text.setText("Тамагочи запрашивает доступ к шагам (Health Connect), чтобы " +
-            "отслеживать вашу активность за день и отражать её в состоянии питомца. " +
-            "Данные используются только локально на устройстве и никуда не передаются.");
+        text.setText("Тамагочи запрашивает доступ к шагам, дистанции, калориям, сну, " +
+            "тренировкам и пульсу (Health Connect), чтобы отслеживать вашу активность " +
+            "за день и отражать её в состоянии питомца. Данные используются только " +
+            "локально на устройстве и никуда не передаются.");
         setContentView(text);
     }
 }

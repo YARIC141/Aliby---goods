@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Тамагочи (Профиль → Тамагочи, веб-UI): чтение шагов из Health Connect -->
+    <!-- Тамагочи (Профиль → Тамагочи, веб-UI): чтение метрик из Health Connect -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
 
     <!-- Пакетная видимость (Android 11+), чтобы определить, установлен ли провайдер Health Connect -->
     <queries>
@@ -144,6 +149,35 @@
         <receiver
             android:name=".WidgetDateNavReceiver"
             android:exported="false" />
+
+        <!-- Виджет "Расписание занятий": сегодняшние уроки + календарь по неделям 1/2 -->
+        <receiver
+            android:name=".ScheduleWidgetProvider"
+            android:label="@string/schedule_widget_label"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/schedule_widget_info" />
+        </receiver>
+
+        <service
+            android:name=".ScheduleWidgetService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
+
+        <receiver
+            android:name=".ScheduleDateNavReceiver"
+            android:exported="false" />
+
+        <activity
+            android:name=".EditScheduleDayActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:theme="@style/AppTheme.Dialog" />
     </application>
 
     <!-- Permissions -->
