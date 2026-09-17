@@ -2618,7 +2618,21 @@
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('./sw.js').catch(function(){});
+      navigator.serviceWorker.register('./sw.js').then(function(reg){
+        // sw.js делает skipWaiting()+clients.claim(), поэтому новый SW захватывает
+        // уже открытую страницу почти сразу — но старый DOM/JS в памяти этим не обновляются.
+        // Без явной перезагрузки по controllerchange новые версии тамагочи не показываются,
+        // пока Android не убьёт и не перезапустит процесс приложения целиком.
+        document.addEventListener('visibilitychange', function(){
+          if (document.visibilityState === 'visible') reg.update().catch(function(){});
+        });
+      }).catch(function(){});
+      var reloadedForUpdate = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function(){
+        if (reloadedForUpdate) return;
+        reloadedForUpdate = true;
+        location.reload();
+      });
     });
   }
 })();
