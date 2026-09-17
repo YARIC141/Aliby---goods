@@ -2765,6 +2765,17 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+<!-- ════════════════ BOOKING/RENT DETAIL MODAL ════════════════ -->
+<div class="overlay" id="m-event-detail">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3 id="evd-title">Запись</h3>
+      <button class="modal-x" onclick="closeModal('m-event-detail')">✕</button>
+    </div>
+    <div id="evd-body"></div>
+  </div>
+</div>
+
 <!-- Courier location modal -->
 <div class="overlay" id="m-courier-map" onclick="if(event.target===this)closeCourierMap()">
   <div class="modal" style="max-width:480px">
@@ -9855,27 +9866,96 @@ async function openOrderById(orderId) {
 async function openBookingById(bookingId) {
   goTo('bookings');
   try {
-    var rows = await req('/rest/v1/bookings?id=eq.' + bookingId + '&select=slot_date');
+    var rows = await req('/rest/v1/bookings?id=eq.' + bookingId + '&select=*,stores(name,address,direction),menu_items(name,price,preparation_time)');
     if (!rows || !rows[0]) return;
-    var ds = rows[0].slot_date;
+    var b = rows[0];
+    var ds = b.slot_date;
     var parts = ds.split('-').map(Number);
     _myBk.year = parts[0]; _myBk.month = parts[1] - 1;
     await loadBookingsScreen();
-    setTimeout(function(){ openMyBookingsDay(ds); }, 100);
+    setTimeout(function(){
+      _myBk.openDate = ds;
+      renderMyBookingsCalendar();
+      _showMyBookingsDay(ds);
+      renderBookingDetailModal(b);
+    }, 100);
   } catch(e) {}
 }
 
 async function openRentById(reservationId) {
   goTo('bookings');
   try {
-    var rows = await req('/rest/v1/rent_reservations?id=eq.' + reservationId + '&select=start_at');
+    var rows = await req('/rest/v1/rent_reservations?id=eq.' + reservationId + '&select=id,start_at,end_at,quantity,total_price,status,payment_status,menu_items(name,rent_period_unit),stores(name)');
     if (!rows || !rows[0]) return;
-    var ds = String(rows[0].start_at).slice(0, 10);
+    var r = rows[0];
+    var ds = String(r.start_at).slice(0, 10);
     var parts = ds.split('-').map(Number);
     _myBk.year = parts[0]; _myBk.month = parts[1] - 1;
     await loadBookingsScreen();
-    setTimeout(function(){ openMyBookingsDay(ds); }, 100);
+    setTimeout(function(){
+      _myBk.openDate = ds;
+      renderMyBookingsCalendar();
+      _showMyBookingsDay(ds);
+      renderRentDetailModal(r);
+    }, 100);
   } catch(e) {}
+}
+
+function renderBookingDetailModal(b) {
+  const sStart = (b.slot_start || '').slice(0, 5), sEnd = (b.slot_end || '').slice(0, 5);
+  const paid = b.payment_status === 'paid';
+  const completed = b.status === 'completed';
+  const isCancelled = b.status === 'cancelled';
+  const _nowCity = nowInCity();
+  const _todayStr = todayInCity();
+  const isPastBk = b.slot_date < _todayStr ||
+    (b.slot_date === _todayStr && sEnd && _timeToMin(sEnd) <= _nowCity.getHours() * 60 + _nowCity.getMinutes());
+  const _cancelSoj = b.stores?.direction === 'sport' || b.stores?.direction === 'entertainment' ? 'тренером' : 'мастером';
+  const cancelLabel = b.cancelled_by_role === 'master' ? `Отменена ${_cancelSoj}`
+    : b.cancelled_by_role === 'admin' ? 'Отменена администратором'
+    : 'Отменена';
+  const statusBadge = isCancelled
+    ? `<span style="color:var(--err)">${cancelLabel}</span>`
+    : completed
+      ? `<span style="color:var(--ok);font-weight:700">✓ Завершена</span>`
+      : isPastBk
+        ? `<span style="color:var(--fg-3)">Прошла</span>`
+        : `<span style="color:${paid ? 'var(--ok)' : 'var(--warn)'}">${paid ? 'Оплачено' : 'Не оплачено'}</span>`;
+  document.getElementById('evd-title').textContent = b.menu_items?.name || 'Запись';
+  document.getElementById('evd-body').innerHTML = `
+    <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:8px">${esc(b.stores?.name || '')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;font:400 13px/1 var(--font-sans)">
+      <span>⏰ ${esc(b.slot_date)}, ${sStart} — ${sEnd}</span>
+      <span style="color:var(--accent)">${b.total_price || b.menu_items?.price || 0} ₽</span>
+      ${statusBadge}
+    </div>
+    ${b.stores?.address ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-4);margin-bottom:4px;display:flex;align-items:center;gap:3px">${svgIco('pin', 11)}${esc(b.stores.address)}</div>` : ''}
+    ${!completed && !isCancelled && !isPastBk ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      ${!paid ? `<button class="btn btn-sm btn-p" onclick="payExistingBooking('${b.id}')">Оплатить</button>` : ''}
+      <button class="btn btn-sm" onclick="openRescheduleInfo('${b.id}','${b.menu_item_id}')">Перенести</button>
+      <button class="btn btn-sm btn-d" onclick="cancelBooking('${b.id}')">Отменить</button>
+    </div>` : ''}
+  `;
+  openModal('m-event-detail');
+}
+
+function renderRentDetailModal(r) {
+  const item = r.menu_items || {};
+  const store = r.stores || {};
+  const sc = RENT_STATUS_COLOR[r.status] || 'var(--fg-3)';
+  const sl = RENT_STATUS_RU[r.status] || r.status;
+  const periodStr = _rentPeriodStr(r);
+  document.getElementById('evd-title').textContent = item.name || 'Аренда';
+  document.getElementById('evd-body').innerHTML = `
+    <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:8px">${esc(store.name || '')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;font:400 13px/1 var(--font-sans)">
+      <span>${periodStr}</span>
+      <span style="color:var(--accent)">${Number(r.total_price || 0).toFixed(0)} ₽</span>
+      <span style="color:${sc}">${esc(sl)}</span>
+      ${r.payment_status === 'paid' ? '<span style="color:var(--ok)">Оплачена</span>' : ''}
+    </div>
+  `;
+  openModal('m-event-detail');
 }
 
 function renderSavingsChart(redemptions, totalSaved) {

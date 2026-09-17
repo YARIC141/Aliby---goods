@@ -149,7 +149,8 @@ class AllibyWidgetRemoteViewsFactory implements RemoteViewsService.RemoteViewsFa
 
         rv.setViewVisibility(R.id.item_time, android.view.View.VISIBLE);
         if (isRent) {
-            rv.setTextViewText(R.id.item_time, isRentPickup ? "Забрать" : "Отдать");
+            String rentLabel = (isRentPickup ? "Забрать\nв " : "Отдать\nв ") + formatTime(atMillis);
+            rv.setTextViewText(R.id.item_time, rentLabel);
             rv.setTextColor(R.id.item_time, isRentPickup ? COLOR_RENT_PICKUP : COLOR_RENT);
         } else {
             rv.setTextColor(R.id.item_time, dark ? TEXT_DARK_SECONDARY : TEXT_LIGHT_SECONDARY);
