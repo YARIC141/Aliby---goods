@@ -487,6 +487,12 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .seg-ctrl button{flex:1;padding:8px 4px;border:none;border-right:1px solid var(--line);background:none;cursor:pointer;font:500 15px/1 var(--font-sans);color:var(--fg-3);transition:background var(--t-fast),color var(--t-fast)}
 .seg-ctrl button:last-child{border-right:none}
 .seg-ctrl button.seg-active{background:var(--accent);color:var(--accent-fg)}
+.ca-item-card{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--r-2);background:var(--bg-1);cursor:pointer;transition:all var(--t-fast);text-align:left;width:100%;font-family:var(--font-sans)}
+.ca-item-card.active{border-color:var(--accent);background:color-mix(in oklch,var(--accent) 10%,var(--bg))}
+.ca-item-card .ca-item-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ca-item-card .ca-item-name{font:600 14px/1.3 var(--font-sans);color:var(--fg)}
+.ca-item-card .ca-item-sub{font:400 12px/1.3 var(--font-sans);color:var(--muted)}
+.ca-item-card .ca-item-price{font:600 13px/1 var(--font-sans);color:var(--fg-2);white-space:nowrap;flex-shrink:0}
 
 /* ── SPLASH ── */
 #splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:opacity var(--t-slow) var(--ease-out)}
@@ -1552,25 +1558,21 @@ document.addEventListener('deviceready',function(){
     </div>
     <div id="ca-sched-wrap" class="pb" style="display:none">
       <div id="ca-sched-store-lbl" style="font:600 12px/1 var(--font-sans);color:var(--accent);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px"></div>
-      <div id="ca-sched-mode-row" style="display:none;margin-bottom:10px;gap:6px;flex-wrap:wrap">
-        <button class="chip active" data-ca-mode="all"      onclick="setCaSchedMode('all')">Все занятия</button>
-        <button class="chip"        data-ca-mode="group"    onclick="setCaSchedMode('group')">Групповые занятия</button>
-        <button class="chip"        data-ca-mode="personal" onclick="setCaSchedMode('personal')">Персональные тренировки</button>
-      </div>
-      <div id="ca-sched-item-row" style="display:none;margin-bottom:10px">
-        <select id="ca-sched-item-sel" onchange="setCaSchedItem(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
-          <option value="">Выберите тренировку</option>
-        </select>
+      <div id="ca-sched-mode-row" class="seg-ctrl" style="display:none;margin-bottom:10px">
+        <button data-ca-mode="group"    onclick="setCaSchedMode('group')">Групповые</button>
+        <button data-ca-mode="personal" onclick="setCaSchedMode('personal')">Персональные</button>
       </div>
       <div id="ca-sched-multiperson-row" style="display:none;margin-bottom:10px;padding:8px 10px;background:var(--bg-2);border-radius:var(--r-2)">
         <div class="theme-row" style="padding:0">
-          <span style="font:500 13px/1.3 var(--font-sans)">Для нескольких человек</span>
+          <span style="font:500 13px/1.3 var(--font-sans);display:flex;align-items:center">Показывать занятия для нескольких человек<span class="screen-help" onclick="event.stopPropagation();showCaMultiPersonInfo()">?</span></span>
           <label class="toggle-sw">
             <input type="checkbox" id="ca-sched-multiperson-chk" onchange="setCaSchedMultiPerson(this.checked)">
             <span class="toggle-track"></span>
           </label>
         </div>
-        <div id="ca-sched-multiperson-hint" style="display:none;color:var(--muted);font-size:12px;margin-top:6px"></div>
+      </div>
+      <div id="ca-sched-item-row" style="display:none;margin-bottom:10px">
+        <div id="ca-sched-item-list" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
       <div id="ca-sched-master-row" style="display:none;margin-bottom:12px">
         <select id="ca-sched-master-sel" onchange="setCaSchedMaster(this.value)" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-2);color:var(--fg);font:500 14px/1.2 var(--font-sans);padding:8px 10px;cursor:pointer">
@@ -1580,26 +1582,28 @@ document.addEventListener('deviceready',function(){
       <div id="ca-sched-book-row" style="display:none;margin-bottom:12px">
         <button class="btn btn-p btn-full" onclick="bookTrainingFromSched()">Записаться на тренировку</button>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <button class="btn btn-sm" onclick="caSchedPrevMonth()">←</button>
-        <span id="ca-sched-month-label" style="font:600 15px/1 var(--font-sans)"></span>
-        <button class="btn btn-sm" onclick="caSchedNextMonth()">→</button>
-      </div>
-      <div class="sched-cal-wrap" style="margin-bottom:14px">
-        <div class="sched-cal-grid" id="ca-sched-cal"></div>
-      </div>
-      <div id="ca-sched-personal-days" style="display:none;margin-bottom:14px">
-        <div id="ca-sched-personal-days-list" style="margin-bottom:10px"></div>
-        <div id="ca-sched-personal-total" style="display:none;font-size:13px;color:var(--muted);margin-bottom:10px"></div>
-        <button class="btn btn-p btn-full" id="ca-sched-personal-submit" onclick="confirmCaPersonalTrainingRequest()" disabled>Отправить заявку</button>
-      </div>
-      <div id="ca-sched-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div id="ca-sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
-          <button class="btn btn-sm" onclick="closeCaSchedDay()">✕</button>
+      <div id="ca-sched-pick-hint" style="display:none;text-align:center;padding:24px 12px;color:var(--muted);font-size:13px">Выберите занятие или услугу выше, чтобы увидеть доступные даты</div>
+      <div id="ca-sched-cal-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button class="btn btn-sm" onclick="caSchedPrevMonth()">←</button>
+          <span id="ca-sched-month-label" style="font:600 15px/1 var(--font-sans)"></span>
+          <button class="btn btn-sm" onclick="caSchedNextMonth()">→</button>
         </div>
-        <div id="ca-sched-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-        <div id="ca-sched-item-picker" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>
+        <div class="sched-cal-wrap" style="margin-bottom:14px">
+          <div class="sched-cal-grid" id="ca-sched-cal"></div>
+        </div>
+        <div id="ca-sched-personal-days" style="display:none;margin-bottom:14px">
+          <div id="ca-sched-personal-days-list" style="margin-bottom:10px"></div>
+          <div id="ca-sched-personal-total" style="display:none;font-size:13px;color:var(--muted);margin-bottom:10px"></div>
+          <button class="btn btn-p btn-full" id="ca-sched-personal-submit" onclick="confirmCaPersonalTrainingRequest()" disabled>Отправить заявку</button>
+        </div>
+        <div id="ca-sched-day-view" style="display:none;padding:12px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-1)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div id="ca-sched-day-title" style="font:600 14px/1 var(--font-sans)"></div>
+            <button class="btn btn-sm" onclick="closeCaSchedDay()">✕</button>
+          </div>
+          <div id="ca-sched-slots" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2638,6 +2642,24 @@ document.addEventListener('deviceready',function(){
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('m-reschedule-info')">Закрыть</button>
       <button class="btn btn-p" id="mri-ok-btn" style="display:none" onclick="proceedReschedule()">Выбрать новое время</button>
+    </div>
+  </div>
+</div>
+
+<!-- Personal training "for several people" info -->
+<div class="overlay" id="m-ca-multiperson-info">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h3>Занятия для нескольких человек</h3>
+      <button class="modal-x" onclick="closeModal('m-ca-multiperson-info')">✕</button>
+    </div>
+    <div style="font-size:14px;line-height:1.5;color:var(--fg-2);margin-bottom:16px">
+      Обычно на персональную тренировку записывается один человек в удобное для тренера время.<br><br>
+      Но есть занятия, где можно объединиться с другими: каждый участник указывает своё удобное время, а тренер потом сам подбирает время, подходящее всем, и подтверждает запись.<br><br>
+      Включите переключатель, чтобы увидеть такие занятия в списке ниже.
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-p btn-full" onclick="closeModal('m-ca-multiperson-info')">Понятно</button>
     </div>
   </div>
 </div>
@@ -4385,7 +4407,7 @@ async function loadCaScheduleScreen() {
     _caSched.itemId = '';
     _caSched.masters = [];
     _caSched.masterScheds = {};
-    _caSched.mode = 'all';
+    _caSched.mode = 'personal';
     _caSched.trainingItems = [];
     _caSched.masterModes = {};
     _caSched.multiPerson = false;
@@ -4395,7 +4417,6 @@ async function loadCaScheduleScreen() {
     const now = new Date();
     _caSched.year = now.getFullYear();
     _caSched.month = now.getMonth();
-    document.querySelectorAll('#ca-sched-mode-row .chip').forEach(b => b.classList.toggle('active', b.dataset.caMode === 'all'));
     const chk = document.getElementById('ca-sched-multiperson-chk');
     if (chk) chk.checked = false;
     // Загружаем мастеров с их недельным расписанием
@@ -4411,17 +4432,28 @@ async function loadCaScheduleScreen() {
       _caSched.bookableItems.forEach(it => itemCache.set(it.id, it));
       const itemModeById = {};
       (trainItems || []).forEach(it => { itemModeById[it.id] = it.training_mode; });
+      const plainServiceIds = new Set(_caSched.bookableItems.map(it => it.id));
       masters.forEach(m => {
         _caSched.masterScheds[m.id] = m.master_schedules || [];
         const modes = new Set();
-        (m.master_services || []).forEach(ms => { const md = itemModeById[ms.service_id]; if (md) modes.add(md); });
+        (m.master_services || []).forEach(ms => {
+          const md = itemModeById[ms.service_id];
+          if (md) modes.add(md);
+          else if (plainServiceIds.has(ms.service_id)) modes.add('personal');
+        });
         _caSched.masterModes[m.id] = modes;
         _caSched.masterItemPrice[m.id] = {};
         (m.master_services || []).forEach(ms => { _caSched.masterItemPrice[m.id][ms.service_id] = ms.price; });
       });
+      const hasGroupItems = _caSched.trainingItems.some(it => it.training_mode === 'group');
+      const hasPersonalBucket = _caSched.trainingItems.some(it => it.training_mode === 'personal') || _caSched.bookableItems.length > 0;
+      _caSched.mode = hasGroupItems ? 'group' : 'personal';
       const modeRow = document.getElementById('ca-sched-mode-row');
-      if (modeRow) modeRow.style.display = (trainItems || []).length ? 'flex' : 'none';
-      _populateCaSchedItemSelect();
+      if (modeRow) {
+        modeRow.style.display = (hasGroupItems && hasPersonalBucket) ? 'flex' : 'none';
+        modeRow.querySelectorAll('button').forEach(b => b.classList.toggle('seg-active', b.dataset.caMode === _caSched.mode));
+      }
+      _renderCaSchedItemList();
       _populateCaSchedMasterSelect();
     } catch {}
   }
@@ -4439,26 +4471,20 @@ function _caPersonalPrice(item) {
   return p != null ? p : item.price;
 }
 
+function showCaMultiPersonInfo() { openModal('m-ca-multiperson-info'); }
+
 function _updateCaSchedMultiPersonUI() {
   const row = document.getElementById('ca-sched-multiperson-row');
-  const hint = document.getElementById('ca-sched-multiperson-hint');
-  if (!row || !hint) return;
+  if (!row) return;
   const hasMulti = _caSched.trainingItems.some(it => it.training_mode === 'personal' && (it.max_group_size || 1) > 1);
-  row.style.display = hasMulti && _caSched.mode !== 'group' ? '' : 'none';
+  row.style.display = hasMulti && _caSched.mode === 'personal' ? '' : 'none';
   const chk = document.getElementById('ca-sched-multiperson-chk');
   if (chk) chk.checked = _caSched.multiPerson;
-  const item = _caSched.trainingItems.find(it => it.id === _caSched.itemId);
-  if (_caSched.multiPerson && item && item.training_mode === 'personal' && (item.max_group_size || 1) > 1) {
-    hint.style.display = '';
-    hint.textContent = `Для данного занятия можно пригласить ещё ${item.max_group_size - 1} человек`;
-  } else {
-    hint.style.display = 'none';
-  }
 }
 
 function setCaSchedMultiPerson(checked) {
   _caSched.multiPerson = checked;
-  _populateCaSchedItemSelect();
+  _renderCaSchedItemList();
   _populateCaSchedMasterSelect();
   _caSched.personalDays = {};
   _caSched.openDate = null;
@@ -4466,25 +4492,52 @@ function setCaSchedMultiPerson(checked) {
   _loadCaSchedMonth();
 }
 
-function _populateCaSchedItemSelect() {
-  const sel = document.getElementById('ca-sched-item-sel');
+function _updateCaSchedCalendarVisibility() {
+  const hasItem = !!_caSched.itemId;
+  const hint = document.getElementById('ca-sched-pick-hint');
+  const calSection = document.getElementById('ca-sched-cal-section');
+  if (hint) hint.style.display = hasItem ? 'none' : '';
+  if (calSection) calSection.style.display = hasItem ? '' : 'none';
+}
+
+function _renderCaSchedItemList() {
+  const wrap = document.getElementById('ca-sched-item-list');
   const row = document.getElementById('ca-sched-item-row');
-  if (!sel || !row) return;
+  if (!wrap || !row) return;
   const mode = _caSched.mode;
-  let items = mode === 'all' ? _caSched.trainingItems : _caSched.trainingItems.filter(it => it.training_mode === mode);
-  items = items.filter(it => it.training_mode !== 'personal' || _caSched.multiPerson || (it.max_group_size || 1) <= 1);
+  let items;
+  if (mode === 'group') {
+    items = _caSched.trainingItems.filter(it => it.training_mode === 'group').map(it => ({ ...it, _kind: 'group' }));
+  } else {
+    const personal = _caSched.trainingItems
+      .filter(it => it.training_mode === 'personal')
+      .filter(it => _caSched.multiPerson || (it.max_group_size || 1) <= 1)
+      .map(it => ({ ...it, _kind: 'personal' }));
+    const plain = _caSched.bookableItems.map(it => ({ ...it, _kind: 'service' }));
+    items = [...personal, ...plain];
+  }
   if (_caSched.masterId) {
     const master = _caSched.masters.find(m => m.id === _caSched.masterId);
     const svcIds = new Set((master?.master_services || []).map(ms => ms.service_id));
     items = items.filter(it => svcIds.has(it.id));
   }
-  sel.innerHTML = `<option value="">Выберите тренировку</option>` + items.map(it => `<option value="${it.id}">${esc(it.name)}</option>`).join('');
-  if (!items.some(it => it.id === _caSched.itemId)) { _caSched.itemId = ''; sel.value = ''; }
-  else sel.value = _caSched.itemId;
+  if (!items.some(it => it.id === _caSched.itemId)) _caSched.itemId = '';
   row.style.display = items.length ? '' : 'none';
+  wrap.innerHTML = items.map(it => {
+    const active = it.id === _caSched.itemId;
+    const price = _caPersonalPrice(it);
+    let sub = 'Услуга';
+    if (it._kind === 'group') sub = `Групповое занятие · до ${it.max_group_size || 1} чел.`;
+    else if (it._kind === 'personal') sub = (it.max_group_size || 1) > 1 ? `Персональная тренировка · можно пригласить ещё ${it.max_group_size - 1} чел.` : 'Персональная тренировка';
+    return `<button type="button" class="ca-item-card${active ? ' active' : ''}" onclick="setCaSchedItem('${it.id}')">
+      <div class="ca-item-main"><span class="ca-item-name">${esc(it.name)}</span><span class="ca-item-sub">${esc(sub)}</span></div>
+      <span class="ca-item-price">${Number(price).toFixed(0)} ₽</span>
+    </button>`;
+  }).join('');
   const selectedItem = items.find(it => it.id === _caSched.itemId);
   document.getElementById('ca-sched-book-row').style.display = (selectedItem && selectedItem.training_mode === 'group') ? '' : 'none';
   _updateCaSchedMultiPersonUI();
+  _updateCaSchedCalendarVisibility();
 }
 
 function _populateCaSchedMasterSelect() {
@@ -4493,7 +4546,7 @@ function _populateCaSchedMasterSelect() {
   const row = document.getElementById('ca-sched-master-row');
   if (!sel || !row || !store) return;
   const mode = _caSched.mode;
-  let masters = mode === 'all' ? _caSched.masters : _caSched.masters.filter(m => (_caSched.masterModes[m.id] || new Set()).has(mode));
+  let masters = _caSched.masters.filter(m => (_caSched.masterModes[m.id] || new Set()).has(mode));
   if (_caSched.itemId) masters = masters.filter(m => (m.master_services || []).some(ms => ms.service_id === _caSched.itemId));
   const mw = _MW(store.direction);
   sel.innerHTML = `<option value="">${mw.any}</option>` + masters.map(m => `<option value="${m.id}">${esc(m.full_name || mw.nom)}</option>`).join('');
@@ -4504,8 +4557,9 @@ function _populateCaSchedMasterSelect() {
 
 function setCaSchedMode(mode) {
   _caSched.mode = mode;
-  document.querySelectorAll('#ca-sched-mode-row .chip').forEach(b => b.classList.toggle('active', b.dataset.caMode === mode));
-  _populateCaSchedItemSelect();
+  document.querySelectorAll('#ca-sched-mode-row button').forEach(b => b.classList.toggle('seg-active', b.dataset.caMode === mode));
+  _caSched.itemId = '';
+  _renderCaSchedItemList();
   _populateCaSchedMasterSelect();
   _caSched.openDate = null;
   _caSched.personalDays = {};
@@ -4515,7 +4569,7 @@ function setCaSchedMode(mode) {
 
 function setCaSchedMaster(masterId) {
   _caSched.masterId = masterId;
-  _populateCaSchedItemSelect();
+  _renderCaSchedItemList();
   _caSched.openDate = null;
   _caSched.personalDays = {};
   document.getElementById('ca-sched-day-view').style.display = 'none';
@@ -4524,10 +4578,8 @@ function setCaSchedMaster(masterId) {
 
 function setCaSchedItem(itemId) {
   _caSched.itemId = itemId;
+  _renderCaSchedItemList();
   _populateCaSchedMasterSelect();
-  const item = _caSched.trainingItems.find(it => it.id === itemId);
-  document.getElementById('ca-sched-book-row').style.display = (item && item.training_mode === 'group') ? '' : 'none';
-  _updateCaSchedMultiPersonUI();
   _caSched.openDate = null;
   _caSched.personalDays = {};
   document.getElementById('ca-sched-day-view').style.display = 'none';
@@ -4845,8 +4897,6 @@ async function confirmCaPersonalTrainingRequest() {
 function openCaSchedDay(dateStr) {
   _caSched.openDate = dateStr;
   _schedulePreselect = null;
-  const picker = document.getElementById('ca-sched-item-picker');
-  if (picker) { picker.style.display = 'none'; picker.innerHTML = ''; }
   const [y, m, d] = dateStr.split('-').map(Number);
   const DOW = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const MON = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -4881,7 +4931,7 @@ function openCaSchedDay(dateStr) {
         btn.textContent = start;
         btn.dataset.start = start;
         btn.disabled = isTaken;
-        if (!isTaken) btn.onclick = () => selectCaSchedSlot(dateStr, start, end);
+        if (!isTaken) btn.onclick = () => selectCaSchedSlot(dateStr, start, end, null, btn);
         slotsEl.appendChild(btn);
       }
     }
@@ -4893,8 +4943,6 @@ function openCaSchedDay(dateStr) {
 function closeCaSchedDay() {
   _caSched.openDate = null;
   _schedulePreselect = null;
-  const picker = document.getElementById('ca-sched-item-picker');
-  if (picker) { picker.style.display = 'none'; picker.innerHTML = ''; }
   document.getElementById('ca-sched-day-view').style.display = 'none';
 }
 
@@ -4912,11 +4960,11 @@ function caSchedNextMonth() {
   _loadCaSchedMonth();
 }
 
-function selectCaSchedSlot(date, start, end, itemId) {
+function selectCaSchedSlot(date, start, end, itemId, btnEl) {
   _schedulePreselect = { date, start, end, masterId: _caSched.masterId || null };
   if (itemId) { _openCaGroupBookingFor(itemId, date, start, end); return; }
   document.querySelectorAll('#ca-sched-slots .booking-slot').forEach(b => b.classList.toggle('active', b.dataset.start === start));
-  _renderCaSchedItemPicker(date, start, end);
+  if (_caSched.itemId) _openCaDirectBookingFor(_caSched.itemId, date, start, end, btnEl);
 }
 
 async function _openCaGroupBookingFor(itemId, date, start, end) {
@@ -4932,21 +4980,17 @@ async function _openCaGroupBookingFor(itemId, date, start, end) {
   openBookingSlotModal(item, null, _caSched.masterId || null, { date, start, end });
 }
 
-function _renderCaSchedItemPicker(date, start, end) {
-  const wrap = document.getElementById('ca-sched-item-picker');
-  if (!wrap) return;
-  const items = (_caSched.bookableItems || []).filter(it => {
-    if (!_caSched.masterId) return true;
-    const master = _caSched.masters.find(m => m.id === _caSched.masterId);
-    return (master?.master_services || []).some(ms => ms.service_id === it.id);
-  });
-  wrap.style.display = '';
-  if (!items.length) {
-    wrap.innerHTML = `<div style="font-size:12px;color:var(--muted)">Нет доступных позиций для записи на это время</div>`;
-    return;
+async function _openCaDirectBookingFor(itemId, date, start, end, btnEl) {
+  let item = itemCache.get(itemId);
+  if (!item) {
+    try {
+      const rows = await req(`/rest/v1/menu_items?id=eq.${itemId}&select=*`);
+      item = rows?.[0];
+      if (item) itemCache.set(itemId, item);
+    } catch (e) {}
   }
-  wrap.innerHTML = `<div style="font-size:12px;color:var(--fg-3);margin-bottom:6px">Выберите позицию для записи на ${esc(start)}:</div>` +
-    items.map(it => `<button type="button" class="btn btn-sm" style="margin:0 6px 6px 0" onclick="bookWithPreselect(this, itemCache.get('${it.id}'))">${esc(it.name)}</button>`).join('');
+  if (!item) { showGeoToast('Ошибка загрузки позиции'); return; }
+  bookWithPreselect(btnEl, item);
 }
 
 function clearPreselect() {
