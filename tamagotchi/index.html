@@ -71,6 +71,21 @@
     background:rgba(16,20,24,.55);backdrop-filter:blur(2px);border:none;display:flex;align-items:center;
     justify-content:center;color:#fff;cursor:pointer;padding:0}
   .bio-toggle-btn svg{width:18px;height:18px}
+  .gold-badge{position:absolute;top:10px;left:10px;background:rgba(16,20,24,.55);backdrop-filter:blur(2px);
+    border-radius:14px;padding:6px 12px 6px 8px;display:flex;align-items:center;gap:5px;color:#f5c94a;
+    font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+  .gold-badge .g-icon{font-size:15px}
+  .shop-list,.inventory-list{display:flex;flex-direction:column;gap:10px}
+  .shop-item,.inventory-item{display:flex;align-items:center;gap:12px;background:var(--card);
+    border-radius:14px;padding:12px 14px}
+  .shop-item .s-icon,.inventory-item .s-icon{font-size:28px;flex-shrink:0;width:36px;text-align:center}
+  .shop-item .s-info,.inventory-item .s-info{flex:1;min-width:0}
+  .shop-item .s-name,.inventory-item .s-name{font-size:14px;font-weight:600}
+  .shop-item .s-desc{font-size:12px;color:var(--text2);margin-top:2px}
+  .inventory-item .s-count{font-size:12px;color:var(--text2);margin-top:2px}
+  .shop-item button{width:auto;margin:0;padding:9px 14px;font-size:13px;flex-shrink:0}
+  .shop-item button:disabled{opacity:.4;cursor:default}
+  .inventory-empty,.shop-empty{color:var(--text2);font-size:14px;text-align:center;padding:30px 0}
   .chat-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
   .chat-header button{width:auto;margin:0;padding:8px 12px;background:#232b33;color:var(--text)}
   .chat-header h1{font-size:18px;margin:0}
@@ -189,6 +204,7 @@
     <div class="sprite-card" id="sprite-card">
       <span class="sprite-placeholder" id="sprite-placeholder">🦝</span>
       <img id="sprite-img" class="hidden" alt="">
+      <div class="gold-badge" id="gold-badge" title="Золото"><span class="g-icon">🪙</span><span id="text-gold">0</span></div>
       <button type="button" class="bio-toggle-btn" id="btn-bio-toggle" title="Биография">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
       </button>
@@ -285,6 +301,8 @@
       <button id="btn-pdd" class="secondary">Билеты ПДД</button>
       <button id="btn-dog" class="secondary">🐶 Собака</button>
       <button id="btn-sobo" class="secondary">🧸 Sobo</button>
+      <button id="btn-shop" class="secondary">🛍️ Магазин</button>
+      <button id="btn-inventory" class="secondary">🎒 Инвентарь</button>
     </div>
 
     <p class="footer-hint" id="text-hint"></p>
@@ -363,6 +381,23 @@
       <a href="https://rive.app/community/files/28761-54484-sobo/" target="_blank" rel="noopener">Rive Community</a>,
       лицензия CC BY.
     </p>
+  </div>
+
+  <div id="screen-shop" class="hidden">
+    <div class="game-header">
+      <button id="btn-shop-back">←</button>
+      <h1>Магазин</h1>
+      <div class="gold-badge" style="position:static" id="gold-badge-shop"><span class="g-icon">🪙</span><span id="text-gold-shop">0</span></div>
+    </div>
+    <div class="shop-list" id="shop-list"></div>
+  </div>
+
+  <div id="screen-inventory" class="hidden">
+    <div class="game-header">
+      <button id="btn-inventory-back">←</button>
+      <h1>Инвентарь</h1>
+    </div>
+    <div class="inventory-list" id="inventory-list"></div>
   </div>
 
   <div id="screen-game-setup" class="hidden">
@@ -579,6 +614,88 @@
   function resetAll(){
     Object.keys(localStorage).filter(function(k){ return k.indexOf(LS_PREFIX) === 0; })
       .forEach(function(k){ localStorage.removeItem(k); });
+  }
+
+  // ── Золото и инвентарь ──────────────────────────────────────────────────
+  function getGold(){ return lsNum('gold', 0); }
+  function addGold(amount){
+    lsSet('gold', getGold() + amount);
+    updateGoldDisplay();
+  }
+  function updateGoldDisplay(){
+    var val = String(getGold());
+    var a = document.getElementById('text-gold'), b = document.getElementById('text-gold-shop');
+    if (a) a.textContent = val;
+    if (b) b.textContent = val;
+  }
+
+  var SHOP_ITEMS = [
+    { id: 'bow',      icon: '🎀', name: 'Бантик',            desc: 'Милый аксессуар на шею', price: 15 },
+    { id: 'ball',     icon: '🎾', name: 'Мячик',              desc: 'Любимая игрушка для игр', price: 20 },
+    { id: 'bone',     icon: '🦴', name: 'Косточка',           desc: 'Вкусное лакомство',        price: 25 },
+    { id: 'hat',      icon: '🎩', name: 'Цилиндр',            desc: 'Стильный головной убор',   price: 40 },
+    { id: 'glasses',  icon: '🕶️', name: 'Очки',               desc: 'Крутые тёмные очки',       price: 45 },
+    { id: 'blanket',  icon: '🧣', name: 'Плед',               desc: 'Уютно для отдыха',         price: 35 },
+    { id: 'medal',    icon: '🏅', name: 'Медаль чемпиона',    desc: 'За победы в играх',         price: 80 },
+    { id: 'crown',    icon: '👑', name: 'Корона',             desc: 'Для истинного короля',      price: 150 }
+  ];
+
+  function getInventory(){
+    try { return JSON.parse(lsGet('inventory', '{}')) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveInventory(inv){ lsSet('inventory', JSON.stringify(inv)); }
+
+  function buyItem(itemId){
+    var item = SHOP_ITEMS.filter(function(i){ return i.id === itemId; })[0];
+    if (!item) return;
+    if (getGold() < item.price){ showToast('Недостаточно золота'); return; }
+    addGold(-item.price);
+    var inv = getInventory();
+    inv[itemId] = (inv[itemId] || 0) + 1;
+    saveInventory(inv);
+    showToast('Куплено: ' + item.name);
+    renderShop();
+  }
+
+  function renderShop(){
+    updateGoldDisplay();
+    var list = document.getElementById('shop-list');
+    list.innerHTML = '';
+    SHOP_ITEMS.forEach(function(item){
+      var row = document.createElement('div');
+      row.className = 'shop-item';
+      var afford = getGold() >= item.price;
+      row.innerHTML =
+        '<div class="s-icon">' + item.icon + '</div>' +
+        '<div class="s-info"><div class="s-name">' + item.name + '</div>' +
+        '<div class="s-desc">' + item.desc + '</div></div>' +
+        '<button' + (afford ? '' : ' disabled') + '>' + item.price + ' 🪙</button>';
+      row.querySelector('button').addEventListener('click', function(){ buyItem(item.id); });
+      list.appendChild(row);
+    });
+  }
+
+  function renderInventory(){
+    var list = document.getElementById('inventory-list');
+    list.innerHTML = '';
+    var inv = getInventory();
+    var ownedIds = Object.keys(inv).filter(function(id){ return inv[id] > 0; });
+    if (!ownedIds.length){
+      list.innerHTML = '<p class="inventory-empty">Пока пусто — загляните в магазин</p>';
+      return;
+    }
+    ownedIds.forEach(function(id){
+      var item = SHOP_ITEMS.filter(function(i){ return i.id === id; })[0];
+      if (!item) return;
+      var row = document.createElement('div');
+      row.className = 'inventory-item';
+      row.innerHTML =
+        '<div class="s-icon">' + item.icon + '</div>' +
+        '<div class="s-info"><div class="s-name">' + item.name + '</div>' +
+        '<div class="s-count">Количество: ' + inv[id] + '</div></div>';
+      list.appendChild(row);
+    });
   }
 
   function clamp(v){ return Math.max(0, Math.min(100, v)); }
@@ -829,6 +946,8 @@
     document.getElementById('screen-games').classList.toggle('hidden', id !== 'games');
     document.getElementById('screen-dog').classList.toggle('hidden', id !== 'dog');
     document.getElementById('screen-sobo').classList.toggle('hidden', id !== 'sobo');
+    document.getElementById('screen-shop').classList.toggle('hidden', id !== 'shop');
+    document.getElementById('screen-inventory').classList.toggle('hidden', id !== 'inventory');
     document.getElementById('screen-game-setup').classList.toggle('hidden', id !== 'game-setup');
     document.getElementById('screen-game-board').classList.toggle('hidden', id !== 'game-board');
     document.getElementById('screen-pdd-tickets').classList.toggle('hidden', id !== 'pdd-tickets');
@@ -1048,7 +1167,12 @@
   }
   function setGameStatus(text){ document.getElementById('game-status-line').textContent = text; }
   function hideGameResult(){ document.getElementById('game-result').classList.add('hidden'); }
-  function showGameResult(text){
+  var GAME_WIN_GOLD = 10;
+  function showGameResult(text, won){
+    if (won) {
+      addGold(GAME_WIN_GOLD);
+      text += ' +' + GAME_WIN_GOLD + ' 🪙';
+    }
     var el = document.getElementById('game-result');
     el.textContent = text;
     el.classList.remove('hidden');
@@ -1217,14 +1341,15 @@
     var st = gameState, chess = st.chess;
     if (chess.isGameOver()){
       st.over = true;
-      var msg;
+      var msg, chessWon = false;
       if (chess.isCheckmate()){
         var winner = chess.turn() === 'w' ? 'b' : 'w';
-        msg = winner === st.playerColor ? 'Мат! Вы победили.' : 'Мат! Победил ИИ.';
+        chessWon = winner === st.playerColor;
+        msg = chessWon ? 'Мат! Вы победили.' : 'Мат! Победил ИИ.';
       } else if (chess.isStalemate()) msg = 'Пат — ничья.';
       else msg = 'Ничья.';
       setGameStatus('');
-      showGameResult(msg);
+      showGameResult(msg, chessWon);
       return;
     }
     setGameStatus(chess.turn() === st.playerColor ? 'Ваш ход' : 'Ход соперника...');
@@ -1330,14 +1455,14 @@
     var status = st.draughts.status;
     if (status !== 'playing'){
       st.over = true;
-      var msg;
+      var msg, playerWon = false;
       if (status === 'draw') msg = 'Ничья.';
       else {
-        var playerWon = (status === 'light_won') === st.playerLight;
+        playerWon = (status === 'light_won') === st.playerLight;
         msg = playerWon ? 'Вы победили!' : 'Победил ИИ.';
       }
       setGameStatus('');
-      showGameResult(msg);
+      showGameResult(msg, playerWon);
       return;
     }
     setGameStatus(isCheckersPlayerTurn() ? 'Ваш ход' : 'Ход соперника...');
@@ -1478,14 +1603,14 @@
       var score = st.game.score();
       var winner = score.black > score.white ? 'black' : (score.white > score.black ? 'white' : null);
       var scoreStr = 'Чёрные ' + score.black.toFixed(1) + ' — Белые ' + score.white.toFixed(1);
-      var msg;
+      var msg, playerWon = false;
       if (!winner) msg = 'Ничья! ' + scoreStr;
       else {
-        var playerWon = (winner === 'black') === st.playerBlack;
+        playerWon = (winner === 'black') === st.playerBlack;
         msg = (playerWon ? 'Вы победили! ' : 'Победил ИИ. ') + scoreStr;
       }
       setGameStatus('');
-      showGameResult(msg);
+      showGameResult(msg, playerWon);
       return;
     }
     setGameStatus(isGoPlayerTurn() ? 'Ваш ход' : 'Ход соперника...');
@@ -1835,8 +1960,9 @@
     if (!wAlive || !bAlive){
       st.over = true;
       var winnerSide = wAlive ? 'w' : 'b';
+      var guardWon = winnerSide === st.playerSide;
       setGameStatus('');
-      showGameResult(winnerSide === st.playerSide ? 'Вы победили!' : 'Победил ИИ.');
+      showGameResult(guardWon ? 'Вы победили!' : 'Победил ИИ.', guardWon);
       return;
     }
     if (st.noKillCount >= 60){
@@ -1995,6 +2121,7 @@
     setRing('ring-energy', pet.energy);
     setRing('ring-fun', pet.fun);
     setRing('ring-steps', activity);
+    updateGoldDisplay();
     document.getElementById('text-hint').textContent =
       'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
       ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) + ' мин. ' +
@@ -2156,6 +2283,7 @@
       settle(pet, now, getActivityLevel());
       if (feed(pet, now)){
         savePet(pet);
+        addGold(1);
         showActionSprite('./assets/feed.png');
       } else {
         var min = Math.ceil((FEED_COOLDOWN_MS - (now - pet.lastFedAt)) / 60000) + 1;
@@ -2171,6 +2299,7 @@
       if (walk(pet, now)){
         addManualBonus(WALK_STEP_BONUS);
         savePet(pet);
+        addGold(1);
         showActionSprite('./assets/walk.png');
       } else {
         var min = Math.ceil((WALK_COOLDOWN_MS - (now - pet.lastWalkAt)) / 60000) + 1;
@@ -2186,6 +2315,7 @@
       if (exercise(pet, now)){
         addManualBonus(EXERCISE_STEP_BONUS);
         savePet(pet);
+        addGold(1);
         showActionSprite('./assets/exercise.png');
       } else {
         var min = Math.ceil((EXERCISE_COOLDOWN_MS - (now - pet.lastExerciseAt)) / 60000) + 1;
@@ -2200,6 +2330,7 @@
       settle(pet, now, getActivityLevel());
       if (play(pet, now)){
         savePet(pet);
+        addGold(1);
         showActionSprite('./assets/play.png');
       } else {
         var min = Math.ceil((PLAY_COOLDOWN_MS - (now - pet.lastPlayAt)) / 60000) + 1;
@@ -2214,6 +2345,7 @@
       settle(pet, now, getActivityLevel());
       if (rest(pet, now)){
         savePet(pet);
+        addGold(1);
         showActionSprite('./assets/rest.png');
       } else {
         var min = Math.ceil((REST_COOLDOWN_MS - (now - pet.lastRestAt)) / 60000) + 1;
@@ -2245,6 +2377,11 @@
     document.getElementById('btn-dog-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
     document.getElementById('btn-sobo').addEventListener('click', openSoboScreen);
     document.getElementById('btn-sobo-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
+
+    document.getElementById('btn-shop').addEventListener('click', function(){ showScreen('shop'); renderShop(); });
+    document.getElementById('btn-shop-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
+    document.getElementById('btn-inventory').addEventListener('click', function(){ showScreen('inventory'); renderInventory(); });
+    document.getElementById('btn-inventory-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
 
     document.getElementById('btn-games').addEventListener('click', function(){ showScreen('games'); });
     document.getElementById('btn-games-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
