@@ -2767,7 +2767,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
     <div class="grid2">
       <div class="fg">
         <label>Заведение * <span class="hint" data-tip="К какому заведению относится позиция">?</span></label>
-        <select id="mmi-store" onchange="loadMICategories()"></select>
+        <select id="mmi-store" onchange="loadMICategories();_updateTrainingVisibility()"></select>
       </div>
       <div class="fg">
         <label>Категория <span class="hint" data-tip="Раздел меню (Кофе, Бургеры и т.д.). Используется для фильтрации и правил абонементов">?</span></label>
@@ -2889,6 +2889,29 @@ ol.hlp-steps>li ul{margin:6px 0 0}
       <div id="mmi-price-rules-section" style="display:none;grid-column:1/-1;border:1px solid var(--line);border-radius:var(--r-2);padding:12px">
         <div id="mmi-price-rules-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
         <button class="btn btn-sm" type="button" onclick="addPriceRule()">+ Правило</button>
+      </div>
+      <div class="fg" id="mmi-training-field" style="display:none;grid-column:1/-1;align-items:center;gap:8px">
+        <input type="checkbox" id="mmi-training-toggle" style="width:auto" onchange="onMmiTrainingToggle(this.checked)">
+        <label for="mmi-training-toggle">Тренировка <span class="hint" data-tip="Позиция — спортивное или развлекательное занятие: групповое (по расписанию, с местами) или персональное (клиент подбирает время с тренером)">?</span></label>
+      </div>
+      <div id="mmi-training-section" style="display:none;grid-column:1/-1;border:1px solid var(--line);border-radius:var(--r-2);padding:12px;display:none;flex-direction:column;gap:10px">
+        <div class="grid2" style="gap:10px">
+          <div class="fg">
+            <label>Формат занятия <span class="hint" data-tip="Групповое — идёт по расписанию, места ограничены. Персональное — клиент указывает удобное время, тренер подбирает и подтверждает финальное время сам или совместно с другими">?</span></label>
+            <select id="mmi-training-mode" onchange="onMmiTrainingModeChange()">
+              <option value="group">Групповое занятие</option>
+              <option value="personal">Персональная тренировка</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label id="mmi-max-group-label">Максимальный размер группы <span class="hint" data-tip="Групповое: вместимость одного занятия. Персональное: сколько клиентов тренер готов объединить в одну сессию — 1 отключает объединение">?</span></label>
+            <input type="number" min="1" step="1" id="mmi-max-group-size" placeholder="1">
+          </div>
+        </div>
+        <div id="mmi-training-schedule-wrap">
+          <label>Дни и время занятий <span class="hint" data-tip="У каждого выбранного дня своё время начала занятия">?</span></label>
+          <div id="mmi-training-schedule-list" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+        </div>
       </div>
       <div style="grid-column:1/-1;margin-top:12px;padding:10px 14px;border-radius:var(--r-2);background:oklch(from var(--err) l c h / .08);border:1px solid oklch(from var(--err) l c h / .3);font:400 12px/1.6 var(--font-sans);color:var(--fg-2)">
         <strong style="color:var(--err)">⛔ Запрещённые товары</strong><br>
@@ -6142,6 +6165,92 @@ function onMmiItemTypeChange() {
   const type = document.getElementById('mmi-item-type').value;
   document.getElementById('mmi-duration-field').style.display = type === 'service' ? '' : 'none';
   document.getElementById('mmi-rent-fields').style.display   = type === 'rental'  ? '' : 'none';
+  _updateTrainingVisibility();
+}
+
+// ─── ITEM TRAINING (спорт/развлечения: групповые/персональные занятия) ───
+let _editTrainingSchedule = []; // [{day_of_week, start_time}], day_of_week 0=Пн..6=Вс
+const _TRAINING_DAY_LABELS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+function _updateTrainingVisibility() {
+  const type = document.getElementById('mmi-item-type').value;
+  const storeId = document.getElementById('mmi-store').value;
+  const store = (S.stores || []).find(s => s.id === storeId);
+  const eligible = type === 'service' && ['sport','entertainment'].includes(store?.direction);
+  document.getElementById('mmi-training-field').style.display = eligible ? 'flex' : 'none';
+  if (!eligible) {
+    document.getElementById('mmi-training-toggle').checked = false;
+    onMmiTrainingToggle(false);
+  }
+}
+
+function onMmiTrainingToggle(show) {
+  document.getElementById('mmi-training-section').style.display = show ? 'flex' : 'none';
+  if (show) onMmiTrainingModeChange();
+}
+
+function onMmiTrainingModeChange() {
+  const mode = document.getElementById('mmi-training-mode').value;
+  document.getElementById('mmi-training-schedule-wrap').style.display = mode === 'group' ? '' : 'none';
+  const label = document.getElementById('mmi-max-group-label');
+  const hint = label.querySelector('.hint');
+  label.firstChild.textContent = mode === 'group' ? 'Максимальный размер группы ' : 'Макс. клиентов в одной сессии ';
+  if (hint) label.appendChild(hint);
+  if (mode === 'group' && !_editTrainingSchedule.length) _renderTrainingSchedule();
+}
+
+function _renderTrainingSchedule() {
+  const el = document.getElementById('mmi-training-schedule-list');
+  if (!el) return;
+  el.innerHTML = _TRAINING_DAY_LABELS.map((label, d) => {
+    const row = _editTrainingSchedule.find(r => r.day_of_week === d);
+    const on = !!row;
+    return `<div style="display:flex;align-items:center;gap:8px">
+      <label style="display:flex;align-items:center;gap:4px;width:38px;flex-shrink:0;cursor:pointer;font-size:12px">
+        <input type="checkbox" style="width:auto;margin:0" ${on ? 'checked' : ''} onchange="_toggleTrainingDay(${d},this.checked)"> ${label}
+      </label>
+      <input type="time" value="${row?.start_time || ''}" ${on ? '' : 'disabled'} style="width:110px"
+        onchange="_setTrainingDayTime(${d},this.value)">
+    </div>`;
+  }).join('');
+}
+
+function _toggleTrainingDay(day, checked) {
+  if (checked) {
+    if (!_editTrainingSchedule.find(r => r.day_of_week === day)) _editTrainingSchedule.push({ day_of_week: day, start_time: '' });
+  } else {
+    _editTrainingSchedule = _editTrainingSchedule.filter(r => r.day_of_week !== day);
+  }
+  _renderTrainingSchedule();
+}
+
+function _setTrainingDayTime(day, value) {
+  const row = _editTrainingSchedule.find(r => r.day_of_week === day);
+  if (row) row.start_time = value;
+}
+
+function _getTrainingErrors() {
+  if (!document.getElementById('mmi-training-toggle').checked) return null;
+  const maxGroup = parseInt(document.getElementById('mmi-max-group-size').value, 10);
+  if (!maxGroup || maxGroup < 1) return 'Тренировка: укажите максимальный размер группы';
+  if (document.getElementById('mmi-training-mode').value === 'group') {
+    if (!_editTrainingSchedule.length) return 'Тренировка: выберите хотя бы один день занятий';
+    if (_editTrainingSchedule.some(r => !r.start_time)) return 'Тренировка: укажите время для каждого выбранного дня';
+  }
+  return null;
+}
+
+async function _saveTrainingSchedule(itemId) {
+  const isTraining = document.getElementById('mmi-training-toggle').checked;
+  const mode = document.getElementById('mmi-training-mode').value;
+  const rows = (isTraining && mode === 'group') ? _editTrainingSchedule : [];
+  await req(`/rest/v1/training_schedules?menu_item_id=eq.${itemId}`, { method: 'DELETE' });
+  if (rows.length) {
+    await req('/rest/v1/training_schedules', {
+      method: 'POST',
+      body: JSON.stringify(rows.map(r => ({ menu_item_id: itemId, day_of_week: r.day_of_week, start_time: r.start_time }))),
+    });
+  }
 }
 
 let _miModalSeq = 0;
@@ -6165,14 +6274,19 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-fat').value        = item?.fat       ?? '';
   document.getElementById('mmi-carbs').value      = item?.carbs     ?? '';
   document.getElementById('mmi-item-type').value  = item?.item_type || 'product';
+  document.getElementById('mmi-store').value    = item?.store_id    || '';
   onMmiItemTypeChange();
   document.getElementById('mmi-rent-unit').value   = item?.rent_period_unit  || 'hour';
   document.getElementById('mmi-rent-step').value   = item?.rent_period_step  || '';
   document.getElementById('mmi-total-qty').value   = item?.total_quantity    || '';
   document.getElementById('mmi-avail-qty').value   = item?.quantity_available ?? '';
   document.getElementById('mmi-image-url').value = item?.image_url       || '';
-  document.getElementById('mmi-store').value    = item?.store_id    || '';
   S.uploadedPhotoFilename = null;
+  document.getElementById('mmi-training-toggle').checked = item?.is_training || false;
+  document.getElementById('mmi-training-mode').value = item?.training_mode || 'group';
+  document.getElementById('mmi-max-group-size').value = item?.max_group_size ?? '';
+  _editTrainingSchedule = [];
+  onMmiTrainingToggle(item?.is_training || false);
 
   const preview = document.getElementById('mmi-preview');
   if (item?.image_url) {
@@ -6191,6 +6305,7 @@ function openMenuItemModal(item) {
     document.getElementById('mmi-cat').innerHTML = '<option value="">— Без категории —</option>';
     if (!document.getElementById('mmi-store').value && S.stores?.length) {
       document.getElementById('mmi-store').value = S.stores[0].id;
+      _updateTrainingVisibility();
     }
     loadMICategories();
   }
@@ -6215,6 +6330,12 @@ function openMenuItemModal(item) {
         _renderPriceRules();
       }
     }).catch(() => {});
+    if (item.is_training && item.training_mode === 'group') {
+      req(`/rest/v1/training_schedules?menu_item_id=eq.${item.id}&order=day_of_week.asc`).then(rows => {
+        _editTrainingSchedule = rows || [];
+        _renderTrainingSchedule();
+      }).catch(() => {});
+    }
   }
 }
 
@@ -6528,6 +6649,8 @@ async function saveMenuItem() {
     const rulesErr = _getPriceRulesErrors();
     if (rulesErr) { restore(); showAdminToast(rulesErr); return; }
   }
+  const trainingErr = _getTrainingErrors();
+  if (trainingErr) { restore(); showAdminToast(trainingErr); return; }
   const id = document.getElementById('mmi-id').value;
   const itemType = document.getElementById('mmi-item-type').value;
   const price = parseFloat(document.getElementById('mmi-price').value);
@@ -6565,6 +6688,9 @@ async function saveMenuItem() {
       const tq = parseInt(document.getElementById('mmi-total-qty').value, 10);
       return !id && !isNaN(tq) ? tq : null;
     })(),
+    is_training:    document.getElementById('mmi-training-toggle').checked,
+    training_mode:  document.getElementById('mmi-training-toggle').checked ? document.getElementById('mmi-training-mode').value : null,
+    max_group_size: document.getElementById('mmi-training-toggle').checked ? (parseInt(document.getElementById('mmi-max-group-size').value, 10) || null) : null,
   };
   const ctrl = new AbortController();
   const timer = setTimeout(() => { ctrl.abort(); restore(); showAdminToast('Нет ответа от сервера, попробуйте ещё раз'); }, 20000);
@@ -6584,6 +6710,7 @@ async function saveMenuItem() {
     if (savedId) {
       await _saveOptGroupsForItem(savedId);
       await _savePriceRules(savedId);
+      await _saveTrainingSchedule(savedId);
     }
     clearTimeout(timer);
     closeModal('m-mi'); restore(); loadMenuItems();
@@ -7563,7 +7690,7 @@ async function renderBkTabDayView(dateStr) {
     renderBkTabCalendar();
     if (!bks.length) { el.innerHTML = '<div class="txt-muted" style="font-size:13px;padding:8px 0">Записей нет</div>'; return; }
 
-    const ST  = { booked:{lbl:'Активна',cls:'b-paid'}, completed:{lbl:'Завершена',cls:'b-ok'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'} };
+    const ST  = { booked:{lbl:'Активна',cls:'b-paid'}, completed:{lbl:'Завершена',cls:'b-ok'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'}, pending_approval:{lbl:'Утверждается тренером',cls:'b-pending'} };
     const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, unpaid:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
     const roleNom = _roleWords((S.stores || []).find(s => s.id === _bkTab.storeId)?.direction).nom;
 
@@ -7581,7 +7708,9 @@ async function renderBkTabDayView(dateStr) {
     }
 
     el.innerHTML = filtered.map(b => {
-      const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
+      const isPending = b.status === 'pending_approval';
+      const ts = isPending ? (b.preferred_start||'').slice(0,5) : (b.slot_start||'').slice(0,5);
+      const te = isPending ? (b.preferred_end||'').slice(0,5)   : (b.slot_end||'').slice(0,5);
       const p = pm[b.user_id] || null;
       const m = b.master_id ? (pm[b.master_id] || null) : null;
       _bkCache[b.id] = { b, p, m };
@@ -7607,8 +7736,8 @@ async function renderBkTabDayView(dateStr) {
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
             <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price??b.menu_items?.price??''} ₽</div>
-            ${!isPaid&&!isCancelled&&!isCompleted?`<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${esc(b.id)}','${dateStr}')">Подтвердить оплату</button>`:''}
-            ${!isCancelled&&!isCompleted?`<button class="btn btn-sm" style="background:var(--ok);color:#fff;font-size:11px" onclick="event.stopPropagation();completeBooking('${esc(b.id)}','${dateStr}')">Завершить</button>`:''}
+            ${!isPaid&&!isCancelled&&!isCompleted&&!isPending?`<button class="btn btn-p btn-sm" onclick="event.stopPropagation();markBookingPaid('${esc(b.id)}','${dateStr}')">Подтвердить оплату</button>`:''}
+            ${!isCancelled&&!isCompleted&&!isPending?`<button class="btn btn-sm" style="background:var(--ok);color:#fff;font-size:11px" onclick="event.stopPropagation();completeBooking('${esc(b.id)}','${dateStr}')">Завершить</button>`:''}
             ${!isCancelled&&!isCompleted?`<button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${esc(b.id)}','${dateStr}')">Отменить</button>`:''}
           </div>
         </div>
@@ -9599,14 +9728,50 @@ async function renderDayBookings(dateStr) {
 
     if (!bks.length) { bkEl.innerHTML = ''; return; }
 
-    const ST  = { booked:{lbl:'Активна',cls:'b-paid'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'}, completed:{lbl:'Завершена',cls:'b-ok'} };
+    const ST  = { booked:{lbl:'Активна',cls:'b-paid'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'}, completed:{lbl:'Завершена',cls:'b-ok'}, pending_approval:{lbl:'Утверждается тренером',cls:'b-pending'} };
     const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, unpaid:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
     const roleNom = _roleWords(_sched.storeDirection).nom;
+
+    const pendingBks = bks.filter(b => b.status === 'pending_approval');
+    const regularBks = bks.filter(b => b.status !== 'pending_approval');
+
+    // Заявки на персональную тренировку без подтверждённого времени группируем
+    // по (тренер, позиция) — тренер подбирает и подтверждает общее время сразу
+    // для всех, кто откликнулся на этот слот в этот день.
+    const pendingGroups = {};
+    pendingBks.forEach(b => {
+      const p = profilesMap[b.user_id] || null;
+      _bkCache[b.id] = { b, p, m: null };
+      const key = `${b.master_id}|${b.menu_item_id}`;
+      (pendingGroups[key] = pendingGroups[key] || []).push(b);
+    });
+
+    const pendingHtml = Object.entries(pendingGroups).map(([key, group]) => {
+      const [masterId, itemId] = key.split('|');
+      const itemName = group[0].menu_items?.name || '—';
+      const rows = group.map(b => {
+        const p = profilesMap[b.user_id] || null;
+        const ps = (b.preferred_start || '').slice(0,5), pe = (b.preferred_end || '').slice(0,5);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-top:1px solid var(--line-soft)">
+          <span>${esc(p?.full_name || 'Клиент')} · готов(а) ${ps}–${pe}</span>
+          <button class="btn btn-sm btn-d" style="font-size:11px" onclick="event.stopPropagation();cancelBooking('${b.id}','${dateStr}')">✕</button>
+        </div>`;
+      }).join('');
+      return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px dashed var(--line-soft);margin-bottom:8px;background:var(--bg)">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
+          <span class="badge b-pending">Утверждается тренером</span>
+          <span style="font:500 13px/1.3 var(--font-sans)">${esc(itemName)} · заявок: ${group.length}</span>
+        </div>
+        ${rows}
+        <button class="btn btn-p btn-sm" style="margin-top:8px" onclick="event.stopPropagation();confirmTrainingGroup('${masterId}','${itemId}','${dateStr}')">Подобрать и подтвердить время</button>
+      </div>`;
+    }).join('');
 
     bkEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px">
       <span style="font:600 13px/1 var(--font-sans);color:var(--fg-2)">Записи · ${bks.length}</span>
     </div>`
-    + bks.map(b => {
+    + pendingHtml
+    + regularBks.map(b => {
       const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
       const p = profilesMap[b.user_id] || null;
       const m = b.master_id ? (profilesMap[b.master_id] || null) : null;
@@ -9640,6 +9805,30 @@ async function renderDayBookings(dateStr) {
       </div>`;
     }).join('');
   } catch { bkEl.innerHTML = '<div style="color:var(--fg-4);font-size:13px;padding:8px 0">Ошибка загрузки</div>'; }
+}
+
+async function confirmTrainingGroup(masterId, itemId, dateStr) {
+  try {
+    const rows = await req('/rest/v1/rpc/personal_training_match_proposal', {
+      method: 'POST',
+      body: JSON.stringify({ p_master_id: masterId, p_menu_item_id: itemId, p_date: dateStr }),
+    });
+    const proposal = Array.isArray(rows) ? rows[0] : rows;
+    if (!proposal || !proposal.matched_count) {
+      showAdminToast('Не удалось подобрать общее время — проверьте расписание тренера и диапазоны клиентов');
+      return;
+    }
+    const ps = (proposal.proposed_start || '').slice(0,5), pe = (proposal.proposed_end || '').slice(0,5);
+    if (!confirm(`Объединить ${proposal.matched_count} чел. на ${ps}–${pe}?`)) return;
+    const ids = proposal.matched_booking_ids.join(',');
+    await req(`/rest/v1/bookings?id=in.(${ids})`, {
+      method: 'PATCH',
+      body: JSON.stringify({ slot_start: proposal.proposed_start, slot_end: proposal.proposed_end, status: 'booked' }),
+    });
+    showAdminToast('Время подтверждено');
+    if (_sched.openDate === dateStr) renderDayBookings(dateStr);
+    if (_bkTab.openDate === dateStr) renderBkTabDayView(dateStr);
+  } catch(e) { showAdminToast('Ошибка: ' + (e.message || '')); }
 }
 
 async function markBookingPaid(bookingId, dateStr) {
