@@ -13,4 +13,8 @@
     <string name="widget_description">Ближайшие записи Alliby и личные события</string>
     <string name="widget_tall_label">Alliby (высокий)</string>
     <string name="widget_tall_description">Ближайшие записи Alliby и личные события — высокий вид, 5 ячеек</string>
+    <string name="schedule_widget_description">Расписание занятий: сегодня и календарь по неделям 1/2</string>
+    <string name="schedule_widget_label">Расписание занятий</string>
+    <string name="pet_widget_description">Показатели питомца из Health Connect: шаги, сон, калории, пульс</string>
+    <string name="pet_widget_label">Питомец</string>
 </resources>

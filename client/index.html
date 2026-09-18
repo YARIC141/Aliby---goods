@@ -1131,6 +1131,7 @@ document.addEventListener('deviceready',function(){
         if(screen==='rent'&&id&&typeof openRentById==='function'){openRentById(id);return;}
         if(screen==='order'&&id&&typeof openOrderById==='function'){openOrderById(id);return;}
         if(screen==='reminders'&&typeof openReminders==='function'){goTo('profile');openReminders();return;}
+        if(screen==='tamagotchi'){window.location.href='/tamagotchi/index.html';return;}
         if(screen&&typeof goTo==='function'){goTo(screen);return;}
       }
       if(qs&&typeof handlePaymentReturn==='function')handlePaymentReturn(qs);
