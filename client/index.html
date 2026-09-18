@@ -4741,7 +4741,9 @@ function renderCaSchedCalendar() {
   const body = document.getElementById('ca-sched-cal');
   body.innerHTML = SCHED_CAL_HD_HTML;
   for (let i = 0; i < dow; i++) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
-  const personalSelected = !!_caPersonalItem();
+  const personalItem = _caPersonalItem();
+  const personalSelected = !!personalItem;
+  const personalDurMin = personalItem ? Math.max(personalItem.duration_minutes || 30, 5) : 30;
   for (let d = 1; d <= lastDate; d++) {
     const pad = n => String(n).padStart(2, '0');
     const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
@@ -4751,7 +4753,7 @@ function renderCaSchedCalendar() {
     const hasSched = !!windows;
     const td = document.createElement('div');
     if (personalSelected) {
-      const hasAny = hasSched && !isPast;
+      const hasAny = hasSched && !isPast && _caFreeWindows(windows[0], _caSched.bookedData[ds], personalDurMin).length > 0;
       const isSelected = !!_caSched.personalDays[ds];
       const hasInterest = hasAny && _caSched.groupInterestDates.has(ds);
       const isConfirmedInterest = hasInterest && _caSched.groupInterestDates.get(ds);
@@ -4795,6 +4797,22 @@ function renderCaSchedCalendar() {
   }
 }
 
+function _caFreeWindows(w, booked, durMin) {
+  if (!w) return [];
+  let segs = [{ start: _timeToMin(w.start), end: _timeToMin(w.end) }];
+  (booked || []).forEach(b => {
+    const bs = _timeToMin(b.slot_start.slice(0, 5)), be = _timeToMin(b.slot_end.slice(0, 5));
+    const next = [];
+    segs.forEach(s => {
+      if (be <= s.start || bs >= s.end) { next.push(s); return; }
+      if (bs > s.start) next.push({ start: s.start, end: Math.min(bs, s.end) });
+      if (be < s.end) next.push({ start: Math.max(be, s.start), end: s.end });
+    });
+    segs = next;
+  });
+  return segs.filter(s => s.end - s.start >= durMin).map(s => ({ start: _minToTime(s.start), end: _minToTime(s.end) }));
+}
+
 function _caPersonalDayToggle(ds) {
   if (_caSched.personalDays[ds]) {
     delete _caSched.personalDays[ds];
@@ -4803,7 +4821,11 @@ function _caPersonalDayToggle(ds) {
   }
   const w = (_caSched.schedData[ds] || [])[0];
   if (!w) return;
-  _caSched.personalDays[ds] = { start: w.start, end: w.end, joinKind: null };
+  const item = _caPersonalItem();
+  const durMin = Math.max(item?.duration_minutes || 30, 5);
+  const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin);
+  if (!free.length) return;
+  _caSched.personalDays[ds] = { start: free[0].start, end: free[0].end, joinKind: null };
   renderCaSchedCalendar();
   if (_caSched.groupInterestDates.has(ds) && !_caSched.dayOptions[ds]) {
     _loadCaPersonalDayOptions(ds);
@@ -4861,6 +4883,10 @@ function _renderCaPersonalDaysList() {
       const label = `${_PD_DOW[new Date(y, m - 1, d).getDay()]}, ${d} ${_PD_MON[m - 1]}`;
       const day = _caSched.personalDays[ds];
       const w = (_caSched.schedData[ds] || [])[0] || { start: '00:00', end: '23:59' };
+      const item = _caPersonalItem();
+      const durMin = Math.max(item?.duration_minutes || 30, 5);
+      const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin);
+      const fw = free.find(f => _timeToMin(day.start) >= _timeToMin(f.start) && _timeToMin(day.end) <= _timeToMin(f.end)) || free[0] || w;
       const opts = _caSched.dayOptions[ds];
       let optsHtml = '';
       if (opts === undefined && _caSched.groupInterestDates.has(ds)) {
@@ -4878,16 +4904,23 @@ function _renderCaPersonalDaysList() {
           }).join('')}
         </div>`;
       }
+      const freeWindowsHtml = (!day.joinKind && free.length > 1)
+        ? `<div style="width:100%;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px">
+            ${free.map(f => `<button type="button" class="chip${fw.start === f.start && fw.end === f.end ? ' active' : ''}" onclick="_selectCaFreeWindow('${ds}','${f.start}','${f.end}')">${f.start}–${f.end}</button>`).join('')}
+          </div>` : '';
       const rangeHtml = day.joinKind
         ? `<span style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:var(--r-2);border:1px solid ${day.joinKind === 'confirmed' ? 'var(--warn)' : 'var(--info)'};color:${day.joinKind === 'confirmed' ? 'var(--warn)' : 'var(--info)'};font-size:13px;font-weight:600">
             ${day.joinKind === 'confirmed' ? 'Подтверждённая тренировка' : 'Согласованное время'} ${day.start}–${day.end}
           </span>`
-        : `<input type="time" value="${day.start}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+        : !free.length
+        ? `<span style="font-size:12px;color:#e05252">Свободного времени не осталось — тренер уже занят весь день</span>`
+        : `<input type="time" value="${day.start}" min="${fw.start}" max="${fw.end}" onchange="onCaPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
           <span style="color:var(--muted);font-size:13px">–</span>
-          <input type="time" value="${day.end}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">`;
+          <input type="time" value="${day.end}" min="${fw.start}" max="${fw.end}" onchange="onCaPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">`;
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:600;min-width:76px">${label}</span>
         ${optsHtml}
+        ${freeWindowsHtml}
         ${rangeHtml}
         <button type="button" class="btn btn-sm" onclick="removeCaPersonalDay('${ds}')" style="margin-left:auto">✕</button>
         <div class="ca-personal-day-err" data-ds="${ds}" style="width:100%;font-size:12px;color:#e05252"></div>
@@ -4895,6 +4928,14 @@ function _renderCaPersonalDaysList() {
     }).join('');
   }
   _updateCaPersonalSubmitState();
+}
+
+function _selectCaFreeWindow(ds, start, end) {
+  const day = _caSched.personalDays[ds];
+  if (!day) return;
+  day.start = start;
+  day.end = end;
+  _renderCaPersonalDaysList();
 }
 
 function onCaPersonalDayRangeChange(ds, which, value) {
@@ -4921,10 +4962,11 @@ function _updateCaPersonalSubmitState() {
       else if (!w) msg = 'Нет рабочего времени в этот день';
       else {
         const sM = _timeToMin(day.start), eM = _timeToMin(day.end);
+        const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin);
         if (eM <= sM) msg = 'Время «до» должно быть позже «от»';
         else if (eM - sM < durMin) msg = `Не короче ${durMin} мин`;
-        else if (sM < _timeToMin(w.start)) msg = `Не раньше ${w.start}`;
-        else if (eM > _timeToMin(w.end)) msg = `Не позже ${w.end}`;
+        else if (!free.length) msg = 'Тренер занят весь день';
+        else if (!free.some(f => sM >= _timeToMin(f.start) && eM <= _timeToMin(f.end))) msg = 'Это время уже занято тренером, выберите другое';
       }
     }
     if (errEl) errEl.textContent = msg;
