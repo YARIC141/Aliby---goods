@@ -2660,6 +2660,20 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+<!-- Training group members info -->
+<div class="overlay" id="m-training-group-members">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd">
+      <h3>Участники группы</h3>
+      <button class="modal-x" onclick="closeModal('m-training-group-members')">✕</button>
+    </div>
+    <div id="mtgm-body" style="margin-bottom:16px"></div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('m-training-group-members')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
 <!-- Personal training "for several people" info -->
 <div class="overlay" id="m-ca-multiperson-info">
   <div class="modal" style="max-width:420px">
@@ -12284,7 +12298,7 @@ async function loadBookingsScreen() {
   const firstDay = `${_myBk.year}-${mm}-01`;
   const lastDay = new Date(_myBk.year, _myBk.month + 1, 0).toISOString().slice(0, 10);
   try {
-    const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&select=*,stores(name,address,direction),menu_items(name,price,preparation_time)&order=slot_date.asc,slot_start.asc`);
+    const rows = await req(`/rest/v1/bookings?user_id=eq.${S.session.user.id}&slot_date=gte.${firstDay}&slot_date=lte.${lastDay}&select=*,stores(name,address,direction),menu_items(name,price,preparation_time,max_group_size)&order=slot_date.asc,slot_start.asc`);
     _myBk.byDate = {};
     _myBk.masterMap = {};
     rows.forEach(r => {
@@ -12444,6 +12458,7 @@ function renderMyBookingsDay(ds) {
         </div>
         ${b.stores?.address ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-4);margin-top:4px;display:flex;align-items:center;gap:3px">${svgIco('pin',11)}${esc(b.stores.address)}</div>` : ''}
         ${b.master_id && _myBk.masterMap?.[b.master_id] ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-3);margin-top:4px">👤 ${esc(_myBk.masterMap[b.master_id])}</div>` : ''}
+        ${!isPending && !isCancelled && (b.menu_items?.max_group_size||1) > 1 ? `<div style="margin-top:4px"><a href="#" onclick="event.preventDefault();event.stopPropagation();openTrainingGroupMembers('${b.id}')" style="font-size:12px;color:var(--accent)">👥 Участники группы</a></div>` : ''}
       </div>
       ${!completed && !isCancelled && !isPastBk ? `<div class="bk-item-actions">
         ${!paid && !isPending ? `<button class="btn btn-sm btn-p" onclick="payExistingBooking('${b.id}')">Оплатить</button>` : ''}
@@ -12548,6 +12563,28 @@ function openRescheduleInfo(bookingId, menuItemId) {
   okBtn.style.display = canReschedule ? '' : 'none';
   _rescheduleTarget = canReschedule ? { bookingId, menuItemId } : null;
   openModal('m-reschedule-info');
+}
+
+async function openTrainingGroupMembers(bookingId) {
+  const bodyEl = document.getElementById('mtgm-body');
+  bodyEl.innerHTML = '<div style="color:var(--fg-3);font-size:14px">Загрузка…</div>';
+  openModal('m-training-group-members');
+  try {
+    const rows = await req('/rest/v1/rpc/personal_training_group_members', {
+      method: 'POST',
+      body: JSON.stringify({ p_booking_id: bookingId }),
+    });
+    if (!rows || !rows.length) {
+      bodyEl.innerHTML = '<div style="color:var(--fg-3);font-size:14px">Нет данных об участниках</div>';
+      return;
+    }
+    bodyEl.innerHTML = `
+      <div style="font:600 14px/1.3 var(--font-sans);margin-bottom:10px">Всего: ${rows.length}</div>
+      ${rows.map(r => `<div style="padding:8px 0;border-top:1px solid var(--line-soft);font:400 14px/1.3 var(--font-sans)">${esc(r.full_name)}${r.is_me ? ' <span style="color:var(--fg-3)">(вы)</span>' : ''}</div>`).join('')}
+    `;
+  } catch(e) {
+    bodyEl.innerHTML = '<div style="color:var(--err);font-size:14px">Ошибка загрузки</div>';
+  }
 }
 
 async function proceedReschedule() {

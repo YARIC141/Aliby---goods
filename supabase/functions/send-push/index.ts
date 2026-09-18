@@ -197,7 +197,15 @@ Deno.serve(async (req: Request) => {
 
   try {
     const dataOnly = type === 'carry_order_assigned'
-    await sendFcm(sub.device_token, title, body, { type, ...data }, dataOnly)
+    // FCM требует, чтобы все значения в message.data были строками — если
+    // вызывающая сторона (например, personal_training_send_push в БД) кладёт
+    // в data число (price, remaining и т.п.), jsonb сериализует его как JSON
+    // number, и FCM отвечает 400 INVALID_ARGUMENT на весь запрос, из-за чего
+    // push вообще не уходит. Приводим значения к строкам здесь, один раз для
+    // всех типов пушей, вместо того чтобы полагаться на каждого вызывающего.
+    const strData: Record<string, string> = { type }
+    for (const [k, v] of Object.entries(data)) strData[k] = v == null ? '' : String(v)
+    await sendFcm(sub.device_token, title, body, strData, dataOnly)
     return new Response(JSON.stringify({ sent: true }), {
       status: 200, headers: { 'Content-Type': 'application/json' },
     })
