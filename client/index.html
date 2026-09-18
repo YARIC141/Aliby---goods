@@ -4904,6 +4904,8 @@ function _renderCaPersonalDaysList() {
           }).join('')}
         </div>`;
       }
+      const availTextHtml = (!day.joinKind && free.length)
+        ? `<div style="width:100%;font-size:12px;color:var(--fg-3)">Доступно для «${esc(item?.name || '')}»: ${free.map(f => `${f.start}–${f.end}`).join(', ')}</div>` : '';
       const freeWindowsHtml = (!day.joinKind && free.length > 1)
         ? `<div style="width:100%;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px">
             ${free.map(f => `<button type="button" class="chip${fw.start === f.start && fw.end === f.end ? ' active' : ''}" onclick="_selectCaFreeWindow('${ds}','${f.start}','${f.end}')">${f.start}–${f.end}</button>`).join('')}
@@ -4920,6 +4922,7 @@ function _renderCaPersonalDaysList() {
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:600;min-width:76px">${label}</span>
         ${optsHtml}
+        ${availTextHtml}
         ${freeWindowsHtml}
         ${rangeHtml}
         <button type="button" class="btn btn-sm" onclick="removeCaPersonalDay('${ds}')" style="margin-left:auto">✕</button>
@@ -12015,8 +12018,10 @@ function _renderPersonalDaysList() {
       const label = `${_PD_DOW[new Date(y, m - 1, d).getDay()]}, ${d} ${_PD_MON[m - 1]}`;
       const day = _booking.personalDays[ds];
       const w = _personalWorkWindow(_booking.selectedMasterId, ds) || { start: '00:00', end: '23:59' };
+      const availTextHtml = `<div style="width:100%;font-size:12px;color:var(--fg-3)">Доступно для «${esc(_booking.item?.name || '')}»: ${w.start}–${w.end}</div>`;
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:600;min-width:76px">${label}</span>
+        ${availTextHtml}
         <input type="time" value="${day.start}" min="${w.start}" max="${w.end}" onchange="onPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
         <span style="color:var(--muted);font-size:13px">–</span>
         <input type="time" value="${day.end}" min="${w.start}" max="${w.end}" onchange="onPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
