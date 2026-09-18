@@ -348,6 +348,7 @@ public class AllibyWidgetProvider extends AppWidgetProvider {
         for (int id : allWidgetIds(context, mgr)) {
             updateOne(context, mgr, id);
         }
+        PetWidgetProvider.refreshAll(context);
     }
 
     @Override

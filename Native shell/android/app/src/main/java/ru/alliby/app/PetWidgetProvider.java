@@ -3,6 +3,7 @@ package ru.alliby.app;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -22,6 +23,8 @@ import ru.alliby.app.tamagotchi.HealthConnectSteps;
  * (updatePeriodMillis) работает и когда приложение полностью закрыто.
  * Каждая метрика независима: если разрешение на конкретную метрику не выдано,
  * по ней просто показывается "—", остальные при этом показываются нормально.
+ * Тема (светлая/тёмная/системная) — общая для всех виджетов Alliby, хранится
+ * в WidgetPrefs; кнопка на этом виджете переключает её так же, как на Alliby.
  */
 public class PetWidgetProvider extends AppWidgetProvider {
 
@@ -43,8 +46,22 @@ public class PetWidgetProvider extends AppWidgetProvider {
         }
     }
 
-    private void updateOne(Context context, AppWidgetManager appWidgetManager, int appWidgetId, OnDone onDone) {
+    /** Перерисовывает все экземпляры этого виджета — вызывается после смены темы с другого виджета. */
+    static void refreshAll(Context context) {
+        AppWidgetManager mgr = AppWidgetManager.getInstance(context);
+        int[] ids = mgr.getAppWidgetIds(new ComponentName(context, PetWidgetProvider.class));
+        for (int id : ids) {
+            updateOne(context, mgr, id, () -> {});
+        }
+    }
+
+    private static void updateOne(Context context, AppWidgetManager appWidgetManager, int appWidgetId, OnDone onDone) {
         Context appContext = context.getApplicationContext();
+        boolean dark = WidgetPrefs.isDark(context);
+        int textPrimary = dark ? 0xfff0f0f0 : 0xff1a1a1a;
+        int textSecondary = dark ? 0xff9a9a9a : 0xff666666;
+        int textEmpty = dark ? 0xff888888 : 0xff999999;
+        int backgroundRes = dark ? R.drawable.widget_background_dark : R.drawable.widget_background;
 
         Intent openIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("alliby://open?screen=tamagotchi"));
         openIntent.setPackage(context.getPackageName());
@@ -54,8 +71,20 @@ public class PetWidgetProvider extends AppWidgetProvider {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        Intent themeIntent = new Intent(context, WidgetDateNavReceiver.class);
+        themeIntent.setAction(AllibyWidgetProvider.ACTION_TOGGLE_THEME);
+        themeIntent.putExtra(AllibyWidgetProvider.EXTRA_APPWIDGET_ID, appWidgetId);
+        PendingIntent themePending = PendingIntent.getBroadcast(
+            context, 8000 + appWidgetId, themeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         if (!HealthConnectSteps.isAvailable(appContext)) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_pet);
+            views.setInt(R.id.pet_widget_root, "setBackgroundResource", backgroundRes);
+            views.setTextColor(R.id.pet_title, textPrimary);
+            views.setTextColor(R.id.pet_empty, textEmpty);
+            views.setOnClickPendingIntent(R.id.pet_btn_theme, themePending);
             views.setOnClickPendingIntent(R.id.pet_btn_open, openPending);
             views.setOnClickPendingIntent(R.id.pet_widget_root, openPending);
             views.setViewVisibility(R.id.pet_metrics, View.GONE);
@@ -68,10 +97,25 @@ public class PetWidgetProvider extends AppWidgetProvider {
         HealthConnectSteps.fetchTodaySteps(appContext, steps ->
             HealthConnectSteps.fetchTodayMetrics(appContext, metrics -> {
                 RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_pet);
+                views.setInt(R.id.pet_widget_root, "setBackgroundResource", backgroundRes);
+                views.setTextColor(R.id.pet_title, textPrimary);
+                views.setOnClickPendingIntent(R.id.pet_btn_theme, themePending);
                 views.setOnClickPendingIntent(R.id.pet_btn_open, openPending);
                 views.setOnClickPendingIntent(R.id.pet_widget_root, openPending);
                 views.setViewVisibility(R.id.pet_metrics, View.VISIBLE);
                 views.setViewVisibility(R.id.pet_empty, View.GONE);
+
+                int[] labelIds = {
+                    R.id.pet_lbl_steps, R.id.pet_lbl_distance, R.id.pet_lbl_calories,
+                    R.id.pet_lbl_sleep, R.id.pet_lbl_exercise, R.id.pet_lbl_heart
+                };
+                for (int id : labelIds) views.setTextColor(id, textSecondary);
+
+                int[] valueIds = {
+                    R.id.pet_val_steps, R.id.pet_val_distance, R.id.pet_val_calories,
+                    R.id.pet_val_sleep, R.id.pet_val_exercise, R.id.pet_val_heart
+                };
+                for (int id : valueIds) views.setTextColor(id, textPrimary);
 
                 views.setTextViewText(R.id.pet_val_steps, steps == null ? "—" : String.valueOf(steps));
                 views.setTextViewText(R.id.pet_val_distance, formatDistance(metrics.getDistanceMeters()));

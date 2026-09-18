@@ -17,6 +17,7 @@
         android:paddingBottom="2dp">
 
         <TextView
+            android:id="@+id/pet_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -24,6 +25,15 @@
             android:textColor="#1a1a1a"
             android:textSize="16sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/pet_btn_theme"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Сменить тему"
+            android:padding="7dp"
+            android:src="@drawable/ic_widget_theme" />
 
         <ImageButton
             android:id="@+id/pet_btn_open"
@@ -61,6 +71,7 @@
                     android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/pet_lbl_steps"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="👣 Шаги"
@@ -86,6 +97,7 @@
                     android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/pet_lbl_distance"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="📏 Дистанция"
@@ -117,6 +129,7 @@
                     android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/pet_lbl_calories"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="🔥 Калории"
@@ -142,6 +155,7 @@
                     android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/pet_lbl_sleep"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="😴 Сон"
@@ -173,6 +187,7 @@
                     android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/pet_lbl_exercise"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="💪 Тренировка"
@@ -198,6 +213,7 @@
                     android:padding="6dp">
 
                     <TextView
+                        android:id="@+id/pet_lbl_heart"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="❤️ Пульс"

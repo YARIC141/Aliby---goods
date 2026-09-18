@@ -56,8 +56,10 @@ object HealthConnectSteps {
         fun onResult(steps: Long?)
     }
 
-    /** Каждое поле независимо null, если Health Connect недоступен, разрешение на
-     * конкретную метрику не выдано, или данных за период просто нет. */
+    /** Каждое поле независимо null, если Health Connect недоступен или разрешение на
+     * конкретную метрику не выдано. Если разрешение выдано, но записей за период нет
+     * (например, ещё рано и шагов/сна не было), поле = 0, а не null — иначе легитимный
+     * ноль неотличим от "нет доступа" и на экране/виджете метрика ошибочно скрывается. */
     data class TodayMetrics(
         val distanceMeters: Double?,
         val activeCaloriesKcal: Double?,
@@ -155,25 +157,25 @@ object HealthConnectSteps {
             if (granted.contains(PERMISSION_DISTANCE)) {
                 try {
                     val r = client.aggregate(AggregateRequest(setOf(DistanceRecord.DISTANCE_TOTAL), todayRange))
-                    distanceMeters = r[DistanceRecord.DISTANCE_TOTAL]?.inMeters
+                    distanceMeters = r[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: 0.0
                 } catch (e: Exception) {}
             }
             if (granted.contains(PERMISSION_CALORIES)) {
                 try {
                     val r = client.aggregate(AggregateRequest(setOf(ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL), todayRange))
-                    activeCaloriesKcal = r[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories
+                    activeCaloriesKcal = r[ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL]?.inKilocalories ?: 0.0
                 } catch (e: Exception) {}
             }
             if (granted.contains(PERMISSION_SLEEP)) {
                 try {
                     val r = client.aggregate(AggregateRequest(setOf(SleepSessionRecord.SLEEP_DURATION_TOTAL), last24hRange))
-                    sleepMinutes = r[SleepSessionRecord.SLEEP_DURATION_TOTAL]?.toMinutes()
+                    sleepMinutes = r[SleepSessionRecord.SLEEP_DURATION_TOTAL]?.toMinutes() ?: 0L
                 } catch (e: Exception) {}
             }
             if (granted.contains(PERMISSION_EXERCISE)) {
                 try {
                     val r = client.aggregate(AggregateRequest(setOf(ExerciseSessionRecord.EXERCISE_DURATION_TOTAL), todayRange))
-                    exerciseMinutes = r[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]?.toMinutes()
+                    exerciseMinutes = r[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]?.toMinutes() ?: 0L
                 } catch (e: Exception) {}
             }
             if (granted.contains(PERMISSION_HEART_RATE)) {
