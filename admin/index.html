@@ -1097,7 +1097,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
       <div id="bk-day-view" style="display:none;margin-top:12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div id="bk-day-title" style="font:600 15px/1 var(--font-sans)"></div>
-          <button class="btn btn-sm" onclick="document.getElementById('bk-day-view').style.display='none';document.getElementById('bk-placeholder').style.display='';_bkTab.openDate=null">✕</button>
+          <button class="btn btn-sm" onclick="closeBkDayView()">✕</button>
         </div>
         <div id="bk-day-bks"></div>
       </div>
@@ -7684,6 +7684,7 @@ function renderBkTabCalendar() {
     const dateStr = `${_bkTab.year}-${mm}-${dd}`;
     let cls = 'sched-day';
     if (dateStr === today) cls += ' today';
+    if (dateStr === _bkTab.openDate) cls += ' selected';
     cells.push({ d, cls, ds: dateStr });
   }
   const trailing = (7 - (cells.length % 7)) % 7;
@@ -7700,9 +7701,17 @@ function renderBkTabCalendar() {
   calEl.innerHTML = html;
 }
 
+function closeBkDayView() {
+  document.getElementById('bk-day-view').style.display = 'none';
+  document.getElementById('bk-placeholder').style.display = '';
+  _bkTab.openDate = null;
+  renderBkTabCalendar();
+}
+
 function onBkTabDayClick(dateStr) {
   if (!_bkTab.storeId) return;
   _bkTab.openDate = dateStr;
+  renderBkTabCalendar();
   const [y, m, d] = dateStr.split('-').map(Number);
   const dow = new Date(y, m - 1, d).getDay();
   const DAY = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
@@ -9655,6 +9664,7 @@ function renderSchedCalendar() {
     if (_sched.dayData[dateStr]?.length) cls += ' has-sched';
     else cls += ' no-work';
     if (_sched.selectedDays.has(dateStr)) cls += ' selected';
+    if (!_sched.editMode && dateStr === _sched.openDate) cls += ' selected';
     cells.push({ d, cls, ds: dateStr });
   }
   const trailing = (7 - (cells.length % 7)) % 7;
@@ -9687,6 +9697,7 @@ function onSchedDayClick(dateStr) {
 
 async function openDayView(dateStr) {
   _sched.openDate = dateStr;
+  renderSchedCalendar();
   const slots = _sched.dayData[dateStr] || [];
   const [y, m, d] = dateStr.split('-').map(Number);
   const dow = new Date(y, m - 1, d).getDay();
@@ -10166,6 +10177,7 @@ async function deleteScheduleDay(dateStr) {
 function closeDayView() {
   _sched.openDate = null;
   document.getElementById('sched-day-view').style.display = 'none';
+  renderSchedCalendar();
 }
 
 // ─── DELIVERY ZONE EDITOR ───────────────────────────────────────────────────
