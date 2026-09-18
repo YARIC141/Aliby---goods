@@ -357,6 +357,7 @@
       <button id="btn-assess" class="secondary">Оценить состояние</button>
       <button id="btn-sensor" class="secondary">Включить датчик шагов</button>
       <button id="btn-sync-steps" class="secondary hidden">Обновить шаги сейчас</button>
+      <button id="btn-hc-info" class="secondary">ℹ️ Информация о показателях</button>
       <button id="btn-games" class="secondary">Игры</button>
       <button id="btn-pdd" class="secondary">Билеты ПДД</button>
       <button id="btn-dog" class="secondary">🐶 Собака</button>
@@ -516,6 +517,21 @@
       </svg>
       <p id="assess-text"></p>
       <button id="btn-assess-close">Понятно</button>
+    </div>
+  </div>
+
+  <div id="hc-info-overlay" class="rules-overlay hidden">
+    <div class="rules-sheet">
+      <h2>Показатели Health Connect</h2>
+      <p>Из Health Connect собираются шесть показателей за сегодня: шаги, дистанция, активные калории, сон, минуты тренировки и средний пульс.</p>
+      <ul>
+        <li><b>Шаги</b> — влияют на общий уровень активности питомца, а он, в свою очередь, на настроение. Если калории и тренировка не переданы, шаги также используются для баланса Жира.</li>
+        <li><b>Калории + тренировка</b> — вместе задают уровень активности для баланса Жира: чем он выше относительно сытости, тем меньше растёт Жир. Как только Health Connect передаёт хотя бы одну из этих метрик, она заменяет собой расчёт по шагам.</li>
+        <li><b>Сон</b> — напрямую задаёт Энергию питомца, пока доступны данные о сне. В этом случае прогулка, спорт, игра и отдых больше не тратят и не восстанавливают Энергию — за неё отвечает только сон.</li>
+        <li><b>Дистанция</b> и <b>пульс</b> — только отображаются на кольцах, на характеристики питомца и на золото не влияют.</li>
+      </ul>
+      <p>Золото от Health Connect не зависит: оно начисляется за уход (каждые 5 нажатий кнопок ухода) и за победы в играх.</p>
+      <button id="btn-hc-info-close">Понятно</button>
     </div>
   </div>
 
@@ -2432,6 +2448,16 @@
     document.getElementById('btn-assess-close').addEventListener('click', closeAssess);
     document.getElementById('assess-overlay').addEventListener('click', function(e){
       if (e.target.id === 'assess-overlay') closeAssess();
+    });
+
+    document.getElementById('btn-hc-info').addEventListener('click', function(){
+      document.getElementById('hc-info-overlay').classList.remove('hidden');
+    });
+    document.getElementById('btn-hc-info-close').addEventListener('click', function(){
+      document.getElementById('hc-info-overlay').classList.add('hidden');
+    });
+    document.getElementById('hc-info-overlay').addEventListener('click', function(e){
+      if (e.target.id === 'hc-info-overlay') document.getElementById('hc-info-overlay').classList.add('hidden');
     });
 
     document.getElementById('input-bio').addEventListener('input', function(){
