@@ -2136,6 +2136,21 @@ ol.hlp-steps>li ul{margin:6px 0 0}
   </div>
 </div>
 
+<!-- Training group slot picker -->
+<div class="overlay" id="m-training-slot">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd">
+      <h3>Подтвердить время</h3>
+      <button class="modal-x" onclick="closeModal('m-training-slot')">✕</button>
+    </div>
+    <div id="mts-body" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="modal-ft" style="margin-top:16px">
+      <button class="btn" onclick="closeModal('m-training-slot')">Отмена</button>
+      <button class="btn btn-p" onclick="submitTrainingSlot()">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════ LEGAL REQUIRED MODAL ════════════════ -->
 <div class="overlay" id="m-legal-required" style="z-index:400">
   <div class="modal" style="max-width:480px">
@@ -7792,7 +7807,7 @@ function globalBookingsRealtimeConnect() {
     _globalBkWs = ws;
     ws.onopen = () => {
       _globalBkRef = 0;
-      ws.send(JSON.stringify({ topic:'realtime:admin-bk-global', event:'phx_join', payload:{ config:{ postgres_changes:[{ event:'*', schema:'public', table:'bookings' }] }, access_token:S.session?.access_token }, ref:String(++_globalBkRef) }));
+      ws.send(JSON.stringify({ topic:'realtime:admin-bk-global', event:'phx_join', payload:{ config:{ postgres_changes:[{ event:'*', schema:'public', table:'bookings' }, { event:'INSERT', schema:'public', table:'admin_notifications' }] }, access_token:S.session?.access_token }, ref:String(++_globalBkRef) }));
       _globalBkHb = setInterval(() => { if (ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(++_globalBkRef)})); }, 25000);
     };
     ws.onmessage = e => {
@@ -7805,6 +7820,10 @@ function globalBookingsRealtimeConnect() {
           // No server-side store filter on this channel (admin may own multiple stores) —
           // gate client-side so platform-owner RLS visibility doesn't leak other tenants' bookings.
           if (!record?.store_id || !_myStoreIds().has(record.store_id)) return;
+          if (data?.table === 'admin_notifications' && type === 'INSERT' && record?.message) {
+            showAdminToast(record.message);
+            return;
+          }
           if (type === 'INSERT' && record?.id) {
             _newBookingIds.add(record.id);
             updateNavBadge();
@@ -9877,6 +9896,8 @@ async function addToTrainingGroup(bookingId, dateStr) {
   } catch(e) { showAdminToast('Ошибка: ' + (e.message || '')); }
 }
 
+const _trainingSlot = { masterId:null, itemId:null, dateStr:null, bookingIds:null, duration:60, winStart:null, winEnd:null, pricePerPerson:0 };
+
 async function confirmTrainingGroup(masterId, itemId, dateStr) {
   try {
     const rows = await req('/rest/v1/rpc/personal_training_match_proposal', {
@@ -9888,16 +9909,74 @@ async function confirmTrainingGroup(masterId, itemId, dateStr) {
       showAdminToast('Не удалось подобрать общее время — проверьте расписание тренера и диапазоны клиентов');
       return;
     }
-    const ps = (proposal.proposed_start || '').slice(0,5), pe = (proposal.proposed_end || '').slice(0,5);
-    if (!confirm(`Объединить ${proposal.matched_count} чел. на ${ps}–${pe}?`)) return;
-    const ids = proposal.matched_booking_ids.join(',');
-    await req(`/rest/v1/bookings?id=in.(${ids})`, {
-      method: 'PATCH',
-      body: JSON.stringify({ slot_start: proposal.proposed_start, slot_end: proposal.proposed_end, status: 'booked' }),
+    const ws = (proposal.window_start || proposal.proposed_start || '').slice(0,5);
+    const we = (proposal.window_end   || proposal.proposed_start || '').slice(0,5);
+    const ps = (proposal.proposed_start || proposal.window_start || '').slice(0,5);
+    const priceRows = await req(`/rest/v1/bookings?id=in.(${proposal.matched_booking_ids.join(',')})&select=total_price&limit=1`);
+    const basePrice = priceRows?.[0]?.total_price || 0;
+    const perPerson = Math.round(basePrice / proposal.matched_count);
+
+    Object.assign(_trainingSlot, {
+      masterId, itemId, dateStr,
+      bookingIds: proposal.matched_booking_ids,
+      duration: proposal.duration_minutes || 60,
+      winStart: ws, winEnd: we,
+      pricePerPerson: perPerson,
     });
-    showAdminToast('Время подтверждено');
-    if (_sched.openDate === dateStr) renderDayBookings(dateStr);
-    if (_bkTab.openDate === dateStr) renderBkTabDayView(dateStr);
+
+    const winEndLabel = _addMinutes(we, _trainingSlot.duration);
+    document.getElementById('mts-body').innerHTML = `
+      <div style="font-size:13px;color:var(--fg-3)">Участников: ${proposal.matched_count} · доступный интервал ${ws}–${winEndLabel}</div>
+      <label style="font-size:13px;font-weight:500">Начало занятия
+        <input type="time" id="mts-time" value="${ps}" min="${ws}" max="${we}" step="300"
+          style="width:100%;margin-top:6px;padding:8px 10px;border-radius:var(--r-2);border:1px solid var(--border);background:var(--bg-input);color:var(--fg)"
+          oninput="_updateTrainingSlotPreview()">
+      </label>
+      <div id="mts-preview" style="font-size:13px"></div>
+    `;
+    _updateTrainingSlotPreview();
+    openModal('m-training-slot');
+  } catch(e) { showAdminToast('Ошибка: ' + (e.message || '')); }
+}
+
+function _addMinutes(hhmm, mins) {
+  if (!hhmm) return '';
+  const [h, m] = hhmm.split(':').map(Number);
+  const total = h * 60 + m + mins;
+  return String(Math.floor(total / 60) % 24).padStart(2,'0') + ':' + String(total % 60).padStart(2,'0');
+}
+
+function _updateTrainingSlotPreview() {
+  const input = document.getElementById('mts-time');
+  const prev = document.getElementById('mts-preview');
+  if (!input || !prev) return;
+  const start = input.value;
+  const end = _addMinutes(start, _trainingSlot.duration);
+  prev.innerHTML = `Занятие ${start}–${end} · ${_trainingSlot.pricePerPerson} ₽ с человека`;
+}
+
+async function submitTrainingSlot() {
+  const input = document.getElementById('mts-time');
+  const startTime = input?.value;
+  if (!startTime || startTime < _trainingSlot.winStart || startTime > _trainingSlot.winEnd) {
+    showAdminToast('Время должно быть внутри допустимого интервала');
+    return;
+  }
+  try {
+    await req('/rest/v1/rpc/personal_training_confirm_slot', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_master_id: _trainingSlot.masterId,
+        p_menu_item_id: _trainingSlot.itemId,
+        p_date: _trainingSlot.dateStr,
+        p_start_time: startTime + ':00',
+        p_booking_ids: _trainingSlot.bookingIds,
+      }),
+    });
+    closeModal('m-training-slot');
+    showAdminToast('Время подтверждено, участники уведомлены');
+    if (_sched.openDate === _trainingSlot.dateStr) renderDayBookings(_trainingSlot.dateStr);
+    if (_bkTab.openDate === _trainingSlot.dateStr) renderBkTabDayView(_trainingSlot.dateStr);
   } catch(e) { showAdminToast('Ошибка: ' + (e.message || '')); }
 }
 

@@ -134,6 +134,14 @@ const PUSH_TEMPLATES: Record<string, Tpl> = {
   booking_created:   () => ({ title: '📅 Запись создана',        body: 'Ваша запись успешно создана. Ждём вас!' }),
   booking_confirmed: () => ({ title: '📅 Запись подтверждена',   body: 'Оплата прошла, запись подтверждена'     }),
   booking_cancelled: () => ({ title: 'Запись отменена',          body: 'Слот был освобождён'                    }),
+  training_group_confirmed: (d) => ({
+    title: '📅 Тренировка подтверждена',
+    body: `${d.item_name || 'Тренировка'} ${d.time_from}–${d.time_to} · ${d.price} ₽ с человека`,
+  }),
+  training_price_changed: (d) => ({
+    title: '💳 Изменилась цена тренировки',
+    body: `${d.item_name || 'Тренировка'} ${d.time_from}–${d.time_to}: теперь ${d.price} ₽ с человека`,
+  }),
   subscription_low:  (d) => ({ title: '⚠️ Абонемент заканчивается', body: `Осталось ${d.remaining} посещений`  }),
   carry_order_assigned: () => ({ title: '🚴 Новый заказ',          body: 'Вам назначена доставка'                 }),
   carry_order_handed:   () => ({ title: '📦 Заказ передан',        body: 'Заберите заказ и нажмите «Принять»'     }),
