@@ -5140,7 +5140,24 @@ function fillStoreSelects() {
     const current = el.value;
     const prefix = el.options[0]?.value === '' ? el.options[0].outerHTML : '';
     el.innerHTML = prefix + opts;
-    el.value = current;
+    // При первом заполнении в этой сессии (current пуст) пробуем восстановить магазин,
+    // выбранный до обновления страницы, чтобы владельцу не приходилось выбирать
+    // заведение заново на каждом экране после каждого reload.
+    const lsKey = `alliby_admin_sel_${id}`;
+    let val = current;
+    let restored = false;
+    if (!val) {
+      try {
+        const saved = localStorage.getItem(lsKey);
+        if (saved && stores.some(s => s.id === saved)) { val = saved; restored = true; }
+      } catch {}
+    }
+    el.value = val;
+    if (!el._storeSelPersist) {
+      el._storeSelPersist = true;
+      el.addEventListener('change', () => { try { localStorage.setItem(lsKey, el.value); } catch {} });
+    }
+    if (restored) el.dispatchEvent(new Event('change'));
   });
   if (stores.length === 1) {
     ['ord-store-filter','bk-store-filter','rent-store-filter'].forEach(id => {
