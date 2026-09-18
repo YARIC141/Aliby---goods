@@ -598,6 +598,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-sans);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-bk-done{position:absolute;top:3px;left:4px;font:700 9px/14px var(--font-sans);background:var(--ok);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day-interest{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:var(--info);pointer-events:none}
+.sched-day-interest.confirmed{background:var(--warn)}
+.chip.chip-confirmed{border-color:var(--warn);color:var(--warn)}
+.chip.chip-confirmed.active{background:var(--warn);color:#000;border-color:transparent}
 .sched-bk-cancelled{position:absolute;bottom:3px;left:4px;font:700 9px/14px var(--font-sans);background:#e53935;color:#fff;border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.has-rent{background:color-mix(in oklch,var(--info) 16%,var(--bg))}
 .sched-day.has-rent:hover:not(.selected){background:color-mix(in oklch,var(--info) 26%,var(--bg))}
@@ -1593,9 +1596,15 @@ document.addEventListener('deviceready',function(){
         <div class="sched-cal-wrap" style="margin-bottom:14px">
           <div class="sched-cal-grid" id="ca-sched-cal"></div>
         </div>
-        <div id="ca-sched-interest-legend" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:-6px 0 14px">
-          <span class="sched-day-interest" style="position:static;transform:none;flex:none"></span>
-          Уже есть желающие — ваша заявка может сразу попасть в их группу
+        <div id="ca-sched-interest-legend" style="display:none;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);margin:-6px 0 14px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="sched-day-interest" style="position:static;transform:none;flex:none"></span>
+            Уже есть желающие — ваша заявка может попасть в их группу
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="sched-day-interest confirmed" style="position:static;transform:none;flex:none"></span>
+            Тренер уже подтвердил группу — можно сразу присоединиться
+          </div>
         </div>
         <div id="ca-sched-personal-days" style="display:none;margin-bottom:14px">
           <div id="ca-sched-personal-days-list" style="margin-bottom:10px"></div>
@@ -3532,7 +3541,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 
 let _calenabsTab = 'ord';
 let _schedulePreselect = null;
-const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {}, multiPerson: false, personalDays: {}, masterItemPrice: {}, bookableItems: [], groupInterestDates: new Set(), dayOptions: {} };
+const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {}, multiPerson: false, personalDays: {}, masterItemPrice: {}, bookableItems: [], groupInterestDates: new Map(), dayOptions: {} };
 
 function peekTab(btn) {
   if (!btn) return;
@@ -4419,7 +4428,7 @@ async function loadCaScheduleScreen() {
     _caSched.personalDays = {};
     _caSched.masterItemPrice = {};
     _caSched.bookableItems = [];
-    _caSched.groupInterestDates = new Set();
+    _caSched.groupInterestDates = new Map();
     _caSched.dayOptions = {};
     const now = new Date();
     _caSched.year = now.getFullYear();
@@ -4682,10 +4691,10 @@ async function _loadCaSchedMonth() {
             method: 'POST',
             body: JSON.stringify({ p_master_id: masterId, p_menu_item_id: item.id, p_date_from: from, p_date_to: to }),
           });
-          _caSched.groupInterestDates = new Set(dates || []);
-        } catch(e) { _caSched.groupInterestDates = new Set(); }
+          _caSched.groupInterestDates = new Map((dates || []).map(r => [r.slot_date, !!r.has_confirmed]));
+        } catch(e) { _caSched.groupInterestDates = new Map(); }
       } else {
-        _caSched.groupInterestDates = new Set();
+        _caSched.groupInterestDates = new Map();
       }
     } else if (masterId) {
       // Раскладываем недельный паттерн мастера по датам
@@ -4745,8 +4754,12 @@ function renderCaSchedCalendar() {
       const hasAny = hasSched && !isPast;
       const isSelected = !!_caSched.personalDays[ds];
       const hasInterest = hasAny && _caSched.groupInterestDates.has(ds);
+      const isConfirmedInterest = hasInterest && _caSched.groupInterestDates.get(ds);
       td.className = `sched-day${!hasAny ? ' empty' : ''}${isToday ? ' today' : ''}${hasAny ? ' has-sched' : ''}${isSelected ? ' selected' : ''}`;
-      td.innerHTML = `<span class="sd-n">${d}</span>${hasInterest ? '<span class="sched-day-interest" title="На эту тренировку в этот день уже есть желающие — при записи вы можете попасть в их группу"></span>' : ''}`;
+      const interestTitle = isConfirmedInterest
+        ? 'Тренер уже подтвердил группу на этот день — вы можете сразу присоединиться'
+        : 'На эту тренировку в этот день уже есть желающие — при записи вы можете попасть в их группу';
+      td.innerHTML = `<span class="sd-n">${d}</span>${hasInterest ? `<span class="sched-day-interest${isConfirmedInterest ? ' confirmed' : ''}" title="${interestTitle}"></span>` : ''}`;
       if (hasAny) td.onclick = () => _caPersonalDayToggle(ds);
     } else {
       const booked = _caSched.bookedData[ds] || [];
@@ -4790,7 +4803,7 @@ function _caPersonalDayToggle(ds) {
   }
   const w = (_caSched.schedData[ds] || [])[0];
   if (!w) return;
-  _caSched.personalDays[ds] = { start: w.start, end: w.end };
+  _caSched.personalDays[ds] = { start: w.start, end: w.end, joinKind: null };
   renderCaSchedCalendar();
   if (_caSched.groupInterestDates.has(ds) && !_caSched.dayOptions[ds]) {
     _loadCaPersonalDayOptions(ds);
@@ -4815,9 +4828,16 @@ async function _loadCaPersonalDayOptions(ds) {
   _renderCaPersonalDaysList();
 }
 
-function _selectCaExistingSlot(ds, start, end) {
-  if (!_caSched.personalDays[ds]) return;
-  _caSched.personalDays[ds] = { start, end };
+function _selectCaExistingSlot(ds, start, end, kind) {
+  const day = _caSched.personalDays[ds];
+  if (!day) return;
+  if (day.joinKind && day.start === start && day.end === end) {
+    // повторный клик по уже выбранному слоту — вернуться к ручному выбору времени
+    const w = (_caSched.schedData[ds] || [])[0];
+    _caSched.personalDays[ds] = { start: w ? w.start : start, end: w ? w.end : end, joinKind: null };
+  } else {
+    _caSched.personalDays[ds] = { start, end, joinKind: kind };
+  }
   _renderCaPersonalDaysList();
 }
 
@@ -4849,20 +4869,26 @@ function _renderCaPersonalDaysList() {
         optsHtml = `<div style="width:100%;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px">
           ${opts.map(o => {
             const os = o.slot_start.slice(0, 5), oe = o.slot_end.slice(0, 5);
-            const lbl = o.kind === 'confirmed'
+            const isConfirmed = o.kind === 'confirmed';
+            const lbl = isConfirmed
               ? `${os}–${oe} · своб. ${o.max_group - o.taken}`
               : `${os}–${oe} · ${o.taken} ${o.taken === 1 ? 'заявка' : 'заявки'} ждут`;
-            const active = day.start === os && day.end === oe;
-            return `<button type="button" class="chip${active ? ' active' : ''}" onclick="_selectCaExistingSlot('${ds}','${os}','${oe}')">${lbl}</button>`;
+            const active = day.joinKind && day.start === os && day.end === oe;
+            return `<button type="button" class="chip${isConfirmed ? ' chip-confirmed' : ''}${active ? ' active' : ''}" onclick="_selectCaExistingSlot('${ds}','${os}','${oe}','${o.kind}')">${lbl}</button>`;
           }).join('')}
         </div>`;
       }
+      const rangeHtml = day.joinKind
+        ? `<span style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:var(--r-2);border:1px solid ${day.joinKind === 'confirmed' ? 'var(--warn)' : 'var(--info)'};color:${day.joinKind === 'confirmed' ? 'var(--warn)' : 'var(--info)'};font-size:13px;font-weight:600">
+            ${day.joinKind === 'confirmed' ? 'Подтверждённая тренировка' : 'Согласованное время'} ${day.start}–${day.end}
+          </span>`
+        : `<input type="time" value="${day.start}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+          <span style="color:var(--muted);font-size:13px">–</span>
+          <input type="time" value="${day.end}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">`;
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:600;min-width:76px">${label}</span>
         ${optsHtml}
-        <input type="time" value="${day.start}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
-        <span style="color:var(--muted);font-size:13px">–</span>
-        <input type="time" value="${day.end}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
+        ${rangeHtml}
         <button type="button" class="btn btn-sm" onclick="removeCaPersonalDay('${ds}')" style="margin-left:auto">✕</button>
         <div class="ca-personal-day-err" data-ds="${ds}" style="width:100%;font-size:12px;color:#e05252"></div>
       </div>`;
@@ -4885,23 +4911,31 @@ function _updateCaPersonalSubmitState() {
   let allOk = dsList.length > 0;
   dsList.forEach(ds => {
     const day = _caSched.personalDays[ds];
-    const w = (_caSched.schedData[ds] || [])[0];
     const errEl = document.querySelector(`.ca-personal-day-err[data-ds="${ds}"]`);
     let msg = '';
-    if (!day.start || !day.end) msg = 'Укажите время';
-    else if (!w) msg = 'Нет рабочего времени в этот день';
-    else {
-      const sM = _timeToMin(day.start), eM = _timeToMin(day.end);
-      if (eM <= sM) msg = 'Время «до» должно быть позже «от»';
-      else if (eM - sM < durMin) msg = `Не короче ${durMin} мин`;
-      else if (sM < _timeToMin(w.start)) msg = `Не раньше ${w.start}`;
-      else if (eM > _timeToMin(w.end)) msg = `Не позже ${w.end}`;
+    if (day.joinKind) {
+      // присоединение к уже существующему слоту — время уже проверено на сервере
+    } else {
+      const w = (_caSched.schedData[ds] || [])[0];
+      if (!day.start || !day.end) msg = 'Укажите время';
+      else if (!w) msg = 'Нет рабочего времени в этот день';
+      else {
+        const sM = _timeToMin(day.start), eM = _timeToMin(day.end);
+        if (eM <= sM) msg = 'Время «до» должно быть позже «от»';
+        else if (eM - sM < durMin) msg = `Не короче ${durMin} мин`;
+        else if (sM < _timeToMin(w.start)) msg = `Не раньше ${w.start}`;
+        else if (eM > _timeToMin(w.end)) msg = `Не позже ${w.end}`;
+      }
     }
     if (errEl) errEl.textContent = msg;
     if (msg) allOk = false;
   });
   const btn = document.getElementById('ca-sched-personal-submit');
-  if (btn) btn.disabled = !allOk;
+  if (btn) {
+    btn.disabled = !allOk;
+    const allJoin = dsList.length > 0 && dsList.every(ds => _caSched.personalDays[ds].joinKind);
+    btn.textContent = allJoin ? 'Присоединиться' : 'Отправить заявку';
+  }
   const totalEl = document.getElementById('ca-sched-personal-total');
   if (allOk && item) {
     const price = _caPersonalPrice(item);
@@ -4944,8 +4978,11 @@ async function confirmCaPersonalTrainingRequest() {
         }),
       });
     }));
+    const allConfirmedJoin = dsList.every(ds => _caSched.personalDays[ds].joinKind === 'confirmed');
     _caSched.personalDays = {};
-    showGeoToast(dsList.length > 1 ? 'Заявки отправлены — тренер подберёт общее время и подтвердит запись' : 'Заявка отправлена — тренер подберёт общее время и подтвердит запись');
+    showGeoToast(allConfirmedJoin
+      ? (dsList.length > 1 ? 'Вы присоединились к тренировкам' : 'Вы присоединились к тренировке')
+      : (dsList.length > 1 ? 'Заявки отправлены — тренер подберёт общее время и подтвердит запись' : 'Заявка отправлена — тренер подберёт общее время и подтвердит запись'));
     if (!(_calenabsIsActive() && _calenabsTab === 'bk')) { _bkNotifCount++; _updateBkBadge(); }
     else loadBookingsScreen();
     renderCaSchedCalendar();
