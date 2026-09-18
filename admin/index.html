@@ -9924,7 +9924,6 @@ function openBookingGroupDetail(key) {
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
           <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price ?? ''} ₽</div>
           ${!paid && !cancelled && !completed ? `<button class="btn btn-p btn-sm" style="font-size:11px" onclick="_groupBookingPaid('${b.id}','${b.slot_date}','${key}')">Оплачена</button>` : ''}
-          ${!cancelled && !completed ? `<button class="btn btn-sm" style="background:var(--ok);color:#fff;font-size:11px" onclick="_groupCompleteBooking('${b.id}','${b.slot_date}','${key}')">Завершить</button>` : ''}
           ${!cancelled && !completed ? `<button class="btn btn-sm btn-d" style="font-size:11px" onclick="_groupCancelBooking('${b.id}','${b.slot_date}','${key}')">Отменить</button>` : ''}
         </div>
       </div>
@@ -9948,7 +9947,10 @@ function openBookingGroupDetail(key) {
       <div class="lbl" style="margin-bottom:6px">Участники (${entries.length})</div>
       ${rows}
     </div>`;
-  document.getElementById('mbd-actions').innerHTML = `<button class="btn" onclick="closeModal('m-booking-detail')">Закрыть</button>`;
+  const hasActiveUncompleted = entries.some(({ b }) => b.status !== 'cancelled' && b.status !== 'completed');
+  document.getElementById('mbd-actions').innerHTML =
+    `<button class="btn" onclick="closeModal('m-booking-detail')">Закрыть</button>`
+    + (hasActiveUncompleted ? `<button class="btn btn-p" style="background:var(--ok);color:#fff" onclick="_groupCompleteAll('${key}')">Завершить тренировку</button>` : '');
   openModal('m-booking-detail');
 }
 
@@ -9957,9 +9959,19 @@ async function _groupBookingPaid(bookingId, dateStr, groupKey) {
   openBookingGroupDetail(groupKey);
 }
 
-async function _groupCompleteBooking(bookingId, dateStr, groupKey) {
-  await completeBooking(bookingId, dateStr);
-  openBookingGroupDetail(groupKey);
+async function _groupCompleteAll(groupKey) {
+  const ids = _bkGroupCache[groupKey] || [];
+  const entries = ids.map(id => _bkCache[id]).filter(Boolean);
+  const active = entries.filter(({ b }) => b.status !== 'cancelled' && b.status !== 'completed');
+  if (!active.length) return;
+  const dateStr = active[0].b.slot_date;
+  try {
+    await req(`/rest/v1/bookings?id=in.(${active.map(({ b }) => b.id).join(',')})`, { method: 'PATCH', body: JSON.stringify({ status: 'completed' }) });
+    showAdminToast('Тренировка завершена');
+    if (_sched.openDate === dateStr) await renderDayBookings(dateStr);
+    if (_bkTab.openDate === dateStr) await renderBkTabDayView(dateStr);
+    openBookingGroupDetail(groupKey);
+  } catch (e) { showAdminToast('Ошибка: ' + (e.message || '')); }
 }
 
 async function _groupCancelBooking(bookingId, dateStr, groupKey) {
