@@ -7758,7 +7758,9 @@ async function renderBkTabDayView(dateStr) {
       return;
     }
 
-    el.innerHTML = pendingHtml + flatList.map(b => {
+    el.innerHTML = pendingHtml + _groupActiveBookings(flatList).map(group => {
+      if (group.length > 1) return _renderTrainingGroupCard(group, dateStr, pm, roleNom);
+      const b = group[0];
       const isPending = b.status === 'pending_approval';
       const ts = isPending ? (b.preferred_start||'').slice(0,5) : (b.slot_start||'').slice(0,5);
       const te = isPending ? (b.preferred_end||'').slice(0,5)   : (b.slot_end||'').slice(0,5);
@@ -9701,6 +9703,7 @@ async function openDayView(dateStr) {
 }
 
 const _bkCache = {}; // bookingId -> { b, p }
+const _bkGroupCache = {}; // groupKey -> [bookingId, ...]
 
 function openBookingDetail(bookingId) {
   const entry = _bkCache[bookingId];
@@ -9801,7 +9804,9 @@ async function renderDayBookings(dateStr) {
       <span style="font:600 13px/1 var(--font-sans);color:var(--fg-2)">Записи · ${bks.length}</span>
     </div>`
     + pendingHtml
-    + regularBks.map(b => {
+    + _groupActiveBookings(regularBks).map(group => {
+      if (group.length > 1) return _renderTrainingGroupCard(group, dateStr, profilesMap, roleNom);
+      const b = group[0];
       const ts = (b.slot_start||'').slice(0,5), te = (b.slot_end||'').slice(0,5);
       const p = profilesMap[b.user_id] || null;
       const m = b.master_id ? (profilesMap[b.master_id] || null) : null;
@@ -9835,6 +9840,131 @@ async function renderDayBookings(dateStr) {
       </div>`;
     }).join('');
   } catch { bkEl.innerHTML = '<div style="color:var(--fg-4);font-size:13px;padding:8px 0">Ошибка загрузки</div>'; }
+}
+
+// Групповая тренировка — несколько bookings с общими master_id/menu_item_id/
+// slot_date/slot_start (см. personal_training_confirm_slot) — в списке
+// показываются одной карточкой; принятие оплаты/завершение/отмена — по
+// каждому участнику отдельно, в модалке openBookingGroupDetail.
+function _groupActiveBookings(list) {
+  const groups = {};
+  const order = [];
+  list.forEach(b => {
+    const key = `${b.master_id}|${b.menu_item_id}|${b.slot_date}|${b.slot_start}`;
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(b);
+  });
+  return order.map(key => groups[key]);
+}
+
+function _renderTrainingGroupCard(group, dateStr, profilesMap, roleNom) {
+  const b0 = group[0];
+  const key = `${b0.master_id}|${b0.menu_item_id}|${b0.slot_date}|${b0.slot_start}`;
+  _bkGroupCache[key] = group.map(b => b.id);
+  group.forEach(b => {
+    _bkCache[b.id] = { b, p: profilesMap[b.user_id] || null, m: b.master_id ? (profilesMap[b.master_id] || null) : null };
+  });
+  const ts = (b0.slot_start||'').slice(0,5), te = (b0.slot_end||'').slice(0,5);
+  const m = b0.master_id ? (profilesMap[b0.master_id] || null) : null;
+  const active = group.filter(b => b.status !== 'cancelled');
+  const paidCount = active.filter(b => b.payment_status === 'paid').length;
+  const allCompleted = active.length > 0 && active.every(b => b.status === 'completed');
+  const statusBadge = allCompleted
+    ? '<span class="badge b-ok">Завершена</span>'
+    : (active.length === 0 ? '<span class="badge b-cancelled">Отменена</span>' : '<span class="badge b-paid">Активна</span>');
+  return `<div style="padding:10px 12px;border-radius:var(--r-2);border:1px solid var(--line-soft);margin-bottom:8px;background:var(--bg);cursor:pointer" onclick="openBookingGroupDetail('${key}')">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:5px">
+          <span style="font:700 13px/1 var(--font-sans)">${ts} — ${te}</span>
+          ${statusBadge}
+          <span class="badge ${paidCount === active.length && active.length ? 'b-paid' : 'b-pending'}">Оплата ${paidCount}/${active.length}</span>
+        </div>
+        <div style="font:500 13px/1.3 var(--font-sans);margin-bottom:3px">${esc(b0.menu_items?.name || '—')} · группа</div>
+        ${m?.full_name ? `<div style="font-size:12px;color:var(--fg-2)">${roleNom}: ${esc(m.full_name)}</div>` : ''}
+        <div style="font-size:12px;color:var(--fg-3)">Участников: ${group.length}${group.length !== active.length ? ` (активно: ${active.length})` : ''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+        <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b0.total_price ?? ''} ₽/чел</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function openBookingGroupDetail(key) {
+  const ids = _bkGroupCache[key];
+  if (!ids || !ids.length) return;
+  const entries = ids.map(id => _bkCache[id]).filter(Boolean);
+  if (!entries.length) return;
+  ids.forEach(id => _newBookingIds.delete(id));
+  updateNavBadge();
+  const { b: b0, m } = entries[0];
+  const ST  = { booked:{lbl:'Активна',cls:'b-paid'}, rescheduled:{lbl:'Перенесена',cls:'b-pending'}, cancelled:{lbl:'Отменена',cls:'b-cancelled'}, completed:{lbl:'Завершена',cls:'b-ok'} };
+  const PAY = { paid:{lbl:'Оплачено',cls:'b-paid'}, unpaid:{lbl:'Не оплачено',cls:'b-pending'}, refunded:{lbl:'Возврат',cls:'b-cancelled'} };
+  const ts = (b0.slot_start||'').slice(0,5), te = (b0.slot_end||'').slice(0,5);
+  const [yr, mo, dy] = (b0.slot_date||'').split('-').map(Number);
+  const MON = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+  document.getElementById('mbd-title').textContent = `Групповая тренировка — ${dy} ${MON[mo-1]} ${yr}`;
+
+  const rows = entries.map(({ b, p }) => {
+    const st = ST[b.status] || { lbl: b.status, cls: 'b-pending' };
+    const pay = PAY[b.payment_status] || { lbl: b.payment_status, cls: 'b-pending' };
+    const cancelled = b.status === 'cancelled', completed = b.status === 'completed', paid = b.payment_status === 'paid';
+    const stLbl = cancelled ? _cancelledLabel(b, (S.stores || []).find(s => s.id === b.store_id)?.direction) : st.lbl;
+    return `<div style="padding:10px 0;border-top:1px solid var(--line-soft)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="min-width:0">
+          <div style="font:600 14px/1.3 var(--font-sans)">${esc(p?.full_name || 'Клиент')}</div>
+          ${p?.phone ? `<div style="font-size:13px;color:var(--fg-3)">${esc(p.phone)}</div>` : ''}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+            <span class="badge ${st.cls}">${stLbl}</span>
+            <span class="badge ${pay.cls}">${pay.lbl}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+          <div style="font:700 13px/1 var(--font-sans);color:var(--accent)">${b.total_price ?? ''} ₽</div>
+          ${!paid && !cancelled && !completed ? `<button class="btn btn-p btn-sm" style="font-size:11px" onclick="_groupBookingPaid('${b.id}','${b.slot_date}','${key}')">Оплачена</button>` : ''}
+          ${!cancelled && !completed ? `<button class="btn btn-sm" style="background:var(--ok);color:#fff;font-size:11px" onclick="_groupCompleteBooking('${b.id}','${b.slot_date}','${key}')">Завершить</button>` : ''}
+          ${!cancelled && !completed ? `<button class="btn btn-sm btn-d" style="font-size:11px" onclick="_groupCancelBooking('${b.id}','${b.slot_date}','${key}')">Отменить</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mbd-body').innerHTML = `
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Время</div>
+      <span style="font:700 15px/1 var(--font-sans)">${ts} — ${te}</span>
+    </div>
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Услуга</div>
+      <div style="font:600 14px/1.3 var(--font-sans)">${esc(b0.menu_items?.name || '—')}</div>
+    </div>
+    ${m ? `<div>
+      <div class="lbl" style="margin-bottom:6px">${_roleWords((S.stores || []).find(s => s.id === b0.store_id)?.direction).nom}</div>
+      ${m.full_name ? `<div style="font:600 14px/1.3 var(--font-sans)">${esc(m.full_name)}</div>` : ''}
+    </div>` : ''}
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Участники (${entries.length})</div>
+      ${rows}
+    </div>`;
+  document.getElementById('mbd-actions').innerHTML = `<button class="btn" onclick="closeModal('m-booking-detail')">Закрыть</button>`;
+  openModal('m-booking-detail');
+}
+
+async function _groupBookingPaid(bookingId, dateStr, groupKey) {
+  await markBookingPaid(bookingId, dateStr);
+  openBookingGroupDetail(groupKey);
+}
+
+async function _groupCompleteBooking(bookingId, dateStr, groupKey) {
+  await completeBooking(bookingId, dateStr);
+  openBookingGroupDetail(groupKey);
+}
+
+async function _groupCancelBooking(bookingId, dateStr, groupKey) {
+  await cancelBooking(bookingId, dateStr);
+  openBookingGroupDetail(groupKey);
 }
 
 // Общий рендер карточек заявок на персональную тренировку для обеих админских
