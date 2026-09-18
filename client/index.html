@@ -597,6 +597,7 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .sched-day.today.selected .sd-n{background:var(--accent);color:var(--accent-fg);border:none}
 .sched-bk-cnt{position:absolute;top:3px;right:4px;font:700 9px/14px var(--font-sans);background:var(--accent);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-bk-done{position:absolute;top:3px;left:4px;font:700 9px/14px var(--font-sans);background:var(--ok);color:var(--accent-fg);border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
+.sched-day-interest{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;background:var(--info);pointer-events:none}
 .sched-bk-cancelled{position:absolute;bottom:3px;left:4px;font:700 9px/14px var(--font-sans);background:#e53935;color:#fff;border-radius:7px;padding:0 4px;min-width:14px;text-align:center;pointer-events:none}
 .sched-day.has-rent{background:color-mix(in oklch,var(--info) 16%,var(--bg))}
 .sched-day.has-rent:hover:not(.selected){background:color-mix(in oklch,var(--info) 26%,var(--bg))}
@@ -1591,6 +1592,10 @@ document.addEventListener('deviceready',function(){
         </div>
         <div class="sched-cal-wrap" style="margin-bottom:14px">
           <div class="sched-cal-grid" id="ca-sched-cal"></div>
+        </div>
+        <div id="ca-sched-interest-legend" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:-6px 0 14px">
+          <span class="sched-day-interest" style="position:static;transform:none;flex:none"></span>
+          Уже есть желающие — ваша заявка может сразу попасть в их группу
         </div>
         <div id="ca-sched-personal-days" style="display:none;margin-bottom:14px">
           <div id="ca-sched-personal-days-list" style="margin-bottom:10px"></div>
@@ -4414,6 +4419,7 @@ async function loadCaScheduleScreen() {
     _caSched.personalDays = {};
     _caSched.masterItemPrice = {};
     _caSched.bookableItems = [];
+    _caSched.groupInterestDates = new Set();
     const now = new Date();
     _caSched.year = now.getFullYear();
     _caSched.month = now.getMonth();
@@ -4668,6 +4674,17 @@ async function _loadCaSchedMonth() {
       (bkRows || []).forEach(r => {
         (_caSched.bookedData[r.slot_date] = _caSched.bookedData[r.slot_date] || []).push(r);
       });
+      if ((item.max_group_size || 1) > 1) {
+        try {
+          const dates = await req('/rest/v1/rpc/personal_training_group_dates', {
+            method: 'POST',
+            body: JSON.stringify({ p_master_id: masterId, p_menu_item_id: item.id, p_date_from: from, p_date_to: to }),
+          });
+          _caSched.groupInterestDates = new Set(dates || []);
+        } catch(e) { _caSched.groupInterestDates = new Set(); }
+      } else {
+        _caSched.groupInterestDates = new Set();
+      }
     } else if (masterId) {
       // Раскладываем недельный паттерн мастера по датам
       const mScheds = _caSched.masterScheds[masterId] || [];
@@ -4725,8 +4742,9 @@ function renderCaSchedCalendar() {
     if (personalSelected) {
       const hasAny = hasSched && !isPast;
       const isSelected = !!_caSched.personalDays[ds];
+      const hasInterest = hasAny && _caSched.groupInterestDates.has(ds);
       td.className = `sched-day${!hasAny ? ' empty' : ''}${isToday ? ' today' : ''}${hasAny ? ' has-sched' : ''}${isSelected ? ' selected' : ''}`;
-      td.innerHTML = `<span class="sd-n">${d}</span>`;
+      td.innerHTML = `<span class="sd-n">${d}</span>${hasInterest ? '<span class="sched-day-interest" title="На эту тренировку в этот день уже есть желающие — при записи вы можете попасть в их группу"></span>' : ''}`;
       if (hasAny) td.onclick = () => _caPersonalDayToggle(ds);
     } else {
       const booked = _caSched.bookedData[ds] || [];
@@ -4749,6 +4767,8 @@ function renderCaSchedCalendar() {
     body.appendChild(td);
   }
   while (body.children.length % 7 !== 0) { const td = document.createElement('div'); td.className = 'sched-day empty'; body.appendChild(td); }
+  const legendEl = document.getElementById('ca-sched-interest-legend');
+  if (legendEl) legendEl.style.display = (personalSelected && _caSched.groupInterestDates.size > 0) ? 'flex' : 'none';
   if (personalSelected) {
     document.getElementById('ca-sched-day-view').style.display = 'none';
     document.getElementById('ca-sched-personal-days').style.display = '';
