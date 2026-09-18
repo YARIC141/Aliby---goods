@@ -3532,7 +3532,7 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 
 let _calenabsTab = 'ord';
 let _schedulePreselect = null;
-const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {}, multiPerson: false, personalDays: {}, masterItemPrice: {}, bookableItems: [] };
+const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {}, multiPerson: false, personalDays: {}, masterItemPrice: {}, bookableItems: [], groupInterestDates: new Set(), dayOptions: {} };
 
 function peekTab(btn) {
   if (!btn) return;
@@ -4420,6 +4420,7 @@ async function loadCaScheduleScreen() {
     _caSched.masterItemPrice = {};
     _caSched.bookableItems = [];
     _caSched.groupInterestDates = new Set();
+    _caSched.dayOptions = {};
     const now = new Date();
     _caSched.year = now.getFullYear();
     _caSched.month = now.getMonth();
@@ -4615,6 +4616,7 @@ async function _loadCaSchedMonth() {
   const to = `${year}-${pad(month + 1)}-${pad(lastDay)}`;
   _caSched.schedData = {};
   _caSched.bookedData = {};
+  _caSched.dayOptions = {};
   try {
     if (mode === 'group') {
       // Групповые занятия: фиксированное расписание по дням недели + вместимость группы
@@ -4783,17 +4785,40 @@ function renderCaSchedCalendar() {
 function _caPersonalDayToggle(ds) {
   if (_caSched.personalDays[ds]) {
     delete _caSched.personalDays[ds];
-  } else {
-    const w = (_caSched.schedData[ds] || [])[0];
-    if (!w) return;
-    _caSched.personalDays[ds] = { start: w.start, end: w.end };
+    renderCaSchedCalendar();
+    return;
   }
+  const w = (_caSched.schedData[ds] || [])[0];
+  if (!w) return;
+  _caSched.personalDays[ds] = { start: w.start, end: w.end };
   renderCaSchedCalendar();
+  if (_caSched.groupInterestDates.has(ds) && !_caSched.dayOptions[ds]) {
+    _loadCaPersonalDayOptions(ds);
+  }
 }
 
 function removeCaPersonalDay(ds) {
   delete _caSched.personalDays[ds];
   renderCaSchedCalendar();
+}
+
+async function _loadCaPersonalDayOptions(ds) {
+  const item = _caPersonalItem();
+  if (!item || !_caSched.masterId) return;
+  try {
+    const rows = await req('/rest/v1/rpc/personal_training_day_options', {
+      method: 'POST',
+      body: JSON.stringify({ p_master_id: _caSched.masterId, p_menu_item_id: item.id, p_date: ds }),
+    });
+    _caSched.dayOptions[ds] = rows || [];
+  } catch (e) { _caSched.dayOptions[ds] = []; }
+  _renderCaPersonalDaysList();
+}
+
+function _selectCaExistingSlot(ds, start, end) {
+  if (!_caSched.personalDays[ds]) return;
+  _caSched.personalDays[ds] = { start, end };
+  _renderCaPersonalDaysList();
 }
 
 function _renderCaPersonalDaysList() {
@@ -4816,8 +4841,25 @@ function _renderCaPersonalDaysList() {
       const label = `${_PD_DOW[new Date(y, m - 1, d).getDay()]}, ${d} ${_PD_MON[m - 1]}`;
       const day = _caSched.personalDays[ds];
       const w = (_caSched.schedData[ds] || [])[0] || { start: '00:00', end: '23:59' };
+      const opts = _caSched.dayOptions[ds];
+      let optsHtml = '';
+      if (opts === undefined && _caSched.groupInterestDates.has(ds)) {
+        optsHtml = `<div style="width:100%;font-size:12px;color:var(--muted);margin-bottom:2px">Загрузка существующих заявок…</div>`;
+      } else if (opts && opts.length) {
+        optsHtml = `<div style="width:100%;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px">
+          ${opts.map(o => {
+            const os = o.slot_start.slice(0, 5), oe = o.slot_end.slice(0, 5);
+            const lbl = o.kind === 'confirmed'
+              ? `${os}–${oe} · своб. ${o.max_group - o.taken}`
+              : `${os}–${oe} · ${o.taken} ${o.taken === 1 ? 'заявка' : 'заявки'} ждут`;
+            const active = day.start === os && day.end === oe;
+            return `<button type="button" class="chip${active ? ' active' : ''}" onclick="_selectCaExistingSlot('${ds}','${os}','${oe}')">${lbl}</button>`;
+          }).join('')}
+        </div>`;
+      }
       return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <span style="font-size:13px;font-weight:600;min-width:76px">${label}</span>
+        ${optsHtml}
         <input type="time" value="${day.start}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','start',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
         <span style="color:var(--muted);font-size:13px">–</span>
         <input type="time" value="${day.end}" min="${w.start}" max="${w.end}" onchange="onCaPersonalDayRangeChange('${ds}','end',this.value)" style="padding:6px 8px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--bg-input);color:var(--fg);font-size:13px">
