@@ -409,6 +409,11 @@
         </select>
       </div>
       <p class="weight-hint">Используется для оценки калорий по шагам и показателя "сожжено жира", если Health Connect их не считает (так делают некоторые фитнес-браслеты).</p>
+      <div class="weight-row">
+        <label for="input-bodyfat">Ваш % жира тела (если знаете)</label>
+        <input type="number" id="input-bodyfat" min="3" max="60" step="0.1" placeholder="20">
+      </div>
+      <p class="weight-hint">Заполните вручную, если ваши умные весы не передают % жира тела в Health Connect (некоторые приложения, например Zepp Life, показывают его только у себя и не пишут в Health Connect). Если Health Connect всё же пришлёт это значение — оно заменит введённое здесь.</p>
       <label for="input-bio" class="bio-label">Биография</label>
       <textarea id="input-bio" rows="4" maxlength="2000" placeholder="Характер, история, привычки питомца..."></textarea>
     </div>
@@ -1213,7 +1218,13 @@
           document.getElementById('input-weight').value = res.weightKg;
           syncBodyWeightToNative(res.weightKg);
         }
-        lsSet('bodyFatPercent', (typeof res.bodyFatPercent === 'number' && res.bodyFatPercent > 0) ? res.bodyFatPercent : '');
+        // Не затираем пустым значением: если Health Connect ничего не прислал
+        // (например, Zepp Life не пишет % жира тела в Health Connect), оставляем
+        // как есть — там может быть значение, введённое пользователем вручную.
+        if (typeof res.bodyFatPercent === 'number' && res.bodyFatPercent > 0){
+          lsSet('bodyFatPercent', res.bodyFatPercent);
+          document.getElementById('input-bodyfat').value = res.bodyFatPercent;
+        }
         renderBodyComposition();
       }).catch(function(){});
     } catch (e) {}
@@ -2682,6 +2693,7 @@
       document.getElementById('input-height').value = lsGet('heightCm', '');
       document.getElementById('input-age').value = lsGet('ageYears', '');
       document.getElementById('input-gender').value = lsGet('gender', '');
+      document.getElementById('input-bodyfat').value = lsGet('bodyFatPercent', '');
       renderWorkoutsList(getCachedWorkouts());
       renderBodyComposition();
       if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); } catch (e) {} }
@@ -2748,6 +2760,12 @@
 
     document.getElementById('input-gender').addEventListener('change', function(){
       lsSet('gender', this.value);
+      renderBodyComposition();
+    });
+
+    document.getElementById('input-bodyfat').addEventListener('input', function(){
+      var v = parseFloat(this.value);
+      lsSet('bodyFatPercent', (v > 0) ? v : '');
       renderBodyComposition();
     });
 
@@ -2958,6 +2976,7 @@
       document.getElementById('input-height').value = '';
       document.getElementById('input-age').value = '';
       document.getElementById('input-gender').value = '';
+      document.getElementById('input-bodyfat').value = '';
       document.getElementById('bio-card').classList.add('hidden');
       document.getElementById('bodycomp-card').classList.add('hidden');
       document.getElementById('workouts-card').classList.add('hidden');
