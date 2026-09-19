@@ -94,4 +94,17 @@ public class TamagotchiPlugin extends Plugin {
             PetWidgetProvider.refreshAll(getContext());
         });
     }
+
+    /**
+     * Зеркалит вес владельца из веб-версии в SharedPreferences, чтобы им мог
+     * пользоваться нативный виджет питомца — он не имеет доступа к localStorage
+     * WebView и иначе не смог бы посчитать калории тем же способом, что и веб-версия.
+     */
+    @PluginMethod
+    public void setBodyWeightKg(PluginCall call) {
+        double weightKg = call.getDouble("weightKg", 0.0);
+        TamagotchiPrefs.setBodyWeightKg(getContext(), (float) weightKg);
+        call.resolve();
+        PetWidgetProvider.refreshAll(getContext());
+    }
 }

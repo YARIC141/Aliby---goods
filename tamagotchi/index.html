@@ -44,6 +44,11 @@
   .ring-value{font-size:11px;font-weight:600;color:var(--text)}
   .bio-card{margin:14px 0}
   .bio-label{display:block;font-size:14px;color:var(--text2);margin-bottom:6px}
+  .weight-row{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+  .weight-row label{flex:1;font-size:13px;color:var(--text2)}
+  .weight-row input[type=number]{width:76px;padding:10px;border-radius:10px;border:1px solid #2a323b;
+    background:#151a1f;color:var(--text);font-size:14px;font-family:inherit;text-align:right}
+  .weight-hint{font-size:11px;color:var(--text2);line-height:1.4;margin:-8px 0 14px}
   textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #2a323b;background:#151a1f;
     color:var(--text);font-size:14px;font-family:inherit;line-height:1.4;resize:vertical}
   textarea::placeholder{color:var(--text2)}
@@ -336,6 +341,11 @@
     </div>
 
     <div class="bio-card hidden" id="bio-card">
+      <div class="weight-row">
+        <label for="input-weight">Ваш вес, кг</label>
+        <input type="number" id="input-weight" min="20" max="300" step="0.5" placeholder="70">
+      </div>
+      <p class="weight-hint">Используется для оценки калорий по шагам, если Health Connect их не считает (так делают некоторые фитнес-браслеты).</p>
       <label for="input-bio" class="bio-label">Биография</label>
       <textarea id="input-bio" rows="4" maxlength="2000" placeholder="Характер, история, привычки питомца..."></textarea>
     </div>
@@ -1016,10 +1026,32 @@
     if (!plugin || typeof plugin.getTodayHealthMetrics !== 'function') return;
     try {
       plugin.getTodayHealthMetrics().then(function(res){
-        lsSet('hcMetrics', JSON.stringify(res || {}));
+        res = res || {};
+        // Некоторые фитнес-браслеты (напр. Zepp Life) считают активные калории сами
+        // по шагам и весу, но не пишут их в Health Connect отдельной записью — тогда
+        // activeCaloriesKcal приходит либо отсутствующим, либо нулевым при ненулевых
+        // шагах. В этом случае считаем калории тем же способом сами.
+        if (!res.activeCaloriesKcal){
+          var weightKg = lsNum('weightKg', 0);
+          var steps = getStepsState().steps;
+          if (weightKg > 0 && steps > 0){
+            res.activeCaloriesKcal = steps * weightKg * 0.0005;
+            res.activeCaloriesEstimated = true;
+          }
+        }
+        lsSet('hcMetrics', JSON.stringify(res));
         renderHealthMetrics();
       }).catch(function(){});
     } catch (e) {}
+  }
+  // Зеркалит вес в SharedPreferences нативного приложения, чтобы им мог пользоваться
+  // виджет питомца (PetWidgetProvider) — у него нет доступа к localStorage WebView,
+  // а без веса он не может посчитать калории тем же способом, что и веб-версия.
+  function syncBodyWeightToNative(weightKg){
+    if (!isNative) return;
+    var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
+    if (!plugin || typeof plugin.setBodyWeightKg !== 'function') return;
+    try { plugin.setBodyWeightKg({ weightKg: weightKg }).catch(function(){}); } catch (e) {}
   }
   function setHealthRing(key, present, pct, text){
     document.getElementById('ring-item-hc-' + key).classList.toggle('hidden', !present);
@@ -1041,7 +1073,7 @@
     var hasCalories = !!(m && typeof m.activeCaloriesKcal === 'number');
     if (hasCalories) any = true;
     setHealthRing('calories', hasCalories, hasCalories ? 100 * m.activeCaloriesKcal / DAILY_ACTIVE_CALORIES_GOAL : 0,
-      hasCalories ? Math.round(m.activeCaloriesKcal) + ' ккал' : '');
+      hasCalories ? (m.activeCaloriesEstimated ? '≈' : '') + Math.round(m.activeCaloriesKcal) + ' ккал' : '');
 
     var hasSleep = !!(m && typeof m.sleepMinutes === 'number');
     if (hasSleep) any = true;
@@ -2338,7 +2370,8 @@
       showScreen('status');
       renderStatus();
       document.getElementById('input-bio').value = lsGet('bio', '');
-      if (isNative){ try { refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } catch (e) {} }
+      document.getElementById('input-weight').value = lsGet('weightKg', '');
+      if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } catch (e) {} }
       else if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
       showScreen('create');
@@ -2367,6 +2400,13 @@
 
     document.getElementById('input-bio').addEventListener('input', function(){
       lsSet('bio', this.value);
+    });
+
+    document.getElementById('input-weight').addEventListener('input', function(){
+      var v = parseFloat(this.value);
+      lsSet('weightKg', (v > 0) ? v : '');
+      syncBodyWeightToNative(v > 0 ? v : 0);
+      if (isNative) refreshHealthConnectMetrics();
     });
 
     document.getElementById('btn-bio-toggle').addEventListener('click', function(){

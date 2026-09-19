@@ -13,6 +13,7 @@ import android.widget.RemoteViews;
 import java.util.Locale;
 
 import ru.alliby.app.tamagotchi.HealthConnectSteps;
+import ru.alliby.app.tamagotchi.TamagotchiPrefs;
 
 /**
  * Домашний виджет "Питомец": показывает все метрики Health Connect за сегодня
@@ -99,6 +100,17 @@ public class PetWidgetProvider extends AppWidgetProvider {
 
         HealthConnectSteps.fetchTodaySteps(appContext, steps ->
             HealthConnectSteps.fetchTodayMetrics(appContext, metrics -> {
+                // Некоторые фитнес-браслеты (напр. Zepp Life) считают активные калории сами
+                // по шагам и весу, но не пишут их в Health Connect отдельной записью — тогда
+                // activeCaloriesKcal приходит null/0 при ненулевых шагах. Оцениваем калории
+                // тем же способом, что и веб-версия (см. refreshHealthConnectMetrics в
+                // tamagotchi/index.html), используя вес, зеркалированный из веб-версии.
+                Double calories = metrics.getActiveCaloriesKcal();
+                if ((calories == null || calories == 0) && steps != null && steps > 0) {
+                    float weightKg = TamagotchiPrefs.bodyWeightKg(appContext);
+                    if (weightKg > 0) calories = steps * weightKg * 0.0005;
+                }
+
                 RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_pet);
                 views.setInt(R.id.pet_widget_root, "setBackgroundResource", backgroundRes);
                 views.setTextColor(R.id.pet_title, textPrimary);
@@ -122,7 +134,7 @@ public class PetWidgetProvider extends AppWidgetProvider {
 
                 views.setTextViewText(R.id.pet_val_steps, steps == null ? "—" : String.valueOf(steps));
                 views.setTextViewText(R.id.pet_val_distance, formatDistance(metrics.getDistanceMeters()));
-                views.setTextViewText(R.id.pet_val_calories, formatCalories(metrics.getActiveCaloriesKcal()));
+                views.setTextViewText(R.id.pet_val_calories, formatCalories(calories));
                 views.setTextViewText(R.id.pet_val_sleep, formatMinutesHm(metrics.getSleepMinutes()));
                 views.setTextViewText(R.id.pet_val_exercise, formatMinutes(metrics.getExerciseMinutes()));
                 views.setTextViewText(R.id.pet_val_heart, formatHeartRate(metrics.getAvgHeartRateBpm()));
