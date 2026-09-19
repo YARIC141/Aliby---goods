@@ -6,6 +6,7 @@ import android.content.Intent;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.contract.ActivityResultContract;
 
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
@@ -106,5 +107,31 @@ public class TamagotchiPlugin extends Plugin {
         TamagotchiPrefs.setBodyWeightKg(getContext(), (float) weightKg);
         call.resolve();
         PetWidgetProvider.refreshAll(getContext());
+    }
+
+    /**
+     * Тренировки за сегодня как отдельные сессии (время начала/конца, тип, средний пульс
+     * именно за эту сессию, оценка калорий) — в отличие от getTodayHealthMetrics, где
+     * exerciseMinutes и avgHeartRateBpm это суточные агрегаты без привязки к конкретной
+     * тренировке.
+     */
+    @PluginMethod
+    public void getTodayWorkouts(PluginCall call) {
+        HealthConnectSteps.fetchTodayWorkouts(getContext(), sessions -> {
+            JSArray arr = new JSArray();
+            for (HealthConnectSteps.WorkoutSession s : sessions) {
+                JSObject w = new JSObject();
+                w.put("startTimeMs", s.getStartTimeMs());
+                w.put("endTimeMs", s.getEndTimeMs());
+                w.put("durationMinutes", Math.round((s.getEndTimeMs() - s.getStartTimeMs()) / 60000.0));
+                w.put("type", s.getLabel());
+                if (s.getAvgHeartRateBpm() != null) w.put("avgHeartRateBpm", s.getAvgHeartRateBpm());
+                if (s.getCaloriesKcal() != null) w.put("caloriesKcal", s.getCaloriesKcal());
+                arr.put(w);
+            }
+            JSObject out = new JSObject();
+            out.put("workouts", arr);
+            call.resolve(out);
+        });
     }
 }

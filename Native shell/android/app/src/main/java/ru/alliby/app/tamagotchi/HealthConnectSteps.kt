@@ -14,6 +14,7 @@ import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -186,6 +187,121 @@ object HealthConnectSteps {
             }
 
             callback.onResult(TodayMetrics(distanceMeters, activeCaloriesKcal, sleepMinutes, exerciseMinutes, avgHeartRateBpm))
+        }
+    }
+
+    /** Одна тренировка за сегодня: конкретная сессия с началом/концом, а не суточный агрегат
+     * (в отличие от exerciseMinutes выше), плюс её собственный средний пульс и оценка калорий
+     * по формуле MET × вес × время — вес берётся из TamagotchiPrefs (зеркалирован из веб-версии). */
+    data class WorkoutSession(
+        val startTimeMs: Long,
+        val endTimeMs: Long,
+        val exerciseType: Int,
+        val label: String,
+        val avgHeartRateBpm: Long?,
+        val caloriesKcal: Double?
+    )
+
+    fun interface WorkoutsCallback {
+        fun onResult(sessions: List<WorkoutSession>)
+    }
+
+    /** MET (Metabolic Equivalent of Task) и русское название по типу тренировки Health Connect.
+     * Официальной калорийности сессии в Health Connect может не быть (не все источники её пишут),
+     * поэтому считаем её сами по стандартной формуле kcal = MET × вес(кг) × время(ч). */
+    private fun exerciseLabelAndMet(type: Int): Pair<String, Double> = when (type) {
+        ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> "Ходьба" to 3.5
+        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
+        ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> "Бег" to 9.8
+        ExerciseSessionRecord.EXERCISE_TYPE_BIKING,
+        ExerciseSessionRecord.EXERCISE_TYPE_BIKING_STATIONARY -> "Велосипед" to 7.5
+        ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_POOL,
+        ExerciseSessionRecord.EXERCISE_TYPE_SWIMMING_OPEN_WATER -> "Плавание" to 8.0
+        ExerciseSessionRecord.EXERCISE_TYPE_STRENGTH_TRAINING,
+        ExerciseSessionRecord.EXERCISE_TYPE_WEIGHTLIFTING,
+        ExerciseSessionRecord.EXERCISE_TYPE_CALISTHENICS -> "Силовая тренировка" to 5.0
+        ExerciseSessionRecord.EXERCISE_TYPE_YOGA,
+        ExerciseSessionRecord.EXERCISE_TYPE_PILATES,
+        ExerciseSessionRecord.EXERCISE_TYPE_STRETCHING -> "Йога/растяжка" to 3.0
+        ExerciseSessionRecord.EXERCISE_TYPE_HIKING -> "Поход" to 6.0
+        ExerciseSessionRecord.EXERCISE_TYPE_ELLIPTICAL -> "Эллипсоид" to 5.0
+        ExerciseSessionRecord.EXERCISE_TYPE_ROWING,
+        ExerciseSessionRecord.EXERCISE_TYPE_ROWING_MACHINE -> "Гребля" to 7.0
+        ExerciseSessionRecord.EXERCISE_TYPE_STAIR_CLIMBING,
+        ExerciseSessionRecord.EXERCISE_TYPE_STAIR_CLIMBING_MACHINE -> "Лестница" to 8.0
+        ExerciseSessionRecord.EXERCISE_TYPE_DANCING -> "Танцы" to 5.5
+        ExerciseSessionRecord.EXERCISE_TYPE_HIGH_INTENSITY_INTERVAL_TRAINING -> "Интервальная тренировка" to 8.0
+        ExerciseSessionRecord.EXERCISE_TYPE_BOXING,
+        ExerciseSessionRecord.EXERCISE_TYPE_MARTIAL_ARTS -> "Единоборства" to 7.5
+        ExerciseSessionRecord.EXERCISE_TYPE_BASKETBALL -> "Баскетбол" to 6.5
+        ExerciseSessionRecord.EXERCISE_TYPE_SOCCER,
+        ExerciseSessionRecord.EXERCISE_TYPE_FOOTBALL_AMERICAN,
+        ExerciseSessionRecord.EXERCISE_TYPE_FOOTBALL_AUSTRALIAN -> "Футбол" to 7.0
+        ExerciseSessionRecord.EXERCISE_TYPE_TENNIS,
+        ExerciseSessionRecord.EXERCISE_TYPE_BADMINTON,
+        ExerciseSessionRecord.EXERCISE_TYPE_SQUASH,
+        ExerciseSessionRecord.EXERCISE_TYPE_RACQUETBALL,
+        ExerciseSessionRecord.EXERCISE_TYPE_TABLE_TENNIS -> "Ракеточный спорт" to 6.5
+        ExerciseSessionRecord.EXERCISE_TYPE_SKIING,
+        ExerciseSessionRecord.EXERCISE_TYPE_SNOWBOARDING,
+        ExerciseSessionRecord.EXERCISE_TYPE_SNOWSHOEING,
+        ExerciseSessionRecord.EXERCISE_TYPE_ICE_SKATING,
+        ExerciseSessionRecord.EXERCISE_TYPE_SKATING -> "Зимний спорт" to 6.5
+        ExerciseSessionRecord.EXERCISE_TYPE_GYMNASTICS -> "Гимнастика" to 4.0
+        ExerciseSessionRecord.EXERCISE_TYPE_GOLF -> "Гольф" to 4.3
+        else -> "Тренировка" to 5.0
+    }
+
+    /** Список тренировок за сегодня с их собственным временем начала/конца (а не суточный
+     * агрегат), средним пульсом за КАЖДУЮ сессию отдельно и оценкой калорий. */
+    @JvmStatic
+    fun fetchTodayWorkouts(context: Context, callback: WorkoutsCallback) {
+        if (!isAvailable(context)) { callback.onResult(emptyList()); return }
+        val client = HealthConnectClient.getOrCreate(context)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val granted = client.permissionController.getGrantedPermissions()
+                if (!granted.contains(PERMISSION_EXERCISE)) { callback.onResult(emptyList()); return@launch }
+
+                val zone = ZoneId.systemDefault()
+                val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant()
+                val now = Instant.now()
+                val response = client.readRecords(
+                    ReadRecordsRequest(
+                        recordType = ExerciseSessionRecord::class,
+                        timeRangeFilter = TimeRangeFilter.between(startOfDay, now)
+                    )
+                )
+
+                val hasHeartRate = granted.contains(PERMISSION_HEART_RATE)
+                val weightKg = TamagotchiPrefs.bodyWeightKg(context)
+
+                val sessions = response.records.map { record ->
+                    var avgHr: Long? = null
+                    if (hasHeartRate) {
+                        try {
+                            val hrRange = TimeRangeFilter.between(record.startTime, record.endTime)
+                            val r = client.aggregate(AggregateRequest(setOf(HeartRateRecord.BPM_AVG), hrRange))
+                            avgHr = r[HeartRateRecord.BPM_AVG]
+                        } catch (e: Exception) {}
+                    }
+                    val (label, met) = exerciseLabelAndMet(record.exerciseType)
+                    val durationHours = Duration.between(record.startTime, record.endTime).toMillis() / 3_600_000.0
+                    val calories = if (weightKg > 0) met * weightKg * durationHours else null
+                    WorkoutSession(
+                        startTimeMs = record.startTime.toEpochMilli(),
+                        endTimeMs = record.endTime.toEpochMilli(),
+                        exerciseType = record.exerciseType,
+                        label = label,
+                        avgHeartRateBpm = avgHr,
+                        caloriesKcal = calories
+                    )
+                }.sortedBy { it.startTimeMs }
+
+                callback.onResult(sessions)
+            } catch (e: Exception) {
+                callback.onResult(emptyList())
+            }
         }
     }
 }

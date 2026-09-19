@@ -48,7 +48,19 @@
   .weight-row label{flex:1;font-size:13px;color:var(--text2)}
   .weight-row input[type=number]{width:76px;padding:10px;border-radius:10px;border:1px solid #2a323b;
     background:#151a1f;color:var(--text);font-size:14px;font-family:inherit;text-align:right}
+  .weight-row select{flex:0 0 auto;padding:10px;border-radius:10px;border:1px solid #2a323b;
+    background:#151a1f;color:var(--text);font-size:14px;font-family:inherit}
   .weight-hint{font-size:11px;color:var(--text2);line-height:1.4;margin:-8px 0 14px}
+  .stat-card{margin:0 0 16px;padding:14px;border-radius:12px;background:var(--card);text-align:center}
+  .stat-card-label{font-size:12px;color:var(--text2);margin-bottom:4px}
+  .stat-card-value{font-size:22px;font-weight:700}
+  .stat-card-hint{font-size:11px;color:var(--text2);margin-top:4px;line-height:1.4}
+  .workouts-card{margin:0 0 16px}
+  .workouts-title{font-size:13px;color:var(--text2);margin-bottom:8px}
+  .workout-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text);
+    padding:9px 11px;background:var(--card);border-radius:9px;margin-bottom:6px}
+  .workout-row .workout-type{font-weight:600}
+  .workout-row .workout-meta{color:var(--text2);text-align:right}
   textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #2a323b;background:#151a1f;
     color:var(--text);font-size:14px;font-family:inherit;line-height:1.4;resize:vertical}
   textarea::placeholder{color:var(--text2)}
@@ -340,12 +352,39 @@
       </div>
     </div>
 
+    <div class="stat-card hidden" id="burnedfat-card">
+      <div class="stat-card-label">🔥 Сожжено сегодня (оценка)</div>
+      <div class="stat-card-value" id="text-burnedfat">0 г</div>
+      <div class="stat-card-hint">Обмен веществ (BMR) + активность за день. Приблизительно, не заменяет медицинские измерения.</div>
+    </div>
+
+    <div class="workouts-card hidden" id="workouts-card">
+      <div class="workouts-title">Тренировки сегодня</div>
+      <div id="workouts-list"></div>
+    </div>
+
     <div class="bio-card hidden" id="bio-card">
       <div class="weight-row">
         <label for="input-weight">Ваш вес, кг</label>
         <input type="number" id="input-weight" min="20" max="300" step="0.5" placeholder="70">
       </div>
-      <p class="weight-hint">Используется для оценки калорий по шагам, если Health Connect их не считает (так делают некоторые фитнес-браслеты).</p>
+      <div class="weight-row">
+        <label for="input-height">Ваш рост, см</label>
+        <input type="number" id="input-height" min="100" max="250" step="1" placeholder="170">
+      </div>
+      <div class="weight-row">
+        <label for="input-age">Ваш возраст, лет</label>
+        <input type="number" id="input-age" min="5" max="120" step="1" placeholder="30">
+      </div>
+      <div class="weight-row">
+        <label for="input-gender">Пол</label>
+        <select id="input-gender">
+          <option value="">—</option>
+          <option value="m">Мужской</option>
+          <option value="f">Женский</option>
+        </select>
+      </div>
+      <p class="weight-hint">Используется для оценки калорий по шагам и показателя "сожжено жира", если Health Connect их не считает (так делают некоторые фитнес-браслеты).</p>
       <label for="input-bio" class="bio-label">Биография</label>
       <textarea id="input-bio" rows="4" maxlength="2000" placeholder="Характер, история, привычки питомца..."></textarea>
     </div>
@@ -1039,10 +1078,107 @@
             res.activeCaloriesEstimated = true;
           }
         }
-        lsSet('hcMetrics', JSON.stringify(res));
-        renderHealthMetrics();
+        return refreshHealthConnectWorkouts().then(function(workouts){
+          // Если калории — наша оценка по шагам (activeCaloriesEstimated), а не
+          // реальные данные Health Connect, формула "шаги × вес" плохо отражает
+          // нагрузку не-шаговых тренировок (силовая, велосипед и т.д.) — добавляем
+          // калории тренировок сверху. Если же калории реальные из Health Connect,
+          // считаем что источник их уже учёл — иначе задвоим одну и ту же нагрузку.
+          var workoutsKcal = sumWorkoutsKcal(workouts);
+          if (res.activeCaloriesEstimated && workoutsKcal > 0){
+            res.activeCaloriesKcal += workoutsKcal;
+          }
+          lsSet('hcMetrics', JSON.stringify(res));
+          renderHealthMetrics();
+          renderBurnedFat();
+        });
       }).catch(function(){});
     } catch (e) {}
+  }
+
+  // ── Тренировки за сегодня (Health Connect) — отдельные сессии с началом/концом,
+  // средним пульсом за КАЖДУЮ тренировку и оценкой калорий по MET, в отличие от
+  // exerciseMinutes/avgHeartRateBpm выше, которые лишь суточные агрегаты. ────────
+  function refreshHealthConnectWorkouts(){
+    if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return Promise.resolve([]);
+    var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
+    if (!plugin || typeof plugin.getTodayWorkouts !== 'function') return Promise.resolve([]);
+    return plugin.getTodayWorkouts().then(function(res){
+      var workouts = (res && res.workouts) || [];
+      lsSet('hcWorkouts', JSON.stringify(workouts));
+      renderWorkoutsList(workouts);
+      return workouts;
+    }).catch(function(){ return []; });
+  }
+  function getCachedWorkouts(){
+    try { return JSON.parse(lsGet('hcWorkouts', '[]')) || []; } catch(e){ return []; }
+  }
+  function sumWorkoutsKcal(workouts){
+    return (workouts || []).reduce(function(sum, w){
+      return sum + (typeof w.caloriesKcal === 'number' ? w.caloriesKcal : 0);
+    }, 0);
+  }
+  function renderWorkoutsList(workouts){
+    var card = document.getElementById('workouts-card');
+    var list = document.getElementById('workouts-list');
+    list.innerHTML = '';
+    if (!workouts || !workouts.length){ card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    workouts.forEach(function(w){
+      var row = document.createElement('div');
+      row.className = 'workout-row';
+      var t = function(ms){ var d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+      var meta = [t(w.startTimeMs) + '–' + t(w.endTimeMs), w.durationMinutes + ' мин'];
+      if (typeof w.avgHeartRateBpm === 'number') meta.push(w.avgHeartRateBpm + ' уд/мин');
+      if (typeof w.caloriesKcal === 'number') meta.push(Math.round(w.caloriesKcal) + ' ккал');
+      var typeEl = document.createElement('div');
+      typeEl.className = 'workout-type';
+      typeEl.textContent = w.type;
+      var metaEl = document.createElement('div');
+      metaEl.className = 'workout-meta';
+      metaEl.textContent = meta.join(' · ');
+      row.appendChild(typeEl);
+      row.appendChild(metaEl);
+      list.appendChild(row);
+    });
+  }
+
+  // ── "Сожжено жира" — реальная оценка по формуле Миффлина-Сан Жеора (BMR) плюс
+  // расход калорий на активность (шаги/HC-калории + тренировки), в граммах жира
+  // (≈7700 ккал на кг). НЕ путать с игровым показателем "Жир" (pet.fat, 0-100%,
+  // косметическая механика ухода за питомцем) — это разные вещи с разным смыслом
+  // и разным хранилищем, поэтому у показателя намеренно другое название в UI. ───
+  function getBMR(){
+    var w = lsNum('weightKg', 0);
+    var h = lsNum('heightCm', 0);
+    var a = lsNum('ageYears', 0);
+    var g = lsGet('gender', '');
+    if (!(w > 0 && h > 0 && a > 0 && (g === 'm' || g === 'f'))) return null;
+    return 10 * w + 6.25 * h - 5 * a + (g === 'm' ? 5 : -161);
+  }
+  // Активные калории за сегодня: реальные из Health Connect (уже включают
+  // тренировки, см. refreshHealthConnectMetrics), иначе оценка по шагам × весу
+  // для веб-версии/устройств без Health Connect.
+  function getTodayActivityKcalEstimate(){
+    var hc = getHealthMetrics();
+    if (hc && typeof hc.activeCaloriesKcal === 'number') return hc.activeCaloriesKcal;
+    var weightKg = lsNum('weightKg', 0);
+    var steps = getStepsState().steps;
+    if (weightKg > 0 && steps > 0) return steps * weightKg * 0.0005;
+    return 0;
+  }
+  function renderBurnedFat(){
+    var card = document.getElementById('burnedfat-card');
+    var bmr = getBMR();
+    if (bmr === null){ card.classList.add('hidden'); return; }
+    card.classList.remove('hidden');
+    var startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    var hoursElapsed = Math.max(0, Math.min(24, (Date.now() - startOfDay.getTime()) / 3600000));
+    var bmrSoFar = bmr / 24 * hoursElapsed;
+    var totalKcal = bmrSoFar + getTodayActivityKcalEstimate();
+    var grams = totalKcal / 7.7;
+    document.getElementById('text-burnedfat').textContent = Math.round(grams) + ' г';
   }
   // Зеркалит вес в SharedPreferences нативного приложения, чтобы им мог пользоваться
   // виджет питомца (PetWidgetProvider) — у него нет доступа к localStorage WebView,
@@ -2371,6 +2507,11 @@
       renderStatus();
       document.getElementById('input-bio').value = lsGet('bio', '');
       document.getElementById('input-weight').value = lsGet('weightKg', '');
+      document.getElementById('input-height').value = lsGet('heightCm', '');
+      document.getElementById('input-age').value = lsGet('ageYears', '');
+      document.getElementById('input-gender').value = lsGet('gender', '');
+      renderWorkoutsList(getCachedWorkouts());
+      renderBurnedFat();
       if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } catch (e) {} }
       else if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
@@ -2407,6 +2548,24 @@
       lsSet('weightKg', (v > 0) ? v : '');
       syncBodyWeightToNative(v > 0 ? v : 0);
       if (isNative) refreshHealthConnectMetrics();
+      renderBurnedFat();
+    });
+
+    document.getElementById('input-height').addEventListener('input', function(){
+      var v = parseFloat(this.value);
+      lsSet('heightCm', (v > 0) ? v : '');
+      renderBurnedFat();
+    });
+
+    document.getElementById('input-age').addEventListener('input', function(){
+      var v = parseFloat(this.value);
+      lsSet('ageYears', (v > 0) ? v : '');
+      renderBurnedFat();
+    });
+
+    document.getElementById('input-gender').addEventListener('change', function(){
+      lsSet('gender', this.value);
+      renderBurnedFat();
     });
 
     document.getElementById('btn-bio-toggle').addEventListener('click', function(){
@@ -2612,12 +2771,18 @@
       resetAll();
       stopSensor();
       document.getElementById('input-bio').value = '';
+      document.getElementById('input-weight').value = '';
+      document.getElementById('input-height').value = '';
+      document.getElementById('input-age').value = '';
+      document.getElementById('input-gender').value = '';
       document.getElementById('bio-card').classList.add('hidden');
+      document.getElementById('burnedfat-card').classList.add('hidden');
+      document.getElementById('workouts-card').classList.add('hidden');
       showScreen('create');
     });
 
     updateSensorStatusUI();
-    setInterval(function(){ renderStatus(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } }, 30000); // досчитывать голод/жир, и (в нативном приложении) шаги+метрики из Health Connect
+    setInterval(function(){ renderStatus(); renderBurnedFat(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } }, 30000); // досчитывать голод/жир/сожжённый жир, и (в нативном приложении) шаги+метрики из Health Connect
     document.addEventListener('visibilitychange', function(){
       if (document.hidden) return;
       renderStatus();
