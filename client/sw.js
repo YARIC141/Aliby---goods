@@ -48,7 +48,14 @@ self.addEventListener('activate', e => {
         );
         await self.clients.claim();
         if (isUpdate) {
-          const clients = await self.clients.matchAll({ includeUncontrolled: true });
+          // includeUncontrolled:false on purpose — an *uncontrolled* client here is
+          // (almost always) a page that just started navigating under this very SW
+          // version, i.e. it's already getting the fresh HTML from the network and
+          // doesn't need the banner. Without this guard, reloading from the banner's
+          // "Обновить" races this same activate() (still finishing its cache cleanup),
+          // the reloading page gets swept into the broadcast as "uncontrolled", and it
+          // shows the exact same "new version" banner again right after the reload.
+          const clients = await self.clients.matchAll();
           clients.forEach(c => c.postMessage({ type: 'APP_UPDATED' }));
         }
       })
