@@ -867,10 +867,15 @@
     var hours = Math.max(0, (now - pet.lastUpdatedAt) / 3600000);
     if (hours <= 0) return pet;
     pet.satiety = clamp(pet.satiety - SATIETY_DECAY_PER_HOUR * hours);
-    var fatActivity = getFatActivityLevel(hc);
-    if (fatActivity === null) fatActivity = activityLevel;
-    var imbalance = (pet.satiety/100) - (fatActivity/100);
-    pet.fat = clamp(pet.fat + FAT_RATE_PER_HOUR * hours * imbalance);
+    var realFat = getRealBodyFatPercent();
+    if (realFat !== null) {
+      pet.fat = realFat;
+    } else {
+      var fatActivity = getFatActivityLevel(hc);
+      if (fatActivity === null) fatActivity = activityLevel;
+      var imbalance = (pet.satiety/100) - (fatActivity/100);
+      pet.fat = clamp(pet.fat + FAT_RATE_PER_HOUR * hours * imbalance);
+    }
     var sleepEnergy = getSleepEnergyLevel(hc);
     if (sleepEnergy !== null) {
       pet.energy = sleepEnergy;
@@ -891,7 +896,7 @@
   // но больше не двигает сам стат напрямую — см. project_tamagotchi_health_connect.
   function walk(pet, now, hc){
     if (now - pet.lastWalkAt < WALK_COOLDOWN_MS) return false;
-    if (getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - WALK_FAT_DROP);
+    if (getRealBodyFatPercent() === null && getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - WALK_FAT_DROP);
     pet.satiety = clamp(pet.satiety - WALK_SATIETY_COST);
     if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - WALK_ENERGY_COST);
     pet.fun = clamp(pet.fun + WALK_FUN_GAIN);
@@ -900,7 +905,7 @@
   }
   function exercise(pet, now, hc){
     if (now - pet.lastExerciseAt < EXERCISE_COOLDOWN_MS) return false;
-    if (getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - EXERCISE_FAT_DROP);
+    if (getRealBodyFatPercent() === null && getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - EXERCISE_FAT_DROP);
     pet.satiety = clamp(pet.satiety - EXERCISE_SATIETY_COST);
     if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - EXERCISE_ENERGY_COST);
     pet.lastExerciseAt = now;
@@ -1093,6 +1098,14 @@
   function getSleepEnergyLevel(hc){
     if (!hc || typeof hc.sleepMinutes !== 'number') return null;
     return clamp(100 * hc.sleepMinutes / DAILY_SLEEP_GOAL_MIN);
+  }
+  // Реальный % жира тела (умные весы через Health Connect) → Жир питомца
+  // напрямую (без баланса сытость/активность и без кнопок), пока метрика
+  // доступна — по просьбе пользователя показатель питомца должен буквально
+  // равняться его собственному проценту жира, а не имитировать его.
+  function getRealBodyFatPercent(){
+    var bf = lsNum('bodyFatPercent', 0);
+    return bf > 0 ? clamp(bf) : null;
   }
   function refreshHealthConnectMetrics(){
     if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return;
@@ -2578,14 +2591,15 @@
 
     var activity = getActivityLevel();
     var s = getStepsState();
-    var fatFromHC = getFatActivityLevel(hc) !== null;
+    var fatFromRealBody = getRealBodyFatPercent() !== null;
+    var fatFromHC = !fatFromRealBody && getFatActivityLevel(hc) !== null;
     var energyFromHC = getSleepEnergyLevel(hc) !== null;
 
     applySprite(pet);
     document.getElementById('text-name').textContent = pet.name;
     document.getElementById('text-mood').textContent = moodLabel(pet.satiety, pet.fat, pet.energy, pet.fun, activity);
     document.getElementById('text-satiety').textContent = Math.round(pet.satiety) + '%';
-    document.getElementById('text-fat').textContent = Math.round(pet.fat) + '%' + (fatFromHC ? ' 🔗' : '');
+    document.getElementById('text-fat').textContent = Math.round(pet.fat) + '%' + ((fatFromHC || fatFromRealBody) ? ' 🔗' : '');
     document.getElementById('text-energy').textContent = Math.round(pet.energy) + '%' + (energyFromHC ? ' 🔗' : '');
     document.getElementById('text-fun').textContent = Math.round(pet.fun) + '%';
     document.getElementById('text-steps').textContent = String(s.steps + s.bonus);
@@ -2599,7 +2613,8 @@
     renderHealthMetrics();
     var hcHint = [];
     if (energyFromHC) hcHint.push('Энергия считается по сну из Health Connect и не меняется кнопками.');
-    if (fatFromHC) hcHint.push('Жир считается по калориям/тренировкам из Health Connect и не меняется кнопками напрямую.');
+    if (fatFromRealBody) hcHint.push('Жир питомца равен вашему % жира тела из Health Connect и не меняется кнопками.');
+    else if (fatFromHC) hcHint.push('Жир считается по калориям/тренировкам из Health Connect и не меняется кнопками напрямую.');
     document.getElementById('text-hint').textContent =
       'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
       ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) + ' мин. ' +
