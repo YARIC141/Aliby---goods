@@ -905,6 +905,12 @@ html[data-theme="light"] .icon-moon{display:flex}
 .legend{position:relative;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px}
 .legend-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:var(--r-pill);background:var(--bg-2);border:1px solid var(--line);font:700 13px/1 var(--font-sans);color:var(--fg-2)}
 .legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.feat-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:26px}
+.feat-tile{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:var(--r-3);background:var(--bg-2);border:1px solid var(--line)}
+.feat-tile-icon{width:42px;height:42px;border-radius:var(--r-2);display:flex;align-items:center;justify-content:center;background:rgba(var(--accent-rgb),.14);color:var(--accent);flex-shrink:0}
+.feat-tile span{font:700 16.5px/1.25 var(--font-sans);color:var(--fg)}
+@media(max-width:960px){.feat-tiles{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.feat-tiles{grid-template-columns:1fr}.feat-tile{padding:14px 16px}.feat-tile span{font-size:15px}}
 .dir-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:48px}
 @media(max-width:960px){.dir-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:720px){.dir-grid{grid-template-columns:1fr}}
@@ -1117,17 +1123,17 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
           Посмотреть ролик — как это работает для клиентов
         </button>
       </div>
-      <div class="legend">
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Заказ с постоплатой</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Бронь</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Аренда</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Запись на тренировку</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Поиск партнёра для персональной тренировки</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Без комиссии</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Виджет со всеми записями</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Уведомления</span>
+      <div class="feat-tiles">
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v20l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5V2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg></div><span>Заказ с постоплатой</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 15l2 2 4-4"/></svg></div><span>Бронь</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9"/><path d="M17 6l3 3"/><path d="M14 9l2 2"/></svg></div><span>Аренда</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="9" width="4" height="6" rx="1"/><rect x="18" y="9" width="4" height="6" rx="1"/><rect x="6" y="10.5" width="3" height="3" rx="0.5"/><rect x="15" y="10.5" width="3" height="3" rx="0.5"/><line x1="9" y1="12" x2="15" y2="12"/></svg></div><span>Запись на тренировку</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div><span>Поиск партнёра для персональной тренировки</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg></div><span>Без комиссии</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg></div><span>Виджет со всеми записями</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><span>Уведомления</span></div>
       </div>
-      <div class="legend" style="margin-top:10px">
+      <div class="legend" style="margin-top:22px">
         <span class="legend-pill"><span class="legend-dot" style="background:var(--brand)"></span>Еда</span>
         <span class="legend-pill"><span class="legend-dot" style="background:var(--green)"></span>Товары</span>
         <span class="legend-pill"><span class="legend-dot" style="background:var(--blue)"></span>Услуги</span>
@@ -1245,15 +1251,15 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
           Посмотреть ролик — как это работает для бизнеса
         </button>
       </div>
-      <div class="legend">
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Приём заказов с постоплатой</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Управление бронированиями</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Сдача в аренду</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Расписание тренировок и мастер-классов</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Донабор группы на тренировку</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Без комиссии — фиксированная подписка</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Виджет с расписанием на сегодня</span>
-        <span class="legend-pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Push-уведомления клиентам и сотрудникам</span>
+      <div class="feat-tiles">
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v20l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5-2 1.5V2z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg></div><span>Приём заказов с постоплатой</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 15l2 2 4-4"/></svg></div><span>Управление бронированиями</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9"/><path d="M17 6l3 3"/><path d="M14 9l2 2"/></svg></div><span>Сдача в аренду</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><span>Расписание тренировок и мастер-классов</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></div><span>Донабор группы на тренировку</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg></div><span>Без комиссии — фиксированная подписка</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg></div><span>Виджет с расписанием на сегодня</span></div>
+        <div class="feat-tile"><div class="feat-tile-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><span>Push-уведомления клиентам и сотрудникам</span></div>
       </div>
     </div>
 
