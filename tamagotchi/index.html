@@ -61,6 +61,15 @@
     padding:9px 11px;background:var(--card);border-radius:9px;margin-bottom:6px}
   .workout-row .workout-type{font-weight:600}
   .workout-row .workout-meta{color:var(--text2);text-align:right}
+  .bodycomp-card{margin:0 0 16px;padding:14px 16px;border-radius:12px;background:var(--card)}
+  .bodycomp-title{font-size:13px;color:var(--text2);margin-bottom:2px}
+  .bodycomp-norm{font-size:11px;color:var(--text2);margin-bottom:10px}
+  .bodycomp-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--text);
+    padding:6px 0;border-bottom:1px solid #232b33}
+  .bodycomp-row:last-of-type{border-bottom:none;padding-bottom:0}
+  .bodycomp-row span:first-child{color:var(--text2)}
+  .bodycomp-row span:last-child{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bodycomp-hint{font-size:11px;color:var(--text2);line-height:1.4;margin-top:10px}
   textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #2a323b;background:#151a1f;
     color:var(--text);font-size:14px;font-family:inherit;line-height:1.4;resize:vertical}
   textarea::placeholder{color:var(--text2)}
@@ -352,10 +361,18 @@
       </div>
     </div>
 
-    <div class="stat-card hidden" id="burnedfat-card">
-      <div class="stat-card-label">🔥 Сожжено сегодня (оценка)</div>
-      <div class="stat-card-value" id="text-burnedfat">0 г</div>
-      <div class="stat-card-hint">Обмен веществ (BMR) + активность за день. Приблизительно, не заменяет медицинские измерения.</div>
+    <div class="bodycomp-card hidden" id="bodycomp-card">
+      <div class="bodycomp-title">⚖️ Баланс калорий и состав тела (оценка)</div>
+      <div class="bodycomp-norm" id="bc-norm-line"></div>
+      <div class="bodycomp-row"><span>Баланс калорий за день</span><span id="bc-balance"></span></div>
+      <div class="bodycomp-row"><span>Изменение массы — жиры</span><span id="bc-fat"></span></div>
+      <div class="bodycomp-row"><span>Изменение массы — белки</span><span id="bc-protein"></span></div>
+      <div class="bodycomp-row"><span>Изменение массы — углеводы</span><span id="bc-carb"></span></div>
+      <div class="bodycomp-row"><span>Мышечная масса</span><span id="bc-muscle"></span></div>
+      <div class="bodycomp-row"><span>Жировая масса</span><span id="bc-fatmass"></span></div>
+      <div class="bodycomp-row"><span>Мышц — благодаря тренировкам</span><span id="bc-muscle-workout"></span></div>
+      <div class="bodycomp-row"><span>Жира сожжено — благодаря тренировкам</span><span id="bc-fatburn-workout"></span></div>
+      <div class="bodycomp-hint">Считаем, что вы съедаете свою расчётную норму калорий и БЖУ. Грубая оценка на основе базового обмена, активности и стандартных коэффициентов — не заменяет реальные измерения состава тела.</div>
     </div>
 
     <div class="workouts-card hidden" id="workouts-card">
@@ -1090,7 +1107,7 @@
           }
           lsSet('hcMetrics', JSON.stringify(res));
           renderHealthMetrics();
-          renderBurnedFat();
+          renderBodyComposition();
         });
       }).catch(function(){});
     } catch (e) {}
@@ -1143,11 +1160,10 @@
     });
   }
 
-  // ── "Сожжено жира" — реальная оценка по формуле Миффлина-Сан Жеора (BMR) плюс
-  // расход калорий на активность (шаги/HC-калории + тренировки), в граммах жира
-  // (≈7700 ккал на кг). НЕ путать с игровым показателем "Жир" (pet.fat, 0-100%,
-  // косметическая механика ухода за питомцем) — это разные вещи с разным смыслом
-  // и разным хранилищем, поэтому у показателя намеренно другое название в UI. ───
+  // ── Баланс калорий и состав тела — НЕ путать с игровым показателем "Жир"
+  // (pet.fat, 0-100%, косметическая механика ухода за питомцем) — это разные
+  // вещи с разным смыслом и разным хранилищем, поэтому у всех показателей ниже
+  // намеренно другие названия в UI ("масса", а не "жир питомца"). ───────────
   function getBMR(){
     var w = lsNum('weightKg', 0);
     var h = lsNum('heightCm', 0);
@@ -1167,18 +1183,102 @@
     if (weightKg > 0 && steps > 0) return steps * weightKg * 0.0005;
     return 0;
   }
-  function renderBurnedFat(){
-    var card = document.getElementById('burnedfat-card');
+
+  // Коэффициенты приблизительной модели (все — грубые оценки, не медицинские):
+  var FAT_KCAL_PER_G = 7.7;      // ≈7700 ккал на кг жировой ткани
+  var MUSCLE_KCAL_PER_G = 2.5;   // мышечная ткань в основном вода+белок, "дешевле" жировой
+  var SEDENTARY_FACTOR = 1.2;    // норма калорий = BMR × коэффициент малой активности
+  var PROTEIN_G_PER_KG = 1.6;    // норма белка, г/кг веса
+  var FAT_G_PER_KG = 1.0;        // норма жиров, г/кг веса (остальное — углеводы)
+  var MUSCLE_SURPLUS_SHARE = 0.15; // доля профицита калорий, которая может пойти на мышцы (только при тренировках)
+  var MUSCLE_DEFICIT_RISK_SHARE = 0.10; // доля дефицита, которая может "съедать" мышцы (только без тренировок)
+
+  // Считаем, что человек потребляет свою расчётную норму калорий и БЖУ (допущение,
+  // т.к. реального учёта питания в приложении нет) — норма = BMR × коэффициент
+  // малой активности, БЖУ — по стандартным граммам на кг веса, углеводы — остаток.
+  function getDailyNorm(){
     var bmr = getBMR();
-    if (bmr === null){ card.classList.add('hidden'); return; }
+    if (bmr === null) return null;
+    var weightKg = lsNum('weightKg', 0);
+    var calories = bmr * SEDENTARY_FACTOR;
+    var proteinG = PROTEIN_G_PER_KG * weightKg;
+    var fatG = FAT_G_PER_KG * weightKg;
+    var carbG = Math.max(0, (calories - proteinG * 4 - fatG * 9) / 4);
+    return { calories: calories, proteinG: proteinG, fatG: fatG, carbG: carbG };
+  }
+  function fmtSignedMassG(g){
+    return (g >= 0 ? '+' : '−') + Math.round(Math.abs(g)) + ' г';
+  }
+  function fmtSignedKcal(k){
+    return (k >= 0 ? '+' : '−') + Math.round(Math.abs(k)) + ' ккал';
+  }
+  function renderBodyComposition(){
+    var card = document.getElementById('bodycomp-card');
+    var norm = getDailyNorm();
+    if (norm === null){ card.classList.add('hidden'); return; }
     card.classList.remove('hidden');
+
     var startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    var hoursElapsed = Math.max(0, Math.min(24, (Date.now() - startOfDay.getTime()) / 3600000));
-    var bmrSoFar = bmr / 24 * hoursElapsed;
-    var totalKcal = bmrSoFar + getTodayActivityKcalEstimate();
-    var grams = totalKcal / 7.7;
-    document.getElementById('text-burnedfat').textContent = Math.round(grams) + ' г';
+    var dayFraction = Math.max(0, Math.min(1, (Date.now() - startOfDay.getTime()) / 86400000));
+
+    // Приход (норма, усвоенная пропорционально прошедшей части дня) и расход
+    // (базовый обмен за прошедшую часть дня + реальная активность/тренировки).
+    var intakeKcal = norm.calories * dayFraction;
+    var proteinKcalSoFar = norm.proteinG * dayFraction * 4;
+    var fatKcalSoFar = norm.fatG * dayFraction * 9;
+    var carbKcalSoFar = norm.carbG * dayFraction * 4;
+
+    var bmrSoFar = getBMR() * dayFraction;
+    var expenditureKcal = bmrSoFar + getTodayActivityKcalEstimate();
+    var netKcal = intakeKcal - expenditureKcal;
+
+    // Разбивка прироста/убыли массы по источнику (Б/Ж/У) — доля каждого макро-
+    // нутриента в усвоенных калориях, применённая к балансу дня и переведённая
+    // в граммы через собственную калорийность этого макронутриента.
+    var proteinShare = intakeKcal > 0 ? proteinKcalSoFar / intakeKcal : 0;
+    var fatShare = intakeKcal > 0 ? fatKcalSoFar / intakeKcal : 0;
+    var carbShare = intakeKcal > 0 ? carbKcalSoFar / intakeKcal : 0;
+    var massFromProteinG = (netKcal * proteinShare) / 4;
+    var massFromFatG = (netKcal * fatShare) / 9;
+    var massFromCarbG = (netKcal * carbShare) / 4;
+
+    // Разбивка того же баланса по типу ткани (мышцы/жир) — в профиците доля
+    // идёт на мышцы только при наличии тренировки сегодня, в дефиците мышцы
+    // "защищены" тренировкой, иначе часть дефицита условно берётся из мышц.
+    var workouts = getCachedWorkouts();
+    var hasWorkout = workouts.length > 0;
+    var workoutsKcalToday = sumWorkoutsKcal(workouts);
+    var muscleMassG, fatMassG;
+    if (netKcal >= 0){
+      var muscleShare = hasWorkout ? MUSCLE_SURPLUS_SHARE : 0;
+      muscleMassG = (netKcal * muscleShare) / MUSCLE_KCAL_PER_G;
+      fatMassG = (netKcal * (1 - muscleShare)) / FAT_KCAL_PER_G;
+    } else {
+      var deficit = -netKcal;
+      var muscleRiskShare = hasWorkout ? 0 : MUSCLE_DEFICIT_RISK_SHARE;
+      muscleMassG = -(deficit * muscleRiskShare) / MUSCLE_KCAL_PER_G;
+      fatMassG = -(deficit * (1 - muscleRiskShare)) / FAT_KCAL_PER_G;
+    }
+
+    // Вклад именно тренировок (изолированно от общего баланса дня): калории
+    // тренировок сами по себе, переведённые в потенциальные граммы жира/мышц.
+    var workoutFatBurnG = workoutsKcalToday / FAT_KCAL_PER_G;
+    var workoutMuscleG = (hasWorkout && netKcal >= 0)
+      ? (workoutsKcalToday * MUSCLE_SURPLUS_SHARE) / MUSCLE_KCAL_PER_G
+      : 0;
+
+    document.getElementById('bc-norm-line').textContent =
+      'Норма: ≈' + Math.round(norm.calories) + ' ккал (Б ' + Math.round(norm.proteinG) +
+      ' / Ж ' + Math.round(norm.fatG) + ' / У ' + Math.round(norm.carbG) + ' г)';
+    document.getElementById('bc-balance').textContent = fmtSignedKcal(netKcal);
+    document.getElementById('bc-fat').textContent = fmtSignedMassG(massFromFatG);
+    document.getElementById('bc-protein').textContent = fmtSignedMassG(massFromProteinG);
+    document.getElementById('bc-carb').textContent = fmtSignedMassG(massFromCarbG);
+    document.getElementById('bc-muscle').textContent = fmtSignedMassG(muscleMassG);
+    document.getElementById('bc-fatmass').textContent = fmtSignedMassG(fatMassG);
+    document.getElementById('bc-muscle-workout').textContent = Math.round(workoutMuscleG) + ' г';
+    document.getElementById('bc-fatburn-workout').textContent = Math.round(workoutFatBurnG) + ' г';
   }
   // Зеркалит вес в SharedPreferences нативного приложения, чтобы им мог пользоваться
   // виджет питомца (PetWidgetProvider) — у него нет доступа к localStorage WebView,
@@ -2511,7 +2611,7 @@
       document.getElementById('input-age').value = lsGet('ageYears', '');
       document.getElementById('input-gender').value = lsGet('gender', '');
       renderWorkoutsList(getCachedWorkouts());
-      renderBurnedFat();
+      renderBodyComposition();
       if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } catch (e) {} }
       else if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
@@ -2548,24 +2648,24 @@
       lsSet('weightKg', (v > 0) ? v : '');
       syncBodyWeightToNative(v > 0 ? v : 0);
       if (isNative) refreshHealthConnectMetrics();
-      renderBurnedFat();
+      renderBodyComposition();
     });
 
     document.getElementById('input-height').addEventListener('input', function(){
       var v = parseFloat(this.value);
       lsSet('heightCm', (v > 0) ? v : '');
-      renderBurnedFat();
+      renderBodyComposition();
     });
 
     document.getElementById('input-age').addEventListener('input', function(){
       var v = parseFloat(this.value);
       lsSet('ageYears', (v > 0) ? v : '');
-      renderBurnedFat();
+      renderBodyComposition();
     });
 
     document.getElementById('input-gender').addEventListener('change', function(){
       lsSet('gender', this.value);
-      renderBurnedFat();
+      renderBodyComposition();
     });
 
     document.getElementById('btn-bio-toggle').addEventListener('click', function(){
@@ -2776,13 +2876,13 @@
       document.getElementById('input-age').value = '';
       document.getElementById('input-gender').value = '';
       document.getElementById('bio-card').classList.add('hidden');
-      document.getElementById('burnedfat-card').classList.add('hidden');
+      document.getElementById('bodycomp-card').classList.add('hidden');
       document.getElementById('workouts-card').classList.add('hidden');
       showScreen('create');
     });
 
     updateSensorStatusUI();
-    setInterval(function(){ renderStatus(); renderBurnedFat(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } }, 30000); // досчитывать голод/жир/сожжённый жир, и (в нативном приложении) шаги+метрики из Health Connect
+    setInterval(function(){ renderStatus(); renderBodyComposition(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } }, 30000); // досчитывать голод/жир/состав тела, и (в нативном приложении) шаги+метрики из Health Connect
     document.addEventListener('visibilitychange', function(){
       if (document.hidden) return;
       renderStatus();
