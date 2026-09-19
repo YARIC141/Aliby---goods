@@ -62,7 +62,11 @@
   .workout-row .workout-type{font-weight:600}
   .workout-row .workout-meta{color:var(--text2);text-align:right}
   .bodycomp-card{margin:0 0 16px;padding:14px 16px;border-radius:12px;background:var(--card)}
-  .bodycomp-title{font-size:13px;color:var(--text2);margin-bottom:2px}
+  .bodycomp-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+  .bodycomp-title{font-size:13px;color:var(--text2)}
+  .bc-info-btn{flex:0 0 auto;width:20px;height:20px;line-height:18px;padding:0;border-radius:50%;
+    border:1px solid var(--text2);background:transparent;color:var(--text2);font-size:12px;
+    text-align:center;cursor:pointer}
   .bodycomp-norm{font-size:11px;color:var(--text2);margin-bottom:10px}
   .bodycomp-row{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--text);
     padding:6px 0;border-bottom:1px solid #232b33}
@@ -362,7 +366,10 @@
     </div>
 
     <div class="bodycomp-card hidden" id="bodycomp-card">
-      <div class="bodycomp-title">⚖️ Баланс калорий и состав тела (оценка)</div>
+      <div class="bodycomp-title-row">
+        <div class="bodycomp-title">⚖️ Баланс калорий и состав тела (оценка)</div>
+        <button type="button" id="btn-bodycomp-info" class="bc-info-btn" title="Как это считается">?</button>
+      </div>
       <div class="bodycomp-norm" id="bc-norm-line"></div>
       <div class="bodycomp-row"><span>Баланс калорий за день</span><span id="bc-balance"></span></div>
       <div class="bodycomp-row"><span>Изменение массы — жиры</span><span id="bc-fat"></span></div>
@@ -562,6 +569,21 @@
       </ul>
       <p>Золото от Health Connect не зависит: оно начисляется за уход (каждые 5 нажатий кнопок ухода) и за победы в играх.</p>
       <button id="btn-hc-info-close">Понятно</button>
+    </div>
+  </div>
+
+  <div id="bodycomp-info-overlay" class="rules-overlay hidden">
+    <div class="rules-sheet">
+      <h2>Как считается баланс калорий и состав тела</h2>
+      <p>Мы предполагаем, что за день вы съедаете свою расчётную норму калорий и БЖУ (белков, жиров, углеводов) — норма считается по формуле базового обмена (BMR) с учётом сидячей активности. Если в Health Connect есть данные умных весов (вес и % жира тела), используется более точная формула Кэтча-МакАрдла — она опирается на реальную безжировую массу, а не на возраст и пол как приближение к ней. Иначе используется формула Миффлина-Сан Жеора по вручную введённым весу, росту, возрасту и полу.</p>
+      <ul>
+        <li><b>Баланс калорий за день</b> — разница между съеденной нормой и потраченными калориями (базовый обмен + активность/тренировки) на текущий момент дня.</li>
+        <li><b>Изменение массы — жиры/белки/углеводы</b> — на сколько грамм изменилась бы масса тела за счёт каждого макронутриента отдельно, если бы весь дневной баланс калорий пришёлся именно на него (жир даёт ≈7.7 ккал/г, белки и углеводы — ≈4 ккал/г).</li>
+        <li><b>Мышечная масса</b> и <b>жировая масса</b> — тот же общий баланс калорий, но разделённый на мышечную и жировую ткань: при профиците и наличии тренировок часть массы условно идёт в мышцы, при дефиците без тренировок часть возможных потерь условно идёт в мышцы (риск катаболизма).</li>
+        <li><b>Мышц / жира сожжено — благодаря тренировкам</b> — вклад именно сегодняшних тренировок: сожжённые тренировкой калории пересчитаны в граммы жира, а часть калорий (если есть профицит) — в граммы потенциального мышечного роста.</li>
+      </ul>
+      <p>Это грубая оценка на стандартных коэффициентах, а не измерение — она не заменяет реальные весы или анализ состава тела.</p>
+      <button id="btn-bodycomp-info-close">Понятно</button>
     </div>
   </div>
 
@@ -1029,6 +1051,7 @@
           lsSet('healthConnectEnabled', '1');
           refreshHealthConnectSteps();
           refreshHealthConnectMetrics();
+          refreshHealthConnectBodyMetrics();
           showToast('Готово, шаги из Health Connect будут учитываться');
         } else {
           showToast('Разрешение не выдано');
@@ -1160,16 +1183,48 @@
     });
   }
 
+  // ── Вес и % жира тела из Health Connect (напр. умные весы, синхронизированные
+  // сторонним приложением) — это НЕ "за сегодня", а последнее известное измерение
+  // за последние 90 дней, т.к. взвешиваются не каждый день. Если данные есть,
+  // подставляем их вместо ручного ввода веса и используем более точную формулу
+  // обмена веществ (Кэтча-МакАрдла) вместо Миффлина-Сан Жеора. ─────────────────
+  function refreshHealthConnectBodyMetrics(){
+    if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return;
+    var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
+    if (!plugin || typeof plugin.getBodyMetrics !== 'function') return;
+    try {
+      plugin.getBodyMetrics().then(function(res){
+        res = res || {};
+        if (typeof res.weightKg === 'number' && res.weightKg > 0){
+          lsSet('weightKg', res.weightKg);
+          document.getElementById('input-weight').value = res.weightKg;
+          syncBodyWeightToNative(res.weightKg);
+        }
+        lsSet('bodyFatPercent', (typeof res.bodyFatPercent === 'number' && res.bodyFatPercent > 0) ? res.bodyFatPercent : '');
+        renderBodyComposition();
+      }).catch(function(){});
+    } catch (e) {}
+  }
+
   // ── Баланс калорий и состав тела — НЕ путать с игровым показателем "Жир"
   // (pet.fat, 0-100%, косметическая механика ухода за питомцем) — это разные
   // вещи с разным смыслом и разным хранилищем, поэтому у всех показателей ниже
   // намеренно другие названия в UI ("масса", а не "жир питомца"). ───────────
   function getBMR(){
     var w = lsNum('weightKg', 0);
+    if (!(w > 0)) return null;
+    // Если известен реальный % жира тела (весы, синхронизированные через Health
+    // Connect) — считаем по формуле Кэтча-МакАрдла: она точнее, т.к. опирается на
+    // фактическую безжировую массу, а не на возраст/пол как приближение к ней.
+    var bf = lsNum('bodyFatPercent', 0);
+    if (bf > 0 && bf < 100){
+      var leanMassKg = w * (1 - bf / 100);
+      return 370 + 21.6 * leanMassKg;
+    }
     var h = lsNum('heightCm', 0);
     var a = lsNum('ageYears', 0);
     var g = lsGet('gender', '');
-    if (!(w > 0 && h > 0 && a > 0 && (g === 'm' || g === 'f'))) return null;
+    if (!(h > 0 && a > 0 && (g === 'm' || g === 'f'))) return null;
     return 10 * w + 6.25 * h - 5 * a + (g === 'm' ? 5 : -161);
   }
   // Активные калории за сегодня: реальные из Health Connect (уже включают
@@ -1268,9 +1323,11 @@
       ? (workoutsKcalToday * MUSCLE_SURPLUS_SHARE) / MUSCLE_KCAL_PER_G
       : 0;
 
-    document.getElementById('bc-norm-line').textContent =
-      'Норма: ≈' + Math.round(norm.calories) + ' ккал (Б ' + Math.round(norm.proteinG) +
+    var bfPercent = lsNum('bodyFatPercent', 0);
+    var normLine = 'Норма: ≈' + Math.round(norm.calories) + ' ккал (Б ' + Math.round(norm.proteinG) +
       ' / Ж ' + Math.round(norm.fatG) + ' / У ' + Math.round(norm.carbG) + ' г)';
+    if (bfPercent > 0) normLine += ' · по Health Connect: жир тела ' + Math.round(bfPercent) + '%';
+    document.getElementById('bc-norm-line').textContent = normLine;
     document.getElementById('bc-balance').textContent = fmtSignedKcal(netKcal);
     document.getElementById('bc-fat').textContent = fmtSignedMassG(massFromFatG);
     document.getElementById('bc-protein').textContent = fmtSignedMassG(massFromProteinG);
@@ -2612,7 +2669,7 @@
       document.getElementById('input-gender').value = lsGet('gender', '');
       renderWorkoutsList(getCachedWorkouts());
       renderBodyComposition();
-      if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } catch (e) {} }
+      if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); } catch (e) {} }
       else if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
       showScreen('create');
@@ -2621,6 +2678,7 @@
     document.getElementById('btn-sync-steps').addEventListener('click', function(){
       refreshHealthConnectSteps(true);
       refreshHealthConnectMetrics();
+      refreshHealthConnectBodyMetrics();
     });
 
     document.getElementById('btn-assess').addEventListener('click', openAssess);
@@ -2637,6 +2695,16 @@
     });
     document.getElementById('hc-info-overlay').addEventListener('click', function(e){
       if (e.target.id === 'hc-info-overlay') document.getElementById('hc-info-overlay').classList.add('hidden');
+    });
+
+    document.getElementById('btn-bodycomp-info').addEventListener('click', function(){
+      document.getElementById('bodycomp-info-overlay').classList.remove('hidden');
+    });
+    document.getElementById('btn-bodycomp-info-close').addEventListener('click', function(){
+      document.getElementById('bodycomp-info-overlay').classList.add('hidden');
+    });
+    document.getElementById('bodycomp-info-overlay').addEventListener('click', function(e){
+      if (e.target.id === 'bodycomp-info-overlay') document.getElementById('bodycomp-info-overlay').classList.add('hidden');
     });
 
     document.getElementById('input-bio').addEventListener('input', function(){
@@ -2882,11 +2950,11 @@
     });
 
     updateSensorStatusUI();
-    setInterval(function(){ renderStatus(); renderBodyComposition(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); } }, 30000); // досчитывать голод/жир/состав тела, и (в нативном приложении) шаги+метрики из Health Connect
+    setInterval(function(){ renderStatus(); renderBodyComposition(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); } }, 30000); // досчитывать голод/жир/состав тела, и (в нативном приложении) шаги+метрики из Health Connect
     document.addEventListener('visibilitychange', function(){
       if (document.hidden) return;
       renderStatus();
-      if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); }
+      if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); }
     });
   }
 

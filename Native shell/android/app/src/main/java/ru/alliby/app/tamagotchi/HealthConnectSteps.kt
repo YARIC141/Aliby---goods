@@ -8,11 +8,13 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -42,6 +44,8 @@ object HealthConnectSteps {
     private val PERMISSION_SLEEP = HealthPermission.getReadPermission(SleepSessionRecord::class)
     private val PERMISSION_EXERCISE = HealthPermission.getReadPermission(ExerciseSessionRecord::class)
     private val PERMISSION_HEART_RATE = HealthPermission.getReadPermission(HeartRateRecord::class)
+    private val PERMISSION_WEIGHT = HealthPermission.getReadPermission(WeightRecord::class)
+    private val PERMISSION_BODY_FAT = HealthPermission.getReadPermission(BodyFatRecord::class)
 
     @JvmField
     val READ_STEPS_PERMISSIONS: Set<String> = setOf(PERMISSION_STEPS)
@@ -50,7 +54,8 @@ object HealthConnectSteps {
     @JvmField
     val READ_ALL_PERMISSIONS: Set<String> = setOf(
         PERMISSION_STEPS, PERMISSION_DISTANCE, PERMISSION_CALORIES,
-        PERMISSION_SLEEP, PERMISSION_EXERCISE, PERMISSION_HEART_RATE
+        PERMISSION_SLEEP, PERMISSION_EXERCISE, PERMISSION_HEART_RATE,
+        PERMISSION_WEIGHT, PERMISSION_BODY_FAT
     )
 
     fun interface Callback {
@@ -302,6 +307,63 @@ object HealthConnectSteps {
             } catch (e: Exception) {
                 callback.onResult(emptyList())
             }
+        }
+    }
+
+    /** Последнее известное измерение веса и % жира тела (не "за сегодня" — весы обычно
+     * взвешивают не каждый день, поэтому берём самую свежую запись за последние 90 дней). */
+    data class BodyMetrics(
+        val weightKg: Double?,
+        val bodyFatPercent: Double?
+    )
+
+    fun interface BodyMetricsCallback {
+        fun onResult(metrics: BodyMetrics)
+    }
+
+    @JvmStatic
+    fun fetchLatestBodyMetrics(context: Context, callback: BodyMetricsCallback) {
+        if (!isAvailable(context)) { callback.onResult(BodyMetrics(null, null)); return }
+        val client = HealthConnectClient.getOrCreate(context)
+        CoroutineScope(Dispatchers.IO).launch {
+            val granted = try {
+                client.permissionController.getGrantedPermissions()
+            } catch (e: Exception) {
+                emptySet()
+            }
+            val range = TimeRangeFilter.between(Instant.now().minus(Duration.ofDays(90)), Instant.now())
+
+            var weightKg: Double? = null
+            if (granted.contains(PERMISSION_WEIGHT)) {
+                try {
+                    val response = client.readRecords(
+                        ReadRecordsRequest(
+                            recordType = WeightRecord::class,
+                            timeRangeFilter = range,
+                            ascendingOrder = false,
+                            pageSize = 1
+                        )
+                    )
+                    weightKg = response.records.firstOrNull()?.weight?.inKilograms
+                } catch (e: Exception) {}
+            }
+
+            var bodyFatPercent: Double? = null
+            if (granted.contains(PERMISSION_BODY_FAT)) {
+                try {
+                    val response = client.readRecords(
+                        ReadRecordsRequest(
+                            recordType = BodyFatRecord::class,
+                            timeRangeFilter = range,
+                            ascendingOrder = false,
+                            pageSize = 1
+                        )
+                    )
+                    bodyFatPercent = response.records.firstOrNull()?.percentage?.value
+                } catch (e: Exception) {}
+            }
+
+            callback.onResult(BodyMetrics(weightKg, bodyFatPercent))
         }
     }
 }

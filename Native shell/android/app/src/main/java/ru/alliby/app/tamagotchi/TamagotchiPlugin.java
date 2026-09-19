@@ -134,4 +134,19 @@ public class TamagotchiPlugin extends Plugin {
             call.resolve(out);
         });
     }
+
+    /**
+     * Последнее известное измерение веса и % жира тела (напр. с умных весов,
+     * синхронизированных в Health Connect стороннм приложением) — не "за сегодня",
+     * т.к. взвешиваются не каждый день; берётся самая свежая запись за 90 дней.
+     */
+    @PluginMethod
+    public void getBodyMetrics(PluginCall call) {
+        HealthConnectSteps.fetchLatestBodyMetrics(getContext(), metrics -> {
+            JSObject out = new JSObject();
+            if (metrics.getWeightKg() != null) out.put("weightKg", metrics.getWeightKg());
+            if (metrics.getBodyFatPercent() != null) out.put("bodyFatPercent", metrics.getBodyFatPercent());
+            call.resolve(out);
+        });
+    }
 }
