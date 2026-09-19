@@ -2,7 +2,7 @@
 .hlp-lead{color:var(--fg-2);font-size:15px;line-height:1.75;margin-bottom:32px;max-width:640px}
 
 /* ── поиск ── */
-.hlp-search{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-1);padding:11px 18px;margin-bottom:20px;transition:border-color .15s}
+.hlp-search{position:sticky;top:60px;z-index:90;display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--bg-1);padding:11px 18px;margin-bottom:20px;box-shadow:0 10px 26px rgba(0,0,0,.16);transition:border-color .15s}
 .hlp-search:focus-within{border-color:var(--teal)}
 .hlp-search svg{flex-shrink:0;color:var(--fg-3)}
 .hlp-search input{flex:1;min-width:0;border:none;background:none;outline:none;font:400 14.5px/1.4 var(--font-sans);color:var(--fg)}
