@@ -15,6 +15,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.util.Set;
 
+import ru.alliby.app.PetWidgetProvider;
+
 /**
  * Мост JS -> Health Connect для тамагочи. UI и вся логика питомца остаются в
  * веб-версии (client/../tamagotchi/index.html) как были — плагин лишь отдаёт
@@ -69,6 +71,7 @@ public class TamagotchiPlugin extends Plugin {
                 out.put("steps", steps);
             }
             call.resolve(out);
+            PetWidgetProvider.refreshAll(getContext());
         });
     }
 
@@ -88,6 +91,7 @@ public class TamagotchiPlugin extends Plugin {
             if (metrics.getExerciseMinutes() != null) out.put("exerciseMinutes", metrics.getExerciseMinutes());
             if (metrics.getAvgHeartRateBpm() != null) out.put("avgHeartRateBpm", metrics.getAvgHeartRateBpm());
             call.resolve(out);
+            PetWidgetProvider.refreshAll(getContext());
         });
     }
 }

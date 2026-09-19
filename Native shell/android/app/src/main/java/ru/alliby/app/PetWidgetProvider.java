@@ -46,8 +46,11 @@ public class PetWidgetProvider extends AppWidgetProvider {
         }
     }
 
-    /** Перерисовывает все экземпляры этого виджета — вызывается после смены темы с другого виджета. */
-    static void refreshAll(Context context) {
+    /** Перерисовывает все экземпляры этого виджета — вызывается после смены темы с другого
+     * виджета, а также из TamagotchiPlugin сразу после каждого успешного запроса к Health
+     * Connect из веб-версии, чтобы виджет не ждал системного updatePeriodMillis (минимум
+     * 30 минут и может задерживаться Doze) и показывал те же цифры, что и открытое приложение. */
+    public static void refreshAll(Context context) {
         AppWidgetManager mgr = AppWidgetManager.getInstance(context);
         int[] ids = mgr.getAppWidgetIds(new ComponentName(context, PetWidgetProvider.class));
         for (int id : ids) {
