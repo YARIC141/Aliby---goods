@@ -61,13 +61,6 @@
   .sprite-card{position:relative;background:var(--card);border-radius:14px;overflow:hidden;margin-bottom:18px;
     aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
   .sprite-card img{width:100%;height:100%;object-fit:cover;display:block}
-  .sobo-controls{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:14px}
-  .sobo-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-  .sobo-row:last-child{margin-bottom:0}
-  .sobo-row label{flex:0 0 92px;font-size:13px;color:var(--text2)}
-  .sobo-row input[type=range]{flex:1;accent-color:var(--accent)}
-  .sobo-row .sobo-val{width:28px;text-align:right;font-size:12px;color:var(--text2);font-variant-numeric:tabular-nums}
-  #btn-sobo-trigger{margin:0;padding:11px 8px;font-size:14px}
   .sprite-placeholder{font-size:72px}
   .bio-toggle-btn{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;
     background:rgba(16,20,24,.55);backdrop-filter:blur(2px);border:none;display:flex;align-items:center;
@@ -360,8 +353,7 @@
       <button id="btn-hc-info" class="secondary">ℹ️ Информация о показателях</button>
       <button id="btn-games" class="secondary">Игры</button>
       <button id="btn-pdd" class="secondary">Билеты ПДД</button>
-      <button id="btn-dog" class="secondary">🐶 Собака</button>
-      <button id="btn-sobo" class="secondary">🧸 Sobo</button>
+      <button id="btn-sprout" class="secondary">🌱 Росток</button>
       <button id="btn-shop" class="secondary">🛍️ Магазин</button>
       <button id="btn-inventory" class="secondary">🎒 Инвентарь</button>
     </div>
@@ -401,45 +393,17 @@
     </div>
   </div>
 
-  <div id="screen-dog" class="hidden">
+  <div id="screen-sprout" class="hidden">
     <div class="game-header">
-      <button id="btn-dog-back">←</button>
-      <h1>Собака</h1>
+      <button id="btn-sprout-back">←</button>
+      <h1>Росток</h1>
     </div>
     <div class="sprite-card">
-      <canvas id="dog-canvas" width="600" height="600" style="width:100%;height:100%;display:block"></canvas>
+      <canvas id="sprout-canvas" width="600" height="600" style="width:100%;height:100%;display:block"></canvas>
     </div>
     <p class="footer-hint">
-      Ассет: «Interactive Dog Mascot for Mobile Apps» — автор PraneethKawyaThathsara,
-      <a href="https://rive.app/marketplace/27226-51415-interactive-dog-mascot-for-mobile-apps-rive-state-machine/" target="_blank" rel="noopener">Rive Marketplace</a>,
-      лицензия CC BY 4.0.
-    </p>
-  </div>
-
-  <div id="screen-sobo" class="hidden">
-    <div class="game-header">
-      <button id="btn-sobo-back">←</button>
-      <h1>Sobo</h1>
-    </div>
-    <div class="sprite-card">
-      <canvas id="sobo-canvas" width="600" height="600" style="width:100%;height:100%;display:block"></canvas>
-    </div>
-    <div class="sobo-controls">
-      <div class="sobo-row">
-        <label for="sobo-mouth">Рот</label>
-        <input type="range" id="sobo-mouth" min="0" max="100" step="1" value="0">
-        <span class="sobo-val" id="sobo-mouth-val">0</span>
-      </div>
-      <div class="sobo-row">
-        <label for="sobo-numstate">Состояние</label>
-        <input type="range" id="sobo-numstate" min="0" max="100" step="1" value="0">
-        <span class="sobo-val" id="sobo-numstate-val">0</span>
-      </div>
-      <button id="btn-sobo-trigger" class="secondary">✨ Триггер</button>
-    </div>
-    <p class="footer-hint">
-      Ассет: «Sobo» — автор Patgrivet,
-      <a href="https://rive.app/community/files/28761-54484-sobo/" target="_blank" rel="noopener">Rive Community</a>,
+      Ассет: «Interactive Sprout Mascot | Tamagotchi Mini-Game» — автор design-QYBVX,
+      <a href="https://www.rive.app/marketplace/28531-53934-interactive-sprout-mascot-or-tamagotchi-mini-game/" target="_blank" rel="noopener">Rive Marketplace</a>,
       лицензия CC BY.
     </p>
   </div>
@@ -1127,8 +1091,7 @@
     document.getElementById('screen-status').classList.toggle('hidden', id !== 'status');
     document.getElementById('screen-chat').classList.toggle('hidden', id !== 'chat');
     document.getElementById('screen-games').classList.toggle('hidden', id !== 'games');
-    document.getElementById('screen-dog').classList.toggle('hidden', id !== 'dog');
-    document.getElementById('screen-sobo').classList.toggle('hidden', id !== 'sobo');
+    document.getElementById('screen-sprout').classList.toggle('hidden', id !== 'sprout');
     document.getElementById('screen-shop').classList.toggle('hidden', id !== 'shop');
     document.getElementById('screen-inventory').classList.toggle('hidden', id !== 'inventory');
     document.getElementById('screen-game-setup').classList.toggle('hidden', id !== 'game-setup');
@@ -2337,88 +2300,30 @@
     document.getElementById('assess-overlay').classList.add('hidden');
   }
 
-  // ── Собака (Rive) — готовый бесплатный маскот с Rive Marketplace, показан
-  // как есть: своих управляемых входов у файла нет (ни State Machine Inputs,
-  // ни Data Binding), только собственные таймлайн-анимации моргания/дыхания.
+  // ── Росток (Rive) — готовый бесплатный маскот с Rive Marketplace, показан
+  // как есть: явных входов, подтверждённых для этого файла, нет — встроенные
+  // взаимодействия (перетаскивание, щекотка, день/ночь) реализованы через
+  // Rive Listeners внутри артборда и реагируют на события указателя сами.
   // Рантайм подгружается лениво при первом открытии экрана, по тому же
   // принципу, что и игровые библиотеки выше. ────────────────────────────────
-  var dogRiveInstance = null;
-  function openDogScreen(){
-    showScreen('dog');
-    if (dogRiveInstance) return;
+  var sproutRiveInstance = null;
+  function openSproutScreen(){
+    showScreen('sprout');
+    if (sproutRiveInstance) return;
     function start(){
-      var canvas = document.getElementById('dog-canvas');
-      dogRiveInstance = new rive.Rive({
-        src: './dog-mascot.riv',
+      var canvas = document.getElementById('sprout-canvas');
+      sproutRiveInstance = new rive.Rive({
+        src: './sprout-mascot.riv',
         canvas: canvas,
         autoplay: true,
         stateMachines: ['State Machine 1'],
         layout: new rive.Layout({ fit: rive.Fit.Contain, alignment: rive.Alignment.Center }),
         onLoad: function(){
-          dogRiveInstance.resizeDrawingSurfaceToCanvas();
+          sproutRiveInstance.resizeDrawingSurfaceToCanvas();
         }
       });
       window.addEventListener('resize', function(){
-        if (dogRiveInstance) dogRiveInstance.resizeDrawingSurfaceToCanvas();
-      });
-    }
-    if (window.rive){ start(); return; }
-    var s = document.createElement('script');
-    s.src = 'https://unpkg.com/@rive-app/canvas@latest';
-    s.onload = start;
-    document.head.appendChild(s);
-  }
-
-  // ── Sobo (Rive) — маскот с реальными управляемыми входами через Data
-  // Binding: mouthOpen/numState (число) и trigState (триггер анимации).
-  // Загружается без явного artboard/stateMachine — файл сам выбирает свой
-  // дефолтный артборд ("State Machine 1"), к которому и привязан ViewModel.
-  var soboRiveInstance = null;
-  function openSoboScreen(){
-    showScreen('sobo');
-    if (soboRiveInstance) return;
-    function start(){
-      var canvas = document.getElementById('sobo-canvas');
-      soboRiveInstance = new rive.Rive({
-        src: './sobo.riv',
-        canvas: canvas,
-        autoplay: true,
-        autoBind: true,
-        stateMachine: 'State Machine 1',
-        layout: new rive.Layout({ fit: rive.Fit.Contain, alignment: rive.Alignment.Center }),
-        onLoad: function(){
-          soboRiveInstance.resizeDrawingSurfaceToCanvas();
-          var vmi = soboRiveInstance.viewModelInstance;
-          if (!vmi) return;
-          var mouthProp = vmi.number('mouthOpen');
-          var numStateProp = vmi.number('numState');
-          var trigProp = vmi.trigger('trigState');
-
-          var mouthSlider = document.getElementById('sobo-mouth');
-          var mouthVal = document.getElementById('sobo-mouth-val');
-          mouthSlider.value = mouthProp.value;
-          mouthVal.textContent = mouthProp.value;
-          mouthSlider.addEventListener('input', function(){
-            mouthProp.value = Number(mouthSlider.value);
-            mouthVal.textContent = mouthSlider.value;
-          });
-
-          var numSlider = document.getElementById('sobo-numstate');
-          var numVal = document.getElementById('sobo-numstate-val');
-          numSlider.value = numStateProp.value;
-          numVal.textContent = numStateProp.value;
-          numSlider.addEventListener('input', function(){
-            numStateProp.value = Number(numSlider.value);
-            numVal.textContent = numSlider.value;
-          });
-
-          document.getElementById('btn-sobo-trigger').addEventListener('click', function(){
-            trigProp.trigger();
-          });
-        }
-      });
-      window.addEventListener('resize', function(){
-        if (soboRiveInstance) soboRiveInstance.resizeDrawingSurfaceToCanvas();
+        if (sproutRiveInstance) sproutRiveInstance.resizeDrawingSurfaceToCanvas();
       });
     }
     if (window.rive){ start(); return; }
@@ -2580,10 +2485,8 @@
       else { enableSensor(); updateSensorStatusUI(); }
     });
 
-    document.getElementById('btn-dog').addEventListener('click', openDogScreen);
-    document.getElementById('btn-dog-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
-    document.getElementById('btn-sobo').addEventListener('click', openSoboScreen);
-    document.getElementById('btn-sobo-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
+    document.getElementById('btn-sprout').addEventListener('click', openSproutScreen);
+    document.getElementById('btn-sprout-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
 
     document.getElementById('btn-shop').addEventListener('click', function(){ showScreen('shop'); renderShop(); });
     document.getElementById('btn-shop-back').addEventListener('click', function(){ showScreen('status'); renderStatus(); });
