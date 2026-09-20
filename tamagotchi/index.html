@@ -1401,6 +1401,7 @@
     document.getElementById('bc-fatmass').textContent = fmtSignedMassG(fatMassG);
     document.getElementById('bc-muscle-workout').textContent = Math.round(workoutMuscleG) + ' г';
     document.getElementById('bc-fatburn-workout').textContent = Math.round(workoutFatBurnG) + ' г';
+    syncBodyCompositionToNative(muscleMassG, fatMassG);
   }
 
   // ── Приёмы пищи — реальный дневной лог питания. Когда за сегодня есть хотя
@@ -1652,6 +1653,17 @@
     var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
     if (!plugin || typeof plugin.setBodyWeightKg !== 'function') return;
     try { plugin.setBodyWeightKg({ weightKg: weightKg }).catch(function(){}); } catch (e) {}
+  }
+  // Зеркалит дневной баланс мышечной/жировой массы (те же граммы, что и в карточке
+  // "Композиция тела") в SharedPreferences, чтобы виджет питомца на рабочем столе
+  // мог показать "приобретено/сожжено за сегодня" — без открытия приложения он не
+  // видит ни лог питания, ни расчёт из renderBodyComposition() (оба живут только в
+  // localStorage WebView).
+  function syncBodyCompositionToNative(muscleG, fatG){
+    if (!isNative) return;
+    var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
+    if (!plugin || typeof plugin.setBodyComposition !== 'function') return;
+    try { plugin.setBodyComposition({ muscleG: muscleG, fatG: fatG }).catch(function(){}); } catch (e) {}
   }
   function setHealthRing(key, present, pct, text){
     document.getElementById('ring-item-hc-' + key).classList.toggle('hidden', !present);
