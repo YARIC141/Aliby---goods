@@ -420,10 +420,6 @@
 
     <div class="actions">
       <button id="btn-feed">Покормить</button>
-      <button id="btn-walk" class="secondary">Погулять</button>
-      <button id="btn-exercise" class="secondary">Позаниматься спортом</button>
-      <button id="btn-play" class="secondary">Играть</button>
-      <button id="btn-rest" class="secondary">Отдыхать</button>
       <button id="btn-chat" class="secondary">Поговорить</button>
       <button id="btn-assess" class="secondary">Оценить состояние</button>
       <button id="btn-sensor" class="secondary">Включить датчик шагов</button>
@@ -645,26 +641,6 @@
 
   var FAT_RATE_PER_HOUR = 1.6;
 
-  var WALK_COOLDOWN_MS = 15 * 60 * 1000;
-  var WALK_STEP_BONUS = 400;
-  var WALK_FAT_DROP = 2;
-  var WALK_SATIETY_COST = 5;
-  var WALK_ENERGY_COST = 10;
-  var WALK_FUN_GAIN = 8;
-
-  var EXERCISE_COOLDOWN_MS = 30 * 60 * 1000;
-  var EXERCISE_STEP_BONUS = 800;
-  var EXERCISE_FAT_DROP = 6;
-  var EXERCISE_SATIETY_COST = 8;
-  var EXERCISE_ENERGY_COST = 18;
-
-  var PLAY_COOLDOWN_MS = 15 * 60 * 1000;
-  var PLAY_FUN_GAIN = 30;
-  var PLAY_ENERGY_COST = 8;
-
-  var REST_COOLDOWN_MS = 15 * 60 * 1000;
-  var REST_ENERGY_GAIN = 35;
-
   var ENERGY_DECAY_PER_HOUR = 3.0;
   var FUN_DECAY_PER_HOUR = 3.5;
 
@@ -681,31 +657,16 @@
   var HEART_RATE_SCALE_MIN = 40;
   var HEART_RATE_SCALE_MAX = 180;
 
-  // ── Спрайты: по кадру на действие (не полноценная покадровая анимация —
-  // см. Native shell/советы по анимации на будущее). Показываем кадр действия
-  // на несколько секунд после нажатия кнопки, в покое — картинку по умолчанию,
-  // либо состояния (голоден/устал), если соответствующий показатель ниже 50%. ─
-  var SPRITE_ACTION_MS = 3000;
-  var SPRITE_DEFAULT = './assets/default.png';
-  var spriteActionSrc = '';
-  var spriteActionUntil = 0;
+  // ── Спрайт питомца: одна статичная картинка на все состояния. ──────────
+  var SPRITE_DEFAULT = './assets/raccoon.svg';
   function setSprite(src){
     var img = document.getElementById('sprite-img');
     var ph = document.getElementById('sprite-placeholder');
     if (src){ img.src = src; img.classList.remove('hidden'); ph.classList.add('hidden'); }
     else { img.classList.add('hidden'); ph.classList.remove('hidden'); }
   }
-  function showActionSprite(src){
-    spriteActionSrc = src;
-    spriteActionUntil = Date.now() + SPRITE_ACTION_MS;
-    setSprite(spriteActionSrc);
-    setTimeout(renderStatus, SPRITE_ACTION_MS + 50);
-  }
   function applySprite(pet){
-    if (Date.now() < spriteActionUntil){ setSprite(spriteActionSrc); return; }
-    if (pet.satiety < 50) setSprite('./assets/hungry.png');
-    else if (pet.energy < 50) setSprite('./assets/tired.png');
-    else setSprite(SPRITE_DEFAULT);
+    setSprite(SPRITE_DEFAULT);
   }
 
   var LS_PREFIX = 'tama_';
@@ -732,27 +693,21 @@
       fun: lsNum('fun', 60),
       createdAt: lsNum('createdAt', Date.now()),
       lastUpdatedAt: lsNum('lastUpdatedAt', Date.now()),
-      lastFedAt: lsNum('lastFedAt', 0),
-      lastWalkAt: lsNum('lastWalkAt', 0),
-      lastExerciseAt: lsNum('lastExerciseAt', 0),
-      lastPlayAt: lsNum('lastPlayAt', 0),
-      lastRestAt: lsNum('lastRestAt', 0)
+      lastFedAt: lsNum('lastFedAt', 0)
     };
   }
   function savePet(p){
     lsSet('name', p.name); lsSet('satiety', p.satiety); lsSet('fat', p.fat);
     lsSet('energy', p.energy); lsSet('fun', p.fun);
     lsSet('createdAt', p.createdAt); lsSet('lastUpdatedAt', p.lastUpdatedAt);
-    lsSet('lastFedAt', p.lastFedAt); lsSet('lastWalkAt', p.lastWalkAt);
-    lsSet('lastExerciseAt', p.lastExerciseAt); lsSet('lastPlayAt', p.lastPlayAt);
-    lsSet('lastRestAt', p.lastRestAt);
+    lsSet('lastFedAt', p.lastFedAt);
   }
   function createPet(name){
     var now = Date.now();
     savePet({
       name: name, satiety: 75, fat: 20, energy: 80, fun: 60,
       createdAt: now, lastUpdatedAt: now,
-      lastFedAt: 0, lastWalkAt: 0, lastExerciseAt: 0, lastPlayAt: 0, lastRestAt: 0
+      lastFedAt: 0
     });
   }
   function resetAll(){
@@ -897,38 +852,6 @@
     pet.lastFedAt = now;
     return true;
   }
-  // hc-стат уже занят Health Connect → кнопка всё равно "срабатывает" (кулдаун/золото/спрайт),
-  // но больше не двигает сам стат напрямую — см. project_tamagotchi_health_connect.
-  function walk(pet, now, hc){
-    if (now - pet.lastWalkAt < WALK_COOLDOWN_MS) return false;
-    if (getRealBodyFatPercent() === null && getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - WALK_FAT_DROP);
-    pet.satiety = clamp(pet.satiety - WALK_SATIETY_COST);
-    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - WALK_ENERGY_COST);
-    pet.fun = clamp(pet.fun + WALK_FUN_GAIN);
-    pet.lastWalkAt = now;
-    return true;
-  }
-  function exercise(pet, now, hc){
-    if (now - pet.lastExerciseAt < EXERCISE_COOLDOWN_MS) return false;
-    if (getRealBodyFatPercent() === null && getFatActivityLevel(hc) === null) pet.fat = clamp(pet.fat - EXERCISE_FAT_DROP);
-    pet.satiety = clamp(pet.satiety - EXERCISE_SATIETY_COST);
-    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - EXERCISE_ENERGY_COST);
-    pet.lastExerciseAt = now;
-    return true;
-  }
-  function play(pet, now, hc){
-    if (now - pet.lastPlayAt < PLAY_COOLDOWN_MS) return false;
-    pet.fun = clamp(pet.fun + PLAY_FUN_GAIN);
-    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy - PLAY_ENERGY_COST);
-    pet.lastPlayAt = now;
-    return true;
-  }
-  function rest(pet, now, hc){
-    if (now - pet.lastRestAt < REST_COOLDOWN_MS) return false;
-    if (getSleepEnergyLevel(hc) === null) pet.energy = clamp(pet.energy + REST_ENERGY_GAIN);
-    pet.lastRestAt = now;
-    return true;
-  }
   function moodLabel(satiety, fat, energy, fun, activityLevel){
     // Взвешенное среднее пяти нормированных 0..100 показателей — так ни один
     // отдельный нулевой показатель (например, активность в день создания
@@ -967,10 +890,6 @@
   function setStepsFromHealthConnect(steps){
     lsSet('stepsDate', todayKey());
     lsSet('stepsToday', steps);
-  }
-  function addManualBonus(amount){
-    var s = getStepsState();
-    lsSet('bonusToday', s.bonus + amount);
   }
   function getActivityLevel(){
     var s = getStepsState();
@@ -2627,8 +2546,7 @@
     if (fatFromRealBody) hcHint.push('Жир питомца равен вашему % жира тела из Health Connect и не меняется кнопками.');
     else if (fatFromHC) hcHint.push('Жир считается по калориям/тренировкам из Health Connect и не меняется кнопками напрямую.');
     document.getElementById('text-hint').textContent =
-      'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин, тренировка — раз в ' + (EXERCISE_COOLDOWN_MS/60000) +
-      ' мин, прогулка/игры/отдых — раз в ' + (WALK_COOLDOWN_MS/60000) + ' мин. ' +
+      'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин. ' +
       (isNative ? 'Шаги берутся из Health Connect.' : 'Шаги считаются только пока эта страница открыта в браузере.') +
       (hcHint.length ? ' ' + hcHint.join(' ') : '');
   }
@@ -2792,76 +2710,9 @@
       if (feed(pet, now)){
         savePet(pet);
         addGold(1);
-        showActionSprite('./assets/feed.png');
       } else {
         var min = Math.ceil((FEED_COOLDOWN_MS - (now - pet.lastFedAt)) / 60000) + 1;
         showToast('Питомец пока не хочет есть, подождите ' + min + ' мин');
-      }
-      renderStatus();
-    });
-
-    document.getElementById('btn-walk').addEventListener('click', function(){
-      var now = Date.now();
-      var pet = loadPet();
-      var hc = getActiveHealthMetrics();
-      settle(pet, now, getActivityLevel(), hc);
-      if (walk(pet, now, hc)){
-        addManualBonus(WALK_STEP_BONUS);
-        savePet(pet);
-        addGold(1);
-        showActionSprite('./assets/walk.png');
-      } else {
-        var min = Math.ceil((WALK_COOLDOWN_MS - (now - pet.lastWalkAt)) / 60000) + 1;
-        showToast('Питомец пока не хочет гулять, подождите ' + min + ' мин');
-      }
-      renderStatus();
-    });
-
-    document.getElementById('btn-exercise').addEventListener('click', function(){
-      var now = Date.now();
-      var pet = loadPet();
-      var hc = getActiveHealthMetrics();
-      settle(pet, now, getActivityLevel(), hc);
-      if (exercise(pet, now, hc)){
-        addManualBonus(EXERCISE_STEP_BONUS);
-        savePet(pet);
-        addGold(1);
-        showActionSprite('./assets/exercise.png');
-      } else {
-        var min = Math.ceil((EXERCISE_COOLDOWN_MS - (now - pet.lastExerciseAt)) / 60000) + 1;
-        showToast('Питомец ещё не отдохнул после тренировки, подождите ' + min + ' мин');
-      }
-      renderStatus();
-    });
-
-    document.getElementById('btn-play').addEventListener('click', function(){
-      var now = Date.now();
-      var pet = loadPet();
-      var hc = getActiveHealthMetrics();
-      settle(pet, now, getActivityLevel(), hc);
-      if (play(pet, now, hc)){
-        savePet(pet);
-        addGold(1);
-        showActionSprite('./assets/play.png');
-      } else {
-        var min = Math.ceil((PLAY_COOLDOWN_MS - (now - pet.lastPlayAt)) / 60000) + 1;
-        showToast('Питомец пока не хочет играть, подождите ' + min + ' мин');
-      }
-      renderStatus();
-    });
-
-    document.getElementById('btn-rest').addEventListener('click', function(){
-      var now = Date.now();
-      var pet = loadPet();
-      var hc = getActiveHealthMetrics();
-      settle(pet, now, getActivityLevel(), hc);
-      if (rest(pet, now, hc)){
-        savePet(pet);
-        addGold(1);
-        showActionSprite('./assets/rest.png');
-      } else {
-        var min = Math.ceil((REST_COOLDOWN_MS - (now - pet.lastRestAt)) / 60000) + 1;
-        showToast('Питомцу пока не нужно отдыхать, подождите ' + min + ' мин');
       }
       renderStatus();
     });
