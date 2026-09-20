@@ -1014,7 +1014,7 @@
   function settle(pet, now, activityLevel, hc){
     var hours = Math.max(0, (now - pet.lastUpdatedAt) / 3600000);
     if (hours <= 0) return pet;
-    pet.satiety = clamp(computeSatiety(now, getTodayMeals()));
+    pet.satiety = clamp(computeSatiety(now, getAllTodayMeals()));
     var realFat = getRealBodyFatPercent();
     if (realFat !== null) {
       pet.fat = realFat;
@@ -1163,6 +1163,7 @@
           refreshHealthConnectSteps();
           refreshHealthConnectMetrics();
           refreshHealthConnectBodyMetrics();
+          refreshHealthConnectNutrition();
           showToast('Готово, шаги из Health Connect будут учитываться');
         } else {
           showToast('Разрешение не выдано');
@@ -1174,6 +1175,7 @@
   function disableHealthConnect(){
     lsSet('healthConnectEnabled', '0');
     lsSet('hcMetrics', '');
+    lsSet('hcNutrition', '');
     updateSensorStatusUI();
   }
 
@@ -1331,6 +1333,38 @@
     } catch (e) {}
   }
 
+  // ── Приёмы пищи, залогированные сторонним приложением (напр. официальным
+  // клиентом FatSecret) в Health Connect — не наш собственный лог питания, а
+  // отдельный источник, который объединяется с ним в getAllTodayMeals(). ──────
+  function refreshHealthConnectNutrition(){
+    if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return;
+    var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
+    if (!plugin || typeof plugin.getTodayNutrition !== 'function') return;
+    try {
+      plugin.getTodayNutrition().then(function(res){
+        var items = (res && res.items) || [];
+        var meals = items.map(function(it, idx){
+          return {
+            id: 'hc_' + it.timeMs + '_' + idx,
+            ts: it.timeMs,
+            name: it.name || 'Приём пищи (Health Connect)',
+            type: it.mealType !== 'unknown' ? it.mealType : undefined,
+            kcal: it.kcal || 0,
+            protein: it.proteinG || 0,
+            fat: it.fatG || 0,
+            carb: it.carbsG || 0,
+            source: 'hc'
+          };
+        });
+        lsSet('hcNutritionDate', todayKey());
+        lsSet('hcNutrition', JSON.stringify(meals));
+        renderMeals();
+        renderBodyComposition();
+        renderStatus();
+      }).catch(function(){});
+    } catch (e) {}
+  }
+
   // ── Баланс калорий и состав тела — НЕ путать с игровым показателем "Жир"
   // (pet.fat, 0-100%, косметическая механика ухода за питомцем) — это разные
   // вещи с разным смыслом и разным хранилищем, поэтому у всех показателей ниже
@@ -1406,7 +1440,7 @@
     // реальную сумму из лога, иначе по-старому предполагаем норму пропорционально
     // прошедшей части дня. Расход всегда фактический (BMR за прошедшую часть дня
     // + реальная активность/тренировки).
-    var todayMeals = getTodayMeals();
+    var todayMeals = getAllTodayMeals();
     var mealsTotal = sumMeals(todayMeals);
     var hasMeals = todayMeals.length > 0;
     var intakeKcal = hasMeals ? mealsTotal.kcal : norm.calories * dayFraction;
@@ -1510,6 +1544,23 @@
       return acc;
     }, { kcal: 0, protein: 0, fat: 0, carb: 0 });
   }
+  // Приёмы пищи, залогированные сторонним приложением (напр. официальным клиентом
+  // FatSecret) в Health Connect — читаются нативным плагином (refreshHealthConnectNutrition)
+  // и кэшируются здесь тем же принципом посуточного сброса, что и свой лог (mealsDate/meals).
+  // Не хранятся в 'meals'/localStorage напрямую: источник истины для них — Health Connect,
+  // не наш собственный лог, поэтому removeMeal() их не трогает и не может удалить.
+  function getHcNutritionMeals(){
+    if (!isNative || lsGet('healthConnectEnabled', '') !== '1') return [];
+    if (lsGet('hcNutritionDate', '') !== todayKey()) return [];
+    try { return JSON.parse(lsGet('hcNutrition', '[]')) || []; } catch(e){ return []; }
+  }
+  // Объединённый лог за сегодня — свои записи + подтянутые из Health Connect,
+  // по времени. Пользователь явно попросил учитывать оба источника вместе
+  // (риск задвоить калории, если одна и та же еда занесена в обоих местах,
+  // принят осознанно — это его выбор).
+  function getAllTodayMeals(){
+    return getTodayMeals().concat(getHcNutritionMeals()).sort(function(a, b){ return a.ts - b.ts; });
+  }
   function addMeal(meal){
     var meals = getTodayMeals();
     meal.id = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -1528,7 +1579,7 @@
     renderStatus();
   }
   function renderMeals(){
-    var meals = getTodayMeals();
+    var meals = getAllTodayMeals();
     var list = document.getElementById('meals-list');
     var empty = document.getElementById('meals-empty');
     var totalEl = document.getElementById('meals-total');
@@ -1550,16 +1601,21 @@
       var metaEl = document.createElement('div');
       metaEl.className = 'meal-meta';
       var typeLabel = MEAL_TYPE_LABELS[m.type] ? MEAL_TYPE_LABELS[m.type] + ' · ' : '';
+      var sourceLabel = m.source === 'hc' ? ' · Health Connect' : '';
       metaEl.textContent = typeLabel + timeStr + ' · ' + Math.round(m.kcal) + ' ккал · Б' + Math.round(m.protein) +
-        ' Ж' + Math.round(m.fat) + ' У' + Math.round(m.carb);
-      var delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'meal-del';
-      delBtn.textContent = '✕';
-      delBtn.addEventListener('click', function(){ removeMeal(m.id); });
+        ' Ж' + Math.round(m.fat) + ' У' + Math.round(m.carb) + sourceLabel;
       row.appendChild(nameEl);
       row.appendChild(metaEl);
-      row.appendChild(delBtn);
+      if (m.source !== 'hc'){
+        // Записи из Health Connect живут не в нашем localStorage, а в самом Health
+        // Connect — удалить их отсюда нечем, поэтому кнопка ✕ только у своих записей.
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'meal-del';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', function(){ removeMeal(m.id); });
+        row.appendChild(delBtn);
+      }
       list.appendChild(row);
     });
     var total = sumMeals(meals);
@@ -3075,7 +3131,7 @@
       renderWorkoutsList(getCachedWorkouts());
       renderMeals();
       renderBodyComposition();
-      if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); } catch (e) {} }
+      if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); refreshHealthConnectNutrition(); } catch (e) {} }
       else if (lsGet('sensorEnabled', '') === '1') startSensor();
     } else {
       showScreen('create');
@@ -3085,6 +3141,7 @@
       refreshHealthConnectSteps(true);
       refreshHealthConnectMetrics();
       refreshHealthConnectBodyMetrics();
+      refreshHealthConnectNutrition();
     });
 
     document.getElementById('btn-assess').addEventListener('click', openAssess);
@@ -3358,11 +3415,11 @@
     });
 
     updateSensorStatusUI();
-    setInterval(function(){ renderStatus(); renderBodyComposition(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); } }, 30000); // досчитывать голод/жир/состав тела, и (в нативном приложении) шаги+метрики из Health Connect
+    setInterval(function(){ renderStatus(); renderBodyComposition(); if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); refreshHealthConnectNutrition(); } }, 30000); // досчитывать голод/жир/состав тела, и (в нативном приложении) шаги+метрики+питание из Health Connect
     document.addEventListener('visibilitychange', function(){
       if (document.hidden) return;
       renderStatus();
-      if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); }
+      if (isNative){ refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); refreshHealthConnectNutrition(); }
     });
   }
 

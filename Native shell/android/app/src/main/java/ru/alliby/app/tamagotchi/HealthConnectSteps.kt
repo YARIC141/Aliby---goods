@@ -26,6 +26,7 @@ import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
 import androidx.health.connect.client.records.HeightRecord
 import androidx.health.connect.client.records.HydrationRecord
 import androidx.health.connect.client.records.LeanBodyMassRecord
+import androidx.health.connect.client.records.MealType
 import androidx.health.connect.client.records.NutritionRecord
 import androidx.health.connect.client.records.OxygenSaturationRecord
 import androidx.health.connect.client.records.PlannedExerciseSessionRecord
@@ -436,6 +437,72 @@ object HealthConnectSteps {
 
             Log.d("TamaBodyMetrics", "result weightKg=" + weightKg + " bodyFatPercent=" + bodyFatPercent)
             callback.onResult(BodyMetrics(weightKg, bodyFatPercent))
+        }
+    }
+
+    /** Один приём пищи, записанный в Health Connect сторонним приложением (например,
+     * официальным клиентом FatSecret) — не наш собственный лог питания в localStorage,
+     * а данные, которые пишет туда другое приложение. mealTypeStr уже приведён к тем же
+     * значениям, что и MEAL_TYPE_LABELS в tamagotchi/index.html (breakfast/lunch/snack/dinner/unknown). */
+    data class NutritionItem(
+        val name: String?,
+        val mealTypeStr: String,
+        val timeMs: Long,
+        val kcal: Double?,
+        val proteinG: Double?,
+        val fatG: Double?,
+        val carbsG: Double?
+    )
+
+    fun interface NutritionCallback {
+        fun onResult(items: List<NutritionItem>)
+    }
+
+    private fun mealTypeToStr(type: Int): String = when (type) {
+        MealType.MEAL_TYPE_BREAKFAST -> "breakfast"
+        MealType.MEAL_TYPE_LUNCH -> "lunch"
+        MealType.MEAL_TYPE_DINNER -> "dinner"
+        MealType.MEAL_TYPE_SNACK -> "snack"
+        else -> "unknown"
+    }
+
+    /** Приёмы пищи за сегодня из Health Connect (с полуночи по локальному времени) —
+     * записи сторонних приложений вроде FatSecret, не наш собственный лог питания. */
+    @JvmStatic
+    fun fetchTodayNutrition(context: Context, callback: NutritionCallback) {
+        if (!isAvailable(context)) { callback.onResult(emptyList()); return }
+        val client = HealthConnectClient.getOrCreate(context)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val granted = client.permissionController.getGrantedPermissions()
+                if (!granted.contains(PERMISSION_NUTRITION)) { callback.onResult(emptyList()); return@launch }
+
+                val zone = ZoneId.systemDefault()
+                val startOfDay = LocalDate.now(zone).atStartOfDay(zone).toInstant()
+                val now = Instant.now()
+                val response = client.readRecords(
+                    ReadRecordsRequest(
+                        recordType = NutritionRecord::class,
+                        timeRangeFilter = TimeRangeFilter.between(startOfDay, now)
+                    )
+                )
+
+                val items = response.records.map { record ->
+                    NutritionItem(
+                        name = record.name,
+                        mealTypeStr = mealTypeToStr(record.mealType),
+                        timeMs = record.startTime.toEpochMilli(),
+                        kcal = record.energy?.inKilocalories,
+                        proteinG = record.protein?.inGrams,
+                        fatG = record.totalFat?.inGrams,
+                        carbsG = record.totalCarbohydrate?.inGrams
+                    )
+                }.sortedBy { it.timeMs }
+
+                callback.onResult(items)
+            } catch (e: Exception) {
+                callback.onResult(emptyList())
+            }
         }
     }
 }

@@ -1,5 +1,5 @@
 // v1 — статичный app-shell, все данные в localStorage, сети не требуется в принципе
-const CACHE = 'tamagotchi-v16';
+const CACHE = 'tamagotchi-v17';
 const SHELL = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png',
   './assets/raccoon.svg',
   './assets/lib/chess.js', './assets/lib/draughts.js', './assets/lib/tenuki.js',

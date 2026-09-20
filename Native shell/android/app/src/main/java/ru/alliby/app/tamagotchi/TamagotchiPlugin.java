@@ -163,4 +163,30 @@ public class TamagotchiPlugin extends Plugin {
             call.resolve(out);
         });
     }
+
+    /**
+     * Приёмы пищи за сегодня из Health Connect — записи сторонних приложений (например,
+     * официального клиента FatSecret), не наш собственный лог питания в localStorage.
+     * JS-сторона объединяет этот список со своим локальным логом.
+     */
+    @PluginMethod
+    public void getTodayNutrition(PluginCall call) {
+        HealthConnectSteps.fetchTodayNutrition(getContext(), items -> {
+            JSArray arr = new JSArray();
+            for (HealthConnectSteps.NutritionItem it : items) {
+                JSObject n = new JSObject();
+                n.put("timeMs", it.getTimeMs());
+                n.put("mealType", it.getMealTypeStr());
+                if (it.getName() != null) n.put("name", it.getName());
+                if (it.getKcal() != null) n.put("kcal", it.getKcal());
+                if (it.getProteinG() != null) n.put("proteinG", it.getProteinG());
+                if (it.getFatG() != null) n.put("fatG", it.getFatG());
+                if (it.getCarbsG() != null) n.put("carbsG", it.getCarbsG());
+                arr.put(n);
+            }
+            JSObject out = new JSObject();
+            out.put("items", arr);
+            call.resolve(out);
+        });
+    }
 }
