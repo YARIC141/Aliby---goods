@@ -70,7 +70,11 @@ async function fatsecretGet(path: string, params: Record<string, string>, scope:
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v)
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
   const data = await res.json().catch(() => ({}))
-  return { ok: res.ok, status: res.status, data }
+  // FatSecret возвращает HTTP 200 даже при логической ошибке (например, IP не
+  // в allowlist аккаунта) — тело в этом случае {"error": {code, message}}, что
+  // не отражается в res.ok, поэтому проверяем его отдельно.
+  const apiError = data && typeof data === 'object' ? (data as any).error : undefined
+  return { ok: res.ok && !apiError, status: res.status, data, errorMessage: apiError?.message as string | undefined }
 }
 
 // FatSecret отдаёт одиночный элемент как объект, а не массив из одного
@@ -109,9 +113,9 @@ function per1gFromServing(serving: any): { per1g: any; servingHint: any } | null
 }
 
 async function foodDetailById(foodId: string) {
-  const { ok, data } = await fatsecretGet('food/v4', { food_id: foodId }, 'basic')
+  const { ok, data, errorMessage } = await fatsecretGet('food/v4', { food_id: foodId }, 'basic')
   const food = data?.food
-  if (!ok || !food) return { error: 'Продукт не найден в FatSecret' }
+  if (!ok || !food) return { error: errorMessage || 'Продукт не найден в FatSecret' }
   const servings = asArray(food?.servings?.serving)
   const serving = pickServing(servings)
   if (!serving) return { error: 'У продукта нет данных о порциях' }
@@ -132,8 +136,8 @@ Deno.serve(async (req: Request) => {
     if (action === 'search') {
       const q = (url.searchParams.get('q') || '').trim()
       if (!q) return jsonResponse({ error: 'q is required' }, 400, origin)
-      const { ok, data } = await fatsecretGet('foods/search/v1', { search_expression: q, max_results: '15' }, 'basic')
-      if (!ok) return jsonResponse({ error: 'FatSecret error' }, 502, origin)
+      const { ok, data, errorMessage } = await fatsecretGet('foods/search/v1', { search_expression: q, max_results: '15' }, 'basic')
+      if (!ok) return jsonResponse({ error: errorMessage || 'FatSecret error' }, 502, origin)
       const foods = asArray(data?.foods?.food)
       const items = foods.map((f: any) => ({
         food_id: f.food_id,
@@ -155,10 +159,10 @@ Deno.serve(async (req: Request) => {
       const code = (url.searchParams.get('code') || '').replace(/\D/g, '')
       if (!code) return jsonResponse({ error: 'code is required' }, 400, origin)
       const gtin13 = code.padStart(13, '0')
-      const { ok, data } = await fatsecretGet('food/barcode/find-by-id/v1', { barcode: gtin13 }, 'basic barcode')
+      const { ok, data, errorMessage } = await fatsecretGet('food/barcode/find-by-id/v1', { barcode: gtin13 }, 'basic barcode')
       const foodId = data?.food_id?.value
       if (!ok || !foodId || foodId === '0') {
-        return jsonResponse({ error: 'Продукт с таким штрихкодом не найден в FatSecret' }, 404, origin)
+        return jsonResponse({ error: errorMessage || 'Продукт с таким штрихкодом не найден в FatSecret' }, 404, origin)
       }
       const result = await foodDetailById(foodId)
       return jsonResponse(result, 'error' in result ? 404 : 200, origin)
