@@ -110,6 +110,20 @@ public class TamagotchiPlugin extends Plugin {
     }
 
     /**
+     * Зеркалит дневной баланс мышечной/жировой массы (те же граммы, что и в
+     * карточке "Композиция тела") в SharedPreferences для виджета питомца —
+     * см. TamagotchiPrefs.todayBodyComposition.
+     */
+    @PluginMethod
+    public void setBodyComposition(PluginCall call) {
+        double muscleG = call.getDouble("muscleG", 0.0);
+        double fatG = call.getDouble("fatG", 0.0);
+        TamagotchiPrefs.setBodyComposition(getContext(), (float) muscleG, (float) fatG);
+        call.resolve();
+        PetWidgetProvider.refreshAll(getContext());
+    }
+
+    /**
      * Тренировки за сегодня как отдельные сессии (время начала/конца, тип, средний пульс
      * именно за эту сессию, оценка калорий) — в отличие от getTodayHealthMetrics, где
      * exerciseMinutes и avgHeartRateBpm это суточные агрегаты без привязки к конкретной

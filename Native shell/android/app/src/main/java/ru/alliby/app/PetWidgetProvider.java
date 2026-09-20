@@ -122,13 +122,15 @@ public class PetWidgetProvider extends AppWidgetProvider {
 
                 int[] labelIds = {
                     R.id.pet_lbl_steps, R.id.pet_lbl_distance, R.id.pet_lbl_calories,
-                    R.id.pet_lbl_sleep, R.id.pet_lbl_exercise, R.id.pet_lbl_heart
+                    R.id.pet_lbl_sleep, R.id.pet_lbl_exercise, R.id.pet_lbl_heart,
+                    R.id.pet_lbl_muscle, R.id.pet_lbl_fat
                 };
                 for (int id : labelIds) views.setTextColor(id, textSecondary);
 
                 int[] valueIds = {
                     R.id.pet_val_steps, R.id.pet_val_distance, R.id.pet_val_calories,
-                    R.id.pet_val_sleep, R.id.pet_val_exercise, R.id.pet_val_heart
+                    R.id.pet_val_sleep, R.id.pet_val_exercise, R.id.pet_val_heart,
+                    R.id.pet_val_muscle, R.id.pet_val_fat
                 };
                 for (int id : valueIds) views.setTextColor(id, textPrimary);
 
@@ -138,6 +140,10 @@ public class PetWidgetProvider extends AppWidgetProvider {
                 views.setTextViewText(R.id.pet_val_sleep, formatMinutesHm(metrics.getSleepMinutes()));
                 views.setTextViewText(R.id.pet_val_exercise, formatMinutes(metrics.getExerciseMinutes()));
                 views.setTextViewText(R.id.pet_val_heart, formatHeartRate(metrics.getAvgHeartRateBpm()));
+
+                TamagotchiPrefs.BodyComposition comp = TamagotchiPrefs.todayBodyComposition(appContext);
+                views.setTextViewText(R.id.pet_val_muscle, formatSignedGrams(comp == null ? null : comp.muscleG));
+                views.setTextViewText(R.id.pet_val_fat, formatSignedGrams(comp == null ? null : comp.fatG));
 
                 appWidgetManager.updateAppWidget(appWidgetId, views);
                 onDone.run();
@@ -172,5 +178,11 @@ public class PetWidgetProvider extends AppWidgetProvider {
     private static String formatHeartRate(Long bpm) {
         if (bpm == null) return "—";
         return bpm + " уд/мин";
+    }
+
+    private static String formatSignedGrams(Float grams) {
+        if (grams == null) return "—";
+        long rounded = Math.round((double) Math.abs(grams));
+        return (grams >= 0 ? "+" : "−") + rounded + " г";
     }
 }
