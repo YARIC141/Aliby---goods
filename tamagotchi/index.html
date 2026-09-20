@@ -397,6 +397,53 @@
       </div>
     </div>
 
+    <div class="rings-row hidden" id="kbju-metrics">
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-kcal" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Калории">🍽️</div>
+        </div>
+        <div class="ring-label">Калории</div>
+        <div class="ring-value" id="text-kcal"></div>
+      </div>
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-protein" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Белки">🥩</div>
+        </div>
+        <div class="ring-label">Белки</div>
+        <div class="ring-value" id="text-protein"></div>
+      </div>
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-macro-fat" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Жиры">🧈</div>
+        </div>
+        <div class="ring-label">Жиры</div>
+        <div class="ring-value" id="text-macro-fat"></div>
+      </div>
+      <div class="ring-item">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle class="ring-track" cx="32" cy="32" r="28"></circle>
+            <circle class="ring-fill" id="ring-carb" cx="32" cy="32" r="28"></circle>
+          </svg>
+          <div class="ring-icon emoji" title="Углеводы">🍞</div>
+        </div>
+        <div class="ring-label">Углеводы</div>
+        <div class="ring-value" id="text-carb"></div>
+      </div>
+    </div>
+
     <div class="bodycomp-card hidden" id="bodycomp-card">
       <div class="bodycomp-title-row">
         <div class="bodycomp-title">⚖️ Баланс калорий и состав тела (оценка)</div>
@@ -462,7 +509,6 @@
     </div>
 
     <div class="actions">
-      <button id="btn-feed">Покормить</button>
       <button id="btn-chat" class="secondary">Поговорить</button>
       <button id="btn-assess" class="secondary">Оценить состояние</button>
       <button id="btn-sensor" class="secondary">Включить датчик шагов</button>
@@ -611,7 +657,7 @@
         <li><b>Сон</b> — напрямую задаёт Энергию питомца, пока доступны данные о сне. В этом случае прогулка, спорт, игра и отдых больше не тратят и не восстанавливают Энергию — за неё отвечает только сон.</li>
         <li><b>Дистанция</b> и <b>пульс</b> — только отображаются на кольцах, на характеристики питомца и на золото не влияют.</li>
       </ul>
-      <p>Золото от Health Connect не зависит: оно начисляется за уход (каждые 5 нажатий кнопок ухода) и за победы в играх.</p>
+      <p>Золото от Health Connect не зависит: оно начисляется за добавление приёма пищи и за победы в играх.</p>
       <button id="btn-hc-info-close">Понятно</button>
     </div>
   </div>
@@ -641,6 +687,7 @@
         <li><b>Вручную</b> — ввод калорий и БЖУ напрямую, если продукта нет в базе или для быстрой прикидки.</li>
       </ul>
       <p>Поиск и штрихкод требуют доступа к FatSecret API — если сервис ещё не настроен или не отвечает, останется ручной ввод.</p>
+      <p>Сытость питомца тоже завязана на этот лог: она плавно снижается к завтраку (10:00), обеду (18:00) и ужину (23:00), доходя до 0%, если приём пищи не добавлен вовремя, и мгновенно восстанавливается до 100%, как только вы добавите приём пищи (любого типа).</p>
       <button id="btn-meals-info-close">Понятно</button>
     </div>
   </div>
@@ -749,9 +796,11 @@
 
   // ── Модель питомца — та же схема таймстемп-настройки (settle), что в нативном
   // MVP, расширенная под сытость/энергию/веселье и новые активности. ─────────
-  var SATIETY_DECAY_PER_HOUR = 4.2;
-  var FEED_AMOUNT = 35;
-  var FEED_COOLDOWN_MS = 20 * 60 * 1000;
+  // Сытость больше не декеится линейно по времени — она считается по расписанию
+  // приёмов пищи: плавно идёт к 0 к каждому дедлайну (завтрак/обед/ужин) и
+  // мгновенно восстанавливается до 100 при добавлении любого приёма пищи. См.
+  // computeSatiety().
+  var SATIETY_CHECKPOINTS_MIN = [10 * 60, 18 * 60, 23 * 60]; // 10:00, 18:00, 23:00
 
   var FAT_RATE_PER_HOUR = 1.6;
 
@@ -806,22 +855,19 @@
       energy: lsNum('energy', 80),
       fun: lsNum('fun', 60),
       createdAt: lsNum('createdAt', Date.now()),
-      lastUpdatedAt: lsNum('lastUpdatedAt', Date.now()),
-      lastFedAt: lsNum('lastFedAt', 0)
+      lastUpdatedAt: lsNum('lastUpdatedAt', Date.now())
     };
   }
   function savePet(p){
     lsSet('name', p.name); lsSet('satiety', p.satiety); lsSet('fat', p.fat);
     lsSet('energy', p.energy); lsSet('fun', p.fun);
     lsSet('createdAt', p.createdAt); lsSet('lastUpdatedAt', p.lastUpdatedAt);
-    lsSet('lastFedAt', p.lastFedAt);
   }
   function createPet(name){
     var now = Date.now();
     savePet({
       name: name, satiety: 75, fat: 20, energy: 80, fun: 60,
-      createdAt: now, lastUpdatedAt: now,
-      lastFedAt: 0
+      createdAt: now, lastUpdatedAt: now
     });
   }
   function resetAll(){
@@ -937,10 +983,38 @@
     el.style.stroke = barColor(pct);
   }
 
+  // Считает сытость на момент now по логу приёмов пищи за сегодня — чистая
+  // функция без зависимости от предыдущего значения, поэтому самовосстанав-
+  // ливается корректно даже если приложение не открывали много часов.
+  // Опорная точка — последний приём пищи (сытость=100 в момент его добавления)
+  // или полночь, если приёмов ещё не было. От опорной точки сытость линейно
+  // идёт к 0 к ближайшему дедлайну из SATIETY_CHECKPOINTS_MIN, наступающему
+  // позже опорной точки, и остаётся на 0, если дедлайн уже прошёл, а новый
+  // приём пищи ещё не добавлен (не поднимается сама по себе с началом
+  // следующего отрезка).
+  function computeSatiety(now, todayMeals){
+    var d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    var dayStart = d.getTime();
+    var checkpoints = SATIETY_CHECKPOINTS_MIN.map(function(min){ return dayStart + min * 60000; });
+    var lastMealTs = null;
+    todayMeals.forEach(function(m){
+      if (m.ts <= now && (lastMealTs === null || m.ts > lastMealTs)) lastMealTs = m.ts;
+    });
+    var refTs = lastMealTs !== null ? lastMealTs : dayStart;
+    var nextCp = null;
+    for (var i = 0; i < checkpoints.length; i++){
+      if (checkpoints[i] > refTs){ nextCp = checkpoints[i]; break; }
+    }
+    if (nextCp === null) nextCp = dayStart + 24 * 3600000; // после ужина держим до полуночи
+    if (now <= refTs) return 100;
+    if (now >= nextCp) return 0;
+    return 100 * (1 - (now - refTs) / (nextCp - refTs));
+  }
   function settle(pet, now, activityLevel, hc){
     var hours = Math.max(0, (now - pet.lastUpdatedAt) / 3600000);
     if (hours <= 0) return pet;
-    pet.satiety = clamp(pet.satiety - SATIETY_DECAY_PER_HOUR * hours);
+    pet.satiety = clamp(computeSatiety(now, getTodayMeals()));
     var realFat = getRealBodyFatPercent();
     if (realFat !== null) {
       pet.fat = realFat;
@@ -959,12 +1033,6 @@
     pet.fun = clamp(pet.fun - FUN_DECAY_PER_HOUR * hours);
     pet.lastUpdatedAt = now;
     return pet;
-  }
-  function feed(pet, now){
-    if (now - pet.lastFedAt < FEED_COOLDOWN_MS) return false;
-    pet.satiety = clamp(pet.satiety + FEED_AMOUNT);
-    pet.lastFedAt = now;
-    return true;
   }
   function moodLabel(satiety, fat, energy, fun, activityLevel){
     // Взвешенное среднее пяти нормированных 0..100 показателей — так ни один
@@ -1327,7 +1395,7 @@
   function renderBodyComposition(){
     var card = document.getElementById('bodycomp-card');
     var norm = getDailyNorm();
-    if (norm === null){ card.classList.add('hidden'); return; }
+    if (norm === null){ card.classList.add('hidden'); document.getElementById('kbju-metrics').classList.add('hidden'); return; }
     card.classList.remove('hidden');
 
     var startOfDay = new Date();
@@ -1402,6 +1470,19 @@
     document.getElementById('bc-muscle-workout').textContent = Math.round(workoutMuscleG) + ' г';
     document.getElementById('bc-fatburn-workout').textContent = Math.round(workoutFatBurnG) + ' г';
     syncBodyCompositionToNative(muscleMassG, fatMassG);
+
+    // Кольца заполнения КБЖУ за день — тот же приход (факт из лога или
+    // предположение по доле прошедшего дня), что и выше, относительно нормы.
+    document.getElementById('kbju-metrics').classList.remove('hidden');
+    var proteinGSoFar = proteinKcalSoFar / 4, fatGSoFar = fatKcalSoFar / 9, carbGSoFar = carbKcalSoFar / 4;
+    setRing('ring-kcal', norm.calories > 0 ? (intakeKcal / norm.calories) * 100 : 0);
+    document.getElementById('text-kcal').textContent = Math.round(intakeKcal) + '/' + Math.round(norm.calories);
+    setRing('ring-protein', norm.proteinG > 0 ? (proteinGSoFar / norm.proteinG) * 100 : 0);
+    document.getElementById('text-protein').textContent = Math.round(proteinGSoFar) + '/' + Math.round(norm.proteinG) + ' г';
+    setRing('ring-macro-fat', norm.fatG > 0 ? (fatGSoFar / norm.fatG) * 100 : 0);
+    document.getElementById('text-macro-fat').textContent = Math.round(fatGSoFar) + '/' + Math.round(norm.fatG) + ' г';
+    setRing('ring-carb', norm.carbG > 0 ? (carbGSoFar / norm.carbG) * 100 : 0);
+    document.getElementById('text-carb').textContent = Math.round(carbGSoFar) + '/' + Math.round(norm.carbG) + ' г';
   }
 
   // ── Приёмы пищи — реальный дневной лог питания. Когда за сегодня есть хотя
@@ -1435,13 +1516,16 @@
     meal.ts = Date.now();
     meals.push(meal);
     saveTodayMeals(meals);
+    addGold(1);
     renderMeals();
     renderBodyComposition();
+    renderStatus();
   }
   function removeMeal(id){
     saveTodayMeals(getTodayMeals().filter(function(m){ return m.id !== id; }));
     renderMeals();
     renderBodyComposition();
+    renderStatus();
   }
   function renderMeals(){
     var meals = getTodayMeals();
@@ -2922,7 +3006,7 @@
     if (fatFromRealBody) hcHint.push('Жир питомца равен вашему % жира тела из Health Connect и не меняется кнопками.');
     else if (fatFromHC) hcHint.push('Жир считается по калориям/тренировкам из Health Connect и не меняется кнопками напрямую.');
     document.getElementById('text-hint').textContent =
-      'Кормёжка — раз в ' + (FEED_COOLDOWN_MS/60000) + ' мин. ' +
+      'Сытость идёт к 0 к завтраку (10:00), обеду (18:00) и ужину (23:00) — добавьте приём пищи, чтобы восстановить её. ' +
       (isNative ? 'Шаги берутся из Health Connect.' : 'Шаги считаются только пока эта страница открыта в браузере.') +
       (hcHint.length ? ' ' + hcHint.join(' ') : '');
   }
@@ -3152,21 +3236,6 @@
       createPet(name);
       document.getElementById('input-bio').value = '';
       showScreen('status');
-      renderStatus();
-    });
-
-    document.getElementById('btn-feed').addEventListener('click', function(){
-      var now = Date.now();
-      var pet = loadPet();
-      var hc = getActiveHealthMetrics();
-      settle(pet, now, getActivityLevel(), hc);
-      if (feed(pet, now)){
-        savePet(pet);
-        addGold(1);
-      } else {
-        var min = Math.ceil((FEED_COOLDOWN_MS - (now - pet.lastFedAt)) / 60000) + 1;
-        showToast('Питомец пока не хочет есть, подождите ' + min + ' мин');
-      }
       renderStatus();
     });
 
