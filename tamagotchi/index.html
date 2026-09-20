@@ -74,6 +74,38 @@
   .bodycomp-row span:first-child{color:var(--text2)}
   .bodycomp-row span:last-child{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
   .bodycomp-hint{font-size:11px;color:var(--text2);line-height:1.4;margin-top:10px}
+  .meals-card{margin:0 0 16px;padding:14px 16px;border-radius:12px;background:var(--card)}
+  .meals-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  .meals-title{font-size:13px;color:var(--text2)}
+  .meals-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  .meal-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 10px;background:#151a1f;border-radius:9px}
+  .meal-row .meal-name{font-weight:600;flex-shrink:0;max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .meal-row .meal-meta{flex:1;color:var(--text2);text-align:right}
+  .meal-row .meal-del{width:auto;margin:0;padding:2px 8px;background:transparent;color:var(--text2);font-size:14px;flex-shrink:0}
+  .meals-empty{font-size:12px;color:var(--text2);line-height:1.4;margin-bottom:10px}
+  .meals-total{font-size:12px;font-weight:600;margin-bottom:10px;font-variant-numeric:tabular-nums}
+  #btn-meal-add{margin-bottom:0}
+  .meal-tabs{display:flex;gap:6px;margin-bottom:14px}
+  .meal-tab{flex:1;padding:9px 4px;border-radius:9px;background:#151a1f;color:var(--text2);font-size:13px;
+    font-weight:600;border:none;cursor:pointer;margin:0}
+  .meal-tab.active{background:var(--accent);color:#04201c}
+  .meal-tab-panel{margin-bottom:6px}
+  .meal-search-row{display:flex;gap:8px}
+  .meal-search-row input{flex:1;margin:0}
+  .meal-search-row button{width:auto;margin:0;padding:12px 14px}
+  .meal-search-results{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:38vh;overflow-y:auto}
+  .meal-result-item{display:flex;flex-direction:column;gap:2px;text-align:left;background:#151a1f;
+    border-radius:10px;padding:10px 12px;border:none;color:var(--text);cursor:pointer;width:100%;margin:0}
+  .meal-result-item .mr-name{font-size:13px;font-weight:600}
+  .meal-result-item .mr-desc{font-size:11px;color:var(--text2)}
+  .meal-search-status{font-size:12px;color:var(--text2);text-align:center;padding:10px 0}
+  .meal-barcode-video{width:100%;border-radius:10px;margin-bottom:10px;background:#000}
+  .meal-barcode-manual{display:flex;gap:8px;margin-top:10px}
+  .meal-barcode-manual input{flex:1;margin:0}
+  .meal-barcode-manual button{width:auto;margin:0;padding:12px 14px}
+  .meal-barcode-status{font-size:12px;color:var(--text2);margin-top:8px;text-align:center}
+  .meal-portion-name{font-size:14px;font-weight:600;margin-bottom:12px}
+  .meal-portion-preview{font-size:12px;color:var(--text2);margin:-6px 0 14px}
   textarea{width:100%;padding:12px;border-radius:10px;border:1px solid #2a323b;background:#151a1f;
     color:var(--text);font-size:14px;font-family:inherit;line-height:1.4;resize:vertical}
   textarea::placeholder{color:var(--text2)}
@@ -382,6 +414,17 @@
       <div class="bodycomp-hint">Считаем, что вы съедаете свою расчётную норму калорий и БЖУ. Грубая оценка на основе базового обмена, активности и стандартных коэффициентов — не заменяет реальные измерения состава тела.</div>
     </div>
 
+    <div class="meals-card" id="meals-card">
+      <div class="meals-title-row">
+        <div class="meals-title">🍽️ Приёмы пищи сегодня</div>
+        <button type="button" id="btn-meals-info" class="bc-info-btn" title="Как это работает">?</button>
+      </div>
+      <div class="meals-list" id="meals-list"></div>
+      <div class="meals-empty" id="meals-empty">Ещё не добавлено ни одного приёма пищи — норма выше пока считается по предположению.</div>
+      <div class="meals-total" id="meals-total"></div>
+      <button type="button" id="btn-meal-add" class="secondary">+ Добавить приём пищи</button>
+    </div>
+
     <div class="workouts-card hidden" id="workouts-card">
       <div class="workouts-title">Тренировки сегодня</div>
       <div id="workouts-list"></div>
@@ -585,6 +628,68 @@
       </ul>
       <p>Это грубая оценка на стандартных коэффициентах, а не измерение — она не заменяет реальные весы или анализ состава тела.</p>
       <button id="btn-bodycomp-info-close">Понятно</button>
+    </div>
+  </div>
+
+  <div id="meals-info-overlay" class="rules-overlay hidden">
+    <div class="rules-sheet">
+      <h2>Приёмы пищи</h2>
+      <p>Пока приёмов пищи за сегодня нет, «Баланс калорий и состав тела» выше считает съеденное по предположению (норма пропорционально прошедшей части дня). Как только вы добавите хотя бы один реальный приём пищи — баланс начинает считаться по факту.</p>
+      <ul>
+        <li><b>Поиск</b> — ищет продукт по названию в базе FatSecret, дальше можно указать граммы или количество порций.</li>
+        <li><b>Штрихкод</b> — сканирует штрихкод камерой (если устройство поддерживает) или принимает цифры вручную, затем ищет товар в FatSecret по коду.</li>
+        <li><b>Вручную</b> — ввод калорий и БЖУ напрямую, если продукта нет в базе или для быстрой прикидки.</li>
+      </ul>
+      <p>Поиск и штрихкод требуют доступа к FatSecret API — если сервис ещё не настроен или не отвечает, останется ручной ввод.</p>
+      <button id="btn-meals-info-close">Понятно</button>
+    </div>
+  </div>
+
+  <div id="meal-add-overlay" class="rules-overlay hidden">
+    <div class="rules-sheet">
+      <h2>Добавить приём пищи</h2>
+      <div class="meal-tabs" id="meal-tabs">
+        <button type="button" class="meal-tab active" data-tab="search">Поиск</button>
+        <button type="button" class="meal-tab" data-tab="barcode">Штрихкод</button>
+        <button type="button" class="meal-tab" data-tab="manual">Вручную</button>
+      </div>
+
+      <div class="meal-tab-panel" id="meal-panel-search">
+        <div class="meal-search-row">
+          <input type="text" id="meal-search-input" placeholder="Например: гречка, куриная грудка">
+          <button type="button" id="btn-meal-search">Искать</button>
+        </div>
+        <div id="meal-search-results" class="meal-search-results"></div>
+      </div>
+
+      <div class="meal-tab-panel hidden" id="meal-panel-barcode">
+        <video id="meal-barcode-video" class="meal-barcode-video hidden" playsinline muted></video>
+        <button type="button" id="btn-meal-barcode-scan" class="secondary">📷 Сканировать камерой</button>
+        <div class="meal-barcode-manual">
+          <input type="text" id="meal-barcode-input" placeholder="Или введите код цифрами" inputmode="numeric">
+          <button type="button" id="btn-meal-barcode-lookup">Найти</button>
+        </div>
+        <div id="meal-barcode-status" class="meal-barcode-status"></div>
+      </div>
+
+      <div class="meal-tab-panel hidden" id="meal-panel-manual">
+        <div class="weight-row"><label for="meal-manual-name">Название</label><input type="text" id="meal-manual-name" placeholder="Обед"></div>
+        <div class="weight-row"><label for="meal-manual-kcal">Калории, ккал</label><input type="number" id="meal-manual-kcal" min="0" step="1"></div>
+        <div class="weight-row"><label for="meal-manual-protein">Белки, г</label><input type="number" id="meal-manual-protein" min="0" step="1"></div>
+        <div class="weight-row"><label for="meal-manual-fat">Жиры, г</label><input type="number" id="meal-manual-fat" min="0" step="1"></div>
+        <div class="weight-row"><label for="meal-manual-carb">Углеводы, г</label><input type="number" id="meal-manual-carb" min="0" step="1"></div>
+        <button type="button" id="btn-meal-manual-add">Добавить</button>
+      </div>
+
+      <div class="meal-tab-panel hidden" id="meal-panel-portion">
+        <div class="meal-portion-name" id="meal-portion-name"></div>
+        <div class="weight-row"><label for="meal-portion-amount" id="meal-portion-amount-label">Количество, г</label><input type="number" id="meal-portion-amount" min="1" step="1"></div>
+        <div class="meal-portion-preview" id="meal-portion-preview"></div>
+        <button type="button" id="btn-meal-portion-add">Добавить</button>
+        <button type="button" id="btn-meal-portion-back" class="ghost">← Назад к результатам</button>
+      </div>
+
+      <button type="button" id="btn-meal-add-close" class="ghost">Закрыть</button>
     </div>
   </div>
 
@@ -1220,12 +1325,17 @@
     startOfDay.setHours(0, 0, 0, 0);
     var dayFraction = Math.max(0, Math.min(1, (Date.now() - startOfDay.getTime()) / 86400000));
 
-    // Приход (норма, усвоенная пропорционально прошедшей части дня) и расход
-    // (базовый обмен за прошедшую часть дня + реальная активность/тренировки).
-    var intakeKcal = norm.calories * dayFraction;
-    var proteinKcalSoFar = norm.proteinG * dayFraction * 4;
-    var fatKcalSoFar = norm.fatG * dayFraction * 9;
-    var carbKcalSoFar = norm.carbG * dayFraction * 4;
+    // Приход: если за сегодня залогирован хотя бы один приём пищи — берём
+    // реальную сумму из лога, иначе по-старому предполагаем норму пропорционально
+    // прошедшей части дня. Расход всегда фактический (BMR за прошедшую часть дня
+    // + реальная активность/тренировки).
+    var todayMeals = getTodayMeals();
+    var mealsTotal = sumMeals(todayMeals);
+    var hasMeals = todayMeals.length > 0;
+    var intakeKcal = hasMeals ? mealsTotal.kcal : norm.calories * dayFraction;
+    var proteinKcalSoFar = hasMeals ? mealsTotal.protein * 4 : norm.proteinG * dayFraction * 4;
+    var fatKcalSoFar = hasMeals ? mealsTotal.fat * 9 : norm.fatG * dayFraction * 9;
+    var carbKcalSoFar = hasMeals ? mealsTotal.carb * 4 : norm.carbG * dayFraction * 4;
 
     var bmrSoFar = getBMR() * dayFraction;
     var expenditureKcal = bmrSoFar + getTodayActivityKcalEstimate();
@@ -1267,8 +1377,11 @@
       : 0;
 
     var bfPercent = lsNum('bodyFatPercent', 0);
-    var normLine = 'Норма: ≈' + Math.round(norm.calories) + ' ккал (Б ' + Math.round(norm.proteinG) +
-      ' / Ж ' + Math.round(norm.fatG) + ' / У ' + Math.round(norm.carbG) + ' г)';
+    var normLine = hasMeals
+      ? 'Съедено сегодня (факт): ≈' + Math.round(mealsTotal.kcal) + ' ккал (Б ' + Math.round(mealsTotal.protein) +
+        ' / Ж ' + Math.round(mealsTotal.fat) + ' / У ' + Math.round(mealsTotal.carb) + ' г) из нормы ≈' + Math.round(norm.calories) + ' ккал'
+      : 'Норма: ≈' + Math.round(norm.calories) + ' ккал (Б ' + Math.round(norm.proteinG) +
+        ' / Ж ' + Math.round(norm.fatG) + ' / У ' + Math.round(norm.carbG) + ' г) — предположительно, приёмы пищи ещё не отмечены';
     if (bfPercent > 0) normLine += ' · по Health Connect: жир тела ' + Math.round(bfPercent) + '%';
     document.getElementById('bc-norm-line').textContent = normLine;
     document.getElementById('bc-balance').textContent = fmtSignedKcal(netKcal);
@@ -1280,6 +1393,246 @@
     document.getElementById('bc-muscle-workout').textContent = Math.round(workoutMuscleG) + ' г';
     document.getElementById('bc-fatburn-workout').textContent = Math.round(workoutFatBurnG) + ' г';
   }
+
+  // ── Приёмы пищи — реальный дневной лог питания. Когда за сегодня есть хотя
+  // бы одна запись, renderBodyComposition() выше берёт съеденные калории/БЖУ
+  // отсюда вместо предположения "норма пропорционально прошедшей части дня".
+  // Источники записи: поиск по названию и штрихкод через FatSecret (Edge
+  // Function fatsecret-proxy — секреты API живут только там), либо ручной
+  // ввод БЖУ как запасной вариант, не зависящий ни от каких ключей. ──────────
+  function getTodayMeals(){
+    if (lsGet('mealsDate', '') !== todayKey()){
+      lsSet('mealsDate', todayKey());
+      lsSet('meals', '[]');
+    }
+    try { return JSON.parse(lsGet('meals', '[]')) || []; } catch(e){ return []; }
+  }
+  function saveTodayMeals(meals){
+    lsSet('mealsDate', todayKey());
+    lsSet('meals', JSON.stringify(meals));
+  }
+  function sumMeals(meals){
+    return meals.reduce(function(acc, m){
+      acc.kcal += m.kcal || 0; acc.protein += m.protein || 0;
+      acc.fat += m.fat || 0; acc.carb += m.carb || 0;
+      return acc;
+    }, { kcal: 0, protein: 0, fat: 0, carb: 0 });
+  }
+  function addMeal(meal){
+    var meals = getTodayMeals();
+    meal.id = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    meal.ts = Date.now();
+    meals.push(meal);
+    saveTodayMeals(meals);
+    renderMeals();
+    renderBodyComposition();
+  }
+  function removeMeal(id){
+    saveTodayMeals(getTodayMeals().filter(function(m){ return m.id !== id; }));
+    renderMeals();
+    renderBodyComposition();
+  }
+  function renderMeals(){
+    var meals = getTodayMeals();
+    var list = document.getElementById('meals-list');
+    var empty = document.getElementById('meals-empty');
+    var totalEl = document.getElementById('meals-total');
+    list.innerHTML = '';
+    if (!meals.length){
+      empty.classList.remove('hidden');
+      totalEl.textContent = '';
+      return;
+    }
+    empty.classList.add('hidden');
+    meals.forEach(function(m){
+      var row = document.createElement('div');
+      row.className = 'meal-row';
+      var t = new Date(m.ts);
+      var timeStr = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
+      var nameEl = document.createElement('div');
+      nameEl.className = 'meal-name';
+      nameEl.textContent = m.name;
+      var metaEl = document.createElement('div');
+      metaEl.className = 'meal-meta';
+      metaEl.textContent = timeStr + ' · ' + Math.round(m.kcal) + ' ккал · Б' + Math.round(m.protein) +
+        ' Ж' + Math.round(m.fat) + ' У' + Math.round(m.carb);
+      var delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'meal-del';
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', function(){ removeMeal(m.id); });
+      row.appendChild(nameEl);
+      row.appendChild(metaEl);
+      row.appendChild(delBtn);
+      list.appendChild(row);
+    });
+    var total = sumMeals(meals);
+    totalEl.textContent = 'Итого: ' + Math.round(total.kcal) + ' ккал (Б ' + Math.round(total.protein) +
+      ' / Ж ' + Math.round(total.fat) + ' / У ' + Math.round(total.carb) + ' г)';
+  }
+
+  // ── FatSecret через прокси (Edge Function) — ключи API не могут жить в
+  // статической странице, поэтому вся авторизация и запросы к FatSecret идут
+  // через сервер, страница получает только уже готовый JSON. ─────────────────
+  function fatsecretRequest(params){
+    return fetch(SB_URL + '/functions/v1/fatsecret-proxy?' + params)
+      .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); });
+  }
+  function fatsecretSearch(q){
+    return fatsecretRequest('action=search&q=' + encodeURIComponent(q));
+  }
+  function fatsecretDetail(foodId){
+    return fatsecretRequest('action=detail&food_id=' + encodeURIComponent(foodId));
+  }
+  function fatsecretBarcode(code){
+    return fatsecretRequest('action=barcode&code=' + encodeURIComponent(code));
+  }
+
+  // ── Модалка добавления приёма пищи — три вкладки (поиск/штрихкод/вручную) +
+  // отдельная вкладка "порция" для уточнения количества у продукта, найденного
+  // в FatSecret, перед добавлением его в сегодняшний лог. ─────────────────────
+  var mealPickedFood = null; // { name, per1g: {kcal,protein,fat,carb} } — выбранный продукт
+  var barcodeStream = null;
+  var barcodeDetector = null;
+  var barcodeScanRAF = null;
+
+  function openMealAdd(){
+    document.getElementById('meal-add-overlay').classList.remove('hidden');
+    switchMealTab('search');
+  }
+  function closeMealAdd(){
+    stopBarcodeScan();
+    document.getElementById('meal-add-overlay').classList.add('hidden');
+  }
+  function switchMealTab(tab){
+    ['search', 'barcode', 'manual', 'portion'].forEach(function(t){
+      document.getElementById('meal-panel-' + t).classList.toggle('hidden', t !== tab);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.meal-tab'), function(btn){
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    if (tab !== 'barcode') stopBarcodeScan();
+  }
+
+  function renderMealSearchResults(items){
+    var box = document.getElementById('meal-search-results');
+    box.innerHTML = '';
+    if (!items || !items.length){
+      box.innerHTML = '<div class="meal-search-status">Ничего не найдено</div>';
+      return;
+    }
+    items.forEach(function(item){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'meal-result-item';
+      var nameEl = document.createElement('div');
+      nameEl.className = 'mr-name';
+      nameEl.textContent = item.name + (item.brand ? ' · ' + item.brand : '');
+      var descEl = document.createElement('div');
+      descEl.className = 'mr-desc';
+      descEl.textContent = item.description || '';
+      btn.appendChild(nameEl);
+      btn.appendChild(descEl);
+      btn.addEventListener('click', function(){ pickMealFood(item.food_id, item.name); });
+      box.appendChild(btn);
+    });
+  }
+
+  function pickMealFood(foodId, fallbackName){
+    var box = document.getElementById('meal-search-results');
+    box.innerHTML = '<div class="meal-search-status">Загрузка...</div>';
+    fatsecretDetail(foodId).then(function(res){
+      if (!res.ok || !res.data || !res.data.per1g){
+        showToast((res.data && res.data.error) || 'Не удалось получить данные о продукте');
+        renderMealSearchResults([]);
+        return;
+      }
+      openMealPortion(res.data.name || fallbackName, res.data.per1g, res.data.servingHint);
+    }).catch(function(){
+      showToast('Нет связи с сервером FatSecret');
+    });
+  }
+
+  function openMealPortion(name, per1g, servingHint){
+    mealPickedFood = { name: name, per1g: per1g };
+    document.getElementById('meal-portion-name').textContent = name;
+    document.getElementById('meal-portion-amount-label').textContent = (servingHint && !servingHint.isGrams)
+      ? 'Количество порций (' + servingHint.label + ')' : 'Количество, г';
+    var amountInput = document.getElementById('meal-portion-amount');
+    amountInput.value = (servingHint && !servingHint.isGrams) ? 1 : Math.round((servingHint && servingHint.amount) || 100);
+    updateMealPortionPreview();
+    switchMealTab('portion');
+  }
+  function updateMealPortionPreview(){
+    if (!mealPickedFood) return;
+    var amount = parseFloat(document.getElementById('meal-portion-amount').value) || 0;
+    var per1g = mealPickedFood.per1g;
+    var kcal = per1g.kcal * amount, protein = per1g.protein * amount,
+      fat = per1g.fat * amount, carb = per1g.carb * amount;
+    document.getElementById('meal-portion-preview').textContent =
+      Math.round(kcal) + ' ккал · Б ' + Math.round(protein) + ' / Ж ' + Math.round(fat) + ' / У ' + Math.round(carb) + ' г';
+  }
+
+  // ── Штрихкод: BarcodeDetector — нативный API самого браузера/WebView, без
+  // сторонних библиотек; если его нет (старый WebView), остаётся только ручной
+  // ввод цифр штрихкода ниже. ──────────────────────────────────────────────
+  function startBarcodeScan(){
+    if (!('BarcodeDetector' in window)){
+      document.getElementById('meal-barcode-status').textContent = 'Камера-сканер не поддерживается этим устройством — введите код цифрами ниже';
+      return;
+    }
+    var video = document.getElementById('meal-barcode-video');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream){
+      barcodeStream = stream;
+      video.srcObject = stream;
+      video.classList.remove('hidden');
+      video.play();
+      barcodeDetector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+      var scanLoop = function(){
+        if (!barcodeStream) return;
+        barcodeDetector.detect(video).then(function(codes){
+          if (codes && codes.length){
+            var code = codes[0].rawValue;
+            stopBarcodeScan();
+            lookupBarcode(code);
+          } else {
+            barcodeScanRAF = requestAnimationFrame(scanLoop);
+          }
+        }).catch(function(){ barcodeScanRAF = requestAnimationFrame(scanLoop); });
+      };
+      scanLoop();
+    }).catch(function(){
+      document.getElementById('meal-barcode-status').textContent = 'Нет доступа к камере — введите код цифрами ниже';
+    });
+  }
+  function stopBarcodeScan(){
+    if (barcodeScanRAF) cancelAnimationFrame(barcodeScanRAF);
+    barcodeScanRAF = null;
+    if (barcodeStream){
+      barcodeStream.getTracks().forEach(function(t){ t.stop(); });
+      barcodeStream = null;
+    }
+    var video = document.getElementById('meal-barcode-video');
+    video.pause();
+    video.srcObject = null;
+    video.classList.add('hidden');
+  }
+  function lookupBarcode(code){
+    code = (code || '').replace(/\D/g, '');
+    if (!code){ showToast('Некорректный штрихкод'); return; }
+    document.getElementById('meal-barcode-status').textContent = 'Ищем по штрихкоду ' + code + '...';
+    fatsecretBarcode(code).then(function(res){
+      if (!res.ok || !res.data || !res.data.per1g){
+        document.getElementById('meal-barcode-status').textContent = (res.data && res.data.error) || 'Продукт с таким штрихкодом не найден';
+        return;
+      }
+      document.getElementById('meal-barcode-status').textContent = '';
+      openMealPortion(res.data.name, res.data.per1g, res.data.servingHint);
+    }).catch(function(){
+      document.getElementById('meal-barcode-status').textContent = 'Нет связи с сервером FatSecret';
+    });
+  }
+
   // Зеркалит вес в SharedPreferences нативного приложения, чтобы им мог пользоваться
   // виджет питомца (PetWidgetProvider) — у него нет доступа к localStorage WebView,
   // а без веса он не может посчитать калории тем же способом, что и веб-версия.
@@ -2613,6 +2966,7 @@
       document.getElementById('input-gender').value = lsGet('gender', '');
       document.getElementById('input-bodyfat').value = lsGet('bodyFatPercent', '');
       renderWorkoutsList(getCachedWorkouts());
+      renderMeals();
       renderBodyComposition();
       if (isNative){ try { syncBodyWeightToNative(lsNum('weightKg', 0)); refreshHealthConnectSteps(); refreshHealthConnectMetrics(); refreshHealthConnectBodyMetrics(); } catch (e) {} }
       else if (lsGet('sensorEnabled', '') === '1') startSensor();
@@ -2650,6 +3004,81 @@
     });
     document.getElementById('bodycomp-info-overlay').addEventListener('click', function(e){
       if (e.target.id === 'bodycomp-info-overlay') document.getElementById('bodycomp-info-overlay').classList.add('hidden');
+    });
+
+    document.getElementById('btn-meals-info').addEventListener('click', function(){
+      document.getElementById('meals-info-overlay').classList.remove('hidden');
+    });
+    document.getElementById('btn-meals-info-close').addEventListener('click', function(){
+      document.getElementById('meals-info-overlay').classList.add('hidden');
+    });
+    document.getElementById('meals-info-overlay').addEventListener('click', function(e){
+      if (e.target.id === 'meals-info-overlay') document.getElementById('meals-info-overlay').classList.add('hidden');
+    });
+
+    document.getElementById('btn-meal-add').addEventListener('click', openMealAdd);
+    document.getElementById('btn-meal-add-close').addEventListener('click', closeMealAdd);
+    document.getElementById('meal-add-overlay').addEventListener('click', function(e){
+      if (e.target.id === 'meal-add-overlay') closeMealAdd();
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.meal-tab'), function(btn){
+      btn.addEventListener('click', function(){ switchMealTab(btn.dataset.tab); });
+    });
+
+    document.getElementById('btn-meal-search').addEventListener('click', function(){
+      var q = document.getElementById('meal-search-input').value.trim();
+      if (!q) return;
+      var box = document.getElementById('meal-search-results');
+      box.innerHTML = '<div class="meal-search-status">Ищем...</div>';
+      fatsecretSearch(q).then(function(res){
+        if (!res.ok){
+          box.innerHTML = '<div class="meal-search-status">' + ((res.data && res.data.error) || 'Ошибка поиска') + '</div>';
+          return;
+        }
+        renderMealSearchResults(res.data.items);
+      }).catch(function(){
+        box.innerHTML = '<div class="meal-search-status">Нет связи с сервером FatSecret</div>';
+      });
+    });
+    document.getElementById('meal-search-input').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') document.getElementById('btn-meal-search').click();
+    });
+
+    document.getElementById('btn-meal-barcode-scan').addEventListener('click', startBarcodeScan);
+    document.getElementById('btn-meal-barcode-lookup').addEventListener('click', function(){
+      lookupBarcode(document.getElementById('meal-barcode-input').value);
+    });
+
+    document.getElementById('meal-portion-amount').addEventListener('input', updateMealPortionPreview);
+    document.getElementById('btn-meal-portion-back').addEventListener('click', function(){ switchMealTab('search'); });
+    document.getElementById('btn-meal-portion-add').addEventListener('click', function(){
+      if (!mealPickedFood) return;
+      var amount = parseFloat(document.getElementById('meal-portion-amount').value) || 0;
+      var per1g = mealPickedFood.per1g;
+      addMeal({
+        name: mealPickedFood.name,
+        kcal: per1g.kcal * amount,
+        protein: per1g.protein * amount,
+        fat: per1g.fat * amount,
+        carb: per1g.carb * amount,
+      });
+      closeMealAdd();
+    });
+
+    document.getElementById('btn-meal-manual-add').addEventListener('click', function(){
+      var name = document.getElementById('meal-manual-name').value.trim() || 'Приём пищи';
+      var kcal = parseFloat(document.getElementById('meal-manual-kcal').value) || 0;
+      var protein = parseFloat(document.getElementById('meal-manual-protein').value) || 0;
+      var fat = parseFloat(document.getElementById('meal-manual-fat').value) || 0;
+      var carb = parseFloat(document.getElementById('meal-manual-carb').value) || 0;
+      if (kcal <= 0){ showToast('Укажите калорийность'); return; }
+      addMeal({ name: name, kcal: kcal, protein: protein, fat: fat, carb: carb });
+      document.getElementById('meal-manual-name').value = '';
+      document.getElementById('meal-manual-kcal').value = '';
+      document.getElementById('meal-manual-protein').value = '';
+      document.getElementById('meal-manual-fat').value = '';
+      document.getElementById('meal-manual-carb').value = '';
+      closeMealAdd();
     });
 
     document.getElementById('input-bio').addEventListener('input', function(){
@@ -2831,6 +3260,7 @@
       document.getElementById('bio-card').classList.add('hidden');
       document.getElementById('bodycomp-card').classList.add('hidden');
       document.getElementById('workouts-card').classList.add('hidden');
+      renderMeals();
       showScreen('create');
     });
 
