@@ -3,6 +3,7 @@ package ru.alliby.app.tamagotchi
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
@@ -329,8 +330,11 @@ object HealthConnectSteps {
             val granted = try {
                 client.permissionController.getGrantedPermissions()
             } catch (e: Exception) {
+                Log.e("TamaBodyMetrics", "getGrantedPermissions failed", e)
                 emptySet()
             }
+            Log.d("TamaBodyMetrics", "granted contains WEIGHT=" + granted.contains(PERMISSION_WEIGHT) +
+                " BODY_FAT=" + granted.contains(PERMISSION_BODY_FAT) + " all=" + granted)
             val range = TimeRangeFilter.between(Instant.now().minus(Duration.ofDays(90)), Instant.now())
 
             var weightKg: Double? = null
@@ -344,8 +348,11 @@ object HealthConnectSteps {
                             pageSize = 1
                         )
                     )
+                    Log.d("TamaBodyMetrics", "WeightRecord count=" + response.records.size)
                     weightKg = response.records.firstOrNull()?.weight?.inKilograms
-                } catch (e: Exception) {}
+                } catch (e: Exception) {
+                    Log.e("TamaBodyMetrics", "WeightRecord read failed", e)
+                }
             }
 
             var bodyFatPercent: Double? = null
@@ -359,10 +366,14 @@ object HealthConnectSteps {
                             pageSize = 1
                         )
                     )
+                    Log.d("TamaBodyMetrics", "BodyFatRecord count=" + response.records.size)
                     bodyFatPercent = response.records.firstOrNull()?.percentage?.value
-                } catch (e: Exception) {}
+                } catch (e: Exception) {
+                    Log.e("TamaBodyMetrics", "BodyFatRecord read failed", e)
+                }
             }
 
+            Log.d("TamaBodyMetrics", "result weightKg=" + weightKg + " bodyFatPercent=" + bodyFatPercent)
             callback.onResult(BodyMetrics(weightKg, bodyFatPercent))
         }
     }
