@@ -9,13 +9,37 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
+import androidx.health.connect.client.records.BasalBodyTemperatureRecord
+import androidx.health.connect.client.records.BasalMetabolicRateRecord
+import androidx.health.connect.client.records.BloodGlucoseRecord
+import androidx.health.connect.client.records.BloodPressureRecord
 import androidx.health.connect.client.records.BodyFatRecord
+import androidx.health.connect.client.records.BodyTemperatureRecord
+import androidx.health.connect.client.records.BodyWaterMassRecord
+import androidx.health.connect.client.records.BoneMassRecord
 import androidx.health.connect.client.records.DistanceRecord
+import androidx.health.connect.client.records.ElevationGainedRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.FloorsClimbedRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
+import androidx.health.connect.client.records.HeightRecord
+import androidx.health.connect.client.records.HydrationRecord
+import androidx.health.connect.client.records.LeanBodyMassRecord
+import androidx.health.connect.client.records.NutritionRecord
+import androidx.health.connect.client.records.OxygenSaturationRecord
+import androidx.health.connect.client.records.PlannedExerciseSessionRecord
+import androidx.health.connect.client.records.PowerRecord
+import androidx.health.connect.client.records.RespiratoryRateRecord
+import androidx.health.connect.client.records.RestingHeartRateRecord
+import androidx.health.connect.client.records.SkinTemperatureRecord
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.SpeedRecord
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
+import androidx.health.connect.client.records.Vo2MaxRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.records.WheelchairPushesRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -48,6 +72,35 @@ object HealthConnectSteps {
     private val PERMISSION_WEIGHT = HealthPermission.getReadPermission(WeightRecord::class)
     private val PERMISSION_BODY_FAT = HealthPermission.getReadPermission(BodyFatRecord::class)
 
+    // Остальные показатели Health Connect (кроме репродуктивного здоровья и клинических
+    // медкарт — те за пределами области этого приложения): запрашиваются, чтобы категории
+    // были видны в списке разрешений Alliby в Health Connect, даже если пока не используются
+    // в логике питомца.
+    private val PERMISSION_HEIGHT = HealthPermission.getReadPermission(HeightRecord::class)
+    private val PERMISSION_BASAL_METABOLIC_RATE = HealthPermission.getReadPermission(BasalMetabolicRateRecord::class)
+    private val PERMISSION_BODY_WATER_MASS = HealthPermission.getReadPermission(BodyWaterMassRecord::class)
+    private val PERMISSION_BONE_MASS = HealthPermission.getReadPermission(BoneMassRecord::class)
+    private val PERMISSION_LEAN_BODY_MASS = HealthPermission.getReadPermission(LeanBodyMassRecord::class)
+    private val PERMISSION_HYDRATION = HealthPermission.getReadPermission(HydrationRecord::class)
+    private val PERMISSION_NUTRITION = HealthPermission.getReadPermission(NutritionRecord::class)
+    private val PERMISSION_BASAL_BODY_TEMPERATURE = HealthPermission.getReadPermission(BasalBodyTemperatureRecord::class)
+    private val PERMISSION_BLOOD_GLUCOSE = HealthPermission.getReadPermission(BloodGlucoseRecord::class)
+    private val PERMISSION_BLOOD_PRESSURE = HealthPermission.getReadPermission(BloodPressureRecord::class)
+    private val PERMISSION_BODY_TEMPERATURE = HealthPermission.getReadPermission(BodyTemperatureRecord::class)
+    private val PERMISSION_SKIN_TEMPERATURE = HealthPermission.getReadPermission(SkinTemperatureRecord::class)
+    private val PERMISSION_RESPIRATORY_RATE = HealthPermission.getReadPermission(RespiratoryRateRecord::class)
+    private val PERMISSION_OXYGEN_SATURATION = HealthPermission.getReadPermission(OxygenSaturationRecord::class)
+    private val PERMISSION_RESTING_HEART_RATE = HealthPermission.getReadPermission(RestingHeartRateRecord::class)
+    private val PERMISSION_HEART_RATE_VARIABILITY = HealthPermission.getReadPermission(HeartRateVariabilityRmssdRecord::class)
+    private val PERMISSION_VO2_MAX = HealthPermission.getReadPermission(Vo2MaxRecord::class)
+    private val PERMISSION_POWER = HealthPermission.getReadPermission(PowerRecord::class)
+    private val PERMISSION_SPEED = HealthPermission.getReadPermission(SpeedRecord::class)
+    private val PERMISSION_ELEVATION_GAINED = HealthPermission.getReadPermission(ElevationGainedRecord::class)
+    private val PERMISSION_FLOORS_CLIMBED = HealthPermission.getReadPermission(FloorsClimbedRecord::class)
+    private val PERMISSION_TOTAL_CALORIES_BURNED = HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class)
+    private val PERMISSION_WHEELCHAIR_PUSHES = HealthPermission.getReadPermission(WheelchairPushesRecord::class)
+    private val PERMISSION_PLANNED_EXERCISE = HealthPermission.getReadPermission(PlannedExerciseSessionRecord::class)
+
     @JvmField
     val READ_STEPS_PERMISSIONS: Set<String> = setOf(PERMISSION_STEPS)
 
@@ -56,7 +109,15 @@ object HealthConnectSteps {
     val READ_ALL_PERMISSIONS: Set<String> = setOf(
         PERMISSION_STEPS, PERMISSION_DISTANCE, PERMISSION_CALORIES,
         PERMISSION_SLEEP, PERMISSION_EXERCISE, PERMISSION_HEART_RATE,
-        PERMISSION_WEIGHT, PERMISSION_BODY_FAT
+        PERMISSION_WEIGHT, PERMISSION_BODY_FAT,
+        PERMISSION_HEIGHT, PERMISSION_BASAL_METABOLIC_RATE, PERMISSION_BODY_WATER_MASS,
+        PERMISSION_BONE_MASS, PERMISSION_LEAN_BODY_MASS, PERMISSION_HYDRATION,
+        PERMISSION_NUTRITION, PERMISSION_BASAL_BODY_TEMPERATURE, PERMISSION_BLOOD_GLUCOSE,
+        PERMISSION_BLOOD_PRESSURE, PERMISSION_BODY_TEMPERATURE, PERMISSION_SKIN_TEMPERATURE,
+        PERMISSION_RESPIRATORY_RATE, PERMISSION_OXYGEN_SATURATION, PERMISSION_RESTING_HEART_RATE,
+        PERMISSION_HEART_RATE_VARIABILITY, PERMISSION_VO2_MAX, PERMISSION_POWER,
+        PERMISSION_SPEED, PERMISSION_ELEVATION_GAINED, PERMISSION_FLOORS_CLIMBED,
+        PERMISSION_TOTAL_CALORIES_BURNED, PERMISSION_WHEELCHAIR_PUSHES, PERMISSION_PLANNED_EXERCISE
     )
 
     fun interface Callback {
