@@ -674,6 +674,14 @@
       </div>
 
       <div class="meal-tab-panel hidden" id="meal-panel-manual">
+        <div class="weight-row"><label for="meal-manual-type">Приём пищи</label>
+          <select id="meal-manual-type">
+            <option value="breakfast">Завтрак</option>
+            <option value="lunch">Обед</option>
+            <option value="snack">Полдник</option>
+            <option value="dinner">Ужин</option>
+          </select>
+        </div>
         <div class="weight-row"><label for="meal-manual-name">Название</label><input type="text" id="meal-manual-name" placeholder="Обед"></div>
         <div class="weight-row"><label for="meal-manual-kcal">Калории, ккал</label><input type="number" id="meal-manual-kcal" min="0" step="1"></div>
         <div class="weight-row"><label for="meal-manual-protein">Белки, г</label><input type="number" id="meal-manual-protein" min="0" step="1"></div>
@@ -1401,6 +1409,7 @@
   // Источники записи: поиск по названию и штрихкод через FatSecret (Edge
   // Function fatsecret-proxy — секреты API живут только там), либо ручной
   // ввод БЖУ как запасной вариант, не зависящий ни от каких ключей. ──────────
+  var MEAL_TYPE_LABELS = { breakfast: 'Завтрак', lunch: 'Обед', snack: 'Полдник', dinner: 'Ужин' };
   function getTodayMeals(){
     if (lsGet('mealsDate', '') !== todayKey()){
       lsSet('mealsDate', todayKey());
@@ -1455,7 +1464,8 @@
       nameEl.textContent = m.name;
       var metaEl = document.createElement('div');
       metaEl.className = 'meal-meta';
-      metaEl.textContent = timeStr + ' · ' + Math.round(m.kcal) + ' ккал · Б' + Math.round(m.protein) +
+      var typeLabel = MEAL_TYPE_LABELS[m.type] ? MEAL_TYPE_LABELS[m.type] + ' · ' : '';
+      metaEl.textContent = typeLabel + timeStr + ' · ' + Math.round(m.kcal) + ' ккал · Б' + Math.round(m.protein) +
         ' Ж' + Math.round(m.fat) + ' У' + Math.round(m.carb);
       var delBtn = document.createElement('button');
       delBtn.type = 'button';
@@ -3067,13 +3077,14 @@
     });
 
     document.getElementById('btn-meal-manual-add').addEventListener('click', function(){
+      var type = document.getElementById('meal-manual-type').value;
       var name = document.getElementById('meal-manual-name').value.trim() || 'Приём пищи';
       var kcal = parseFloat(document.getElementById('meal-manual-kcal').value) || 0;
       var protein = parseFloat(document.getElementById('meal-manual-protein').value) || 0;
       var fat = parseFloat(document.getElementById('meal-manual-fat').value) || 0;
       var carb = parseFloat(document.getElementById('meal-manual-carb').value) || 0;
       if (kcal <= 0){ showToast('Укажите калорийность'); return; }
-      addMeal({ name: name, kcal: kcal, protein: protein, fat: fat, carb: carb });
+      addMeal({ name: name, type: type, kcal: kcal, protein: protein, fat: fat, carb: carb });
       document.getElementById('meal-manual-name').value = '';
       document.getElementById('meal-manual-kcal').value = '';
       document.getElementById('meal-manual-protein').value = '';
