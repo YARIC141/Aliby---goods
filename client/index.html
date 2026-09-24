@@ -3189,6 +3189,9 @@ const DEFAULT_FEATURES = {
   sMap:true, sStores:true, sMenu:true,
   sCart:true, sOrders:true, sSubscriptions:true, sMySubscriptions:true,
 };
+const DEFAULT_DIRECTIONS = {
+  food:true, goods:true, services:true, sport:true, entertainment:true,
+};
 
 // ─── STATE ───
 const S = {
@@ -3199,6 +3202,7 @@ const S = {
   nearbyMeters: null, geoLat: null, geoLng: null, deliveryFilter: false,
   navHistory: [], navIdx: -1,
   features: { ...DEFAULT_FEATURES },
+  directions: { ...DEFAULT_DIRECTIONS },
   direction: 'food',
   _carts: { food: {items:[],storeId:null}, goods: {items:[],storeId:null}, services: {items:[],storeId:null}, sport: {items:[],storeId:null}, entertainment: {items:[],storeId:null} },
   deliveryMode: null, deliveryFee: 0,
@@ -5499,8 +5503,10 @@ async function loadAppConfig() {
     if (!rows?.length) return;
     const cfg = rows[0].config;
     if (cfg?.ui?.features) S.features = { ...DEFAULT_FEATURES, ...cfg.ui.features };
+    if (cfg?.ui?.directions) S.directions = { ...DEFAULT_DIRECTIONS, ...cfg.ui.directions };
   } catch(e) {}
   applyFeatureToggles();
+  applyDirectionToggles();
 }
 
 function applyFeatureToggles() {
@@ -5510,6 +5516,25 @@ function applyFeatureToggles() {
     const btn = document.querySelector(`[data-nav="${nav}"]`);
     if (btn) btn.style.display = f[key] === false ? 'none' : '';
   });
+}
+
+// Скрывает тайл на главной и вкладку в «Заведениях» для отключённых направлений;
+// если сейчас активно отключённое направление — переключает на первое включённое.
+function applyDirectionToggles() {
+  const d = S.directions;
+  Object.keys(DEFAULT_DIRECTIONS).forEach(dir => {
+    const on = d[dir] !== false;
+    const tile = document.querySelector(`.home-tile-${dir}`);
+    if (tile) tile.style.display = on ? '' : 'none';
+    const tab = document.querySelector(`.dir-tab[data-dir="${dir}"]`);
+    if (tab) tab.style.display = on ? '' : 'none';
+    const recentBlock = document.querySelector(`.recent-dir-block[data-dir="${dir}"]`);
+    if (recentBlock) recentBlock.style.display = on ? '' : 'none';
+  });
+  if (d[S.direction] === false) {
+    const fallback = Object.keys(DEFAULT_DIRECTIONS).find(dir => d[dir] !== false);
+    if (fallback) setDirection(fallback);
+  }
 }
 
 // ─── AUTH ───
@@ -10305,14 +10330,14 @@ const DIR_META = {
 
 function _renderRecentStores(el, unique) {
   const byDir = { food: [], goods: [], services: [], sport: [], entertainment: [] };
-  for (const e of unique) { const d = e.store?.direction; if (d && byDir[d] && byDir[d].length < 4) byDir[d].push(e); }
+  for (const e of unique) { const d = e.store?.direction; if (d && byDir[d] && S.directions[d] !== false && byDir[d].length < 4) byDir[d].push(e); }
   const hasAny = Object.values(byDir).some(a => a.length > 0);
   if (!hasAny) { el.innerHTML = ''; return; }
   let html = '<div style="font:600 13px/1 var(--font-sans);color:var(--fg-3);margin-bottom:14px;padding-top:4px">Недавние заведения</div>';
   for (const [dir, items] of Object.entries(byDir)) {
     if (!items.length) continue;
     const { label, color } = DIR_META[dir];
-    html += `<div class="recent-dir-block"><div class="recent-dir-label" style="color:${color};border-color:${color}40">${label}</div>`;
+    html += `<div class="recent-dir-block" data-dir="${dir}"><div class="recent-dir-label" style="color:${color};border-color:${color}40">${label}</div>`;
     for (const { store_id, store: st } of items) {
       const thumb = st.image_url
         ? `<img src="${esc(mediaUrl(st.image_url))}" alt="">`
