@@ -544,6 +544,13 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .home-tile-services::before{background:#78b4e0}
 .home-tile-sport::before{background:#ef4444}
 .home-tile-entertainment::before{background:#eab308}
+.ht-shortcuts{display:none;flex-direction:column;gap:6px;width:100%;margin-top:10px;text-align:left}
+.home-tile-sport.expanded{grid-column:1/-1;cursor:default;padding:16px}
+.home-tile-sport.expanded:hover{transform:none}
+.home-tile-sport.expanded .ht-shortcuts{display:flex}
+.ht-shortcut-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--glass-sm);color:var(--fg);font:600 14px/1.2 var(--font-sans);cursor:pointer;transition:background var(--t-fast)}
+.ht-shortcut-btn:hover{background:var(--bg-2)}
+.ht-shortcut-btn:active{transform:scale(0.98)}
 .recent-dir-block{margin-bottom:20px}
 .recent-dir-label{display:flex;align-items:center;gap:6px;font:700 12px/1 var(--font-sans);letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;padding-bottom:8px;border-bottom:2px solid}
 .recent-store-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);cursor:pointer}
@@ -1356,10 +1363,28 @@ document.addEventListener('deviceready',function(){
       <div class="ht-name">Товары</div>
       <div class="ht-desc">Магазины и шоурумы</div>
     </div>
-    <div class="home-tile home-tile-sport" onclick="openDirection('sport')">
+    <div class="home-tile home-tile-sport" id="home-tile-sport" onclick="toggleSportTile()">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-sport"/></svg></div>
       <div class="ht-name">Спорт и образование</div>
       <div class="ht-desc">Клубы и секции</div>
+      <div class="ht-shortcuts">
+        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutNearby()">
+          <span>Заведения рядом</span>
+          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('nearby')">?</span>
+        </button>
+        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutFormat('group')">
+          <span>По расписанию</span>
+          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('schedule')">?</span>
+        </button>
+        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutFormat('personal', false)">
+          <span>Индивидуальные</span>
+          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('personal')">?</span>
+        </button>
+        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutFormat('personal', true)">
+          <span>Групповые</span>
+          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('group')">?</span>
+        </button>
+      </div>
     </div>
     <div class="home-tile home-tile-entertainment" onclick="openDirection('entertainment')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-entertain"/></svg></div>
@@ -2693,6 +2718,20 @@ document.addEventListener('deviceready',function(){
   </div>
 </div>
 
+<!-- Sport tile shortcut info -->
+<div class="overlay" id="m-sport-shortcut-info">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h3 id="sport-shortcut-info-title">Занятие</h3>
+      <button class="modal-x" onclick="closeModal('m-sport-shortcut-info')">✕</button>
+    </div>
+    <div id="sport-shortcut-info-body" style="font-size:14px;line-height:1.5;color:var(--fg-2);margin-bottom:16px"></div>
+    <div class="modal-ft">
+      <button class="btn btn-p btn-full" onclick="closeModal('m-sport-shortcut-info')">Понятно</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="m-usub">
   <div class="modal">
     <div class="modal-hd">
@@ -3505,6 +3544,39 @@ function openDirection(dir) {
   goTo('map');
 }
 
+// ─── HOME "СПОРТ И ОБРАЗОВАНИЕ" TILE SHORTCUTS ───
+function toggleSportTile() {
+  document.getElementById('home-tile-sport')?.classList.toggle('expanded');
+}
+
+function sportShortcutNearby() {
+  document.getElementById('home-tile-sport')?.classList.remove('expanded');
+  setDirection('sport');
+  goTo('map');
+  applyNearbyFilter(500);
+}
+
+function sportShortcutFormat(mode, multiPerson) {
+  document.getElementById('home-tile-sport')?.classList.remove('expanded');
+  _sportTrainingPreset = { mode, multiPerson: !!multiPerson };
+  setDirection('sport');
+  goTo('map');
+}
+
+const _SPORT_SHORTCUT_INFO = {
+  nearby:   { title: 'Заведения рядом', body: 'Покажет на карте заведения направления «Спорт и образование», которые находятся не дальше 500 метров от вас.' },
+  schedule: { title: 'По расписанию', body: 'Групповые занятия с фиксированным временем: заведение само составляет расписание, а вы записываетесь на подходящий слот вместе с другими участниками.' },
+  personal: { title: 'Индивидуальные', body: 'Персональная тренировка один на один с тренером — вы сами выбираете удобное время в разделе «Тренировки и инвентарь» выбранного заведения.' },
+  group:    { title: 'Групповые', body: 'Тоже персональная тренировка, но для нескольких человек: вы можете позвать друзей, каждый укажет своё удобное время, а тренер подберёт время, подходящее всем.' },
+};
+function showSportShortcutInfo(kind) {
+  const info = _SPORT_SHORTCUT_INFO[kind];
+  if (!info) return;
+  document.getElementById('sport-shortcut-info-title').textContent = info.title;
+  document.getElementById('sport-shortcut-info-body').textContent = info.body;
+  openModal('m-sport-shortcut-info');
+}
+
 // ─── QR CODE ───
 function showQrModal() {
   const uid = S.session?.user?.id;
@@ -3561,6 +3633,9 @@ const debouncedMenuLoad = debounce(() => loadMenuItems(), 380);
 let _calenabsTab = 'ord';
 let _schedulePreselect = null;
 const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(), storeId: null, schedData: {}, bookedData: {}, openDate: null, masterId: '', itemId: '', masters: [], masterScheds: {}, mode: 'all', trainingItems: [], masterModes: {}, groupCounts: {}, multiPerson: false, personalDays: {}, masterItemPrice: {}, bookableItems: [], groupInterestDates: new Map(), dayOptions: {} };
+// Set by a "Спорт и образование" home-tile shortcut; consumed once by the next store's
+// loadCaScheduleScreen() to preselect the training format the user asked for on the home screen.
+let _sportTrainingPreset = null;
 
 function peekTab(btn) {
   if (!btn) return;
@@ -4481,6 +4556,15 @@ async function loadCaScheduleScreen() {
       const hasGroupItems = _caSched.trainingItems.some(it => it.training_mode === 'group');
       const hasPersonalBucket = _caSched.trainingItems.some(it => it.training_mode === 'personal') || _caSched.bookableItems.length > 0;
       _caSched.mode = hasGroupItems ? 'group' : 'personal';
+      if (_sportTrainingPreset) {
+        if (_sportTrainingPreset.mode === 'group' && hasGroupItems) {
+          _caSched.mode = 'group';
+        } else if (_sportTrainingPreset.mode === 'personal' && hasPersonalBucket) {
+          _caSched.mode = 'personal';
+          _caSched.multiPerson = !!_sportTrainingPreset.multiPerson;
+        }
+        _sportTrainingPreset = null;
+      }
       const modeRow = document.getElementById('ca-sched-mode-row');
       if (modeRow) {
         modeRow.style.display = (hasGroupItems && hasPersonalBucket) ? 'flex' : 'none';
