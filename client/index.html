@@ -255,6 +255,18 @@ hr{border:none;border-top:1px solid var(--line-soft);margin:14px 0}
 .sl-item.sel{background:oklch(from var(--bg-2) l c h / .65)}
 .sl-item .sli-name{font:600 16px/1.3 var(--font-sans);color:var(--fg);margin-bottom:3px}
 .sl-item .sli-addr{font:400 13px/1.3 var(--font-sans);color:var(--fg-4)}
+#stl-filters{flex-shrink:0}
+.stl-dist-row{display:flex;align-items:center;gap:8px;padding:0 16px 10px;flex-shrink:0}
+.stl-dist-row label{flex-shrink:0;font:500 13px/1 var(--font-sans);color:var(--fg-4)}
+.stl-dist-row select{width:auto;flex:1;padding:6px 8px;font-size:14px}
+.stl-group{border-bottom:8px solid var(--line-soft)}
+.stl-group-head{padding:12px 16px 8px;position:sticky;top:0;background:var(--bg);z-index:1}
+.stl-group-name{font:600 15px/1.3 var(--font-sans);color:var(--fg)}
+.stl-group-addr{font:400 13px/1.3 var(--font-sans);color:var(--fg-4);margin-top:2px}
+.stl-item{padding:10px 16px;border-top:1px solid var(--line-soft);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;transition:background var(--t-fast)}
+.stl-item:hover{background:oklch(from var(--bg-2) l c h / .55)}
+.stl-item-name{font:500 14px/1.3 var(--font-sans);color:var(--fg)}
+.stl-item-meta{font:400 12px/1.3 var(--font-sans);color:var(--fg-4);white-space:nowrap;flex-shrink:0}
 .map-area{flex:1;position:relative;overflow:hidden}
 .map-gl{position:absolute;inset:0;width:100%;height:100%}
 .store-pin{display:flex;flex-direction:column;align-items:center;cursor:pointer;transform:translateX(-50%)}
@@ -1498,6 +1510,31 @@ document.addEventListener('deviceready',function(){
       <span id="map-tog-ico"><svg class="ico" width="22" height="22"><use href="#i-map"/></svg></span>
     </button>
   </div>
+</div>
+
+<!-- ════════════════ SPORT TRAININGS LIST ════════════════ -->
+<div id="screen-sporttrainings" class="screen">
+  <div class="ph">
+    <button class="btn-back" onclick="goTo('home')">←</button>
+    <h2><span id="stl-title">Тренировки</span><span class="screen-help" id="stl-help">?</span></h2>
+  </div>
+  <div class="screen-tip"></div>
+  <div id="stl-filters">
+    <div class="sl-search">
+      <input type="search" placeholder="Поиск тренировки или заведения…" oninput="applySportTrainingsFilter(this.value)">
+    </div>
+    <div class="sl-cats" id="stl-cats"></div>
+    <div class="stl-dist-row">
+      <label for="stl-dist-select">Расстояние</label>
+      <select id="stl-dist-select" onchange="applySportTrainingsFilter()">
+        <option value="">Любое</option>
+        <option value="2000">до 2 км</option>
+        <option value="5000">до 5 км</option>
+        <option value="10000">до 10 км</option>
+      </select>
+    </div>
+  </div>
+  <div class="sl-list" id="stl-list"><div class="loading">Загрузка…</div></div>
 </div>
 
 <!-- ════════════════ STORE ════════════════ -->
@@ -3283,7 +3320,7 @@ const BG_ORBS = {
   sport:         { orb1:'rgba(239,68,68,.52)',  sub:'rgba(239,68,68,.18)',  dk:'rgba(239,68,68,.44)' },
   entertainment: { orb1:'rgba(234,179,8,.52)',  sub:'rgba(234,179,8,.18)',  dk:'rgba(234,179,8,.44)' },
 };
-const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions']);
+const DIR_SCREENS = new Set(['map','store','menu','cart','subscriptions','sporttrainings']);
 const _SVC_DIRS = new Set(['services','sport','entertainment']);
 // Открытое заведение может не совпадать с выбранным направлением (переход с главной,
 // из «недавних», по ссылке) — вкладки и кнопки решаются направлением самого заведения.
@@ -3587,9 +3624,10 @@ function sportShortcutNearby() {
 
 function sportShortcutFormat(mode, multiPerson) {
   document.getElementById('home-tile-sport')?.classList.remove('expanded');
+  _trainingListPreset = { mode, multiPerson: !!multiPerson };
   _sportTrainingPreset = { mode, multiPerson: !!multiPerson };
   setDirection('sport');
-  goTo('map');
+  goTo('sporttrainings');
 }
 
 const _SPORT_SHORTCUT_INFO = {
@@ -3604,6 +3642,158 @@ function showSportShortcutInfo(kind) {
   document.getElementById('sport-shortcut-info-title').textContent = info.title;
   document.getElementById('sport-shortcut-info-body').textContent = info.body;
   openModal('m-sport-shortcut-info');
+}
+
+// ─── SPORT TRAININGS LIST (grouped by store) ───
+let _stlData = null; // {kind, groups:[{store,dist,items}]}
+let _stlCat = new Set();
+
+function _fmtApproxDistance(m) {
+  if (m == null) return '';
+  if (m < 950) return `≈ ${Math.max(50, Math.round(m / 50) * 50)} м`;
+  return `≈ ${(m / 1000).toFixed(1).replace('.0', '')} км`;
+}
+
+async function loadSportTrainingsScreen() {
+  const kind = _trainingListPreset?.mode === 'group' ? 'schedule' : (_trainingListPreset?.multiPerson ? 'group' : 'personal');
+  const info = _SPORT_SHORTCUT_INFO[kind];
+  document.getElementById('stl-title').textContent = info.title;
+  document.getElementById('stl-help').setAttribute('onclick', `event.stopPropagation();showSportShortcutInfo('${kind}')`);
+  const listEl = document.getElementById('stl-list');
+  listEl.innerHTML = '<div class="loading">Загрузка…</div>';
+  _stlCat = new Set();
+  const distSel = document.getElementById('stl-dist-select'); if (distSel) distSel.value = '';
+  const searchInput = document.querySelector('#stl-filters .sl-search input'); if (searchInput) searchInput.value = '';
+  document.getElementById('stl-cats').innerHTML = '';
+
+  if (!S.allStores.some(st => st.direction === 'sport')) await loadMapStores();
+  const sportStores = S.allStores.filter(st => st.direction === 'sport');
+  if (!sportStores.length) { listEl.innerHTML = '<div class="empty">Нет заведений направления «Спорт и образование»</div>'; return; }
+
+  const trainingMode = _trainingListPreset?.mode === 'group' ? 'group' : 'personal';
+  let items;
+  try {
+    items = await req(`/rest/v1/menu_items?store_id=in.(${sportStores.map(s => s.id).join(',')})&is_training=eq.true&is_available=eq.true&training_mode=eq.${trainingMode}&select=id,store_id,name,training_mode,duration_minutes,price,max_group_size`);
+  } catch (e) { listEl.innerHTML = '<div class="empty">Ошибка загрузки</div>'; return; }
+
+  const byStore = new Map();
+  (items || []).forEach(it => {
+    if (!byStore.has(it.store_id)) byStore.set(it.store_id, []);
+    byStore.get(it.store_id).push(it);
+  });
+  const storeById = new Map(sportStores.map(s => [s.id, s]));
+  const buildGroups = () => [...byStore.entries()].map(([storeId, its]) => {
+    const st = storeById.get(storeId);
+    if (!st) return null;
+    const sLat = st.lat ?? st.latitude, sLng = st.lng ?? st.longitude;
+    const dist = (S.geoLat != null && sLat != null) ? haversineM(S.geoLat, S.geoLng, sLat, sLng) : null;
+    return { store: st, dist, items: its };
+  }).filter(Boolean).sort((a, b) => (a.dist ?? Infinity) - (b.dist ?? Infinity) || a.store.name.localeCompare(b.store.name, 'ru'));
+
+  // Не блокируем первый рендер геолокацией — сразу показываем список без расстояний,
+  // затем (если нужно) досчитываем/пересортировываем в фоне, когда/если гео придёт.
+  const data = { kind, groups: buildGroups() };
+  _stlData = data;
+  renderSportTrainingsCats();
+  applySportTrainingsFilter('');
+
+  if (S.geoLat == null) {
+    if (S.userAddrLat != null) {
+      S.geoLat = S.userAddrLat; S.geoLng = S.userAddrLng;
+      data.groups = buildGroups();
+      if (_stlData === data) { renderSportTrainingsCats(); applySportTrainingsFilter(); }
+    } else {
+      navigator.geolocation.getCurrentPosition(pos => {
+        S.geoLat = pos.coords.latitude; S.geoLng = pos.coords.longitude;
+        data.groups = buildGroups();
+        if (_stlData === data) { renderSportTrainingsCats(); applySportTrainingsFilter(); }
+      }, () => {}, { maximumAge: 60000, timeout: 8000, enableHighAccuracy: false });
+    }
+  }
+}
+
+function renderSportTrainingsCats() {
+  const el = document.getElementById('stl-cats');
+  if (!_stlData) { el.innerHTML = ''; return; }
+  const catsMap = new Map();
+  _stlData.groups.forEach(g => { if (g.store.store_category_id && g.store.store_categories) catsMap.set(g.store.store_category_id, g.store.store_categories); });
+  if (!catsMap.size) { el.innerHTML = ''; return; }
+  for (const id of _stlCat) if (!catsMap.has(id)) _stlCat.delete(id);
+  const sorted = [...catsMap.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
+  el.innerHTML = '';
+  const all = document.createElement('button');
+  all.className = 'chip' + (_stlCat.size === 0 ? ' active' : '');
+  all.textContent = 'Все';
+  all.addEventListener('click', () => { _stlCat.clear(); renderSportTrainingsCats(); applySportTrainingsFilter(); });
+  el.appendChild(all);
+  sorted.forEach(([id, cat]) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (_stlCat.has(id) ? ' active' : '');
+    b.innerHTML = `${svgIco('tag', 11)} ${esc(stripEmoji(cat.name))}`;
+    b.addEventListener('click', () => {
+      if (_stlCat.has(id)) _stlCat.delete(id); else _stlCat.add(id);
+      renderSportTrainingsCats();
+      applySportTrainingsFilter();
+    });
+    el.appendChild(b);
+  });
+}
+
+function applySportTrainingsFilter(q) {
+  if (!_stlData) return;
+  if (q === undefined) q = document.querySelector('#stl-filters .sl-search input')?.value || '';
+  const ql = q.toLowerCase();
+  const maxDist = document.getElementById('stl-dist-select')?.value || '';
+  const maxDistM = maxDist ? Number(maxDist) : null;
+  const filtered = _stlData.groups.map(g => {
+    if (_stlCat.size && !_stlCat.has(g.store.store_category_id)) return null;
+    if (maxDistM != null && (g.dist == null || g.dist > maxDistM)) return null;
+    let its = g.items;
+    if (ql) its = its.filter(it => it.name.toLowerCase().includes(ql) || g.store.name.toLowerCase().includes(ql) || (g.store.address || '').toLowerCase().includes(ql));
+    if (!its.length) return null;
+    return { store: g.store, dist: g.dist, items: its };
+  }).filter(Boolean);
+  renderSportTrainingsList(filtered);
+}
+
+function renderSportTrainingsList(groups) {
+  const el = document.getElementById('stl-list');
+  el.innerHTML = '';
+  if (!groups.length) { el.innerHTML = '<div class="empty">Ничего не найдено</div>'; return; }
+  groups.forEach(g => {
+    const wrap = document.createElement('div');
+    wrap.className = 'stl-group';
+    const distTxt = _fmtApproxDistance(g.dist);
+    const head = document.createElement('div');
+    head.className = 'stl-group-head';
+    head.innerHTML = `
+      <div class="stl-group-name">${esc(g.store.name)}</div>
+      <div class="stl-group-addr">${esc(g.store.address || '')}${distTxt ? ` · ${distTxt}` : ''}</div>`;
+    wrap.appendChild(head);
+    g.items.forEach(it => {
+      const row = document.createElement('div');
+      row.className = 'stl-item';
+      const durTxt = it.duration_minutes ? `${it.duration_minutes} мин` : '';
+      const priceTxt = it.price != null ? `${it.price} ₽` : '';
+      row.innerHTML = `
+        <div class="stl-item-name">${esc(it.name)}</div>
+        <div class="stl-item-meta">${esc([durTxt, priceTxt].filter(Boolean).join(' · '))}</div>`;
+      row.addEventListener('click', () => openSportTrainingStore(g.store.id));
+      wrap.appendChild(row);
+    });
+    el.appendChild(wrap);
+  });
+}
+
+function openSportTrainingStore(storeId) {
+  const st = S.allStores.find(s => s.id === storeId);
+  if (!st) return;
+  _sportTrainingPreset = _trainingListPreset ? { ..._trainingListPreset } : null;
+  S.store = st;
+  syncStoreNavBtn();
+  try { localStorage.setItem('alliby_store', JSON.stringify(st)); } catch (e) {}
+  goTo('store');
+  switchSvcTab('sched');
 }
 
 // ─── QR CODE ───
@@ -3665,6 +3855,9 @@ const _caSched = { year: new Date().getFullYear(), month: new Date().getMonth(),
 // Set by a "Спорт и образование" home-tile shortcut; consumed once by the next store's
 // loadCaScheduleScreen() to preselect the training format the user asked for on the home screen.
 let _sportTrainingPreset = null;
+// Same shortcut choice, but never auto-consumed — backs the grouped trainings list screen
+// (screen-sporttrainings) for as long as the user stays on/returns to it.
+let _trainingListPreset = null;
 
 function peekTab(btn) {
   if (!btn) return;
@@ -5341,7 +5534,7 @@ function goTo(id, opts = {}) {
   if (id === 'orders')       { _calenabsTab = 'ord'; id = 'calenabs'; }
   syncStoreNavBtn();
   syncCartNavBtn();
-  const _GUEST_OK = ['map', 'store', 'cart', 'auth'];
+  const _GUEST_OK = ['map', 'store', 'cart', 'auth', 'sporttrainings'];
   if (!_GUEST_OK.includes(id) && !S.session && !_initQuickRestore) { _pendingNavAfterAuth = id; goTo('auth'); return; }
   document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
   if (id !== 'auth') localStorage.setItem('alliby_nav', id);
@@ -5362,7 +5555,7 @@ function goTo(id, opts = {}) {
     const _shb = document.getElementById('store-share-btn'); if (_shb) _shb.style.display = 'none';
   }
   const sid = id;
-  ({'home':loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,calenabs:loadCalenabsScreen,profile:loadProfile})[sid]?.();
+  ({'home':loadHome,alibi:loadAlibi,map:loadMap,store:loadStore,menu:loadMenu,cart:renderCart,calenabs:loadCalenabsScreen,profile:loadProfile,sporttrainings:loadSportTrainingsScreen})[sid]?.();
   if (opts.dir && prevId && prevId !== sid) {
     document.getElementById('screen-' + sid)?.classList.add('active');
     animateScreenChange(prevId, sid, opts.dir);
