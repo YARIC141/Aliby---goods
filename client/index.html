@@ -4544,9 +4544,9 @@ function _renderCaSchedItemList() {
   } else {
     const personal = _caSched.trainingItems
       .filter(it => it.training_mode === 'personal')
-      .filter(it => _caSched.multiPerson || (it.max_group_size || 1) <= 1)
+      .filter(it => _caSched.multiPerson ? (it.max_group_size || 1) > 1 : (it.max_group_size || 1) <= 1)
       .map(it => ({ ...it, _kind: 'personal' }));
-    const plain = _caSched.bookableItems.map(it => ({ ...it, _kind: 'service' }));
+    const plain = _caSched.multiPerson ? [] : _caSched.bookableItems.map(it => ({ ...it, _kind: 'service' }));
     items = [...personal, ...plain];
   }
   if (_caSched.masterId) {
