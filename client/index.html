@@ -4556,15 +4556,6 @@ async function loadCaScheduleScreen() {
       const hasGroupItems = _caSched.trainingItems.some(it => it.training_mode === 'group');
       const hasPersonalBucket = _caSched.trainingItems.some(it => it.training_mode === 'personal') || _caSched.bookableItems.length > 0;
       _caSched.mode = hasGroupItems ? 'group' : 'personal';
-      if (_sportTrainingPreset) {
-        if (_sportTrainingPreset.mode === 'group' && hasGroupItems) {
-          _caSched.mode = 'group';
-        } else if (_sportTrainingPreset.mode === 'personal' && hasPersonalBucket) {
-          _caSched.mode = 'personal';
-          _caSched.multiPerson = !!_sportTrainingPreset.multiPerson;
-        }
-        _sportTrainingPreset = null;
-      }
       const modeRow = document.getElementById('ca-sched-mode-row');
       if (modeRow) {
         modeRow.style.display = (hasGroupItems && hasPersonalBucket) ? 'flex' : 'none';
@@ -4573,6 +4564,20 @@ async function loadCaScheduleScreen() {
       _renderCaSchedItemList();
       _populateCaSchedMasterSelect();
     } catch {}
+  }
+  // Пресет с шортката тайла "Спорт и образование" (главная) — применяем независимо от того,
+  // был ли этот магазин уже загружен ранее (кэш _caSched.storeId), иначе повторный визит в тот
+  // же магазин в рамках сессии молча игнорировал бы пресет.
+  if (_sportTrainingPreset) {
+    const hasGroupItems = _caSched.trainingItems.some(it => it.training_mode === 'group');
+    const hasPersonalBucket = _caSched.trainingItems.some(it => it.training_mode === 'personal') || _caSched.bookableItems.length > 0;
+    if (_sportTrainingPreset.mode === 'group' && hasGroupItems) {
+      setCaSchedMode('group');
+    } else if (_sportTrainingPreset.mode === 'personal' && hasPersonalBucket) {
+      _caSched.multiPerson = !!_sportTrainingPreset.multiPerson;
+      setCaSchedMode('personal');
+    }
+    _sportTrainingPreset = null;
   }
   await _loadCaSchedMonth();
 }
