@@ -133,6 +133,7 @@ html.has-fzoom #zoom-root{zoom:var(--fzoom);height:calc(100dvh/var(--fzoom))}
   #side-nav{display:none}
   #bottom-nav{display:block;position:fixed;bottom:0;left:0;right:0;z-index:50;padding-bottom:env(safe-area-inset-bottom,0px)}
   .pb::after,.sl-list::after,.cart-body::after{content:'';display:block;height:calc(120px + env(safe-area-inset-bottom,0px));flex-shrink:0}
+  .home-tiles::after{content:'';display:block;grid-column:1/-1;height:calc(120px + env(safe-area-inset-bottom,0px))}
 }
 @media(max-width:767px){
   body.nav-right #bottom-nav{position:fixed;right:0;top:0;bottom:0;left:auto;width:68px;border-top:none;border-left:1px solid var(--border);background:var(--bg);z-index:100;display:flex!important;flex-direction:column;justify-content:flex-end;padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -3546,8 +3547,36 @@ function openDirection(dir) {
 
 // ─── HOME "СПОРТ И ОБРАЗОВАНИЕ" TILE SHORTCUTS ───
 function toggleSportTile() {
-  document.getElementById('home-tile-sport')?.classList.toggle('expanded');
+  const tile = document.getElementById('home-tile-sport');
+  if (!tile) return;
+  tile.classList.toggle('expanded');
+  syncSportTileHeight();
 }
+
+// Grid `auto` rows can size a spanning item to its min-height instead of its
+// real content height at narrow viewport widths, clipping the shortcut list.
+// Work around it by measuring the tile's natural content height out-of-flow
+// and pinning it as an explicit height while expanded.
+function syncSportTileHeight() {
+  const tile = document.getElementById('home-tile-sport');
+  if (!tile) return;
+  if (!tile.classList.contains('expanded')) {
+    tile.style.removeProperty('height');
+    return;
+  }
+  const grid = tile.parentElement;
+  const gridW = grid.getBoundingClientRect().width;
+  tile.style.setProperty('position', 'absolute', 'important');
+  tile.style.setProperty('width', gridW + 'px', 'important');
+  tile.style.setProperty('height', 'auto', 'important');
+  const natural = tile.scrollHeight;
+  tile.style.removeProperty('position');
+  tile.style.removeProperty('width');
+  tile.style.setProperty('height', natural + 'px', 'important');
+}
+window.addEventListener('resize', () => {
+  if (document.getElementById('home-tile-sport')?.classList.contains('expanded')) syncSportTileHeight();
+});
 
 function sportShortcutNearby() {
   document.getElementById('home-tile-sport')?.classList.remove('expanded');
