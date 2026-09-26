@@ -88,6 +88,43 @@ html.dark{
 }
 html,body{background-color:var(--bg);background-image:radial-gradient(circle 740px at 0% 0%,var(--bg-orb1,rgba(232,116,59,.52)) 0%,transparent 80%),radial-gradient(circle 840px at 100% 100%,rgba(120,180,224,.58) 0%,transparent 80%),linear-gradient(135deg,var(--bg-orb1-sub,rgba(232,116,59,.18)) 0%,rgba(120,180,224,.18) 100%);background-attachment:fixed;overscroll-behavior-y:none}
 html.dark,html.dark body{background-image:radial-gradient(circle 600px at 0% 0%,var(--bg-orb1-dk,rgba(232,116,59,.44)) 0%,transparent 68%),radial-gradient(circle 700px at 100% 100%,rgba(120,180,224,.54) 0%,transparent 68%)}
+
+/* ── FLAT SKIN (светлая/тёмная, альтернативный плоский стиль) ── */
+html[data-skin="flat"]{
+  --bg:#f3f4f7;--bg-1:#ffffff;--bg-2:#eceef2;--bg-3:#e2e5ea;
+  --line:#e3e5ea;--line-soft:rgba(22,24,33,.08);
+  --fg:#16181d;--fg-2:#454a54;--fg-3:#767b86;--fg-4:#9aa0ab;
+  --shadow-1:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+  --shadow-2:0 4px 12px rgba(16,24,40,.08),0 12px 32px rgba(16,24,40,.10);
+  --glow-accent:0 0 0 1px rgba(255,90,54,.28),0 6px 20px rgba(255,90,54,.16);
+  --accent:#ff5a36;--accent-deep:#e2431f;--accent-fg:#ffffff;--accent-glow:rgba(255,90,54,.35);
+  --cta-from:#ff5a36;--cta-to:#ff5a36;--cta-glow:rgba(255,90,54,.35);
+  --bg-subtle:var(--bg-1);--bg-hover:var(--bg-2);--bg-muted:var(--bg-2);
+  --border:var(--line);--border-light:var(--line-soft);
+  --muted:var(--fg-4);--fg-sec:var(--fg-2);--fg-ter:var(--fg-3);
+  --bg-popup:var(--bg-1);--bg-overlay:rgba(16,18,22,.45);
+  --bg-input:var(--bg-1);--shadow:rgba(16,24,40,.12);
+  --pat:rgba(22,24,33,.10);
+  --glass:var(--bg-1);--glass-sm:var(--bg-1);--glass-card:var(--bg-1);--glass-ui:var(--bg-1);
+}
+html[data-skin="flat"].dark{
+  --bg:#121317;--bg-1:#1c1e23;--bg-2:#25272d;--bg-3:#2e3138;
+  --line:#33363d;--line-soft:rgba(255,255,255,.08);
+  --fg:#f5f6f8;--fg-2:#c8cad0;--fg-3:#92969f;--fg-4:#666a73;
+  --shadow-1:0 1px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.35);
+  --shadow-2:0 4px 12px rgba(0,0,0,.35),0 12px 32px rgba(0,0,0,.4);
+  --glow-accent:0 0 0 1px rgba(255,107,69,.35),0 6px 20px rgba(255,107,69,.22);
+  --accent:#ff6b45;--accent-deep:#e2431f;--accent-fg:#ffffff;--accent-glow:rgba(255,107,69,.4);
+  --cta-from:#ff6b45;--cta-to:#ff6b45;--cta-glow:rgba(255,107,69,.4);
+  --bg-subtle:var(--bg-1);--bg-hover:var(--bg-2);--bg-muted:var(--bg-2);
+  --border:var(--line);--border-light:var(--line-soft);
+  --muted:var(--fg-4);--fg-sec:var(--fg-2);--fg-ter:var(--fg-3);
+  --bg-popup:var(--bg-1);--bg-overlay:rgba(0,0,0,.6);
+  --bg-input:var(--bg-1);--shadow:rgba(0,0,0,.5);
+  --pat:rgba(255,255,255,.12);
+  --glass:var(--bg-1);--glass-sm:var(--bg-1);--glass-card:var(--bg-1);--glass-ui:var(--bg-1);
+}
+html[data-skin="flat"] *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 body{font-family:var(--font-sans);font-size:17px;color:var(--fg);overflow:hidden;height:100dvh}
 #bg-ornament{position:fixed;inset:-200px 0;width:100%;height:calc(100% + 400px);pointer-events:none;z-index:0}
 svg.ico{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle;flex-shrink:0}
@@ -465,9 +502,12 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .usub-store{font:600 11px/1 var(--font-sans);text-transform:uppercase;letter-spacing:.06em;color:var(--fg-4);padding-left:10px;margin-bottom:6px}
 .usub-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;padding-left:10px}
 .usub-name{font:600 17px/1.3 var(--font-sans);color:var(--fg)}
-.usub-stats{display:flex;gap:14px;margin-top:8px;padding-left:10px}
-.usub-stat .lbl{display:block;margin-bottom:3px;font:400 12px/1 var(--font-sans);color:var(--fg-4);text-transform:uppercase;letter-spacing:.08em}
-.usub-stat strong{font:600 22px/1 var(--font-sans)}
+.usub-stats{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-left:10px}
+.usub-stat-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.usub-stat .lbl{display:block;font:400 12px/1 var(--font-sans);color:var(--fg-4);text-transform:uppercase;letter-spacing:.08em}
+.usub-stat strong{font:600 14px/1 var(--font-sans);color:var(--fg-2)}
+.usub-bar{height:5px;border-radius:var(--r-pill);background:var(--bg-2);overflow:hidden}
+.usub-bar-fill{height:100%;border-radius:var(--r-pill);background:var(--accent);transition:width var(--t-med) var(--ease-out)}
 
 /* ── MODAL ── */
 .overlay{display:none;position:fixed;inset:0;background:oklch(0 0 0 / .65);backdrop-filter:blur(4px);z-index:200;align-items:flex-start;justify-content:center;padding:50px 12px 20px;overflow-y:auto}
@@ -674,6 +714,8 @@ html.dark .bp-b{fill:oklch(0.60 0.12 220/.24)}
 html.no-ornament #bg-ornament{display:none}
 html.bg-custom body,html.dark.bg-custom body{background-image:var(--bg-custom-img)!important;background-size:cover;background-position:center;background-attachment:fixed}
 html.bg-custom #bg-fluid{display:none}
+html.bg-plain body,html.dark.bg-plain body{background-image:none!important}
+html.bg-plain #bg-fluid{display:none}
 #panel-customize{position:fixed;inset:0;z-index:9999;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .25s var(--ease-out,ease);display:flex;flex-direction:column;overscroll-behavior-y:none}
 #panel-customize.open{transform:translateX(0)}
 #panel-reminders{position:fixed;inset:0;z-index:9999;background:var(--bg);overflow-y:auto;transform:translateX(100%);transition:transform .25s var(--ease-out,ease);display:flex;flex-direction:column;overscroll-behavior-y:none}
@@ -684,6 +726,7 @@ html.bg-custom #bg-fluid{display:none}
 .bg-opt-prev{width:100%;height:44px;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line-soft);background-size:cover;background-position:center}
 .bg-opt-grad{background:radial-gradient(circle at 0% 0%,rgba(232,116,59,.55) 0%,transparent 55%),radial-gradient(circle at 100% 100%,rgba(120,180,224,.55) 0%,transparent 55%),var(--bg)}
 .bg-opt-fluid{background:radial-gradient(circle at 100% 0%,rgba(120,180,224,.55) 0%,transparent 55%),radial-gradient(circle at 0% 100%,rgba(232,116,59,.55) 0%,transparent 55%),var(--bg)}
+.bg-opt-plain{background:var(--bg)}
 /* ─── HELP / ИНСТРУКЦИЯ ─── */
 #screen-help .pb{scroll-behavior:smooth}
 .hlp{max-width:780px;margin:0 auto;padding-bottom:60px}
@@ -745,7 +788,8 @@ ol.hlp-steps>li ul{margin:6px 0 0}
 <script>
 try{
 if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');
-(function(){var bg=localStorage.getItem('alliby_bg')||'fluid';if(bg==='fluid')document.documentElement.classList.add('bg-fluid');if(bg==='custom'){var i=localStorage.getItem('alliby_bg_img');if(i){document.documentElement.classList.add('bg-custom');document.documentElement.style.setProperty('--bg-custom-img','url("'+i+'")')}}if(localStorage.getItem('alliby_ornament')!=='1')document.documentElement.classList.add('no-ornament')})();
+if(localStorage.getItem('alliby_skin')==='flat')document.documentElement.setAttribute('data-skin','flat');
+(function(){var bg=localStorage.getItem('alliby_bg')||'fluid';if(bg==='fluid')document.documentElement.classList.add('bg-fluid');if(bg==='plain')document.documentElement.classList.add('bg-plain');if(bg==='custom'){var i=localStorage.getItem('alliby_bg_img');if(i){document.documentElement.classList.add('bg-custom');document.documentElement.style.setProperty('--bg-custom-img','url("'+i+'")')}}if(localStorage.getItem('alliby_ornament')!=='1')document.documentElement.classList.add('no-ornament')})();
 (function(){
   var s=parseFloat(localStorage.getItem('alliby_fscale')||'1');
   document.documentElement.style.setProperty('--fzoom',s);
@@ -2526,6 +2570,19 @@ document.addEventListener('deviceready',function(){
       </div>
     </div>
     <div class="sec">
+      <div class="sec-title">Стиль</div>
+      <div class="bg-picker">
+        <button class="skin-opt bg-opt" data-skin="warm" onclick="setSkin('warm')">
+          <div class="bg-opt-prev" style="background:linear-gradient(135deg,#e8743b,#78b4e0)"></div>
+          <span>Тёплый</span>
+        </button>
+        <button class="skin-opt bg-opt" data-skin="flat" onclick="setSkin('flat')">
+          <div class="bg-opt-prev" style="background:#f3f4f7;border:1px solid #e3e5ea;display:flex;align-items:center;justify-content:center"><span style="width:16px;height:16px;border-radius:5px;background:#ff5a36"></span></div>
+          <span>Плоский</span>
+        </button>
+      </div>
+    </div>
+    <div class="sec">
       <div class="sec-title">Фон</div>
       <div class="bg-picker">
         <button class="bg-opt" data-bg="gradient" onclick="setBgStyle('gradient')">
@@ -2535,6 +2592,10 @@ document.addEventListener('deviceready',function(){
         <button class="bg-opt" data-bg="fluid" onclick="setBgStyle('fluid')">
           <div class="bg-opt-prev bg-opt-fluid"></div>
           <span>Фигуры</span>
+        </button>
+        <button class="bg-opt" data-bg="plain" onclick="setBgStyle('plain')">
+          <div class="bg-opt-prev bg-opt-plain"></div>
+          <span>Однотонный</span>
         </button>
         <button class="bg-opt" data-bg="custom" onclick="onBgCustomClick()">
           <div class="bg-opt-prev" id="bg-opt-custom-prev" style="display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--fg-4)">+</div>
@@ -5655,8 +5716,15 @@ function setBgStyle(s) {
   if (s === 'custom' && !localStorage.getItem('alliby_bg_img')) s = 'gradient';
   document.documentElement.classList.toggle('bg-fluid', s === 'fluid');
   document.documentElement.classList.toggle('bg-custom', s === 'custom');
+  document.documentElement.classList.toggle('bg-plain', s === 'plain');
   document.querySelectorAll('.bg-opt').forEach(b => b.classList.toggle('active', b.dataset.bg === s));
   try { localStorage.setItem('alliby_bg', s); } catch(e) {}
+}
+
+function setSkin(s) {
+  document.documentElement.setAttribute('data-skin', s === 'flat' ? 'flat' : '');
+  document.querySelectorAll('.skin-opt').forEach(b => b.classList.toggle('active', b.dataset.skin === s));
+  try { localStorage.setItem('alliby_skin', s); } catch(e) {}
 }
 // ─── HELP / ИНСТРУКЦИЯ ───
 function helpJump(id) {
@@ -9581,9 +9649,34 @@ function renderSubUnifiedList() {
   el.innerHTML = (_subFilter === 'gifts' ? items.map(renderGiftSub) : items.map(renderUserSub)).join('');
 }
 
+function _subBarRow(lbl, valueText, pct) {
+  const bar = pct === null ? '' : `<div class="usub-bar"><div class="usub-bar-fill" style="width:${pct}%"></div></div>`;
+  return `<div class="usub-stat"><div class="usub-stat-row"><span class="lbl">${lbl}</span><strong>${valueText}</strong></div>${bar}</div>`;
+}
+
 function renderUserSub(us) {
   const plan = us.subscriptions;
   const unseenDot = !_isSeen('sub', us.id) ? `<span class="unseen-dot" data-unseen-for="sub:${us.id}"></span>` : '';
+
+  const totalUses = plan?.total_uses || 0;
+  let usesRow;
+  if (totalUses > 0 && us.remaining_uses !== null && us.remaining_uses !== undefined) {
+    const used = Math.max(0, Math.min(totalUses, totalUses - us.remaining_uses));
+    usesRow = _subBarRow('Использовано', `${used}/${totalUses}`, Math.round(used / totalUses * 100));
+  } else {
+    usesRow = _subBarRow('Осталось исп.', us.remaining_uses ?? '∞', null);
+  }
+
+  const totalDays = plan?.duration_days || 0;
+  let daysRow;
+  if (totalDays > 0 && us.end_date) {
+    const daysLeft = Math.max(0, Math.ceil((new Date(us.end_date) - Date.now()) / 86400000));
+    const elapsed  = Math.max(0, Math.min(totalDays, totalDays - daysLeft));
+    daysRow = _subBarRow(`Действует до ${fmtShortDate(us.end_date)}`, `${elapsed}/${totalDays} дн.`, Math.round(elapsed / totalDays * 100));
+  } else {
+    daysRow = _subBarRow('Действует до', fmtShortDate(us.end_date), null);
+  }
+
   return `<div class="usub-card" onclick="openSubModal('${us.id}')">
     ${unseenDot}
     ${plan?.stores?.name ? `<div class="usub-store">${esc(plan.stores.name)}</div>` : ''}
@@ -9592,8 +9685,8 @@ function renderUserSub(us) {
       <span class="badge ${fmtSubStatus(us).cls}">${fmtSubStatus(us).label}</span>
     </div>
     <div class="usub-stats">
-      <div class="usub-stat"><span class="lbl">Осталось исп.</span><strong>${us.remaining_uses ?? '∞'}</strong></div>
-      <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(us.end_date)}</strong></div>
+      ${usesRow}
+      ${daysRow}
     </div>
   </div>`;
 }
@@ -11058,6 +11151,7 @@ window.addEventListener('hashchange', () => {
   document.getElementById('theme-chk').checked = _initDark;
   _updateThemeIcon(_initDark);
   setBgStyle(localStorage.getItem('alliby_bg') || 'fluid');
+  setSkin(localStorage.getItem('alliby_skin') || 'warm');
   setOrnament(localStorage.getItem('alliby_ornament') === '1');
   {
     const _img = localStorage.getItem('alliby_bg_img');
