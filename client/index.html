@@ -3592,6 +3592,11 @@ function toggleSportTile() {
   syncSportTileHeight();
 }
 
+function collapseSportTile() {
+  document.getElementById('home-tile-sport')?.classList.remove('expanded');
+  syncSportTileHeight();
+}
+
 // Grid `auto` rows can size a spanning item to its min-height instead of its
 // real content height at narrow viewport widths, clipping the shortcut list.
 // Work around it by measuring the tile's natural content height out-of-flow
@@ -3618,14 +3623,14 @@ window.addEventListener('resize', () => {
 });
 
 function sportShortcutNearby() {
-  document.getElementById('home-tile-sport')?.classList.remove('expanded');
+  collapseSportTile();
   setDirection('sport');
   goTo('map');
   applyNearbyFilter(500);
 }
 
 function sportShortcutFormat(mode, multiPerson) {
-  document.getElementById('home-tile-sport')?.classList.remove('expanded');
+  collapseSportTile();
   _trainingListPreset = { mode, multiPerson: !!multiPerson };
   _sportTrainingPreset = { mode, multiPerson: !!multiPerson };
   setDirection('sport');
