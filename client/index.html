@@ -1525,7 +1525,12 @@ document.addEventListener('deviceready',function(){
     <div class="sl-search">
       <input type="search" placeholder="Поиск тренировки или заведения…" oninput="applySportTrainingsFilter(this.value)">
     </div>
-    <div class="sl-cats" id="stl-cats"></div>
+    <div class="stl-dist-row" id="stl-cat-row" style="display:none">
+      <label for="stl-cat-select">Тип заведения</label>
+      <select id="stl-cat-select" onchange="applySportTrainingsFilter()">
+        <option value="">Все</option>
+      </select>
+    </div>
     <div class="stl-dist-row">
       <label for="stl-dist-select">Расстояние</label>
       <select id="stl-dist-select" onchange="applySportTrainingsFilter()">
@@ -3653,7 +3658,6 @@ function showSportShortcutInfo(kind) {
 
 // ─── SPORT TRAININGS LIST (grouped by store) ───
 let _stlData = null; // {kind, groups:[{store,dist,items}]}
-let _stlCat = new Set();
 
 function _fmtApproxDistance(m) {
   if (m == null) return '';
@@ -3668,10 +3672,10 @@ async function loadSportTrainingsScreen() {
   document.getElementById('stl-help').setAttribute('onclick', `event.stopPropagation();showSportShortcutInfo('${kind}')`);
   const listEl = document.getElementById('stl-list');
   listEl.innerHTML = '<div class="loading">Загрузка…</div>';
-  _stlCat = new Set();
   const distSel = document.getElementById('stl-dist-select'); if (distSel) distSel.value = '';
   const searchInput = document.querySelector('#stl-filters .sl-search input'); if (searchInput) searchInput.value = '';
-  document.getElementById('stl-cats').innerHTML = '';
+  const catSel = document.getElementById('stl-cat-select'); if (catSel) catSel.innerHTML = '<option value="">Все</option>';
+  document.getElementById('stl-cat-row').style.display = 'none';
 
   if (!S.allStores.some(st => st.direction === 'sport')) await loadMapStores();
   const sportStores = S.allStores.filter(st => st.direction === 'sport');
@@ -3720,40 +3724,29 @@ async function loadSportTrainingsScreen() {
 }
 
 function renderSportTrainingsCats() {
-  const el = document.getElementById('stl-cats');
-  if (!_stlData) { el.innerHTML = ''; return; }
+  const row = document.getElementById('stl-cat-row');
+  const el = document.getElementById('stl-cat-select');
+  if (!_stlData) { row.style.display = 'none'; return; }
   const catsMap = new Map();
   _stlData.groups.forEach(g => { if (g.store.store_category_id && g.store.store_categories) catsMap.set(g.store.store_category_id, g.store.store_categories); });
-  if (!catsMap.size) { el.innerHTML = ''; return; }
-  for (const id of _stlCat) if (!catsMap.has(id)) _stlCat.delete(id);
+  if (!catsMap.size) { row.style.display = 'none'; return; }
+  const prev = el.value;
   const sorted = [...catsMap.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'ru'));
-  el.innerHTML = '';
-  const all = document.createElement('button');
-  all.className = 'chip' + (_stlCat.size === 0 ? ' active' : '');
-  all.textContent = 'Все';
-  all.addEventListener('click', () => { _stlCat.clear(); renderSportTrainingsCats(); applySportTrainingsFilter(); });
-  el.appendChild(all);
-  sorted.forEach(([id, cat]) => {
-    const b = document.createElement('button');
-    b.className = 'chip' + (_stlCat.has(id) ? ' active' : '');
-    b.innerHTML = `${svgIco('tag', 11)} ${esc(stripEmoji(cat.name))}`;
-    b.addEventListener('click', () => {
-      if (_stlCat.has(id)) _stlCat.delete(id); else _stlCat.add(id);
-      renderSportTrainingsCats();
-      applySportTrainingsFilter();
-    });
-    el.appendChild(b);
-  });
+  el.innerHTML = '<option value="">Все</option>' + sorted.map(([id, cat]) =>
+    `<option value="${id}">${cat.icon ? esc(cat.icon) + ' ' : ''}${esc(stripEmoji(cat.name))}</option>`).join('');
+  el.value = catsMap.has(prev) ? prev : '';
+  row.style.display = '';
 }
 
 function applySportTrainingsFilter(q) {
   if (!_stlData) return;
   if (q === undefined) q = document.querySelector('#stl-filters .sl-search input')?.value || '';
   const ql = q.toLowerCase();
+  const catId = document.getElementById('stl-cat-select')?.value || '';
   const maxDist = document.getElementById('stl-dist-select')?.value || '';
   const maxDistM = maxDist ? Number(maxDist) : null;
   const filtered = _stlData.groups.map(g => {
-    if (_stlCat.size && !_stlCat.has(g.store.store_category_id)) return null;
+    if (catId && g.store.store_category_id !== catId) return null;
     if (maxDistM != null && (g.dist == null || g.dist > maxDistM)) return null;
     let its = g.items;
     if (ql) its = its.filter(it => it.name.toLowerCase().includes(ql) || g.store.name.toLowerCase().includes(ql) || (g.store.address || '').toLowerCase().includes(ql));
