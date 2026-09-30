@@ -117,6 +117,8 @@
   .sensor-status.off{color:var(--text2)}
   #hc-metrics{margin-top:-8px}
   .ring-icon.emoji{font-size:20px;line-height:1}
+  .pet-topbar{display:flex;margin-bottom:8px}
+  .pet-exit-btn{width:auto;margin:0;padding:8px 14px;background:#232b33;color:var(--text)}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#232b33;color:var(--text);
     padding:12px 18px;border-radius:10px;font-size:14px;max-width:360px;text-align:center;
     box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:10}
@@ -251,6 +253,7 @@
 <div class="wrap">
 
   <div id="screen-create">
+    <div class="pet-topbar"><button type="button" class="pet-exit-btn" data-pet-exit aria-label="Назад">←</button></div>
     <h1>Заведи питомца</h1>
     <p class="hint">Придумай ему имя — характер появится из того, как ты будешь за ним ухаживать.</p>
     <input type="text" id="input-name" placeholder="Имя питомца" maxlength="16">
@@ -258,6 +261,7 @@
   </div>
 
   <div id="screen-status" class="hidden">
+    <div class="pet-topbar"><button type="button" class="pet-exit-btn" data-pet-exit aria-label="Назад">←</button></div>
     <div class="name" id="text-name"></div>
     <div class="mood" id="text-mood"></div>
     <div id="sensor-status" class="sensor-status off">Датчик шагов выключен</div>
@@ -1870,6 +1874,13 @@
   }
 
   // ── UI ───────────────────────────────────────────────────────────────────
+  // Выход из питомца в основное приложение: открываем «Главную», а не последний экран клиента.
+  function exitPet(){
+    try{ localStorage.setItem('alliby_nav','home'); }catch(e){}
+    window.location.href='/';
+  }
+  document.querySelectorAll('[data-pet-exit]').forEach(function(b){ b.addEventListener('click', exitPet); });
+
   function showScreen(id){
     document.getElementById('screen-create').classList.toggle('hidden', id !== 'create');
     document.getElementById('screen-status').classList.toggle('hidden', id !== 'status');
