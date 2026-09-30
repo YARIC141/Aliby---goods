@@ -7681,7 +7681,7 @@ function itemActions(item, qty) {
   }
   return qty > 0
     ? `<div class="qty-ctrl" onclick="event.stopPropagation()"><button class="qty-btn" onclick="changeQty('${item.id}',-1)">−</button><span class="qty-val">${qty}</span><button class="qty-btn" onclick="changeQty('${item.id}',1)">+</button></div>`
-    : `${getBestDisc(item) ? `<span class="sub-note" style="flex:none;align-self:center;padding:0 8px 0 0">По абонементу <span class="price-orig">${item.price} ₽</span></span>` : ''}<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">${_cardBtnPrice(item)}</button>`;
+    : `${getBestDisc(item) ? `<span class="sub-note" style="flex:1 1 0;min-width:0;align-self:center;padding:0 8px 0 0;display:flex;flex-direction:column;gap:2px">По абонементу <span class="price-orig">${item.price} ₽</span></span>` : ''}<button class="btn btn-p btn-sm" onclick="event.stopPropagation();addToCartById('${item.id}')">${_cardBtnPrice(item)}</button>`;
 }
 
 // Есть ли на карточке кнопка с ценой (тогда отдельная строка цены не нужна).
