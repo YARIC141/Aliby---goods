@@ -1496,7 +1496,7 @@ ol.hlp-steps>li ul{margin:6px 0 0}
           <div class="r"><div class="f">Адрес и позиция на карте</div><div class="d">Нажмите <b class="k">Указать</b> — откроется карта. Найдите нужное место, поставьте точку и подтвердите выбор. Адрес и координаты подставятся автоматически.</div></div>
           <div class="r"><div class="f">Телефон</div><div class="d">Покупатель видит номер на странице заведения и может позвонить в одно касание.</div></div>
           <div class="r"><div class="f">Часы работы</div><div class="d">Свободный текст, например <code>Пн-Пт 9:00–21:00, Сб-Вс 10:00–20:00</code> или <code>Ежедневно 8:00–23:00</code>.</div></div>
-          <div class="r"><div class="f">Направление<span class="req">*</span></div><div class="d">Определяет раздел приложения покупателя: <b>Еда</b>, <b>Товары</b>, <b>Услуги</b>, <b>Спорт и образование</b>, <b>Развлечения</b>.</div></div>
+          <div class="r"><div class="f">Направление<span class="req">*</span></div><div class="d">Определяет раздел приложения покупателя: <b>Еда</b>, <b>Товары</b>, <b>Услуги</b>, <b>Спорт</b>, <b>Образование</b>, <b>Развлечения</b>.</div></div>
           <div class="r"><div class="f">Тип заведения</div><div class="d">Задаёт иконку метки на карте и участвует в фильтрах. Список зависит от выбранного направления.</div></div>
           <div class="r"><div class="f">Средний чек (₽)</div><div class="d">Показывается прямо на метке карты. Оставьте пустым, чтобы не отображать.</div></div>
         </div>
@@ -2530,7 +2530,8 @@ ol.hlp-steps>li ul{margin:6px 0 0}
           <option value="food">Еда</option>
           <option value="goods">Товары</option>
           <option value="services">Услуги</option>
-          <option value="sport">Спорт и образование</option>
+          <option value="sport">Спорт</option>
+          <option value="education">Образование</option>
           <option value="entertainment">Развлечения</option>
         </select>
       </div>
@@ -6210,7 +6211,7 @@ function _updateTrainingVisibility() {
   const type = document.getElementById('mmi-item-type').value;
   const storeId = document.getElementById('mmi-store').value;
   const store = (S.stores || []).find(s => s.id === storeId);
-  const eligible = type === 'service' && ['sport','entertainment'].includes(store?.direction);
+  const eligible = type === 'service' && ['sport','education','entertainment'].includes(store?.direction);
   document.getElementById('mmi-training-field').style.display = eligible ? 'flex' : 'none';
   if (!eligible) {
     document.getElementById('mmi-training-toggle').checked = false;
@@ -8462,6 +8463,7 @@ async function openEmployeesModal() {
 // table tennis / computer clubs etc. book a "тренер", salons/studios keep "мастер".
 function _isCoachDir(dir) { return dir === 'sport' || dir === 'entertainment'; }
 function _roleWords(dir) {
+  if (dir === 'education') return { nom: 'Преподаватель', gen: 'преподавателя', soj: 'преподавателем' };
   return _isCoachDir(dir)
     ? { nom: 'Тренер', gen: 'тренера', soj: 'тренером' }
     : { nom: 'Мастер', gen: 'мастера', soj: 'мастером' };
@@ -8482,7 +8484,7 @@ function _renderEmpList(emps) {
   el.innerHTML = emps.map(e => {
     const storeName = storeMap[e.employee_store_id] || '—';
     const storeDir = storeDirMap[e.employee_store_id];
-    const isSvcStore = ['services','sport','entertainment'].includes(storeDir);
+    const isSvcStore = ['services','sport','education','entertainment'].includes(storeDir);
     const roleLabel = _roleWords(storeDir).nom;
     const masterBadge = e.is_master
       ? `<span style="font-size:10px;font-weight:700;background:var(--accent);color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;vertical-align:middle">${roleLabel}</span>`

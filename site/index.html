@@ -39,6 +39,8 @@
   --green-deep:#21793f;
   --red:#ef4444;
   --red-deep:#b91c1c;
+  --violet:#6366f1;
+  --violet-deep:#4338ca;
   --gold:#eab308;
   --gold-deep:#a16207;
   --teal:#14b8a6;
@@ -916,7 +918,7 @@ html[data-theme="light"] .feat-tile:hover{background:rgba(255,255,255,.78)}
 .feat-tile span{font:700 16.5px/1.25 var(--font-sans);color:var(--fg)}
 @media(max-width:960px){.feat-tiles{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.feat-tiles{grid-template-columns:1fr}.feat-tile{padding:14px 16px}.feat-tile span{font-size:15px}}
-.dir-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:48px}
+.dir-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:48px}
 @media(max-width:960px){.dir-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:720px){.dir-grid{grid-template-columns:1fr}}
 .dir-card{scroll-margin-top:88px;background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:var(--r-4);padding:28px;transition:background .2s,border-color .2s,transform .2s,box-shadow .2s;display:flex;flex-direction:column}
@@ -1056,7 +1058,8 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
           <a href="#dir-client-food">Еда</a>
           <a href="#dir-client-goods">Товары</a>
           <a href="#dir-client-services">Услуги</a>
-          <a href="#dir-client-sport">Спорт и образование</a>
+          <a href="#dir-client-sport">Спорт</a>
+          <a href="#dir-client-education">Образование</a>
           <a href="#dir-client-entertainment">Развлечения</a>
         </div>
       </div>
@@ -1071,7 +1074,8 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
           <a href="#dir-business-food">Еда</a>
           <a href="#dir-business-goods">Товары</a>
           <a href="#dir-business-services">Услуги</a>
-          <a href="#dir-business-sport">Спорт и образование</a>
+          <a href="#dir-business-sport">Спорт</a>
+          <a href="#dir-business-education">Образование</a>
           <a href="#dir-business-entertainment">Развлечения</a>
         </div>
       </div>
@@ -1142,7 +1146,8 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
         <span class="legend-pill"><span class="legend-dot" style="background:var(--brand)"></span>Еда</span>
         <span class="legend-pill"><span class="legend-dot" style="background:var(--green)"></span>Товары</span>
         <span class="legend-pill"><span class="legend-dot" style="background:var(--blue)"></span>Услуги</span>
-        <span class="legend-pill"><span class="legend-dot" style="background:var(--red)"></span>Спорт и образование</span>
+        <span class="legend-pill"><span class="legend-dot" style="background:var(--red)"></span>Спорт</span>
+        <span class="legend-pill"><span class="legend-dot" style="background:var(--violet)"></span>Образование</span>
         <span class="legend-pill"><span class="legend-dot" style="background:var(--gold)"></span>Развлечения</span>
       </div>
     </div>
@@ -1190,16 +1195,29 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 
       <div class="dir-card" id="dir-client-sport" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','client')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 15c3-1.3 6.5-1.3 9 0v6c-2.5-1.3-6-1.3-9 0v-6z"/><path d="M21.5 15c-3-1.3-6.5-1.3-9 0v6c2.5-1.3 6-1.3 9 0v-6z"/><circle cx="12" cy="7.5" r="5.5"/><path d="M12 4.3l1.7 1.2-.65 2h-2.1l-.65-2z"/><line x1="12" y1="2" x2="12" y2="4.3"/><line x1="16.8" y1="4.6" x2="13.7" y2="5.5"/><line x1="15.2" y1="11.5" x2="12.65" y2="7.5"/><line x1="8.8" y1="11.5" x2="11.35" y2="7.5"/><line x1="7.2" y1="4.6" x2="10.3" y2="5.5"/></svg></div>
-        <div class="dir-title">Спорт и образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="dir-title">Спорт<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Зал, корт, персональный тренер — прогресс без звонков администратору.</p>
         <ul class="dir-list">
-          <li>Запись к тренеру или преподавателю</li>
+          <li>Запись к тренеру</li>
           <li>Просмотр расписания тренера</li>
           <li>Бронь зала или стола</li>
           <li>Аренда инвентаря</li>
           <li>Доставка</li>
         </ul>
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <div class="dir-card" id="dir-client-education" style="--accent:var(--violet);--accent-rgb:99,102,241;cursor:pointer" onclick="handleDirCardClick(this,'education','client')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/><line x1="22" y1="10" x2="22" y2="16"/></svg></div>
+        <div class="dir-title">Образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <p class="dir-lede">Языковая школа, курсы, репетитор — занятия и расписание без звонков в администрацию.</p>
+        <ul class="dir-list">
+          <li>Запись к преподавателю</li>
+          <li>Расписание групп и свободные места</li>
+          <li>Абонемент на курс</li>
+          <li>Индивидуальные занятия</li>
+        </ul>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('education','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
       <div class="dir-card" id="dir-client-entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','client')" role="button" tabindex="0">
@@ -1318,10 +1336,10 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 
       <div class="dir-card" id="dir-business-sport" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','business')" role="button" tabindex="0">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 15c3-1.3 6.5-1.3 9 0v6c-2.5-1.3-6-1.3-9 0v-6z"/><path d="M21.5 15c-3-1.3-6.5-1.3-9 0v6c2.5-1.3 6-1.3 9 0v-6z"/><circle cx="12" cy="7.5" r="5.5"/><path d="M12 4.3l1.7 1.2-.65 2h-2.1l-.65-2z"/><line x1="12" y1="2" x2="12" y2="4.3"/><line x1="16.8" y1="4.6" x2="13.7" y2="5.5"/><line x1="15.2" y1="11.5" x2="12.65" y2="7.5"/><line x1="8.8" y1="11.5" x2="11.35" y2="7.5"/><line x1="7.2" y1="4.6" x2="10.3" y2="5.5"/></svg></div>
-        <div class="dir-title">Спорт и образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div class="dir-title">Спорт<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
         <p class="dir-lede">Фитнес-клубы, залы, корты, секции — расписание тренеров и загрузка зала.</p>
         <ul class="dir-list">
-          <li>Добавляйте тренеров и преподавателей — у каждого своё расписание и услуги</li>
+          <li>Добавляйте тренеров — у каждого своё расписание и услуги</li>
           <li>Аренда зала и инвентаря</li>
           <li>Доставка</li>
           <li>Продажа экипировки и питания</li>
@@ -1329,6 +1347,20 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
           <li>Администратор без доступа к финансам</li>
         </ul>
         <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      </div>
+
+      <div class="dir-card" id="dir-business-education" style="--accent:var(--violet);--accent-rgb:99,102,241;cursor:pointer" onclick="handleDirCardClick(this,'education','business')" role="button" tabindex="0">
+        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/><line x1="22" y1="10" x2="22" y2="16"/></svg></div>
+        <div class="dir-title">Образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <p class="dir-lede">Языковые школы, курсы, репетиторские центры — расписание групп и загрузка преподавателей.</p>
+        <ul class="dir-list">
+          <li>Добавляйте преподавателей — у каждого своё расписание и группы</li>
+          <li>Набор в группы с остатком мест</li>
+          <li>Абонементы на курсы</li>
+          <li>Онлайн-запись по QR-коду</li>
+          <li>Администратор без доступа к финансам</li>
+        </ul>
+        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('education','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
       </div>
 
       <div class="dir-card" id="dir-business-entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','business')" role="button" tabindex="0">
@@ -2059,6 +2091,7 @@ var SCENARIO_ICONS = {
   food: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/>',
   goods: '<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>',
   services: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>',
+  education: '<path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/><line x1="22" y1="10" x2="22" y2="16"/>',
   sport: '<path d="M2.5 15c3-1.3 6.5-1.3 9 0v6c-2.5-1.3-6-1.3-9 0v-6z"/><path d="M21.5 15c-3-1.3-6.5-1.3-9 0v6c2.5-1.3 6-1.3 9 0v-6z"/><circle cx="12" cy="7.5" r="5.5"/><path d="M12 4.3l1.7 1.2-.65 2h-2.1l-.65-2z"/><line x1="12" y1="2" x2="12" y2="4.3"/><line x1="16.8" y1="4.6" x2="13.7" y2="5.5"/><line x1="15.2" y1="11.5" x2="12.65" y2="7.5"/><line x1="8.8" y1="11.5" x2="11.35" y2="7.5"/><line x1="7.2" y1="4.6" x2="10.3" y2="5.5"/>',
   entertainment: '<rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="17" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="7" cy="17" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="1.5" fill="currentColor"/>',
   courier: '<circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>',
@@ -2173,38 +2206,69 @@ var SCENARIOS = {
   sport: {
     accentRgb: '239,68,68',
     client: {
-      title: 'Спорт и образование — глазами клиента',
-      sub: 'Тренировка, аренда стола или занятие для ребёнка — один и тот же принцип записи',
+      title: 'Спорт — глазами клиента',
+      sub: 'Тренировка или аренда стола — один и тот же принцип записи',
       story: [
         'Катя хочет подтянуть подачу — открывает Alliby, видит всех тренеров «Топ-спина» с их расписанием, выбирает Андрея и бронирует персональную тренировку на четверг вечером. У неё подключён абонемент «Безлимит» — оплата списывается автоматически, без отдельных платежей за каждое занятие.',
         'В карточке тренировки — две вкладки. «По расписанию» — время фиксировано, видно, сколько мест ещё свободно, и бронь подтверждается сразу. «Персональные» — Катя сама выбирает удобное время в диапазоне, который открыл Андрей, а он позже подтверждает точный час. Когда Андрей готов тренировать сразу нескольких, появляются ещё две вкладки — «Для одного» и «Для группы»: в календаре Катя видит день с точкой — значит, кто-то уже предложил тренировку на это время, — и присоединяется к ней сразу, без ожидания подтверждения.',
         'В выходные Катя арендует стол на два часа, чтобы просто поиграть с друзьями — без тренера, через ту же систему. Летом стол стоит во дворе клуба: забытую ракетку или изотоник она заказывает прямо в приложении, не отходя от игры, и администратор приносит заказ к уличному столу.',
         'На день рождения друга Катя дарит ему абонемент «Безлимит» — покупает в приложении, пересылает код в чате, а друг активирует подарок на своём аккаунте перед первой тренировкой.',
-        'Перед началом учебного года Кате приходит push «Скидка на абонемент для друзей» — она приводит в клуб приятеля, и оба получают выгоду.',
-        'Родители в соседнем районе находят «Секцию программирования для школьников» тем же способом: открывают Alliby, выбирают преподавателя, видят расписание групп «Scratch для 8–10 лет» и свободные места, бронируют занятие для ребёнка на удобное время без звонков администратору.',
+        'Перед началом сезона Кате приходит push «Скидка на абонемент для друзей» — она приводит в клуб приятеля, и оба получают выгоду.',
       ],
       stats: [
-        { v: '1 клик', l: 'чтобы выбрать тренера или преподавателя перед записью' },
+        { v: '1 клик', l: 'чтобы выбрать тренера перед записью' },
         { v: '2 сценария', l: 'тренировка и аренда — в одном календаре «Алиби»' },
       ],
     },
     business: {
-      title: 'Спорт и образование — глазами владельца',
-      sub: 'Клуб настольного тенниса «Топ-спин» и детская секция программирования — работают на одной информационной модели',
+      title: 'Спорт — глазами владельца',
+      sub: 'Клуб настольного тенниса «Топ-спин» — расписание тренеров, аренда столов и абонементы в одном приложении',
       story: [
         'Вы управляете клубом настольного тенниса «Топ-спин». В Alliby вы — и владелец, и один из тренеров: ведёте своё расписание, а также нанимаете других тренеров, добавляете их в систему и видите загрузку каждого. Клиент видит реальную занятость любого мастера и бронирует слот сам, без звонков. Двойная бронь исключена — система следит за занятостью каждого стола и каждого тренера одновременно.',
         'Для групповых тренировок Андрей включает в позиции галочку «Тренировка» и выбирает режим «По расписанию»: задаёт дни недели и время начала, а клиенты бронируют готовые слоты мгновенно, видя остаток мест. Для персональных тренировок он выбирает режим «Персональная тренировка» и вместо фиксированного времени указывает диапазон приёма на каждый день — например, «с 9 до 18 по вторникам» — а точное время внутри диапазона согласовывает с каждым клиентом сам. Если Андрей не против тренировать сразу нескольких клиентов вместе, он поднимает «Макс. клиентов в сессии» — тогда у клиентов при записи появляются вкладки «Для одного» и «Для группы», и донабор группы происходит сам, без его участия.',
         'Стол, который просто стоит без дела, — чистый убыток по аренде помещения. Вы поставили цену часа так, что даже три брони в день с одного стола перекрывают аренду зала с запасом, а прогноз загрузки виден в одном календаре, без ручных таблиц. После тренировки клиенты часто берут в том же чеке изотоник или батончик — не отдельная касса, а та же карточка товара в Alliby.',
         'Летом часть столов стоит во дворе клуба. Игрок не бросает партию, чтобы дойти до кассы за новой ракеткой или бутылкой изотоника, — заказывает их в приложении, и администратор через пару минут приносит заказ прямо к уличному столу. Это доставка внутри территории клуба, а не отправка курьером на дом.',
         'На входе в клуб и на ваших визитках — QR-код: человек, который просто зашёл спросить про аренду стола, сканирует его и сразу видит расписание тренеров и свободные слоты, записывается на месте, без звонка администратору. Часть абонементов «Безлимит» клиенты покупают не себе, а в подарок — так в клуб приходят люди, которые о нём раньше не слышали.',
-        'Точно так же работает другой бизнес в соседнем городе — секция программирования для школьников. Преподаватели заведены тем же способом: профиль, фото, личное расписание. Группы «Scratch для 8–10 лет» и «Python для подростков» — до восьми детей, дважды в неделю по 60 минут. Родители видят свободные места на неделю вперёд и бронируют занятие сами, не дозваниваясь до администратора, а если группа набралась не полностью, преподаватель рассылает push с приглашением донабрать место со скидкой. Оба бизнеса — фитнес-клуб и образовательная секция — используют один и тот же механизм «мастер с расписанием», просто под разные предметные области.',
         'Когда ваш клуб вырос, вы открыли второй зал на другом конце города и управляете обоими из одного аккаунта — тренеры видят расписание только своей площадки, а выручку по обеим сразу видите только вы.',
-        'Перед началом учебного года вы рассылаете push «Скидка на абонемент для новых учеников» по районным группам — заявки приходят прямо в приложение, без звонков и бумажных анкет.',
+        'Перед началом сезона вы рассылаете push «Скидка на абонемент для новых учеников» по районным группам — заявки приходят прямо в приложение, без звонков и бумажных анкет.',
         'В «Аналитике» вы видите, какие часы у столов пустуют чаще всего, и переставляете туда групповые тренировки вместо персональных — простой перестаёт быть чистым убытком.',
       ],
       stats: [
         { v: '0', l: 'двойных броней — система следит за занятостью каждого ресурса' },
         { v: '3 брони/день', l: 'с одного стола перекрывают аренду зала с запасом' },
+      ],
+    },
+  },
+  education: {
+    accentRgb: '99,102,241',
+    client: {
+      title: 'Образование — глазами клиента',
+      sub: 'Языковая школа, курсы для ребёнка или репетитор — запись на занятие без звонков',
+      story: [
+        'Максим хочет выучить корейский — открывает Alliby, находит языковую школу «Сеул», видит преподавателей с их расписанием и группы по уровням. Выбирает группу для начинающих по вторникам и четвергам: сразу видно, сколько мест ещё свободно, и бронь подтверждается без ожидания.',
+        'Если удобного времени в группах нет, Максим записывается к преподавателю индивидуально: выбирает день из тех, что открыл преподаватель, а точный час тот подтверждает позже.',
+        'Оплату за курс Максим вносит абонементом — оплата списывается автоматически, без отдельных платежей за каждое занятие. Абонемент можно и подарить: код отправляется в чате, друг активирует его на своём аккаунте.',
+        'Родители школьника находят курс тем же способом: открывают Alliby, выбирают преподавателя, смотрят расписание групп и свободные места, записывают ребёнка на удобное время без звонков администратору.',
+        'Перед началом семестра приходит push «Набор в новые группы» — Максим успевает занять место до того, как группа наберётся.',
+      ],
+      stats: [
+        { v: '1 клик', l: 'чтобы выбрать преподавателя перед записью' },
+        { v: '0 звонков', l: 'администратору — расписание и свободные места видны в приложении' },
+      ],
+    },
+    business: {
+      title: 'Образование — глазами владельца',
+      sub: 'Школа корейского языка «Сеул» и детская секция программирования — работают на одной информационной модели',
+      story: [
+        'Вы управляете школой корейского языка «Сеул». В Alliby вы добавляете преподавателей: у каждого профиль, фото и личное расписание. Клиент видит реальную занятость преподавателя и записывается сам. Двойная бронь исключена — система следит за занятостью каждого преподавателя.',
+        'Групповые занятия вы настраиваете в режиме «По расписанию»: задаёте дни недели, время начала и размер группы, а ученики бронируют готовые места, видя остаток. Для индивидуальных уроков преподаватель указывает диапазон приёма на каждый день, а точное время согласовывает с учеником.',
+        'Точно так же работает другой бизнес в соседнем городе — секция программирования для школьников. Группы «Scratch для 8–10 лет» и «Python для подростков» — до восьми детей, дважды в неделю по 60 минут. Родители видят свободные места на неделю вперёд и бронируют занятие сами, а если группа набралась не полностью, преподаватель рассылает push с приглашением донабрать место со скидкой.',
+        'На входе в школу и на листовках — QR-код: человек, который зашёл узнать про курсы, сканирует его и сразу видит расписание групп и свободные места, записывается на месте, без звонка администратору.',
+        'Перед началом семестра вы рассылаете push «Набор в новые группы» — заявки приходят прямо в приложение, без бумажных анкет. Администратор ведёт запись, но не видит финансов школы.',
+      ],
+      stats: [
+        { v: '0', l: 'двойных броней — система следит за занятостью преподавателей' },
+        { v: '8 мест', l: 'в группе — остаток виден ученикам в реальном времени' },
       ],
     },
   },
@@ -2283,7 +2347,7 @@ function openScenario(key, audience) {
   modal.style.setProperty('--accent-rgb', dir.accentRgb);
   document.getElementById('scenario-icon').innerHTML =
     '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (SCENARIO_ICONS[key] || '') + '</svg>';
-  var dirLabels = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт и образование', entertainment: 'Развлечения', courier: 'Alliby Carry' };
+  var dirLabels = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт', education: 'Образование', entertainment: 'Развлечения', courier: 'Alliby Carry' };
   var audienceLabel = audience === 'client' ? 'для клиента' : 'для бизнеса';
   document.getElementById('scenario-eyebrow').textContent = (dirLabels[key] || key) + ' · ' + audienceLabel;
   document.getElementById('scenario-title').textContent = s.title;
