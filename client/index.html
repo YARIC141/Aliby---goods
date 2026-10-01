@@ -232,27 +232,31 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .empty{text-align:center;padding:48px 20px;color:var(--fg-4);font:400 16px/1.5 var(--font-sans)}
 .loading{text-align:center;padding:28px;color:var(--fg-4);font:400 14px/1.5 var(--font-sans)}
 /* ── Onboarding tour ── */
-#tour{position:fixed;inset:0;z-index:10002;display:none;align-items:flex-end;justify-content:center;background:oklch(0 0 0 / .6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;transition:opacity .25s}
+#tour{position:fixed;inset:0;z-index:10002;display:none;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .25s}
 #tour.open{display:flex}
 #tour.show{opacity:1}
-.tour-card{width:100%;max-width:480px;background:var(--bg-1);border-radius:22px 22px 0 0;padding:20px 22px calc(env(safe-area-inset-bottom,0px) + 18px);box-shadow:0 -8px 32px rgba(0,0,0,.25);transform:translateY(24px);transition:transform .3s var(--ease-out,ease);touch-action:pan-y}
+#tour.pos-top{align-items:flex-start}
+#tour-spot{position:fixed;left:50%;top:50%;width:0;height:0;border-radius:16px;box-shadow:0 0 0 100vmax oklch(0 0 0 / .62);outline:2px solid color-mix(in oklch,var(--accent,#e8743b) 85%,#fff);outline-offset:0;pointer-events:none;transition:left .28s var(--ease-out,ease),top .28s var(--ease-out,ease),width .28s var(--ease-out,ease),height .28s var(--ease-out,ease)}
+#tour-spot.none{outline-color:transparent}
+.tour-card{position:relative;width:100%;max-width:480px;background:var(--bg-1);border-radius:22px 22px 0 0;padding:18px 22px calc(env(safe-area-inset-bottom,0px) + 16px);box-shadow:0 -8px 32px rgba(0,0,0,.25);transform:translateY(24px);transition:transform .3s var(--ease-out,ease);touch-action:pan-y}
+#tour.pos-top .tour-card{border-radius:0 0 22px 22px;padding:calc(env(safe-area-inset-top,0px) + 14px) 22px 16px;box-shadow:0 8px 32px rgba(0,0,0,.25);transform:translateY(-24px)}
 #tour.show .tour-card{transform:none}
-.tour-top{display:flex;align-items:center;justify-content:space-between;min-height:28px;margin-bottom:6px}
+.tour-top{display:flex;align-items:center;justify-content:space-between;min-height:28px;margin-bottom:4px}
 .tour-kicker{font:600 12px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3)}
 .tour-skip{background:none;border:0;color:var(--fg-3);font:500 14px/1 var(--font-sans);padding:8px 0 8px 12px;cursor:pointer}
-.tour-body{text-align:center;padding:6px 4px 14px;min-height:190px}
-.tour-ico{width:64px;height:64px;margin:6px auto 14px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:color-mix(in oklch,var(--accent,#e8743b) 16%,var(--bg-1));color:var(--accent,#e8743b)}
-.tour-ico svg{width:32px;height:32px}
-.tour-title{font:700 21px/1.25 var(--font-sans);color:var(--fg);margin-bottom:8px}
-.tour-text{font:400 15px/1.55 var(--font-sans);color:var(--fg-2,var(--fg-3))}
-.tour-dots{display:flex;justify-content:center;gap:6px;margin-bottom:14px}
+.tour-body{text-align:center;padding:4px 4px 10px;min-height:150px}
+.tour-ico{width:52px;height:52px;margin:2px auto 10px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:color-mix(in oklch,var(--accent,#e8743b) 16%,var(--bg-1));color:var(--accent,#e8743b)}
+.tour-ico svg{width:26px;height:26px}
+.tour-title{font:700 20px/1.25 var(--font-sans);color:var(--fg);margin-bottom:6px}
+.tour-text{font:400 15px/1.5 var(--font-sans);color:var(--fg-2,var(--fg-3))}
+.tour-dots{display:flex;justify-content:center;gap:6px;margin-bottom:12px}
 .tour-dot{width:7px;height:7px;border-radius:50%;background:var(--line);transition:background .2s,width .2s}
 .tour-dot.on{width:20px;border-radius:4px;background:var(--accent,#e8743b)}
 .tour-nav{display:flex;gap:10px}
 .tour-nav .btn{flex:1;justify-content:center;padding:13px 18px}
 .tour-body.anim{animation:tourIn .28s var(--ease-out,ease)}
 @keyframes tourIn{from{opacity:0;transform:translateX(var(--tour-dx,16px))}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){#tour,.tour-card,.tour-dot{transition:none}.tour-body.anim{animation:none}}
+@media (prefers-reduced-motion:reduce){#tour,.tour-card,.tour-dot,#tour-spot{transition:none}.tour-body.anim{animation:none}}
 #offline-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:8000;background:#dc2626;color:#fff;padding:6px 14px;font:500 13px/1.4 var(--font-sans);text-align:center;align-items:center;justify-content:center;gap:8px}
 #offline-banner.show{display:flex}
 #geo-locate-banner{display:none;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line-soft);font-size:13px;color:var(--fg-3)}
@@ -13360,6 +13364,7 @@ function closeStoreSchedDay() {
 
 <!-- Onboarding tour -->
 <div id="tour" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-hidden="true">
+  <div id="tour-spot" class="none"></div>
   <div class="tour-card" id="tour-card">
     <div class="tour-top"><span class="tour-kicker" id="tour-kicker"></span><button type="button" class="tour-skip" id="tour-skip">Пропустить</button></div>
     <div class="tour-body" id="tour-body" aria-live="polite">
@@ -13376,54 +13381,71 @@ function closeStoreSchedDay() {
 </div>
 <script>
 // ─── ONBOARDING TOUR ───
-// Показывается один раз новому пользователю (полный тур) и после обновления,
-// в котором появились новые шаги (только «Что нового»). Чтобы показать новинку,
-// добавьте шаг с since = TOUR_VERSION + 1 и увеличьте TOUR_VERSION.
-// Деплой сам по себе тур не запускает — иначе он надоедал бы после каждого пуша.
-const TOUR_VERSION = 1;
+// Один раз новому пользователю (полный тур) и после обновления, в котором появились
+// новые шаги («Что нового»). Чтобы рассказать о новинке: добавьте шаг с since = TOUR_VERSION + 1
+// и увеличьте TOUR_VERSION. Деплой сам по себе тур не запускает.
+// Шаг: screen — какой экран открыть; target — CSS-селектор (берётся первый ВИДИМЫЙ элемент,
+// поэтому скрытые направления/кнопки не ломают тур); skip — пропустить шаг, если цель не найдена;
+// when — условие показа. Тексты намеренно не называют конкретные направления.
+const TOUR_VERSION = 2;
 const TOUR_KEY = 'alliby_tour_seen';
 const _TI = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const _TI_SPRITE = id => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#${id}"/></svg>`;
+const _tourNav = n => `[data-nav="${n}"]`;
 const TOUR_STEPS = [
-  { since: 1, icon: _TI('<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'),
+  { since: 2, icon: _TI('<path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'),
     title: 'Добро пожаловать в Alliby',
-    text: 'Одно приложение для заведений вашего города: еда, услуги, товары, спорт, образование и развлечения. Покажем главное за минуту.' },
-  { since: 1, icon: _TI_SPRITE('i-food'),
-    title: 'Выберите направление',
-    text: 'На «Главной» плитки направлений. Нажмите нужную — увидите заведения этого типа. Недавние заведения всегда под рукой внизу.' },
-  { since: 1, icon: _TI('<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>'),
-    title: 'Найдите заведение',
-    text: 'Раздел «Заведения» показывает карту и список рядом с вами. Нажмите на метку, чтобы посмотреть информацию, а затем откройте меню заведения.' },
-  { since: 1, icon: _TI('<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>'),
-    title: 'Товары, услуги и запись',
-    text: 'В меню заведения — товары и услуги. Кнопка с ценой кладёт товар в корзину, а «Записаться» или «Арендовать» откроет выбор времени. Нажмите на карточку, чтобы увидеть состав и аллергены.' },
-  { since: 1, icon: _TI('<path d="M20 12v8H4v-8"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>'),
-    title: 'Абонементы и скидки',
-    text: 'Вверху меню заведения — абонементы. Если у вас есть подходящий, на карточке появится «По абонементу» с зачёркнутой обычной ценой, а на кнопке — цена со скидкой.' },
-  { since: 1, icon: _TI('<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>'),
-    title: 'Корзина и оплата',
-    text: 'В «Корзине» проверьте заказ и оплатите его. Если оплата не проходит, отключите VPN — платёжный сервис такие соединения блокирует.' },
-  { since: 1, icon: _TI('<circle cx="12" cy="12" r="10"/><polyline points="7 18 12 6 17 18"/><line x1="9" y1="14" x2="15" y2="14"/>'),
-    title: 'Раздел «Алиби»',
-    text: 'Здесь ваши заказы, записи и купленные абонементы. Откройте абонемент, чтобы увидеть остаток и срок действия.' },
-  { since: 1, icon: _TI_SPRITE('i-qr'),
-    title: 'QR, статистика и питомец',
-    text: 'QR на «Главной» — ваш личный код, покажите его в заведении. «Статистика» считает вашу экономию, а «Питомец» — небольшая игра, которую можно кормить и развивать.' },
-  { since: 1, icon: _TI('<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+    text: 'Одно приложение для заведений вашего города. Покажем главное — это займёт минуту.' },
+  { since: 2, icon: _TI_SPRITE('i-goods'),
+    title: 'Направления',
+    text: 'Плитки на «Главной» — категории заведений. Нажмите на любую, чтобы увидеть заведения этого типа. Набор направлений может меняться.',
+    screen: 'home', target: '.home-tile:not(.home-tile-mini):not(.home-tile-pet):not(.home-tile-install)', when: () => !!S.session },
+  { since: 2, icon: _TI_SPRITE('i-qr'),
+    title: 'QR и статистика',
+    text: 'QR — ваш личный код: покажите его в заведении. «Статистика» считает вашу экономию и историю использования абонементов.',
+    screen: 'home', target: '.home-tile-group', skip: true, when: () => !!S.session },
+  { since: 2, icon: _TI_SPRITE('i-paw'),
+    title: 'Питомец',
+    text: 'Небольшая игра: питомца можно кормить и развивать. Заходите к нему почаще.',
+    screen: 'home', target: '.home-tile-pet', skip: true, when: () => !!S.session },
+  { since: 2, icon: _TI('<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>'),
+    title: 'Заведения',
+    text: 'Карта и список заведений рядом с вами. Нажмите на метку или карточку, чтобы посмотреть информацию и открыть меню.',
+    screen: 'map', target: _tourNav('map') },
+  { since: 2, icon: _TI('<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/>'),
+    title: 'Меню заведения',
+    text: 'Здесь товары и услуги выбранного заведения. Кнопка на карточке сразу добавляет позицию в корзину или открывает запись. Нажмите на карточку — увидите подробности.',
+    screen: 'store', target: '#screen-store .item-card .item-actions .btn', skip: true, when: () => !!S.store },
+  { since: 2, icon: _TI('<path d="M20 12v8H4v-8"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>'),
+    title: 'Абонементы',
+    text: 'Если заведение предлагает абонементы, они показаны в этой ленте — её можно скрыть крестиком. С подходящим абонементом на карточках появляется «По абонементу» и цена со скидкой.',
+    screen: 'store', target: '#store-subs-sec', skip: true, when: () => !!S.store },
+  { since: 2, icon: _TI('<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>'),
+    title: 'Корзина',
+    text: 'Проверьте выбранное и оплатите заказ. Если оплата не проходит, отключите VPN — платёжный сервис такие соединения блокирует.',
+    screen: 'cart', target: _tourNav('cart') },
+  { since: 2, icon: _TI('<circle cx="12" cy="12" r="10"/><polyline points="7 18 12 6 17 18"/><line x1="9" y1="14" x2="15" y2="14"/>'),
+    title: 'Алиби',
+    text: 'Ваши заказы, записи и купленные абонементы. Откройте абонемент, чтобы увидеть остаток и срок действия.',
+    screen: 'calenabs', target: _tourNav('calenabs'), when: () => !!S.session },
+  { since: 2, icon: _TI('<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
     title: 'Профиль и настройки',
-    text: 'В профиле — тема, напоминания, инструкция и этот тур: «Обучение по приложению» можно пройти снова в любой момент. Знаки «?» на экранах дают короткие подсказки.' },
+    text: 'Тема, напоминания и инструкция — в профиле. Этот тур можно пройти снова кнопкой «Обучение по приложению». Знаки «?» на экранах дают короткие подсказки.',
+    screen: 'profile', target: '[onclick="startTour(true)"]', when: () => !!S.session },
 ];
 
-let _tourSteps = [], _tourIdx = 0, _tourTimer = null, _tourSession = false, _tourLastFocus = null;
+let _tourSteps = [], _tourIdx = 0, _tourTimer = null, _tourSession = false, _tourLastFocus = null, _tourTok = 0, _tourOrigin = null;
+const _tourSleep = ms => new Promise(r => setTimeout(r, ms));
 
 function _tourSeen() { try { return parseInt(localStorage.getItem(TOUR_KEY) || '0', 10) || 0; } catch { return 0; } }
 function _tourMarkSeen() { try { localStorage.setItem(TOUR_KEY, String(TOUR_VERSION)); } catch {} }
+function _tourCurScreen() { return document.querySelector('.screen.active')?.id?.replace('screen-', '') || null; }
 
 function _tourSchedule() {
   if (_tourSession || _tourSeen() >= TOUR_VERSION) return;
   clearTimeout(_tourTimer);
   _tourTimer = setTimeout(() => {
-    // не перебиваем splash, открытые модалки и экран входа
+    // не перебиваем splash, открытые модалки и экраны кроме «Главной»/«Заведений»
     const busy = document.getElementById('splash')
       || document.querySelector('.overlay.open')
       || document.getElementById('panel-customize')?.classList.contains('open')
@@ -13434,21 +13456,93 @@ function _tourSchedule() {
 }
 
 function startTour(manual) {
+  if (_tourSession) return;
   const seen = manual ? 0 : _tourSeen();
-  _tourSteps = TOUR_STEPS.filter(st => st.since > seen);
+  _tourSteps = TOUR_STEPS.filter(st => st.since > seen && (!st.when || st.when()));
   if (!_tourSteps.length) return;
   _tourSession = true;
   _tourIdx = 0;
-  const isNew = seen === 0;
-  document.getElementById('tour-kicker').textContent = isNew ? 'Знакомство' : 'Что нового';
+  _tourOrigin = _tourCurScreen();
+  document.getElementById('tour-kicker').textContent = seen === 0 ? 'Знакомство' : 'Что нового';
   const el = document.getElementById('tour');
   _tourLastFocus = document.activeElement;
   el.classList.add('open');
   el.setAttribute('aria-hidden', 'false');
   requestAnimationFrame(() => el.classList.add('show'));
-  _tourRender(0);
-  document.getElementById('tour-next').focus({ preventScroll: true });
   document.addEventListener('keydown', _tourKey);
+  window.addEventListener('resize', _tourReflow);
+  document.getElementById('tour-next').focus({ preventScroll: true });
+  _tourShow(1);
+}
+
+// Первый видимый элемент по селектору (скрытые тоглами направления/кнопки игнорируются)
+function _tourFind(sel) {
+  return [...document.querySelectorAll(sel)].find(e => {
+    const r = e.getBoundingClientRect();
+    return e.offsetParent !== null && r.width > 0 && r.height > 0;
+  }) || null;
+}
+
+// Координаты getBoundingClientRect внутри #zoom-root зависят от CSS-zoom настройки размера шрифта —
+// калибруемся по самому корню, чтобы подсветка попадала точно.
+function _tourK() {
+  const zr = document.getElementById('zoom-root');
+  const w = zr?.getBoundingClientRect().width;
+  const k = w ? document.documentElement.clientWidth / w : 1;
+  return Math.abs(k - 1) < 0.01 ? 1 : k;
+}
+
+function _tourPlace(target) {
+  const spot = document.getElementById('tour-spot');
+  const tour = document.getElementById('tour');
+  if (!target) {
+    spot.classList.add('none');
+    Object.assign(spot.style, { left: '50%', top: '50%', width: '0px', height: '0px' });
+    tour.classList.remove('pos-top');
+    return;
+  }
+  const k = _tourK(), r = target.getBoundingClientRect(), pad = 6;
+  const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+  const x = Math.max(4, r.left * k - pad), y = Math.max(4, r.top * k - pad);
+  const w = Math.min(vw - 4, r.right * k + pad) - x, h = Math.min(vh - 4, r.bottom * k + pad) - y;
+  spot.classList.remove('none');
+  Object.assign(spot.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+  // карточку уводим на сторону, противоположную подсвеченному элементу
+  tour.classList.toggle('pos-top', y + h / 2 > vh * 0.5);
+}
+
+async function _tourShow(dir) {
+  const tok = ++_tourTok;
+  const st = _tourSteps[_tourIdx];
+  if (st.screen && _tourCurScreen() !== st.screen) {
+    try { goTo(st.screen); } catch {}
+    await _tourSleep(450);
+    if (tok !== _tourTok) return;
+  }
+  let target = null;
+  if (st.target) {
+    for (let i = 0; i < 10 && !(target = _tourFind(st.target)); i++) { await _tourSleep(150); if (tok !== _tourTok) return; }
+    if (!target && st.skip) { // цели нет (скрыто/нет данных) — тихо пропускаем шаг
+      let d = dir || 1, n = _tourIdx + d;
+      if (n < 0) { d = 1; n = _tourIdx + 1; }
+      if (n >= _tourSteps.length) { closeTour(); return; }
+      _tourIdx = n;
+      return _tourShow(d);
+    }
+    if (target) {
+      try { target.scrollIntoView({ block: 'center', inline: 'nearest' }); } catch {}
+      await _tourSleep(80);
+      if (tok !== _tourTok) return;
+    }
+  }
+  _tourPlace(target);
+  _tourRender(dir, target);
+}
+
+function _tourReflow() {
+  const st = _tourSteps[_tourIdx];
+  if (!st || !_tourSession) return;
+  _tourPlace(st.target ? _tourFind(st.target) : null);
 }
 
 function _tourRender(dir) {
@@ -13458,7 +13552,7 @@ function _tourRender(dir) {
   document.getElementById('tour-text').textContent = st.text;
   document.getElementById('tour-dots').innerHTML = _tourSteps.map((_, i) => `<span class="tour-dot${i === _tourIdx ? ' on' : ''}"></span>`).join('');
   document.getElementById('tour-back').style.visibility = _tourIdx ? 'visible' : 'hidden';
-  document.getElementById('tour-next').textContent = last ? 'Начать' : 'Далее';
+  document.getElementById('tour-next').textContent = last ? 'Готово' : 'Далее';
   document.getElementById('tour-skip').style.visibility = last ? 'hidden' : 'visible';
   const body = document.getElementById('tour-body');
   body.classList.remove('anim');
@@ -13466,20 +13560,26 @@ function _tourRender(dir) {
 }
 
 function tourStep(d) {
+  if (!_tourSession) return;
   const n = _tourIdx + d;
   if (n >= _tourSteps.length) { closeTour(); return; }
   if (n < 0) return;
   _tourIdx = n;
-  _tourRender(d);
+  _tourShow(d);
 }
 
 function closeTour() {
+  _tourTok++;
+  _tourSession = false;
   _tourMarkSeen();
   const el = document.getElementById('tour');
   el.classList.remove('show');
   el.setAttribute('aria-hidden', 'true');
   document.removeEventListener('keydown', _tourKey);
-  setTimeout(() => el.classList.remove('open'), 250);
+  window.removeEventListener('resize', _tourReflow);
+  setTimeout(() => { if (!_tourSession) { el.classList.remove('open', 'pos-top'); _tourPlace(null); } }, 250);
+  // возвращаем пользователя туда, откуда он начал тур
+  if (_tourOrigin && _tourCurScreen() !== _tourOrigin) { try { goTo(_tourOrigin); } catch {} }
   try { _tourLastFocus?.focus?.({ preventScroll: true }); } catch {}
 }
 
