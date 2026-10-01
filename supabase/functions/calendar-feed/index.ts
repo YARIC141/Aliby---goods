@@ -56,6 +56,8 @@ Deno.serve(async (req: Request) => {
   const { data: tk } = await sb.from('calendar_feed_tokens').select('user_id').eq('token', token).maybeSingle()
   if (!tk) return new Response('Not found', { status: 404 })
   const uid = tk.user_id as string
+  // статус «подключено» в профиле: календарь реально забрал ленту
+  sb.from('calendar_feed_tokens').update({ last_fetched_at: new Date().toISOString() }).eq('token', token).then(() => {}, () => {})
 
   const since = new Date(Date.now() - 60 * 86400_000)
   const sinceDate = since.toISOString().slice(0, 10)
