@@ -13524,7 +13524,7 @@ function closeStoreSchedDay() {
 // Шаг: screen — какой экран открыть; target — CSS-селектор (берётся первый ВИДИМЫЙ элемент,
 // поэтому скрытые направления/кнопки не ломают тур); skip — пропустить шаг, если цель не найдена;
 // when — условие показа. Тексты намеренно не называют конкретные направления.
-const TOUR_VERSION = 3;
+const TOUR_VERSION = 4;
 const TOUR_KEY = 'alliby_tour_seen';
 const _TI = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
 const _TI_SPRITE = id => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#${id}"/></svg>`;
@@ -13573,6 +13573,10 @@ const TOUR_STEPS = [
     title: 'Профиль и настройки',
     text: 'Тема, напоминания и инструкция — в профиле. Этот тур можно пройти снова кнопкой «Обучение по приложению». Знаки «?» на экранах дают короткие подсказки.',
     screen: 'profile', target: '[onclick="startTour(true)"]', when: () => !!S.session },
+  { since: 4, icon: _TI('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
+    title: 'Синхронизация с календарём',
+    text: 'Подключите Google или Apple Календарь в профиле — все ваши записи, тренировки и аренды будут появляться там автоматически.',
+    screen: 'profile', target: '[onclick="openCalSync()"]', when: () => !!S.session },
 ];
 
 let _tourSteps = [], _tourIdx = 0, _tourTimer = null, _tourSession = false, _tourLastFocus = null, _tourTok = 0, _tourOrigin = null;
