@@ -742,7 +742,7 @@
 
       <div class="meal-tab-panel" id="meal-panel-search">
         <div class="meal-search-row">
-          <input lang="ru" type="text" id="meal-search-input" placeholder="Например: гречка, куриная грудка">
+          <input lang="ru" type="text" inputmode="text" autocomplete="off" id="meal-search-input" placeholder="Например: гречка, куриная грудка">
           <button type="button" id="btn-meal-search">Искать</button>
         </div>
         <div id="meal-search-results" class="meal-search-results"></div>
@@ -1707,20 +1707,19 @@
     };
   }
   function offSearch(q){
-    return fetch('https://search.openfoodfacts.org/search?q=' + encodeURIComponent(q) +
-        '&page_size=15&langs=ru&fields=' + OFF_FIELDS)
+    return fetch(SB_URL + '/functions/v1/off-proxy?action=search&langs=ru&q=' + encodeURIComponent(q))
       .then(function(r){ if (!r.ok) throw new Error('off ' + r.status); return r.json(); })
       .then(function(d){ return (d.hits || []).map(offItem).filter(Boolean); })
       .then(function(items){
         if (items.length) return items;
         // по-русски ничего — пробуем без языкового фильтра (латиница, бренды)
-        return fetch('https://search.openfoodfacts.org/search?q=' + encodeURIComponent(q) + '&page_size=15&fields=' + OFF_FIELDS)
+        return fetch(SB_URL + '/functions/v1/off-proxy?action=search&q=' + encodeURIComponent(q))
           .then(function(r){ return r.json(); })
           .then(function(d){ return (d.hits || []).map(offItem).filter(Boolean); });
       });
   }
   function offBarcode(code){
-    return fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(code) + '.json?fields=' + OFF_FIELDS)
+    return fetch(SB_URL + '/functions/v1/off-proxy?action=barcode&code=' + encodeURIComponent(code))
       .then(function(r){ return r.json(); })
       .then(function(d){ return d && d.status === 1 ? offItem(d.product) : null; });
   }
