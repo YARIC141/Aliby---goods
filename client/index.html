@@ -1964,6 +1964,29 @@ document.addEventListener('deviceready',function(){
 </div>
 
 <!-- ════════════════ RENT BOOKING MODAL ════════════════ -->
+<div class="overlay" id="m-calsync">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3 style="font-size:16px">Синхронизация с календарём</h3>
+      <button class="modal-x" onclick="closeModal('m-calsync')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--fg-3);line-height:1.5;margin-bottom:12px">
+      Все ваши записи, тренировки и аренды появятся в календаре и будут обновляться автоматически.
+      Google может обновлять подписку с задержкой до нескольких часов.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-p btn-full" onclick="calSyncOpen('google')">Добавить в Google Календарь</button>
+      <button class="btn btn-full" onclick="calSyncOpen('apple')">Добавить в Apple Календарь</button>
+      <button class="btn btn-full" onclick="calSyncCopy()">Скопировать ссылку</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px;font-size:12px">
+      <a href="#" style="color:var(--accent)" onclick="event.preventDefault();calSyncRegen()">Перевыпустить ссылку</a>
+      <a href="#" style="color:var(--err)" onclick="event.preventDefault();calSyncRevoke()">Отключить</a>
+    </div>
+    <div style="font-size:11px;color:var(--fg-4);margin-top:10px;line-height:1.4">Ссылка личная — не передавайте её другим. Если она попала не туда, перевыпустите её: старая перестанет работать.</div>
+  </div>
+</div>
+
 <div class="overlay" id="m-rent">
   <div class="modal" style="max-width:480px">
     <div class="modal-hd">
@@ -2077,6 +2100,13 @@ document.addEventListener('deviceready',function(){
     <div class="sec">
       <button class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between" onclick="startTour(true)">
         <span>Обучение по приложению</span>
+        <span style="color:var(--fg-4);font-size:18px">›</span>
+      </button>
+    </div>
+
+    <div class="sec">
+      <button class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between" onclick="openCalSync()">
+        <span>Синхронизировать с календарём (Google / Apple)</span>
         <span style="color:var(--fg-4);font-size:18px">›</span>
       </button>
     </div>
@@ -8441,6 +8471,103 @@ function realtimeSubscribeRent(userId, _retried = false) {
   } catch {}
 }
 
+// ── Календарь: подписка (лента ICS) и добавление отдельных событий ──
+let _calToken = null;
+function _calFeedUrl(proto) {
+  const base = SB_URL.replace(/^https?:/, proto);
+  return `${base}/functions/v1/calendar-feed?t=${_calToken}`;
+}
+async function _calEnsureToken(regen) {
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return false; }
+  try {
+    const t = await req('/rest/v1/rpc/get_calendar_feed_token', { method: 'POST', body: JSON.stringify({ p_regenerate: !!regen }) });
+    _calToken = typeof t === 'string' ? t : (t && t.get_calendar_feed_token) || null;
+  } catch (e) { _calToken = null; }
+  if (!_calToken) { showGeoToast('Не удалось получить ссылку'); return false; }
+  return true;
+}
+async function openCalSync() {
+  if (!S.session) { showGeoToast('Войдите в аккаунт'); return; }
+  openModal('m-calsync');
+  _calToken = null;
+}
+async function calSyncOpen(kind) {
+  if (!_calToken && !(await _calEnsureToken(false))) return;
+  const isNat = window.Capacitor?.isNativePlatform?.() ?? false;
+  const webcal = _calFeedUrl('webcal:');
+  const url = kind === 'google'
+    ? 'https://calendar.google.com/calendar/r?cid=' + encodeURIComponent(webcal)
+    : webcal;
+  if (isNat) window.open(url, '_system'); else window.location.href = url;
+}
+async function calSyncCopy() {
+  if (!_calToken && !(await _calEnsureToken(false))) return;
+  const url = _calFeedUrl('https:');
+  try { await navigator.clipboard.writeText(url); showGeoToast('Ссылка скопирована'); }
+  catch (e) { showGeoToast(url); }
+}
+async function calSyncRegen() {
+  if (!confirm('Перевыпустить ссылку? Старая подписка в календаре перестанет обновляться — её нужно будет добавить заново.')) return;
+  if (await _calEnsureToken(true)) showGeoToast('Новая ссылка создана');
+}
+async function calSyncRevoke() {
+  if (!confirm('Отключить синхронизацию? Ссылка перестанет работать.')) return;
+  try {
+    await req('/rest/v1/rpc/revoke_calendar_feed_token', { method: 'POST', body: '{}' });
+    _calToken = null; showGeoToast('Синхронизация отключена');
+  } catch (e) { showGeoToast('Не удалось отключить'); }
+}
+
+// Одиночное событие: на вебе — .ics, в приложении (WebView не скачивает файлы) — шаблон Google Календаря.
+function _calIcsLocal(d, t) { return d.replace(/-/g, '') + 'T' + t.slice(0, 5).replace(':', '') + '00'; }
+function _calIcsUtc(iso) {
+  const d = new Date(iso), p = n => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`;
+}
+function _calAddEvent(ev) {
+  const isNat = window.Capacitor?.isNativePlatform?.() ?? false;
+  if (isNat) {
+    const q = new URLSearchParams({ action: 'TEMPLATE', text: ev.title, dates: ev.start + '/' + ev.end, location: ev.location || '', details: ev.details || '' });
+    window.open('https://calendar.google.com/calendar/render?' + q.toString(), '_system');
+    return;
+  }
+  const e = v => String(v || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Alliby//Calendar//RU', 'BEGIN:VEVENT',
+    'UID:' + ev.uid + '@alliby.ru', 'DTSTAMP:' + _calIcsUtc(new Date().toISOString()),
+    'DTSTART:' + ev.start, 'DTEND:' + ev.end, 'SUMMARY:' + e(ev.title),
+    ev.location ? 'LOCATION:' + e(ev.location) : '', ev.details ? 'DESCRIPTION:' + e(ev.details) : '',
+    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Alliby', 'TRIGGER:-PT1H', 'END:VALARM',
+    'END:VEVENT', 'END:VCALENDAR'].filter(Boolean).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+  a.download = 'alliby-event.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function addBkToCal(id) {
+  let b = null;
+  Object.values(_myBk.byDate || {}).forEach(arr => arr.forEach(x => { if (x.id === id) b = x; }));
+  if (!b || !b.slot_start || !b.slot_end) return;
+  const master = b.master_id && _myBk.masterMap?.[b.master_id];
+  _calAddEvent({
+    uid: 'bk-' + b.id, title: b.menu_items?.name || 'Запись',
+    start: _calIcsLocal(b.slot_date, b.slot_start), end: _calIcsLocal(b.slot_date, b.slot_end),
+    location: [b.stores?.name, b.stores?.address].filter(Boolean).join(', '),
+    details: [b.stores?.name, master ? 'Специалист: ' + master : ''].filter(Boolean).join('\n'),
+  });
+}
+function addRentToCal(id) {
+  let r = null;
+  Object.values(_myBk.rentByDate || {}).forEach(arr => arr.forEach(x => { if (x.id === id) r = x; }));
+  if (!r) return;
+  _calAddEvent({
+    uid: 'rent-' + r.id, title: 'Аренда: ' + (r.menu_items?.name || ''),
+    start: _calIcsUtc(r.start_at), end: _calIcsUtc(r.end_at),
+    location: [r.stores?.name, r.stores?.address].filter(Boolean).join(', '),
+    details: r.stores?.name || '',
+  });
+}
+
 function _onRealtimeRent(record, type) {
   const isVisible = _calenabsIsActive() && _calenabsTab === 'rent';
   const card = document.querySelector(`[data-rent-id="${record.id}"]`);
@@ -12997,6 +13124,7 @@ function renderMyBookingsDay(ds) {
         </div>
         ${b.stores?.address ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-4);margin-top:4px;display:flex;align-items:center;gap:3px">${svgIco('pin',11)}${esc(b.stores.address)}</div>` : ''}
         ${b.master_id && _myBk.masterMap?.[b.master_id] ? `<div style="font:400 12px/1 var(--font-sans);color:var(--fg-3);margin-top:4px">👤 ${esc(_myBk.masterMap[b.master_id])}</div>` : ''}
+        ${!isPending && !isCancelled ? `<div style="margin-top:4px"><a href="#" onclick="event.preventDefault();event.stopPropagation();addBkToCal('${b.id}')" style="font-size:12px;color:var(--accent)">📅 В календарь</a></div>` : ''}
         ${!isPending && !isCancelled && (b.menu_items?.max_group_size||1) > 1 ? `<div style="margin-top:4px"><a href="#" onclick="event.preventDefault();event.stopPropagation();openTrainingGroupMembers('${b.id}')" style="font-size:12px;color:var(--accent)">👥 Участники группы</a></div>` : ''}
       </div>
       ${!completed && !isCancelled && !isPastBk ? `<div class="bk-item-actions">
@@ -13034,6 +13162,7 @@ function _rentDayItemsHtml(ds) {
           <span style="color:${sc}">${esc(sl)}</span>
           ${r.payment_status === 'paid' ? '<span style="color:var(--ok)">Оплачена</span>' : ''}
         </div>
+        ${!dimmed ? `<div style="margin-top:4px"><a href="#" onclick="event.preventDefault();event.stopPropagation();addRentToCal('${r.id}')" style="font-size:12px;color:var(--accent)">📅 В календарь</a></div>` : ''}
       </div>
     </div>`;
   }).join('');
