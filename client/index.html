@@ -13486,19 +13486,18 @@ function closeStoreSchedDay() {
 
   document.addEventListener('touchstart', e => {
     if (!scrollTop()) return;
-    // The zone's *end* is anchored to the scroll pane's own top, not the header —
-    // screens like store detail insert a tab bar between .ph and .pb, and the
-    // gesture needs to still trigger from a touch that lands right at the top of
-    // the actual content. But the zone's *start* stays at the header's top: users
-    // naturally begin the pull gesture from the title/name row itself, well above
-    // the tab bar, and anchoring the start to pb too made the touch land outside
-    // the zone entirely — the gesture silently never engaged there.
-    const pb = activePb();
-    const ph = document.querySelector('.screen.active .ph');
-    const zoneEnd = pb ? pb.getBoundingClientRect().top : (ph ? ph.getBoundingClientRect().top : 0);
-    const zoneStart = ph ? ph.getBoundingClientRect().top : zoneEnd;
+    // Жест можно начинать с любого места экрана, пока контент прокручен вверх.
+    // Исключения: карта (там свайп двигает карту), поля ввода, открытые окна и тур,
+    // горизонтально прокручиваемые ленты.
+    const tgt = e.target;
+    if (tgt && tgt.closest && tgt.closest('.maplibregl-map, input, textarea, select, .overlay.open, #tour, [data-no-ptr]')) return;
+    if (document.querySelector('.overlay.open')) return;
+    for (let el = tgt; el && el !== document.body; el = el.parentElement) {
+      if (el.scrollWidth > el.clientWidth + 4 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) return;
+      // вложенный вертикальный список, прокрученный вниз, — тянем его, а не обновляем страницу
+      if (el.scrollTop > 2 && el.scrollHeight > el.clientHeight + 4) return;
+    }
     const t = e.touches[0];
-    if (t.clientY < zoneStart || t.clientY > zoneEnd + INIT_ZONE) return;
     startY = t.clientY; startX = t.clientX; dy = 0; tracking = true;
   }, { passive: true });
 
@@ -13515,6 +13514,13 @@ function closeStoreSchedDay() {
     const p = Math.min(dy / THRESH, 1);
     pill.style.transform = `translateX(-50%) translateY(${Math.round((p - 1) * 56)}px)`;
     pill.textContent = dy >= THRESH ? '↺' : '↓';
+  }, { passive: true });
+
+  // Система перехватила жест (touchcancel) — сбрасываем, иначе «таблетка» зависает
+  document.addEventListener('touchcancel', () => {
+    tracking = false; dy = 0;
+    pill.style.transform = 'translateX(-50%) translateY(-56px)';
+    pill.textContent = '↓';
   }, { passive: true });
 
   document.addEventListener('touchend', () => {
