@@ -119,6 +119,25 @@
   .ring-icon.emoji{font-size:20px;line-height:1}
   .pet-topbar{display:flex;margin-bottom:8px}
   .pet-exit-btn{width:auto;margin:0;padding:8px 14px;background:#232b33;color:var(--text)}
+  /* ── Обучающий тур питомца ── */
+  #ptour{position:fixed;inset:0;z-index:1000;display:none;align-items:flex-end;justify-content:center}
+  #ptour.open{display:flex}
+  #ptour.pos-top{align-items:flex-start}
+  #ptour-spot{position:fixed;left:50%;top:50%;width:0;height:0;border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.66);outline:2px solid var(--accent);pointer-events:none;transition:left .28s,top .28s,width .28s,height .28s}
+  #ptour-spot.none{outline-color:transparent}
+  .ptour-card{position:relative;width:100%;max-width:480px;background:var(--card);border-radius:22px 22px 0 0;padding:18px 20px calc(env(safe-area-inset-bottom,0px) + 16px);box-shadow:0 -8px 32px rgba(0,0,0,.45);text-align:center}
+  #ptour.pos-top .ptour-card{border-radius:0 0 22px 22px;padding-top:calc(env(safe-area-inset-top,0px) + 14px);box-shadow:0 8px 32px rgba(0,0,0,.45)}
+  .ptour-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .ptour-kicker{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);font-weight:600}
+  #ptour .ptour-skip{width:auto;background:transparent;color:var(--text2);font-size:14px;font-weight:500;padding:8px 0 8px 12px}
+  .ptour-title{font-size:20px;font-weight:700;margin-bottom:6px}
+  .ptour-text{font-size:15px;line-height:1.5;color:var(--text2);min-height:66px}
+  .ptour-dots{display:flex;justify-content:center;gap:6px;margin:12px 0}
+  .ptour-dot{width:7px;height:7px;border-radius:50%;background:#3a444d}
+  .ptour-dot.on{width:20px;border-radius:4px;background:var(--accent)}
+  .ptour-nav{display:flex;gap:10px}
+  .ptour-nav button{flex:1}
+  @media (prefers-reduced-motion:reduce){#ptour-spot{transition:none}}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#232b33;color:var(--text);
     padding:12px 18px;border-radius:10px;font-size:14px;max-width:360px;text-align:center;
     box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:10}
@@ -251,6 +270,20 @@
 </head>
 <body>
 <div class="wrap">
+
+  <div id="ptour" role="dialog" aria-modal="true" aria-labelledby="ptour-title" aria-hidden="true">
+    <div id="ptour-spot" class="none"></div>
+    <div class="ptour-card">
+      <div class="ptour-top"><span class="ptour-kicker">Знакомство</span><button type="button" class="ptour-skip" id="ptour-skip">Пропустить</button></div>
+      <div class="ptour-title" id="ptour-title"></div>
+      <div class="ptour-text" id="ptour-text" aria-live="polite"></div>
+      <div class="ptour-dots" id="ptour-dots" aria-hidden="true"></div>
+      <div class="ptour-nav">
+        <button type="button" class="secondary" id="ptour-back">Назад</button>
+        <button type="button" id="ptour-next">Далее</button>
+      </div>
+    </div>
+  </div>
 
   <div id="screen-create">
     <div class="pet-topbar"><button type="button" class="pet-exit-btn" data-pet-exit aria-label="Назад">←</button></div>
@@ -526,6 +559,7 @@
     </div>
 
     <p class="footer-hint" id="text-hint"></p>
+    <button id="btn-pet-tour" class="ghost">Показать обучение</button>
     <button id="btn-reset" class="ghost">Начать заново</button>
   </div>
 
@@ -1881,6 +1915,118 @@
   }
   document.querySelectorAll('[data-pet-exit]').forEach(function(b){ b.addEventListener('click', exitPet); });
 
+  // ── Обучающий тур питомца: запускается один раз сразу после того, как пользователь дал имя ──
+  // Шаг: target — CSS-селектор (берётся первый видимый элемент), skip — пропустить, если цели нет.
+  var PTOUR_KEY = 'alliby_pet_tour_seen';
+  var PTOUR_STEPS = [
+    { title: 'Знакомься с питомцем', text: 'Это твой питомец. Он живёт по-настоящему: голодает, устаёт и радуется — в зависимости от того, как ты о нём заботишься.', target: '#sprite-card', skip: true },
+    { title: 'Показатели', text: 'Кольца показывают состояние питомца. Со временем они меняются, а часть показателей зависит от твоей реальной активности.', target: '.rings-row', skip: true },
+    { title: 'Питание', text: 'Записывай приёмы пищи — это влияет на питомца и на расчёт баланса калорий.', target: '#btn-meal-add', skip: true },
+    { title: 'Общение', text: 'Питомцу можно написать — у него есть собственный характер, который складывается из ухода.', target: '#btn-chat', skip: true },
+    { title: 'Игры', text: 'Играй с питомцем, чтобы повысить веселье и заработать золото.', target: '#btn-games', skip: true },
+    { title: 'Магазин и инвентарь', text: 'Золото можно потратить в магазине на украшения для питомца. Купленное лежит в инвентаре.', target: '#btn-shop', skip: true }
+  ];
+  var ptSteps = [], ptIdx = 0, ptOn = false, ptTok = 0;
+  function ptSleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function ptFind(sel){
+    var list = document.querySelectorAll(sel);
+    for (var i = 0; i < list.length; i++){
+      var r = list[i].getBoundingClientRect();
+      if (list[i].offsetParent !== null && r.width > 0 && r.height > 0) return list[i];
+    }
+    return null;
+  }
+  function ptPlace(t){
+    var spot = document.getElementById('ptour-spot'), box = document.getElementById('ptour');
+    if (!t){
+      spot.classList.add('none');
+      spot.style.left = '50%'; spot.style.top = '50%'; spot.style.width = '0px'; spot.style.height = '0px';
+      box.classList.remove('pos-top');
+      return;
+    }
+    var r = t.getBoundingClientRect(), pad = 6, vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    var x = Math.max(4, r.left - pad), y = Math.max(4, r.top - pad);
+    var w = Math.min(vw - 4, r.right + pad) - x, h = Math.min(vh - 4, r.bottom + pad) - y;
+    spot.classList.remove('none');
+    spot.style.left = x + 'px'; spot.style.top = y + 'px'; spot.style.width = w + 'px'; spot.style.height = h + 'px';
+    box.classList.toggle('pos-top', y + h / 2 > vh * 0.5);
+  }
+  function ptShow(dir){
+    var tok = ++ptTok, st = ptSteps[ptIdx];
+    var tries = 0;
+    (function find(){
+      if (tok !== ptTok) return;
+      var t = st.target ? ptFind(st.target) : null;
+      if (st.target && !t && tries++ < 8){ setTimeout(find, 150); return; }
+      if (st.target && !t && st.skip){
+        var d = dir || 1, n = ptIdx + d;
+        if (n < 0){ d = 1; n = ptIdx + 1; }
+        if (n >= ptSteps.length){ closePetTour(); return; }
+        ptIdx = n; ptShow(d); return;
+      }
+      if (t) { try { t.scrollIntoView({ block: 'center' }); } catch (e) {} }
+      setTimeout(function(){
+        if (tok !== ptTok) return;
+        ptPlace(t);
+        var last = ptIdx === ptSteps.length - 1;
+        document.getElementById('ptour-title').textContent = st.title;
+        document.getElementById('ptour-text').textContent = st.text;
+        var dots = '';
+        for (var i = 0; i < ptSteps.length; i++) dots += '<span class="ptour-dot' + (i === ptIdx ? ' on' : '') + '"></span>';
+        document.getElementById('ptour-dots').innerHTML = dots;
+        document.getElementById('ptour-back').style.visibility = ptIdx ? 'visible' : 'hidden';
+        document.getElementById('ptour-next').textContent = last ? 'Готово' : 'Далее';
+        document.getElementById('ptour-skip').style.visibility = last ? 'hidden' : 'visible';
+      }, 90);
+    })();
+  }
+  function startPetTour(){
+    if (ptOn) return;
+    ptSteps = PTOUR_STEPS.slice();
+    ptIdx = 0; ptOn = true;
+    var box = document.getElementById('ptour');
+    box.classList.add('open'); box.setAttribute('aria-hidden', 'false');
+    document.addEventListener('keydown', ptKey);
+    window.addEventListener('resize', ptReflow);
+    document.getElementById('ptour-next').focus({ preventScroll: true });
+    ptShow(1);
+  }
+  function ptReflow(){ if (ptOn) { var st = ptSteps[ptIdx]; ptPlace(st && st.target ? ptFind(st.target) : null); } }
+  function ptStep(d){
+    if (!ptOn) return;
+    var n = ptIdx + d;
+    if (n >= ptSteps.length){ closePetTour(); return; }
+    if (n < 0) return;
+    ptIdx = n; ptShow(d);
+  }
+  function closePetTour(){
+    ptTok++; ptOn = false;
+    try { localStorage.setItem(PTOUR_KEY, '1'); } catch (e) {}
+    var box = document.getElementById('ptour');
+    box.classList.remove('open', 'pos-top'); box.setAttribute('aria-hidden', 'true');
+    ptPlace(null);
+    document.removeEventListener('keydown', ptKey);
+    window.removeEventListener('resize', ptReflow);
+    window.scrollTo(0, 0);
+  }
+  function ptKey(e){
+    if (e.key === 'Escape') closePetTour();
+    else if (e.key === 'ArrowRight') ptStep(1);
+    else if (e.key === 'ArrowLeft') ptStep(-1);
+  }
+  document.getElementById('ptour-next').addEventListener('click', function(){ ptStep(1); });
+  document.getElementById('ptour-back').addEventListener('click', function(){ ptStep(-1); });
+  document.getElementById('ptour-skip').addEventListener('click', closePetTour);
+  document.getElementById('btn-pet-tour').addEventListener('click', startPetTour);
+
+  // Зеркалит имя питомца в SharedPreferences нативного приложения — его показывает виджет питомца.
+  function syncPetNameToNative(name){
+    if (!isNative) return;
+    var plugin = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Tamagotchi;
+    if (!plugin || typeof plugin.setPetName !== 'function') return;
+    try { plugin.setPetName({ name: name || '' }).catch(function(){}); } catch (e) {}
+  }
+
   function showScreen(id){
     document.getElementById('screen-create').classList.toggle('hidden', id !== 'create');
     document.getElementById('screen-status').classList.toggle('hidden', id !== 'status');
@@ -3133,6 +3279,7 @@
     if (hasPet()){
       showScreen('status');
       renderStatus();
+      syncPetNameToNative(loadPet().name);
       document.getElementById('input-bio').value = lsGet('bio', '');
       document.getElementById('input-weight').value = lsGet('weightKg', '');
       document.getElementById('input-height').value = lsGet('heightCm', '');
@@ -3305,6 +3452,10 @@
       document.getElementById('input-bio').value = '';
       showScreen('status');
       renderStatus();
+      syncPetNameToNative(name);
+      var seenTour = false;
+      try { seenTour = localStorage.getItem(PTOUR_KEY) === '1'; } catch (e) {}
+      if (!seenTour) setTimeout(startPetTour, 500);
     });
 
     document.getElementById('btn-chat').addEventListener('click', openChat);

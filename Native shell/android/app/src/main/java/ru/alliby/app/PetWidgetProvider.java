@@ -83,8 +83,12 @@ public class PetWidgetProvider extends AppWidgetProvider {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        String petName = TamagotchiPrefs.petName(appContext);
+        final String title = petName.isEmpty() ? "🐾 Питомец" : "🐾 " + petName;
+
         if (!HealthConnectSteps.isAvailable(appContext)) {
             RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_pet);
+            views.setTextViewText(R.id.pet_title, title);
             views.setInt(R.id.pet_widget_root, "setBackgroundResource", backgroundRes);
             views.setTextColor(R.id.pet_title, textPrimary);
             views.setTextColor(R.id.pet_empty, textEmpty);
@@ -112,6 +116,7 @@ public class PetWidgetProvider extends AppWidgetProvider {
                 }
 
                 RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_pet);
+                views.setTextViewText(R.id.pet_title, title);
                 views.setInt(R.id.pet_widget_root, "setBackgroundResource", backgroundRes);
                 views.setTextColor(R.id.pet_title, textPrimary);
                 views.setOnClickPendingIntent(R.id.pet_btn_theme, themePending);

@@ -109,6 +109,14 @@ public class TamagotchiPlugin extends Plugin {
         PetWidgetProvider.refreshAll(getContext());
     }
 
+    /** Зеркалит имя питомца для заголовка виджета питомца. */
+    @PluginMethod
+    public void setPetName(PluginCall call) {
+        TamagotchiPrefs.setPetName(getContext(), call.getString("name", ""));
+        call.resolve();
+        PetWidgetProvider.refreshAll(getContext());
+    }
+
     /**
      * Зеркалит дневной баланс мышечной/жировой массы (те же граммы, что и в
      * карточке "Композиция тела") в SharedPreferences для виджета питомца —

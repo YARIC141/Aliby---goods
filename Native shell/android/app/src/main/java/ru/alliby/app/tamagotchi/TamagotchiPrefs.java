@@ -20,6 +20,7 @@ public class TamagotchiPrefs {
     private static final String KEY_COMPOSITION_DATE = "body_composition_date";
     private static final String KEY_MUSCLE_G = "body_composition_muscle_g";
     private static final String KEY_FAT_G = "body_composition_fat_g";
+    private static final String KEY_PET_NAME = "pet_name";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getApplicationContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -27,6 +28,15 @@ public class TamagotchiPrefs {
 
     private static String todayKey() {
         return new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
+    }
+
+    /** Пустая строка, если питомец ещё не создан. */
+    public static String petName(Context ctx) {
+        return prefs(ctx).getString(KEY_PET_NAME, "");
+    }
+
+    public static void setPetName(Context ctx, String name) {
+        prefs(ctx).edit().putString(KEY_PET_NAME, name == null ? "" : name.trim()).apply();
     }
 
     /** 0f, если вес ещё не задан пользователем. */
