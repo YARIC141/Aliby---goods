@@ -5651,7 +5651,7 @@ function goTo(id, opts = {}) {
   if (!_GUEST_OK.includes(id) && !S.session && !_initQuickRestore) { _pendingNavAfterAuth = id; goTo('auth'); return; }
   document.querySelectorAll('.screen-tip.open').forEach(t => t.classList.remove('open'));
   if (id !== 'auth') localStorage.setItem('alliby_nav', id);
-  if (id === 'home' || id === 'map') _tourSchedule();
+  if ((id === 'home' || id === 'map') && typeof _tourSchedule === 'function') _tourSchedule(); // скрипт тура грузится ниже основного
   const prevId = document.querySelector('.screen.active')?.id?.replace('screen-', '') || null;
   if (!opts.fromSwipe) {
     S.navHistory = S.navHistory.slice(0, S.navIdx + 1);
