@@ -120,8 +120,7 @@ Deno.serve(async (req: Request) => {
       uid: `mst-${arr.map(x => x.id).sort()[0]}@alliby.ru`, start, end,
       summary: `${b.menu_items?.name || 'Запись'} — ${names.length > 1 ? `${names.length} уч.` : names[0]}`,
       location: [b.stores?.name, b.stores?.address].filter(Boolean).join(', '),
-      desc: [b.stores?.name, `Клиенты: ${names.join(', ')}`].filter(Boolean).join('
-'),
+      desc: [b.stores?.name, `Клиенты: ${names.join(', ')}`].filter(Boolean).join('\n'),
     })
   }
   for (const r of (rent.data || []) as any[]) {
