@@ -60,7 +60,7 @@ Deno.serve(async (req: Request) => {
   const since = new Date(Date.now() - 60 * 86400_000)
   const sinceDate = since.toISOString().slice(0, 10)
 
-  const [bk, rent] = await Promise.all([
+  const [bk, rent, mbk] = await Promise.all([
     sb.from('bookings')
       .select('id,slot_date,slot_start,slot_end,status,master_id,menu_items(name),stores(name,address,timezone)')
       .eq('user_id', uid).in('status', ['booked', 'completed']).gte('slot_date', sinceDate)
@@ -68,6 +68,11 @@ Deno.serve(async (req: Request) => {
     sb.from('rent_reservations')
       .select('id,start_at,end_at,quantity,status,menu_items(name),stores(name,address)')
       .eq('user_id', uid).in('status', ['pending', 'active', 'completed']).gte('end_at', since.toISOString()).limit(1000),
+    // Записи к этому пользователю как к мастеру/тренеру/преподавателю
+    sb.from('bookings')
+      .select('id,user_id,menu_item_id,slot_date,slot_start,slot_end,menu_items(name),stores(name,address,timezone)')
+      .eq('master_id', uid).in('status', ['booked', 'completed']).gte('slot_date', sinceDate)
+      .not('slot_start', 'is', null).limit(2000),
   ])
 
   const masterIds = [...new Set((bk.data || []).map((b: any) => b.master_id).filter(Boolean))]
@@ -75,6 +80,13 @@ Deno.serve(async (req: Request) => {
   if (masterIds.length) {
     const { data } = await sb.from('profiles').select('id,full_name').in('id', masterIds)
     ;(data || []).forEach((p: any) => { if (p.full_name) masters[p.id] = p.full_name })
+  }
+
+  const clientIds = [...new Set((mbk.data || []).map((b: any) => b.user_id).filter(Boolean))]
+  const clients: Record<string, string> = {}
+  if (clientIds.length) {
+    const { data } = await sb.from('profiles').select('id,full_name').in('id', clientIds)
+    ;(data || []).forEach((p: any) => { clients[p.id] = p.full_name || 'Клиент' })
   }
 
   const events: Ev[] = []
@@ -88,6 +100,28 @@ Deno.serve(async (req: Request) => {
       summary: b.menu_items?.name || 'Запись',
       location: [b.stores?.name, b.stores?.address].filter(Boolean).join(', '),
       desc: [b.stores?.name, b.master_id && masters[b.master_id] ? `Специалист: ${masters[b.master_id]}` : ''].filter(Boolean).join('\n'),
+    })
+  }
+  // Групповые занятия — несколько записей с общим слотом → одно событие со списком участников
+  const groups = new Map<string, any[]>()
+  for (const b of (mbk.data || []) as any[]) {
+    const k = `${b.menu_item_id}|${b.slot_date}|${b.slot_start}|${b.slot_end}`
+    if (!groups.has(k)) groups.set(k, [])
+    groups.get(k)!.push(b)
+  }
+  for (const [k, arr] of groups) {
+    const b = arr[0]
+    const tz = b.stores?.timezone || 'Europe/Moscow'
+    const start = localToUtc(b.slot_date, String(b.slot_start).slice(0, 5), tz)
+    const end = localToUtc(b.slot_date, String(b.slot_end).slice(0, 5), tz)
+    if (!(end > start)) continue
+    const names = arr.map(x => clients[x.user_id] || 'Клиент')
+    events.push({
+      uid: `mst-${arr.map(x => x.id).sort()[0]}@alliby.ru`, start, end,
+      summary: `${b.menu_items?.name || 'Запись'} — ${names.length > 1 ? `${names.length} уч.` : names[0]}`,
+      location: [b.stores?.name, b.stores?.address].filter(Boolean).join(', '),
+      desc: [b.stores?.name, `Клиенты: ${names.join(', ')}`].filter(Boolean).join('
+'),
     })
   }
   for (const r of (rent.data || []) as any[]) {

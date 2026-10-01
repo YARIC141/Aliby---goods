@@ -1971,7 +1971,7 @@ document.addEventListener('deviceready',function(){
       <button class="modal-x" onclick="closeModal('m-calsync')">✕</button>
     </div>
     <div style="font-size:13px;color:var(--fg-3);line-height:1.5;margin-bottom:12px">
-      Все ваши записи, тренировки и аренды появятся в календаре и будут обновляться автоматически.
+      Все ваши записи, тренировки и аренды (а для мастеров и тренеров — ещё и записи клиентов к вам) появятся в календаре и будут обновляться автоматически.
       Google может обновлять подписку с задержкой до нескольких часов.
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -13575,7 +13575,7 @@ const TOUR_STEPS = [
     screen: 'profile', target: '[onclick="startTour(true)"]', when: () => !!S.session },
   { since: 4, icon: _TI('<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
     title: 'Синхронизация с календарём',
-    text: 'Подключите Google или Apple Календарь в профиле — все ваши записи, тренировки и аренды будут появляться там автоматически.',
+    text: 'Подключите Google или Apple Календарь в профиле — все ваши записи, тренировки и аренды (а у мастеров и тренеров — записи клиентов) будут появляться там автоматически.',
     screen: 'profile', target: '[onclick="openCalSync()"]', when: () => !!S.session },
 ];
 
