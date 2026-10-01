@@ -1735,6 +1735,10 @@
   function openMealAdd(){
     document.getElementById('meal-add-overlay').classList.remove('hidden');
     switchMealTab('search');
+    // фокус внутри жеста открытия — иначе Android WebView не поднимает клавиатуру с первого тапа
+    var inp = document.getElementById('meal-search-input');
+    inp.setAttribute('lang', 'ru');
+    inp.focus();
   }
   function closeMealAdd(){
     stopBarcodeScan();
@@ -3447,6 +3451,12 @@
           return;
         }
         renderMealSearchResults(items);
+      });
+    });
+    // первый тап иногда не показывает клавиатуру — фокусируем явно на touchend/click
+    ['touchend', 'click'].forEach(function(ev){
+      document.getElementById('meal-search-input').addEventListener(ev, function(){
+        var el = this; if (document.activeElement !== el) el.focus();
       });
     });
     document.getElementById('meal-search-input').addEventListener('keydown', function(e){
