@@ -735,8 +735,8 @@
       <h2>Добавить приём пищи</h2>
       <div class="meal-tabs" id="meal-tabs">
         <button type="button" class="meal-tab active" data-tab="search">Поиск</button>
-        <!-- Штрихкод временно скрыт: аккаунт FatSecret не имеет scope "barcode" (invalid_scope) -->
-        <button type="button" class="meal-tab hidden" data-tab="barcode">Штрихкод</button>
+        <!-- Штрихкод работает через Open Food Facts (у FatSecret-аккаунта нет scope "barcode") -->
+        <button type="button" class="meal-tab" data-tab="barcode">Штрихкод</button>
         <button type="button" class="meal-tab" data-tab="manual">Вручную</button>
       </div>
 
@@ -1678,6 +1678,45 @@
     return fatsecretRequest('action=barcode&code=' + encodeURIComponent(code));
   }
 
+  // ── Open Food Facts — открытая база продуктов (ODbL), без ключей, CORS открыт.
+  // Работает напрямую из страницы; даёт и поиск, и штрихкоды. ──────────────────
+  var OFF_FIELDS = 'code,product_name,brands,nutriments,serving_quantity';
+  function offPer1g(n){
+    if (!n) return null;
+    var p = Number(n['proteins_100g']), f = Number(n['fat_100g']), c = Number(n['carbohydrates_100g']);
+    if (!isFinite(p) || !isFinite(f) || !isFinite(c)) return null;
+    var kcal = Number(n['energy-kcal_100g']);
+    if (!isFinite(kcal) || kcal <= 0){
+      var kj = Number(n['energy-kj_100g'] || n['energy_100g']);
+      kcal = isFinite(kj) && kj > 0 ? kj / 4.184 : p * 4 + f * 9 + c * 4;
+    }
+    return { kcal: kcal / 100, protein: p / 100, fat: f / 100, carb: c / 100 };
+  }
+  function offItem(prod){
+    var per1g = offPer1g(prod && prod.nutriments);
+    var name = prod && prod.product_name;
+    if (!per1g || !name) return null;
+    var brand = Array.isArray(prod.brands) ? prod.brands[0] : (prod.brands || '').split(',')[0].trim();
+    var serv = Number(prod.serving_quantity);
+    return {
+      source: 'off', name: name, brand: brand || '', per1g: per1g,
+      servingHint: { isGrams: true, amount: isFinite(serv) && serv > 0 ? serv : 100 },
+      description: Math.round(per1g.kcal * 100) + ' ккал · Б ' + Math.round(per1g.protein * 1000) / 10 +
+        ' / Ж ' + Math.round(per1g.fat * 1000) / 10 + ' / У ' + Math.round(per1g.carb * 1000) / 10 + ' г на 100 г · Open Food Facts'
+    };
+  }
+  function offSearch(q){
+    return fetch('https://search.openfoodfacts.org/search?q=' + encodeURIComponent(q) +
+        '&page_size=15&langs=ru&fields=' + OFF_FIELDS)
+      .then(function(r){ if (!r.ok) throw new Error('off ' + r.status); return r.json(); })
+      .then(function(d){ return (d.hits || []).map(offItem).filter(Boolean); });
+  }
+  function offBarcode(code){
+    return fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(code) + '.json?fields=' + OFF_FIELDS)
+      .then(function(r){ return r.json(); })
+      .then(function(d){ return d && d.status === 1 ? offItem(d.product) : null; });
+  }
+
   // ── Модалка добавления приёма пищи — три вкладки (поиск/штрихкод/вручную) +
   // отдельная вкладка "порция" для уточнения количества у продукта, найденного
   // в FatSecret, перед добавлением его в сегодняшний лог. ─────────────────────
@@ -1723,7 +1762,10 @@
       descEl.textContent = item.description || '';
       btn.appendChild(nameEl);
       btn.appendChild(descEl);
-      btn.addEventListener('click', function(){ pickMealFood(item.food_id, item.name); });
+      btn.addEventListener('click', function(){
+        if (item.source === 'off') openMealPortion(item.name, item.per1g, item.servingHint);
+        else pickMealFood(item.food_id, item.name);
+      });
       box.appendChild(btn);
     });
   }
@@ -1811,15 +1853,15 @@
     code = (code || '').replace(/\D/g, '');
     if (!code){ showToast('Некорректный штрихкод'); return; }
     document.getElementById('meal-barcode-status').textContent = 'Ищем по штрихкоду ' + code + '...';
-    fatsecretBarcode(code).then(function(res){
-      if (!res.ok || !res.data || !res.data.per1g){
-        document.getElementById('meal-barcode-status').textContent = (res.data && res.data.error) || 'Продукт с таким штрихкодом не найден';
+    offBarcode(code).then(function(item){
+      if (!item){
+        document.getElementById('meal-barcode-status').textContent = 'Продукт с таким штрихкодом не найден в Open Food Facts';
         return;
       }
       document.getElementById('meal-barcode-status').textContent = '';
-      openMealPortion(res.data.name, res.data.per1g, res.data.servingHint);
+      openMealPortion(item.name, item.per1g, item.servingHint);
     }).catch(function(){
-      document.getElementById('meal-barcode-status').textContent = 'Нет связи с сервером FatSecret';
+      document.getElementById('meal-barcode-status').textContent = 'Нет связи с Open Food Facts';
     });
   }
 
@@ -3352,14 +3394,17 @@
       if (!q) return;
       var box = document.getElementById('meal-search-results');
       box.innerHTML = '<div class="meal-search-status">Ищем...</div>';
-      fatsecretSearch(q).then(function(res){
-        if (!res.ok){
-          box.innerHTML = '<div class="meal-search-status">' + ((res.data && res.data.error) || 'Ошибка поиска') + '</div>';
+      // FatSecret и Open Food Facts параллельно: сбой одного источника не мешает другому
+      var fs = fatsecretSearch(q).then(function(res){ return res.ok ? (res.data.items || []) : { err: (res.data && res.data.error) || 'Ошибка поиска' }; })
+        .catch(function(){ return { err: 'Нет связи с сервером FatSecret' }; });
+      var off = offSearch(q).catch(function(){ return { err: 'Нет связи с Open Food Facts' }; });
+      Promise.all([fs, off]).then(function(r){
+        var items = (Array.isArray(r[0]) ? r[0] : []).concat(Array.isArray(r[1]) ? r[1] : []);
+        if (!items.length && !Array.isArray(r[0]) && !Array.isArray(r[1])){
+          box.innerHTML = '<div class="meal-search-status">' + (r[0].err || r[1].err) + '</div>';
           return;
         }
-        renderMealSearchResults(res.data.items);
-      }).catch(function(){
-        box.innerHTML = '<div class="meal-search-status">Нет связи с сервером FatSecret</div>';
+        renderMealSearchResults(items);
       });
     });
     document.getElementById('meal-search-input').addEventListener('keydown', function(e){
