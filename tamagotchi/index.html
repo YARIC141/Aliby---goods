@@ -1680,6 +1680,7 @@
 
   // ── Open Food Facts — открытая база продуктов (ODbL), без ключей, CORS открыт.
   // Работает напрямую из страницы; даёт и поиск, и штрихкоды. ──────────────────
+  var USE_FATSECRET = false;
   var OFF_FIELDS = 'code,product_name,brands,nutriments,serving_quantity';
   function offPer1g(n){
     if (!n) return null;
@@ -1709,7 +1710,14 @@
     return fetch('https://search.openfoodfacts.org/search?q=' + encodeURIComponent(q) +
         '&page_size=15&langs=ru&fields=' + OFF_FIELDS)
       .then(function(r){ if (!r.ok) throw new Error('off ' + r.status); return r.json(); })
-      .then(function(d){ return (d.hits || []).map(offItem).filter(Boolean); });
+      .then(function(d){ return (d.hits || []).map(offItem).filter(Boolean); })
+      .then(function(items){
+        if (items.length) return items;
+        // по-русски ничего — пробуем без языкового фильтра (латиница, бренды)
+        return fetch('https://search.openfoodfacts.org/search?q=' + encodeURIComponent(q) + '&page_size=15&fields=' + OFF_FIELDS)
+          .then(function(r){ return r.json(); })
+          .then(function(d){ return (d.hits || []).map(offItem).filter(Boolean); });
+      });
   }
   function offBarcode(code){
     return fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(code) + '.json?fields=' + OFF_FIELDS)
@@ -1808,36 +1816,67 @@
   // ── Штрихкод: BarcodeDetector — нативный API самого браузера/WebView, без
   // сторонних библиотек; если его нет (старый WebView), остаётся только ручной
   // ввод цифр штрихкода ниже. ──────────────────────────────────────────────
+  var zxingReader = null;
+  function loadZXing(){
+    if (window.ZXing) return Promise.resolve();
+    return new Promise(function(resolve, reject){
+      var sc = document.createElement('script');
+      sc.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+  function onBarcodeFound(code){
+    stopBarcodeScan();
+    lookupBarcode(code);
+  }
   function startBarcodeScan(){
-    if (!('BarcodeDetector' in window)){
-      document.getElementById('meal-barcode-status').textContent = 'Камера-сканер не поддерживается этим устройством — введите код цифрами ниже';
+    var status = document.getElementById('meal-barcode-status');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      status.textContent = 'Камера недоступна — введите код цифрами ниже';
       return;
     }
     var video = document.getElementById('meal-barcode-video');
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream){
-      barcodeStream = stream;
-      video.srcObject = stream;
+    if ('BarcodeDetector' in window){
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(function(stream){
+        barcodeStream = stream;
+        video.srcObject = stream;
+        video.classList.remove('hidden');
+        video.play();
+        barcodeDetector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+        var scanLoop = function(){
+          if (!barcodeStream) return;
+          barcodeDetector.detect(video).then(function(codes){
+            if (codes && codes.length) onBarcodeFound(codes[0].rawValue);
+            else barcodeScanRAF = requestAnimationFrame(scanLoop);
+          }).catch(function(){ barcodeScanRAF = requestAnimationFrame(scanLoop); });
+        };
+        scanLoop();
+      }).catch(function(){
+        status.textContent = 'Нет доступа к камере. Разрешите её в настройках приложения или введите код цифрами ниже';
+      });
+      return;
+    }
+    // Нет встроенного BarcodeDetector (WebView, Safari) — декодируем через ZXing
+    status.textContent = 'Запускаем камеру...';
+    loadZXing().then(function(){
+      var hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E]);
+      zxingReader = new ZXing.BrowserMultiFormatReader(hints);
       video.classList.remove('hidden');
-      video.play();
-      barcodeDetector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
-      var scanLoop = function(){
-        if (!barcodeStream) return;
-        barcodeDetector.detect(video).then(function(codes){
-          if (codes && codes.length){
-            var code = codes[0].rawValue;
-            stopBarcodeScan();
-            lookupBarcode(code);
-          } else {
-            barcodeScanRAF = requestAnimationFrame(scanLoop);
-          }
-        }).catch(function(){ barcodeScanRAF = requestAnimationFrame(scanLoop); });
-      };
-      scanLoop();
+      status.textContent = 'Наведите камеру на штрихкод';
+      zxingReader.decodeFromConstraints({ video: { facingMode: 'environment' } }, video, function(result){
+        if (result) onBarcodeFound(result.getText());
+      }).catch(function(){
+        status.textContent = 'Нет доступа к камере. Разрешите её в настройках приложения или введите код цифрами ниже';
+        video.classList.add('hidden');
+      });
     }).catch(function(){
-      document.getElementById('meal-barcode-status').textContent = 'Нет доступа к камере — введите код цифрами ниже';
+      status.textContent = 'Не удалось загрузить сканер — введите код цифрами ниже';
     });
   }
   function stopBarcodeScan(){
+    if (zxingReader){ try { zxingReader.reset(); } catch(e){} zxingReader = null; }
     if (barcodeScanRAF) cancelAnimationFrame(barcodeScanRAF);
     barcodeScanRAF = null;
     if (barcodeStream){
@@ -3394,14 +3433,18 @@
       if (!q) return;
       var box = document.getElementById('meal-search-results');
       box.innerHTML = '<div class="meal-search-status">Ищем...</div>';
-      // FatSecret и Open Food Facts параллельно: сбой одного источника не мешает другому
-      var fs = fatsecretSearch(q).then(function(res){ return res.ok ? (res.data.items || []) : { err: (res.data && res.data.error) || 'Ошибка поиска' }; })
-        .catch(function(){ return { err: 'Нет связи с сервером FatSecret' }; });
-      var off = offSearch(q).catch(function(){ return { err: 'Нет связи с Open Food Facts' }; });
-      Promise.all([fs, off]).then(function(r){
-        var items = (Array.isArray(r[0]) ? r[0] : []).concat(Array.isArray(r[1]) ? r[1] : []);
-        if (!items.length && !Array.isArray(r[0]) && !Array.isArray(r[1])){
-          box.innerHTML = '<div class="meal-search-status">' + (r[0].err || r[1].err) + '</div>';
+      // Источник — Open Food Facts. FatSecret отключён (USE_FATSECRET): он ищет только по-английски.
+      var sources = [offSearch(q).then(function(items){ return { items: items }; })
+        .catch(function(){ return { err: 'Нет связи с Open Food Facts' }; })];
+      if (USE_FATSECRET){
+        sources.push(fatsecretSearch(q).then(function(res){ return res.ok ? { items: res.data.items || [] } : { err: (res.data && res.data.error) || 'Ошибка поиска' }; })
+          .catch(function(){ return { err: 'Нет связи с сервером FatSecret' }; }));
+      }
+      Promise.all(sources).then(function(rs){
+        var items = [];
+        rs.forEach(function(r){ if (r.items) items = items.concat(r.items); });
+        if (!items.length && rs.every(function(r){ return r.err; })){
+          box.innerHTML = '<div class="meal-search-status">' + rs[0].err + '</div>';
           return;
         }
         renderMealSearchResults(items);
