@@ -3392,6 +3392,8 @@
       if (e.target.id === 'assess-overlay') closeAssess();
     });
 
+    // Health Connect есть только в Android-приложении — в вебе кнопку не показываем
+    if (!isNative) document.getElementById('btn-hc-info').classList.add('hidden');
     document.getElementById('btn-hc-info').addEventListener('click', function(){
       document.getElementById('hc-info-overlay').classList.remove('hidden');
     });
