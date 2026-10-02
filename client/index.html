@@ -10566,7 +10566,7 @@ async function openSubDetailModal(id) {
 
 // ─── PROFILE ───
 async function loadProfile() {
-  { const wn = document.getElementById('prof-widget-note'); if (wn) wn.style.display = _isNative() ? 'none' : ''; }
+  { const wn = document.getElementById('prof-widget-note'); if (wn) wn.style.display = window.Capacitor?.isNativePlatform?.() ? 'none' : ''; }
   if (S.session) loadCalSyncStatus();
   document.getElementById('p-email').textContent = '…';
   document.getElementById('p-uid').textContent   = '…';
