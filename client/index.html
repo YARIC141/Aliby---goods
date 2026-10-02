@@ -2120,6 +2120,12 @@ document.addEventListener('deviceready',function(){
       </button>
     </div>
 
+    <div class="sec" id="prof-widget-note" style="display:none">
+      <div style="padding:12px;border-radius:10px;background:var(--bg-2,rgba(128,128,128,.1));font-size:13px;line-height:1.45;color:var(--fg-3)">
+        <b style="color:var(--fg-2,inherit)">Виджет на рабочем столе</b><br>Расписание дня, записи и заказы на главном экране — доступно в Android-приложении Alliby.
+      </div>
+    </div>
+
     <div class="sec">
       <button class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between" onclick="goTo('help')">
         <span>Инструкция</span>
@@ -10560,6 +10566,7 @@ async function openSubDetailModal(id) {
 
 // ─── PROFILE ───
 async function loadProfile() {
+  { const wn = document.getElementById('prof-widget-note'); if (wn) wn.style.display = _isNative() ? 'none' : ''; }
   if (S.session) loadCalSyncStatus();
   document.getElementById('p-email').textContent = '…';
   document.getElementById('p-uid').textContent   = '…';
@@ -13627,8 +13634,8 @@ const TOUR_STEPS = [
     screen: 'profile', target: '[onclick="openCalSync()"]', when: () => !!S.session },
   { since: 5, icon: _TI('<rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/>'),
     title: 'Виджет на рабочем столе',
-    text: 'В Android-приложении можно добавить виджет Alliby на главный экран: он показывает расписание дня, ближайшие записи и заказы. Нажмите и удерживайте пустое место на рабочем столе → «Виджеты» → Alliby. Вместе с синхронизацией с Google и Apple Календарём все ваши планы всегда под рукой.',
-    when: () => !!S.session && !!window.Capacitor?.isNativePlatform?.() },
+    text: 'Только в Android-приложении: можно добавить виджет Alliby на главный экран: он показывает расписание дня, ближайшие записи и заказы. Нажмите и удерживайте пустое место на рабочем столе → «Виджеты» → Alliby. Вместе с синхронизацией с Google и Apple Календарём все ваши планы всегда под рукой.',
+    when: () => !!S.session },
   { since: 2, icon: _TI('<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
     title: 'Где снова открыть тур',
     text: 'Это был последний шаг. Чтобы пройти тур ещё раз, откройте «Профиль» и нажмите «Обучение по приложению». Там же — тема и напоминания. Знаки «?» на экранах дают короткие подсказки.',

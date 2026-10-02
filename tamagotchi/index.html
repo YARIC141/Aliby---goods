@@ -3393,7 +3393,11 @@
     });
 
     // Health Connect есть только в Android-приложении — в вебе кнопку не показываем
-    if (!isNative) document.getElementById('btn-hc-info').classList.add('hidden');
+    if (!isNative){
+      var hcBtn = document.getElementById('btn-hc-info');
+      hcBtn.textContent = '🤖 Health Connect — в Android-приложении';
+      hcBtn.addEventListener('click', function(e){ e.stopImmediatePropagation(); showToast('Health Connect (шаги, сон, пульс) доступен в Android-приложении Alliby'); }, true);
+    }
     document.getElementById('btn-hc-info').addEventListener('click', function(){
       document.getElementById('hc-info-overlay').classList.remove('hidden');
     });
