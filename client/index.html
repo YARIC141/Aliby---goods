@@ -829,6 +829,20 @@ if(localStorage.getItem('alliby_skin')==='flat')document.documentElement.setAttr
 }catch(e){}
 </script>
 <script>
+// Отладочная консоль (Eruda) для устройств без DevTools, напр. iPhone: открыть /?debug=1; выключить /?debug=0.
+(function(){
+  try{
+    var m=/[?&]debug=([01])/.exec(location.search);
+    if(m){ if(m[1]==='1') localStorage.setItem('alliby_debug','1'); else localStorage.removeItem('alliby_debug'); }
+    if(localStorage.getItem('alliby_debug')!=='1') return;
+    var sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/eruda@3.4.1/eruda.min.js';
+    sc.onload=function(){ try{ eruda.init(); }catch(e){} };
+    document.head.appendChild(sc);
+  }catch(e){}
+})();
+</script>
+<script>
 // ─── NATIVE BRIDGE ───
 // window.Capacitor инжектируется Capacitor через evaluateJavascript в onPageFinished,
 // поэтому проверяем его лениво при каждом вызове, а не один раз при загрузке скрипта.
