@@ -13678,6 +13678,9 @@ function _tourCurScreen() { return document.querySelector('.screen.active')?.id?
 
 function _tourSchedule() {
   if (_tourSession || _tourSeen() >= TOUR_VERSION) return;
+  // гостю тур не запускаем: шаги про профиль, календарь и заказы отфильтруются, а тур пометится пройденным.
+  // Полный тур стартует после входа, при следующем открытии «Главной»/«Заведений».
+  if (!S.session) return;
   clearTimeout(_tourTimer);
   _tourTimer = setTimeout(() => {
     // не перебиваем splash, открытые модалки и экраны кроме «Главной»/«Заведений»
