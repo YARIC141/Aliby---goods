@@ -1,4 +1,4 @@
-// v34
+// v35
 const APP_CACHE  = 'alliby-app-v17';
 const API_CACHE  = 'alliby-api-v1';
 const IMG_CACHE  = 'alliby-img-v1';
@@ -27,6 +27,24 @@ function fetchTimeout(request, ms = NET_TIMEOUT_MS) {
   const t = setTimeout(() => ctrl.abort(), ms);
   return fetch(request, { signal: ctrl.signal }).finally(() => clearTimeout(t));
 }
+
+// Navigate-запросы: fetch(request, {signal}) на Request с mode:'navigate' в WebKit может падать,
+// поэтому для навигации ограничиваем время гонкой с таймером, без AbortController.
+function fetchRace(request, ms = NET_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('sw-net-timeout')), ms);
+    fetch(request).then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+  });
+}
+
+// Страница-самолечение: если SW не смог отдать ни сеть, ни кэш, она снимает SW и чистит кэши
+// (каждый вызов с таймаутом — CacheStorage в Safari может зависать) и один раз перезагружается.
+const HEAL_HTML = '<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font:16px sans-serif;padding:32px">Нет соединения. Пробуем восстановить…<br><br><a href="/" onclick="location.reload();return false">Обновить страницу</a>' +
+  '<script>(function(){try{if(sessionStorage.getItem("sw_heal"))return;sessionStorage.setItem("sw_heal","1");}catch(e){return;}' +
+  'function lim(p,ms){return Promise.race([p,new Promise(function(r){setTimeout(r,ms)})]);}' +
+  'var a=navigator.serviceWorker?navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister();}));}):Promise.resolve();' +
+  'var b=window.caches?caches.keys().then(function(k){return Promise.all(k.map(function(n){return caches.delete(n);}));}):Promise.resolve();' +
+  'lim(Promise.all([a.catch(function(){}),b.catch(function(){})]),2500).then(function(){location.reload();});})();</script></body></html>';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -158,7 +176,7 @@ self.addEventListener('fetch', e => {
           }
 
           // First load — fetch from network and cache
-          return fetchTimeout(e.request).then(resp => {
+          return fetchRace(e.request).then(resp => {
             if (resp.ok) cache.put(e.request, resp.clone());
             return resp;
           });
@@ -168,11 +186,11 @@ self.addEventListener('fetch', e => {
         // falling back to a cached shell (best-effort) only if that also fails.
         .catch(async () => {
           try {
-            return await fetchTimeout(e.request);
+            return await fetchRace(e.request);
           } catch {
             const fallback = await withTimeout(caches.match('/'), 1000).catch(() => null)
               || await withTimeout(caches.match('/index.html'), 1000).catch(() => null);
-            return fallback || new Response('<html><body style="font:16px sans-serif;padding:32px">Нет соединения. Обновите страницу.</body></html>', {
+            return fallback || new Response(HEAL_HTML, {
               status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' },
             });
           }
