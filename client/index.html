@@ -3956,6 +3956,19 @@ function openSportTrainingStore(storeId) {
 }
 
 // ─── QR CODE ───
+// В Android-сборке без Тамагочи (нет нативного плагина) плитку «Питомец» не показываем
+function _petUnavailable() {
+  const c = window.Capacitor;
+  if (!c?.isNativePlatform?.()) return false;
+  const hdr = c.PluginHeaders; // список нативных плагинов; если его нет — на всякий случай не прячем
+  return Array.isArray(hdr) && hdr.length > 0 && !hdr.some(h => h.name === 'Tamagotchi');
+}
+function applyPetAvailability() {
+  const t = document.querySelector('.home-tile-pet');
+  if (t) t.style.display = _petUnavailable() ? 'none' : '';
+}
+[0, 500, 1500, 4000].forEach(ms => setTimeout(applyPetAvailability, ms));
+document.addEventListener('visibilitychange', applyPetAvailability);
 function openPet() {
   window.location.href = '/tamagotchi/index.html';
 }
@@ -13599,7 +13612,7 @@ const TOUR_STEPS = [
   { since: 2, icon: _TI_SPRITE('i-paw'),
     title: 'Питомец',
     text: 'Небольшая игра: питомца можно кормить и развивать. Заходите к нему почаще.',
-    screen: 'home', target: '.home-tile-pet', skip: true, when: () => !!S.session },
+    screen: 'home', target: '.home-tile-pet', skip: true, when: () => !!S.session && !_petUnavailable() },
   { since: 2, icon: _TI('<polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>'),
     title: 'Заведения',
     text: 'Карта и список заведений рядом с вами. Нажмите на метку или карточку, чтобы посмотреть информацию и открыть меню.',
