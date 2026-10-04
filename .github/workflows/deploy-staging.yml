@@ -1,0 +1,63 @@
+name: Deploy to staging (test.alliby.ru)
+
+# Стенд на VPS: изолированный Supabase `sbtest` (/root/supabase-test) и статика /var/www/alliby-test.
+# Пуш в ветку staging катит сюда; прод (main) не затрагивается.
+on:
+  push:
+    branches: [staging]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p 2222 -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy frontend
+        run: |
+          TS=$(date +%s)
+          sed -i "1s/.*/\/\/ v${TS}/" client/sw.js
+          sed -i "s/alliby-app-v[0-9]\+/alliby-app-v${TS}/" client/sw.js
+          sed -i "1s/.*/\/\/ v${TS}/" admin/sw.js
+          sed -i "s/aliby-admin-app-v[0-9]\+/aliby-admin-app-v${TS}/" admin/sw.js
+          sed -i "1s/.*/\/\/ v${TS}/" carry/sw.js
+          sed -i "s/alliby-carry-app-v[0-9]\+/alliby-carry-app-v${TS}/" carry/sw.js
+          for d in client admin carry tamagotchi; do
+            rsync -az --delete -e "ssh -p 2222" $d/ root@${{ secrets.VPS_HOST }}:/var/www/alliby-test/$d/
+          done
+
+      - name: Apply database migrations
+        run: |
+          rsync -az -e "ssh -p 2222 -i ~/.ssh/id_ed25519" supabase/migrations/ root@${{ secrets.VPS_HOST }}:/tmp/alliby-mig-test/
+          ssh -p 2222 root@${{ secrets.VPS_HOST }} bash -s << 'APPLY'
+          DB="docker exec -i sbtest-db psql -U postgres -d postgres"
+          $DB -c "CREATE TABLE IF NOT EXISTS public._migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT now())"
+          for f in $(ls /tmp/alliby-mig-test/*.sql | sort); do
+            base=$(basename "$f")
+            applied=$($DB -tAc "SELECT COUNT(*) FROM public._migrations WHERE name='$base'" | tr -d '[:space:]')
+            if [ "$applied" = "0" ]; then
+              echo ">> $base"
+              if cat "$f" | $DB; then
+                $DB -c "INSERT INTO public._migrations(name) VALUES ('$base') ON CONFLICT DO NOTHING"
+              else
+                echo "!! FAILED: $base" >&2
+                exit 1
+              fi
+            else
+              echo "-- Skip $base"
+            fi
+          done
+          docker restart sbtest-rest
+          APPLY
+
+      - name: Deploy Edge Functions
+        run: |
+          rsync -az --delete -e "ssh -p 2222" supabase/functions/ root@${{ secrets.VPS_HOST }}:/root/supabase-test/volumes/functions/
+          ssh -p 2222 root@${{ secrets.VPS_HOST }} "cd /root/supabase-test && docker compose up -d --force-recreate functions"

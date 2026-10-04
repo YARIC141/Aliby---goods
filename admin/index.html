@@ -3102,7 +3102,7 @@ window.addEventListener('unhandledrejection', e => _showFatalError(e.reason));
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
 const _TEST_TUNNEL = location.hostname === 'test.alliby.ru' || location.hostname === 'app-test.alliby.ru';
 const SB_URL  = _TEST_TUNNEL ? 'https://test.alliby.ru' : (_LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru');
-const SB_ANON = (_LOCAL || _TEST_TUNNEL) ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
+const SB_ANON = _TEST_TUNNEL ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkxMTIyNTc0LCJleHAiOjIxMDY0ODI1NzR9.X1S7SEEcXmvbiveUycmSJSvwx9JDkrZh379f1vdO-jo' : (_LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq');
 // Резервный домен на том же сервере — на случай если провайдер рвёт именно
 // соединение до alliby.ru (см. client/index.html). req() один раз переключится
 // на него при сетевой ошибке и дальше уже сразу ходит туда.
