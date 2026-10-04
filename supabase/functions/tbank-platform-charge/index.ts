@@ -17,8 +17,8 @@ import { tbankHttpClient } from "../_shared/tbank-http-client.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { trackEvent } from '../_shared/analytics.ts'
 
-const TBANK_INIT_URL   = 'https://securepay.tinkoff.ru/v2/Init'
-const TBANK_CHARGE_URL = 'https://securepay.tinkoff.ru/v2/Charge'
+const TBANK_INIT_URL   = (Deno.env.get('TBANK_API_URL') || 'https://securepay.tinkoff.ru/v2') + '/Init'
+const TBANK_CHARGE_URL = (Deno.env.get('TBANK_API_URL') || 'https://securepay.tinkoff.ru/v2') + '/Charge'
 const MAX_RETRIES = 3
 
 async function calcToken(params: Record<string, string | number>, password: string): Promise<string> {

@@ -9,7 +9,7 @@ import { tbankHttpClient } from "../_shared/tbank-http-client.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { trackEvent } from '../_shared/analytics.ts'
 
-const TBANK_CANCEL_URL = 'https://securepay.tinkoff.ru/v2/Cancel'
+const TBANK_CANCEL_URL = (Deno.env.get('TBANK_API_URL') || 'https://securepay.tinkoff.ru/v2') + '/Cancel'
 
 async function calcToken(params: Record<string, unknown>, password: string): Promise<string> {
   const entries: Record<string, string> = { Password: password }

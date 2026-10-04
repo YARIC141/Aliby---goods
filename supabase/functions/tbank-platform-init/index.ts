@@ -15,7 +15,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { handleCors, jsonResponse } from '../_shared/cors.ts'
 import { trackEvent } from '../_shared/analytics.ts'
 
-const TBANK_INIT_URL   = 'https://securepay.tinkoff.ru/v2/Init'
+const TBANK_INIT_URL   = (Deno.env.get('TBANK_API_URL') || 'https://securepay.tinkoff.ru/v2') + '/Init'
 const NOTIFY_URL       = 'https://alliby.ru/functions/v1/tbank-platform-notify'
 const SUCCESS_URL      = 'https://admin.alliby.ru/?tpay=success'
 const FAIL_URL         = 'https://admin.alliby.ru/?tpay=fail'

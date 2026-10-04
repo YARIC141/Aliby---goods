@@ -4,7 +4,7 @@ import { handleCors, jsonResponse } from "../_shared/cors.ts"
 import { decryptPaymentKey } from "../_shared/payment-crypto.ts"
 import { logKeyAccess } from "../_shared/audit.ts"
 
-const TBANK_INIT_URL = "https://securepay.tinkoff.ru/v2/Init"
+const TBANK_INIT_URL = (Deno.env.get('TBANK_API_URL') || 'https://securepay.tinkoff.ru/v2') + '/Init'
 const MAX_OPEN_UNPAID_ORDERS = 3
 const NOTIFY_URL     = "https://alliby.ru/functions/v1/tbank-store-notify"
 const SUCCESS_BASE   = "https://alliby.ru/?tpay=store_success"
