@@ -13,6 +13,7 @@
 <link rel="shortcut icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="icons/icon-192.v2.png">
 <link rel="manifest" href="manifest.json?v=2">
+<script>window._pwaDeferred = null; window.addEventListener("beforeinstallprompt", function(e) { e.preventDefault(); window._pwaDeferred = e; if (window._pwaOnReady) window._pwaOnReady(); });</script>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
@@ -879,6 +880,13 @@ ol.hlp-steps>li ul{margin:6px 0 0}
         <div class="fg"><input type="password" id="p-newpwd" placeholder="Новый пароль (мин. 6)"></div>
         <button class="btn" id="p-pwd-btn" onclick="updatePwd()">Обновить</button>
       </div>
+    </div>
+
+    <div class="sec" id="pwa-profile-sec" style="display:none">
+      <button class="btn btn-full" style="display:flex;align-items:center;justify-content:space-between" onclick="triggerPwaInstall()">
+        <span>Сохранить ярлык на рабочий стол</span>
+        <span style="color:var(--fg-4);font-size:18px">›</span>
+      </button>
     </div>
 
     <div class="sec">
@@ -3388,7 +3396,7 @@ function goTo(id, opts = {}) {
     document.getElementById('screen-' + id)?.classList.add('active');
   }
   _curScreen = id;
-  if ((id === 'stores' || id === 'orders') && typeof _tourSchedule === 'function') _tourSchedule(); // скрипт тура грузится ниже основного
+  if ((id === 'stores' || id === 'orders') && typeof _tourSchedule === 'function') { _tourSchedule(); _pwaSchedule(); } // скрипты тура и PWA грузятся ниже основного
 }
 
 function animateScreenChange(fromId, toId, dir) {
@@ -10879,7 +10887,7 @@ if ('serviceWorker' in navigator) {
       document.getElementById('update-banner').style.display = 'flex';
   });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js', { scope: '/admin/', updateViaCache: 'none' })
+    navigator.serviceWorker.register('sw.js', { scope: location.pathname.startsWith('/admin') ? '/admin/' : '/', updateViaCache: 'none' })
       .then(reg => {
         // Floating promise — a failed background update check (flaky network) must not
         // become an unhandled rejection and trigger the fatal-error overlay.
@@ -10915,6 +10923,94 @@ if ('serviceWorker' in navigator) {
     </div>
   </div>
 </div>
+
+<!-- PWA install -->
+<div id="pwa-install-sheet" style="display:none;position:fixed;inset:0;z-index:10003;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg-1);border-radius:20px 20px 0 0;padding:24px 20px calc(env(safe-area-inset-bottom,0px) + 28px);width:100%;max-width:480px">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font:700 17px/1.3 var(--font-sans);color:var(--fg);margin-bottom:8px">Ярлык Alliby Business</div>
+      <div style="font:400 14px/1.6 var(--font-sans);color:var(--fg-3)">Кабинет будет открываться в отдельном окне, как обычное приложение</div>
+    </div>
+    <div style="background:var(--bg-2);border-radius:12px;padding:12px 14px;margin-bottom:16px;font:400 13px/1.6 var(--font-sans);color:var(--fg-2)">
+      <b>Chrome / Edge на ПК:</b> значок установки в адресной строке или меню ⋮ → «Сохранить и поделиться» → «Установить Alliby Business». Ярлык на рабочий стол создаётся в окне установки.<br>
+      <b>Android Chrome:</b> меню ⋮ → «Установить приложение» или «Добавить на главный экран»<br>
+      <b>iPhone Safari:</b> кнопка «Поделиться» (□↑) → «На экран "Домой"»<br>
+      <b>Safari на Mac:</b> Файл → «Добавить в Dock»
+    </div>
+    <button onclick="document.getElementById('pwa-install-sheet').style.display='none'" class="btn btn-p" style="width:100%;justify-content:center;padding:13px">Понятно</button>
+  </div>
+</div>
+<div id="pwa-banner" style="display:none;position:fixed;z-index:9998;right:16px;bottom:16px;width:min(380px,calc(100vw - 32px));padding:12px 14px;background:var(--bg-1);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.18)">
+  <div style="display:flex;align-items:center;gap:12px">
+    <img src="icons/icon-192.v2.png" style="width:40px;height:40px;border-radius:10px;flex-shrink:0;display:block" alt="">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:600;color:var(--fg)">Установить Alliby Business</div>
+      <div id="pwa-banner-sub" style="font-size:12px;color:var(--fg-3);margin-top:2px">Ярлык на рабочем столе — запуск в один клик</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn btn-sm btn-p" onclick="triggerPwaInstall()">Установить</button>
+      <button class="btn btn-sm" onclick="dismissPwaBanner()" aria-label="Закрыть">✕</button>
+    </div>
+  </div>
+</div>
+<style>
+@media(max-width:767px){#pwa-banner{left:12px;right:12px;bottom:calc(68px + env(safe-area-inset-bottom,0px));width:auto}}
+</style>
+<script>
+// ─── Предложение сохранить ярлык (PWA) ───
+const PWA_KEY = 'alliby_admin_pwa_dismissed';
+const _pwaStandalone = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+function _pwaIsDismissed() {
+  try { const ts = parseInt(localStorage.getItem(PWA_KEY) || '0', 10); return ts > 0 && (Date.now() - ts) < 7 * 24 * 3600 * 1000; } catch { return false; }
+}
+function _pwaMarkDismissed() { try { localStorage.setItem(PWA_KEY, String(Date.now())); } catch {} }
+
+async function triggerPwaInstall() {
+  const sheet = document.getElementById('pwa-install-sheet');
+  if (!window._pwaDeferred) { if (sheet) sheet.style.display = 'flex'; return; }
+  try {
+    const result = await window._pwaDeferred.prompt();
+    window._pwaDeferred = null;
+    document.getElementById('pwa-banner').style.display = 'none';
+    if (result?.outcome === 'accepted') _pwaMarkDismissed();
+  } catch {
+    window._pwaDeferred = null;
+    if (sheet) sheet.style.display = 'flex';
+  }
+}
+
+function dismissPwaBanner() {
+  document.getElementById('pwa-banner').style.display = 'none';
+  _pwaMarkDismissed();
+}
+
+// Баннер показываем уже внутри кабинета (после входа), не поверх тура, окон и cookie-плашки
+let _pwaTimer = null;
+function _pwaSchedule() {
+  if (_pwaStandalone() || _pwaIsDismissed() || !S.session) return;
+  clearTimeout(_pwaTimer);
+  _pwaTimer = setTimeout(function tick() {
+    const banner = document.getElementById('pwa-banner');
+    if (!banner || banner.style.display === 'block' || _pwaStandalone() || _pwaIsDismissed()) return;
+    const busy = _tourSession || _tourSeen() < TOUR_VERSION
+      || document.querySelector('.overlay.open')
+      || document.getElementById('cookie-banner')?.style.display === 'flex';
+    if (busy) { _pwaTimer = setTimeout(tick, 4000); return; }
+    banner.style.display = 'block';
+  }, 5000);
+}
+window._pwaOnReady = _pwaSchedule;
+
+(function() {
+  const sec = document.getElementById('pwa-profile-sec');
+  if (sec && !_pwaStandalone()) sec.style.display = '';
+  window.addEventListener('appinstalled', function() {
+    document.getElementById('pwa-banner').style.display = 'none';
+    if (sec) sec.style.display = 'none';
+    _pwaMarkDismissed();
+  });
+})();
+</script>
 
 <div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--accent);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;flex-wrap:wrap;align-items:center;gap:10px;justify-content:center">
   <span style="font-size:13px">Доступна новая версия приложения</span>
