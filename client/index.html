@@ -3285,6 +3285,7 @@ window.addEventListener('unhandledrejection', e => _showFatalError(e.reason));
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
 const _TEST_TUNNEL = location.hostname === 'test.alliby.ru' || location.hostname === 'app-test.alliby.ru';
+const _APP_ORIGIN = _TEST_TUNNEL ? 'https://app-test.alliby.ru/client/' : 'https://alliby.ru/';
 const SB_URL  = _TEST_TUNNEL ? 'https://test.alliby.ru' : (_LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru');
 const SB_ANON = _TEST_TUNNEL ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkxMTIyNTc0LCJleHAiOjIxMDY0ODI1NzR9.X1S7SEEcXmvbiveUycmSJSvwx9JDkrZh379f1vdO-jo' : (_LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq');
 // Некоторые провайдеры/сети рвут соединение именно до alliby.ru, не трогая остальной
@@ -6130,7 +6131,7 @@ async function doRegister() {
 async function doRecover() {
   const done = btnLoad(document.getElementById('recover-btn'), 'Отправка…');
   try {
-    await req('/auth/v1/recover?redirect_to=' + encodeURIComponent('https://alliby.ru/'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
+    await req('/auth/v1/recover?redirect_to=' + encodeURIComponent(_APP_ORIGIN), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
     document.getElementById('ok-recover').style.display = 'block';
   } catch(e) { alert(e.message || 'Ошибка'); } finally { done(); }
 }
@@ -6206,7 +6207,7 @@ async function _openPromoStore(storeId) {
 async function shareStore() {
   const st = S.store;
   if (!st?.id) return;
-  const url = `https://alliby.ru/?promo_store=${st.id}`;
+  const url = `${_APP_ORIGIN}?promo_store=${st.id}`;
   const shareData = { title: st.name || 'Alliby', text: `Загляните в «${st.name || 'это заведение'}» на Alliby\n${url}` };
   if (navigator.share) {
     try { await navigator.share(shareData); } catch(e) {}

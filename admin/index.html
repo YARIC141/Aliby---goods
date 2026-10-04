@@ -3101,6 +3101,7 @@ window.addEventListener('unhandledrejection', e => _showFatalError(e.reason));
 // ─── CONFIG ───
 const _LOCAL = location.hostname === '127.0.0.1' || location.hostname === 'localhost' || location.protocol === 'file:';
 const _TEST_TUNNEL = location.hostname === 'test.alliby.ru' || location.hostname === 'app-test.alliby.ru';
+const _APP_ORIGIN = _TEST_TUNNEL ? 'https://app-test.alliby.ru/client/' : 'https://alliby.ru/';
 const SB_URL  = _TEST_TUNNEL ? 'https://test.alliby.ru' : (_LOCAL ? 'http://127.0.0.1:54321' : 'https://alliby.ru');
 const SB_ANON = _TEST_TUNNEL ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzkxMTIyNTc0LCJleHAiOjIxMDY0ODI1NzR9.X1S7SEEcXmvbiveUycmSJSvwx9JDkrZh379f1vdO-jo' : (_LOCAL ? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' : 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq');
 // Резервный домен на том же сервере — на случай если провайдер рвёт именно
@@ -3660,7 +3661,7 @@ document.querySelectorAll('[data-tab-auth]').forEach(b => b.addEventListener('cl
 async function doRecover() {
   const done = btnLoad(document.getElementById('recover-btn'), 'Отправка…');
   try {
-    await req('/auth/v1/recover?redirect_to=' + encodeURIComponent('https://alliby.ru/admin'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
+    await req('/auth/v1/recover?redirect_to=' + encodeURIComponent(_TEST_TUNNEL ? 'https://app-test.alliby.ru/admin/' : 'https://alliby.ru/admin'), { method:'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
     document.getElementById('ok-recover').style.display = 'block';
   } catch(e) { alert(e.message || 'Ошибка'); } finally { done(); }
 }
@@ -5576,7 +5577,7 @@ function editCurrentStore() {
 }
 
 function _storeDeepLink() {
-  return `https://alliby.ru/#store=${_detailStore.id}`;
+  return `${_APP_ORIGIN}#store=${_detailStore.id}`;
 }
 
 function showStoreQRDirect(store) {
