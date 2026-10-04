@@ -11609,11 +11609,10 @@ async function triggerPwaInstall() {
     if (installBtn) installBtn.addEventListener('click', function() { triggerPwaInstall(); });
   });
 
-  // Safari (iOS и macOS) не присылает beforeinstallprompt — показываем баннер сами,
-  // «Установить» откроет инструкцию «Поделиться → На экран Домой»
-  const isSafari = /^((?!chrome|crios|fxios|edg|android).)*safari/i.test(navigator.userAgent);
+  // Safari не присылает beforeinstallprompt, а Chrome/Edge присылают его не всегда (уже установлено,
+  // эвристики) — если за 4 с события не было, показываем баннер сами: «Установить» откроет инструкцию
   const isNativeApp = !!window.Capacitor?.isNativePlatform?.();
-  if ((isIos || isSafari) && !isNativeApp && !_pwaIsDismissed()) {
+  if (!isNativeApp && !_pwaIsDismissed()) {
     setTimeout(function() {
       const banner = $banner();
       if (!window._pwaDeferred && banner) banner.style.display = 'block';
@@ -13882,7 +13881,7 @@ function _tourKey(e) {
     </div>
     <div style="display:flex;align-items:center;gap:12px;background:var(--bg-2);border-radius:12px;padding:12px 14px;margin-bottom:16px">
       <div style="font-size:28px;flex-shrink:0">⬆️</div>
-      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-2)"><b>iOS Safari:</b> кнопка «Поделиться» (□↑) → «На экран "Домой"»<br><b>Android Chrome:</b> меню ⋮ → «Добавить на главный экран» или «Установить приложение»</div>
+      <div style="font:400 13px/1.5 var(--font-sans);color:var(--fg-2)"><b>iOS Safari:</b> кнопка «Поделиться» (□↑) → «На экран "Домой"»<br><b>Android Chrome:</b> меню ⋮ → «Добавить на главный экран» или «Установить приложение»<br><b>Chrome / Edge на ПК:</b> значок установки в адресной строке или меню ⋮ → «Сохранить и поделиться» → «Установить Alliby» (ярлык на рабочем столе — в диалоге установки)<br><b>Safari на Mac:</b> Файл → «Добавить в Dock»</div>
     </div>
     <button onclick="document.getElementById('ios-install-sheet').style.display='none'" style="width:100%;padding:13px;border-radius:12px;background:var(--brand-ember);border:none;font:700 15px/1 var(--font-sans);color:#fff;cursor:pointer">Понятно</button>
   </div>
