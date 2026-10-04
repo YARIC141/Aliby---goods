@@ -11588,18 +11588,26 @@ async function triggerPwaInstall() {
   if (standalone) return;
 
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const installTile = document.getElementById('home-install-tile');
-  const banner = document.getElementById('pwa-banner');
-  const installBtn = document.getElementById('pwa-install-btn');
+  // Скрипт выполняется раньше, чем в разметке появляются баннер и плитка (они ниже по документу),
+  // поэтому элементы ищем в момент использования, а не один раз при старте
+  const $banner = () => document.getElementById('pwa-banner');
+  const $tile = () => document.getElementById('home-install-tile');
 
-  if (isIos && installTile) {
-    installTile.style.display = '';
+  function onReady(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
   }
 
   // На ПК вместо «экрана телефона» предлагаем ярлык на рабочем столе
   const isDesktop = !/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
-  const bannerSub = document.getElementById('pwa-banner-sub');
-  if (isDesktop && bannerSub) bannerSub.textContent = 'Ярлык на рабочем столе — запуск в один клик';
+  onReady(function() {
+    const bannerSub = document.getElementById('pwa-banner-sub');
+    if (isDesktop && bannerSub) bannerSub.textContent = 'Ярлык на рабочем столе — запуск в один клик';
+    const installTile = $tile();
+    if (isIos && installTile) installTile.style.display = '';
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) installBtn.addEventListener('click', function() { triggerPwaInstall(); });
+  });
 
   // Safari (iOS и macOS) не присылает beforeinstallprompt — показываем баннер сами,
   // «Установить» откроет инструкцию «Поделиться → На экран Домой»
@@ -11607,7 +11615,8 @@ async function triggerPwaInstall() {
   const isNativeApp = !!window.Capacitor?.isNativePlatform?.();
   if ((isIos || isSafari) && !isNativeApp && !_pwaIsDismissed()) {
     setTimeout(function() {
-      if (!window._pwaDeferred && banner && !standalone) banner.style.display = 'block';
+      const banner = $banner();
+      if (!window._pwaDeferred && banner) banner.style.display = 'block';
     }, 4000);
   }
 
@@ -11615,18 +11624,17 @@ async function triggerPwaInstall() {
     window.addEventListener('beforeinstallprompt', function(e) {
       e.preventDefault();
       window._pwaDeferred = e;
-      if (banner) banner.style.display = 'block';
-      if (installTile) installTile.style.display = '';
+      onReady(function() {
+        const banner = $banner(), tile = $tile();
+        if (banner) banner.style.display = 'block';
+        if (tile) tile.style.display = '';
+      });
     });
   }
 
-  if (installBtn) {
-    installBtn.addEventListener('click', function() { triggerPwaInstall(); });
-  }
-
   window.addEventListener('appinstalled', function() {
+    const banner = $banner(), tile = $tile();
     if (banner) banner.style.display = 'none';
-    const tile = document.getElementById('home-install-tile');
     if (tile) tile.style.display = 'none';
     try { localStorage.setItem('alliby_pwa_dismissed', String(Date.now())); } catch(ex) {}
   });
