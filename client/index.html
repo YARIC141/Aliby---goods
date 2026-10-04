@@ -11596,6 +11596,21 @@ async function triggerPwaInstall() {
     installTile.style.display = '';
   }
 
+  // На ПК вместо «экрана телефона» предлагаем ярлык на рабочем столе
+  const isDesktop = !/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
+  const bannerSub = document.getElementById('pwa-banner-sub');
+  if (isDesktop && bannerSub) bannerSub.textContent = 'Ярлык на рабочем столе — запуск в один клик';
+
+  // Safari (iOS и macOS) не присылает beforeinstallprompt — показываем баннер сами,
+  // «Установить» откроет инструкцию «Поделиться → На экран Домой»
+  const isSafari = /^((?!chrome|crios|fxios|edg|android).)*safari/i.test(navigator.userAgent);
+  const isNativeApp = !!window.Capacitor?.isNativePlatform?.();
+  if ((isIos || isSafari) && !isNativeApp && !_pwaIsDismissed()) {
+    setTimeout(function() {
+      if (!window._pwaDeferred && banner && !standalone) banner.style.display = 'block';
+    }, 4000);
+  }
+
   if (!isIos && !_pwaIsDismissed()) {
     window.addEventListener('beforeinstallprompt', function(e) {
       e.preventDefault();
@@ -13871,7 +13886,7 @@ function _tourKey(e) {
     <img src="icons/icon-192.v2.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0;display:block" alt="">
     <div style="flex:1;min-width:0">
       <div style="font-size:14px;font-weight:600;color:var(--fg)">Установить Alliby</div>
-      <div style="font-size:12px;color:var(--fg-3);margin-top:2px">Быстрый доступ с экрана телефона</div>
+      <div id="pwa-banner-sub" style="font-size:12px;color:var(--fg-3);margin-top:2px">Быстрый доступ с экрана телефона</div>
     </div>
     <div style="display:flex;gap:8px;flex-shrink:0">
       <button id="pwa-install-btn" style="background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer">Установить</button>
