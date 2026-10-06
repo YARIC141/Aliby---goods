@@ -206,10 +206,10 @@ textarea{resize:vertical;min-height:60px;padding:10px}
 .fg{margin-bottom:12px}
 .fg label{display:block;font:500 13px/1 var(--font-sans);text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:5px}
 .btn{padding:9px 18px;border:1px solid var(--line);background:var(--glass-card);cursor:pointer;font:500 17px/1 var(--font-sans);font-family:var(--font-sans);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;color:var(--fg);border-radius:var(--r-2);transition:background var(--t-fast),border-color var(--t-fast),transform var(--t-fast)}
-.btn:hover{background:var(--bg-2)}
+@media (hover:hover){.btn:hover{background:var(--bg-2)}}
 .btn:active{transform:scale(0.98)}
 .btn-p{background:linear-gradient(145deg,var(--cta-from),var(--cta-to));color:#fff;border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
-.btn-p:hover{filter:brightness(1.08)}
+@media (hover:hover){.btn-p:hover{background:linear-gradient(145deg,var(--cta-from),var(--cta-to));filter:brightness(1.08)}}
 .btn-p:disabled,.btn-p[disabled]{background:var(--bg-2);color:var(--fg-3);box-shadow:none;filter:none;border-color:var(--line);cursor:not-allowed}
 #cart-pay-btn{background:linear-gradient(145deg,var(--cta-from),var(--cta-to));box-shadow:none;min-height:48px}
 #del-pickup-btn,#del-delivery-btn{background:linear-gradient(145deg,#f5a800,#ffd000);color:#1a1200;border-color:transparent;box-shadow:none}
@@ -1400,23 +1400,27 @@ document.addEventListener('deviceready',function(){
 
     <div id="auth-login" class="tab-pane active">
       <div id="err-login" class="alert alert-e" style="display:none"></div>
-      <div class="fg"><label>Email</label><input type="email" id="li-email" autocomplete="username"></div>
-      <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" autocomplete="current-password"></div>
-      <button class="btn btn-p btn-full" id="login-btn" onclick="doLogin()">Войти</button>
+      <form id="login-form" onsubmit="event.preventDefault();doLogin()" method="post" action="#">
+      <div class="fg"><label>Email</label><input type="email" id="li-email" name="email" autocomplete="username" autocapitalize="none" autocorrect="off"></div>
+      <div class="fg"><label>Пароль</label><input type="password" id="li-pwd" name="password" autocomplete="current-password"></div>
+      <button type="submit" class="btn btn-p btn-full" id="login-btn">Войти</button>
+      </form>
       <hr>
       <button class="btn btn-full" onclick="showAuthTab('recover')">Забыл пароль</button>
     </div>
 
     <div id="auth-reg" class="tab-pane">
       <div id="err-reg" class="alert alert-e" style="display:none"></div>
-      <div class="fg"><label>Email</label><input type="email" id="reg-email" autocomplete="username"></div>
+      <form id="reg-form" onsubmit="event.preventDefault();if(!document.getElementById('reg-btn').disabled)doRegister()" method="post" action="#">
+      <div class="fg"><label>Email</label><input type="email" id="reg-email" name="email" autocomplete="username" autocapitalize="none" autocorrect="off"></div>
       <div class="fg"><label>Имя и фамилия</label><input type="text" id="reg-name" placeholder="Иван Иванов" autocomplete="name"></div>
-      <div class="fg"><label>Пароль (мин. 6 символов)</label><input type="password" id="reg-pwd" autocomplete="new-password"></div>
+      <div class="fg"><label>Пароль (мин. 6 символов)</label><input type="password" id="reg-pwd" name="password" autocomplete="new-password"></div>
       <label style="position:relative;display:block;padding-left:26px;font-size:12px;color:var(--fg-3);margin-bottom:8px;cursor:pointer">
         <input type="checkbox" id="reg-pd-check" onchange="document.getElementById('reg-btn').disabled=!this.checked" style="position:absolute;left:0;top:2px;width:18px;height:18px;margin:0">
         Мне исполнилось 14 лет. Даю согласие на <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">обработку персональных данных</a> и принимаю <a href="https://site.alliby.ru/terms" target="_blank" rel="noopener" style="color:var(--accent)">Пользовательское соглашение</a>
       </label>
-      <button class="btn btn-p btn-full" id="reg-btn" onclick="doRegister()" disabled>Зарегистрироваться</button>
+      <button type="submit" class="btn btn-p btn-full" id="reg-btn" disabled>Зарегистрироваться</button>
+      </form>
     </div>
 
     <div id="auth-recover" class="tab-pane">
