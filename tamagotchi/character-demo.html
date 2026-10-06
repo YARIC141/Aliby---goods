@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Параметрический питомец — демо</title>
+<style>
+  :root{--bg:#101418;--card:#1b2128;--text:#f0f0f0;--text2:#9aa4ad;--accent:#2dd4bf;--line:#2a323b;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,Segoe UI,Roboto,sans-serif;
+    display:flex;justify-content:center}
+  .wrap{width:100%;max-width:460px;padding:24px 20px 60px}
+  h1{font-size:19px;margin:0 0 4px}
+  p.hint{color:var(--text2);font-size:13px;line-height:1.5;margin:0 0 20px}
+  .stage{position:relative;background:var(--card);border-radius:16px;aspect-ratio:1/1;overflow:hidden;margin-bottom:16px}
+  .stage svg{width:100%;height:100%;display:block}
+  .state-badge{position:absolute;top:10px;left:12px;font-size:11px;color:var(--text2);
+    background:rgba(16,20,24,.6);padding:4px 10px;border-radius:20px;text-transform:capitalize}
+  .panel{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px}
+  .panel h2{font-size:12px;color:var(--text2);margin:0 0 12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .row:last-child{margin-bottom:0}
+  .row label{width:72px;font-size:13px;color:var(--text2);flex-shrink:0}
+  .row input[type=range]{flex:1;accent-color:var(--accent)}
+  .row .val{width:30px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:var(--text)}
+  .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .actions button{padding:11px 6px;border-radius:10px;border:none;background:#232b33;color:var(--text);
+    font-size:13px;cursor:pointer}
+  .actions button:active{background:var(--accent);color:#04201c}
+  .note{font-size:12px;color:var(--text2);line-height:1.6}
+  code{background:#232b33;padding:1px 5px;border-radius:4px;font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Параметрический питомец</h1>
+  <p class="hint">Тело — примитивы SVG (эллипсы/круги/кривые Безье). Их форма и движение каждый кадр пересчитываются
+    из параметров ниже — сдвиньте ползунки, не останавливая анимацию.</p>
+
+  <div class="stage">
+    <div class="state-badge" id="state-badge">ожидание</div>
+    <svg id="pet-svg" viewBox="0 0 200 200"></svg>
+  </div>
+
+  <div class="panel">
+    <h2>Параметры (аналог статов тамагочи)</h2>
+    <div class="row"><label>Сытость</label><input type="range" id="p-satiety" min="0" max="100" value="75"><span class="val" id="v-satiety">75</span></div>
+    <div class="row"><label>Энергия</label><input type="range" id="p-energy" min="0" max="100" value="80"><span class="val" id="v-energy">80</span></div>
+    <div class="row"><label>Вес</label><input type="range" id="p-fat" min="0" max="100" value="20"><span class="val" id="v-fat">20</span></div>
+    <div class="row"><label>Веселье</label><input type="range" id="p-fun" min="0" max="100" value="60"><span class="val" id="v-fun">60</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>Действия (двигают статы + запускают анимацию)</h2>
+    <div class="actions">
+      <button data-action="feed">Покормить</button>
+      <button data-action="walk">Гулять</button>
+      <button data-action="exercise">Тренировка</button>
+      <button data-action="play">Играть</button>
+      <button data-action="rest">Спать</button>
+    </div>
+  </div>
+
+  <p class="note">Все элементы — обычные <code>&lt;ellipse&gt;</code>/<code>&lt;circle&gt;</code>/<code>&lt;path&gt;</code>,
+    созданные один раз; на каждый кадр меняются только их атрибуты (rx/ry, d, transform). Никаких спрайтов и картинок.</p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var NS = 'http://www.w3.org/2000/svg';
+  function svgEl(tag, attrs){
+    var el = document.createElementNS(NS, tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function lerp(a, b, t){ return a + (b - a) * Math.max(0, Math.min(1, t)); }
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+  function smoothstep(edge0, edge1, x){
+    var t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+    return t * t * (3 - 2 * t);
+  }
+  // HSL интерполяция для "здоровья" шерсти
+  function lerpColor(h1,s1,l1, h2,s2,l2, t){
+    return 'hsl(' + lerp(h1,h2,t).toFixed(1) + ',' + lerp(s1,s2,t).toFixed(1) + '%,' + lerp(l1,l2,t).toFixed(1) + '%)';
+  }
+
+  // ───────── состояние питомца ─────────
+  var pet = { satiety: 75, energy: 80, fat: 20, fun: 60 };
+
+  var sliders = ['satiety','energy','fat','fun'].map(function(key){
+    var input = document.getElementById('p-' + key);
+    var out   = document.getElementById('v-' + key);
+    input.addEventListener('input', function(){
+      pet[key] = Number(input.value);
+      out.textContent = input.value;
+    });
+    return { key: key, input: input, out: out };
+  });
+  function syncSlidersFromPet(){
+    sliders.forEach(function(s){
+      s.input.value = pet[s.key];
+      s.out.textContent = Math.round(pet[s.key]);
+    });
+  }
+
+  // ───────── экшены: двигают статы и на время подменяют анимацию ─────────
+  var ACTIONS = {
+    feed:     { label: 'кормлю',      duration: 1800, apply: function(){ pet.satiety = clamp(pet.satiety + 25, 0, 100); if (pet.satiety > 85) pet.fat = clamp(pet.fat + 4, 0, 100); } },
+    walk:     { label: 'гуляю',       duration: 2600, apply: function(){ pet.fun = clamp(pet.fun + 8, 0, 100); pet.satiety = clamp(pet.satiety - 6, 0, 100); pet.energy = clamp(pet.energy - 5, 0, 100); } },
+    exercise: { label: 'тренируюсь',  duration: 2200, apply: function(){ pet.fat = clamp(pet.fat - 10, 0, 100); pet.energy = clamp(pet.energy - 15, 0, 100); pet.fun = clamp(pet.fun + 4, 0, 100); } },
+    play:     { label: 'играю',       duration: 2000, apply: function(){ pet.fun = clamp(pet.fun + 20, 0, 100); pet.energy = clamp(pet.energy - 10, 0, 100); } },
+    rest:     { label: 'сплю',        duration: 3000, apply: function(){ pet.energy = clamp(pet.energy + 30, 0, 100); } }
+  };
+  var state = 'idle', stateStart = 0, stateEnd = 0;
+  var badge = document.getElementById('state-badge');
+
+  function triggerAction(name){
+    var a = ACTIONS[name];
+    if (!a) return;
+    a.apply();
+    syncSlidersFromPet();
+    state = name;
+    stateStart = performance.now();
+    stateEnd = stateStart + a.duration;
+    badge.textContent = a.label;
+  }
+  document.querySelectorAll('.actions button').forEach(function(btn){
+    btn.addEventListener('click', function(){ triggerAction(btn.dataset.action); });
+  });
+
+  // ───────── строим SVG-скелет один раз ─────────
+  var svg = document.getElementById('pet-svg');
+  var root = svgEl('g', { id: 'root' });
+  svg.appendChild(root);
+
+  var shadow = svgEl('ellipse', { cx: 100, cy: 160, ry: 7, fill: 'rgba(0,0,0,.3)' });
+  var tail   = svgEl('path', { fill: 'none', 'stroke-linecap': 'round' });
+  var legBL  = svgEl('ellipse', { rx: 7, ry: 10 });
+  var legBR  = svgEl('ellipse', { rx: 7, ry: 10 });
+  var body   = svgEl('ellipse', { cx: 100, cy: 120 });
+  var belly  = svgEl('ellipse', { cx: 100 });
+  var legFL  = svgEl('ellipse', { rx: 7, ry: 10 });
+  var legFR  = svgEl('ellipse', { rx: 7, ry: 10 });
+  var head   = svgEl('circle', { cx: 100, cy: 78 });
+  var earL   = svgEl('path', {});
+  var earR   = svgEl('path', {});
+  var browL  = svgEl('line', { 'stroke-width': 2.4, 'stroke-linecap': 'round' });
+  var browR  = svgEl('line', { 'stroke-width': 2.4, 'stroke-linecap': 'round' });
+  var eyeL   = svgEl('ellipse', { rx: 4.6, fill: '#1c1c1c' });
+  var eyeR   = svgEl('ellipse', { rx: 4.6, fill: '#1c1c1c' });
+  var cheekL = svgEl('circle', { r: 6.5, fill: '#ff8fa3' });
+  var cheekR = svgEl('circle', { r: 6.5, fill: '#ff8fa3' });
+  var mouth  = svgEl('path', { fill: 'none', stroke: '#5a3b28', 'stroke-width': 2.2, 'stroke-linecap': 'round' });
+  var particles = svgEl('g', { id: 'particles' });
+
+  [shadow, tail, legBL, legBR, body, belly, legFL, legFR, head, earL, earR,
+   browL, browR, eyeL, eyeR, cheekL, cheekR, mouth, particles].forEach(function(el){ root.appendChild(el); });
+
+  // ───────── частицы (Z во сне, сердечки, капли пота, крошки еды) ─────────
+  var parts = [];
+  function spawnParticle(type, x, y){
+    var el, life = 1000, vy = -0.028, vx = (Math.random() - 0.5) * 0.02;
+    if (type === 'z') {
+      el = svgEl('text', { x: x, y: y, 'font-size': 12 + Math.random() * 4, fill: '#9aa4ad', 'font-family': 'sans-serif' });
+      el.textContent = 'Z'; life = 1600; vy = -0.02;
+    } else if (type === 'heart') {
+      el = svgEl('text', { x: x, y: y, 'font-size': 12, fill: '#ff5d7a', 'font-family': 'sans-serif' });
+      el.textContent = '♥'; life = 900; vy = -0.045;
+    } else if (type === 'sweat') {
+      el = svgEl('circle', { cx: x, cy: y, r: 3, fill: '#5ec8ff' });
+      life = 650; vy = 0.06;
+    } else if (type === 'sparkle') {
+      el = svgEl('text', { x: x, y: y, 'font-size': 10, fill: '#ffd76a', 'font-family': 'sans-serif' });
+      el.textContent = '✦'; life = 600; vy = -0.03;
+    }
+    particles.appendChild(el);
+    parts.push({ el: el, x: x, y: y, vx: vx, vy: vy, born: performance.now(), life: life });
+  }
+  function updateParticles(now){
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i], t = now - p.born;
+      if (t > p.life) { particles.removeChild(p.el); parts.splice(i, 1); continue; }
+      var dt = 16;
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      var op = 1 - t / p.life;
+      p.el.setAttribute('x', p.x); p.el.setAttribute('y', p.y);
+      p.el.setAttribute('cx', p.x); p.el.setAttribute('cy', p.y);
+      p.el.setAttribute('opacity', op.toFixed(2));
+    }
+  }
+
+  // ───────── ушная "пружина" — плавное запаздывание за целевым углом ─────────
+  var earAngle = 0, earVel = 0;
+
+  var lastEmit = 0;
+
+  function render(now){
+    var t = now / 1000;
+    var satiety = pet.satiety / 100, energy = pet.energy / 100, fat = pet.fat / 100, fun = pet.fun / 100;
+    var happiness = clamp(satiety * 0.4 + fun * 0.6, 0, 1);
+    var wellbeing = clamp((satiety + energy + fun) / 3, 0, 1);
+
+    var inAction = state !== 'idle' && now < stateEnd;
+    if (state !== 'idle' && now >= stateEnd) { state = 'idle'; badge.textContent = 'ожидание'; }
+
+    // ---- форма тела, зависящая от параметров ----
+    var bodyRx = lerp(34, 54, fat);
+    var bodyRy = lerp(30, 45, fat);
+    var headR  = lerp(29, 33, fat);
+    // фиксированный оттенок (тёплый рыжий), меняются только насыщенность/яркость —
+    // интерполяция по hue между непохожими цветами даёт грязный зелёный на полпути
+    var furColor = lerpColor(28, 8, 48, 28, 78, 62, wellbeing);
+    var furDark  = lerpColor(28, 8, 36, 28, 60, 46, wellbeing);
+
+    // ---- дыхание / базовая идле-анимация ----
+    var breathe = Math.sin(t * (1.1 + energy * 1.2)) * lerp(1.2, 3, fun);
+    var headBob = Math.sin(t * (1.1 + energy * 1.2) + 0.6) * lerp(0.6, 1.8, fun);
+
+    // ---- грубое движение всего тела (прыжок / шаг / покачивание) ----
+    var rootX = 0, rootY = 0, rootRot = 0, scaleX = 1, scaleY = 1;
+
+    if (state === 'exercise' && inAction) {
+      var jp = (Math.sin(t * 11) + 1) / 2;
+      scaleY = lerp(0.82, 1.18, jp); scaleX = lerp(1.14, 0.9, jp);
+      rootY = -lerp(0, 22, jp);
+      if (Math.random() < 0.02) spawnParticle('sweat', 122, 70);
+    } else if (state === 'play' && inAction) {
+      var hp = (Math.sin(t * 9) + 1) / 2;
+      rootY = -lerp(0, 14, hp);
+      rootRot = Math.sin(t * 6) * 8;
+      if (Math.random() < 0.05) spawnParticle('heart', 80 + Math.random() * 40, 70);
+    } else if (state === 'walk' && inAction) {
+      rootX = Math.sin(t * 1.4) * 26;
+      scaleX = rootX > 0 ? -1 : 1; // разворот мордой по направлению
+      rootY = Math.abs(Math.sin(t * 8)) * -4;
+    } else if (state === 'feed' && inAction) {
+      rootY = Math.sin(t * 10) * 1.5;
+      if (now - lastEmit > 500) { spawnParticle('sparkle', 100 + (Math.random()*10-5), 85); lastEmit = now; }
+    } else if (state === 'rest' && inAction) {
+      if (now - lastEmit > 850) { spawnParticle('z', 118, 55); lastEmit = now; }
+    }
+
+    root.setAttribute('transform',
+      'translate(' + (100 + rootX) + ',' + (100 + rootY) + ') rotate(' + rootRot.toFixed(2) + ') scale(' + scaleX.toFixed(3) + ',' + scaleY.toFixed(3) + ') translate(-100,-100)');
+
+    // ---- тень ----
+    shadow.setAttribute('cx', 100);
+    shadow.setAttribute('rx', bodyRx * 0.9);
+    shadow.setAttribute('opacity', state === 'exercise' || state === 'play' ? 0.15 : 0.3);
+
+    // ---- ноги: походка, если state=walk, иначе спокойная стойка ----
+    var legY = 148 + breathe * 0.15;
+    var gait = (state === 'walk' && inAction) ? Math.sin(t * 8) * 6 : 0;
+    legBL.setAttribute('cx', 100 - bodyRx * 0.55); legBL.setAttribute('cy', legY + gait);
+    legBR.setAttribute('cx', 100 + bodyRx * 0.35); legBR.setAttribute('cy', legY - gait);
+    legFL.setAttribute('cx', 100 - bodyRx * 0.35); legFL.setAttribute('cy', legY - gait);
+    legFR.setAttribute('cx', 100 + bodyRx * 0.55); legFR.setAttribute('cy', legY + gait);
+    [legBL, legBR, legFL, legFR].forEach(function(l){ l.setAttribute('fill', furDark); });
+
+    // ---- тело + живот ----
+    body.setAttribute('cy', 122 + headBob * 0.3);
+    body.setAttribute('rx', bodyRx);
+    body.setAttribute('ry', bodyRy + breathe * 0.5);
+    body.setAttribute('fill', furColor);
+    belly.setAttribute('cy', 130 + headBob * 0.3);
+    belly.setAttribute('rx', bodyRx * 0.5);
+    belly.setAttribute('ry', bodyRy * 0.48);
+    belly.setAttribute('fill', furDark);
+    belly.setAttribute('opacity', 0.35);
+
+    // ---- хвост: колышется быстрее при высоком "веселье" ----
+    var wagSpeed = lerp(0.6, 3.6, fun), wagAmp = lerp(6, 24, fun);
+    var wagAngle = (state === 'rest') ? 0 : Math.sin(t * wagSpeed) * wagAmp;
+    var tailBaseX = 100 + bodyRx - 6, tailBaseY = 118;
+    var tipX = tailBaseX + 22, tipY = tailBaseY - 14 + wagAngle;
+    var ctrlX = tailBaseX + 14, ctrlY = tailBaseY - 22 + wagAngle * 1.4;
+    tail.setAttribute('d', 'M ' + tailBaseX + ' ' + tailBaseY + ' Q ' + ctrlX + ' ' + ctrlY + ' ' + tipX + ' ' + tipY);
+    tail.setAttribute('stroke', furColor);
+    tail.setAttribute('stroke-width', lerp(9, 13, fat));
+
+    // ---- голова ----
+    var headCx = 100, headCy = 78 + headBob;
+    head.setAttribute('cy', headCy);
+    head.setAttribute('r', headR);
+    head.setAttribute('fill', furColor);
+
+    // ---- уши: пружина к целевому углу (обвисают при низкой энергии) ----
+    var earTarget = lerp(34, -8, energy) + (state === 'play' || state === 'feed' ? -12 : 0);
+    var earAccel = (earTarget - earAngle) * 0.02 - earVel * 0.25;
+    earVel += earAccel; earAngle += earVel;
+    function earPath(sign){
+      var baseX = headCx + sign * headR * 0.62, baseY = headCy - headR * 0.62;
+      var ang = (earAngle * sign) * Math.PI / 180;
+      var tx = baseX + Math.sin(ang) * 22 * sign, ty = baseY - Math.cos(ang) * 22;
+      var cx = baseX + sign * 6, cy = baseY - 10;
+      return 'M ' + (baseX - sign*7) + ' ' + (baseY+4) + ' Q ' + cx + ' ' + cy + ' ' + tx + ' ' + ty + ' Q ' + (baseX+sign*10) + ' ' + (baseY+2) + ' ' + (baseX + sign*7) + ' ' + (baseY + 8) + ' Z';
+    }
+    earL.setAttribute('d', earPath(-1)); earL.setAttribute('fill', furColor);
+    earR.setAttribute('d', earPath(1));  earR.setAttribute('fill', furColor);
+
+    // ---- глаза: полуприкрыты при низкой энергии + периодическое моргание ----
+    var blinkCycle = (t % 3.4) / 3.4;
+    var blink = blinkCycle > 0.94 ? Math.sin((blinkCycle - 0.94) / 0.06 * Math.PI) : 0;
+    var baseOpen = (state === 'rest' && inAction) ? 0.05 : lerp(0.35, 1, energy);
+    var openness = (state === 'rest' && inAction) ? 0.05 : baseOpen * (1 - blink);
+    var eyeY = headCy - 2, eyeDX = headR * 0.42;
+    eyeL.setAttribute('cx', headCx - eyeDX); eyeL.setAttribute('cy', eyeY); eyeL.setAttribute('ry', Math.max(0.6, 6.4 * openness));
+    eyeR.setAttribute('cx', headCx + eyeDX); eyeR.setAttribute('cy', eyeY); eyeR.setAttribute('ry', Math.max(0.6, 6.4 * openness));
+
+    // ---- брови: наклон отражает настроение ----
+    var browTilt = lerp(9, -11, happiness);
+    function browCoords(sign){
+      var cx = headCx + sign * eyeDX, cy = eyeY - 9;
+      var a = browTilt * sign * Math.PI / 180;
+      var dx = Math.cos(a) * 7, dy = Math.sin(a) * 7;
+      return [cx - dx, cy - dy, cx + dx, cy + dy];
+    }
+    var bl = browCoords(-1), br = browCoords(1);
+    browL.setAttribute('x1', bl[0]); browL.setAttribute('y1', bl[1]); browL.setAttribute('x2', bl[2]); browL.setAttribute('y2', bl[3]);
+    browR.setAttribute('x1', br[0]); browR.setAttribute('y1', br[1]); browR.setAttribute('x2', br[2]); browR.setAttribute('y2', br[3]);
+    browL.setAttribute('stroke', furDark); browR.setAttribute('stroke', furDark);
+
+    // ---- щёки: румянец от сытости ----
+    var blush = smoothstep(0.55, 0.95, satiety);
+    cheekL.setAttribute('cx', headCx - headR * 0.72); cheekL.setAttribute('cy', headCy + headR * 0.28); cheekL.setAttribute('opacity', blush * 0.55);
+    cheekR.setAttribute('cx', headCx + headR * 0.72); cheekR.setAttribute('cy', headCy + headR * 0.28); cheekR.setAttribute('opacity', blush * 0.55);
+
+    // ---- рот: улыбка/грусть от счастья, жевание во время кормления ----
+    var mouthY = headCy + headR * 0.42;
+    if (state === 'feed' && inAction) {
+      var chew = Math.abs(Math.sin(t * 13));
+      mouth.setAttribute('d', 'M ' + (headCx - 6) + ' ' + mouthY + ' Q ' + headCx + ' ' + (mouthY + 4 + chew * 6) + ' ' + (headCx + 6) + ' ' + mouthY);
+      mouth.setAttribute('stroke-width', 3);
+    } else {
+      var smileY = lerp(-8, 7, happiness);
+      mouth.setAttribute('d', 'M ' + (headCx - 9) + ' ' + mouthY + ' Q ' + headCx + ' ' + (mouthY + smileY) + ' ' + (headCx + 9) + ' ' + mouthY);
+      mouth.setAttribute('stroke-width', 2.2);
+    }
+
+    updateParticles(now);
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>

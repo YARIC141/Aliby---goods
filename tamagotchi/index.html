@@ -267,6 +267,17 @@
   .pdd-result{text-align:center;padding:30px 0}
   .pdd-result .pdd-score{font-size:32px;font-weight:700;color:var(--accent);margin-bottom:8px}
 </style>
+<style id="pwd-reveal-css">
+.pwd-wrap{position:relative;display:block}
+.pwd-wrap>input{padding-right:46px!important}
+.pwd-eye{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:42px;height:42px;max-height:100%;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;margin:0;cursor:pointer;color:var(--fg-3,#888);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.pwd-eye:hover{color:var(--fg,#222)}
+.pwd-eye:focus-visible{outline:2px solid var(--accent,#e8743b);outline-offset:-2px;border-radius:8px}
+.pwd-eye svg{width:20px;height:20px;pointer-events:none}
+.pwd-eye .off{display:none}
+.pwd-eye[aria-pressed="true"] .on{display:none}
+.pwd-eye[aria-pressed="true"] .off{display:block}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -3757,6 +3768,60 @@
     pill.textContent = '↓';
     if (dy >= THRESH) window.location.reload();
   });
+})();
+</script>
+<script id="pwd-reveal-js">
+// «Показать пароль»: глазок у каждого input[type=password] (в т.ч. появляющихся позже). Исключение — data-no-reveal.
+(function () {
+  var EYE = '<svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>'
+    + '<svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  function enhance(inp) {
+    if (inp.dataset.pwdReveal || inp.hasAttribute('data-no-reveal') || !inp.parentNode) return;
+    inp.dataset.pwdReveal = '1';
+    var cs = getComputedStyle(inp);
+    var wrap = document.createElement('div');
+    wrap.className = 'pwd-wrap';
+    wrap.style.margin = cs.margin;
+    if (cs.flexGrow !== '0' || cs.flexBasis !== 'auto') wrap.style.flex = cs.flex;
+    wrap.style.minWidth = '0';
+    inp.parentNode.insertBefore(wrap, inp);
+    wrap.appendChild(inp);
+    inp.style.margin = '0';
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pwd-eye';
+    b.setAttribute('aria-label', 'Показать пароль');
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = EYE;
+    // mousedown/touchstart не отбирают фокус у поля — на iOS клавиатура не прячется
+    b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    b.addEventListener('touchstart', function (e) { e.preventDefault(); b.click(); }, { passive: false });
+    b.addEventListener('click', function () {
+      var show = inp.type === 'password';
+      var s = inp.selectionStart, e2 = inp.selectionEnd;
+      inp.type = show ? 'text' : 'password';
+      b.setAttribute('aria-pressed', show ? 'true' : 'false');
+      b.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
+      try { inp.focus({ preventScroll: true }); inp.setSelectionRange(s, e2); } catch (x) {}
+    });
+    wrap.appendChild(b);
+    // не оставляем пароль открытым при уходе со страницы/сворачивании приложения
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden && inp.type === 'text') { inp.type = 'password'; b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', 'Показать пароль'); }
+    });
+  }
+  function scan(root) {
+    (root.querySelectorAll ? root.querySelectorAll('input[type=password]') : []).forEach(enhance);
+  }
+  scan(document);
+  new MutationObserver(function (ms) {
+    ms.forEach(function (m) {
+      m.addedNodes.forEach(function (n) {
+        if (n.nodeType !== 1) return;
+        if (n.matches && n.matches('input[type=password]')) enhance(n); else scan(n);
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 </script>
 </body>
