@@ -265,7 +265,8 @@ ol.hlp-steps>li::before{content:counter(hlpstep);position:absolute;left:0;top:1p
       </div>
 
       <div id="auth-recover" class="tab-pane">
-        <div id="ok-recover" class="alert alert-ok" style="display:none">Письмо отправлено. Проверьте почту.</div>
+        <div id="ok-recover" class="alert alert-ok" style="display:none">Письмо отправлено. Проверьте почту и папку «Спам».</div>
+      <div id="err-recover" class="alert alert-e" style="display:none"></div>
         <p style="font-size:13px;color:var(--fg-3);margin-bottom:10px">Введите email — пришлём ссылку для сброса пароля.</p>
         <div class="fg"><label>Email</label><input type="email" id="rec-email"></div>
         <button class="btn btn-p btn-full" id="recover-btn" onclick="doRecover()">Отправить ссылку</button>
@@ -1088,6 +1089,44 @@ function _timeoutSignal(ms) {
   const t = setTimeout(() => ctrl.abort(), ms);
   return { signal: ctrl.signal, done: () => clearTimeout(t) };
 }
+// Понятный текст ошибки входа/регистрации/восстановления: что случилось и что делать дальше
+function authErr(e, ctx) {
+  e = e || {};
+  const code = String(e.error_code || e.code || '');
+  const msg = String(e.msg || e.error_description || e.message || (typeof e.error === 'string' ? e.error : ''));
+  const st = Number(e.status) || 0;
+  if (e.network || msg === 'Нет соединения') {
+    if (navigator.onLine === false) return 'Нет интернета. Проверьте Wi‑Fi или мобильную сеть и повторите.';
+    if (e.timeout) return 'Сервер долго не отвечает. Проверьте интернет и попробуйте ещё раз через минуту.';
+    return 'Не удаётся связаться с сервером. Отключите VPN или блокировщик, проверьте интернет и повторите. Если не помогает — попробуйте позже.';
+  }
+  if (st === 429 || /over_.*rate_limit/.test(code) || /rate limit|too many/i.test(msg))
+    return 'Слишком много попыток. Подождите минуту и повторите.';
+  if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg))
+    return ctx === 'login' ? 'Неверный email или пароль. Проверьте раскладку и регистр. Забыли пароль — нажмите «Забыл пароль».' : 'Неверные данные. Проверьте введённое и повторите.';
+  if (code === 'email_not_confirmed' || /email not confirmed/i.test(msg))
+    return 'Email не подтверждён. Откройте письмо от Alliby и перейдите по ссылке (загляните в «Спам»).';
+  if (code === 'user_already_exists' || code === 'email_exists' || /already (been )?registered|already exists/i.test(msg))
+    return 'Этот email уже зарегистрирован. Войдите или восстановите пароль.';
+  if (code === 'weak_password' || /password should be|at least \d+ char/i.test(msg))
+    return 'Пароль слишком простой: используйте не менее 6 символов.';
+  if (code === 'same_password' || /different from the old/i.test(msg))
+    return 'Новый пароль должен отличаться от старого.';
+  if (code === 'validation_failed' || code === 'email_address_invalid' || /invalid.*email|email.*invalid|unable to validate email/i.test(msg))
+    return 'Проверьте email: адрес указан неверно.';
+  if (code === 'signup_disabled' || /signups? (not allowed|disabled)/i.test(msg))
+    return 'Регистрация сейчас недоступна. Попробуйте позже.';
+  if (code === 'user_banned' || /banned/i.test(msg))
+    return 'Аккаунт заблокирован. Напишите в поддержку.';
+  if (/error sending|sending (confirmation|recovery)|smtp/i.test(msg))
+    return 'Не удалось отправить письмо. Повторите позже или напишите в поддержку.';
+  if (st >= 500) return 'Сервер временно недоступен (код ' + st + '). Повторите через пару минут.';
+  return (msg || (ctx === 'login' ? 'Не удалось войти' : ctx === 'register' ? 'Не удалось зарегистрироваться' : 'Что-то пошло не так')) + (st ? ' (код ' + st + ')' : '');
+}
+function showAuthErr(el, e, ctx) {
+  el.textContent = authErr(e, ctx);
+  el.style.display = 'block';
+}
 async function req(path, opts = {}, _retried = false, _hostFallback = false) {
   if (!_retried && S.session?.expires_at && (Date.now() / 1000 > S.session.expires_at - 60)) {
     await refreshSession();
@@ -1104,7 +1143,7 @@ async function req(path, opts = {}, _retried = false, _hostFallback = false) {
       _sbActiveUrl = SB_URL_FALLBACK;
       return req(path, opts, _retried, true);
     }
-    throw { message: 'Нет соединения' };
+    throw { message: 'Нет соединения', network: true, timeout: e?.name === 'AbortError' };
   } finally {
     _to.done();
   }
@@ -1119,7 +1158,7 @@ async function req(path, opts = {}, _retried = false, _hostFallback = false) {
     goToAuth();
     throw { message: 'Сессия истекла, войдите снова' };
   }
-  if (!r.ok) throw body || { message: r.statusText };
+  if (!r.ok) throw Object.assign((body && typeof body === 'object') ? body : { message: r.statusText }, { status: r.status });
   return body;
 }
 
@@ -1174,9 +1213,7 @@ async function doLogin() {
     setSession(d);
     await afterAuth();
   } catch(e) {
-    const raw = e.error_description || e.message || 'Ошибка входа';
-    err.textContent = raw === 'Email not confirmed' ? 'Email не подтверждён — проверьте почту' : raw;
-    err.style.display = 'block';
+    showAuthErr(err, e, 'login');
   } finally { done(); }
 }
 
@@ -1200,15 +1237,20 @@ async function doRegister() {
       loginMsg.textContent = 'Аккаунт создан! Проверьте почту и спам и пройдите по ссылке регистрации.';
       loginMsg.style.display = 'block';
     }
-  } catch(e) { err.textContent = e.msg || e.message || 'Ошибка регистрации'; err.style.display = 'block'; } finally { done(); }
+  } catch(e) { showAuthErr(err, e, 'register'); } finally { done(); }
 }
 
 async function doRecover() {
+  if (!document.getElementById('rec-email').value.trim()) { showAuthErr(document.getElementById('err-recover'), { message: 'Введите email, на который зарегистрирован аккаунт' }, 'recover'); return; }
   const done = btnLoad(document.getElementById('recover-btn'), 'Отправка…');
   try {
     await req('/auth/v1/recover', { method: 'POST', body: JSON.stringify({ email: document.getElementById('rec-email').value }) });
+    document.getElementById('err-recover').style.display = 'none';
     document.getElementById('ok-recover').style.display = 'block';
-  } catch(e) { alert(e.message || 'Ошибка'); } finally { done(); }
+  } catch(e) {
+    document.getElementById('ok-recover').style.display = 'none';
+    showAuthErr(document.getElementById('err-recover'), e, 'recover');
+  } finally { done(); }
 }
 
 function logout() {

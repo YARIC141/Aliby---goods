@@ -1666,7 +1666,7 @@
   // через сервер, страница получает только уже готовый JSON. ─────────────────
   function fatsecretRequest(params){
     return fetch(SB_URL + '/functions/v1/fatsecret-proxy?' + params)
-      .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); });
+      .then(function(r){ return r.json().then(function(data){ return { ok: r.ok, status: r.status, data: data }; }); });
   }
   function fatsecretSearch(q){
     return fatsecretRequest('action=search&q=' + encodeURIComponent(q));
@@ -2183,11 +2183,15 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', apikey: SB_ANON },
       body: JSON.stringify({ email: email, password: password })
-    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, data: data }; }); })
+    }).then(function(r){ return r.json().then(function(data){ return { ok: r.ok, status: r.status, data: data }; }); })
       .then(function(res){
         btn.disabled = false;
         if (!res.ok || !res.data.access_token){
-          showToast('Не удалось войти — проверьте email и пароль');
+          var st = res.status, c = (res.data && (res.data.error_code || res.data.code)) || '';
+          showToast(st === 429 ? 'Слишком много попыток — подождите минуту'
+            : (c === 'email_not_confirmed' ? 'Email не подтверждён — откройте письмо и перейдите по ссылке'
+            : (st >= 500 ? 'Сервер временно недоступен — повторите через пару минут'
+            : 'Неверный email или пароль')));
           return;
         }
         saveSession({ access_token: res.data.access_token, email: email });
@@ -2195,7 +2199,7 @@
         updateChatAuthUI();
       }).catch(function(){
         btn.disabled = false;
-        showToast('Нет связи с сервером входа');
+        showToast(navigator.onLine === false ? 'Нет интернета — проверьте сеть' : 'Нет связи с сервером. Отключите VPN и повторите');
       });
   }
   function sendChatMessage(){
