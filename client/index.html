@@ -14082,5 +14082,15 @@ function _tourKey(e) {
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 </script>
+<script id="test-badge-js">
+(function(){try{
+  var h=location.hostname; if(h!=='test.alliby.ru'&&h!=='app-test.alliby.ru')return;
+  var t=document.querySelector('#screen-profile .pb'); if(!t||t.querySelector('.test-badge'))return;
+  var d=document.createElement('div'); d.className='test-badge';
+  d.style.cssText='margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#fff3cd;color:#664d03;border:1px solid #ffda6a;font:600 13px/1.4 system-ui,sans-serif;text-align:center';
+  d.textContent='⚠ ТЕСТОВОЕ ПРИЛОЖЕНИЕ — тестовые данные и тестовый стенд';
+  t.insertBefore(d,t.firstChild);
+}catch(e){}})();
+</script>
 </body>
 </html>
