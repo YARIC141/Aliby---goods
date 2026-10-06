@@ -16,9 +16,12 @@ import { handleCors, jsonResponse } from '../_shared/cors.ts'
 import { trackEvent } from '../_shared/analytics.ts'
 
 const TBANK_INIT_URL   = (Deno.env.get('TBANK_API_URL') || 'https://securepay.tinkoff.ru/v2') + '/Init'
-const NOTIFY_URL       = 'https://alliby.ru/functions/v1/tbank-platform-notify'
-const SUCCESS_URL      = 'https://admin.alliby.ru/?tpay=success'
-const FAIL_URL         = 'https://admin.alliby.ru/?tpay=fail'
+// Прод по умолчанию; на стенде задаются PUBLIC_API_URL=https://test.alliby.ru и PUBLIC_ADMIN_URL=https://app-test.alliby.ru/admin
+const API_BASE        = Deno.env.get('PUBLIC_API_URL')   || 'https://alliby.ru'
+const ADMIN_BASE      = Deno.env.get('PUBLIC_ADMIN_URL') || 'https://admin.alliby.ru'
+const NOTIFY_URL       = `${API_BASE}/functions/v1/tbank-platform-notify`
+const SUCCESS_URL      = `${ADMIN_BASE}/?tpay=success`
+const FAIL_URL         = `${ADMIN_BASE}/?tpay=fail`
 
 const TRIAL_AMOUNT_KOPECKS    = 100     // 1 ₽ — refunded after card binding
 const ADD_STORE_MONTHLY_KOPECKS = 50000   // 500 ₽/мес
