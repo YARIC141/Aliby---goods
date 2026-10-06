@@ -501,6 +501,12 @@ ol.hlp-steps>li ul{margin:6px 0 0}
 .pwd-eye[aria-pressed="true"] .on{display:none}
 .pwd-eye[aria-pressed="true"] .off{display:block}
 </style>
+<style id="link-contrast-css">
+/* ссылки в тексте (inline color:var(--accent)): в светлой теме затемняем акцент для читаемости */
+:root{--link-c:color-mix(in oklch,var(--accent) 55%,#000)}
+html.dark{--link-c:var(--accent)}
+a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}
+</style>
 </head>
 <body>
 
