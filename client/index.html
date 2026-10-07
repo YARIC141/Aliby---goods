@@ -577,6 +577,15 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .ca-item-card .ca-item-main{display:flex;flex-direction:column;gap:2px;min-width:0}
 .ca-item-card .ca-item-name{font:600 14px/1.3 var(--font-sans);color:var(--fg)}
 .ca-item-card .ca-item-sub{font:400 12px/1.3 var(--font-sans);color:var(--muted)}
+.ca-pick-grid{display:grid;gap:10px;margin-bottom:12px}
+.ca-pick-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:92px;padding:12px 8px;border:1.5px dashed var(--line);border-radius:var(--r-2);background:var(--bg-1);cursor:pointer;text-align:center;font-family:var(--font-sans);color:var(--fg-2);width:100%;transition:all var(--t-fast)}
+.ca-pick-empty:active{background:var(--bg-2)}
+.ca-pick-empty .ca-pick-lbl{font:600 14px/1.2 var(--font-sans);color:var(--fg)}
+.ca-pick-empty .ca-pick-act{font:500 12px/1 var(--font-sans);color:var(--accent)}
+.ca-pick-x{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--bg-2);color:var(--fg-2);cursor:pointer;font-size:13px;line-height:26px;text-align:center}
+.ca-pick-ava{width:40px;height:40px;border-radius:50%;flex-shrink:0;background:var(--bg-2);color:var(--fg-2);display:flex;align-items:center;justify-content:center;font:600 16px/1 var(--font-sans);overflow:hidden}
+.ca-pick-ava img{width:100%;height:100%;object-fit:cover}
+#ca-sched-item-row,#ca-sched-master-row{display:none!important}
 .ca-item-card .ca-item-price{font:600 13px/1 var(--font-sans);color:var(--fg-2);white-space:nowrap;flex-shrink:0}
 
 /* ── SPLASH ── */
@@ -1774,6 +1783,7 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
           <button data-ca-multi="1" onclick="setCaSchedMultiPerson(true)">Для группы</button>
         </div>
       </div>
+      <div id="ca-sched-picks" class="ca-pick-grid"></div>
       <div id="ca-sched-item-row" style="display:none;margin-bottom:10px">
         <div id="ca-sched-item-list" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
@@ -2938,6 +2948,16 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
 </div>
 
 <!-- Personal training "for several people" info -->
+<div class="overlay" id="m-ca-pick" onclick="if(event.target===this)closeModal('m-ca-pick')">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h3 id="m-ca-pick-title">Выбор</h3>
+      <button class="modal-x" onclick="closeModal('m-ca-pick')">✕</button>
+    </div>
+    <div id="m-ca-pick-list" style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <div class="overlay" id="m-ca-multiperson-info">
   <div class="modal" style="max-width:420px">
     <div class="modal-hd">
@@ -5008,7 +5028,7 @@ async function loadCaScheduleScreen() {
     // Загружаем мастеров с их недельным расписанием
     try {
       const [masters, trainItems, bookableItems] = await Promise.all([
-        req(`/rest/v1/public_masters?employee_store_id=eq.${store.id}&select=id,full_name,master_schedules(day_of_week,start_time,end_time),master_services(service_id,price)&order=full_name.asc`),
+        req(`/rest/v1/public_masters?employee_store_id=eq.${store.id}&select=id,full_name,master_photo_url,master_schedules(day_of_week,start_time,end_time),master_services(service_id,price)&order=full_name.asc`),
         req(`/rest/v1/menu_items?store_id=eq.${store.id}&is_training=eq.true&is_available=eq.true&select=id,training_mode,max_group_size,duration_minutes,name,price`),
         req(`/rest/v1/menu_items?store_id=eq.${store.id}&item_type=eq.service&is_available=eq.true&select=id,name,price,duration_minutes,preparation_time,item_type,is_training`),
       ]);
@@ -5122,6 +5142,7 @@ function _renderCaSchedItemList() {
     items = items.filter(it => svcIds.has(it.id));
   }
   if (!items.some(it => it.id === _caSched.itemId)) _caSched.itemId = '';
+  _caPickItems = items;
   row.style.display = items.length ? '' : 'none';
   wrap.innerHTML = items.map(it => {
     const active = it.id === _caSched.itemId;
@@ -5138,6 +5159,7 @@ function _renderCaSchedItemList() {
   document.getElementById('ca-sched-book-row').style.display = (selectedItem && selectedItem.training_mode === 'group') ? '' : 'none';
   _updateCaSchedMultiPersonUI();
   _updateCaSchedCalendarVisibility();
+  _renderCaSchedPicks();
 }
 
 function _populateCaSchedMasterSelect() {
@@ -5153,6 +5175,80 @@ function _populateCaSchedMasterSelect() {
   if (!masters.some(m => m.id === _caSched.masterId)) { _caSched.masterId = ''; sel.value = ''; }
   else sel.value = _caSched.masterId;
   row.style.display = masters.length ? '' : 'none';
+  _caPickMasters = masters;
+  _renderCaSchedPicks();
+}
+
+// ── Ячейки выбора «тренер/мастер» и «занятие/услуга» над расписанием ──
+let _caPickItems = [], _caPickMasters = [];
+
+function _caItemSub(it) {
+  if (it._kind === 'group') return `Групповое занятие · до ${it.max_group_size || 1} чел.`;
+  if (it._kind === 'personal') return (it.max_group_size || 1) > 1 ? `Персональная тренировка · можно пригласить ещё ${it.max_group_size - 1} чел.` : 'Персональная тренировка';
+  return 'Услуга';
+}
+
+function _caItemCardHtml(it, onclick, active, extra) {
+  const price = _caPersonalPrice(it);
+  return `<button type="button" class="ca-item-card${active ? ' active' : ''}" onclick="${onclick}">
+    <div class="ca-item-main"><span class="ca-item-name">${esc(it.name)}</span><span class="ca-item-sub">${esc(_caItemSub(it))}</span></div>
+    <span class="ca-item-price">${Number(price).toFixed(0)} ₽</span>${extra || ''}
+  </button>`;
+}
+
+function _caMasterCardHtml(m, onclick, active, extra, mw) {
+  const name = m.full_name || mw.nom;
+  const ava = m.master_photo_url
+    ? `<span class="ca-pick-ava"><img src="${esc(m.master_photo_url)}" alt=""></span>`
+    : `<span class="ca-pick-ava">${esc(name.trim().charAt(0).toUpperCase())}</span>`;
+  return `<button type="button" class="ca-item-card${active ? ' active' : ''}" style="justify-content:flex-start" onclick="${onclick}">
+    ${ava}<div class="ca-item-main" style="flex:1"><span class="ca-item-name">${esc(name)}</span><span class="ca-item-sub">${mw.nom}</span></div>${extra || ''}
+  </button>`;
+}
+
+function _renderCaSchedPicks() {
+  const box = document.getElementById('ca-sched-picks');
+  const store = S.store;
+  if (!box || !store) return;
+  const mw = _MW(store.direction);
+  const itemLbl = store.direction === 'services' ? 'Услуга' : 'Занятие';
+  const master = _caSched.masters.find(m => m.id === _caSched.masterId);
+  const item = _caPickItems.find(it => it.id === _caSched.itemId);
+  const showMaster = !!master || _caPickMasters.length > 0;
+  const showItem = !!item || _caPickItems.length > 0;
+  const x = kind => `<span class="ca-pick-x" role="button" aria-label="Сбросить" onclick="event.stopPropagation();clearCaSchedPick('${kind}')">✕</span>`;
+  const emptyTile = (kind, icon, lbl) => `<button type="button" class="ca-pick-empty" onclick="openCaSchedPick('${kind}')">${icon}<span class="ca-pick-lbl">${lbl}</span><span class="ca-pick-act">Выбрать ›</span></button>`;
+  const icoMaster = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
+  const icoItem = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
+  const cells = [];
+  if (showMaster) cells.push(master ? _caMasterCardHtml(master, "openCaSchedPick('master')", true, x('master'), mw) : emptyTile('master', icoMaster, mw.nom));
+  if (showItem) cells.push(item ? _caItemCardHtml(item, "openCaSchedPick('item')", true, x('item')) : emptyTile('item', icoItem, itemLbl));
+  box.style.gridTemplateColumns = (!master && !item && cells.length === 2) ? '1fr 1fr' : '1fr';
+  box.innerHTML = cells.join('');
+}
+
+function openCaSchedPick(kind) {
+  const store = S.store; if (!store) return;
+  const mw = _MW(store.direction);
+  const list = document.getElementById('m-ca-pick-list');
+  if (kind === 'master') {
+    document.getElementById('m-ca-pick-title').textContent = mw.nom;
+    list.innerHTML = _caPickMasters.map(m => _caMasterCardHtml(m, `pickCaSched('master','${m.id}')`, m.id === _caSched.masterId, '', mw)).join('');
+  } else {
+    document.getElementById('m-ca-pick-title').textContent = store.direction === 'services' ? 'Услуга' : 'Занятие';
+    list.innerHTML = _caPickItems.map(it => _caItemCardHtml(it, `pickCaSched('item','${it.id}')`, it.id === _caSched.itemId, '')).join('');
+  }
+  if (!list.innerHTML) list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:16px">Нет подходящих вариантов</div>';
+  openModal('m-ca-pick');
+}
+
+function pickCaSched(kind, id) {
+  closeModal('m-ca-pick');
+  if (kind === 'master') setCaSchedMaster(id); else setCaSchedItem(id);
+}
+
+function clearCaSchedPick(kind) {
+  if (kind === 'master') setCaSchedMaster(''); else setCaSchedItem('');
 }
 
 function setCaSchedMode(mode) {
@@ -5169,6 +5265,7 @@ function setCaSchedMode(mode) {
 
 function setCaSchedMaster(masterId) {
   _caSched.masterId = masterId;
+  const _sel = document.getElementById('ca-sched-master-sel'); if (_sel) _sel.value = masterId;
   _renderCaSchedItemList();
   _caSched.openDate = null;
   _caSched.personalDays = {};
