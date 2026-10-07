@@ -5221,8 +5221,8 @@ function _renderCaSchedPicks() {
   const icoMaster = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>';
   const icoItem = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';
   const cells = [];
-  if (showMaster) cells.push(master ? _caMasterCardHtml(master, "openCaSchedPick('master')", true, x('master'), mw) : emptyTile('master', icoMaster, mw.nom));
   if (showItem) cells.push(item ? _caItemCardHtml(item, "openCaSchedPick('item')", true, x('item')) : emptyTile('item', icoItem, itemLbl));
+  if (showMaster) cells.push(master ? _caMasterCardHtml(master, "openCaSchedPick('master')", true, x('master'), mw) : emptyTile('master', icoMaster, mw.nom));
   box.style.gridTemplateColumns = (!master && !item && cells.length === 2) ? '1fr 1fr' : '1fr';
   box.innerHTML = cells.join('');
 }
