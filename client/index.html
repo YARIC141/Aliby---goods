@@ -8579,7 +8579,14 @@ function _scheduleRtReconnect(key, userId, fn) {
     _rtReconnT[key] = null;
     if (_rtWant[key] && S.session?.user?.id === userId) fn(userId);
   }, delay);
-  _rtReconnDelay[key] = Math.min(delay * 2, 30000);
+  _rtReconnDelay[key] = Math.min(delay * 2, 10000);
+}
+// На нестабильном канале рукопожатие WS может висеть 20-30 с. Если сокет не открылся за 7 с —
+// рвём его: onclose запустит обычное переподключение (новый TCP, а не ожидание зависшего).
+function _rtNewSocket(url) {
+  const ws = new WebSocket(url);
+  setTimeout(() => { if (ws.readyState === WebSocket.CONNECTING) { try { ws.close(); } catch {} } }, 7000);
+  return ws;
 }
 let _bkNotifCount = 0;
 let _orderNotifCount = 0;
@@ -8597,13 +8604,30 @@ function _updateBkBadge() {
   window.AllibyBridge?.setBadge(total);
 }
 
+let _rtDotT = null;
+function _rtAllOpen() {
+  return _rtWs?.readyState === WebSocket.OPEN && _rtBkWs?.readyState === WebSocket.OPEN &&
+         _rtSubWs?.readyState === WebSocket.OPEN && _rtRentWs?.readyState === WebSocket.OPEN;
+}
 function _setClientRtDot() {
   const dot = document.getElementById('cal-rt-dot');
   if (!dot) return;
-  const ok = _rtWs?.readyState === WebSocket.OPEN && _rtBkWs?.readyState === WebSocket.OPEN &&
-             _rtSubWs?.readyState === WebSocket.OPEN && _rtRentWs?.readyState === WebSocket.OPEN;
-  dot.classList.toggle('rt-dot-connecting', !ok);
-  dot.style.background = ok ? '#22c55e' : '';
+  if (_rtAllOpen()) {
+    clearTimeout(_rtDotT); _rtDotT = null;
+    dot.classList.remove('rt-dot-connecting');
+    dot.style.background = '#22c55e';
+    return;
+  }
+  // Была зелёной — даём 6 с на короткое переподключение, прежде чем моргать.
+  if (dot.style.background && !dot.classList.contains('rt-dot-connecting')) {
+    if (!_rtDotT) _rtDotT = setTimeout(() => {
+      _rtDotT = null;
+      if (!_rtAllOpen()) { dot.classList.add('rt-dot-connecting'); dot.style.background = ''; }
+    }, 6000);
+    return;
+  }
+  dot.classList.add('rt-dot-connecting');
+  dot.style.background = '';
 }
 
 // ─── VPN HEURISTIC ───
@@ -8699,7 +8723,7 @@ function realtimeSubscribeOrders(userId, _retried = false) {
   let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
-    const ws = new WebSocket(wsUrl);
+    const ws = _rtNewSocket(wsUrl);
     _rtWs = ws;
     ws.onopen = () => {
       _rtRef = 0;
@@ -8765,7 +8789,7 @@ function realtimeSubscribeBookings(userId, _retried = false) {
   let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
-    const ws = new WebSocket(wsUrl);
+    const ws = _rtNewSocket(wsUrl);
     _rtBkWs = ws;
     ws.onopen = () => {
       _rtBkRef = 0;
@@ -8815,7 +8839,7 @@ function realtimeSubscribeSubs(userId, _retried = false) {
   let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
-    const ws = new WebSocket(wsUrl);
+    const ws = _rtNewSocket(wsUrl);
     _rtSubWs = ws;
     ws.onopen = () => {
       _rtSubRef = 0;
@@ -8885,7 +8909,7 @@ function realtimeSubscribeRent(userId, _retried = false) {
   let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
-    const ws = new WebSocket(wsUrl);
+    const ws = _rtNewSocket(wsUrl);
     _rtRentWs = ws;
     ws.onopen = () => {
       _rtRentRef = 0;
