@@ -7461,7 +7461,7 @@ function renderSubCard(s) {
       ? `<button class="btn btn-sm btn-full" disabled style="opacity:.4">Нет в наличии</button>`
       : (inCart
           ? `<button class="btn btn-sm btn-full" style="opacity:.65" onclick="event.stopPropagation();removeFromSubCart('${s.id}')">${svgIco('check',12)} В корзине</button>`
-          : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">В корзину</button>`)}
+          : `<button class="btn btn-p btn-sm btn-full" onclick="event.stopPropagation();addSubToCart('${s.id}')">${s.price} ₽</button>`)}
     ${!canBuy || outOfStock || _SVC_DIRS.has(S.direction) ? '' : (inGift
       ? `<button class="btn btn-sm btn-full" style="margin-top:4px;opacity:.65" onclick="event.stopPropagation();removeFromGiftCart('${s.id}')">${svgIco('gift',12)} В корзине</button>`
       : `<button class="btn btn-sm btn-full" style="margin-top:4px" onclick="event.stopPropagation();openGiftConfirm('${s.id}')">Приобрести в подарок</button>`)}
@@ -10296,7 +10296,7 @@ function renderSubItemCard(sub) {
       ${S.storeSubActive !== false
         ? (inCart
           ? `<button class="btn btn-sm" style="opacity:.65" onclick="removeFromSubCart('${sub.id}')">${svgIco('check',12)} В корзине</button>`
-          : `<button class="btn btn-p btn-sm" onclick="addSubToCart('${sub.id}')">В корзину</button>`)
+          : `<button class="btn btn-p btn-sm" onclick="addSubToCart('${sub.id}')">${sub.price} ₽</button>`)
         : ''}
     </div>
   </div>`;
