@@ -121,6 +121,23 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(async keys => {
         const isUpdate = keys.some(k => k.startsWith('alliby-app-v') && k !== APP_CACHE);
+        // Новый APP_CACHE пуст, а первый запуск после деплоя на плохой сети не успевает скачать
+        // оболочку и падает на HEAL_HTML. Поэтому переносим оболочку из самого свежего старого
+        // кэша: приложение откроется сразу (stale-while-revalidate), а свежую версию подтянет фон.
+        try {
+          const olds = keys.filter(k => k.startsWith('alliby-app-v') && k !== APP_CACHE)
+            .sort((x, y) => (parseInt(y.slice(12), 10) || 0) - (parseInt(x.slice(12), 10) || 0));
+          if (olds.length) {
+            const nc = await withTimeout(caches.open(APP_CACHE));
+            const oc = await withTimeout(caches.open(olds[0]));
+            const reqs = await withTimeout(oc.keys());
+            for (const r of reqs) {
+              if (await withTimeout(nc.match(r))) continue;
+              const resp = await withTimeout(oc.match(r));
+              if (resp) await withTimeout(nc.put(r, resp));
+            }
+          }
+        } catch {}
         await Promise.all(
           keys.filter(k => k !== APP_CACHE && k !== API_CACHE && k !== IMG_CACHE && k !== STATIC_CACHE).map(k => caches.delete(k))
         );
@@ -230,7 +247,7 @@ self.addEventListener('fetch', e => {
   // ── App shell (HTML navigate): stale-while-revalidate ─────────────────────
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      withTimeout(caches.open(APP_CACHE).then(async cache => ({ cache, cached: await cache.match(e.request) })))
+      withTimeout(caches.open(APP_CACHE).then(async cache => ({ cache, cached: await cache.match(e.request, { ignoreSearch: true }) })))
         .then(({ cache, cached }) => {
           if (cached) {
             // Serve from cache immediately, revalidate in background
