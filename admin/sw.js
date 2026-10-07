@@ -76,12 +76,30 @@ self.addEventListener('fetch', e => {
   })());
 });
 
+// Новый APP_CACHE после каждого деплоя пуст: первый запуск на плохой сети не успевает скачать
+// оболочку. Переносим её из самого свежего старого кэша — открывается сразу, фон обновит.
+async function seedAppCache(keys) {
+  try {
+    const olds = keys.filter(k => k.startsWith('aliby-admin-app-v') && k !== APP_CACHE)
+      .sort((x, y) => (parseInt(y.slice(17), 10) || 0) - (parseInt(x.slice(17), 10) || 0));
+    if (!olds.length) return;
+    const nc = await caches.open(APP_CACHE);
+    const oc = await caches.open(olds[0]);
+    for (const r of await oc.keys()) {
+      if (await nc.match(r)) continue;
+      const resp = await oc.match(r);
+      if (resp) await nc.put(r, resp);
+    }
+  } catch {}
+}
+
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== TILE_CACHE && k !== APP_CACHE && k !== STATIC_CACHE).map(k => caches.delete(k))
-      ))
+      .then(async keys => {
+        await seedAppCache(keys);
+        await Promise.all(keys.filter(k => k !== TILE_CACHE && k !== APP_CACHE && k !== STATIC_CACHE).map(k => caches.delete(k)));
+      })
       .then(() => self.clients.claim())
   );
 });
@@ -136,7 +154,7 @@ self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
     e.respondWith(
       caches.open(APP_CACHE).then(async cache => {
-        const cached = await cache.match(e.request);
+        const cached = await cache.match(e.request, { ignoreSearch: true });
 
         if (cached) {
           checkAppShellUpdate(e.request.url).catch(() => {});
