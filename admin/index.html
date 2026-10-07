@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#2E9DC4">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts/fonts.css">
 <title>Alliby Business</title>
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.v2.png">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -15,10 +13,10 @@
 <link rel="manifest" href="manifest.json?v=2">
 <script>if(/^(app-)?test\.alliby\.ru$/.test(location.hostname)){document.querySelectorAll('link[rel="manifest"]').forEach(function(l){l.href="manifest-test.json"});document.querySelectorAll('link[rel="icon"][type="image/png"],link[rel="apple-touch-icon"]').forEach(function(l){l.href="icons/icon-test-192.png"});document.querySelectorAll('link[rel="icon"][type="image/svg+xml"],link[rel="shortcut icon"]').forEach(function(l){l.remove()})}</script>
 <script>window._pwaDeferred = null; window.addEventListener("beforeinstallprompt", function(e) { e.preventDefault(); window._pwaDeferred = e; if (window._pwaOnReady) window._pwaOnReady(); });</script>
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<script src="vendor/maplibre-gl.js" defer></script>
+<script src="vendor/qrcode.min.js" defer></script>
+<script src="vendor/jsQR.js" defer></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
