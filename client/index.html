@@ -643,9 +643,9 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .home-tile-entertainment::before{background:#eab308}
 .home-tile-education::before{background:#6366f1}
 .ht-shortcuts{display:none;flex-direction:column;gap:6px;width:100%;margin-top:10px;text-align:left}
-.home-tile-sport.expanded{grid-column:1/-1;cursor:default;padding:16px}
-.home-tile-sport.expanded:hover{transform:none}
-.home-tile-sport.expanded .ht-shortcuts{display:flex}
+.home-tile.expanded{grid-column:1/-1;cursor:default;padding:16px}
+.home-tile.expanded:hover{transform:none}
+.home-tile.expanded .ht-shortcuts{display:flex}
 .ht-shortcut-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);background:var(--glass-sm);color:var(--fg);font:600 14px/1.2 var(--font-sans);cursor:pointer;transition:background var(--t-fast)}
 .ht-shortcut-btn:hover{background:var(--bg-2)}
 .ht-shortcut-btn:active{transform:scale(0.98)}
@@ -1493,53 +1493,41 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
       <div class="ht-name">Питомец</div>
       <div class="ht-desc">Тамагочи</div>
     </div>
-    <div class="home-tile home-tile-food" onclick="openDirection('food')">
+    <div class="home-tile home-tile-food" id="home-tile-food" data-dir="food" onclick="toggleDirTile('food')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-food"/></svg></div>
       <div class="ht-name">Еда</div>
       <div class="ht-desc">Кафе и рестораны</div>
+      <div class="ht-shortcuts"></div>
     </div>
-    <div class="home-tile home-tile-services" onclick="openDirection('services')">
+    <div class="home-tile home-tile-services" id="home-tile-services" data-dir="services" onclick="toggleDirTile('services')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-services"/></svg></div>
       <div class="ht-name">Услуги</div>
       <div class="ht-desc">Сервис и мастерские</div>
+      <div class="ht-shortcuts"></div>
     </div>
-    <div class="home-tile home-tile-goods" onclick="openDirection('goods')">
+    <div class="home-tile home-tile-goods" id="home-tile-goods" data-dir="goods" onclick="toggleDirTile('goods')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-goods"/></svg></div>
       <div class="ht-name">Товары</div>
       <div class="ht-desc">Магазины и шоурумы</div>
+      <div class="ht-shortcuts"></div>
     </div>
-    <div class="home-tile home-tile-sport" id="home-tile-sport" onclick="toggleSportTile()">
+    <div class="home-tile home-tile-sport" id="home-tile-sport" data-dir="sport" onclick="toggleDirTile('sport')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-sport"/></svg></div>
       <div class="ht-name">Спорт</div>
       <div class="ht-desc">Клубы и секции</div>
-      <div class="ht-shortcuts">
-        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutNearby()">
-          <span>Заведения рядом</span>
-          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('nearby')">?</span>
-        </button>
-        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutFormat('group')">
-          <span>По расписанию</span>
-          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('schedule')">?</span>
-        </button>
-        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutFormat('personal', false)">
-          <span>Индивидуальные</span>
-          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('personal')">?</span>
-        </button>
-        <button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();sportShortcutFormat('personal', true)">
-          <span>Групповые</span>
-          <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('group')">?</span>
-        </button>
-      </div>
+      <div class="ht-shortcuts"></div>
     </div>
-    <div class="home-tile home-tile-education" style="display:none" onclick="openDirection('education')">
+    <div class="home-tile home-tile-education" style="display:none" id="home-tile-education" data-dir="education" onclick="toggleDirTile('education')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-education"/></svg></div>
       <div class="ht-name">Образование</div>
       <div class="ht-desc">Школы и курсы</div>
+      <div class="ht-shortcuts"></div>
     </div>
-    <div class="home-tile home-tile-entertainment" onclick="openDirection('entertainment')">
+    <div class="home-tile home-tile-entertainment" id="home-tile-entertainment" data-dir="entertainment" onclick="toggleDirTile('entertainment')">
       <div class="ht-icon"><svg class="ico" width="36" height="36"><use href="#i-entertain"/></svg></div>
       <div class="ht-name">Развлечения</div>
       <div class="ht-desc">Досуг и активности</div>
+      <div class="ht-shortcuts"></div>
     </div>
     <div id="home-install-tile" class="home-tile home-tile-install" style="display:none" onclick="triggerPwaInstall()"><div class="ht-icon">📲</div><div class="ht-name">Установить</div><div class="ht-desc">На главный экран</div></div>
     <div id="home-recent" style="grid-column:1/-1"></div>
@@ -3846,30 +3834,54 @@ function openDirection(dir) {
   goTo('map');
 }
 
-// ─── HOME "СПОРТ И ОБРАЗОВАНИЕ" TILE SHORTCUTS ───
-function toggleSportTile() {
-  const tile = document.getElementById('home-tile-sport');
-  if (!tile) return;
-  tile.classList.toggle('expanded');
-  syncSportTileHeight();
+// ─── HOME: ШОРТКАТЫ НА ПЛИТКАХ НАПРАВЛЕНИЙ ───
+const _TRAIN_DIRS = new Set(['sport', 'education', 'entertainment', 'services']);
+const _DIR_NAMES = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт', education: 'Образование', entertainment: 'Развлечения' };
+
+function _buildDirShortcuts(tile, dir) {
+  const box = tile.querySelector('.ht-shortcuts');
+  if (!box || box.childElementCount) return;
+  const btn = (label, call, kind) => `<button type="button" class="ht-shortcut-btn" onclick="event.stopPropagation();${call}">
+    <span>${label}</span>
+    <span class="screen-help" onclick="event.stopPropagation();showSportShortcutInfo('${kind}','${dir}')">?</span>
+  </button>`;
+  const items = [
+    btn('Все заведения', `dirShortcutAll('${dir}')`, 'all'),
+    btn('Заведения рядом', `dirShortcutNearby('${dir}')`, 'nearby'),
+  ];
+  if (_TRAIN_DIRS.has(dir)) {
+    items.push(
+      btn('По расписанию', `dirShortcutFormat('${dir}','group')`, 'schedule'),
+      btn('Индивидуальные', `dirShortcutFormat('${dir}','personal',false)`, 'personal'),
+      btn('Групповые', `dirShortcutFormat('${dir}','personal',true)`, 'group'),
+    );
+  }
+  box.innerHTML = items.join('');
 }
 
-function collapseSportTile() {
-  document.getElementById('home-tile-sport')?.classList.remove('expanded');
-  syncSportTileHeight();
+function toggleDirTile(dir) {
+  const tile = document.getElementById('home-tile-' + dir);
+  if (!tile) return;
+  const willOpen = !tile.classList.contains('expanded');
+  collapseDirTiles();
+  if (willOpen) {
+    _buildDirShortcuts(tile, dir);
+    tile.classList.add('expanded');
+    syncDirTileHeight();
+  }
+}
+
+function collapseDirTiles() {
+  document.querySelectorAll('.home-tile.expanded').forEach(t => { t.classList.remove('expanded'); t.style.removeProperty('height'); });
 }
 
 // Grid `auto` rows can size a spanning item to its min-height instead of its
 // real content height at narrow viewport widths, clipping the shortcut list.
 // Work around it by measuring the tile's natural content height out-of-flow
 // and pinning it as an explicit height while expanded.
-function syncSportTileHeight() {
-  const tile = document.getElementById('home-tile-sport');
+function syncDirTileHeight() {
+  const tile = document.querySelector('.home-tile.expanded');
   if (!tile) return;
-  if (!tile.classList.contains('expanded')) {
-    tile.style.removeProperty('height');
-    return;
-  }
   const grid = tile.parentElement;
   const gridW = grid.getBoundingClientRect().width;
   tile.style.setProperty('position', 'absolute', 'important');
@@ -3880,36 +3892,44 @@ function syncSportTileHeight() {
   tile.style.removeProperty('width');
   tile.style.setProperty('height', natural + 'px', 'important');
 }
-window.addEventListener('resize', () => {
-  if (document.getElementById('home-tile-sport')?.classList.contains('expanded')) syncSportTileHeight();
-});
+window.addEventListener('resize', () => { syncDirTileHeight(); });
 
-function sportShortcutNearby() {
-  collapseSportTile();
-  setDirection('sport');
+function dirShortcutAll(dir) {
+  collapseDirTiles();
+  openDirection(dir);
+}
+
+function dirShortcutNearby(dir) {
+  collapseDirTiles();
+  setDirection(dir);
   goTo('map');
   applyNearbyFilter(500);
 }
 
-function sportShortcutFormat(mode, multiPerson) {
-  collapseSportTile();
-  _trainingListPreset = { mode, multiPerson: !!multiPerson };
+function dirShortcutFormat(dir, mode, multiPerson) {
+  collapseDirTiles();
+  _trainingListPreset = { mode, multiPerson: !!multiPerson, dir };
   _sportTrainingPreset = { mode, multiPerson: !!multiPerson };
-  setDirection('sport');
+  setDirection(dir);
   goTo('sporttrainings');
 }
 
 const _SPORT_SHORTCUT_INFO = {
-  nearby:   { title: 'Заведения рядом', body: 'Покажет на карте заведения направления «Спорт», которые находятся не дальше 500 метров от вас.' },
+  all:      { title: 'Все заведения', body: '' },
+  nearby:   { title: 'Заведения рядом', body: '' },
   schedule: { title: 'По расписанию', body: 'Групповые занятия с фиксированным временем: заведение само составляет расписание, а вы записываетесь на подходящий слот вместе с другими участниками.' },
-  personal: { title: 'Индивидуальные', body: 'Персональная тренировка один на один с тренером — вы сами выбираете удобное время в разделе «Тренировки и инвентарь» выбранного заведения.' },
-  group:    { title: 'Групповые', body: 'Тоже персональная тренировка, но для нескольких человек: вы можете позвать друзей, каждый укажет своё удобное время, а тренер подберёт время, подходящее всем.' },
+  personal: { title: 'Индивидуальные', body: 'Занятие один на один со специалистом — вы сами выбираете удобное время в разделе «Запись» выбранного заведения.' },
+  group:    { title: 'Групповые', body: 'Тоже персональное занятие, но для нескольких человек: вы можете позвать друзей, каждый укажет своё удобное время, а специалист подберёт время, подходящее всем.' },
 };
-function showSportShortcutInfo(kind) {
+function showSportShortcutInfo(kind, dir) {
   const info = _SPORT_SHORTCUT_INFO[kind];
   if (!info) return;
+  const name = _DIR_NAMES[dir || _trainingListPreset?.dir || 'sport'] || '';
+  let body = info.body;
+  if (kind === 'all') body = `Откроет карту со всеми заведениями направления «${name}».`;
+  if (kind === 'nearby') body = `Покажет на карте заведения направления «${name}», которые находятся не дальше 500 метров от вас.`;
   document.getElementById('sport-shortcut-info-title').textContent = info.title;
-  document.getElementById('sport-shortcut-info-body').textContent = info.body;
+  document.getElementById('sport-shortcut-info-body').textContent = body;
   openModal('m-sport-shortcut-info');
 }
 
@@ -3926,7 +3946,7 @@ async function loadSportTrainingsScreen() {
   const kind = _trainingListPreset?.mode === 'group' ? 'schedule' : (_trainingListPreset?.multiPerson ? 'group' : 'personal');
   const info = _SPORT_SHORTCUT_INFO[kind];
   document.getElementById('stl-title').textContent = info.title;
-  document.getElementById('stl-help').setAttribute('onclick', `event.stopPropagation();showSportShortcutInfo('${kind}')`);
+  document.getElementById('stl-help').setAttribute('onclick', `event.stopPropagation();showSportShortcutInfo('${kind}','${_trainingListPreset?.dir || 'sport'}')`);
   const listEl = document.getElementById('stl-list');
   listEl.innerHTML = '<div class="loading">Загрузка…</div>';
   const distSel = document.getElementById('stl-dist-select'); if (distSel) distSel.value = '';
@@ -3934,9 +3954,10 @@ async function loadSportTrainingsScreen() {
   const catSel = document.getElementById('stl-cat-select'); if (catSel) catSel.innerHTML = '<option value="">Все</option>';
   document.getElementById('stl-cat-row').style.display = 'none';
 
-  if (!S.allStores.some(st => st.direction === 'sport')) await loadMapStores();
-  const sportStores = S.allStores.filter(st => st.direction === 'sport');
-  if (!sportStores.length) { listEl.innerHTML = '<div class="empty">Нет заведений направления «Спорт»</div>'; return; }
+  const _stlDirKey = _trainingListPreset?.dir || 'sport';
+  if (!S.allStores.some(st => st.direction === _stlDirKey)) await loadMapStores();
+  const sportStores = S.allStores.filter(st => st.direction === _stlDirKey);
+  if (!sportStores.length) { listEl.innerHTML = `<div class="empty">Нет заведений направления «${_DIR_NAMES[_stlDirKey] || ''}»</div>`; return; }
 
   const trainingMode = _trainingListPreset?.mode === 'group' ? 'group' : 'personal';
   let items;
