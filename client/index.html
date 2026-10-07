@@ -2896,6 +2896,7 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
         <span id="mbs-sub-toggle-label"></span>
       </label>
     </div>
+    <div id="mbs-cta-hint" style="display:none;text-align:center;margin:0 0 10px;font:500 13px/1.4 var(--font-sans);color:var(--fg-2)"></div>
     <div class="modal-ft" style="flex-wrap:wrap">
       <button class="btn" id="mbs-book-btn" disabled onclick="confirmBooking(false)" style="flex:1;min-width:120px">Забронировать</button>
       <button class="btn btn-p" id="mbs-pay-btn" disabled onclick="confirmBooking(true)" style="flex:1;min-width:140px;white-space:normal;line-height:1.3">Оплатить и записаться</button>
@@ -14091,6 +14092,26 @@ function _tourKey(e) {
   d.textContent='⚠ ТЕСТОВОЕ ПРИЛОЖЕНИЕ — тестовые данные и тестовый стенд';
   t.insertBefore(d,t.firstChild);
 }catch(e){}})();
+</script>
+<script id="bk-hint-js">
+(function(){
+  function upd(){
+    var h=document.getElementById('mbs-cta-hint'); if(!h) return;
+    var main=document.getElementById('mbs-main'), msg='';
+    try{
+      if(main && main.style.display!=='none' && typeof _booking!=='undefined'){
+        if(_booking.trainingMode==='personal'){
+          if(document.getElementById('mbs-book-btn').disabled) msg='Отметь на календаре удобные дни и укажи время';
+        } else if(!_booking.currentDate) msg='Выбери дату';
+        else if(!_booking.selectedSlot) msg='Выбери временной слот';
+      }
+    }catch(e){}
+    h.textContent=msg; h.style.display=msg?'':'none';
+  }
+  var mo=new MutationObserver(upd), ids=['mbs-book-btn','mbs-pay-btn','mbs-main','mbs-date-label','mbs-slots'];
+  ids.forEach(function(id){var el=document.getElementById(id); if(el) mo.observe(el,{attributes:true,childList:true,characterData:true,subtree:true});});
+  upd();
+})();
 </script>
 </body>
 </html>
