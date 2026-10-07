@@ -3856,6 +3856,8 @@ function _buildDirShortcuts(tile, dir) {
       btn('Групповые', `dirShortcutFormat('${dir}','personal',true)`, 'group'),
     );
   }
+  if (dir === 'food') items.push(btn('Доставка', `dirShortcutDelivery()`, 'delivery'));
+  if (dir === 'goods') items.push(btn('Аренда', `dirShortcutRental('goods')`, 'rental'));
   box.innerHTML = items.join('');
 }
 
@@ -3906,6 +3908,24 @@ function dirShortcutNearby(dir) {
   applyNearbyFilter(500);
 }
 
+async function dirShortcutDelivery() {
+  collapseDirTiles();
+  setDirection('food');
+  S.deliveryFilter = false;
+  document.getElementById('delivery-filter-btn')?.classList.remove('btn-yellow-p');
+  goTo('map');
+  for (let i = 0; i < 40 && !S.allStores.some(st => st.direction === 'food'); i++) await new Promise(r => setTimeout(r, 150));
+  toggleDeliveryFilter();
+}
+
+function dirShortcutRental(dir) {
+  collapseDirTiles();
+  _trainingListPreset = { mode: 'rental', multiPerson: false, dir };
+  _sportTrainingPreset = null;
+  setDirection(dir);
+  goTo('sporttrainings');
+}
+
 function dirShortcutFormat(dir, mode, multiPerson) {
   collapseDirTiles();
   _trainingListPreset = { mode, multiPerson: !!multiPerson, dir };
@@ -3919,6 +3939,8 @@ const _SPORT_SHORTCUT_INFO = {
   nearby:   { title: 'Заведения рядом', body: '' },
   schedule: { title: 'По расписанию', body: 'Групповые занятия с фиксированным временем: заведение само составляет расписание, а вы записываетесь на подходящий слот вместе с другими участниками.' },
   personal: { title: 'Индивидуальные', body: 'Занятие один на один со специалистом — вы сами выбираете удобное время в разделе «Запись» выбранного заведения.' },
+  delivery: { title: 'Доставка', body: 'Покажет на карте заведения, которые доставляют по вашему адресу. Если адрес ещё не указан, приложение попросит его ввести.' },
+  rental:   { title: 'Аренда', body: 'Список заведений, где можно взять вещи или оборудование в аренду, с ценами и сроками.' },
   group:    { title: 'Групповые', body: 'Тоже персональное занятие, но для нескольких человек: вы можете позвать друзей, каждый укажет своё удобное время, а специалист подберёт время, подходящее всем.' },
 };
 function showSportShortcutInfo(kind, dir) {
@@ -3943,7 +3965,8 @@ function _fmtApproxDistance(m) {
 }
 
 async function loadSportTrainingsScreen() {
-  const kind = _trainingListPreset?.mode === 'group' ? 'schedule' : (_trainingListPreset?.multiPerson ? 'group' : 'personal');
+  const isRental = _trainingListPreset?.mode === 'rental';
+  const kind = isRental ? 'rental' : _trainingListPreset?.mode === 'group' ? 'schedule' : (_trainingListPreset?.multiPerson ? 'group' : 'personal');
   const info = _SPORT_SHORTCUT_INFO[kind];
   document.getElementById('stl-title').textContent = info.title;
   document.getElementById('stl-help').setAttribute('onclick', `event.stopPropagation();showSportShortcutInfo('${kind}','${_trainingListPreset?.dir || 'sport'}')`);
@@ -3962,7 +3985,9 @@ async function loadSportTrainingsScreen() {
   const trainingMode = _trainingListPreset?.mode === 'group' ? 'group' : 'personal';
   let items;
   try {
-    items = await req(`/rest/v1/menu_items?store_id=in.(${sportStores.map(s => s.id).join(',')})&is_training=eq.true&is_available=eq.true&training_mode=eq.${trainingMode}&select=id,store_id,name,training_mode,duration_minutes,price,max_group_size`);
+    items = isRental
+      ? await req(`/rest/v1/menu_items?store_id=in.(${sportStores.map(s => s.id).join(',')})&item_type=eq.rental&is_visible=eq.true&select=id,store_id,name,duration_minutes,price`)
+      : await req(`/rest/v1/menu_items?store_id=in.(${sportStores.map(s => s.id).join(',')})&is_training=eq.true&is_available=eq.true&training_mode=eq.${trainingMode}&select=id,store_id,name,training_mode,duration_minutes,price,max_group_size`);
   } catch (e) { listEl.innerHTML = '<div class="empty">Ошибка загрузки</div>'; return; }
 
   const byStore = new Map();
@@ -4073,7 +4098,7 @@ function openSportTrainingStore(storeId) {
   syncStoreNavBtn();
   try { localStorage.setItem('alliby_store', JSON.stringify(st)); } catch (e) {}
   goTo('store');
-  switchSvcTab('sched');
+  if (_trainingListPreset?.mode === 'rental') switchFgTab('rental'); else switchSvcTab('sched');
 }
 
 // ─── QR CODE ───
@@ -5107,6 +5132,27 @@ function _caPersonalItem() {
   return (item && item.training_mode === 'personal') ? item : null;
 }
 
+function _caServiceItem() {
+  if (_caSched.mode === 'group') return null;
+  return _caSched.bookableItems.find(it => it.id === _caSched.itemId) || null;
+}
+
+// Слоты услуги без выбранного мастера: объединение свободных окон всех мастеров,
+// привязанных к услуге, с учётом длительности. Для каждого слота — список мастеров.
+function _caSvcSlots(ds) {
+  if (!_caSched.svcData) return null;
+  const d = _caSched.svcData[ds] || {};
+  const dur = _caSched.svcDur || 30;
+  const map = new Map();
+  Object.entries(d).forEach(([mid, free]) => free.forEach(f => {
+    for (let t = _timeToMin(f.start); t + dur <= _timeToMin(f.end); t += 30) {
+      if (!map.has(t)) map.set(t, []);
+      map.get(t).push(mid);
+    }
+  }));
+  return [...map.entries()].sort((a, b) => a[0] - b[0]).map(([t, ms]) => ({ start: _minToTime(t), end: _minToTime(t + dur), masters: ms }));
+}
+
 function _caPersonalPrice(item) {
   const p = _caSched.masterItemPrice[_caSched.masterId]?.[item.id];
   return p != null ? p : item.price;
@@ -5328,6 +5374,9 @@ async function _loadCaSchedMonth() {
   _caSched.schedData = {};
   _caSched.bookedData = {};
   _caSched.dayOptions = {};
+  _caSched.svcData = null;
+  const _svcItem = _caServiceItem();
+  const _svcMasters = _svcItem ? _caSched.masters.filter(m => (m.master_services || []).some(ms => ms.service_id === _svcItem.id)) : [];
   try {
     if (mode === 'group') {
       // Групповые занятия: фиксированное расписание по дням недели + вместимость группы
@@ -5417,6 +5466,31 @@ async function _loadCaSchedMonth() {
       bkRows.forEach(r => {
         (_caSched.bookedData[r.slot_date] = _caSched.bookedData[r.slot_date] || []).push(r);
       });
+    } else if (_svcItem && _svcMasters.length) {
+      // Услуга привязана к мастерам, мастер не выбран: показываем только реально существующие слоты
+      const dur = Math.max(_svcItem.duration_minutes || 30, 5);
+      const ids = _svcMasters.map(m => m.id);
+      const [schedRows, bkRows] = await Promise.all([
+        req(`/rest/v1/store_schedules?store_id=eq.${storeId}&date=gte.${from}&date=lte.${to}&select=date,slots`),
+        req(`/rest/v1/bookings?master_id=in.(${ids.join(',')})&slot_date=gte.${from}&slot_date=lte.${to}&status=eq.booked&select=master_id,slot_date,slot_start,slot_end`),
+      ]);
+      const storeByDate = {}; schedRows.forEach(r => { storeByDate[r.date] = r.slots; });
+      const bkBy = {}; (bkRows || []).forEach(r => { (bkBy[r.master_id + '|' + r.slot_date] = bkBy[r.master_id + '|' + r.slot_date] || []).push(r); });
+      _caSched.svcDur = dur;
+      _caSched.svcData = {};
+      for (let d = 1; d <= lastDay; d++) {
+        const ds = `${year}-${pad(month + 1)}-${pad(d)}`;
+        const dbDow = (new Date(year, month, d).getDay() + 6) % 7;
+        const day = {};
+        _svcMasters.forEach(m => {
+          const daySched = (_caSched.masterScheds[m.id] || []).find(x => x.day_of_week === dbDow);
+          const w = _computePersonalWindow(storeByDate[ds], daySched, null, dur);
+          if (!w) return;
+          const free = _caFreeWindows(w, bkBy[m.id + '|' + ds], dur);
+          if (free.length) day[m.id] = free;
+        });
+        if (Object.keys(day).length) { _caSched.svcData[ds] = day; _caSched.schedData[ds] = [{ start: '00:00', end: '23:59' }]; }
+      }
     } else {
       const bkStatus = mode === 'personal' ? 'eq.booked' : 'neq.cancelled';
       const [schedRows, bkRows] = await Promise.all([
@@ -5473,7 +5547,9 @@ function renderCaSchedCalendar() {
         if (_caSched.mode === 'group') {
           availCount = windows.filter(w => w.free > 0 && (ds !== today || _timeToMin(w.start) > nowMinToday)).length;
         } else {
-          availCount = getAvailableSlots(windows, booked, 30, nowMinToday).length;
+          availCount = _caSched.svcData
+            ? _caSvcSlots(ds).filter(sl => ds !== today || _timeToMin(sl.start) > nowMinToday).length
+            : getAvailableSlots(windows, booked, 30, nowMinToday).length;
         }
       }
       const isFull = hasSched && !isPast && availCount === 0;
@@ -5760,27 +5836,45 @@ function openCaSchedDay(dateStr) {
       btn.onclick = () => selectCaSchedSlot(dateStr, w.start, w.end, w.itemId);
       slotsEl.appendChild(btn);
     });
+  } else if (_caSched.svcData) {
+    (_caSvcSlots(dateStr) || []).forEach(sl => {
+      if (_timeToMin(sl.start) <= nowMinToday) return;
+      const btn = document.createElement('button');
+      btn.className = 'booking-slot';
+      btn.textContent = sl.start;
+      btn.dataset.start = sl.start;
+      btn.onclick = () => selectCaSvcSlot(dateStr, sl, btn);
+      slotsEl.appendChild(btn);
+    });
   } else {
     const booked = _caSched.bookedData[dateStr] || [];
     const bk = booked.map(b => ({ s: _timeToMin(b.slot_start), e: _timeToMin(b.slot_end) }));
+    const dur = Math.max(_caServiceItem()?.duration_minutes || 30, 30);
     for (const w of windows) {
       const ws = _timeToMin(w.start), we = _timeToMin(w.end);
-      for (let t = ws; t + 30 <= we; t += 30) {
-        const te = t + 30;
-        if (te <= nowMinToday) continue;
+      for (let t = ws; t + dur <= we; t += 30) {
+        const te = t + dur;
+        if (t + 30 <= nowMinToday) continue;
         const start = _minToTime(t);
         const end = _minToTime(te);
-        const isTaken = bk.some(b => t < b.e && te > b.s);
+        if (bk.some(b => t < b.e && te > b.s)) continue;
         const btn = document.createElement('button');
         btn.className = 'booking-slot';
         btn.textContent = start;
         btn.dataset.start = start;
-        btn.disabled = isTaken;
-        if (!isTaken) btn.onclick = () => selectCaSchedSlot(dateStr, start, end, null, btn);
+        btn.onclick = () => selectCaSchedSlot(dateStr, start, end, null, btn);
         slotsEl.appendChild(btn);
       }
     }
   }
+  let mEl = document.getElementById('ca-sched-slot-masters');
+  if (!mEl) {
+    mEl = document.createElement('div');
+    mEl.id = 'ca-sched-slot-masters';
+    mEl.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-top:12px';
+    slotsEl.insertAdjacentElement('afterend', mEl);
+  }
+  mEl.innerHTML = '';
   document.getElementById('ca-sched-day-view').style.display = '';
   document.getElementById('ca-sched-day-view').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
@@ -5803,6 +5897,28 @@ function caSchedNextMonth() {
   if (_caSched.month > 11) { _caSched.month = 0; _caSched.year++; }
   _caSched.openDate = null;
   _loadCaSchedMonth();
+}
+
+function selectCaSvcSlot(date, sl, btnEl) {
+  document.querySelectorAll('#ca-sched-slots .booking-slot').forEach(b => b.classList.toggle('active', b === btnEl));
+  const mw = _MW(S.store.direction);
+  const mEl = document.getElementById('ca-sched-slot-masters');
+  if (!mEl) return;
+  const list = sl.masters.map(id => _caSched.masters.find(m => m.id === id)).filter(Boolean);
+  mEl.innerHTML = `<div style="font-size:13px;color:var(--fg-2)">В ${sl.start} свободны:</div>` +
+    list.map(m => _caMasterCardHtml(m, `bookCaSvcMaster('${m.id}','${date}','${sl.start}','${sl.end}')`, false, '', mw)).join('');
+  mEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function bookCaSvcMaster(masterId, date, start, end) {
+  _schedulePreselect = { date, start, end, masterId };
+  const id = _caSched.itemId;
+  let item = itemCache.get(id);
+  if (!item) {
+    try { const rows = await req(`/rest/v1/menu_items?id=eq.${id}&select=*`); item = rows?.[0]; if (item) itemCache.set(id, item); } catch (e) {}
+  }
+  if (!item) { showGeoToast('Ошибка загрузки позиции'); return; }
+  openBookingSlotModal(item, null, masterId, { date, start, end });
 }
 
 function selectCaSchedSlot(date, start, end, itemId, btnEl) {
