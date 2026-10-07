@@ -8616,11 +8616,18 @@ function _hideVpnBanner() {
   el.addEventListener('touchmove', dismiss, { passive: true });
 })();
 
+let _vpnBadStreak = 0;
 function _checkVpnHeuristic() {
   const httpOk = Date.now() - _lastReqOkAt < 15000;
-  const wsOk = _rtWs?.readyState === WebSocket.OPEN && _rtBkWs?.readyState === WebSocket.OPEN &&
-               _rtSubWs?.readyState === WebSocket.OPEN && _rtRentWs?.readyState === WebSocket.OPEN;
-  _vpnSuspected = httpOk && !wsOk;
+  // Учитываем только сокеты, которые должны быть подключены (иначе гость/неполный набор = ложный VPN),
+  // и требуем 3 проверки подряд (~30 с): разовое переподключение WS после сетевого сбоя — не VPN.
+  const wsOk = (!_rtWant.orders || _rtWs?.readyState === WebSocket.OPEN) &&
+               (!_rtWant.bk || _rtBkWs?.readyState === WebSocket.OPEN) &&
+               (!_rtWant.sub || _rtSubWs?.readyState === WebSocket.OPEN) &&
+               (!_rtWant.rent || _rtRentWs?.readyState === WebSocket.OPEN);
+  const wanted = _rtWant.orders || _rtWant.bk || _rtWant.sub || _rtWant.rent;
+  _vpnBadStreak = (httpOk && wanted && !wsOk && document.visibilityState === 'visible') ? _vpnBadStreak + 1 : 0;
+  _vpnSuspected = _vpnBadStreak >= 3;
   if (_vpnSuspected) _showVpnBanner(); else { _vpnBannerDismissed = false; _hideVpnBanner(); }
 }
 
