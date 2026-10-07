@@ -1,0 +1,25 @@
+{
+  "name": "Alliby TEST",
+  "short_name": "Alliby TEST",
+  "description": "Тестовое приложение",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f0ede8",
+  "theme_color": "#e8743b",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "icons/icon-test-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-test-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

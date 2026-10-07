@@ -13,6 +13,7 @@
 <link rel="shortcut icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="icons/icon-192.v2.png">
 <link rel="manifest" href="manifest.json?v=2">
+<script>if(/^(app-)?test\.alliby\.ru$/.test(location.hostname)){document.querySelectorAll('link[rel="manifest"]').forEach(function(l){l.href="manifest-test.json"});document.querySelectorAll('link[rel="icon"][type="image/png"],link[rel="apple-touch-icon"]').forEach(function(l){l.href="icons/icon-test-192.png"});document.querySelectorAll('link[rel="icon"][type="image/svg+xml"],link[rel="shortcut icon"]').forEach(function(l){l.remove()})}</script>
 <script>window._pwaDeferred = null; window.addEventListener("beforeinstallprompt", function(e) { e.preventDefault(); window._pwaDeferred = e; if (window._pwaOnReady) window._pwaOnReady(); });</script>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
