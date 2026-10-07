@@ -23,6 +23,8 @@ jobs:
       - name: Deploy frontend
         run: |
           TS=$(date +%s)
+          echo "{\"v\":\"${TS}\"}" > client/version.json
+          sed -i "s/__APP_VER__/${TS}/" client/index.html
           sed -i "1s/.*/\/\/ v${TS}/" client/sw.js
           sed -i "s/alliby-app-v[0-9]\+/alliby-app-v${TS}/" client/sw.js
           sed -i "1s/.*/\/\/ v${TS}/" admin/sw.js

@@ -12059,6 +12059,44 @@ function dismissPwaBanner() {
 if ('serviceWorker' in navigator) {
   let _pendingUpdate = false;
   let _swReg = null;
+  // ── Проверка версии при каждом запуске/возврате в приложение ──
+  // APP_VER подставляется deploy-воркфлоу (метка времени деплоя); тот же номер лежит в version.json.
+  // Несовпадение = на устройстве старая версия → обновляем оболочку и перезагружаем.
+  const APP_VER = '__APP_VER__';
+  let _pageStart = Date.now();
+  let _hiddenAt = 0, _verMismatch = false;
+  async function _checkVersion() {
+    if (APP_VER.startsWith('__')) return; // локальная разработка — без проверки
+    try {
+      const c = new AbortController();
+      const t = setTimeout(() => c.abort(), 5000);
+      const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store', signal: c.signal });
+      clearTimeout(t);
+      if (!r.ok) return;
+      const j = await r.json();
+      if (!j || !j.v || j.v === APP_VER) { try { sessionStorage.removeItem('alliby_ver_reload'); } catch (e) {} return; }
+      _verMismatch = true;
+      _swReg?.update().catch(() => {});
+      navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_APP_UPDATE' });
+      // оболочка в кэше SW обновится не сразу: даём ей время, потом применяем (один раз на версию)
+      setTimeout(() => _applyVersionUpdate(j.v), 3500);
+    } catch (e) {}
+  }
+  function _applyVersionUpdate(newVer) {
+    let done = null;
+    try { done = sessionStorage.getItem('alliby_ver_reload'); } catch (e) {}
+    if (done === newVer) { document.getElementById('update-banner').style.display = 'flex'; return; } // уже пробовали — не зацикливаемся
+    // Сразу после запуска / возврата из фона — перезагружаем сами; во время работы — плашка «Обновить»
+    const fresh = Date.now() - _pageStart < 30000;
+    const openModal_ = document.querySelector('.overlay.open');
+    if (fresh && !openModal_) {
+      try { sessionStorage.setItem('alliby_ver_reload', newVer); } catch (e) {}
+      window.location.reload();
+    } else {
+      _pendingUpdate = true;
+      document.getElementById('update-banner').style.display = 'flex';
+    }
+  }
   // Mobile OSes usually resume a suspended tab/PWA/native WebView instead of
   // re-navigating it, so the SW's own 'navigate'-triggered shell revalidation
   // can go uncalled for a long time. Exposed on window so both the
@@ -12066,6 +12104,7 @@ if ('serviceWorker' in navigator) {
   // listener (visibilitychange isn't always reliable inside a native WebView)
   // can trigger it explicitly on every foreground resume.
   window._checkAppUpdate = () => {
+    _checkVersion();
     _swReg?.update().catch(() => {});
     navigator.serviceWorker.controller?.postMessage({ type: 'CHECK_APP_UPDATE' });
   };
@@ -12076,7 +12115,10 @@ if ('serviceWorker' in navigator) {
     document.getElementById('update-banner').style.display = 'flex';
   });
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && _pendingUpdate) window.location.reload();
+    if (document.hidden) { _hiddenAt = Date.now(); return; }
+    // долго пробыли в фоне = по сути новый запуск → считаем страницу «свежей» для автообновления
+    if (_hiddenAt && Date.now() - _hiddenAt > 60000) _pageStart = Date.now();
+    if (_pendingUpdate) window.location.reload();
   });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
@@ -12088,6 +12130,7 @@ if ('serviceWorker' in navigator) {
         // overlay (see window 'unhandledrejection' listener above) even though the current
         // SW keeps working fine. Swallow it.
         reg.update().catch(() => {});
+        _checkVersion();
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState !== 'visible') return;
           window._checkAppUpdate();

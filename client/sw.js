@@ -177,6 +177,9 @@ self.addEventListener('message', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // version.json — проверка версии приложения, всегда напрямую в сеть
+  if (new URL(e.request.url).pathname.endsWith('/version.json')) return;
+
   // ── Images: cache-first, max 200 ─────────────────────────────────────────
   if (e.request.destination === 'image') {
     e.respondWith(
