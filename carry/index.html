@@ -1,6 +1,88 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script>/* errlog: журнал клиентских ошибок → rpc/log_client_errors (только прод-домены) */
+(function () {
+  var H = location.hostname;
+  if (!/(^|\.)alliby\.ru$/.test(H) || /test/.test(H)) return;
+  var APP = H.indexOf('admin.') === 0 ? 'admin' : H.indexOf('carry.') === 0 ? 'carry' : 'client';
+  var K = 'sb-errlog-q', KEY = 'sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq';
+  var BASES = ['https://alliby.ru', 'https://edge.alliby.ru'];
+  var origFetch = window.fetch ? window.fetch.bind(window) : null;
+  if (!origFetch) return;
+  var count = 0, seen = {}, flushing = false, t0 = Date.now();
+  function rd() { try { return JSON.parse(localStorage.getItem(K) || '[]'); } catch (e) { return []; } }
+  function wr(a) { try { localStorage.setItem(K, JSON.stringify(a.slice(-30))); } catch (e) {} }
+  function page() { return location.origin + location.pathname; }
+  function short(u) { try { var x = new URL(u, location.href); return x.origin + x.pathname; } catch (e) { return String(u).slice(0, 200); } }
+  function log(kind, msg, extra) {
+    try {
+      msg = String(msg || '').slice(0, 500);
+      var key = kind + '|' + msg;
+      if (seen[key] || count >= 20) return;
+      seen[key] = 1; count++;
+      var c = navigator.connection || {};
+      var ex = extra || {};
+      ex.online = navigator.onLine; ex.sa = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+      ex.net = c.effectiveType || null; ex.t = Date.now() - t0;
+      var q = rd();
+      q.push({ app: APP, kind: kind, msg: msg, page: page(), ua: navigator.userAgent, extra: ex, ts: Date.now() });
+      wr(q);
+      setTimeout(flush, 1500);
+    } catch (e) {}
+  }
+  function post(base, body) {
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 8000);
+    return origFetch(base + '/rest/v1/rpc/log_client_errors', {
+      method: 'POST', keepalive: true, signal: ctrl ? ctrl.signal : undefined,
+      headers: { apikey: KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ p: body })
+    }).then(function (r) { clearTimeout(timer); if (!r.ok) throw new Error('http ' + r.status); }, function (e) { clearTimeout(timer); throw e; });
+  }
+  function flush() {
+    if (flushing) return;
+    var q = rd();
+    if (!q.length) return;
+    flushing = true;
+    post(BASES[0], q).catch(function () { return post(BASES[1], q); }).then(function () {
+      wr(rd().slice(q.length));
+    }, function () {}).then(function () { flushing = false; });
+  }
+  window.__errlog = log;
+
+  window.addEventListener('error', function (e) {
+    var t = e.target;
+    if (t && t !== window && (t.src || t.href)) { log('resource', short(t.src || t.href), { tag: t.tagName }); return; }
+    log('js', (e.message || 'error') + ' @' + short(e.filename || '') + ':' + (e.lineno || 0) + ':' + (e.colno || 0));
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e.reason;
+    log('promise', r && (r.stack || r.message) || String(r), null);
+  });
+
+  window.fetch = function (input, init) {
+    var url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.indexOf('log_client_errors') >= 0) return origFetch(input, init);
+    var s = Date.now();
+    return origFetch(input, init).then(function (r) {
+      if (r.status >= 500) log('http_' + r.status, short(url), { ms: Date.now() - s });
+      return r;
+    }, function (e) {
+      log('fetch_fail', (e && e.name || 'Error') + ': ' + (e && e.message || '') + ' ' + short(url), { ms: Date.now() - s });
+      throw e;
+    });
+  };
+
+  window.addEventListener('load', function () {
+    try {
+      var n = performance.getEntriesByType('navigation')[0];
+      if (n && n.loadEventStart > 8000) log('slow_load', 'load ' + Math.round(n.loadEventStart) + 'ms', { dcl: Math.round(n.domContentLoadedEventEnd) });
+    } catch (e) {}
+    flush();
+  });
+  window.addEventListener('online', flush);
+  setTimeout(flush, 3000);
+})();</script>
 <meta charset="UTF-8">
 <script>try{if(localStorage.getItem('alliby_theme')==='dark')document.documentElement.classList.add('dark');}catch(e){}</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
