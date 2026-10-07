@@ -3810,8 +3810,28 @@ function mediaUrl(url) {
 // on web, a normal same-tab redirect is fine.
 function goToPaymentUrl(url) {
   const isNat = window.Capacitor?.isNativePlatform?.() ?? false;
-  if (isNat) window.open(url, '_system');
-  else window.location.href = url;
+  if (isNat) { window.open(url, '_system'); return; }
+  // iOS-ярлык (standalone): location.href на чужой домен открывает встроенное окно, в котором
+  // ломаются переход в банковское приложение (СБП/T-Bank), 3DS и сторонние cookie. Открываем
+  // в обычном Safari; если браузер заблокировал окно (нет жеста пользователя) — обычный переход.
+  const ios = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (ios && navigator.standalone === true) {
+    let w = null;
+    try { w = window.open(url, '_blank'); } catch (e) {}
+    try { window.__errlog?.('pay_redirect', 'ios-standalone opened=' + !!w); } catch (e) {}
+    if (w) return;
+  }
+  window.location.href = url;
+}
+// Понятный текст ошибки оплаты: сетевой сбой отличаем от отказа сервера/банка
+function payErrText(e) {
+  e = e || {};
+  if (e.network || e.message === 'Нет соединения') {
+    if (navigator.onLine === false) return 'Нет интернета. Проверьте подключение и нажмите «Оплатить» ещё раз.';
+    return 'Нет связи с сервером. Деньги не списаны. Проверьте интернет (отключите VPN) и нажмите «Оплатить» ещё раз.';
+  }
+  const m = e.error || e.message || (typeof e === 'string' ? e : '');
+  return 'Ошибка оплаты' + (m ? ': ' + m : '. Попробуйте ещё раз.');
 }
 function btnLoad(el, label = 'Сохранение…') {
   if (!el) return () => {};
@@ -5052,7 +5072,7 @@ async function rentPayNow() {
       showGeoToast('Ошибка оплаты: неожиданный ответ');
     }
   } catch(e) {
-    showGeoToast('Ошибка: ' + (e?.error || e?.message || 'попробуйте ещё раз'));
+    showGeoToast(payErrText(e));
   } finally {
     restore?.();
   }
@@ -10796,7 +10816,7 @@ async function checkoutRent() {
         });
       } catch {}
     }
-    showGeoToast('Ошибка оплаты: ' + (e?.error || e?.message || ''));
+    showGeoToast(payErrText(e));
   } finally {
     restore?.();
   }
@@ -10837,8 +10857,7 @@ async function _initSubPayment(subIds, isGift, pendingPayment, amountText, order
     // Unexpected 200 without payment_url
     showGeoToast('Ошибка оплаты: неожиданный ответ сервера');
   } catch(e) {
-    const msg = e?.error || e?.message || JSON.stringify(e) || 'неизвестная ошибка';
-    showGeoToast('Ошибка оплаты: ' + msg);
+    showGeoToast(payErrText(e));
   }
 }
 
@@ -12421,13 +12440,12 @@ async function doCheckout(useSubscription = false) {
       try { localStorage.setItem('alliby_order_ctx', JSON.stringify({ store: S.store?.name || null, del: S.deliveryMode === 'delivery' })); } catch(e) {}
       // On native, open in system browser so WebView stays on alliby.ru and Capacitor bridge stays alive.
       // On web, navigate current page (standard redirect flow).
-      if (_isNat) { window.open(result.payment_url, '_system'); }
-      else { window.location.href = result.payment_url; }
+      goToPaymentUrl(result.payment_url);
       return;
     }
     showGeoToast('Ошибка: не удалось получить ссылку на оплату');
   } catch(e) {
-    showGeoToast('Ошибка: ' + (e.error || e.message || 'Попробуйте ещё раз'));
+    showGeoToast(payErrText(e));
   } finally {
     payBtn.disabled = false;
     updateCartPayBtnLabel();
@@ -13441,7 +13459,7 @@ async function confirmBooking(payNow) {
       throw new Error(result.error || 'no payment_url');
     }
   } catch(e) {
-    showGeoToast('Ошибка оплаты: ' + (e?.error || e?.message || ''));
+    showGeoToast(payErrText(e));
     restorePay();
   }
 }
@@ -13686,7 +13704,7 @@ async function payExistingBooking(id) {
       showGeoToast('Ошибка: ' + (result.error || 'нет ссылки на оплату'));
     }
   } catch(e) {
-    showGeoToast('Ошибка оплаты: ' + (e?.error || e?.message || ''));
+    showGeoToast(payErrText(e));
   }
 }
 
