@@ -5486,7 +5486,7 @@ async function _loadCaSchedMonth() {
           const daySched = (_caSched.masterScheds[m.id] || []).find(x => x.day_of_week === dbDow);
           const w = _computePersonalWindow(storeByDate[ds], daySched, null, dur);
           if (!w) return;
-          const free = _caFreeWindows(w, bkBy[m.id + '|' + ds], dur);
+          const free = _caFreeWindows(w, bkBy[m.id + '|' + ds], dur, ds);
           if (free.length) day[m.id] = free;
         });
         if (Object.keys(day).length) { _caSched.svcData[ds] = day; _caSched.schedData[ds] = [{ start: '00:00', end: '23:59' }]; }
@@ -5529,7 +5529,7 @@ function renderCaSchedCalendar() {
     const hasSched = !!windows;
     const td = document.createElement('div');
     if (personalSelected) {
-      const hasAny = hasSched && !isPast && _caFreeWindows(windows[0], _caSched.bookedData[ds], personalDurMin).length > 0;
+      const hasAny = hasSched && !isPast && _caFreeWindows(windows[0], _caSched.bookedData[ds], personalDurMin, ds).length > 0;
       const isSelected = !!_caSched.personalDays[ds];
       const hasInterest = hasAny && _caSched.groupInterestDates.has(ds);
       const isConfirmedInterest = hasInterest && _caSched.groupInterestDates.get(ds);
@@ -5575,9 +5575,15 @@ function renderCaSchedCalendar() {
   }
 }
 
-function _caFreeWindows(w, booked, durMin) {
+function _caFreeWindows(w, booked, durMin, ds) {
   if (!w) return [];
   let segs = [{ start: _timeToMin(w.start), end: _timeToMin(w.end) }];
+  if (ds && ds === todayInCity()) {
+    // сегодня прошедшее время недоступно: начало окна не раньше текущего момента (с округлением вверх до 5 мин)
+    const n = nowInCity();
+    const nowMin = Math.ceil((n.getHours() * 60 + n.getMinutes() + 1) / 5) * 5;
+    segs = segs.map(s => ({ start: Math.max(s.start, nowMin), end: s.end })).filter(s => s.end > s.start);
+  }
   (booked || []).forEach(b => {
     const bs = _timeToMin(b.slot_start.slice(0, 5)), be = _timeToMin(b.slot_end.slice(0, 5));
     const next = [];
@@ -5601,7 +5607,7 @@ function _caPersonalDayToggle(ds) {
   if (!w) return;
   const item = _caPersonalItem();
   const durMin = Math.max(item?.duration_minutes || 30, 5);
-  const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin);
+  const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin, ds);
   if (!free.length) return;
   _caSched.personalDays[ds] = { start: free[0].start, end: free[0].end, joinKind: null };
   renderCaSchedCalendar();
@@ -5663,7 +5669,7 @@ function _renderCaPersonalDaysList() {
       const w = (_caSched.schedData[ds] || [])[0] || { start: '00:00', end: '23:59' };
       const item = _caPersonalItem();
       const durMin = Math.max(item?.duration_minutes || 30, 5);
-      const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin);
+      const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin, ds);
       const fw = free.find(f => _timeToMin(day.start) >= _timeToMin(f.start) && _timeToMin(day.end) <= _timeToMin(f.end)) || free[0] || w;
       const opts = _caSched.dayOptions[ds];
       let optsHtml = '';
@@ -5743,7 +5749,7 @@ function _updateCaPersonalSubmitState() {
       else if (!w) msg = 'Нет рабочего времени в этот день';
       else {
         const sM = _timeToMin(day.start), eM = _timeToMin(day.end);
-        const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin);
+        const free = _caFreeWindows(w, _caSched.bookedData[ds], durMin, ds);
         if (eM <= sM) msg = 'Время «до» должно быть позже «от»';
         else if (eM - sM < durMin) msg = `Не короче ${durMin} мин`;
         else if (!free.length) msg = 'Тренер занят весь день';
@@ -5854,7 +5860,7 @@ function openCaSchedDay(dateStr) {
       const ws = _timeToMin(w.start), we = _timeToMin(w.end);
       for (let t = ws; t + dur <= we; t += 30) {
         const te = t + dur;
-        if (t + 30 <= nowMinToday) continue;
+        if (nowMinToday && t <= nowMinToday) continue;
         const start = _minToTime(t);
         const end = _minToTime(te);
         if (bk.some(b => t < b.e && te > b.s)) continue;
@@ -12599,7 +12605,7 @@ function getAvailableSlots(windows, booked, prepMin, nowMin = 0) {
     const ws = _timeToMin(w.start), we = _timeToMin(w.end);
     for (let t = ws; t + prepMin <= we; t += prepMin) {
       const te = t + prepMin;
-      if (te <= nowMin) continue;
+      if (nowMin && t <= nowMin) continue;
       if (!bk.some(b => t < b.e && te > b.s)) res.push({ start: _minToTime(t), end: _minToTime(te) });
     }
   }
@@ -12648,7 +12654,7 @@ function _groupSlotsForDate(ds) {
     .map(r => {
       const start = (r.start_time || '').slice(0, 5);
       const startMin = _timeToMin(start);
-      if (startMin + durMin <= nowMin) return null;
+      if (nowMin && startMin <= nowMin) return null;
       const booked = (_booking.groupBookedCounts[ds] || {})[start] || 0;
       const free = (_booking.maxGroupSize || 1) - booked;
       return { start, end: _minToTime(startMin + durMin), free };
@@ -13241,6 +13247,12 @@ async function confirmBooking(payNow) {
   if (!S.session || !_booking.item) return;
   if (_booking.trainingMode === 'personal') return confirmPersonalTrainingRequest();
   if (!_booking.currentDate || !_booking.selectedSlot) return;
+  {
+    const _n = nowInCity();
+    if (_booking.currentDate < todayInCity() || (_booking.currentDate === todayInCity() && _timeToMin(_booking.selectedSlot.start) <= _n.getHours() * 60 + _n.getMinutes())) {
+      showGeoToast('Это время уже прошло — выберите другое'); return;
+    }
+  }
   if (_booking.trainingMode !== 'group' && _booking.masters.length > 0 && !_booking.autoMasterId) { showGeoToast('Выберите ' + _MW(S.store?.direction).gen); return; }
   const storeId = S.store?.id || _booking.item.store_id;
   const masterPrice = _booking.autoMasterId != null ? _booking.masterPrices[_booking.autoMasterId] : null;
