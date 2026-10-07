@@ -3348,7 +3348,7 @@ const S = {
 function buildOsmStyle() {
   return {
     version: 8,
-    sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } },
+    sources: { osm: { type: 'raster', tiles: ['https://alliby.ru/osm-tiles/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } },
     layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 }],
   };
 }
@@ -4246,7 +4246,7 @@ function _openAddrPickerAt(lat, lng, searchText) {
     }
     _addrPickMap = new maplibregl.Map({
       container: 'addr-pick-gl',
-      style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
+      style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://alliby.ru/osm-tiles/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] },
       center: [defLng, defLat], zoom, attributionControl: false,
     });
     _addrPickMap.on('moveend', _addrPickGeocode);
