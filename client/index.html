@@ -5477,11 +5477,11 @@ function _renderCaPersonalDaysList() {
         optsHtml = `<div style="width:100%;font-size:12px;color:var(--muted);margin-bottom:2px">Загрузка существующих заявок…</div>`;
       } else if (opts && opts.length) {
         optsHtml = `<div style="width:100%;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:2px">
-          ${opts.map(o => {
+          ${opts.filter(o => o.kind !== 'confirmed' || o.max_group - o.taken > 0).map(o => {
             const os = o.slot_start.slice(0, 5), oe = o.slot_end.slice(0, 5);
             const isConfirmed = o.kind === 'confirmed';
             const lbl = isConfirmed
-              ? `${os}–${oe} · своб. ${o.max_group - o.taken}`
+              ? `${os}–${oe} · мест осталось ${o.max_group - o.taken}`
               : `${os}–${oe} · ${o.taken} ${o.taken === 1 ? 'заявка' : 'заявки'} ждут`;
             const active = day.joinKind && day.start === os && day.end === oe;
             return `<button type="button" class="chip${isConfirmed ? ' chip-confirmed' : ''}${active ? ' active' : ''}" onclick="_selectCaExistingSlot('${ds}','${os}','${oe}','${o.kind}')">${lbl}</button>`;
@@ -5635,12 +5635,11 @@ function openCaSchedDay(dateStr) {
   slotsEl.innerHTML = '';
   if (_caSched.mode === 'group') {
     windows.forEach(w => {
-      if (_timeToMin(w.start) <= nowMinToday) return;
+      if (_timeToMin(w.start) <= nowMinToday || w.free <= 0) return;
       const btn = document.createElement('button');
       btn.className = 'booking-slot';
-      btn.textContent = `${w.start} · ${w.itemName} · своб. ${w.free}`;
-      btn.disabled = w.free <= 0;
-      if (w.free > 0) btn.onclick = () => selectCaSchedSlot(dateStr, w.start, w.end, w.itemId);
+      btn.textContent = `${w.start} · ${w.itemName} · мест осталось ${w.free}`;
+      btn.onclick = () => selectCaSchedSlot(dateStr, w.start, w.end, w.itemId);
       slotsEl.appendChild(btn);
     });
   } else {
@@ -12734,7 +12733,7 @@ function renderBookingDateView() {
   if (_booking.trainingMode === 'group') {
     const slots = _groupSlotsForDate(ds).filter(s => s.free > 0);
     document.getElementById('mbs-slots').innerHTML = slots.length
-      ? slots.map(s => `<button class="booking-slot" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start} · своб. ${s.free}</button>`).join('')
+      ? slots.map(s => `<button class="booking-slot" data-start="${s.start}" data-end="${s.end}" onclick="selectBookingSlot('${s.start}','${s.end}')">${s.start} · мест осталось ${s.free}</button>`).join('')
       : `<span style="color:var(--muted);font-size:13px">Нет свободных групп на этот день</span>`;
     _renderBookingCal();
     return;
