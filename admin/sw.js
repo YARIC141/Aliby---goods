@@ -17,11 +17,70 @@ function fetchTimeout(request, ms = NET_TIMEOUT_MS) {
 
 self.addEventListener('install', () => self.skipWaiting());
 
+// ── Precache статики (шрифты и библиотеки со своего домена) ───────────────────
+// Отдельный кэш, не пересоздаётся при каждом деплое. Если файл в списке изменился —
+// увеличьте номер версии в имени STATIC_CACHE. Любые сбои тихо игнорируются:
+// приложение просто берёт файл из сети, как раньше.
+const STATIC_CACHE = 'aliby-admin-static-v1';
+const STATIC_FILES = [
+  'fonts/fonts.css',
+  'fonts/01-latin.woff2',
+  'fonts/02-latin.woff2',
+  'fonts/03-cyrillic.woff2',
+  'fonts/04-latin.woff2',
+  'fonts/05-cyrillic.woff2',
+  'fonts/06-latin.woff2',
+  'vendor/jsQR.js',
+  'vendor/maplibre-gl.css',
+  'vendor/maplibre-gl.js',
+  'vendor/qrcode.min.js'
+].map(p => new URL(p, self.registration.scope).href);
+const STATIC_SET = new Set(STATIC_FILES);
+
+function stRace(p, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('sw-static-timeout')), ms);
+    p.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+  });
+}
+
+async function precacheStatic() {
+  const cache = await stRace(caches.open(STATIC_CACHE), 3000);
+  await Promise.allSettled(STATIC_FILES.map(async u => {
+    if (await stRace(cache.match(u), 3000)) return;
+    const r = await stRace(fetch(u), 15000);
+    if (r.ok) await cache.put(u, r);
+  }));
+}
+
+self.addEventListener('install', e => {
+  e.waitUntil(stRace(precacheStatic(), 12000).catch(() => {}));
+});
+
+// cache-first для файлов из списка; при любой проблеме с кэшем — обычная сеть
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET' || !STATIC_SET.has(req.url)) return;
+  const fallback = req.clone();
+  e.respondWith((async () => {
+    try {
+      const cache = await stRace(caches.open(STATIC_CACHE), 2000);
+      const hit = await stRace(cache.match(req.url), 2000);
+      if (hit) return hit;
+      const r = await stRace(fetch(req), 15000);
+      if (r.ok) cache.put(req.url, r.clone());
+      return r;
+    } catch (err) {
+      return fetch(fallback);
+    }
+  })());
+});
+
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k !== TILE_CACHE && k !== APP_CACHE).map(k => caches.delete(k))
+        keys.filter(k => k !== TILE_CACHE && k !== APP_CACHE && k !== STATIC_CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   );
