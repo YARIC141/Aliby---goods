@@ -1,0 +1,72 @@
+name: Uptime check
+
+# Внешняя проверка доступности (работает вне VPS, поэтому видит его падение).
+# Telegram-уведомление отправляется при переходе «работает → не работает» и обратно,
+# а не при каждом запуске. Нужны секреты репозитория TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+      ANON: sb_publishable_HILQWfLrBvlWcUPz6Atam__5M5vw3nq
+    steps:
+      - name: Check endpoints
+        id: probe
+        run: |
+          fail=""
+          probe() { # name url [extra curl args]
+            local name="$1" url="$2"; shift 2
+            local code=000
+            for i in 1 2 3; do
+              code=$(curl -s -o /dev/null -m 15 -w '%{http_code}' "$@" "$url") || true
+              [ "$code" = "200" ] && break
+              sleep 5
+            done
+            echo "$name $code"
+            [ "$code" = "200" ] || fail="$fail\n• $name — HTTP $code"
+          }
+          probe "alliby.ru (клиент)" https://alliby.ru/
+          probe "admin.alliby.ru" https://admin.alliby.ru/
+          probe "carry.alliby.ru" https://carry.alliby.ru/
+          probe "API alliby.ru" https://alliby.ru/rest/v1/ -H "apikey: $ANON"
+          probe "API edge.alliby.ru" https://edge.alliby.ru/rest/v1/ -H "apikey: $ANON"
+          {
+            echo 'fail<<EOF'
+            printf '%b\n' "$fail"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+          if [ -n "$fail" ]; then echo "failed=1" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Notify on state change
+        if: always()
+        run: |
+          prev=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow uptime.yml --status completed --limit 1 --json conclusion --jq '.[0].conclusion // "success"')
+          now=success; [ "${{ steps.probe.outputs.failed }}" = "1" ] && now=failure
+          send() {
+            [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || { echo "Telegram secrets not set"; return 0; }
+            curl -s -m 15 -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+              -d chat_id="$TG_CHAT" --data-urlencode text="$1" > /dev/null
+          }
+          if [ "$now" = failure ] && [ "$prev" != failure ]; then
+            send "🔴 Alliby недоступен (внешняя проверка, $(date -u +%H:%M) UTC)${{ steps.probe.outputs.fail }}"
+          elif [ "$now" = success ] && [ "$prev" = failure ]; then
+            send "🟢 Alliby снова доступен ($(date -u +%H:%M) UTC)"
+          fi
+          [ "$now" = success ] || exit 1
