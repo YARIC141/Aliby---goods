@@ -1,5 +1,5 @@
-// v10
-const APP_CACHE  = 'aliby-admin-app-v4';
+// v11
+const APP_CACHE  = 'aliby-admin-app-v5';
 const TILE_CACHE = 'aliby-admin-tiles-v2';
 const TILE_PATH  = '/functions/v1/vector-tiles/';
 const MAX_TILES  = 300;
@@ -14,6 +14,37 @@ function fetchTimeout(request, ms = NET_TIMEOUT_MS) {
   const t = setTimeout(() => ctrl.abort(), ms);
   return fetch(request, { signal: ctrl.signal }).finally(() => clearTimeout(t));
 }
+
+// Safari/WebKit bug: after a tab is backgrounded and resumed, the CacheStorage
+// IPC channel can come back broken — caches.open()/cache.match() then hang
+// forever (never resolve, never reject), which freezes navigation entirely.
+// Race every cache call against a timeout and fall back to network on trip.
+const CACHE_TIMEOUT_MS = 2000;
+function withTimeout(promise, ms = CACHE_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('sw-cache-timeout')), ms);
+    promise.then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+  });
+}
+
+// Navigate-запросы: fetch(request, {signal}) на Request с mode:'navigate' в WebKit может падать,
+// поэтому для навигации ограничиваем время гонкой с таймером, без AbortController.
+function fetchRace(request, ms = NET_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('sw-net-timeout')), ms);
+    fetch(request).then(v => { clearTimeout(t); resolve(v); }, e => { clearTimeout(t); reject(e); });
+  });
+}
+
+// Страница-самолечение: если SW не смог отдать ни сеть, ни кэш, она снимает SW и чистит кэши
+// (каждый вызов с таймаутом — CacheStorage в Safari может зависать) и один раз перезагружается.
+const HEAL_HTML = '<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="font:16px sans-serif;padding:32px">Нет соединения. Пробуем восстановить…<br><br><a href="/" onclick="location.reload();return false">Обновить страницу</a>' +
+  '<script>(function(){try{if(sessionStorage.getItem("sw_heal"))return;sessionStorage.setItem("sw_heal","1");}catch(e){return;}' +
+  'function lim(p,ms){return Promise.race([p,new Promise(function(r){setTimeout(r,ms)})]);}' +
+  'var a=navigator.serviceWorker?navigator.serviceWorker.getRegistrations().then(function(r){return Promise.all(r.map(function(x){return x.unregister();}));}):Promise.resolve();' +
+  'var b=window.caches?caches.keys().then(function(k){return Promise.all(k.map(function(n){return caches.delete(n);}));}):Promise.resolve();' +
+  'lim(Promise.all([a.catch(function(){}),b.catch(function(){})]),2500).then(function(){location.reload();});})();</script></body></html>';
+
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -83,12 +114,12 @@ async function seedAppCache(keys) {
     const olds = keys.filter(k => k.startsWith('aliby-admin-app-v') && k !== APP_CACHE)
       .sort((x, y) => (parseInt(y.slice(17), 10) || 0) - (parseInt(x.slice(17), 10) || 0));
     if (!olds.length) return;
-    const nc = await caches.open(APP_CACHE);
-    const oc = await caches.open(olds[0]);
-    for (const r of await oc.keys()) {
-      if (await nc.match(r)) continue;
-      const resp = await oc.match(r);
-      if (resp) await nc.put(r, resp);
+    const nc = await withTimeout(caches.open(APP_CACHE));
+    const oc = await withTimeout(caches.open(olds[0]));
+    for (const r of await withTimeout(oc.keys())) {
+      if (await withTimeout(nc.match(r))) continue;
+      const resp = await withTimeout(oc.match(r));
+      if (resp) await withTimeout(nc.put(r, resp));
     }
   } catch {}
 }
@@ -118,9 +149,9 @@ async function trimTiles() {
 // cached shell indefinitely across many "close and reopen" cycles. The 'message'
 // listener lets the page trigger this check explicitly on every foreground resume.
 async function checkAppShellUpdate(url) {
-  const cache = await caches.open(APP_CACHE);
+  const cache = await withTimeout(caches.open(APP_CACHE));
   const req = new Request(url);
-  const cached = await cache.match(req);
+  const cached = await withTimeout(cache.match(req));
   if (!cached) return;
   const resp = await fetchTimeout(new Request(url, { cache: 'no-cache' }));
   if (!resp.ok) return;
@@ -153,19 +184,30 @@ self.addEventListener('fetch', e => {
 
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      caches.open(APP_CACHE).then(async cache => {
-        const cached = await cache.match(e.request, { ignoreSearch: true });
-
-        if (cached) {
-          checkAppShellUpdate(e.request.url).catch(() => {});
-          return cached;
-        }
-
-        return fetchTimeout(e.request).then(resp => {
-          if (resp.ok) cache.put(e.request, resp.clone());
-          return resp;
-        });
-      })
+      withTimeout(caches.open(APP_CACHE).then(async cache => ({ cache, cached: await cache.match(e.request, { ignoreSearch: true }) })))
+        .then(({ cache, cached }) => {
+          if (cached) {
+            checkAppShellUpdate(e.request.url).catch(() => {});
+            return cached;
+          }
+          return fetchRace(e.request).then(resp => {
+            if (resp.ok) cache.put(e.request, resp.clone());
+            return resp;
+          });
+        })
+        // CacheStorage завис (Safari) или сеть упала: идём в сеть мимо кэша, а при неудаче
+        // отдаём оболочку из кэша либо страницу-самолечение вместо "Safari не удалось открыть страницу".
+        .catch(async () => {
+          try {
+            return await fetchRace(e.request);
+          } catch {
+            const fallback = await withTimeout(caches.match(self.registration.scope), 1000).catch(() => null)
+              || await withTimeout(caches.match('/'), 1000).catch(() => null);
+            return fallback || new Response(HEAL_HTML, {
+              status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' },
+            });
+          }
+        })
     );
     return;
   }
