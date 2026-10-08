@@ -5,9 +5,11 @@ import { decryptPaymentKey } from "../_shared/payment-crypto.ts"
 import { logKeyAccess } from "../_shared/audit.ts"
 
 const TBANK_INIT_URL = (Deno.env.get('TBANK_API_URL') || 'https://securepay.tinkoff.ru/v2') + '/Init'
-const NOTIFY_URL     = "https://alliby.ru/functions/v1/tbank-rent-notify"
-const SUCCESS_BASE   = "https://alliby.ru/?tpay=rent_success"
-const FAIL_BASE      = "https://alliby.ru/?tpay=rent_fail"
+const APP_BASE = Deno.env.get('PUBLIC_APP_URL') || 'https://alliby.ru'
+const FN_BASE  = Deno.env.get('PUBLIC_FUNCTIONS_URL') || 'https://alliby.ru/functions/v1'
+const NOTIFY_URL     = `${FN_BASE}/tbank-rent-notify`
+const SUCCESS_BASE   = `${APP_BASE}/?tpay=rent_success`
+const FAIL_BASE      = `${APP_BASE}/?tpay=rent_fail`
 
 async function calcToken(params: Record<string, string | number>, password: string): Promise<string> {
   const all    = { ...params, Password: password }
