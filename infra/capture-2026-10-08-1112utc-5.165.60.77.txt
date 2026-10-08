@@ -1,0 +1,363 @@
+1791454405.983620 eth0  In  IP 5.165.60.77.37242 > 89.169.39.31.443: Flags [S], seq 2178990714, win 65535, options [mss 1460,sackOK,TS val 3889944898 ecr 0,nop,wscale 9], length 0
+1791454405.983742 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [S.], seq 2562402116, ack 2178990715, win 65160, options [mss 1200,sackOK,TS val 1996686592 ecr 3889944898,nop,wscale 7], length 0
+1791454406.008865 eth0  In  IP 5.165.60.77.37242 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889944924 ecr 1996686592], length 0
+1791454406.013483 eth0  In  IP 5.165.60.77.37242 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889944927 ecr 1996686592], length 1188
+1791454406.013560 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996686621 ecr 3889944927], length 0
+1791454406.609169 eth0  In  IP 5.165.60.77.37256 > 89.169.39.31.443: Flags [S], seq 3657719723, win 65535, options [mss 1460,sackOK,TS val 3889945523 ecr 0,nop,wscale 9], length 0
+1791454406.609274 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37256: Flags [S.], seq 3438693631, ack 3657719724, win 65160, options [mss 1200,sackOK,TS val 1996687217 ecr 3889945523,nop,wscale 7], length 0
+1791454406.633870 eth0  In  IP 5.165.60.77.37270 > 89.169.39.31.443: Flags [S], seq 1937358833, win 65535, options [mss 1460,sackOK,TS val 3889945547 ecr 0,nop,wscale 9], length 0
+1791454406.633964 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37270: Flags [S.], seq 933166529, ack 1937358834, win 65160, options [mss 1200,sackOK,TS val 1996687242 ecr 3889945547,nop,wscale 7], length 0
+1791454406.635295 eth0  In  IP 5.165.60.77.37256 > 89.169.39.31.443: Flags [R], seq 3657719724, win 0, length 0
+1791454406.764937 eth0  In  IP 5.165.60.77.37272 > 89.169.39.31.443: Flags [S], seq 1602650706, win 65535, options [mss 1460,sackOK,TS val 3889945622 ecr 0,nop,wscale 9], length 0
+1791454406.765029 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [S.], seq 3347183666, ack 1602650707, win 65160, options [mss 1200,sackOK,TS val 1996687373 ecr 3889945622,nop,wscale 7], length 0
+1791454406.765986 eth0  In  IP 5.165.60.77.37270 > 89.169.39.31.443: Flags [R], seq 1937358834, win 0, length 0
+1791454406.793437 eth0  In  IP 5.165.60.77.37272 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889945703 ecr 1996687373], length 0
+1791454406.796121 eth0  In  IP 5.165.60.77.37272 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889945708 ecr 1996687373], length 1188
+1791454406.796154 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996687404 ecr 3889945708], length 0
+1791454407.068775 eth0  In  IP 5.165.60.77.37284 > 89.169.39.31.443: Flags [S], seq 1588867833, win 65535, options [mss 1460,sackOK,TS val 3889945981 ecr 0,nop,wscale 9], length 0
+1791454407.068856 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [S.], seq 3552780018, ack 1588867834, win 65160, options [mss 1200,sackOK,TS val 1996687677 ecr 3889945981,nop,wscale 7], length 0
+1791454407.093758 eth0  In  IP 5.165.60.77.37284 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889946007 ecr 1996687677], length 0
+1791454407.094103 eth0  In  IP 5.165.60.77.37284 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889946008 ecr 1996687677], length 1188
+1791454407.094134 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996687702 ecr 3889946008], length 0
+1791454413.034196 eth0  In  IP 5.165.60.77.37294 > 89.169.39.31.443: Flags [S], seq 3298030267, win 65535, options [mss 1460,sackOK,TS val 3889951949 ecr 0,nop,wscale 9], length 0
+1791454413.034302 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [S.], seq 3802013350, ack 3298030268, win 65160, options [mss 1200,sackOK,TS val 1996693642 ecr 3889951949,nop,wscale 7], length 0
+1791454413.080222 eth0  In  IP 5.165.60.77.37294 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889951985 ecr 1996693642], length 0
+1791454413.080599 eth0  In  IP 5.165.60.77.37294 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889951986 ecr 1996693642], length 1188
+1791454413.080630 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996693688 ecr 3889951986], length 0
+1791454413.620223 eth0  In  IP 5.165.60.77.59962 > 89.169.39.31.443: Flags [S], seq 3109711095, win 65535, options [mss 1460,sackOK,TS val 3889952535 ecr 0,nop,wscale 9], length 0
+1791454413.620320 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [S.], seq 2372511074, ack 3109711096, win 65160, options [mss 1200,sackOK,TS val 1996694228 ecr 3889952535,nop,wscale 7], length 0
+1791454413.621756 eth0  In  IP 5.165.60.77.59976 > 89.169.39.31.443: Flags [S], seq 892696612, win 65535, options [mss 1460,sackOK,TS val 3889952536 ecr 0,nop,wscale 9], length 0
+1791454413.621798 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [S.], seq 3390829587, ack 892696613, win 65160, options [mss 1200,sackOK,TS val 1996694230 ecr 3889952536,nop,wscale 7], length 0
+1791454413.644914 eth0  In  IP 5.165.60.77.59962 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889952560 ecr 1996694228], length 0
+1791454413.647330 eth0  In  IP 5.165.60.77.59962 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889952561 ecr 1996694228], length 1188
+1791454413.647378 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996694255 ecr 3889952561], length 0
+1791454413.647708 eth0  In  IP 5.165.60.77.59976 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889952562 ecr 1996694230], length 0
+1791454413.652813 eth0  In  IP 5.165.60.77.59976 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889952565 ecr 1996694230], length 1188
+1791454413.652852 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996694261 ecr 3889952565], length 0
+1791454413.825402 eth0  In  IP 5.165.60.77.59982 > 89.169.39.31.443: Flags [S], seq 2581571776, win 65535, options [mss 1460,sackOK,TS val 3889952740 ecr 0,nop,wscale 9], length 0
+1791454413.825485 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [S.], seq 3503007096, ack 2581571777, win 65160, options [mss 1200,sackOK,TS val 1996694433 ecr 3889952740,nop,wscale 7], length 0
+1791454413.834116 eth0  In  IP 5.165.60.77.59984 > 89.169.39.31.443: Flags [S], seq 2084505675, win 65535, options [mss 1460,sackOK,TS val 3889952747 ecr 0,nop,wscale 9], length 0
+1791454413.834177 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [S.], seq 3526384872, ack 2084505676, win 65160, options [mss 1200,sackOK,TS val 1996694442 ecr 3889952747,nop,wscale 7], length 0
+1791454413.837715 eth0  In  IP 5.165.60.77.59988 > 89.169.39.31.443: Flags [S], seq 1569930574, win 65535, options [mss 1460,sackOK,TS val 3889952751 ecr 0,nop,wscale 9], length 0
+1791454413.837767 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [S.], seq 2566757447, ack 1569930575, win 65160, options [mss 1200,sackOK,TS val 1996694446 ecr 3889952751,nop,wscale 7], length 0
+1791454413.840870 eth0  In  IP 5.165.60.77.59994 > 89.169.39.31.443: Flags [S], seq 3838168740, win 65535, options [mss 1460,sackOK,TS val 3889952754 ecr 0,nop,wscale 9], length 0
+1791454413.840921 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [S.], seq 2014828343, ack 3838168741, win 65160, options [mss 1200,sackOK,TS val 1996694449 ecr 3889952754,nop,wscale 7], length 0
+1791454413.843160 eth0  In  IP 5.165.60.77.60010 > 89.169.39.31.443: Flags [S], seq 1450178007, win 65535, options [mss 1460,sackOK,TS val 3889952757 ecr 0,nop,wscale 9], length 0
+1791454413.843194 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [S.], seq 1183450684, ack 1450178008, win 65160, options [mss 1200,sackOK,TS val 1996694451 ecr 3889952757,nop,wscale 7], length 0
+1791454413.852697 eth0  In  IP 5.165.60.77.59982 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889952766 ecr 1996694433], length 0
+1791454413.853666 eth0  In  IP 5.165.60.77.59982 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889952767 ecr 1996694433], length 1188
+1791454413.853698 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996694462 ecr 3889952767], length 0
+1791454413.863924 eth0  In  IP 5.165.60.77.59988 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889952777 ecr 1996694446], length 0
+1791454413.864351 eth0  In  IP 5.165.60.77.59984 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889952777 ecr 1996694442], length 0
+1791454413.865757 eth0  In  IP 5.165.60.77.59994 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889952781 ecr 1996694449], length 0
+1791454413.867502 eth0  In  IP 5.165.60.77.60010 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889952783 ecr 1996694451], length 0
+1791454413.868748 eth0  In  IP 5.165.60.77.59994 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889952783 ecr 1996694449], length 1188
+1791454413.868783 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996694477 ecr 3889952783], length 0
+1791454413.868997 eth0  In  IP 5.165.60.77.60010 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889952784 ecr 1996694451], length 1188
+1791454413.869016 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996694477 ecr 3889952784], length 0
+1791454413.869072 eth0  In  IP 5.165.60.77.59984 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889952782 ecr 1996694442], length 1188
+1791454413.869101 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996694477 ecr 3889952782], length 0
+1791454413.870076 eth0  In  IP 5.165.60.77.59988 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889952783 ecr 1996694446], length 1188
+1791454413.870095 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996694478 ecr 3889952783], length 0
+1791454416.010510 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996696618 ecr 3889944927], length 0
+1791454416.244771 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996696853 ecr 3889944927], length 0
+1791454416.476695 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996697085 ecr 3889944927], length 0
+1791454416.793562 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996697401 ecr 3889945708], length 0
+1791454416.932736 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996697541 ecr 3889944927], length 0
+1791454417.028744 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996697637 ecr 3889945708], length 0
+1791454417.095133 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996697703 ecr 3889946008], length 0
+1791454417.260717 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996697869 ecr 3889945708], length 0
+1791454417.324714 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996697933 ecr 3889946008], length 0
+1791454417.557688 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996698166 ecr 3889946008], length 0
+1791454417.724720 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996698333 ecr 3889945708], length 0
+1791454417.892754 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996698501 ecr 3889944927], length 0
+1791454418.012727 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996698621 ecr 3889946008], length 0
+1791454418.325309 eth0  In  IP 5.165.60.77.60012 > 89.169.39.31.443: Flags [S], seq 393879015, win 65535, options [mss 1460,sackOK,TS val 3889957239 ecr 0,nop,wscale 9], length 0
+1791454418.325380 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [S.], seq 1271150530, ack 393879016, win 65160, options [mss 1200,sackOK,TS val 1996698933 ecr 3889957239,nop,wscale 7], length 0
+1791454418.349734 eth0  In  IP 5.165.60.77.60012 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889957264 ecr 1996698933], length 0
+1791454418.353287 eth0  In  IP 5.165.60.77.60012 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889957267 ecr 1996698933], length 1188
+1791454418.353349 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996698961 ecr 3889957267], length 0
+1791454418.573717 eth0  In  IP 5.165.60.77.60024 > 89.169.39.31.443: Flags [S], seq 1176769073, win 65535, options [mss 1460,sackOK,TS val 3889957487 ecr 0,nop,wscale 9], length 0
+1791454418.573804 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [S.], seq 1102228233, ack 1176769074, win 65160, options [mss 1200,sackOK,TS val 1996699182 ecr 3889957487,nop,wscale 7], length 0
+1791454418.598311 eth0  In  IP 5.165.60.77.60024 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889957512 ecr 1996699182], length 0
+1791454418.607524 eth0  In  IP 5.165.60.77.60024 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889957514 ecr 1996699182], length 1188
+1791454418.607601 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996699215 ecr 3889957514], length 0
+1791454418.660726 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996699269 ecr 3889945708], length 0
+1791454418.980702 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996699589 ecr 3889946008], length 0
+1791454419.138760 eth0  In  IP 5.165.60.77.60030 > 89.169.39.31.443: Flags [S], seq 624424143, win 65535, options [mss 1460,sackOK,TS val 3889958050 ecr 0,nop,wscale 9], length 0
+1791454419.138836 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [S.], seq 3628218910, ack 624424144, win 65160, options [mss 1200,sackOK,TS val 1996699747 ecr 3889958050,nop,wscale 7], length 0
+1791454419.162809 eth0  In  IP 5.165.60.77.60030 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889958077 ecr 1996699747], length 0
+1791454419.164802 eth0  In  IP 5.165.60.77.60030 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889958079 ecr 1996699747], length 1188
+1791454419.164858 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996699773 ecr 3889958079], length 0
+1791454419.444787 eth0  In  IP 5.165.60.77.60040 > 89.169.39.31.443: Flags [S], seq 712344756, win 65535, options [mss 1460,sackOK,TS val 3889958357 ecr 0,nop,wscale 9], length 0
+1791454419.444912 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [S.], seq 2333819646, ack 712344757, win 65160, options [mss 1200,sackOK,TS val 1996700053 ecr 3889958357,nop,wscale 7], length 0
+1791454419.449424 eth0  In  IP 5.165.60.77.60050 > 89.169.39.31.443: Flags [S], seq 2026587401, win 65535, options [mss 1460,sackOK,TS val 3889958362 ecr 0,nop,wscale 9], length 0
+1791454419.449498 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [S.], seq 1240917671, ack 2026587402, win 65160, options [mss 1200,sackOK,TS val 1996700057 ecr 3889958362,nop,wscale 7], length 0
+1791454419.453381 eth0  In  IP 5.165.60.77.60052 > 89.169.39.31.443: Flags [S], seq 951021086, win 65535, options [mss 1460,sackOK,TS val 3889958365 ecr 0,nop,wscale 9], length 0
+1791454419.453452 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [S.], seq 4215428139, ack 951021087, win 65160, options [mss 1200,sackOK,TS val 1996700061 ecr 3889958365,nop,wscale 7], length 0
+1791454419.472335 eth0  In  IP 5.165.60.77.60040 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889958385 ecr 1996700053], length 0
+1791454419.477552 eth0  In  IP 5.165.60.77.60050 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889958390 ecr 1996700057], length 0
+1791454419.477761 eth0  In  IP 5.165.60.77.60040 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889958390 ecr 1996700053], length 1188
+1791454419.477797 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996700086 ecr 3889958390], length 0
+1791454419.480162 eth0  In  IP 5.165.60.77.60050 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889958393 ecr 1996700057], length 1188
+1791454419.480202 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996700088 ecr 3889958393], length 0
+1791454419.480302 eth0  In  IP 5.165.60.77.60052 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889958394 ecr 1996700061], length 0
+1791454419.482613 eth0  In  IP 5.165.60.77.60052 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889958396 ecr 1996700061], length 1188
+1791454419.482687 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996700091 ecr 3889958396], length 0
+1791454419.748736 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996700357 ecr 3889944927], length 0
+1791454420.516725 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996701125 ecr 3889945708], length 0
+1791454420.836711 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996701445 ecr 3889946008], length 0
+1791454423.080196 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996703688 ecr 3889951986], length 0
+1791454423.332685 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996703941 ecr 3889951986], length 0
+1791454423.396676 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704005 ecr 3889944927], length 0
+1791454423.580695 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704189 ecr 3889951986], length 0
+1791454423.645986 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704254 ecr 3889952561], length 0
+1791454423.648845 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704257 ecr 3889952565], length 0
+1791454423.853432 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704461 ecr 3889952767], length 0
+1791454423.864830 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704473 ecr 3889952783], length 0
+1791454423.864931 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704473 ecr 3889952782], length 0
+1791454423.867109 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704475 ecr 3889952783], length 0
+1791454423.867179 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704475 ecr 3889952784], length 0
+1791454423.876693 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704485 ecr 3889952561], length 0
+1791454423.876718 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704485 ecr 3889952565], length 0
+1791454424.076752 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704685 ecr 3889951986], length 0
+1791454424.084720 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704693 ecr 3889952767], length 0
+1791454424.092688 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704701 ecr 3889952783], length 0
+1791454424.100693 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704709 ecr 3889952784], length 0
+1791454424.100717 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704709 ecr 3889952783], length 0
+1791454424.100726 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704709 ecr 3889952782], length 0
+1791454424.108707 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704717 ecr 3889952561], length 0
+1791454424.108728 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704717 ecr 3889952565], length 0
+1791454424.228690 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704837 ecr 3889945708], length 0
+1791454424.316725 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704925 ecr 3889952767], length 0
+1791454424.324696 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704933 ecr 3889952783], length 0
+1791454424.332692 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704941 ecr 3889952782], length 0
+1791454424.332721 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704941 ecr 3889952783], length 0
+1791454424.332727 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996704941 ecr 3889952784], length 0
+1791454424.484715 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705093 ecr 3889946008], length 0
+1791454424.564725 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705173 ecr 3889952561], length 0
+1791454424.564787 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705173 ecr 3889952565], length 0
+1791454424.772739 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705381 ecr 3889952767], length 0
+1791454424.780710 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705389 ecr 3889952783], length 0
+1791454424.788713 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705397 ecr 3889952784], length 0
+1791454424.788747 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705397 ecr 3889952783], length 0
+1791454424.796701 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705405 ecr 3889952782], length 0
+1791454425.124696 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996705733 ecr 3889951986], length 0
+1791454425.508716 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996706117 ecr 3889952565], length 0
+1791454425.508835 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996706117 ecr 3889952561], length 0
+1791454425.700699 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996706309 ecr 3889952783], length 0
+1791454425.700729 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996706309 ecr 3889952784], length 0
+1791454425.700735 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996706309 ecr 3889952783], length 0
+1791454425.700742 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996706309 ecr 3889952767], length 0
+1791454425.764728 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996706373 ecr 3889952782], length 0
+1791454426.639414 eth0  In  IP 5.165.60.77.50470 > 89.169.39.31.443: Flags [S], seq 2035668311, win 65535, options [mss 1460,sackOK,TS val 3889965546 ecr 0,nop,wscale 9], length 0
+1791454426.639516 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [S.], seq 1060894081, ack 2035668312, win 65160, options [mss 1200,sackOK,TS val 1996707247 ecr 3889965546,nop,wscale 7], length 0
+1791454426.664680 eth0  In  IP 5.165.60.77.50470 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889965579 ecr 1996707247], length 0
+1791454426.670560 eth0  In  IP 5.165.60.77.50470 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889965585 ecr 1996707247], length 1188
+1791454426.670674 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996707278 ecr 3889965585], length 0
+1791454427.108754 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996707717 ecr 3889951986], length 0
+1791454427.364712 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996707973 ecr 3889952565], length 0
+1791454427.364732 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996707973 ecr 3889952561], length 0
+1791454427.556707 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996708165 ecr 3889952767], length 0
+1791454427.556744 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996708165 ecr 3889952783], length 0
+1791454427.556758 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996708165 ecr 3889952784], length 0
+1791454427.556768 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996708165 ecr 3889952783], length 0
+1791454427.620735 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996708229 ecr 3889952782], length 0
+1791454428.352843 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996708961 ecr 3889957267], length 0
+1791454428.581686 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996709190 ecr 3889957267], length 0
+1791454428.596454 eth0  In  IP 5.165.60.77.50474 > 89.169.39.31.443: Flags [S], seq 1750950566, win 65535, options [mss 1460,sackOK,TS val 3889967508 ecr 0,nop,wscale 9], length 0
+1791454428.596524 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [S.], seq 3505797635, ack 1750950567, win 65160, options [mss 1200,sackOK,TS val 1996709204 ecr 3889967508,nop,wscale 7], length 0
+1791454428.598256 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996709206 ecr 3889957514], length 0
+1791454428.624107 eth0  In  IP 5.165.60.77.50474 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889967536 ecr 1996709204], length 0
+1791454428.628937 eth0  In  IP 5.165.60.77.50474 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889967541 ecr 1996709204], length 1188
+1791454428.628993 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996709237 ecr 3889967541], length 0
+1791454428.812702 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996709421 ecr 3889957267], length 0
+1791454428.828682 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996709437 ecr 3889957514], length 0
+1791454429.060742 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996709669 ecr 3889957514], length 0
+1791454429.163922 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996709772 ecr 3889958079], length 0
+1791454429.268700 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996709877 ecr 3889957267], length 0
+1791454429.396705 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710005 ecr 3889958079], length 0
+1791454429.472201 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710080 ecr 3889958390], length 0
+1791454429.478445 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710086 ecr 3889958393], length 0
+1791454429.480783 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710089 ecr 3889958396], length 0
+1791454429.516691 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710125 ecr 3889957514], length 0
+1791454429.628701 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710237 ecr 3889958079], length 0
+1791454429.700674 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710309 ecr 3889958390], length 0
+1791454429.708691 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710317 ecr 3889958396], length 0
+1791454429.708713 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710317 ecr 3889958393], length 0
+1791454429.932701 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710541 ecr 3889958390], length 0
+1791454429.940674 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710549 ecr 3889958393], length 0
+1791454429.940696 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710549 ecr 3889958396], length 0
+1791454430.084710 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710693 ecr 3889958079], length 0
+1791454430.180718 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996710789 ecr 3889957267], length 0
+1791454430.396695 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711005 ecr 3889958396], length 0
+1791454430.396727 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711005 ecr 3889958390], length 0
+1791454430.404693 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711013 ecr 3889958393], length 0
+1791454430.436698 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711045 ecr 3889957514], length 0
+1791454431.012688 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711621 ecr 3889958079], length 0
+1791454431.012731 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711621 ecr 3889952565], length 0
+1791454431.012828 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711621 ecr 3889952561], length 0
+1791454431.076745 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711685 ecr 3889944927], length 0
+1791454431.076785 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711685 ecr 3889951986], length 0
+1791454431.204710 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711813 ecr 3889952783], length 0
+1791454431.204748 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711813 ecr 3889952784], length 0
+1791454431.204762 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711813 ecr 3889952783], length 0
+1791454431.204774 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711813 ecr 3889952767], length 0
+1791454431.332710 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711941 ecr 3889958393], length 0
+1791454431.332742 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711941 ecr 3889952782], length 0
+1791454431.332752 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711941 ecr 3889958390], length 0
+1791454431.332759 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996711941 ecr 3889958396], length 0
+1791454431.588750 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996712197 ecr 3889945708], length 0
+1791454431.623120 eth0  In  IP 5.165.60.77.50476 > 89.169.39.31.443: Flags [S], seq 262682412, win 65535, options [mss 1460,sackOK,TS val 3889970530 ecr 0,nop,wscale 9], length 0
+1791454431.623230 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [S.], seq 625392770, ack 262682413, win 65160, options [mss 1200,sackOK,TS val 1996712231 ecr 3889970530,nop,wscale 7], length 0
+1791454431.651008 eth0  In  IP 5.165.60.77.50476 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889970564 ecr 1996712231], length 0
+1791454431.657483 eth0  In  IP 5.165.60.77.50476 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889970570 ecr 1996712231], length 1188
+1791454431.657555 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996712265 ecr 3889970570], length 0
+1791454432.036722 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996712645 ecr 3889957267], length 0
+1791454432.100725 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996712709 ecr 3889946008], length 0
+1791454432.292698 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996712901 ecr 3889957514], length 0
+1791454432.868722 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996713477 ecr 3889958079], length 0
+1791454433.188719 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996713797 ecr 3889958396], length 0
+1791454433.188750 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996713797 ecr 3889958390], length 0
+1791454433.188759 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996713797 ecr 3889958393], length 0
+1791454435.684718 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996716293 ecr 3889957267], length 0
+1791454435.940725 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996716549 ecr 3889957514], length 0
+1791454436.516729 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996717125 ecr 3889958079], length 0
+1791454436.665631 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996717273 ecr 3889965585], length 0
+1791454436.836713 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996717445 ecr 3889958396], length 0
+1791454436.900717 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996717509 ecr 3889958393], length 0
+1791454436.900749 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996717509 ecr 3889958390], length 0
+1791454436.900758 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996717509 ecr 3889965585], length 0
+1791454437.132687 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996717741 ecr 3889965585], length 0
+1791454437.589680 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996718198 ecr 3889965585], length 0
+1791454438.500707 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719109 ecr 3889965585], length 0
+1791454438.624731 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719233 ecr 3889967541], length 0
+1791454438.756753 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719365 ecr 3889952565], length 0
+1791454438.756788 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719365 ecr 3889952782], length 0
+1791454438.756850 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719365 ecr 3889952767], length 0
+1791454438.756879 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719365 ecr 3889952783], length 0
+1791454438.756901 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719365 ecr 3889952784], length 0
+1791454438.756927 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719365 ecr 3889952783], length 0
+1791454438.756939 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719365 ecr 3889952561], length 0
+1791454438.860671 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719469 ecr 3889967541], length 0
+1791454439.092695 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719701 ecr 3889967541], length 0
+1791454439.268699 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996719877 ecr 3889951986], length 0
+1791454439.556746 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996720165 ecr 3889967541], length 0
+1791454440.356685 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996720965 ecr 3889965585], length 0
+1791454440.485683 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996721094 ecr 3889967541], length 0
+1791454441.652386 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996722260 ecr 3889970570], length 0
+1791454441.884694 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996722493 ecr 3889970570], length 0
+1791454442.118223 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996722726 ecr 3889970570], length 0
+1791454442.340741 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996722949 ecr 3889967541], length 0
+1791454442.580754 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996723189 ecr 3889970570], length 0
+1791454443.364752 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996723973 ecr 3889957514], length 0
+1791454443.364799 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996723973 ecr 3889957267], length 0
+1791454443.556931 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996724165 ecr 3889970570], length 0
+1791454443.876762 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996724485 ecr 3889958079], length 0
+1791454443.897763 eth0  In  IP 5.165.60.77.38174 > 89.169.39.31.443: Flags [S], seq 3117681770, win 65535, options [mss 1460,sackOK,TS val 3889982812 ecr 0,nop,wscale 9], length 0
+1791454443.897876 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [S.], seq 2970655500, ack 3117681771, win 65160, options [mss 1200,sackOK,TS val 1996724506 ecr 3889982812,nop,wscale 7], length 0
+1791454443.928797 eth0  In  IP 5.165.60.77.38174 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889982837 ecr 1996724506], length 0
+1791454443.928804 eth0  In  IP 5.165.60.77.38174 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889982842 ecr 1996724506], length 1188
+1791454443.929201 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996724537 ecr 3889982842], length 0
+1791454444.004799 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996724613 ecr 3889965585], length 0
+1791454444.208177 eth0  In  IP 5.165.60.77.38182 > 89.169.39.31.443: Flags [S], seq 1509734784, win 65535, options [mss 1460,sackOK,TS val 3889983122 ecr 0,nop,wscale 9], length 0
+1791454444.208254 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [S.], seq 3718859784, ack 1509734785, win 65160, options [mss 1200,sackOK,TS val 1996724816 ecr 3889983122,nop,wscale 7], length 0
+1791454444.234679 eth0  In  IP 5.165.60.77.38182 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889983149 ecr 1996724816], length 0
+1791454444.243203 eth0  In  IP 5.165.60.77.38182 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889983156 ecr 1996724816], length 1188
+1791454444.243284 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996724851 ecr 3889983156], length 0
+1791454444.388702 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60040: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996724997 ecr 3889958390], length 0
+1791454444.388731 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60050: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996724997 ecr 3889958393], length 0
+1791454444.388741 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60052: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996724997 ecr 3889958396], length 0
+1791454445.412756 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996726021 ecr 3889970570], length 0
+1791454445.924852 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37242: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996726533 ecr 3889944927], length 0
+1791454446.052918 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996726661 ecr 3889967541], length 0
+1791454446.436760 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37272: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996727045 ecr 3889945708], length 0
+1791454446.948726 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37284: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996727557 ecr 3889946008], length 0
+1791454448.902748 eth0  In  IP 5.165.60.77.38192 > 89.169.39.31.443: Flags [S], seq 1548690579, win 65535, options [mss 1460,sackOK,TS val 3889987809 ecr 0,nop,wscale 9], length 0
+1791454448.902986 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38192: Flags [S.], seq 2780587903, ack 1548690580, win 65160, options [mss 1200,sackOK,TS val 1996729511 ecr 3889987809,nop,wscale 7], length 0
+1791454448.934042 eth0  In  IP 5.165.60.77.38192 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889987844 ecr 1996729511], length 0
+1791454448.934471 eth0  In  IP 5.165.60.77.38192 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889987848 ecr 1996729511], length 1188
+1791454448.934517 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38192: Flags [.], ack 1189, win 519, options [nop,nop,TS val 1996729542 ecr 3889987848], length 0
+1791454449.124706 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996729733 ecr 3889970570], length 0
+1791454449.173650 eth0  In  IP 5.165.60.77.38202 > 89.169.39.31.443: Flags [S], seq 2251327795, win 65535, options [mss 1460,sackOK,TS val 3889988081 ecr 0,nop,wscale 9], length 0
+1791454449.173909 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38202: Flags [S.], seq 3085278946, ack 2251327796, win 65160, options [mss 1200,sackOK,TS val 1996729782 ecr 3889988081,nop,wscale 7], length 0
+1791454449.201527 eth0  In  IP 5.165.60.77.38202 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889988115 ecr 1996729782], length 0
+1791454449.207651 eth0  In  IP 5.165.60.77.38202 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889988118 ecr 1996729782], length 1188
+1791454449.207703 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38202: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996729816 ecr 3889988118], length 0
+1791454449.480464 eth0  In  IP 5.165.60.77.38234 > 89.169.39.31.443: Flags [S], seq 1822081477, win 65535, options [mss 1460,sackOK,TS val 3889988394 ecr 0,nop,wscale 9], length 0
+1791454449.480594 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38234: Flags [S.], seq 881801212, ack 1822081478, win 65160, options [mss 1200,sackOK,TS val 1996730088 ecr 3889988394,nop,wscale 7], length 0
+1791454449.482066 eth0  In  IP 5.165.60.77.38218 > 89.169.39.31.443: Flags [S], seq 3230854236, win 65535, options [mss 1460,sackOK,TS val 3889988389 ecr 0,nop,wscale 9], length 0
+1791454449.482119 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38218: Flags [S.], seq 4095870530, ack 3230854237, win 65160, options [mss 1200,sackOK,TS val 1996730090 ecr 3889988389,nop,wscale 7], length 0
+1791454449.482955 eth0  In  IP 5.165.60.77.38242 > 89.169.39.31.443: Flags [S], seq 1899252590, win 65535, options [mss 1460,sackOK,TS val 3889988397 ecr 0,nop,wscale 9], length 0
+1791454449.482981 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38242: Flags [S.], seq 2932149510, ack 1899252591, win 65160, options [mss 1200,sackOK,TS val 1996730091 ecr 3889988397,nop,wscale 7], length 0
+1791454449.507513 eth0  In  IP 5.165.60.77.38234 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889988420 ecr 1996730088], length 0
+1791454449.509492 eth0  In  IP 5.165.60.77.38242 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889988422 ecr 1996730091], length 0
+1791454449.510417 eth0  In  IP 5.165.60.77.38234 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889988423 ecr 1996730088], length 1188
+1791454449.510455 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38234: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996730118 ecr 3889988423], length 0
+1791454449.511410 eth0  In  IP 5.165.60.77.38218 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889988422 ecr 1996730090], length 0
+1791454449.514303 eth0  In  IP 5.165.60.77.38218 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889988426 ecr 1996730090], length 1188
+1791454449.514326 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38218: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996730122 ecr 3889988426], length 0
+1791454449.515119 eth0  In  IP 5.165.60.77.38242 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889988429 ecr 1996730091], length 1188
+1791454449.515139 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38242: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996730123 ecr 3889988429], length 0
+1791454451.192859 eth0  In  IP 5.165.60.77.38252 > 89.169.39.31.443: Flags [S], seq 2751205108, win 65535, options [mss 1460,sackOK,TS val 3889990099 ecr 0,nop,wscale 9], length 0
+1791454451.192959 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38252: Flags [S.], seq 1818846887, ack 2751205109, win 65160, options [mss 1200,sackOK,TS val 1996731801 ecr 3889990099,nop,wscale 7], length 0
+1791454451.218899 eth0  In  IP 5.165.60.77.38252 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889990133 ecr 1996731801], length 0
+1791454451.222579 eth0  In  IP 5.165.60.77.38252 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889990136 ecr 1996731801], length 1188
+1791454451.222661 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38252: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996731830 ecr 3889990136], length 0
+1791454451.353279 eth0  In  IP 5.165.60.77.38258 > 89.169.39.31.443: Flags [S], seq 4154802658, win 65535, options [mss 1460,sackOK,TS val 3889990264 ecr 0,nop,wscale 9], length 0
+1791454451.353348 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38258: Flags [S.], seq 3202102964, ack 4154802659, win 65160, options [mss 1200,sackOK,TS val 1996731961 ecr 3889990264,nop,wscale 7], length 0
+1791454451.359157 eth0  In  IP 5.165.60.77.38268 > 89.169.39.31.443: Flags [S], seq 990073209, win 65535, options [mss 1460,sackOK,TS val 3889990270 ecr 0,nop,wscale 9], length 0
+1791454451.359250 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38268: Flags [S.], seq 224094386, ack 990073210, win 65160, options [mss 1200,sackOK,TS val 1996731967 ecr 3889990270,nop,wscale 7], length 0
+1791454451.360177 eth0  In  IP 5.165.60.77.38270 > 89.169.39.31.443: Flags [S], seq 3663465762, win 65535, options [mss 1460,sackOK,TS val 3889990275 ecr 0,nop,wscale 9], length 0
+1791454451.360236 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38270: Flags [S.], seq 3696103254, ack 3663465763, win 65160, options [mss 1200,sackOK,TS val 1996731968 ecr 3889990275,nop,wscale 7], length 0
+1791454451.385604 eth0  In  IP 5.165.60.77.38258 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889990300 ecr 1996731961], length 0
+1791454451.385942 eth0  In  IP 5.165.60.77.38270 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889990301 ecr 1996731968], length 0
+1791454451.387496 eth0  In  IP 5.165.60.77.38268 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889990300 ecr 1996731967], length 0
+1791454451.387701 eth0  In  IP 5.165.60.77.38258 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889990302 ecr 1996731961], length 1188
+1791454451.387738 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38258: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996731996 ecr 3889990302], length 0
+1791454451.391723 eth0  In  IP 5.165.60.77.38268 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889990304 ecr 1996731967], length 1188
+1791454451.391772 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38268: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996732000 ecr 3889990304], length 0
+1791454451.394743 eth0  In  IP 5.165.60.77.38270 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889990308 ecr 1996731968], length 1188
+1791454451.394782 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38270: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996732003 ecr 3889990308], length 0
+1791454451.556716 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50470: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996732165 ecr 3889965585], length 0
+1791454453.604763 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59976: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889952565], length 0
+1791454453.604918 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50474: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889967541], length 0
+1791454453.604959 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59962: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889952561], length 0
+1791454453.604967 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59994: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889952783], length 0
+1791454453.604972 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60010: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889952784], length 0
+1791454453.604978 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59988: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889952783], length 0
+1791454453.604982 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59982: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889952767], length 0
+1791454453.604985 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.59984: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734213 ecr 3889952782], length 0
+1791454453.930906 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734539 ecr 3889982842], length 0
+1791454454.164680 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734773 ecr 3889982842], length 0
+1791454454.236462 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996734844 ecr 3889983156], length 0
+1791454454.404726 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996735013 ecr 3889982842], length 0
+1791454454.468694 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996735077 ecr 3889983156], length 0
+1791454454.700679 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996735309 ecr 3889983156], length 0
+1791454454.876681 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996735485 ecr 3889982842], length 0
+1791454455.140747 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.37294: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996735749 ecr 3889951986], length 0
+1791454455.156699 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996735765 ecr 3889983156], length 0
+1791454455.844692 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996736453 ecr 3889982842], length 0
+1791454456.100717 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996736709 ecr 3889983156], length 0
+1791454456.673644 eth0  In  IP 5.165.60.77.47632 > 89.169.39.31.443: Flags [S], seq 3445106280, win 65535, options [mss 1460,sackOK,TS val 3889995586 ecr 0,nop,wscale 9], length 0
+1791454456.673726 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.47632: Flags [S.], seq 251358695, ack 3445106281, win 65160, options [mss 1200,sackOK,TS val 1996737282 ecr 3889995586,nop,wscale 7], length 0
+1791454456.676690 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.50476: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996737285 ecr 3889970570], length 0
+1791454456.699655 eth0  In  IP 5.165.60.77.47632 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889995613 ecr 1996737282], length 0
+1791454456.702752 eth0  In  IP 5.165.60.77.47632 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889995617 ecr 1996737282], length 1188
+1791454456.702818 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.47632: Flags [.], ack 1189, win 519, options [nop,nop,TS val 1996737311 ecr 3889995617], length 0
+1791454457.764686 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38174: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996738373 ecr 3889982842], length 0
+1791454457.956683 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.38182: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996738565 ecr 3889983156], length 0
+1791454458.212733 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60012: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996738821 ecr 3889957267], length 0
+1791454458.212769 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60024: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996738821 ecr 3889957514], length 0
+1791454458.405043 eth0  In  IP 5.165.60.77.47634 > 89.169.39.31.443: Flags [S], seq 2727576630, win 65535, options [mss 1460,sackOK,TS val 3889997266 ecr 0,nop,wscale 9], length 0
+1791454458.405143 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.47634: Flags [S.], seq 2036215020, ack 2727576631, win 65160, options [mss 1200,sackOK,TS val 1996739013 ecr 3889997266,nop,wscale 7], length 0
+1791454458.432825 eth0  In  IP 5.165.60.77.47634 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889997346 ecr 1996739013], length 0
+1791454458.434037 eth0  In  IP 5.165.60.77.47634 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889997349 ecr 1996739013], length 1188
+1791454458.434074 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.47634: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996739042 ecr 3889997349], length 0
+1791454458.628999 eth0  In  IP 5.165.60.77.47646 > 89.169.39.31.443: Flags [S], seq 1090418171, win 65535, options [mss 1460,sackOK,TS val 3889997539 ecr 0,nop,wscale 9], length 0
+1791454458.629108 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.47646: Flags [S.], seq 4121465260, ack 1090418172, win 65160, options [mss 1200,sackOK,TS val 1996739237 ecr 3889997539,nop,wscale 7], length 0
+1791454458.653609 eth0  In  IP 5.165.60.77.47646 > 89.169.39.31.443: Flags [.], ack 1, win 128, options [nop,nop,TS val 3889997568 ecr 1996739237], length 0
+1791454458.655799 eth0  In  IP 5.165.60.77.47646 > 89.169.39.31.443: Flags [.], seq 1:1189, ack 1, win 128, options [nop,nop,TS val 3889997570 ecr 1996739237], length 1188
+1791454458.655898 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.47646: Flags [.], ack 1189, win 500, options [nop,nop,TS val 1996739264 ecr 3889997570], length 0
+1791454458.724770 eth0  Out IP 89.169.39.31.443 > 5.165.60.77.60030: Flags [F.], seq 1, ack 1189, win 500, options [nop,nop,TS val 1996739333 ecr 3889958079], length 0
+
