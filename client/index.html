@@ -1316,8 +1316,8 @@ document.addEventListener('deviceready',function(){
       // в нативной WebView при возврате из фона — appStateChange это настоящее
       // нативное событие Capacitor, поэтому дублируем проверку обновления сюда.
       if(typeof window._checkAppUpdate==='function')window._checkAppUpdate();
-      if(typeof realtimeSubscribeOrders==='function'&&typeof S!=='undefined'&&S.session&&S.session.user){
-        realtimeSubscribeOrders(S.session.user.id);
+      if(typeof realtimeResync==='function'&&typeof S!=='undefined'&&S.session&&S.session.user){
+        realtimeResync(S.session.user.id);
         window.AllibyBridge.syncReminders(S.session.user.id);
       }
     });
@@ -8591,10 +8591,10 @@ function updateCartCount() {
 }
 
 // ─── REALTIME ───
-let _rtWs = null, _rtRef = 0, _rtHb = null;
-let _rtBkWs = null, _rtBkRef = 0, _rtBkHb = null;
-let _rtRentWs = null, _rtRentRef = 0, _rtRentHb = null;
-let _rtSubWs  = null, _rtSubRef  = 0, _rtSubHb  = null;
+// Один WebSocket на все каналы (orders/bookings/subs/rent): на нестабильной сети
+// каждое лишнее TCP+TLS-рукопожатие - это отдельный шанс зависнуть, поэтому 4 -> 1.
+let _rtSock = null, _rtSockRef = 0, _rtSockHb = null;
+let _rtJoined = {};
 
 // A dropped socket only ever got reconnected on the next visibilitychange (hide→show) —
 // a WS that drops while the tab stays foregrounded (server restart, network blip) just sat
@@ -8602,15 +8602,16 @@ let _rtSubWs  = null, _rtSubRef  = 0, _rtSubHb  = null;
 // _rtWant tracks which sockets should be connected (cleared on logout/unsubscribe) so a
 // stale onclose from an already-torn-down socket can't schedule a reconnect after the fact.
 let _rtWant = { orders: false, bk: false, sub: false, rent: false };
-let _rtReconnDelay = { orders: 3000, bk: 3000, sub: 3000, rent: 3000 };
-let _rtReconnT = { orders: null, bk: null, sub: null, rent: null };
+let _rtReconnDelay = { all: 3000 };
+let _rtReconnT = { all: null };
+function _rtAnyWant() { return _rtWant.orders || _rtWant.bk || _rtWant.sub || _rtWant.rent; }
 function _clearRtReconnect(key) { if (_rtReconnT[key]) { clearTimeout(_rtReconnT[key]); _rtReconnT[key] = null; } }
 function _scheduleRtReconnect(key, userId, fn) {
   _clearRtReconnect(key);
   const delay = _rtReconnDelay[key];
   _rtReconnT[key] = setTimeout(() => {
     _rtReconnT[key] = null;
-    if (_rtWant[key] && S.session?.user?.id === userId) fn(userId);
+    if (_rtAnyWant() && S.session?.user?.id === userId) fn(userId);
   }, delay);
   _rtReconnDelay[key] = Math.min(delay * 2, 10000);
 }
@@ -8639,8 +8640,7 @@ function _updateBkBadge() {
 
 let _rtDotT = null;
 function _rtAllOpen() {
-  return _rtWs?.readyState === WebSocket.OPEN && _rtBkWs?.readyState === WebSocket.OPEN &&
-         _rtSubWs?.readyState === WebSocket.OPEN && _rtRentWs?.readyState === WebSocket.OPEN;
+  return _rtSock?.readyState === WebSocket.OPEN;
 }
 function _setClientRtDot() {
   const dot = document.getElementById('cal-rt-dot');
@@ -8698,11 +8698,8 @@ function _checkVpnHeuristic() {
   const httpOk = Date.now() - _lastReqOkAt < 15000;
   // Учитываем только сокеты, которые должны быть подключены (иначе гость/неполный набор = ложный VPN),
   // и требуем 3 проверки подряд (~30 с): разовое переподключение WS после сетевого сбоя — не VPN.
-  const wsOk = (!_rtWant.orders || _rtWs?.readyState === WebSocket.OPEN) &&
-               (!_rtWant.bk || _rtBkWs?.readyState === WebSocket.OPEN) &&
-               (!_rtWant.sub || _rtSubWs?.readyState === WebSocket.OPEN) &&
-               (!_rtWant.rent || _rtRentWs?.readyState === WebSocket.OPEN);
-  const wanted = _rtWant.orders || _rtWant.bk || _rtWant.sub || _rtWant.rent;
+  const wsOk = !_rtAnyWant() || _rtSock?.readyState === WebSocket.OPEN;
+  const wanted = _rtAnyWant();
   _vpnBadStreak = (httpOk && wanted && !wsOk && document.visibilityState === 'visible') ? _vpnBadStreak + 1 : 0;
   _vpnSuspected = _vpnBadStreak >= 3;
   if (_vpnSuspected) _showVpnBanner(); else { _vpnBannerDismissed = false; _hideVpnBanner(); }
@@ -8746,173 +8743,110 @@ async function _handleRealtimeAuthError(userId, resubscribe, retried) {
   // ok === null (network hiccup): leave it, the next visibilitychange/reconnect will retry.
 }
 
-function realtimeSubscribeOrders(userId, _retried = false) {
-  // NB: only tears down the orders socket — must NOT call the shared realtimeUnsubscribe()
-  // here, since that closes all four sockets and used to silently kill a still-healthy
-  // bookings/rent/subs connection every time only the orders one needed reconnecting.
-  clearInterval(_rtHb);
-  if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
-  _rtWant.orders = true;
+// Каналы на общем сокете. realtimeSubscribe* сохранили прежние имена/сигнатуры (их зовут из логина и resync).
+const _RT_CH = {
+  orders: { topic: 'realtime:orders-watch',     table: 'orders',             event: 'UPDATE',
+            on: (d, t) => { const r = d?.new ?? d?.record; if (r) _onRealtimeOrder(r); } },
+  bk:     { topic: 'realtime:client-bk-watch',   table: 'bookings',           event: '*',
+            on: (d, t) => { const r = d?.new ?? d?.record; if (r) _onRealtimeBooking(r, t); } },
+  sub:    { topic: 'realtime:client-sub-watch',  table: 'user_subscriptions', event: '*',
+            on: (d, t) => { const r = d?.new ?? d?.record; if (r || t === 'DELETE') _onRealtimeSub(r ?? d?.old, t); } },
+  rent:   { topic: 'realtime:client-rent-watch', table: 'rent_reservations',  event: '*',
+            on: (d, t) => { const r = d?.new ?? d?.record; if (r) _onRealtimeRent(r, t); } }
+};
+function _rtJoin(ws, key, userId) {
+  const c = _RT_CH[key];
+  _rtJoined[key] = true;
+  ws.send(JSON.stringify({
+    topic: c.topic, event: 'phx_join',
+    payload: {
+      config: { postgres_changes: [{ event: c.event, schema: 'public', table: c.table, filter: 'user_id=eq.' + userId }] },
+      access_token: S.session?.access_token
+    },
+    ref: String(++_rtSockRef)
+  }));
+}
+function _rtConnect(userId, _retried = false) {
+  clearInterval(_rtSockHb);
+  _rtJoined = {};
+  if (_rtSock) { const old = _rtSock; _rtSock = null; try { old.onclose = old.onerror = null; old.close(); } catch {} }
+  if (!_rtAnyWant()) { _setClientRtDot(); return; }
   let closedForAuthError = false;
   const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
   try {
     const ws = _rtNewSocket(wsUrl);
-    _rtWs = ws;
+    _rtSock = ws;
     ws.onopen = () => {
-      _rtRef = 0;
-      _rtReconnDelay.orders = 3000;
-      ws.send(JSON.stringify({
-        topic: 'realtime:orders-watch',
-        event: 'phx_join',
-        payload: {
-          config: { postgres_changes: [{ event: 'UPDATE', schema: 'public', table: 'orders', filter: 'user_id=eq.' + userId }] },
-          access_token: S.session?.access_token
-        },
-        ref: String(++_rtRef)
-      }));
-      _rtHb = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtRef) }));
+      _rtSockRef = 0;
+      _rtReconnDelay.all = 3000;
+      Object.keys(_RT_CH).forEach(k => { if (_rtWant[k]) _rtJoin(ws, k, userId); });
+      _rtSockHb = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtSockRef) }));
       }, 25000);
       _setClientRtDot();
     };
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
-          closedForAuthError = true;
-          try { ws.close(); } catch {}
-          _handleRealtimeAuthError(userId, realtimeSubscribeOrders, _retried);
+        if (msg.event === 'phx_reply' && msg.payload?.status === 'error' && msg.topic !== 'phoenix') {
+          // Просроченный токен отклоняет join (сокет остаётся OPEN). Другие причины (например,
+          // таблицы нет в публикации) не должны ронять остальные каналы на этом же сокете.
+          if (/jwt|token|expired|unauthor|auth/i.test(JSON.stringify(msg.payload.response || ''))) {
+            closedForAuthError = true;
+            try { ws.close(); } catch {}
+            _handleRealtimeAuthError(userId, _rtConnect, _retried);
+          }
           return;
         }
         if (msg.event === 'postgres_changes') {
+          const key = Object.keys(_RT_CH).find(k => _RT_CH[k].topic === msg.topic);
+          if (!key) return;
           const data = msg.payload?.data ?? msg.payload;
-          const record = data?.new ?? data?.record;
-          if (record) _onRealtimeOrder(record);
+          const type = (data?.eventType || data?.type || '').toUpperCase();
+          _RT_CH[key].on(data, type);
         }
       } catch {}
     };
     ws.onclose = ws.onerror = () => {
-      clearInterval(_rtHb); _rtWs = null; _setClientRtDot();
-      if (!closedForAuthError && _rtWant.orders && S.session?.user?.id) _scheduleRtReconnect('orders', userId, realtimeSubscribeOrders);
+      if (_rtSock !== ws) return; // уже заменён новым сокетом
+      clearInterval(_rtSockHb); _rtSock = null; _rtJoined = {}; _setClientRtDot();
+      if (!closedForAuthError && _rtAnyWant() && S.session?.user?.id) _scheduleRtReconnect('all', userId, _rtConnect);
     };
   } catch {}
+}
+// Поднять канал на общем сокете: подключиться, если сокета нет; дослать join, если сокет уже открыт.
+function _rtEnsure(key, userId, force) {
+  _rtWant[key] = true;
+  const ws = _rtSock;
+  if (force || !ws || ws.readyState > WebSocket.OPEN) { _clearRtReconnect('all'); _rtConnect(userId, !!force); return; }
+  if (ws.readyState === WebSocket.OPEN && !_rtJoined[key]) _rtJoin(ws, key, userId);
+  // CONNECTING: onopen сам join'ит все нужные каналы
+}
+function realtimeSubscribeOrders(userId, _retried = false)   { _rtEnsure('orders', userId, _retried); }
+function realtimeSubscribeBookings(userId, _retried = false) { _rtEnsure('bk', userId, _retried); }
+function realtimeSubscribeSubs(userId, _retried = false)     { _rtEnsure('sub', userId, _retried); }
+function realtimeSubscribeRent(userId, _retried = false)     { _rtEnsure('rent', userId, _retried); }
+// Возврат в приложение: если сокет не открыт - поднять заново (все каналы разом).
+function realtimeResync(userId) {
+  if (_rtSock && _rtSock.readyState <= WebSocket.OPEN) {
+    if (_rtSock.readyState === WebSocket.OPEN) Object.keys(_RT_CH).forEach(k => { if (!_rtJoined[k]) { _rtWant[k] = true; _rtJoin(_rtSock, k, userId); } });
+    return;
+  }
+  Object.keys(_RT_CH).forEach(k => { _rtWant[k] = true; });
+  _clearRtReconnect('all');
+  _rtConnect(userId);
 }
 
 function realtimeUnsubscribe() {
   _rtWant = { orders: false, bk: false, sub: false, rent: false };
-  ['orders', 'bk', 'sub', 'rent'].forEach(_clearRtReconnect);
-  clearInterval(_rtHb);
-  if (_rtWs) { try { _rtWs.close(); } catch {} _rtWs = null; }
-  clearInterval(_rtBkHb);
-  if (_rtBkWs) { try { _rtBkWs.close(); } catch {} _rtBkWs = null; }
-  clearInterval(_rtRentHb);
-  if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
-  clearInterval(_rtSubHb);
-  if (_rtSubWs)  { try { _rtSubWs.close();  } catch {} _rtSubWs  = null; }
+  _clearRtReconnect('all');
+  clearInterval(_rtSockHb);
+  _rtJoined = {};
+  if (_rtSock) { const old = _rtSock; _rtSock = null; try { old.onclose = old.onerror = null; old.close(); } catch {} }
   _setClientRtDot();
   clearInterval(_vpnCheckTimer);
   _vpnSuspected = false;
   _hideVpnBanner();
-}
-
-function realtimeSubscribeBookings(userId, _retried = false) {
-  clearInterval(_rtBkHb);
-  if (_rtBkWs) { try { _rtBkWs.close(); } catch {} _rtBkWs = null; }
-  _rtWant.bk = true;
-  let closedForAuthError = false;
-  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
-  try {
-    const ws = _rtNewSocket(wsUrl);
-    _rtBkWs = ws;
-    ws.onopen = () => {
-      _rtBkRef = 0;
-      _rtReconnDelay.bk = 3000;
-      ws.send(JSON.stringify({
-        topic: 'realtime:client-bk-watch',
-        event: 'phx_join',
-        payload: {
-          config: { postgres_changes: [{ event: '*', schema: 'public', table: 'bookings', filter: 'user_id=eq.' + userId }] },
-          access_token: S.session?.access_token
-        },
-        ref: String(++_rtBkRef)
-      }));
-      _rtBkHb = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtBkRef) }));
-      }, 25000);
-      _setClientRtDot();
-    };
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
-          closedForAuthError = true;
-          try { ws.close(); } catch {}
-          _handleRealtimeAuthError(userId, realtimeSubscribeBookings, _retried);
-          return;
-        }
-        if (msg.event === 'postgres_changes') {
-          const data   = msg.payload?.data ?? msg.payload;
-          const type   = (data?.eventType || data?.type || '').toUpperCase();
-          const record = data?.new ?? data?.record;
-          if (record) _onRealtimeBooking(record, type);
-        }
-      } catch {}
-    };
-    ws.onclose = ws.onerror = () => {
-      clearInterval(_rtBkHb); _rtBkWs = null; _setClientRtDot();
-      if (!closedForAuthError && _rtWant.bk && S.session?.user?.id) _scheduleRtReconnect('bk', userId, realtimeSubscribeBookings);
-    };
-  } catch {}
-}
-
-function realtimeSubscribeSubs(userId, _retried = false) {
-  clearInterval(_rtSubHb);
-  if (_rtSubWs) { try { _rtSubWs.close(); } catch {} _rtSubWs = null; }
-  _rtWant.sub = true;
-  let closedForAuthError = false;
-  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
-  try {
-    const ws = _rtNewSocket(wsUrl);
-    _rtSubWs = ws;
-    ws.onopen = () => {
-      _rtSubRef = 0;
-      _rtReconnDelay.sub = 3000;
-      ws.send(JSON.stringify({
-        topic: 'realtime:client-sub-watch',
-        event: 'phx_join',
-        payload: {
-          config: { postgres_changes: [{ event: '*', schema: 'public', table: 'user_subscriptions', filter: 'user_id=eq.' + userId }] },
-          access_token: S.session?.access_token
-        },
-        ref: String(++_rtSubRef)
-      }));
-      _rtSubHb = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtSubRef) }));
-      }, 25000);
-      _setClientRtDot();
-    };
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
-          closedForAuthError = true;
-          try { ws.close(); } catch {}
-          _handleRealtimeAuthError(userId, realtimeSubscribeSubs, _retried);
-          return;
-        }
-        if (msg.event === 'postgres_changes') {
-          const data   = msg.payload?.data ?? msg.payload;
-          const type   = (data?.eventType || data?.type || '').toUpperCase();
-          const record = data?.new ?? data?.record;
-          if (record || type === 'DELETE') _onRealtimeSub(record ?? data?.old, type);
-        }
-      } catch {}
-    };
-    ws.onclose = ws.onerror = () => {
-      clearInterval(_rtSubHb); _rtSubWs = null; _setClientRtDot();
-      if (!closedForAuthError && _rtWant.sub && S.session?.user?.id) _scheduleRtReconnect('sub', userId, realtimeSubscribeSubs);
-    };
-  } catch {}
 }
 
 function _onRealtimeSub(record, type) {
@@ -8933,56 +8867,6 @@ function _onRealtimeSub(record, type) {
   const uid = S.session?.user?.id;
   if (uid) { try { localStorage.setItem(`alliby_subs_${uid}`, JSON.stringify(_subsAllData)); } catch {} }
   if (isVisible) renderSubUnifiedList();
-}
-
-function realtimeSubscribeRent(userId, _retried = false) {
-  clearInterval(_rtRentHb);
-  if (_rtRentWs) { try { _rtRentWs.close(); } catch {} _rtRentWs = null; }
-  _rtWant.rent = true;
-  let closedForAuthError = false;
-  const wsUrl = SB_URL.replace(/^https?/, 'wss') + '/realtime/v1/websocket?apikey=' + SB_ANON + '&vsn=1.0.0';
-  try {
-    const ws = _rtNewSocket(wsUrl);
-    _rtRentWs = ws;
-    ws.onopen = () => {
-      _rtRentRef = 0;
-      _rtReconnDelay.rent = 3000;
-      ws.send(JSON.stringify({
-        topic: 'realtime:client-rent-watch',
-        event: 'phx_join',
-        payload: {
-          config: { postgres_changes: [{ event: '*', schema: 'public', table: 'rent_reservations', filter: 'user_id=eq.' + userId }] },
-          access_token: S.session?.access_token
-        },
-        ref: String(++_rtRentRef)
-      }));
-      _rtRentHb = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++_rtRentRef) }));
-      }, 25000);
-      _setClientRtDot();
-    };
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.event === 'phx_reply' && msg.payload?.status === 'error') {
-          closedForAuthError = true;
-          try { ws.close(); } catch {}
-          _handleRealtimeAuthError(userId, realtimeSubscribeRent, _retried);
-          return;
-        }
-        if (msg.event === 'postgres_changes') {
-          const data   = msg.payload?.data ?? msg.payload;
-          const type   = (data?.eventType || data?.type || '').toUpperCase();
-          const record = data?.new ?? data?.record;
-          if (record) _onRealtimeRent(record, type);
-        }
-      } catch {}
-    };
-    ws.onclose = ws.onerror = () => {
-      clearInterval(_rtRentHb); _rtRentWs = null; _setClientRtDot();
-      if (!closedForAuthError && _rtWant.rent && S.session?.user?.id) _scheduleRtReconnect('rent', userId, realtimeSubscribeRent);
-    };
-  } catch {}
 }
 
 // ── Календарь: подписка (лента ICS) и добавление отдельных событий ──
@@ -9228,10 +9112,7 @@ function _onRealtimeOrder(record) {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden || !S.session?.user?.id) return;
   const uid = S.session.user.id;
-  if (!_rtWs || _rtWs.readyState !== WebSocket.OPEN) realtimeSubscribeOrders(uid);
-  if (!_rtBkWs || _rtBkWs.readyState !== WebSocket.OPEN) realtimeSubscribeBookings(uid);
-  if (!_rtRentWs || _rtRentWs.readyState !== WebSocket.OPEN) realtimeSubscribeRent(uid);
-  if (!_rtSubWs  || _rtSubWs.readyState  !== WebSocket.OPEN) realtimeSubscribeSubs(uid);
+  realtimeResync(uid);
   if (_calenabsIsActive()) {
     if (_calenabsTab === 'ord') loadActiveOrders();
     else if (_calenabsTab === 'bk') loadBookingsScreen();
