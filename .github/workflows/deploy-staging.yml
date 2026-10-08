@@ -39,7 +39,7 @@ jobs:
         run: |
           rsync -az -e "ssh -p 2222 -i ~/.ssh/id_ed25519" supabase/migrations/ root@${{ secrets.VPS_HOST }}:/tmp/alliby-mig-test/
           ssh -p 2222 root@${{ secrets.VPS_HOST }} bash -s << 'APPLY'
-          DB="docker exec -i sbtest-db psql -U postgres -d postgres"
+          DB="docker exec -i sbtest-db psql -U supabase_admin -d postgres"
           $DB -c "CREATE TABLE IF NOT EXISTS public._migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT now())"
           for f in $(ls /tmp/alliby-mig-test/*.sql | sort); do
             base=$(basename "$f")
