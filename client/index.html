@@ -10196,10 +10196,6 @@ async function renderCart() {
       subNoteHtml = `<div class="ci-sub-note">По абонементу «${esc(alloc.sub.name)}»${covered < qty ? ` (${covered} из ${qty})` : ''}</div>`;
     } else {
       priceHtml = `<div class="ci-price">${unitPrice} ₽ × ${qty} = ${fullSum} ₽</div>`;
-      const hint = getBestUnownedDiscForItem(item);
-      if (hint) {
-        subNoteHtml = `<div class="ci-sub-hint">По абонементу «${esc(hint.sub.name)}» — ${hint.price + optExtra} ₽</div>`;
-      }
     }
     const optionsHtml = options.length
       ? `<div style="font-size:12px;color:var(--fg-4);margin-top:2px">${options.map(o => esc(o.name)).join(', ')}</div>`
@@ -12311,20 +12307,7 @@ function startCheckout() {
     // Абонемент уже показан и переключается прямо в корзине (cart-sub-toggle-row) — просто оформляем.
     doCheckout(_cartUseSub);
   } else {
-    const hasOpportunity = S.cart.some(({ item }) => getBestUnownedDiscForItem(item));
-    if (hasOpportunity) {
-      // Абонемент доступен, но не куплен
-      document.getElementById('msw-title').textContent = 'Доступен абонемент';
-      document.getElementById('msw-text').textContent =
-        'Для части товаров в корзине доступен абонемент — с ним будет дешевле.';
-      document.getElementById('msw-actions').innerHTML =
-        `<button class="btn btn-d btn-full" onclick="closeModal('m-sub-warn')">Отмена</button>` +
-        `<button class="btn btn-full" onclick="closeModal('m-sub-warn');doCheckout()">Без абонемента</button>` +
-        `<button class="btn btn-p btn-full" onclick="closeModal('m-sub-warn');goTo('subscriptions')">Купить абонемент</button>`;
-      openModal('m-sub-warn');
-    } else {
-      doCheckout();
-    }
+    doCheckout();
   }
 }
 
