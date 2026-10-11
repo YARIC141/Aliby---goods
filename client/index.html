@@ -10196,6 +10196,10 @@ async function renderCart() {
       subNoteHtml = `<div class="ci-sub-note">По абонементу «${esc(alloc.sub.name)}»${covered < qty ? ` (${covered} из ${qty})` : ''}</div>`;
     } else {
       priceHtml = `<div class="ci-price">${unitPrice} ₽ × ${qty} = ${fullSum} ₽</div>`;
+      const hint = getBestUnownedDiscForItem(item);
+      if (hint) {
+        subNoteHtml = `<div class="ci-sub-hint">По абонементу «${esc(hint.sub.name)}» — ${hint.price + optExtra} ₽</div>`;
+      }
     }
     const optionsHtml = options.length
       ? `<div style="font-size:12px;color:var(--fg-4);margin-top:2px">${options.map(o => esc(o.name)).join(', ')}</div>`
