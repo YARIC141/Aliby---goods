@@ -10484,10 +10484,8 @@ function _subBarRow(lbl, valueText, pct) {
   return `<div class="usub-stat"><div class="usub-stat-row"><span class="lbl">${lbl}</span><strong>${valueText}</strong></div>${bar}</div>`;
 }
 
-function renderUserSub(us) {
+function _subStatRows(us) {
   const plan = us.subscriptions;
-  const unseenDot = !_isSeen('sub', us.id) ? `<span class="unseen-dot" data-unseen-for="sub:${us.id}"></span>` : '';
-
   const totalUses = plan?.total_uses || 0;
   let usesRow;
   if (totalUses > 0 && us.remaining_uses !== null && us.remaining_uses !== undefined) {
@@ -10507,6 +10505,15 @@ function renderUserSub(us) {
     daysRow = _subBarRow('Действует до', fmtShortDate(us.end_date), null);
   }
 
+  return usesRow + daysRow;
+}
+
+function renderUserSub(us) {
+  const plan = us.subscriptions;
+  const unseenDot = !_isSeen('sub', us.id) ? `<span class="unseen-dot" data-unseen-for="sub:${us.id}"></span>` : '';
+
+  const statRows = _subStatRows(us);
+
   return `<div class="usub-card" onclick="openSubModal('${us.id}')">
     ${unseenDot}
     ${plan?.stores?.name ? `<div class="usub-store">${esc(plan.stores.name)}</div>` : ''}
@@ -10515,8 +10522,7 @@ function renderUserSub(us) {
       <span class="badge ${fmtSubStatus(us).cls}">${fmtSubStatus(us).label}</span>
     </div>
     <div class="usub-stats">
-      ${usesRow}
-      ${daysRow}
+      ${statRows}
     </div>
   </div>`;
 }
@@ -10533,8 +10539,7 @@ function renderGiftSub(us) {
       <span class="badge ${badgeCls}">${statusLbl}</span>
     </div>
     <div class="usub-stats">
-      <div class="usub-stat"><span class="lbl">Действует до</span><strong>${fmtShortDate(us.end_date)}</strong></div>
-      <div class="usub-stat"><span class="lbl">Использований</span><strong>${us.remaining_uses ?? '∞'}</strong></div>
+      ${_subStatRows(us)}
     </div>
     <div style="margin-top:8px;font-size:11px;color:var(--muted);word-break:break-all">ID: ${us.id}</div>
   </div>`;
