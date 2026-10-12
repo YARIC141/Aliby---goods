@@ -691,7 +691,7 @@ footer{
 .ag-btn.ag-client{--ag-c:var(--brand);--ag-c-deep:var(--brand-deep);--ag-rgb:232,116,59}
 .ag-btn.ag-business{--ag-c:var(--blue);--ag-c-deep:var(--blue-deep);--ag-rgb:120,180,224}
 .ag-btn.ag-courier{--ag-c:var(--teal);--ag-c-deep:var(--teal-deep);--ag-rgb:20,184,166}
-@media(max-width:480px){.ag-btns{flex-direction:column;align-items:stretch}.ag-btn{max-width:none}}
+@media(max-width:480px){.ag-btns{flex-direction:column;align-items:center;gap:12px}.ag-btn{flex:none;width:100%;max-width:210px;font-size:16px}.ag-main{padding:15px 12px}.ag-open{width:48px}}
 .seg.section-focus{animation:section-pulse 1.6s ease-out}
 @keyframes section-pulse{0%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),.6)}100%{box-shadow:inset 0 0 0 2px rgba(var(--accent-rgb),0)}}
 
@@ -991,9 +991,12 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
 }
 @media(max-width:720px){
   .dir-tabs{margin-top:28px}
-  .dir-tablist{margin:0 -16px;padding:0 16px 0 34px;-webkit-overflow-scrolling:touch}
-  .dir-tab{padding:11px 14px 12px;font-size:14px;gap:7px}
-  .dir-panel{padding:22px 18px}
+  /* на телефоне вкладки переносятся на новые строки — все направления видны сразу */
+  .dir-tablist{flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 12px;padding:0;overflow:visible}
+  .dir-tab{padding:9px 12px;font-size:13.5px;gap:6px;border-radius:12px;border-bottom:1px solid var(--line)}
+  .dir-tab[aria-selected="true"]{border-color:var(--dir-edge)}
+  .dir-tab svg{width:16px;height:16px}
+  .dir-panel{padding:22px 18px;margin-top:0}
   .dir-feat .dir-icon{width:44px;height:44px;margin-bottom:14px}
   .dir-feat .dir-title{margin-bottom:6px}
   .dir-feat .dir-lede{margin-bottom:14px}
