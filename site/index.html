@@ -945,14 +945,41 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 .dir-list{list-style:none;display:flex;flex-direction:column;gap:11px}
 .dir-list li{display:flex;align-items:flex-start;gap:9px;font:400 14px/1.5 var(--font-sans);color:var(--fg-2)}
 .dir-list li::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:7px;flex-shrink:0}
-.dir-scenario-link{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:7px;align-self:flex-start;margin-top:18px;padding:13px 22px;border-radius:var(--r-pill);background:rgba(var(--accent-rgb),.16);border:1px solid rgba(var(--accent-rgb),.4);font:700 14.5px/1 var(--font-sans);color:var(--accent);cursor:pointer;transition:background .16s,border-color .16s}
-@media(min-width:721px){.dir-scenario-link{margin-top:auto}}
-.dir-scenario-link svg{transition:transform .16s;position:relative;z-index:1}
-.dir-scenario-link span{position:relative;z-index:1}
-.dir-scenario-link::after{content:'';position:absolute;top:0;left:-75%;width:45%;height:100%;background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,.75) 50%,transparent 100%);transform:skewX(-20deg);animation:scenario-shine 2s ease-in-out infinite;pointer-events:none}
-@keyframes scenario-shine{0%{left:-75%}85%{left:130%}100%{left:130%}}
-.dir-card:hover .dir-scenario-link,.dir-scenario-link:hover{background:rgba(var(--accent-rgb),.28);border-color:rgba(var(--accent-rgb),.65)}
-.dir-card:hover .dir-scenario-link svg{transform:translateX(3px)}
+.dir-grid-solo{grid-template-columns:1fr;margin-top:18px}
+/* Направления — вкладки: выбрал вкладку, и сразу видны особенности и сценарий */
+.dir-tabs{margin-top:40px}
+.dir-tablist{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;scroll-margin-top:88px}
+.dir-tab{display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:var(--r-pill);background:rgba(255,255,255,.055);border:1px solid var(--line);font:700 15px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;white-space:nowrap;transition:background .16s,border-color .16s,color .16s}
+.dir-tab svg{color:rgb(var(--accent-rgb));flex-shrink:0}
+.dir-tab:hover{background:rgba(var(--accent-rgb),.1);border-color:rgba(var(--accent-rgb),.4);color:var(--fg)}
+.dir-tab[aria-selected="true"]{background:rgba(var(--accent-rgb),.2);border-color:rgba(var(--accent-rgb),.7);color:var(--fg);box-shadow:0 8px 24px rgba(var(--accent-rgb),.18)}
+.dir-tab:focus-visible{outline:2px solid rgb(var(--accent-rgb));outline-offset:2px}
+html[data-theme="light"] .dir-tab{background:rgba(255,255,255,.5)}
+html[data-theme="light"] .dir-tab[aria-selected="true"]{background:rgba(var(--accent-rgb),.16)}
+.dir-panel{scroll-margin-top:88px;margin-top:18px;display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:44px;align-items:start;padding:36px clamp(22px,4vw,44px);border-radius:var(--r-4);border:1px solid rgba(var(--accent-rgb),.35);background:linear-gradient(160deg,rgba(var(--accent-rgb),.12),rgba(255,255,255,.04) 45%)}
+html[data-theme="light"] .dir-panel{background:linear-gradient(160deg,rgba(var(--accent-rgb),.12),rgba(255,255,255,.55) 45%)}
+.dir-tabs.js-tabs .dir-panel:not(.active){display:none}
+.dir-tabs.js-tabs .dir-panel.active{animation:scenario-in .22s cubic-bezier(.2,.8,.3,1)}
+.dir-feat{position:sticky;top:96px}
+.dir-feat .dir-lede{min-height:0}
+.dir-scn{min-width:0}
+.dir-scn-head{margin-bottom:24px}
+.dir-scn-title{font:400 clamp(22px,3vw,28px)/1.2 var(--font-display);letter-spacing:-.01em;margin-bottom:8px;text-wrap:balance;color:var(--fg)}
+.dir-scn-sub{font:400 14.5px/1.5 var(--font-sans);color:var(--fg-2)}
+@media(max-width:860px){
+  .dir-panel{grid-template-columns:1fr;gap:28px}
+  .dir-feat{position:static}
+}
+@media(max-width:720px){
+  .dir-tabs{margin-top:28px}
+  .dir-tablist{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .dir-tablist::-webkit-scrollbar{display:none}
+  .dir-tab{padding:10px 15px;font-size:14px}
+  .dir-panel{padding:22px 18px;margin-top:12px}
+  .dir-feat .dir-icon{width:44px;height:44px;margin-bottom:14px}
+  .dir-feat .dir-title{margin-bottom:6px}
+  .dir-feat .dir-lede{margin-bottom:14px}
+}
 .dir-card-carry .dir-card-body{display:flex;flex-direction:column;flex:1;min-width:0}
 @media(min-width:961px){
   .dir-card-carry{grid-column:1/-1;flex-direction:row;align-items:flex-start;gap:32px}
@@ -960,32 +987,18 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
   .dir-card-carry .dir-lede{min-height:0}
   .dir-card-carry .dir-list{display:grid;grid-template-columns:1fr 1fr;column-gap:32px;row-gap:11px}
 }
-.dir-chevron{display:none}
 @media(max-width:720px){
   .dir-card{display:grid;grid-template-columns:40px 1fr;column-gap:14px;row-gap:2px;align-items:start}
-  .dir-icon{grid-column:1;grid-row:1/3;width:40px;height:40px;margin-bottom:0;align-self:start}
-  .dir-title{grid-column:2;grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:0}
-  .dir-lede{grid-column:2;grid-row:2;margin-bottom:0;min-height:0}
-  .dir-chevron{display:block;flex-shrink:0;color:var(--fg-3);transition:transform .2s}
-  .dir-card.dir-open .dir-chevron{transform:rotate(180deg);color:var(--accent)}
-  .dir-card .dir-list,.dir-card .dir-scenario-link{display:none;grid-column:1/-1}
-  .dir-card.dir-open .dir-list{display:flex;margin-top:12px}
-  .dir-card.dir-open .dir-scenario-link{display:inline-flex}
+  .dir-card .dir-icon{grid-column:1;grid-row:1/3;width:40px;height:40px;margin-bottom:0;align-self:start}
+  .dir-card .dir-title{grid-column:2;grid-row:1;margin-bottom:0}
+  .dir-card .dir-lede{grid-column:2;grid-row:2;margin-bottom:0;min-height:0}
+  .dir-card .dir-list{grid-column:1/-1;margin-top:12px}
 }
 
 .scenario-modal{position:fixed;inset:0;z-index:200;display:none;align-items:flex-start;justify-content:center;padding:64px 20px;overflow-y:auto;background:rgba(10,9,7,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .scenario-modal.open{display:flex}
-.scenario-panel{position:relative;width:100%;max-width:720px;background:var(--bg-1);border:1px solid var(--line);border-radius:var(--r-4);box-shadow:0 30px 90px rgba(0,0,0,.55);overflow:hidden;animation:scenario-in .22s cubic-bezier(.2,.8,.3,1)}
 @keyframes scenario-in{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
-.scenario-close{position:absolute;top:18px;right:18px;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(15,14,12,.5);border:1px solid var(--line);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .16s,color .16s}
-.scenario-close:hover{background:var(--bg-3);color:var(--fg)}
-.scenario-hero{position:relative;padding:34px clamp(28px,4vw,48px) 26px;background:linear-gradient(160deg,rgba(var(--accent-rgb),.22),rgba(var(--accent-rgb),.03) 65%);border-bottom:1px solid var(--line)}
-.scenario-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 90% at 100% 0%,rgba(var(--accent-rgb),.22),transparent 70%);pointer-events:none}
-.scenario-icon{position:relative;width:56px;height:56px;border-radius:var(--r-3);display:flex;align-items:center;justify-content:center;margin-bottom:16px;background:rgba(var(--accent-rgb),.18);border:1px solid rgba(var(--accent-rgb),.35);color:rgb(var(--accent-rgb))}
 .scenario-eyebrow{position:relative;display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:var(--r-pill);margin-bottom:14px;background:rgba(var(--accent-rgb),.16);border:1px solid rgba(var(--accent-rgb),.35);font:700 11px/1 var(--font-sans);letter-spacing:.06em;text-transform:uppercase;color:rgb(var(--accent-rgb))}
-.scenario-title{position:relative;font:400 clamp(24px,3.5vw,32px)/1.2 var(--font-display);letter-spacing:-.01em;margin-bottom:8px;text-wrap:balance}
-.scenario-sub{position:relative;font:400 14.5px/1.5 var(--font-sans);color:var(--fg-2);max-width:520px}
-.scenario-scroll{padding:28px clamp(28px,4vw,48px) clamp(28px,4vw,48px);max-height:60vh;overflow-y:auto}
 .scenario-block{margin-bottom:26px}
 .scenario-block:last-child{margin-bottom:0}
 .scenario-block-h{display:flex;align-items:center;gap:8px;font:700 11.5px/1 var(--font-sans);letter-spacing:.07em;text-transform:uppercase;color:rgb(var(--accent-rgb));margin-bottom:15px}
@@ -998,7 +1011,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 .scenario-stat-v{font:400 30px/1 var(--font-display);color:rgb(var(--accent-rgb));margin-bottom:4px}
 .scenario-stat-l{font:400 12.5px/1.4 var(--font-sans);color:var(--fg-2)}
 @media(max-width:520px){.scenario-stats{grid-template-columns:1fr}}
-@media(max-width:600px){.scenario-modal{padding:24px 12px}.scenario-scroll{max-height:66vh}}
+@media(max-width:600px){.scenario-modal{padding:24px 12px}}
 .video-panel{position:relative;width:100%;max-width:900px;background:#000;border-radius:var(--r-4);box-shadow:0 30px 90px rgba(0,0,0,.55);overflow:hidden;animation:scenario-in .22s cubic-bezier(.2,.8,.3,1)}
 .video-panel video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 .video-close{position:absolute;top:14px;right:14px;z-index:2;width:36px;height:36px;border-radius:50%;background:rgba(15,14,12,.6);border:1px solid rgba(255,255,255,.25);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .16s,color .16s}
@@ -1165,88 +1178,105 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
       </div>
     </div>
 
-    <div class="dir-grid">
-      <div class="dir-card" id="dir-client-food" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','client')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
-        <div class="dir-title">Еда<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Голод — самая частая причина открыть телефон. Закрываем её за пару касаний.</p>
-        <ul class="dir-list">
-          <li>Заказ блюд и напитков</li>
-          <li>Доставка или самовывоз</li>
-          <li>Бронь столика</li>
-          <li>Меню по QR без установки</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('food','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+    <div class="dir-tabs" data-audience="client">
+      <div class="dir-tablist" role="tablist" aria-label="Направления для клиентов">
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-client-food" aria-controls="dir-client-food" aria-selected="true" tabindex="0" style="--accent-rgb:232,116,59"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg><span>Еда</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-client-goods" aria-controls="dir-client-goods" aria-selected="false" tabindex="-1" style="--accent-rgb:53,168,98"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span>Товары</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-client-services" aria-controls="dir-client-services" aria-selected="false" tabindex="-1" style="--accent-rgb:120,180,224"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><span>Услуги</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-client-sport" aria-controls="dir-client-sport" aria-selected="false" tabindex="-1" style="--accent-rgb:239,68,68"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span>Спорт</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-client-education" aria-controls="dir-client-education" aria-selected="false" tabindex="-1" style="--accent-rgb:99,102,241"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg><span>Образование</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-client-entertainment" aria-controls="dir-client-entertainment" aria-selected="false" tabindex="-1" style="--accent-rgb:234,179,8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg><span>Развлечения</span></button>
       </div>
-
-      <div class="dir-card" id="dir-client-goods" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','client')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
-        <div class="dir-title">Товары<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">От аптеки до техномаркета — заказ без похода в магазин.</p>
-        <ul class="dir-list">
-          <li>Покупка товаров</li>
-          <li>Доставка или самовывоз</li>
-          <li>Аренда вместо покупки</li>
-          <li>Каталог по QR без установки</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('goods','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel active" id="dir-client-food" role="tabpanel" aria-labelledby="tab-dir-client-food" data-key="food" style="--accent:var(--brand);--accent-rgb:232,116,59">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
+          <div class="dir-title">Еда</div>
+          <p class="dir-lede">Голод — самая частая причина открыть телефон. Закрываем её за пару касаний.</p>
+          <ul class="dir-list">
+            <li>Заказ блюд и напитков</li>
+            <li>Доставка или самовывоз</li>
+            <li>Бронь столика</li>
+            <li>Меню по QR без установки</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-client-services" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','client')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
-        <div class="dir-title">Услуги<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Барбершоп, салон красоты, мастерская — запись, которая не путается.</p>
-        <ul class="dir-list">
-          <li>Запись к мастеру</li>
-          <li>Просмотр расписания мастера</li>
-          <li>Покупка сопутствующих товаров</li>
-          <li>Доставка товаров для дома</li>
-          <li>Запись по QR без установки</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('services','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-client-goods" role="tabpanel" aria-labelledby="tab-dir-client-goods" data-key="goods" style="--accent:var(--green);--accent-rgb:53,168,98">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+          <div class="dir-title">Товары</div>
+          <p class="dir-lede">От аптеки до техномаркета — заказ без похода в магазин.</p>
+          <ul class="dir-list">
+            <li>Покупка товаров</li>
+            <li>Доставка или самовывоз</li>
+            <li>Аренда вместо покупки</li>
+            <li>Каталог по QR без установки</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-client-sport" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','client')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
-        <div class="dir-title">Спорт<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Зал, корт, персональный тренер — прогресс без звонков администратору.</p>
-        <ul class="dir-list">
-          <li>Запись к тренеру</li>
-          <li>Просмотр расписания тренера</li>
-          <li>Бронь зала или стола</li>
-          <li>Аренда инвентаря</li>
-          <li>Доставка</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-client-services" role="tabpanel" aria-labelledby="tab-dir-client-services" data-key="services" style="--accent:var(--blue);--accent-rgb:120,180,224">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
+          <div class="dir-title">Услуги</div>
+          <p class="dir-lede">Барбершоп, салон красоты, мастерская — запись, которая не путается.</p>
+          <ul class="dir-list">
+            <li>Запись к мастеру</li>
+            <li>Просмотр расписания мастера</li>
+            <li>Покупка сопутствующих товаров</li>
+            <li>Доставка товаров для дома</li>
+            <li>Запись по QR без установки</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-client-education" style="--accent:var(--violet);--accent-rgb:99,102,241;cursor:pointer" onclick="handleDirCardClick(this,'education','client')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg></div>
-        <div class="dir-title">Образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Языковая школа, курсы, репетитор — занятия и расписание без звонков в администрацию.</p>
-        <ul class="dir-list">
-          <li>Запись к преподавателю</li>
-          <li>Расписание групп и свободные места</li>
-          <li>Абонемент на курс</li>
-          <li>Индивидуальные занятия</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('education','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-client-sport" role="tabpanel" aria-labelledby="tab-dir-client-sport" data-key="sport" style="--accent:var(--red);--accent-rgb:239,68,68">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
+          <div class="dir-title">Спорт</div>
+          <p class="dir-lede">Зал, корт, персональный тренер — прогресс без звонков администратору.</p>
+          <ul class="dir-list">
+            <li>Запись к тренеру</li>
+            <li>Просмотр расписания тренера</li>
+            <li>Бронь зала или стола</li>
+            <li>Аренда инвентаря</li>
+            <li>Доставка</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-client-entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','client')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg></div>
-        <div class="dir-title">Развлечения<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Компьютерный клуб, квеструм, караоке, каток — в одном заведении сразу всё.</p>
-        <ul class="dir-list">
-          <li>Бронь стола или площадки</li>
-          <li>Запись на мастер-класс</li>
-          <li>Покупка снэков и мерча</li>
-          <li>Доставка</li>
-          <li>Бронь по QR без установки</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('entertainment','client')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-client-education" role="tabpanel" aria-labelledby="tab-dir-client-education" data-key="education" style="--accent:var(--violet);--accent-rgb:99,102,241">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg></div>
+          <div class="dir-title">Образование</div>
+          <p class="dir-lede">Языковая школа, курсы, репетитор — занятия и расписание без звонков в администрацию.</p>
+          <ul class="dir-list">
+            <li>Запись к преподавателю</li>
+            <li>Расписание групп и свободные места</li>
+            <li>Абонемент на курс</li>
+            <li>Индивидуальные занятия</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
+      <div class="dir-panel" id="dir-client-entertainment" role="tabpanel" aria-labelledby="tab-dir-client-entertainment" data-key="entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg></div>
+          <div class="dir-title">Развлечения</div>
+          <p class="dir-lede">Компьютерный клуб, квеструм, караоке, каток — в одном заведении сразу всё.</p>
+          <ul class="dir-list">
+            <li>Бронь стола или площадки</li>
+            <li>Запись на мастер-класс</li>
+            <li>Покупка снэков и мерча</li>
+            <li>Доставка</li>
+            <li>Бронь по QR без установки</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
+      </div>
+    </div>
 
+    <div class="dir-grid dir-grid-solo">
       <div class="dir-card dir-card-carry">
         <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg></div>
         <div class="dir-card-body">
@@ -1303,98 +1333,113 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
       </div>
     </div>
 
-    <div class="dir-grid">
-      <div class="dir-card" id="dir-business-food" style="--accent:var(--brand);--accent-rgb:232,116,59;cursor:pointer" onclick="handleDirCardClick(this,'food','business')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
-        <div class="dir-title">Еда<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Рестораны, кофейни, бары — от меню до курьера.</p>
-        <ul class="dir-list">
-          <li>Продажа блюд и напитков</li>
-          <li>Доставка с настройкой зон</li>
-          <li>Бронь столиков</li>
-          <li>Онлайн-меню по QR-коду</li>
-          <li>Добавляйте поваров, администраторов и курьеров</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('food','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+    <div class="dir-tabs" data-audience="business">
+      <div class="dir-tablist" role="tablist" aria-label="Направления для бизнеса">
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-business-food" aria-controls="dir-business-food" aria-selected="true" tabindex="0" style="--accent-rgb:232,116,59"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg><span>Еда</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-business-goods" aria-controls="dir-business-goods" aria-selected="false" tabindex="-1" style="--accent-rgb:53,168,98"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span>Товары</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-business-services" aria-controls="dir-business-services" aria-selected="false" tabindex="-1" style="--accent-rgb:120,180,224"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><span>Услуги</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-business-sport" aria-controls="dir-business-sport" aria-selected="false" tabindex="-1" style="--accent-rgb:239,68,68"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span>Спорт</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-business-education" aria-controls="dir-business-education" aria-selected="false" tabindex="-1" style="--accent-rgb:99,102,241"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg><span>Образование</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-business-entertainment" aria-controls="dir-business-entertainment" aria-selected="false" tabindex="-1" style="--accent-rgb:234,179,8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg><span>Развлечения</span></button>
+        <button type="button" class="dir-tab" role="tab" id="tab-dir-business-courier" aria-controls="dir-business-courier" aria-selected="false" tabindex="-1" style="--accent-rgb:20,184,166"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg><span>Alliby Carry</span></button>
       </div>
-
-      <div class="dir-card" id="dir-business-goods" style="--accent:var(--green);--accent-rgb:53,168,98;cursor:pointer" onclick="handleDirCardClick(this,'goods','business')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
-        <div class="dir-title">Товары<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Магазины и точки продаж — каталог, который продаёт и сдаёт в аренду.</p>
-        <ul class="dir-list">
-          <li>Продажа товаров</li>
-          <li>Доставка или самовывоз</li>
-          <li>Аренда инвентаря и техники</li>
-          <li>Онлайн-каталог по QR-коду</li>
-          <li>Добавляйте продавцов и администраторов</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('goods','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel active" id="dir-business-food" role="tabpanel" aria-labelledby="tab-dir-business-food" data-key="food" style="--accent:var(--brand);--accent-rgb:232,116,59">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
+          <div class="dir-title">Еда</div>
+          <p class="dir-lede">Рестораны, кофейни, бары — от меню до курьера.</p>
+          <ul class="dir-list">
+            <li>Продажа блюд и напитков</li>
+            <li>Доставка с настройкой зон</li>
+            <li>Бронь столиков</li>
+            <li>Онлайн-меню по QR-коду</li>
+            <li>Добавляйте поваров, администраторов и курьеров</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-business-services" style="--accent:var(--blue);--accent-rgb:120,180,224;cursor:pointer" onclick="handleDirCardClick(this,'services','business')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
-        <div class="dir-title">Услуги<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Салоны, мастерские, студии — расписание, которое не путается.</p>
-        <ul class="dir-list">
-          <li>Добавляйте мастеров — у каждого своё расписание и услуги</li>
-          <li>Аренда свободного места</li>
-          <li>Доп. товары в чек</li>
-          <li>Доставка на дом</li>
-          <li>Онлайн-запись по QR-коду</li>
-          <li>Администратор без доступа к финансам</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('services','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-business-goods" role="tabpanel" aria-labelledby="tab-dir-business-goods" data-key="goods" style="--accent:var(--green);--accent-rgb:53,168,98">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
+          <div class="dir-title">Товары</div>
+          <p class="dir-lede">Магазины и точки продаж — каталог, который продаёт и сдаёт в аренду.</p>
+          <ul class="dir-list">
+            <li>Продажа товаров</li>
+            <li>Доставка или самовывоз</li>
+            <li>Аренда инвентаря и техники</li>
+            <li>Онлайн-каталог по QR-коду</li>
+            <li>Добавляйте продавцов и администраторов</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-business-sport" style="--accent:var(--red);--accent-rgb:239,68,68;cursor:pointer" onclick="handleDirCardClick(this,'sport','business')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
-        <div class="dir-title">Спорт<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Фитнес-клубы, залы, корты, секции — расписание тренеров и загрузка зала.</p>
-        <ul class="dir-list">
-          <li>Добавляйте тренеров — у каждого своё расписание и услуги</li>
-          <li>Аренда зала и инвентаря</li>
-          <li>Доставка</li>
-          <li>Продажа экипировки и питания</li>
-          <li>Онлайн-запись по QR-коду</li>
-          <li>Администратор без доступа к финансам</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('sport','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-business-services" role="tabpanel" aria-labelledby="tab-dir-business-services" data-key="services" style="--accent:var(--blue);--accent-rgb:120,180,224">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
+          <div class="dir-title">Услуги</div>
+          <p class="dir-lede">Салоны, мастерские, студии — расписание, которое не путается.</p>
+          <ul class="dir-list">
+            <li>Добавляйте мастеров — у каждого своё расписание и услуги</li>
+            <li>Аренда свободного места</li>
+            <li>Доп. товары в чек</li>
+            <li>Доставка на дом</li>
+            <li>Онлайн-запись по QR-коду</li>
+            <li>Администратор без доступа к финансам</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-business-education" style="--accent:var(--violet);--accent-rgb:99,102,241;cursor:pointer" onclick="handleDirCardClick(this,'education','business')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg></div>
-        <div class="dir-title">Образование<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Языковые школы, курсы, репетиторские центры — расписание групп и загрузка преподавателей.</p>
-        <ul class="dir-list">
-          <li>Добавляйте преподавателей — у каждого своё расписание и группы</li>
-          <li>Набор в группы с остатком мест</li>
-          <li>Абонементы на курсы</li>
-          <li>Онлайн-запись по QR-коду</li>
-          <li>Администратор без доступа к финансам</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('education','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-business-sport" role="tabpanel" aria-labelledby="tab-dir-business-sport" data-key="sport" style="--accent:var(--red);--accent-rgb:239,68,68">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
+          <div class="dir-title">Спорт</div>
+          <p class="dir-lede">Фитнес-клубы, залы, корты, секции — расписание тренеров и загрузка зала.</p>
+          <ul class="dir-list">
+            <li>Добавляйте тренеров — у каждого своё расписание и услуги</li>
+            <li>Аренда зала и инвентаря</li>
+            <li>Доставка</li>
+            <li>Продажа экипировки и питания</li>
+            <li>Онлайн-запись по QR-коду</li>
+            <li>Администратор без доступа к финансам</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card" id="dir-business-entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8;cursor:pointer" onclick="handleDirCardClick(this,'entertainment','business')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg></div>
-        <div class="dir-title">Развлечения<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
-        <p class="dir-lede">Компьютерные клубы, квесты, VR — самый гибкий формат каталога.</p>
-        <ul class="dir-list">
-          <li>Бронь столов и площадок</li>
-          <li>Аренда оборудования почасово</li>
-          <li>Добавляйте инструкторов — у каждого своё расписание и услуги</li>
-          <li>Продажа снэков и мерча</li>
-          <li>Онлайн-бронь по QR-коду</li>
-          <li>Администратор и бармен без доступа к финансам</li>
-        </ul>
-        <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('entertainment','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+      <div class="dir-panel" id="dir-business-education" role="tabpanel" aria-labelledby="tab-dir-business-education" data-key="education" style="--accent:var(--violet);--accent-rgb:99,102,241">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg></div>
+          <div class="dir-title">Образование</div>
+          <p class="dir-lede">Языковые школы, курсы, репетиторские центры — расписание групп и загрузка преподавателей.</p>
+          <ul class="dir-list">
+            <li>Добавляйте преподавателей — у каждого своё расписание и группы</li>
+            <li>Набор в группы с остатком мест</li>
+            <li>Абонементы на курсы</li>
+            <li>Онлайн-запись по QR-коду</li>
+            <li>Администратор без доступа к финансам</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
       </div>
-
-      <div class="dir-card dir-card-carry" style="--accent:var(--teal);--accent-rgb:20,184,166;cursor:pointer" onclick="handleDirCardClick(this,'courier','business')" role="button" tabindex="0">
-        <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>
-        <div class="dir-card-body">
-          <div class="dir-title">Alliby Carry — взаимодействие с курьерами без посредников<svg class="dir-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="dir-panel" id="dir-business-entertainment" role="tabpanel" aria-labelledby="tab-dir-business-entertainment" data-key="entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg></div>
+          <div class="dir-title">Развлечения</div>
+          <p class="dir-lede">Компьютерные клубы, квесты, VR — самый гибкий формат каталога.</p>
+          <ul class="dir-list">
+            <li>Бронь столов и площадок</li>
+            <li>Аренда оборудования почасово</li>
+            <li>Добавляйте инструкторов — у каждого своё расписание и услуги</li>
+            <li>Продажа снэков и мерча</li>
+            <li>Онлайн-бронь по QR-коду</li>
+            <li>Администратор и бармен без доступа к финансам</li>
+          </ul>
+        </div>
+        <div class="dir-scn"></div>
+      </div>
+      <div class="dir-panel" id="dir-business-courier" role="tabpanel" aria-labelledby="tab-dir-business-courier" data-key="courier" style="--accent:var(--teal);--accent-rgb:20,184,166">
+        <div class="dir-feat">
+          <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>
+          <div class="dir-title">Alliby Carry — взаимодействие с курьерами без посредников</div>
           <p class="dir-lede">Свой штатный курьер или открытый рынок исполнителей — доставка не встаёт, даже если водитель заболел.</p>
           <ul class="dir-list">
             <li>Подключите штатного курьера к Alliby Carry — он получает ваши заказы автоматически, без звонков</li>
@@ -1404,8 +1449,8 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
             <li>Цена доставки для клиента не меняется — разницу в свою пользу забираете вы</li>
             <li>Push курьеру приходит мгновенно, статус заказа обновляется в реальном времени</li>
           </ul>
-          <span class="dir-scenario-link" onclick="event.stopPropagation();openScenario('courier','business')"><span>Смотреть сценарий</span> <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
         </div>
+        <div class="dir-scn"></div>
       </div>
     </div>
 
@@ -1910,31 +1955,6 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
   <button id="cookie-accept" onclick="acceptCookies()">Принять</button>
 </div>
 
-<!-- SCENARIO MODAL -->
-<div class="scenario-modal" id="scenario-modal" onclick="if(event.target===this)closeScenario()">
-  <div class="scenario-panel" role="dialog" aria-modal="true" aria-labelledby="scenario-title">
-    <button class="scenario-close" onclick="closeScenario()" aria-label="Закрыть">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>
-    </button>
-    <div class="scenario-hero">
-      <div class="scenario-icon" id="scenario-icon"></div>
-      <span class="scenario-eyebrow" id="scenario-eyebrow"></span>
-      <h3 class="scenario-title" id="scenario-title"></h3>
-      <p class="scenario-sub" id="scenario-sub"></p>
-    </div>
-    <div class="scenario-scroll">
-      <div class="scenario-block">
-        <div class="scenario-block-h"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>История одного дня</div>
-        <div class="scenario-story" id="scenario-story"></div>
-      </div>
-      <div class="scenario-block">
-        <div class="scenario-block-h"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h6v6"/></svg>Что это даёт</div>
-        <div class="scenario-stats" id="scenario-stats"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- VIDEO MODAL -->
 <div class="scenario-modal" id="video-modal" onclick="if(event.target===this)closeVideoModal()">
   <div class="video-panel" role="dialog" aria-modal="true" aria-label="Видеоролик">
@@ -2100,16 +2120,6 @@ function acceptCookies(){
 </script>
 
 <script>
-var SCENARIO_ICONS = {
-  food: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/>',
-  goods: '<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>',
-  services: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>',
-  education: '<path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/>',
-  sport: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
-  entertainment: '<path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/>',
-  courier: '<circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>',
-};
-
 var SCENARIOS = {
   food: {
     accentRgb: '232,116,59',
@@ -2345,38 +2355,77 @@ var SCENARIOS = {
   },
 };
 
-function handleDirCardClick(el, key, audience) {
-  if (window.matchMedia('(max-width: 720px)').matches) {
-    el.classList.toggle('dir-open');
-  } else {
-    openScenario(key, audience);
-  }
-}
-function openScenario(key, audience) {
-  var dir = SCENARIOS[key];
+// Вкладки направлений: в каждой панели — особенности (статичный HTML) и сценарий из SCENARIOS.
+var SCN_ICON_STORY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/></svg>';
+var SCN_ICON_STATS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M15 7h6v6"/></svg>';
+
+function renderScenario(panel, audience) {
+  var dir = SCENARIOS[panel.getAttribute('data-key')];
   var s = dir && dir[audience];
-  if (!s) return;
-  var modal = document.getElementById('scenario-modal');
-  modal.style.setProperty('--accent-rgb', dir.accentRgb);
-  document.getElementById('scenario-icon').innerHTML =
-    '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (SCENARIO_ICONS[key] || '') + '</svg>';
-  var dirLabels = { food: 'Еда', goods: 'Товары', services: 'Услуги', sport: 'Спорт', education: 'Образование', entertainment: 'Развлечения', courier: 'Alliby Carry' };
-  var audienceLabel = audience === 'client' ? 'для клиента' : 'для бизнеса';
-  document.getElementById('scenario-eyebrow').textContent = (dirLabels[key] || key) + ' · ' + audienceLabel;
-  document.getElementById('scenario-title').textContent = s.title;
-  document.getElementById('scenario-sub').textContent = s.sub;
-  document.getElementById('scenario-story').innerHTML = s.story.map(function(p) { return '<p>' + p + '</p>'; }).join('');
-  document.getElementById('scenario-stats').innerHTML = s.stats.map(function(st) {
-    return '<div class="scenario-stat"><div class="scenario-stat-v">' + st.v + '</div><div class="scenario-stat-l">' + st.l + '</div></div>';
-  }).join('');
-  modal.scrollTop = 0;
-  modal.classList.add('open');
-  document.body.style.overflow = 'hidden';
+  var box = panel.querySelector('.dir-scn');
+  if (!s || !box) return;
+  box.innerHTML =
+    '<div class="dir-scn-head">' +
+      '<span class="scenario-eyebrow">Сценарий ' + (audience === 'client' ? 'для клиента' : 'для бизнеса') + '</span>' +
+      '<h3 class="dir-scn-title">' + s.title + '</h3>' +
+      '<p class="dir-scn-sub">' + s.sub + '</p>' +
+    '</div>' +
+    '<div class="scenario-block"><div class="scenario-block-h">' + SCN_ICON_STORY + 'История одного дня</div>' +
+      '<div class="scenario-story">' + s.story.map(function (p) { return '<p>' + p + '</p>'; }).join('') + '</div></div>' +
+    '<div class="scenario-block"><div class="scenario-block-h">' + SCN_ICON_STATS + 'Что это даёт</div>' +
+      '<div class="scenario-stats">' + s.stats.map(function (st) {
+        return '<div class="scenario-stat"><div class="scenario-stat-v">' + st.v + '</div><div class="scenario-stat-l">' + st.l + '</div></div>';
+      }).join('') + '</div></div>';
 }
-function closeScenario() {
-  document.getElementById('scenario-modal').classList.remove('open');
-  document.body.style.overflow = '';
+
+// Включить вкладку направления по id панели (dir-client-goods и т.п.).
+// scroll: 'auto'/'smooth' — прокрутить к вкладкам; иначе — только если вкладки ушли вверх за экран.
+function activateDirTab(panelId, scroll) {
+  var panel = document.getElementById(panelId);
+  if (!panel || !panel.classList.contains('dir-panel')) return false;
+  var tabs = panel.closest('.dir-tabs');
+  var list = tabs.querySelector('.dir-tablist');
+  tabs.querySelectorAll('.dir-tab').forEach(function (t) {
+    var on = t.getAttribute('aria-controls') === panelId;
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+    t.tabIndex = on ? 0 : -1;
+    if (on) {
+      // на телефоне ряд вкладок прокручивается горизонтально — держим активную в поле зрения
+      var l = t.offsetLeft - list.offsetLeft, r = l + t.offsetWidth;
+      if (l < list.scrollLeft || r > list.scrollLeft + list.clientWidth) {
+        list.scrollTo({ left: l - 16, behavior: 'smooth' });
+      }
+    }
+  });
+  tabs.querySelectorAll('.dir-panel').forEach(function (p) { p.classList.toggle('active', p === panel); });
+  if (scroll) list.scrollIntoView({ behavior: scroll, block: 'start' });
+  else if (list.getBoundingClientRect().top < 0) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  return true;
 }
+
+document.querySelectorAll('.dir-tabs').forEach(function (tabs) {
+  var audience = tabs.getAttribute('data-audience');
+  tabs.querySelectorAll('.dir-panel').forEach(function (p) { renderScenario(p, audience); });
+  tabs.classList.add('js-tabs');
+  var list = tabs.querySelector('.dir-tablist');
+  list.addEventListener('click', function (e) {
+    var t = e.target.closest('.dir-tab');
+    if (t) activateDirTab(t.getAttribute('aria-controls'));
+  });
+  list.addEventListener('keydown', function (e) {
+    var all = Array.prototype.slice.call(list.querySelectorAll('.dir-tab'));
+    var i = all.indexOf(document.activeElement);
+    if (i < 0) return;
+    var j = e.key === 'ArrowRight' ? (i + 1) % all.length
+          : e.key === 'ArrowLeft' ? (i - 1 + all.length) % all.length
+          : e.key === 'Home' ? 0 : e.key === 'End' ? all.length - 1 : -1;
+    if (j < 0) return;
+    e.preventDefault();
+    all[j].focus();
+    activateDirTab(all[j].getAttribute('aria-controls'));
+  });
+});
+
 function openVideoModal(src) {
   var modal = document.getElementById('video-modal');
   var video = document.getElementById('video-modal-player');
@@ -2394,19 +2443,12 @@ function closeVideoModal() {
   document.body.style.overflow = '';
 }
 
-// Пункт сценария в меню: пролистать к карточке направления и открыть её сценарий.
+// Пункт сценария в меню: пролистать к вкладкам направления и включить нужную.
 // С подстраниц ссылка ведёт на /#dir-…, поэтому тот же разбор нужен и при загрузке.
 (function () {
   function openDirTarget(id, smooth) {
-    var m = /^dir-(client|business)-([a-z]+)$/.exec(id);
-    if (!m) return;
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
-    el.classList.add('section-focus');
-    setTimeout(function () { el.classList.remove('section-focus'); }, 1600);
-    // ждём окончания прокрутки — модалка ставит overflow:hidden и оборвала бы её
-    setTimeout(function () { openScenario(m[2], m[1]); }, smooth ? 520 : 260);
+    if (!/^dir-(client|business)-[a-z]+$/.test(id)) return;
+    activateDirTab(id, smooth ? 'smooth' : 'auto');
   }
 
   document.addEventListener('click', function (e) {
@@ -2450,7 +2492,7 @@ function goToBusinessTerms() {
   if (pricing) pricing.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeScenario(); closeVideoModal(); }
+  if (e.key === 'Escape') closeVideoModal();
   if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList.contains('dir-card')) {
     e.preventDefault();
     document.activeElement.click();
