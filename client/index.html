@@ -3172,6 +3172,7 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
 
 <div class="overlay" id="m-item">
   <div class="modal mi-modal">
+    <button id="mi-back" class="mi-close" style="left:10px;right:auto;display:none" onclick="_miBack()" aria-label="Назад">←</button>
     <button class="mi-close" onclick="closeModal('m-item')" aria-label="Закрыть">✕</button>
     <div id="mi-img"></div>
     <div class="mi-body">
@@ -8537,7 +8538,7 @@ function _miMoreHtml(item) {
   return `<div class="mi-more-t">Что-нибудь ещё?</div><div class="mi-more">${list.map(x => {
     const q = _cartQtyForItem(x.id);
     const sub = x.portion_g != null ? `${x.portion_g} г` : '';
-    return `<div class="mi-mini" onclick="openItemDetail('${x.id}')">
+    return `<div class="mi-mini" onclick="_miOpenFromMore('${x.id}')">
       <div class="mi-mini-img">${itemFallbackImg(x)}</div>
       <div class="mi-mini-b"><div class="mi-mini-n">${esc(x.name)}</div>${sub ? `<div class="mi-mini-s">${sub}</div>` : ''}
         <div class="mi-mini-f"><span>${x.price} ₽</span><button class="mi-mini-add${q ? ' on' : ''}" onclick="event.stopPropagation();_miAddMore('${x.id}')">${q ? q : '+'}</button></div></div>
@@ -8561,7 +8562,18 @@ function _miToggleDesc(el) {
   el.textContent = clamped ? 'Подробнее' : 'Свернуть';
 }
 
-function openItemDetail(id) {
+let _miStack = [];
+function _miOpenFromMore(id) {
+  if (_detailItem) _miStack.push(_detailItem.id);
+  openItemDetail(id, true);
+}
+function _miBack() {
+  const prev = _miStack.pop();
+  if (prev) openItemDetail(prev, true);
+}
+
+function openItemDetail(id, keepStack) {
+  if (!keepStack) _miStack = [];
   const item = itemCache.get(id);
   if (!item) return;
   _detailItem = item;
@@ -8667,6 +8679,8 @@ function openItemDetail(id) {
   const _optEl = document.getElementById('mi-options');
   if (_optEl) _optEl.innerHTML = '';
   _updateDetailPrice();
+  const backBtn = document.getElementById('mi-back');
+  if (backBtn) backBtn.style.display = _miStack.length ? 'flex' : 'none';
   openModal('m-item');
   const ov = document.getElementById('m-item'); if (ov) ov.scrollTop = 0;
   const _oid = item.id;
