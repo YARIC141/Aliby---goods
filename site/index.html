@@ -991,12 +991,13 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
 }
 @media(max-width:720px){
   .dir-tabs{margin-top:28px}
-  /* на телефоне вкладки переносятся на новые строки — все направления видны сразу */
-  .dir-tablist{flex-wrap:wrap;justify-content:center;gap:6px;margin:0 0 12px;padding:0;overflow:visible}
-  .dir-tab{padding:9px 12px;font-size:13.5px;gap:6px;border-radius:12px;border-bottom:1px solid var(--line)}
-  .dir-tab[aria-selected="true"]{border-color:var(--dir-edge)}
+  /* на телефоне вкладки переносятся на новые строки — все направления видны сразу;
+     активная уходит в конец нижнего ряда и остаётся «приросшей» к описанию */
+  .dir-tablist{flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:0 6px;margin:0;padding:0 6px;overflow:visible}
+  .dir-tab{padding:9px 12px;margin-bottom:6px;font-size:13.5px;gap:6px;border-radius:12px;border-bottom:1px solid var(--line)}
+  .dir-tab[aria-selected="true"]{order:1;margin-bottom:0;padding-bottom:13px;border-radius:14px 14px 0 0;border-bottom:0;border-color:var(--dir-edge)}
   .dir-tab svg{width:16px;height:16px}
-  .dir-panel{padding:22px 18px;margin-top:0}
+  .dir-panel{padding:22px 18px}
   .dir-feat .dir-icon{width:44px;height:44px;margin-bottom:14px}
   .dir-feat .dir-title{margin-bottom:6px}
   .dir-feat .dir-lede{margin-bottom:14px}
