@@ -2990,6 +2990,14 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
         <label>Аллергены <span class="hint" data-tip="Аллергены через запятую: глютен, молоко, яйца, орехи и т.д. Оставьте пустым если нет">?</span></label>
         <input type="text" id="mmi-allergens" placeholder="Например: глютен, молоко, яйца">
       </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Что входит в услугу <span class="hint" data-tip="Каждый пункт с новой строки. Клиент увидит список с галочками в карточке услуги. Оставьте пустым, если не нужно">?</span></label>
+        <textarea id="mmi-includes" rows="3" placeholder="Коррекция формы&#10;Работа с профессиональной косметикой"></textarea>
+      </div>
+      <div class="fg" style="grid-column:1/-1">
+        <label>Состав <span class="hint" data-tip="Состав товара одной строкой. Показывается в карточке товара. Оставьте пустым, если не нужно">?</span></label>
+        <input type="text" id="mmi-composition" placeholder="Например: воск, масло ши, экстракт хмеля">
+      </div>
       <div class="fg">
         <label>Цена (₽) * <span class="hint" data-tip="Цена за одну единицу товара или услуги в рублях">?</span></label>
         <input type="number" step="0.01" id="mmi-price" placeholder="Цена за одну единицу в рублях">
@@ -3017,6 +3025,10 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
       <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px">
         <input type="checkbox" id="mmi-hit" style="width:auto">
         <label for="mmi-hit">Хит <span class="hint" data-tip="Плашка «🔥 ХИТ» поверх фото товара на витрине">?</span></label>
+      </div>
+      <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px">
+        <input type="checkbox" id="mmi-new" style="width:auto">
+        <label for="mmi-new">Новинка <span class="hint" data-tip="Плашка «Новинка» в карточке позиции">?</span></label>
       </div>
       <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:20px">
         <input type="checkbox" id="mmi-discount-toggle" style="width:auto" onchange="toggleMmiDiscount(this.checked)">
@@ -6550,6 +6562,9 @@ function openMenuItemModal(item) {
   document.getElementById('mmi-duration').value   = item?.duration_minutes || '';
   document.getElementById('mmi-avail').checked    = item ? item.is_available : true;
   document.getElementById('mmi-hit').checked      = item?.is_hit || false;
+  document.getElementById('mmi-new').checked      = item?.is_new || false;
+  document.getElementById('mmi-includes').value   = item?.includes || '';
+  document.getElementById('mmi-composition').value = item?.composition || '';
   document.getElementById('mmi-discount-toggle').checked = item?.old_price != null;
   document.getElementById('mmi-old-price').value  = item?.old_price ?? '';
   toggleMmiDiscount(item?.old_price != null);
@@ -6956,6 +6971,9 @@ async function saveMenuItem() {
     duration_minutes: itemType === 'service' ? (parseInt(document.getElementById('mmi-duration').value, 10) || null) : null,
     is_available:     document.getElementById('mmi-avail').checked,
     is_hit:           document.getElementById('mmi-hit').checked,
+    is_new:           document.getElementById('mmi-new').checked,
+    includes:         document.getElementById('mmi-includes').value.trim() || null,
+    composition:      document.getElementById('mmi-composition').value.trim() || null,
     portion_g:        _numOrNull('mmi-portion-g'),
     calories:         _numOrNull('mmi-calories'),
     protein:          _numOrNull('mmi-protein'),
