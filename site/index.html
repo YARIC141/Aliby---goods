@@ -948,18 +948,23 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
 .dir-grid-solo{grid-template-columns:1fr;margin-top:18px}
 /* Направления — вкладки: выбрал вкладку, и сразу видны особенности и сценарий */
 .dir-tabs{margin-top:40px}
-.dir-tablist{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;scroll-margin-top:88px}
-.dir-tab{display:inline-flex;align-items:center;gap:9px;padding:11px 18px;border-radius:var(--r-pill);background:rgba(255,255,255,.055);border:1px solid var(--line);font:700 15px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;white-space:nowrap;transition:background .16s,border-color .16s,color .16s}
+/* Вкладки как у папки: активный ярлык одного цвета с карточкой и «врастает» в её верхнюю границу.
+   Фон непрозрачный (--dir-surface), иначе граница карточки просвечивает под ярлыком. */
+.dir-tab,.dir-panel{--dir-surface:color-mix(in srgb,rgb(var(--accent-rgb)) 11%,var(--bg-1));--dir-edge:rgba(var(--accent-rgb),.45)}
+html[data-theme="light"] .dir-tab,html[data-theme="light"] .dir-panel{--dir-surface:color-mix(in srgb,rgb(var(--accent-rgb)) 8%,var(--bg-1))}
+.dir-tablist{position:relative;z-index:1;display:flex;flex-wrap:nowrap;align-items:flex-end;gap:4px;padding:0 18px;overflow-x:auto;scrollbar-width:none;scroll-margin-top:88px}
+.dir-tablist::-webkit-scrollbar{display:none}
+.dir-tab{display:inline-flex;align-items:center;gap:9px;padding:13px 18px 14px;border-radius:14px 14px 0 0;background:rgba(255,255,255,.04);border:1px solid var(--line);border-bottom:0;font:700 15px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;white-space:nowrap;transition:background .16s,color .16s}
 .dir-tab svg{color:rgb(var(--accent-rgb));flex-shrink:0}
-.dir-tab:hover{background:rgba(var(--accent-rgb),.1);border-color:rgba(var(--accent-rgb),.4);color:var(--fg)}
-.dir-tab[aria-selected="true"]{background:rgba(var(--accent-rgb),.2);border-color:rgba(var(--accent-rgb),.7);color:var(--fg);box-shadow:0 8px 24px rgba(var(--accent-rgb),.18)}
-.dir-tab:focus-visible{outline:2px solid rgb(var(--accent-rgb));outline-offset:2px}
-html[data-theme="light"] .dir-tab{background:rgba(255,255,255,.5)}
-html[data-theme="light"] .dir-tab[aria-selected="true"]{background:rgba(var(--accent-rgb),.16)}
-.dir-panel{scroll-margin-top:88px;margin-top:18px;display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:44px;align-items:start;padding:36px clamp(22px,4vw,44px);border-radius:var(--r-4);border:1px solid rgba(var(--accent-rgb),.35);background:linear-gradient(160deg,rgba(var(--accent-rgb),.12),rgba(255,255,255,.04) 45%)}
-html[data-theme="light"] .dir-panel{background:linear-gradient(160deg,rgba(var(--accent-rgb),.12),rgba(255,255,255,.55) 45%)}
+.dir-tab:hover{background:rgba(var(--accent-rgb),.1);color:var(--fg)}
+.dir-tab[aria-selected="true"]{background:var(--dir-surface);border-color:var(--dir-edge);color:var(--fg)}
+.dir-tab:focus-visible{outline:2px solid rgb(var(--accent-rgb));outline-offset:-4px}
+html[data-theme="light"] .dir-tab{background:rgba(0,0,0,.03)}
+html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-surface)}
+.dir-panel{position:relative;scroll-margin-top:88px;margin-top:-1px;display:grid;grid-template-columns:minmax(0,330px) minmax(0,1fr);gap:44px;align-items:start;padding:36px clamp(22px,4vw,44px);border-radius:var(--r-4);border:1px solid var(--dir-edge);background:var(--dir-surface)}
 .dir-tabs.js-tabs .dir-panel:not(.active){display:none}
-.dir-tabs.js-tabs .dir-panel.active{animation:scenario-in .22s cubic-bezier(.2,.8,.3,1)}
+.dir-tabs.js-tabs .dir-panel.active>*{animation:dir-in .22s ease-out}
+@keyframes dir-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .dir-feat{position:sticky;top:96px}
 .dir-feat .dir-lede{min-height:0}
 .dir-scn{min-width:0}
@@ -972,10 +977,9 @@ html[data-theme="light"] .dir-panel{background:linear-gradient(160deg,rgba(var(-
 }
 @media(max-width:720px){
   .dir-tabs{margin-top:28px}
-  .dir-tablist{flex-wrap:nowrap;justify-content:flex-start;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  .dir-tablist::-webkit-scrollbar{display:none}
-  .dir-tab{padding:10px 15px;font-size:14px}
-  .dir-panel{padding:22px 18px;margin-top:12px}
+  .dir-tablist{margin:0 -16px;padding:0 16px 0 34px;-webkit-overflow-scrolling:touch}
+  .dir-tab{padding:11px 14px 12px;font-size:14px;gap:7px}
+  .dir-panel{padding:22px 18px}
   .dir-feat .dir-icon{width:44px;height:44px;margin-bottom:14px}
   .dir-feat .dir-title{margin-bottom:6px}
   .dir-feat .dir-lede{margin-bottom:14px}
@@ -2391,7 +2395,7 @@ function activateDirTab(panelId, scroll) {
     t.tabIndex = on ? 0 : -1;
     if (on) {
       // на телефоне ряд вкладок прокручивается горизонтально — держим активную в поле зрения
-      var l = t.offsetLeft - list.offsetLeft, r = l + t.offsetWidth;
+      var l = t.offsetLeft, r = l + t.offsetWidth; // offsetParent — сам .dir-tablist (position:relative)
       if (l < list.scrollLeft || r > list.scrollLeft + list.clientWidth) {
         list.scrollTo({ left: l - 16, behavior: 'smooth' });
       }
