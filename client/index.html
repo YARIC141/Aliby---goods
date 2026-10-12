@@ -11865,23 +11865,47 @@ function renderBookingDetailModal(b) {
   openModal('m-event-detail');
 }
 
+function openRentDetail(id) {
+  for (const k of Object.keys(_myBk.rentByDate || {})) {
+    const r = (_myBk.rentByDate[k] || []).find(x => x.id === id);
+    if (r) { renderRentDetailModal(r); return; }
+  }
+}
+
 function renderRentDetailModal(r) {
-  const item = r.menu_items || {};
-  const store = r.stores || {};
-  const sc = RENT_STATUS_COLOR[r.status] || 'var(--fg-3)';
-  const sl = RENT_STATUS_RU[r.status] || r.status;
-  const periodStr = _rentPeriodStr(r);
-  document.getElementById('evd-title').textContent = item.name || 'Аренда';
-  document.getElementById('evd-body').innerHTML = `
-    <div style="font:400 13px/1.4 var(--font-sans);color:var(--fg-3);margin-bottom:8px">${esc(store.name || '')}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;font:400 13px/1 var(--font-sans)">
-      <span>${periodStr}</span>
-      <span style="color:var(--accent)">${Number(r.total_price || 0).toFixed(0)} ₽</span>
-      <span style="color:${sc}">${esc(sl)}</span>
-      ${r.payment_status === 'paid' ? '<span style="color:var(--ok)">Оплачена</span>' : ''}
-    </div>
-  `;
+  const base = r.menu_items || {};
+  document.getElementById('evd-title').textContent = base.name || 'Аренда';
+  const draw = (rr) => {
+    const item = rr.menu_items || {};
+    const store = rr.stores || {};
+    const sc = RENT_STATUS_COLOR[rr.status] || 'var(--fg-3)';
+    const sl = RENT_STATUS_RU[rr.status] || rr.status;
+    const paid = rr.payment_status === 'paid';
+    const unitRu = RENT_UNIT_RU[item.rent_period_unit] || '';
+    const row = (lbl, val) => `<div class="cond-row"><span class="cond-lbl">${lbl}</span><span class="cond-val">${val}</span></div>`;
+    const img = item.image_url ? `<div class="mu-img" style="height:170px;border-radius:var(--r-3);margin-bottom:12px"><img src="${esc(mediaUrl(item.image_url))}" alt=""></div>` : '';
+    const created = rr.created_at ? new Date(rr.created_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const active = rr.status === 'pending' || rr.status === 'active';
+    document.getElementById('evd-body').innerHTML = `
+      ${img}
+      <div class="mi-head"><div style="flex:1;min-width:0"><div style="font:600 17px/1.25 var(--font-sans)">${esc(item.name || 'Аренда')}</div>
+        <div class="mi-subline">${esc(store.name || '')}</div></div>
+        <span class="badge" style="color:${sc}">${esc(sl)}</span></div>
+      <div class="mu-saved" style="${paid ? 'background:color-mix(in oklch,var(--ok) 14%,var(--bg));color:var(--ok)' : 'background:color-mix(in oklch,var(--warn) 14%,var(--bg));color:var(--warn)'}">${Number(rr.total_price || 0).toFixed(0)} ₽ · ${paid ? 'Оплачена' : 'Не оплачена'}</div>
+      <div style="margin-top:10px">
+        ${row('Период', esc(_rentPeriodStr(rr)))}
+        ${row('Количество', `${rr.quantity || 1} шт`)}
+        ${unitRu && item.price != null ? row('Тариф', `${Number(item.price).toFixed(0)} ₽ / ${unitRu}`) : ''}
+        ${store.address ? row('Адрес', esc(store.address)) : ''}
+        ${rr.notes ? row('Комментарий', esc(rr.notes)) : ''}
+        ${created ? row('Оформлена', created) : ''}
+      </div>
+      ${active ? `<div style="margin-top:12px"><button class="btn btn-sm" onclick="addRentToCal('${rr.id}')">📅 В календарь</button></div>` : ''}`;
+  };
+  draw(r);
   openModal('m-event-detail');
+  req(`/rest/v1/rent_reservations?id=eq.${r.id}&select=*,menu_items(name,image_url,price,rent_period_unit),stores(name,address)`)
+    .then(rows => { if (rows?.[0]) draw(rows[0]); }).catch(() => {});
 }
 
 function renderSavingsChart(redemptions, totalSaved) {
@@ -13841,7 +13865,7 @@ function _rentDayItemsHtml(ds) {
     const periodStr = _rentPeriodStr(r);
     const dimmed = r.status === 'cancelled';
     const unseenDot = !dimmed && !_isSeen('rent', r.id) ? `<span class="unseen-dot" data-unseen-for="rent:${r.id}"></span>` : '';
-    return `<div class="bk-item" style="${dimmed ? 'opacity:.5' : ''}" onclick="_markSeen('rent','${r.id}')">
+    return `<div class="bk-item" style="${dimmed ? 'opacity:.5' : ''}" onclick="_markSeen('rent','${r.id}');openRentDetail('${r.id}')" style="cursor:pointer">
       ${unseenDot}
       <div class="bk-item-main">
         <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
