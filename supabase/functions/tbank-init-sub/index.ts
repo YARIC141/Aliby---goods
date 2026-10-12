@@ -90,6 +90,24 @@ Deno.serve(async (req: Request) => {
   if (provider !== "tinkoff")
     return jsonResponse({ error: "Карточная оплата не настроена. Перейдите в admin → Интернет-эквайринг." }, 400)
 
+  // Повторное нажатие «Оплатить»: отдаём уже созданную ссылку, не плодим pending
+  if (subscription_ids.length === 1) {
+    const since = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const { data: mine } = await serviceClient
+      .from("user_subscriptions").select("id")
+      .eq("user_id", user.id).eq("subscription_id", subscription_ids[0])
+      .eq("status", "pending").gte("purchase_date", since)
+    if (mine?.length) {
+      const { data: prev } = await serviceClient
+        .from("payments").select("id, amount, metadata")
+        .in("user_subscription_id", mine.map((m: any) => m.id))
+        .eq("status", "pending").order("created_at", { ascending: false }).limit(1)
+      const pm = prev?.[0]
+      if (pm?.metadata?.payment_url && !!pm.metadata.is_gift === !!is_gift)
+        return jsonResponse({ payment_id: pm.id, payment_url: pm.metadata.payment_url, amount: Number(pm.amount) })
+    }
+  }
+
   // Create user_subscriptions with pending status
   const now = new Date()
   const userSubInserts = subs.map((sub: any) => {
@@ -175,7 +193,7 @@ Deno.serve(async (req: Request) => {
   }
 
   await serviceClient.from("payments")
-    .update({ provider_transaction_id: String(tData.PaymentId) })
+    .update({ provider_transaction_id: String(tData.PaymentId), metadata: { ...metadata, payment_url: tData.PaymentURL } })
     .eq("id", payment.id)
 
   return jsonResponse({ payment_id: payment.id, payment_url: tData.PaymentURL, amount: totalAmount })
