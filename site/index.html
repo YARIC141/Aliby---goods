@@ -991,17 +991,24 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
 }
 @media(max-width:720px){
   .dir-tabs{margin-top:28px}
-  /* на телефоне вкладки переносятся на новые строки — все направления видны сразу;
+  /* на телефоне вкладки — сетка 3×2, все направления видны сразу;
      активная уходит в конец нижнего ряда и остаётся «приросшей» к описанию */
-  .dir-tablist{flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:0 6px;margin:0;padding:0 6px;overflow:visible}
-  .dir-tab{padding:9px 12px;margin-bottom:6px;font-size:13.5px;gap:6px;border-radius:12px;border-bottom:1px solid var(--line)}
+  .dir-tablist{display:grid;grid-template-columns:repeat(3,auto);align-items:end;gap:0 5px;margin:0;padding:0 4px;overflow:visible}
+  .dir-tab{justify-content:center;min-width:0;padding:9px 6px;margin-bottom:5px;font-size:12.5px;gap:5px;border-radius:12px;border-bottom:1px solid var(--line)}
+  .dir-tab span{min-width:0;overflow:hidden;text-overflow:ellipsis}
   .dir-tab[aria-selected="true"]{order:1;margin-bottom:0;padding-bottom:13px;border-radius:14px 14px 0 0;border-bottom:0;border-color:var(--dir-edge)}
-  .dir-tab svg{width:16px;height:16px}
+  .dir-tab svg{width:15px;height:15px}
   .dir-panel{padding:22px 18px}
   .dir-feat .dir-icon{width:44px;height:44px;margin-bottom:14px}
   .dir-feat .dir-title{margin-bottom:6px}
   .dir-feat .dir-lede{margin-bottom:14px}
 }
+@media(max-width:380px){
+  .dir-tablist{gap:0 4px;padding:0}
+  .dir-tab{padding-left:5px;padding-right:5px;font-size:12px;gap:4px}
+  .dir-tab svg{width:13px;height:13px}
+}
+@media(max-width:340px){.dir-tab svg{display:none}}
 .dir-card-carry .dir-card-body{display:flex;flex-direction:column;flex:1;min-width:0}
 @media(min-width:961px){
   .dir-card-carry{grid-column:1/-1;flex-direction:row;align-items:flex-start;gap:32px}
