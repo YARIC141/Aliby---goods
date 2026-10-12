@@ -42,7 +42,8 @@ jobs:
             echo "$name $code"
             [ "$code" = "200" ] || fail="$fail\n• $name — HTTP $code"
           }
-          probe "alliby.ru (клиент)" https://alliby.ru/
+          probe "app.alliby.ru (клиент)" https://app.alliby.ru/
+          probe "alliby.ru (сайт)" https://alliby.ru/
           probe "admin.alliby.ru" https://admin.alliby.ru/
           probe "carry.alliby.ru" https://carry.alliby.ru/
           probe "API alliby.ru" https://alliby.ru/rest/v1/ -H "apikey: $ANON"

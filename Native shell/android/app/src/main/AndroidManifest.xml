@@ -84,11 +84,13 @@
                 <data android:scheme="alliby" />
             </intent-filter>
 
-            <!-- App Link: https://alliby.ru/?tpay=... (T-Bank payment return, verified) -->
+            <!-- App Link: https://app.alliby.ru/?tpay=... (T-Bank payment return, verified).
+                 alliby.ru оставлен для старых ссылок оплаты/QR (до переезда клиента на app.alliby.ru). -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="app.alliby.ru" />
                 <data android:scheme="https" android:host="alliby.ru" />
             </intent-filter>
 

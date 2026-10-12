@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Alliby',
   // Загружаем живой сайт — нативная оболочка рендерит production URL
   server: {
-    url: 'https://alliby.ru',
+    url: 'https://app.alliby.ru',
     cleartext: false,
   },
   // Папка www нужна Capacitor формально, но реально грузим server.url
