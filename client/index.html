@@ -551,8 +551,42 @@ html.dark .map-attr{background:rgba(0,0,0,.62);color:rgba(255,255,255,.8)}
 .nutri-lbl{font:400 10px/1.2 var(--font-sans);color:var(--fg-4);margin-top:2px}
 .nutri-portion{font:400 12px/1.2 var(--font-sans);color:var(--fg-3);margin-bottom:5px}
 .item-unavail{font:500 12px/1 var(--font-sans);color:var(--err);text-transform:uppercase;letter-spacing:.05em}
-#mi-img{position:relative;width:100%;height:180px;background:var(--bg-2);border-radius:var(--r-2);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:14px;font:400 40px/1 var(--font-display);font-style:italic;color:var(--fg-4)}
-#mi-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;border-radius:var(--r-2)}
+.mi-modal{padding:0;position:relative;max-width:480px}
+.mi-close{position:absolute;top:10px;right:10px;z-index:3;width:34px;height:34px;border-radius:50%;border:none;background:color-mix(in oklch,var(--bg) 82%,transparent);color:var(--fg);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#mi-img{position:relative;width:100%;height:230px;background:var(--bg-2);border-radius:var(--r-3) var(--r-3) 0 0;display:flex;align-items:center;justify-content:center;overflow:hidden;font:400 40px/1 var(--font-display);font-style:italic;color:var(--fg-4)}
+#mi-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+#mi-img.contain img{object-fit:contain;padding:14px}
+.mi-body{padding:16px 18px 6px}
+.mi-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mi-head h3{font:600 20px/1.2 var(--font-sans);margin:0;flex:1;min-width:0}
+.mi-badge{flex-shrink:0;padding:4px 10px;border-radius:999px;background:color-mix(in oklch,var(--accent) 14%,var(--bg));color:var(--accent);font:600 12px/1 var(--font-sans);margin-top:2px}
+.mi-subline{margin-top:3px;font:400 13px/1.3 var(--font-sans);color:var(--fg-4)}
+.mi-desc{margin-top:10px;font:400 14px/1.45 var(--font-sans);color:var(--fg-2)}
+.mi-desc.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.mi-desc-more{display:inline-block;margin-top:2px;font:600 14px/1.4 var(--font-sans);color:var(--fg);cursor:pointer}
+.mi-promo{margin-top:16px;border-radius:var(--r-3);background:var(--bg-2);padding:14px 14px 12px}
+.mi-promo-t{font:700 19px/1.2 var(--font-sans);margin-bottom:12px}
+.mi-promo-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;border:none;border-radius:var(--r-2);background:var(--accent);color:#fff;padding:11px 14px;font:600 14px/1.2 var(--font-sans);cursor:pointer}
+.mi-more-t{margin:18px 0 10px;font:700 19px/1.2 var(--font-sans)}
+.mi-more{display:flex;gap:10px;overflow-x:auto;margin:0 -18px;padding:0 18px 6px;scrollbar-width:none}
+.mi-more::-webkit-scrollbar{display:none}
+.mi-mini{flex:0 0 150px;border:1px solid var(--line-soft);border-radius:var(--r-3);background:var(--bg);overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
+.mi-mini-img{position:relative;height:108px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;color:var(--fg-4)}
+.mi-mini-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:8px}
+.mi-mini-b{padding:8px 10px 10px}
+.mi-mini-n{font:600 13px/1.25 var(--font-sans);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.mi-mini-s{font:400 11px/1.2 var(--font-sans);color:var(--fg-4);margin-top:2px}
+.mi-mini-f{display:flex;align-items:center;justify-content:space-between;margin-top:6px;font:600 13px/1 var(--font-sans)}
+.mi-mini-add{min-width:26px;height:26px;padding:0 7px;border-radius:13px;border:none;background:var(--bg-2);color:var(--fg);font:600 14px/1 var(--font-sans);cursor:pointer}
+.mi-mini-add.on{background:var(--accent);color:#fff}
+.mi-bar{position:sticky;bottom:0;z-index:2;background:var(--bg);border-top:1px solid var(--line-soft);border-radius:0 0 var(--r-3) var(--r-3);padding:10px 18px 14px}
+.mi-bar-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font:400 13px/1.2 var(--font-sans);color:var(--fg-3)}
+.mi-bar-row .price-wrap{display:flex;align-items:baseline;gap:6px}
+.mi-bar-row .price-val,.mi-bar-row .price-sub{font:600 15px/1 var(--font-sans);color:var(--fg)}
+.mi-bar-act{display:flex;gap:10px;align-items:stretch}
+.mi-bar-act .btn{flex:1}
+.mi-stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.mi-stepper .qty-val{min-width:20px;text-align:center}
 .mi-sub-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--line-soft);border-radius:var(--r-2);margin-bottom:6px;cursor:pointer;transition:background var(--t-fast),border-color var(--t-fast)}
 .mi-sub-row:hover{background:var(--bg-2);border-color:var(--accent)}
 .mi-sub-name{font:600 16px/1.3 var(--font-sans)}
@@ -3127,20 +3161,26 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
 </div>
 
 <div class="overlay" id="m-item">
-  <div class="modal">
-    <div class="modal-hd">
-      <h3 id="mi-name"></h3>
-      <button class="modal-x" onclick="closeModal('m-item')">✕</button>
-    </div>
+  <div class="modal mi-modal">
+    <button class="mi-close" onclick="closeModal('m-item')" aria-label="Закрыть">✕</button>
     <div id="mi-img"></div>
-    <div id="mi-desc" class="item-desc" style="margin-bottom:8px"></div>
-    <div id="mi-allergens" style="display:none;margin-bottom:8px;padding:6px 10px;border-radius:var(--r-2);background:color-mix(in oklch,var(--warn) 12%,var(--bg));font:400 12px/1.4 var(--font-sans);color:var(--fg-3)"></div>
-    <div id="mi-nutrition" style="display:none;margin-bottom:10px"></div>
-    <div id="mi-price" class="item-price" style="margin-bottom:10px"></div>
-    <div id="mi-subs"></div>
-    <div id="mi-options" style="margin-top:10px"></div>
-    <div class="modal-ft" style="margin-top:14px">
-      <button id="mi-cart-btn" class="btn btn-p btn-full" onclick="addToCartFromDetail()">В корзину</button>
+    <div class="mi-body">
+      <div class="mi-head"><h3 id="mi-name"></h3><span id="mi-badge" class="mi-badge" style="display:none"></span></div>
+      <div id="mi-subline" class="mi-subline"></div>
+      <div id="mi-desc" class="mi-desc"></div>
+      <div id="mi-allergens" style="display:none;margin-top:10px;padding:6px 10px;border-radius:var(--r-2);background:color-mix(in oklch,var(--warn) 12%,var(--bg));font:400 12px/1.4 var(--font-sans);color:var(--fg-3)"></div>
+      <div id="mi-nutrition" style="display:none;margin-top:10px"></div>
+      <div id="mi-subs" style="margin-top:12px"></div>
+      <div id="mi-options" style="margin-top:12px"></div>
+      <div id="mi-promo"></div>
+      <div id="mi-more-wrap"></div>
+    </div>
+    <div class="mi-bar">
+      <div class="mi-bar-row"><span id="mi-qtylbl"></span><div id="mi-price" class="item-price"></div></div>
+      <div class="mi-bar-act">
+        <div id="mi-stepper" class="mi-stepper" style="display:none"><button class="qty-btn" onclick="_miQtyChange(-1)">−</button><span class="qty-val" id="mi-qty">1</span><button class="qty-btn" onclick="_miQtyChange(1)">+</button></div>
+        <button id="mi-cart-btn" class="btn btn-p" onclick="addToCartFromDetail()">В корзину</button>
+      </div>
     </div>
   </div>
 </div>
@@ -8442,16 +8482,26 @@ function _selectOpt(btn) {
   _updateDetailPrice();
 }
 
+let _miQty = 1;
+function _miQtyChange(d) {
+  _miQty = Math.max(1, Math.min(99, _miQty + d));
+  _updateDetailPrice();
+}
+
 function _updateDetailPrice() {
-  const optEl = document.getElementById('mi-options');
-  if (!optEl) return;
-  let extra = 0;
-  optEl.querySelectorAll('.opt-btn[data-sel="true"]').forEach(btn => { extra += parseFloat(btn.dataset.priceAdd || 0); });
   const priceEl = document.getElementById('mi-price');
-  if (!priceEl) return;
-  const val = priceEl.querySelector('.price-val');
-  if (val) val.textContent = `${_detailBasePrice + extra} ₽`;
-  else priceEl.innerHTML = `<div class="price-wrap"><span class="price-val">${_detailBasePrice + extra} ₽</span></div>`;
+  if (!priceEl || !_detailItem) return;
+  const optEl = document.getElementById('mi-options');
+  let extra = 0;
+  if (optEl) optEl.querySelectorAll('.opt-btn[data-sel="true"]').forEach(btn => { extra += parseFloat(btn.dataset.priceAdd || 0); });
+  const isProduct = _detailItem.item_type !== 'service' && _detailItem.item_type !== 'rental';
+  const qty = isProduct ? _miQty : 1;
+  const qEl = document.getElementById('mi-qty'); if (qEl) qEl.textContent = qty;
+  const lbl = document.getElementById('mi-qtylbl'); if (lbl) lbl.textContent = isProduct ? `${qty} шт` : 'Стоимость';
+  if (extra === 0 && qty === 1) { priceEl.innerHTML = `<div class="price-wrap">${itemPriceHtml(_detailItem)}</div>`; return; }
+  const best = getBestDisc(_detailItem);
+  const unit = (best ? Math.max(0, _detailBasePrice - best.disc) : _detailBasePrice) + extra;
+  priceEl.innerHTML = `<div class="price-wrap"><span class="price-val">${unit * qty} ₽</span></div>`;
 }
 
 function _collectDetailOptions() {
@@ -8466,21 +8516,72 @@ function _collectDetailOptions() {
 
 let _detailItem = null;
 
+function _miMoreHtml(item) {
+  const list = [...itemCache.values()].filter(x => x.id !== item.id && x.store_id === item.store_id
+    && x.is_available && x.item_type !== 'service' && x.item_type !== 'rental').slice(0, 8);
+  if (!list.length || S.storeSubActive === false || !storeCanOrder(S.store)) return '';
+  return `<div class="mi-more-t">Что-нибудь ещё?</div><div class="mi-more">${list.map(x => {
+    const q = _cartQtyForItem(x.id);
+    const sub = x.portion_g != null ? `${x.portion_g} г` : '';
+    return `<div class="mi-mini" onclick="openItemDetail('${x.id}')">
+      <div class="mi-mini-img">${itemFallbackImg(x)}</div>
+      <div class="mi-mini-b"><div class="mi-mini-n">${esc(x.name)}</div>${sub ? `<div class="mi-mini-s">${sub}</div>` : ''}
+        <div class="mi-mini-f"><span>${x.price} ₽</span><button class="mi-mini-add${q ? ' on' : ''}" onclick="event.stopPropagation();_miAddMore('${x.id}')">${q ? q : '+'}</button></div></div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+async function _miAddMore(id) {
+  const open = document.getElementById('m-item')?.classList.contains('open');
+  const cur = _detailItem;
+  await addToCartById(id);
+  // у позиции с опциями addToCartById откроет её карточку — тогда ничего не перерисовываем
+  if (_detailItem !== cur || !open) return;
+  const w = document.getElementById('mi-more-wrap');
+  if (w && cur) { const sx = w.querySelector('.mi-more')?.scrollLeft || 0; w.innerHTML = _miMoreHtml(cur); const m = w.querySelector('.mi-more'); if (m) m.scrollLeft = sx; }
+}
+
+function _miToggleDesc(el) {
+  const d = document.getElementById('mi-desc');
+  const clamped = d.classList.toggle('clamp');
+  el.textContent = clamped ? 'Подробнее' : 'Свернуть';
+}
+
 function openItemDetail(id) {
   const item = itemCache.get(id);
   if (!item) return;
   _detailItem = item;
   _detailBasePrice = item.price;
+  _miQty = 1;
   trackEvent('item_click', S.store?.id, { item_id: item.id, item_name: item.name });
+  const isService = item.item_type === 'service';
+  const isRental = item.item_type === 'rental';
+  const isProduct = !isService && !isRental;
   document.getElementById('mi-name').textContent = item.name;
-  document.getElementById('mi-img').innerHTML = itemFallbackImg(item);
-  const descEl = document.getElementById('mi-desc');
+  const imgEl = document.getElementById('mi-img');
+  imgEl.innerHTML = itemFallbackImg(item);
+  imgEl.classList.toggle('contain', isProduct && S.store?.direction === 'goods');
+  const badge = document.getElementById('mi-badge');
+  badge.textContent = 'Хит';
+  badge.style.display = item.is_hit ? '' : 'none';
+
   const prepLabel = { food: 'Время приготовления', goods: 'Время подготовки', services: 'Время на услугу', sport: 'Время на услугу', education: 'Время на занятие', entertainment: 'Время на услугу' }[S.direction] || 'Время';
-  descEl.innerHTML = [
-    item.description ? `<span>${esc(item.description)}</span>` : '',
-    item.preparation_time > 0 ? `<span style="color:var(--fg-4)">⏱ ${prepLabel}: ${item.preparation_time} мин</span>` : '',
-  ].filter(Boolean).join('<br>');
-  descEl.style.display = (item.description || item.preparation_time > 0) ? '' : 'none';
+  const subParts = [];
+  if (item.portion_g != null) subParts.push(`${item.portion_g} г`);
+  if (item.preparation_time > 0) subParts.push(isService || isRental ? `${item.preparation_time} мин` : `${prepLabel}: ${item.preparation_time} мин`);
+  const subEl = document.getElementById('mi-subline');
+  subEl.textContent = subParts.join(' · ');
+  subEl.style.display = subParts.length ? '' : 'none';
+
+  const descEl = document.getElementById('mi-desc');
+  if (item.description) {
+    const long = item.description.length > 110;
+    descEl.className = 'mi-desc' + (long ? ' clamp' : '');
+    descEl.innerHTML = `<span>${esc(item.description)}</span>` + (long ? `<br><span class="mi-desc-more" onclick="_miToggleDesc(this)">Подробнее</span>` : '');
+    descEl.style.display = '';
+  } else {
+    descEl.style.display = 'none';
+  }
 
   const allerEl = document.getElementById('mi-allergens');
   if (item.allergens) {
@@ -8491,8 +8592,6 @@ function openItemDetail(id) {
   }
 
   renderNutrition(item);
-
-  document.getElementById('mi-price').innerHTML = `<div class="price-wrap">${itemPriceHtml(item)}</div>`;
 
   const applicable = getApplicableSubs(item);
   const subsEl = document.getElementById('mi-subs');
@@ -8512,26 +8611,46 @@ function openItemDetail(id) {
     subsEl.innerHTML = '';
   }
 
-  const btn = document.getElementById('mi-cart-btn');
-  if (S.storeSubActive === false || !storeCanOrder(S.store)) {
-    btn.style.display = 'none';
+  // Баннер «С абонементом выгоднее»: только если у пользователя нет подходящего абонемента
+  const promoEl = document.getElementById('mi-promo');
+  const hint = !applicable.length ? getBestUnownedDiscForItem(item) : null;
+  if (hint) {
+    const pct = hint.sub.discount_type === 'percent' && hint.sub.discount_value
+      ? `${hint.sub.discount_value}%` : `${hint.disc} ₽`;
+    promoEl.innerHTML = `<div class="mi-promo"><div class="mi-promo-t">С абонементом выгоднее на ${pct}</div>
+      <button class="mi-promo-btn" onclick="closeModal('m-item');openSubDetailModal('${esc(hint.sub.id)}')"><span>Перейти к выбору абонемента</span><span>→</span></button></div>`;
   } else {
-    btn.style.display = '';
+    promoEl.innerHTML = '';
+  }
+
+  document.getElementById('mi-more-wrap').innerHTML = _miMoreHtml(item);
+
+  const btn = document.getElementById('mi-cart-btn');
+  const bar = document.querySelector('#m-item .mi-bar');
+  const stepper = document.getElementById('mi-stepper');
+  stepper.style.display = 'none';
+  if (S.storeSubActive === false || !storeCanOrder(S.store)) {
+    bar.style.display = 'none';
+  } else {
+    bar.style.display = '';
     btn.disabled = !item.is_available;
-    if (item.item_type === 'rental' && item.is_available) {
+    if (isRental && item.is_available) {
       btn.textContent = 'Арендовать';
       btn.onclick = () => { closeModal('m-item'); openRentModal(item.id); };
-    } else if (item.item_type === 'service' && item.is_available) {
-      btn.textContent = 'Записаться';
+    } else if (isService && item.is_available) {
+      btn.textContent = 'Записаться на услугу';
       btn.onclick = () => { closeModal('m-item'); openBookingSlotModal(item); };
     } else {
-      btn.textContent = item.is_available ? 'В корзину' : 'Недоступно';
+      btn.textContent = item.is_available ? 'Добавить в корзину' : 'Недоступно';
       btn.onclick = addToCartFromDetail;
+      if (isProduct && item.is_available) stepper.style.display = '';
     }
   }
   const _optEl = document.getElementById('mi-options');
   if (_optEl) _optEl.innerHTML = '';
+  _updateDetailPrice();
   openModal('m-item');
+  const ov = document.getElementById('m-item'); if (ov) ov.scrollTop = 0;
   const _oid = item.id;
   _getOptionGroups(_oid).then(groups => {
     if (_detailItem?.id !== _oid) return;
@@ -8549,11 +8668,12 @@ function goToSubCard(userSubId) {
   setTimeout(() => openSubModal(userSubId), 250);
 }
 
-function addToCartFromDetail() {
+async function addToCartFromDetail() {
   if (!_detailItem) return;
   const options = _collectDetailOptions();
+  const id = _detailItem.id, n = _miQty;
   closeModal('m-item');
-  addToCartById(_detailItem.id, options);
+  for (let i = 0; i < n; i++) await addToCartById(id, options);
 }
 
 // Store items by id for add to cart without JSON injection
