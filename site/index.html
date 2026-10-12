@@ -717,6 +717,9 @@ html[data-theme="light"]{
   --mk-line:rgba(160,145,130,.60);
   --mk-glass:rgba(232,227,219,.80);--mk-chip:rgba(0,0,0,.055);--mk-chip-b:rgba(0,0,0,.10);
 }
+/* голубой на светлом фоне плохо читается — темнее и в переменной, и в акценте разделов (он задан inline, поэтому !important) */
+html[data-theme="light"]{--blue:#4286bb}
+html[data-theme="light"] [style*="--accent-rgb:120,180,224"]{--accent-rgb:66,134,187 !important}
 html[data-theme="light"] nav{background:rgba(250,249,247,.88)}
 html[data-theme="light"] .mk-pin-label{background:rgba(250,249,247,.9);color:var(--fg);border-color:rgba(0,0,0,.12)}
 html[data-theme="light"] .spotlight-visual{
