@@ -4570,6 +4570,7 @@ function loadRentTab() {
 }
 
 
+let _rentListCache = {};
 async function loadMyRentReservations() {
   const el = document.getElementById('ca-rent-mine');
   if (!el) return;
@@ -4579,6 +4580,8 @@ async function loadMyRentReservations() {
   try {
     const rows = await req(`/rest/v1/rent_reservations?user_id=eq.${uid}&select=id,start_at,end_at,quantity,total_price,status,payment_status,menu_items(name,rent_period_unit),stores(name)&order=created_at.desc&limit=50`);
     if (!rows.length) { el.innerHTML = '<div class="empty" style="padding:32px 0">Нет аренд</div>'; return; }
+    _rentListCache = {};
+    rows.forEach(r => { _rentListCache[r.id] = r; });
     el.innerHTML = rows.map(r => {
       const item = r.menu_items || {};
       const store = r.stores || {};
@@ -4586,7 +4589,7 @@ async function loadMyRentReservations() {
       const sl = RENT_STATUS_RU[r.status] || r.status;
       const periodStr = _rentPeriodStr(r);
       const unseenDot = r.status !== 'cancelled' && !_isSeen('rent', r.id) ? `<span class="unseen-dot" data-unseen-for="rent:${r.id}"></span>` : '';
-      return `<div class="card" data-rent-id="${r.id}" style="margin-bottom:10px;padding:12px 14px" onclick="_markSeen('rent','${r.id}')">
+      return `<div class="card" data-rent-id="${r.id}" style="margin-bottom:10px;padding:12px 14px;cursor:pointer" onclick="_markSeen('rent','${r.id}');openRentDetail('${r.id}')">
         ${unseenDot}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <div style="font:600 14px/1.3 var(--font-sans)">${esc(item.name || '—')}</div>
@@ -11870,6 +11873,7 @@ function openRentDetail(id) {
     const r = (_myBk.rentByDate[k] || []).find(x => x.id === id);
     if (r) { renderRentDetailModal(r); return; }
   }
+  if (_rentListCache[id]) renderRentDetailModal(_rentListCache[id]);
 }
 
 function renderRentDetailModal(r) {
