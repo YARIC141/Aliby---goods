@@ -13,7 +13,9 @@
  */
 
 const ALLOWED_ORIGINS = [
+  'https://app.alliby.ru',
   'https://alliby.ru',
+  'https://app-test.alliby.ru',
 ]
 
 function corsHeadersFor(origin: string | null) {

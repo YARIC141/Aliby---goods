@@ -20,7 +20,7 @@
  * Basic он вернётся ошибкой самого FatSecret, которую отдаём клиенту как есть.
  */
 
-const ALLOWED_ORIGINS = ['https://alliby.ru']
+const ALLOWED_ORIGINS = ['https://app.alliby.ru', 'https://alliby.ru', 'https://app-test.alliby.ru']
 
 function corsHeadersFor(origin: string | null) {
   const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]

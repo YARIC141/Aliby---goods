@@ -9,7 +9,7 @@
  * Ответ — JSON Open Food Facts как есть (нормализует клиент).
  */
 
-const ALLOWED_ORIGINS = ['https://alliby.ru']
+const ALLOWED_ORIGINS = ['https://app.alliby.ru', 'https://alliby.ru', 'https://app-test.alliby.ru']
 const FIELDS = 'code,product_name,brands,nutriments,serving_quantity'
 const UA = 'Alliby/1.0 (alliby.app@gmail.com)'
 

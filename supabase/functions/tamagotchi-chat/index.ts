@@ -23,7 +23,9 @@
  */
 
 const ALLOWED_ORIGINS = [
+  'https://app.alliby.ru',
   'https://alliby.ru',
+  'https://app-test.alliby.ru',
 ]
 
 const ALLOWED_EMAIL = 'yarich92@gmail.com'

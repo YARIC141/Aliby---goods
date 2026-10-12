@@ -2,6 +2,19 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<script>
+// Мост на приложение: раньше клиент жил на alliby.ru/, теперь на app.alliby.ru.
+// Старые QR (#store=), возвраты оплаты (?tpay=), промо-ссылки, письма входа и
+// установленное приложение (Capacitor/PWA) уводим на новый адрес с тем же query/hash.
+(function () {
+  var APP = location.hostname === 'test.alliby.ru' ? 'https://app-test.alliby.ru/client/' : 'https://app.alliby.ru/';
+  var sp = new URLSearchParams(location.search);
+  ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','yclid','gclid','fbclid','_openstat','from','ysclid'].forEach(function (k) { sp.delete(k); });
+  var link = sp.toString() !== '' || /(^#|&)(store|access_token|error|error_description|type)=/.test(location.hash);
+  var inApp = !!window.Capacitor || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  if (link || inApp) location.replace(APP + location.search + location.hash);
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alliby — агрегатор товаров и услуг: заказы, запись и доставка без комиссии</title>
 <meta name="description" content="Еда, товары, услуги и аренда на одной карте — без сервисных сборов для клиентов. Для бизнеса: свой магазин, онлайн-запись и доставка с 0% комиссии, от 930 ₽/мес.">
@@ -9,16 +22,16 @@
 <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="shortcut icon" href="favicon.ico">
-<link rel="canonical" href="https://site.alliby.ru/">
+<link rel="canonical" href="https://alliby.ru/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://site.alliby.ru/">
+<meta property="og:url" content="https://alliby.ru/">
 <meta property="og:title" content="Alliby — агрегатор товаров и услуг: заказы, запись и доставка без комиссии">
 <meta property="og:description" content="Еда, товары, услуги и аренда на одной карте — без сервисных сборов для клиентов. Для бизнеса: свой магазин, онлайн-запись и доставка с 0% комиссии, от 930 ₽/мес.">
-<meta property="og:image" content="https://site.alliby.ru/og-image.png">
+<meta property="og:image" content="https://alliby.ru/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Alliby — агрегатор товаров и услуг: заказы, запись и доставка без комиссии">
 <meta name="twitter:description" content="Агрегатор товаров и услуг с картой заведений, заказами и доставкой для клиентов — и электронный магазин с сервисом доставки для бизнеса, без комиссий.">
-<meta name="twitter:image" content="https://site.alliby.ru/og-image.png">
+<meta name="twitter:image" content="https://alliby.ru/og-image.png">
 <meta name="keywords" content="агрегатор товаров и услуг, сервис доставки, сервисы доставки, электронный магазин для бизнеса, онлайн заказ еды, доставка еды, кафе рядом, меню онлайн, запись к мастеру, бронирование онлайн, аренда оборудования онлайн, абонемент вместо программы лояльности, подарочный абонемент, QR меню ресторана, приём онлайн оплаты для бизнеса, CRM для малого бизнеса, маркетплейс без комиссии, платформа для бизнеса, Alliby">
 <meta name="robots" content="index, follow">
 <meta name="google-site-verification" content="RWOZho2bDiWPd3TkodtoWfV14ZwKcL-3_W1REIDIpv4"/>
@@ -997,14 +1010,14 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Alliby",
-    "url": "https://site.alliby.ru/",
+    "url": "https://alliby.ru/",
     "description": "Агрегатор товаров и услуг с сервисом доставки для клиентов и электронный магазин для бизнеса"
   },
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Alliby",
-    "url": "https://alliby.ru/",
+    "url": "https://app.alliby.ru/",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
     "description": "Сервис для онлайн-заказов еды и товаров, записи к мастерам и управления заведением. Работает в браузере без установки.",
@@ -1031,8 +1044,8 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
     "publisher": {
       "@type": "Organization",
       "name": "Alliby",
-      "url": "https://site.alliby.ru/",
-      "logo": "https://site.alliby.ru/favicon.svg"
+      "url": "https://alliby.ru/",
+      "logo": "https://alliby.ru/favicon.svg"
     }
   }
 ]
@@ -1253,7 +1266,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
       Первый раз в приложении? <a href="/help-client" style="color:var(--brand);font-weight:600">Инструкция по работе с Alliby →</a>
     </p>
     <div style="text-align:center;margin-top:28px">
-      <a class="btn-orange" href="https://alliby.ru/">
+      <a class="btn-orange" href="https://app.alliby.ru/">
         Открыть Alliby
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
       </a>
@@ -1853,7 +1866,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
     <a href="#pricing">Тарифы</a>
     <a href="/articles">Статьи</a>
     <a href="#team">Команда</a>
-    <a href="https://alliby.ru/">Приложение</a>
+    <a href="https://app.alliby.ru/">Приложение</a>
     <a href="/privacy">Конфиденциальность</a>
     <a href="/terms">Условия использования</a>
     <a href="/license">Лицензионный договор</a>
@@ -1865,7 +1878,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
     <div class="footer-app">
       <div class="footer-app-hd"><b class="footer-app-name c-client">Alliby</b><span class="footer-app-cap">Для клиентов</span></div>
       <div class="footer-app-links">
-        <a href="https://alliby.ru/"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Веб-версия</a>
+        <a href="https://app.alliby.ru/"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Веб-версия</a>
         <a href="https://play.google.com/store/apps/details?id=ru.alliby.app&amp;pcampaignid=web_share" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 28.99 31.99" aria-hidden="true"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg> Google Play</a>
       </div>
     </div>

@@ -399,11 +399,11 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
       <div class="fg"><label>Минимальное вознаграждение за заказ, ₽</label><input type="number" id="ob-reward" min="0" step="10" placeholder="150"></div>
       <label style="position:relative;display:block;padding-left:26px;font-size:12px;color:var(--fg-3);margin-bottom:8px;cursor:pointer">
         <input type="checkbox" id="ob-terms-check" onchange="_updateObBtn()" style="position:absolute;left:0;top:2px;width:18px;height:18px;margin:0;accent-color:var(--accent)">
-        Мне исполнилось 18 лет. Я ознакомился и принимаю условия <a href="https://site.alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Оферты Alliby Carry</a> и соглашаюсь с Правилами использования простой электронной подписи
+        Мне исполнилось 18 лет. Я ознакомился и принимаю условия <a href="https://alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Оферты Alliby Carry</a> и соглашаюсь с Правилами использования простой электронной подписи
       </label>
       <label style="position:relative;display:block;padding-left:26px;font-size:12px;color:var(--fg-3);margin-bottom:8px;cursor:pointer">
         <input type="checkbox" id="ob-pd-check" onchange="_updateObBtn()" style="position:absolute;left:0;top:2px;width:18px;height:18px;margin:0;accent-color:var(--accent)">
-        Даю согласие на обработку персональных данных в соответствии с <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой конфиденциальности</a>
+        Даю согласие на обработку персональных данных в соответствии с <a href="https://alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политикой конфиденциальности</a>
       </label>
       <button class="btn btn-p btn-full" id="ob-btn" onclick="doBecomeCourier()" disabled>Стать курьером</button>
       <button class="btn btn-full" onclick="openHelp()" style="margin-top:8px">Как это работает</button>
@@ -499,7 +499,7 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
   <div class="ph">
     <button class="icon-btn" onclick="closeHelp()" title="Назад" style="flex-shrink:0">←</button>
     <h2 style="flex:1;margin:0">Инструкция</h2>
-    <a href="https://site.alliby.ru/help-carry" target="_blank" rel="noopener" class="hlp-site-link">На сайте ↗</a>
+    <a href="https://alliby.ru/help-carry" target="_blank" rel="noopener" class="hlp-site-link">На сайте ↗</a>
   </div>
   <div class="screen-body" id="help-scroll">
     <div class="hlp">
@@ -894,8 +894,8 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
 
         <div class="hlp-sub">Документы</div>
         <ul>
-          <li><a href="https://site.alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Условия использования Alliby Carry</a> — оферта, которую вы подписали при регистрации.</li>
-          <li><a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политика конфиденциальности</a></li>
+          <li><a href="https://alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Условия использования Alliby Carry</a> — оферта, которую вы подписали при регистрации.</li>
+          <li><a href="https://alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политика конфиденциальности</a></li>
         </ul>
         <a class="hlp-back" onclick="helpTop()">↑ К содержанию</a>
       </section>
@@ -941,9 +941,9 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
       <span>Инструкция</span><span style="color:var(--fg-4);font-size:18px">›</span>
     </button>
     <div style="font-size:13px;text-align:center;margin-bottom:10px">
-      <a href="https://site.alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Условия использования Alliby Carry</a>
+      <a href="https://alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Условия использования Alliby Carry</a>
       &nbsp;·&nbsp;
-      <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политика конфиденциальности</a>
+      <a href="https://alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политика конфиденциальности</a>
     </div>
     <button class="btn btn-d btn-full" id="pf-delete-btn" onclick="doDeleteAccount()">Удалить аккаунт</button>
     <p style="font-size:11px;color:var(--fg-3);text-align:center;margin-top:8px">Удаляются только курьерские данные — если этот email также используется как покупатель или в панели продавца, тот аккаунт останется. Если больше нигде не используется — стирается вход целиком.</p>
@@ -994,7 +994,7 @@ a[style*="color:var(--accent)"]{color:var(--link-c)!important;text-decoration:un
 <div class="overlay" id="m-geo-consent">
   <div class="modal" style="max-width:420px">
     <div class="modal-hd"><h3>Согласие на передачу геопозиции</h3></div>
-    <p style="font-size:13px;color:var(--fg-3);line-height:1.5">Пока включён статус «На смене», приложение передаёт вашу геопозицию для алгоритмического подбора ближайших заказов — в том числе до момента принятия конкретного заказа. Вы можете в любой момент отозвать согласие, выключив статус «На смене»; подробнее — в <a href="https://site.alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Оферте</a> (п. 6.2) и <a href="https://site.alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политике конфиденциальности</a>.</p>
+    <p style="font-size:13px;color:var(--fg-3);line-height:1.5">Пока включён статус «На смене», приложение передаёт вашу геопозицию для алгоритмического подбора ближайших заказов — в том числе до момента принятия конкретного заказа. Вы можете в любой момент отозвать согласие, выключив статус «На смене»; подробнее — в <a href="https://alliby.ru/carry-terms" target="_blank" rel="noopener" style="color:var(--accent)">Оферте</a> (п. 6.2) и <a href="https://alliby.ru/privacy" target="_blank" rel="noopener" style="color:var(--accent)">Политике конфиденциальности</a>.</p>
     <div class="modal-ft">
       <button class="btn" onclick="declineGeoConsent()">Не сейчас</button>
       <button class="btn btn-p" id="geo-consent-accept-btn" onclick="confirmGeoConsent()">Согласен, включить смену</button>
@@ -1578,7 +1578,7 @@ Email: yarich92@gmail.com
 текущему назначенному Заказу; номер Курьера аналогично раскрывается
 Покупателю и Продавцу.
 6.4. Порядок обработки определён Политикой конфиденциальности:
-site.alliby.ru/privacy — неотъемлемой частью настоящей Оферты.
+alliby.ru/privacy — неотъемлемой частью настоящей Оферты.
 
 7. АКЦЕПТ И СОГЛАШЕНИЕ ОБ ИСПОЛЬЗОВАНИИ ПРОСТОЙ ЭЛЕКТРОННОЙ ПОДПИСИ
 7.1. Акцепт — регистрация Курьера и подтверждение согласия
@@ -1606,7 +1606,7 @@ IP + user-agent + timestamp UTC сохраняются в базе данных
 Сервиса, отключив смену и (или) удалив учётную запись.
 8.3. Оператор вправе менять условия; при существенном ухудшении —
 уведомление за 45 календарных дней. Актуальная версия:
-site.alliby.ru/carry-terms.
+alliby.ru/carry-terms.
 8.4. Оператор вправе заблокировать учётную запись немедленно при
 существенном нарушении условий или законодательства РФ.
 

@@ -1,4 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /rest/
+Disallow: /auth/
+Disallow: /functions/
+Disallow: /storage/
+Disallow: /realtime/
+Disallow: /api/
+Disallow: /pay/
+Disallow: /tamagotchi/
+Disallow: /osm-tiles/
 
-Sitemap: https://site.alliby.ru/sitemap.xml
+Sitemap: https://alliby.ru/sitemap.xml

@@ -3,7 +3,7 @@
  * Called by a Postgres trigger (notify_courier_banned, see migration
  * 20240101000125) whenever profiles.courier_banned flips to true.
  * Sends the courier an email — the primary moderation-notice channel per
- * §5.4а of the Carry offer (site.alliby.ru/carry-terms).
+ * §5.4а of the Carry offer (alliby.ru/carry-terms).
  * Auth: x-push-secret header (same shared secret as send-push).
  */
 
@@ -48,7 +48,7 @@ function buildEmailHtml(reason: string | null): string {
       это основной канал связи по вопросам модерации согласно п.&nbsp;5.4а Оферты Alliby&nbsp;Carry.
     </p>
     <p style="font-size:11px;color:#9ca3af;margin-top:20px">
-      Alliby Carry · site.alliby.ru/carry-terms
+      Alliby Carry · alliby.ru/carry-terms
     </p>
   </div>
 </body>
