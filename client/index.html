@@ -8572,8 +8572,7 @@ function openItemDetail(id) {
   badge.textContent = item.is_new ? 'Новинка' : 'Хит';
   badge.style.display = (item.is_new || item.is_hit) ? '' : 'none';
   const extraEl = document.getElementById('mi-extra');
-  const inclLines = (item.includes || '').split('
-').map(x => x.trim()).filter(Boolean);
+  const inclLines = (item.includes || '').split(String.fromCharCode(10)).map(x => x.trim()).filter(Boolean);
   extraEl.innerHTML = (inclLines.length ? `<div class="mi-sec-t">Что входит в услугу</div><ul class="mi-incl">${inclLines.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '')
     + (item.composition ? `<div class="mi-sec-t">Состав</div><div class="mi-comp">${esc(item.composition)}</div>` : '');
 
