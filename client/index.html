@@ -4610,6 +4610,7 @@ async function loadMyRentReservations() {
 function openRentModal(itemId) {
   const item = itemCache.get(itemId);
   if (!item) return;
+  if (S.storeSubActive === false && (!item.store_id || item.store_id === S.store?.id)) { showGeoToast(BOOKING_OFF_MSG); return; }
   _rentItem = item;
   _rentQty  = 1;
   _rentStartDate = null;
@@ -5071,7 +5072,7 @@ function rentCalcTotal() {
   const canPay = S.storeSubActive !== false;
   const useSubNow = !!(_rentFullSub && _rentUseSub);
   if (addBtn)  addBtn.style.display  = (!isTimeUnit && canPay && !useSubNow) ? '' : 'none';
-  if (bookBtn) bookBtn.style.display = S.store?.allow_unpaid_booking ? '' : 'none';
+  if (bookBtn) bookBtn.style.display = (canPay && S.store?.allow_unpaid_booking) ? '' : 'none';
   if (payBtn)  payBtn.style.display  = canPay ? '' : 'none';
   if (payBtn)  payBtn.textContent    = useSubNow ? 'Оплатить абонементом' : 'Оплатить';
 
@@ -8314,9 +8315,11 @@ function itemFallbackImg(item, alt) {
 function itemActions(item, qty) {
   if (!item.is_available) return '<span class="item-unavail">Недоступно</span>';
   if (item.item_type === 'rental') {
+    if (S.storeSubActive === false) return '<span class="item-unavail">Бронь недоступна</span>';
     return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();openRentModal('${item.id}')">Арендовать</button>`;
   }
   if (item.item_type === 'service') {
+    if (S.storeSubActive === false) return '<span class="item-unavail">Запись недоступна</span>';
     if (_schedulePreselect) {
       return `<button class="btn btn-p btn-sm" onclick="event.stopPropagation();bookWithPreselect(this,itemCache.get('${item.id}'))">Записаться ${_schedulePreselect.start}</button>`;
     }
@@ -13020,9 +13023,23 @@ function _personalWorkWindow(masterId, ds) {
   return _computePersonalWindow(storeWindows, daySched, dayRange, durMin);
 }
 
+// Онлайн-запись и бронирование доступны только заведениям с подпиской Alliby Бизнес.
+// Для текущего заведения берём уже проверенный S.storeSubActive, для другого (календарь,
+// перенос) — спрашиваем сервер. Ошибка сети не блокирует: сервер всё равно проверит при вставке.
+async function storeBookable(storeId) {
+  if (!storeId || (S.store?.id === storeId && S.storeSubActive !== undefined)) return S.storeSubActive !== false;
+  try {
+    return (await req('/rest/v1/rpc/is_store_subscription_active', {
+      method: 'POST', body: JSON.stringify({ p_store_id: storeId }),
+    })) === true;
+  } catch { return true; }
+}
+const BOOKING_OFF_MSG = 'Онлайн-запись в этом заведении сейчас недоступна';
+
 async function openBookingSlotModal(item, rescheduleId = null, preselectedMasterId = null, preselectedSlot = null) {
   if (!S.session) { _pendingNavAfterAuth = 'store'; goTo('auth'); return; }
   if (!item) return;
+  if (!rescheduleId && !(await storeBookable(item.store_id || S.store?.id))) { showGeoToast(BOOKING_OFF_MSG); return; }
   _booking.item = item;
   _booking.rescheduleId = rescheduleId || null;
   _booking.preselectedSlot = preselectedSlot || null;
