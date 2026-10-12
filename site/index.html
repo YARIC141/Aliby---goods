@@ -678,11 +678,15 @@ footer{
 .ag-question{font:400 20px/1.3 var(--font-display);color:var(--fg);margin-bottom:22px}
 .ag-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
 .ag-btn{
-  flex:1;min-width:160px;max-width:220px;padding:18px 28px;border-radius:var(--r-4);border:none;cursor:pointer;
+  flex:1;min-width:160px;max-width:220px;display:flex;align-items:stretch;overflow:hidden;border-radius:var(--r-4);border:none;
   font:700 17px/1 var(--font-sans);color:#fff;
   transition:transform .16s,box-shadow .16s;
 }
 .ag-btn:hover{transform:translateY(-2px)}
+.ag-main{flex:1;padding:18px 10px 18px 22px;background:none;border:0;color:inherit;font:inherit;cursor:pointer;text-align:center}
+.ag-open{display:flex;align-items:center;justify-content:center;width:50px;flex:none;border-left:1px solid rgba(255,255,255,.35);color:#fff;text-decoration:none;transition:background .16s}
+.ag-open:hover{background:rgba(0,0,0,.14)}
+.ag-open svg{transition:transform .16s}.ag-open:hover svg{transform:translate(1px,-1px)}
 .ag-btn.ag-client{background:var(--brand);box-shadow:0 10px 30px rgba(232,116,59,.3)}
 .ag-btn.ag-client:hover{background:var(--brand-deep);box-shadow:0 14px 36px rgba(232,116,59,.4)}
 .ag-btn.ag-business{background:var(--blue);box-shadow:0 10px 30px rgba(120,180,224,.3)}
@@ -1154,9 +1158,18 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
   <div class="audience-gate">
     <div class="ag-question">Кто ты?</div>
     <div class="ag-btns">
-      <button class="ag-btn ag-client" onclick="scrollToAudience('client')">Клиент</button>
-      <button class="ag-btn ag-business" onclick="scrollToAudience('business')">Бизнес</button>
-      <button class="ag-btn ag-courier" onclick="scrollToAudience('courier')">Курьер</button>
+      <div class="ag-btn ag-client">
+        <button type="button" class="ag-main" onclick="scrollToAudience('client')">Клиент</button>
+        <a class="ag-open" href="https://app.alliby.ru/" title="Открыть Alliby" aria-label="Открыть приложение Alliby"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+      </div>
+      <div class="ag-btn ag-business">
+        <button type="button" class="ag-main" onclick="scrollToAudience('business')">Бизнес</button>
+        <a class="ag-open" href="https://admin.alliby.ru/" title="Открыть Alliby Business" aria-label="Открыть приложение Alliby Business"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+      </div>
+      <div class="ag-btn ag-courier">
+        <button type="button" class="ag-main" onclick="scrollToAudience('courier')">Курьер</button>
+        <a class="ag-open" href="https://carry.alliby.ru/" title="Открыть Alliby Carry" aria-label="Открыть приложение Alliby Carry"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+      </div>
     </div>
   </div>
 </header>
