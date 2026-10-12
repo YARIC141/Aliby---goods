@@ -952,7 +952,7 @@ html[data-theme="light"] .dir-card:hover{background:rgba(255,255,255,.78)}
    Фон непрозрачный (--dir-surface), иначе граница карточки просвечивает под ярлыком. */
 .dir-tab,.dir-panel{--dir-surface:color-mix(in srgb,rgb(var(--accent-rgb)) 11%,var(--bg-1));--dir-edge:rgba(var(--accent-rgb),.45)}
 html[data-theme="light"] .dir-tab,html[data-theme="light"] .dir-panel{--dir-surface:color-mix(in srgb,rgb(var(--accent-rgb)) 8%,var(--bg-1))}
-.dir-tablist{position:relative;z-index:1;display:flex;flex-wrap:nowrap;align-items:flex-end;gap:4px;padding:0 18px;overflow-x:auto;scrollbar-width:none;scroll-margin-top:88px}
+.dir-tablist{position:relative;z-index:1;display:flex;flex-wrap:nowrap;align-items:flex-end;gap:4px;padding:0 18px;overflow-x:auto;scrollbar-width:none;scroll-margin-top:148px}
 .dir-tablist::-webkit-scrollbar{display:none}
 .dir-tab{display:inline-flex;align-items:center;gap:9px;padding:13px 18px 14px;border-radius:14px 14px 0 0;background:rgba(255,255,255,.04);border:1px solid var(--line);border-bottom:0;font:700 15px/1 var(--font-sans);color:var(--fg-2);cursor:pointer;white-space:nowrap;transition:background .16s,color .16s}
 .dir-tab svg{color:rgb(var(--accent-rgb));flex-shrink:0}
@@ -965,6 +965,8 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
 .dir-tabs.js-tabs .dir-panel:not(.active){display:none}
 /* Alliby Carry — не направление, а доставка для всех: отдельная карточка после вкладок */
 .dir-after{margin-top:44px}
+.dir-group-h{text-align:center;margin:0 0 18px;font:400 clamp(22px,3vw,28px)/1.2 var(--font-display);letter-spacing:-.01em;color:var(--fg)}
+.dir-group-h+.dir-after-label{margin-top:-10px}
 .dir-after-label{text-align:center;margin:0 0 14px;font:700 12px/1.2 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3)}
 .dir-panel-solo{margin-top:0}
 .dir-tabs.js-tabs .dir-panel.active>*{animation:dir-in .22s ease-out}
@@ -1187,6 +1189,7 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
     </div>
 
     <div class="dir-tabs" data-audience="client">
+      <h3 class="dir-group-h">Возможности Alliby</h3>
       <div class="dir-tablist" role="tablist" aria-label="Направления для клиентов">
         <button type="button" class="dir-tab" role="tab" id="tab-dir-client-food" aria-controls="dir-client-food" aria-selected="true" tabindex="0" style="--accent-rgb:232,116,59"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg><span>Еда</span></button>
         <button type="button" class="dir-tab" role="tab" id="tab-dir-client-goods" aria-controls="dir-client-goods" aria-selected="false" tabindex="-1" style="--accent-rgb:53,168,98"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span>Товары</span></button>
@@ -1197,7 +1200,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel active" id="dir-client-food" role="tabpanel" aria-labelledby="tab-dir-client-food" data-key="food" style="--accent:var(--brand);--accent-rgb:232,116,59">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
           <div class="dir-title">Еда</div>
           <p class="dir-lede">Голод — самая частая причина открыть телефон. Закрываем её за пару касаний.</p>
@@ -1212,7 +1214,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-client-goods" role="tabpanel" aria-labelledby="tab-dir-client-goods" data-key="goods" style="--accent:var(--green);--accent-rgb:53,168,98">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
           <div class="dir-title">Товары</div>
           <p class="dir-lede">От аптеки до техномаркета — заказ без похода в магазин.</p>
@@ -1227,7 +1228,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-client-services" role="tabpanel" aria-labelledby="tab-dir-client-services" data-key="services" style="--accent:var(--blue);--accent-rgb:120,180,224">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
           <div class="dir-title">Услуги</div>
           <p class="dir-lede">Барбершоп, салон красоты, мастерская — запись, которая не путается.</p>
@@ -1243,7 +1243,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-client-sport" role="tabpanel" aria-labelledby="tab-dir-client-sport" data-key="sport" style="--accent:var(--red);--accent-rgb:239,68,68">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
           <div class="dir-title">Спорт</div>
           <p class="dir-lede">Зал, корт, персональный тренер — прогресс без звонков администратору.</p>
@@ -1259,7 +1258,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-client-education" role="tabpanel" aria-labelledby="tab-dir-client-education" data-key="education" style="--accent:var(--violet);--accent-rgb:99,102,241">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg></div>
           <div class="dir-title">Образование</div>
           <p class="dir-lede">Языковая школа, курсы, репетитор — занятия и расписание без звонков в администрацию.</p>
@@ -1274,7 +1272,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-client-entertainment" role="tabpanel" aria-labelledby="tab-dir-client-entertainment" data-key="entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg></div>
           <div class="dir-title">Развлечения</div>
           <p class="dir-lede">Компьютерный клуб, квеструм, караоке, каток — в одном заведении сразу всё.</p>
@@ -1348,6 +1345,7 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
     </div>
 
     <div class="dir-tabs" data-audience="business">
+      <h3 class="dir-group-h">Возможности Alliby Business</h3>
       <div class="dir-tablist" role="tablist" aria-label="Направления для бизнеса">
         <button type="button" class="dir-tab" role="tab" id="tab-dir-business-food" aria-controls="dir-business-food" aria-selected="true" tabindex="0" style="--accent-rgb:232,116,59"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg><span>Еда</span></button>
         <button type="button" class="dir-tab" role="tab" id="tab-dir-business-goods" aria-controls="dir-business-goods" aria-selected="false" tabindex="-1" style="--accent-rgb:53,168,98"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span>Товары</span></button>
@@ -1358,7 +1356,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel active" id="dir-business-food" role="tabpanel" aria-labelledby="tab-dir-business-food" data-key="food" style="--accent:var(--brand);--accent-rgb:232,116,59">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby Business</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3"/><line x1="21" y1="15" x2="21" y2="22"/></svg></div>
           <div class="dir-title">Еда</div>
           <p class="dir-lede">Рестораны, кофейни, бары — от меню до курьера.</p>
@@ -1374,7 +1371,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-business-goods" role="tabpanel" aria-labelledby="tab-dir-business-goods" data-key="goods" style="--accent:var(--green);--accent-rgb:53,168,98">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby Business</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg></div>
           <div class="dir-title">Товары</div>
           <p class="dir-lede">Магазины и точки продаж — каталог, который продаёт и сдаёт в аренду.</p>
@@ -1390,7 +1386,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-business-services" role="tabpanel" aria-labelledby="tab-dir-business-services" data-key="services" style="--accent:var(--blue);--accent-rgb:120,180,224">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby Business</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></div>
           <div class="dir-title">Услуги</div>
           <p class="dir-lede">Салоны, мастерские, студии — расписание, которое не путается.</p>
@@ -1407,7 +1402,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-business-sport" role="tabpanel" aria-labelledby="tab-dir-business-sport" data-key="sport" style="--accent:var(--red);--accent-rgb:239,68,68">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby Business</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
           <div class="dir-title">Спорт</div>
           <p class="dir-lede">Фитнес-клубы, залы, корты, секции — расписание тренеров и загрузка зала.</p>
@@ -1424,7 +1418,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-business-education" role="tabpanel" aria-labelledby="tab-dir-business-education" data-key="education" style="--accent:var(--violet);--accent-rgb:99,102,241">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby Business</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8.5L12 3 2 8.5l10 5.5 10-5.5z"/><path d="M6 11.5v6c3 3.5 9 3.5 12 0v-6"/><line x1="22" y1="8.5" x2="22" y2="15"/></svg></div>
           <div class="dir-title">Образование</div>
           <p class="dir-lede">Языковые школы, курсы, репетиторские центры — расписание групп и загрузка преподавателей.</p>
@@ -1440,7 +1433,6 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
       </div>
       <div class="dir-panel" id="dir-business-entertainment" role="tabpanel" aria-labelledby="tab-dir-business-entertainment" data-key="entertainment" style="--accent:var(--gold);--accent-rgb:234,179,8">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby Business</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11h4M8 9v4M15 12h.01M18 10h.01"/><path d="M17.32 5H6.68a4 4 0 0 0-3.98 3.59C2.6 9.42 2 14.46 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.41-1.41A2 2 0 0 1 9.83 16h4.34a2 2 0 0 1 1.41.59L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.55-.6-6.58-.69-7.26A4 4 0 0 0 17.32 5z"/></svg></div>
           <div class="dir-title">Развлечения</div>
           <p class="dir-lede">Компьютерные клубы, квесты, VR — самый гибкий формат каталога.</p>
@@ -1523,10 +1515,10 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
     </div>
 
     <div class="dir-after">
+      <h3 class="dir-group-h">Возможности Alliby Carry</h3>
       <p class="dir-after-label">Для заведений — свои курьеры и рынок исполнителей</p>
       <div class="dir-panel dir-panel-solo" id="dir-business-courier" data-key="courier" data-audience="business" style="--accent:var(--teal);--accent-rgb:20,184,166">
         <div class="dir-feat">
-          <span class="scenario-eyebrow">Возможности Alliby Carry</span>
           <div class="dir-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg></div>
           <div class="dir-title">Alliby Carry — взаимодействие с курьерами без посредников</div>
           <p class="dir-lede">Свой штатный курьер или открытый рынок исполнителей — доставка не встаёт, даже если водитель заболел.</p>
