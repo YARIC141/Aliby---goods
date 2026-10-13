@@ -11,6 +11,12 @@
   var origFetch = window.fetch ? window.fetch.bind(window) : null;
   if (!origFetch) return;
   var count = 0, seen = {}, flushing = false, t0 = Date.now();
+  // Свёрнутое приложение / уход со страницы: ОС рвёт сеть и загрузки — это не ошибки, не пишем.
+  var lastHide = document.hidden ? Date.now() : 0, lastVis = 0;
+  function onHide() { lastHide = lastVis = Date.now(); }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) onHide(); else lastVis = Date.now(); });
+  window.addEventListener('pagehide', onHide);
+  function bg(since) { return document.hidden || Date.now() - lastVis < 3000 || (since != null && lastHide >= since); }
   function rd() { try { return JSON.parse(localStorage.getItem(K) || '[]'); } catch (e) { return []; } }
   function wr(a) { try { localStorage.setItem(K, JSON.stringify(a.slice(-30))); } catch (e) {} }
   function page() { return location.origin + location.pathname; }
@@ -52,7 +58,7 @@
 
   window.addEventListener('error', function (e) {
     var t = e.target;
-    if (t && t !== window && (t.src || t.href)) { log('resource', short(t.src || t.href), { tag: t.tagName }); return; }
+    if (t && t !== window && (t.src || t.href)) { if (bg()) return; log('resource', short(t.src || t.href), { tag: t.tagName }); return; }
     log('js', (e.message || 'error') + ' @' + short(e.filename || '') + ':' + (e.lineno || 0) + ':' + (e.colno || 0));
   }, true);
   window.addEventListener('unhandledrejection', function (e) {
@@ -68,7 +74,7 @@
       if (r.status >= 500) log('http_' + r.status, short(url), { ms: Date.now() - s });
       return r;
     }, function (e) {
-      log('fetch_fail', (e && e.name || 'Error') + ': ' + (e && e.message || '') + ' ' + short(url), { ms: Date.now() - s });
+      if (!(e && e.name === 'AbortError') && !bg(s)) log('fetch_fail', (e && e.name || 'Error') + ': ' + (e && e.message || '') + ' ' + short(url), { ms: Date.now() - s });
       throw e;
     });
   };
