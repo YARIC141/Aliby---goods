@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дерево решений клиента: где спортивная секция теряет людей и как их вернуть — Alliby</title>
+<meta name="description" content="Путь клиента спортивного клуба от первого интереса до постоянных занятий: 16 точек, где человек уходит, кто решает это вручную и что Alliby делает автоматически.">
+<link rel="canonical" href="https://alliby.ru/articles/derevo-resheniy-klienta">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Alliby">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Дерево решений клиента: где спортивная секция теряет людей и как их вернуть">
+<meta property="og:description" content="Путь клиента спортивного клуба от первого интереса до постоянных занятий: 16 точек, где человек уходит, кто решает это вручную и что Alliby делает автоматически.">
+<meta property="og:url" content="https://alliby.ru/articles/derevo-resheniy-klienta">
+<meta property="og:image" content="https://alliby.ru/og-image.png">
+<meta property="article:published_time" content="2026-10-15">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap">
+<style>
+  /* Макет: вертикальный ствол из 9 этапов; на этапах 1 и 4 ствол ветвится на колонки.
+     Красное = где теряем клиента, зелёное = что делает Alliby. */
+  :root {
+    --bg: #f2f5f9;
+    --surface: #ffffff;
+    --ink: #13202e;
+    --muted: #556374;
+    --line: #d9e0e8;
+    --brand: #e8743b;
+    --node: #13202e;
+    --node-ink: #ffffff;
+    --plate: #13202e;
+    --plate-ink: #f2f5f9;
+    --loss-bg: #fdeeee;
+    --loss-ink: #9c2a2a;
+    --loss-line: #f2c6c6;
+    --gain-bg: #e7f6ee;
+    --gain-ink: #17653f;
+    --gain-line: #b8e0ca;
+    --font-body: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Unbounded', 'Onest', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1620; --surface: #172230; --ink: #e8edf3; --muted: #9ba9b9; --line: #26354a;
+      --node: #e8edf3; --node-ink: #0e1620; --plate: #1f3249; --plate-ink: #eef2f7;
+      --loss-bg: #3a1e22; --loss-ink: #f2a8a8; --loss-line: #5b2d33;
+      --gain-bg: #153227; --gain-ink: #93dab3; --gain-line: #25553f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1620; --surface: #172230; --ink: #e8edf3; --muted: #9ba9b9; --line: #26354a;
+    --node: #e8edf3; --node-ink: #0e1620; --plate: #1f3249; --plate-ink: #eef2f7;
+    --loss-bg: #3a1e22; --loss-ink: #f2a8a8; --loss-line: #5b2d33;
+    --gain-bg: #153227; --gain-ink: #93dab3; --gain-line: #25553f;
+    color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--ink); font: 400 16px/1.5 var(--font-body); }
+  .page { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 56px; }
+  h1, h2, h3, p { margin: 0; }
+  h1, h2, h3 { text-wrap: balance; }
+
+  /* Шапка */
+  .head { display: grid; gap: 14px; margin-bottom: 24px; }
+  .brandline { font: 600 12px/1 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .brandline b { width: 10px; height: 10px; border-radius: 50%; background: var(--brand); display: inline-block; }
+  h1 { font: 600 clamp(28px, 6vw, 46px)/1.1 var(--font-display); letter-spacing: -.01em; }
+  .lead { color: var(--muted); font-size: 18px; max-width: 62ch; }
+
+  .plate { background: var(--plate); color: var(--plate-ink); border-radius: 14px; padding: 16px 20px; display: grid; gap: 4px; margin-bottom: 20px; }
+  .plate strong { font: 600 16px/1.35 var(--font-body); }
+  .plate span { opacity: .85; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-bottom: 32px; font-size: 15px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .dot { width: 14px; height: 14px; border-radius: 4px; border: 1px solid; }
+  .dot.loss { background: var(--loss-bg); border-color: var(--loss-line); }
+  .dot.gain { background: var(--gain-bg); border-color: var(--gain-line); }
+
+  /* Ствол */
+  .stage { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0 18px; }
+  .rail { display: flex; flex-direction: column; align-items: center; }
+  .node { width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--node); color: var(--node-ink); display: grid; place-items: center; font: 600 15px/1 var(--font-display); }
+  .rail i { flex: 1; width: 2px; min-height: 24px; background: var(--line); margin: 6px 0; }
+  .body { display: grid; gap: 12px; align-content: start; padding-bottom: 30px; min-width: 0; }
+  .stage:last-of-type .body { padding-bottom: 0; }
+  .body h2 { font: 600 clamp(19px, 3.4vw, 24px)/1.2 var(--font-display); padding-top: 8px; }
+  .thinks { color: var(--muted); font-style: italic; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 13px; font-size: 15px; }
+
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .box { border-radius: 12px; border: 1px solid; padding: 12px 14px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+  .box .tag { font: 600 11px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; }
+  .box p, .box li { font-size: 16px; }
+  .box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+  .loss { background: var(--loss-bg); border-color: var(--loss-line); color: var(--loss-ink); }
+  .gain { background: var(--gain-bg); border-color: var(--gain-line); color: var(--gain-ink); }
+  .loss .tag, .gain .tag { opacity: .9; }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .card h3 { font: 600 17px/1.25 var(--font-body); }
+  .cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .cols2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+  .rule { background: var(--plate); color: var(--plate-ink); border-radius: 12px; padding: 12px 16px; font-weight: 500; text-align: center; }
+  .sub { font: 600 13px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+  .combo .eq { font-weight: 600; font-size: 15px; }
+  .combo .miss { color: var(--loss-ink); font-size: 15px; }
+
+  /* Ступени формата */
+  .ladder { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .step { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 4px; align-content: start; background: var(--bg); }
+  .step b { font-size: 15px; }
+  .step span { font-size: 15px; color: var(--muted); }
+  .step.hit { background: var(--gain-bg); border-color: var(--gain-line); }
+  .step.hit span { color: var(--gain-ink); }
+  .step.hit b { color: var(--gain-ink); }
+
+  .loop { margin-top: 18px; border: 1px dashed var(--line); border-radius: 12px; padding: 12px 16px; color: var(--muted); font-size: 15px; display: flex; gap: 10px; align-items: baseline; }
+  .loop b { color: var(--ink); }
+
+  /* Итог */
+  .summary { margin-top: 36px; display: grid; gap: 14px; }
+  .summary h2 { font: 600 clamp(20px, 3.6vw, 26px)/1.2 var(--font-display); }
+  .sum3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .sum3 .card h3 { font-size: 16px; }
+  .foot { margin-top: 28px; color: var(--muted); font-size: 15px; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* Дерево-воронка */
+  :root { --trunk: #8a5a3a; --crown: #2f9e66; --crown-ink: #ffffff; --rootgray: #9aa5b1; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --trunk: #a9744d; --crown: #2b8a5c; --rootgray: #6d7b8b; } }
+  :root[data-theme="dark"] { --trunk: #a9744d; --crown: #2b8a5c; --rootgray: #6d7b8b; }
+  .page { max-width: 1900px; }
+  .head, .plate, .stage, .summary, .detail-h { max-width: 1040px; }
+  .trees { display: grid; grid-template-columns: minmax(0,340fr) minmax(0,720fr) minmax(0,1350fr); gap: 12px; margin-bottom: 14px; }
+  .tree { display: grid; grid-template-rows: subgrid; grid-row: span 4; gap: 10px; align-content: start; }
+  .tree-h { font: 600 clamp(18px, 2.2vw, 24px)/1.2 var(--font-display); }
+  .detail-h { margin: 34px 0 20px; }
+  .tree-p { color: var(--muted); font-size: 16px; }
+  .tree-p.note { font-size: 15.5px; max-width: 90ch; margin-bottom: 8px; }
+  .treewrap { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); border-radius: 16px; padding: 0; }
+  .probwrap { margin-right: 0; } .probwrap svg { overflow: visible; display: block; width: 100%; height: auto; font-family: var(--font-body); }
+  .score-s { font-size: 19px; font-weight: 500; } .score-b { font-size: 32px; font-weight: 700; }
+  .score-b2 { font-size: 24px; font-weight: 700; }
+  .score-n { fill: var(--muted); } .score-y { fill: var(--y-ink); } .score-g { fill: var(--gain-ink); }
+  .soil { fill: var(--trunk); opacity: .22; } .soil2 { fill: var(--trunk); opacity: .3; }
+  .bark { fill: none; stroke: #000; stroke-opacity: .22; stroke-width: 1.6; stroke-linecap: round; }
+  .barkl { fill: none; stroke: #fff; stroke-opacity: .13; stroke-width: 1.4; stroke-linecap: round; }
+  .knot { fill: #000; fill-opacity: .28; } .knot2 { fill: #000; fill-opacity: .35; }
+  .node-ring { fill: none; stroke: var(--muted); stroke-opacity: .35; stroke-width: 1.5; }
+  .leaf { opacity: .9; } .leaf-g { fill: var(--crown); } .leaf-y { fill: var(--yel); }
+  .foliage { opacity: .75; } .hl { fill: #fff; opacity: .2; }
+  .link { fill: none; stroke-width: 3; stroke-dasharray: 2 5; stroke-linecap: round; } .link-g { stroke: var(--gain-ink); } .link-y { stroke: var(--yel); }
+  .link-gd { fill: var(--gain-ink); } .link-yd { fill: var(--yel); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tl2 { fill: #ff5252; } }
+  :root[data-theme="dark"] .tl2 { fill: #ff5252; }
+  .map { color: var(--muted); font-size: 15px; margin: -4px 0 6px; }
+  .cost-ul { margin: 6px 0 0; padding-left: 20px; display: grid; gap: 4px; color: var(--ink); }
+  .gbase { fill: var(--surface); }
+  .gt { fill: var(--gain-ink); font-size: 21px; } .gty { fill: var(--y-ink); font-size: 21px; }
+  .pt { fill: var(--loss-ink); font-weight: 600; font-size: 22px; } .pl { fill: var(--loss-ink); font-size: 21px; }
+  .pline { fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 6 6; opacity: .75; }
+  .treewrap svg { overflow: visible; display: block; width: 100%; height: auto; font-family: var(--font-body); }
+  @media (max-width: 1100px) { .trees-scroll { overflow-x: auto; } .trees { min-width: 2000px; } }
+  .costs2 { display: grid; grid-template-columns: 1fr .55fr; gap: 12px; }
+  .trunkL { fill: none; stroke: var(--trunk); stroke-width: 20; }
+  .mini-list { font-size: 16px; color: var(--ink); padding: 8px 12px 10px 28px; display: grid; gap: 4px; }
+  .sub2 { font-weight: 600; margin: 4px 0 -4px; }
+  .cost { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 4px; align-content: start; font-size: 16px; }
+  .cost b { font: 600 22px/1.2 var(--font-display); }
+  .cost-l { color: var(--muted); font-size: 15px; }
+  .cost > span:last-child { color: var(--muted); }
+  .cost-n b { color: var(--ink); }
+  .cost-y { background: var(--y-bg); border-color: var(--y-line); } .cost-y b { color: var(--y-ink); }
+  .cost-g { background: var(--gain-bg); border-color: var(--gain-line); } .cost-g b { color: var(--gain-ink); }
+  .sum3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .trunk { fill: var(--trunk); }
+  .root { fill: none; stroke-linecap: butt; }
+  .root-n { stroke: var(--rootgray); }
+  .root-g { stroke: var(--crown); }
+  .rbox-n { fill: var(--bg); stroke: var(--rootgray); stroke-width: 1.5; }
+  .rbox-g { fill: var(--gain-bg); stroke: var(--gain-line); stroke-width: 1.5; }
+  .tbg { fill: var(--gain-ink); font-weight: 600; font-size: 19px; }
+  .lbox { fill: var(--loss-bg); stroke: var(--loss-line); stroke-width: 1.5; }
+  .gbox { fill: var(--gain-bg); stroke: var(--gain-line); stroke-width: 1.5; }
+  .dead { fill: none; stroke: var(--loss-ink); opacity: 1; stroke-linecap: round; stroke-linecap: butt; }
+  .off { fill: none; stroke: var(--gain-ink); stroke-linecap: butt; }
+  .arr-g { fill: var(--gain-ink); }
+  .arr-d { fill: var(--muted); }
+  .loop { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 7 6; stroke-linejoin: round; }
+  .lbg { fill: var(--surface); }
+  .node-c { fill: var(--node); stroke: var(--surface); stroke-width: 3; }
+  .node-t { fill: var(--node-ink); font-weight: 600; font-size: 16px; }
+  .crown { fill: var(--crown); }
+  .crown-t2 { fill: var(--ink); font-weight: 600; font-size: 20px; }
+  .t { fill: var(--ink); font-size: 19px; }
+  .tb { fill: var(--ink); font-weight: 600; font-size: 19px; }
+  .tl { fill: var(--muted); font-size: 18px; }
+  .tbl { fill: var(--loss-ink); font-weight: 600; font-size: 19px; }
+  .tl2 { fill: #d92b2b; font-size: 36px; font-weight: 800; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+  .tg { fill: var(--gain-ink); font-size: 19px; }
+  :root { --yel: #2f6fd0; --y-bg: #e1ebfb; --y-line: #9db9e8; --y-ink: #1d4a96; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --yel: #4a8df0; --y-bg: #12294d; --y-line: #2c4f8a; --y-ink: #9cc2ff; } }
+  :root[data-theme="dark"] { --yel: #4a8df0; --y-bg: #12294d; --y-line: #2c4f8a; --y-ink: #9cc2ff; }
+  .root-y { stroke: var(--yel); }
+  .rbox-y, .gbox-y { fill: var(--y-bg); stroke: var(--y-line); stroke-width: 1.5; }
+  .off-y { stroke: var(--yel); }
+  .arr-y { fill: var(--yel); }
+  .crown-y { fill: var(--yel); }
+  .tby { fill: var(--y-ink); font-weight: 600; font-size: 19px; }
+  .tyy { fill: var(--y-ink); font-size: 19px; }
+  .dot.yellow { background: var(--yel); border-color: var(--yel); }
+  .dot.gray { background: var(--rootgray); border-color: var(--rootgray); }
+  .dot.green { background: var(--crown); border-color: var(--crown); }
+
+  /* Исполнители решений: администратор — серый, собственник — синий, Alliby — зелёный */
+  :root { --adm: #8a96a3; --adm-bg: #eef1f4; --adm-line: #c3cbd4; --adm-ink: #3f4b58;
+          --own: #2f6fd0; --own-bg: #e1ebfb; --own-line: #9db9e8; --own-ink: #1d4a96;
+          --alb: #2f9e66; --alb-bg: #e7f6ee; --alb-line: #b8e0ca; --alb-ink: #17653f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --adm: #8d9aa9; --adm-bg: #222d3a; --adm-line: #3a4a5c; --adm-ink: #c3ccd6;
+    --own: #4a8df0; --own-bg: #12294d; --own-line: #2c4f8a; --own-ink: #9cc2ff;
+    --alb: #3fb67a; --alb-bg: #153227; --alb-line: #25553f; --alb-ink: #93dab3; } }
+  :root[data-theme="dark"] {
+    --adm: #8d9aa9; --adm-bg: #222d3a; --adm-line: #3a4a5c; --adm-ink: #c3ccd6;
+    --own: #4a8df0; --own-bg: #12294d; --own-line: #2c4f8a; --own-ink: #9cc2ff;
+    --alb: #3fb67a; --alb-bg: #153227; --alb-line: #25553f; --alb-ink: #93dab3; }
+  .gbox-a, .rbox-a { fill: var(--adm-bg); stroke: var(--adm-line); stroke-width: 1.5; }
+  .gbox-o { fill: var(--own-bg); stroke: var(--own-line); stroke-width: 1.5; }
+  .gbox-b, .rbox-b { fill: var(--alb-bg); stroke: var(--alb-line); stroke-width: 1.5; }
+  .gta { fill: var(--adm-ink); font-size: 21px; } .tba { fill: var(--adm-ink); font-weight: 600; font-size: 19px; } .tya { fill: var(--adm-ink); font-size: 19px; }
+  .gto { fill: var(--own-ink); font-size: 21px; }
+  .gtb { fill: var(--alb-ink); font-size: 21px; } .tbb { fill: var(--alb-ink); font-weight: 600; font-size: 19px; } .tgb { fill: var(--alb-ink); font-size: 19px; }
+  .link-a { stroke: var(--adm); } .link-ad { fill: var(--adm); }
+  .link-o { stroke: var(--own); } .link-od { fill: var(--own); }
+  .link-b { stroke: var(--alb); } .link-bd { fill: var(--alb); }
+  .dot.adm { background: var(--adm); border-color: var(--adm); }
+  .dot.own { background: var(--own); border-color: var(--own); }
+  .dot.alb { background: var(--alb); border-color: var(--alb); }
+
+  /* Уровень проблема → решения: при наведении блоки увеличиваются, граница и пунктир подсвечены */
+  .hit { fill: transparent; stroke: none; cursor: pointer; }
+  .lvl { pointer-events: none; }
+  .lvl .full { display: none; }
+  .lvl.on .short { display: none; }
+  .lvl.zoom .short { display: inline; transform-box: fill-box; transform-origin: center; transition: transform .18s ease; }
+  .lvl.on .full { display: inline; animation: lvlpop .18s ease; transform-box: fill-box; transform-origin: center; }
+  @keyframes lvlpop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+  .full rect { filter: drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+  .fh { font-weight: 700; font-size: 17px; letter-spacing: .08em; }
+  text.fb { font-size: 25px; }
+  .lvl rect { transition: stroke .18s, stroke-width .18s; }
+  .lvl.on rect { stroke: var(--ink); stroke-width: 3; }
+  .lvl.on .lbox { stroke: var(--loss-ink); }
+  .lvl.on .gbox-a, .lvl.on .rbox-a { stroke: var(--adm-ink); }
+  .lvl.on .gbox-o { stroke: var(--own-ink); }
+  .lvl.on .gbox-b, .lvl.on .rbox-b { stroke: var(--alb-ink); }
+  .pline { transition: stroke .18s, opacity .18s, stroke-width .18s; }
+  .pline.on { stroke: var(--ink); stroke-width: 2.5; opacity: 1; }
+
+  @media (max-width: 860px) {
+    .cols3, .sum3, .ladder { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .pair, .cols2 { grid-template-columns: 1fr; }
+    .stage { grid-template-columns: 34px minmax(0, 1fr); gap: 0 12px; }
+    .node { width: 34px; height: 34px; font-size: 13px; }
+    .lead { font-size: 16px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  .backlink { display: inline-block; margin-bottom: 14px; color: var(--muted); text-decoration: none; font-size: 15px; }
+  .backlink:hover { color: var(--ink); }
+</style>
+
+</head>
+<body>
+<main class="page">
+  <header class="head">
+    <a class="backlink" href="/articles">← Все статьи</a>
+    <div class="brandline"><b></b>Alliby · Спорт</div>
+    <h1>Дерево решений клиента</h1>
+    <p class="lead">Путь человека, который хочет заниматься спортом: откуда он приходит, где уходит и как Alliby возвращает его на ствол. Alliby расширяет вход: показывает заведение в приложении и рекламой знакомит людей с направлениями, о которых они не знали.</p>
+  </header>
+
+  <div class="plate">
+    <strong>Alliby не работает с сетевыми заведениями.</strong>
+    <span>Клиенты не видят их предложений. Рядом с вами в приложении только местные секции и клубы.</span>
+  </div>
+
+  <div class="legend">
+    <span><i class="dot gray"></i>Корни: обычные клиенты</span>
+    <span><i class="dot green"></i>Корни: привлечённые Alliby</span>
+    <span><i class="dot yellow"></i>Свои каналы: привлечение и удержание</span>
+    <span><i class="dot loss"></i>Где клиент уходит</span>
+    <span><i class="dot adm"></i>Решает администратор: ручная работа</span>
+    <span><i class="dot own"></i>Решает собственник: группы и занятия</span>
+    <span><i class="dot alb"></i>Решает Alliby: автоматически</span>
+  </div>
+
+<!-- TREE -->
+<div class="trees-scroll"><div class="trees">
+<section class="tree probs-col">
+  <h2 class="tree-h">Проблемы клиента</h2>
+  <p class="tree-p">Где клиент уходит со ствола. Пунктир ведёт к узлу и решению с тем же номером. Наведите на проблему или решение, чтобы развернуть полное описание уровня.</p>
+  <div class="probwrap"><svg viewBox="0 -42 340 1742" xmlns="http://www.w3.org/2000/svg"><path class="pline" d="M300,4 L362,4"/><rect class="lbox" x="2" y="-38" width="306" height="84" rx="10"/><text x="14" y="-10" class="pt" text-anchor="start">15 · Выручка</text><text x="14" y="13" class="pl" text-anchor="start">✕ Неясно, что приносит</text><text x="14" y="36" class="pl" text-anchor="start">деньги и что интересно</text><path class="pline" d="M300,1494 L362,1494"/><rect class="lbox" x="2" y="1452" width="306" height="84" rx="10"/><text x="14" y="1480" class="pt" text-anchor="start">0 · Привлечение</text><text x="14" y="1503" class="pl" text-anchor="start">✕ О заведении не знают,</text><text x="14" y="1526" class="pl" text-anchor="start">новых клиентов мало</text><path class="pline" d="M300,1404 L362,1404"/><rect class="lbox" x="2" y="1362" width="306" height="84" rx="10"/><text x="14" y="1390" class="pt" text-anchor="start">1 · Выбор</text><text x="14" y="1413" class="pl" text-anchor="start">✕ Не сошлись цена,</text><text x="14" y="1436" class="pl" text-anchor="start">локация или интерес</text><path class="pline" d="M300,1314 L362,1314"/><rect class="lbox" x="2" y="1272" width="306" height="84" rx="10"/><text x="14" y="1300" class="pt" text-anchor="start">2 · Доверие</text><text x="14" y="1323" class="pl" text-anchor="start">✕ Невзрачный дизайн,</text><text x="14" y="1346" class="pl" text-anchor="start">неактуальная информация</text><path class="pline" d="M300,1224 L362,1224"/><rect class="lbox" x="2" y="1182" width="306" height="84" rx="10"/><text x="14" y="1210" class="pt" text-anchor="start">3 · Цена и расписание</text><text x="14" y="1233" class="pl" text-anchor="start">✕ Дорого или нет</text><text x="14" y="1256" class="pl" text-anchor="start">нужного дня</text><path class="pline" d="M300,1134 L362,1134"/><rect class="lbox" x="2" y="1092" width="306" height="84" rx="10"/><text x="14" y="1120" class="pt" text-anchor="start">4 · Куда вписаться</text><text x="14" y="1143" class="pl" text-anchor="start">✕ Группа уже идёт,</text><text x="14" y="1166" class="pl" text-anchor="start">не знает, куда войти</text><path class="pline" d="M300,1044 L362,1044"/><rect class="lbox" x="2" y="1002" width="306" height="84" rx="10"/><text x="14" y="1030" class="pt" text-anchor="start">5 · Запись</text><text x="14" y="1053" class="pl" text-anchor="start">✕ Надо звонить,</text><text x="14" y="1076" class="pl" text-anchor="start">желание остыло</text><path class="pline" d="M300,954 L362,954"/><rect class="lbox" x="2" y="912" width="306" height="84" rx="10"/><text x="14" y="940" class="pt" text-anchor="start">6 · Площадка и инвентарь</text><text x="14" y="963" class="pl" text-anchor="start">✕ Нельзя занять корт</text><text x="14" y="986" class="pl" text-anchor="start">или стол заранее</text><path class="pline" d="M300,864 L362,864"/><rect class="lbox" x="2" y="822" width="306" height="84" rx="10"/><text x="14" y="850" class="pt" text-anchor="start">7 · Оплата</text><text x="14" y="873" class="pl" text-anchor="start">✕ Не хочет платить</text><text x="14" y="896" class="pl" text-anchor="start">вперёд, уходит</text><path class="pline" d="M300,774 L362,774"/><rect class="lbox" x="2" y="732" width="306" height="84" rx="10"/><text x="14" y="760" class="pt" text-anchor="start">8 · Не могу прийти</text><text x="14" y="783" class="pl" text-anchor="start">✕ Занятие пропадает,</text><text x="14" y="806" class="pl" text-anchor="start">платить обидно</text><path class="pline" d="M300,684 L362,684"/><rect class="lbox" x="2" y="642" width="306" height="84" rx="10"/><text x="14" y="670" class="pt" text-anchor="start">9 · День занятия</text><text x="14" y="693" class="pl" text-anchor="start">✕ Забыл прийти</text><text x="14" y="716" class="pl" text-anchor="start">на занятие</text><path class="pline" d="M300,594 L362,594"/><rect class="lbox" x="2" y="552" width="306" height="84" rx="10"/><text x="14" y="580" class="pt" text-anchor="start">10 · Учёт визитов</text><text x="14" y="603" class="pl" text-anchor="start">✕ Спор об остатке</text><text x="14" y="626" class="pl" text-anchor="start">визитов по абонементу</text><path class="pline" d="M300,504 L362,504"/><rect class="lbox" x="2" y="462" width="306" height="84" rx="10"/><text x="14" y="490" class="pt" text-anchor="start">11 · Мотивация</text><text x="14" y="513" class="pl" text-anchor="start">✕ Личный тренер дорог,</text><text x="14" y="536" class="pl" text-anchor="start">в общей группе скучно</text><path class="pline" d="M300,414 L362,414"/><rect class="lbox" x="2" y="372" width="306" height="84" rx="10"/><text x="14" y="400" class="pt" text-anchor="start">12 · Развитие</text><text x="14" y="423" class="pl" text-anchor="start">✕ Упёрся в потолок,</text><text x="14" y="446" class="pl" text-anchor="start">нет новой цели</text><path class="pline" d="M300,324 L362,324"/><rect class="lbox" x="2" y="282" width="306" height="84" rx="10"/><text x="14" y="310" class="pt" text-anchor="start">13 · Пропал надолго</text><text x="14" y="333" class="pl" text-anchor="start">✕ Ушёл на паузу,</text><text x="14" y="356" class="pl" text-anchor="start">заведение не напомнило</text><path class="pline" d="M300,234 L362,234"/><rect class="lbox" x="2" y="192" width="306" height="84" rx="10"/><text x="14" y="220" class="pt" text-anchor="start">14 · Продление</text><text x="14" y="243" class="pl" text-anchor="start">✕ Абонемент кончился,</text><text x="14" y="266" class="pl" text-anchor="start">продлевать лень</text><rect class="hit" data-n="0" x="2" y="1452" width="306" height="84" rx="10"/><rect class="hit" data-n="1" x="2" y="1362" width="306" height="84" rx="10"/><rect class="hit" data-n="2" x="2" y="1272" width="306" height="84" rx="10"/><rect class="hit" data-n="3" x="2" y="1182" width="306" height="84" rx="10"/><rect class="hit" data-n="4" x="2" y="1092" width="306" height="84" rx="10"/><rect class="hit" data-n="5" x="2" y="1002" width="306" height="84" rx="10"/><rect class="hit" data-n="6" x="2" y="912" width="306" height="84" rx="10"/><rect class="hit" data-n="7" x="2" y="822" width="306" height="84" rx="10"/><rect class="hit" data-n="8" x="2" y="732" width="306" height="84" rx="10"/><rect class="hit" data-n="9" x="2" y="642" width="306" height="84" rx="10"/><rect class="hit" data-n="10" x="2" y="552" width="306" height="84" rx="10"/><rect class="hit" data-n="11" x="2" y="462" width="306" height="84" rx="10"/><rect class="hit" data-n="12" x="2" y="372" width="306" height="84" rx="10"/><rect class="hit" data-n="13" x="2" y="282" width="306" height="84" rx="10"/><rect class="hit" data-n="14" x="2" y="192" width="306" height="84" rx="10"/><rect class="hit" data-n="15" x="2" y="-38" width="306" height="84" rx="10"/></svg></div>
+  <div></div>
+</section>
+<section class="tree">
+  <h2 class="tree-h">Со своим сайтом и другими каналами</h2>
+  <p class="tree-p">Заведение привлекает клиентов само: сайт, соцсети, реклама, другие сервисы записи. Потока из приложения нет, корней меньше. Синим выделены привлечение (корень) и удержание (отростки). Отростки тоньше: клиента возвращает ручная работа. Решения выделены цветом исполнителя: серым — администратор (звонки, рассылки, таблицы), синим — собственник (создаёт группы и сам ведёт занятия).</p>
+  <div class="treewrap" role="img" aria-label="Дерево клиента со своими каналами">
+  <svg viewBox="-60 -42 720 1742" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glowc"><stop offset="0" style="stop-color:var(--yel);stop-opacity:.22"/><stop offset="1" style="stop-color:var(--yel);stop-opacity:0"/></radialGradient>
+    <marker id="arrGc" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="22" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arr-g"/></marker>
+    <marker id="arrYc" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="22" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arr-y"/></marker>
+    <marker id="arrDc" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arr-d"/></marker>
+  </defs>
+  <ellipse cx="300" cy="130" rx="260" ry="190" fill="url(#glowc)"/><ellipse class="soil" cx="300" cy="1490" rx="150" ry="14"/><ellipse class="soil2" cx="300" cy="1488" rx="96" ry="8"/><path class="pline" d="M-60,1494 L652.0,1494"/><path class="pline" d="M-60,1404 L652.0,1404"/><path class="pline" d="M-60,1314 L652.0,1314"/><path class="pline" d="M-60,1224 L652.0,1224"/><path class="pline" d="M-60,1134 L652.0,1134"/><path class="pline" d="M-60,1044 L652.0,1044"/><path class="pline" d="M-60,954 L652.0,954"/><path class="pline" d="M-60,864 L652.0,864"/><path class="pline" d="M-60,774 L652.0,774"/><path class="pline" d="M-60,684 L652.0,684"/><path class="pline" d="M-60,594 L652.0,594"/><path class="pline" d="M-60,504 L652.0,504"/><path class="pline" d="M-60,414 L652.0,414"/><path class="pline" d="M-60,324 L652.0,324"/><path class="pline" d="M-60,234 L652.0,234"/><path class="root root-n" style="stroke-width:15.4" d="M103.3,1558 C103.3,1526 286.0,1516 286.0,1480"/><rect class="rbox-n" x="24.3" y="1556" width="158" height="104" rx="12"/><text x="33.33333333333333" y="1584" class="tb" text-anchor="start">Знают вас</text><text x="33.33333333333333" y="1609" class="t" text-anchor="start">друзья, район,</text><text x="33.33333333333333" y="1632" class="t" text-anchor="start">вывеска</text><path class="root root-n" style="stroke-width:18.2" d="M290.0,1558 C290.0,1526 302.8,1516 302.8,1480"/><rect class="rbox-n" x="211.0" y="1556" width="158" height="104" rx="12"/><text x="220.0" y="1584" class="tb" text-anchor="start">Хотят начать</text><text x="220.0" y="1609" class="t" text-anchor="start">фигура, ЗОЖ,</text><text x="220.0" y="1632" class="t" text-anchor="start">самооценка</text><path class="root root-y" style="stroke-width:9.8" d="M476.7,1558 C476.7,1526 316.8,1516 316.8,1480"/><rect class="rbox-a" x="397.7" y="1556" width="158" height="104" rx="12"/><text x="406.6666666666667" y="1584" class="tba" text-anchor="start">Сайт и соцсети</text><text x="406.6666666666667" y="1609" class="tya" text-anchor="start">реклама и посты,</text><text x="406.6666666666667" y="1632" class="tya" text-anchor="start">ведёт админ</text><path class="dead" style="stroke-width:12.6" d="M300,1408 C270.0,1406 250.0,1386 224,1366"/><text x="222" y="1377" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:9.3" d="M300,1318 C330.0,1316 350.0,1296 376,1276"/><text x="378" y="1287" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:9.9" d="M300,1228 C270.0,1226 250.0,1206 224,1186"/><text x="222" y="1197" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:7.3" d="M300,1138 C330.0,1136 350.0,1116 376,1096"/><text x="378" y="1107" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:8.0" d="M300,1048 C270.0,1046 250.0,1026 224,1006"/><text x="222" y="1017" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:5.6" d="M300,958 C330.0,956 350.0,936 376,916"/><text x="378" y="927" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:6.7" d="M300,868 C270.0,866 250.0,846 224,826"/><text x="222" y="837" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:5.4" d="M300,778 C330.0,776 350.0,756 376,736"/><text x="378" y="747" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:6.0" d="M300,688 C270.0,686 250.0,666 224,646"/><text x="222" y="657" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:5.2" d="M300,598 C330.0,596 350.0,576 376,556"/><text x="378" y="567" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:5.4" d="M300,508 C270.0,506 250.0,486 224,466"/><text x="222" y="477" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:6.3" d="M300,418 C330.0,416 350.0,396 376,376"/><text x="378" y="387" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:5.2" d="M300,328 C270.0,326 250.0,306 224,286"/><text x="222" y="297" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:5.7" d="M300,238 C330.0,236 350.0,216 376,196"/><text x="378" y="207" class="tl2" text-anchor="start">✕</text><polygon class="trunk" points="278.3,1480 278.3,1474 278.3,1468 278.3,1462 278.3,1456 278.3,1450 278.3,1444 278.3,1438 278.3,1432 278.4,1426 279.1,1420 280.3,1414 281.8,1408 283.2,1402 284.2,1396 284.4,1390 284.4,1384 284.4,1378 284.4,1372 284.4,1366 284.4,1360 284.4,1354 284.4,1348 284.3,1342 284.2,1336 283.9,1330 283.7,1324 283.4,1318 283.2,1312 283.2,1306 283.2,1300 283.2,1294 283.2,1288 283.2,1282 283.2,1276 283.2,1270 283.2,1264 283.2,1258 283.2,1252 283.2,1246 283.7,1240 284.6,1234 285.6,1228 286.6,1222 287.3,1216 287.4,1210 287.4,1204 287.4,1198 287.4,1192 287.4,1186 287.4,1180 287.4,1174 287.4,1168 287.4,1162 287.3,1156 287.1,1150 286.9,1144 286.7,1138 286.6,1132 286.6,1126 286.6,1120 286.6,1114 286.6,1108 286.6,1102 286.6,1096 286.6,1090 286.6,1084 286.6,1078 286.6,1072 286.6,1066 286.9,1060 287.6,1054 288.3,1048 289.0,1042 289.5,1036 289.6,1030 289.6,1024 289.6,1018 289.6,1012 289.6,1006 289.6,1000 289.6,994 289.6,988 289.5,982 289.5,976 289.4,970 289.2,964 289.1,958 289.0,952 289.0,946 289.0,940 289.0,934 289.0,928 289.0,922 289.0,916 289.0,910 289.0,904 289.0,898 289.0,892 289.0,886 289.2,880 289.7,874 290.2,868 290.7,862 291.0,856 291.1,850 291.1,844 291.1,838 291.1,832 291.1,826 291.1,820 291.1,814 291.1,808 291.1,802 291.0,796 290.9,790 290.8,784 290.8,778 290.7,772 290.7,766 290.7,760 290.7,754 290.7,748 290.7,742 290.7,736 290.7,730 290.7,724 290.7,718 290.7,712 290.7,706 290.9,700 291.2,694 291.6,688 292.0,682 292.3,676 292.3,670 292.3,664 292.3,658 292.3,652 292.3,646 292.3,640 292.3,634 292.3,628 292.3,622 292.3,616 292.2,610 292.1,604 292.1,598 292.0,592 292.0,586 292.0,580 292.0,574 292.0,568 292.0,562 292.0,556 292.0,550 292.0,544 292.0,538 292.0,532 292.0,526 292.2,520 292.4,514 292.7,508 293.0,502 293.2,496 293.3,490 293.3,484 293.3,478 293.3,472 293.3,466 293.3,460 293.3,454 293.3,448 293.3,442 293.2,436 293.2,430 293.1,424 293.1,418 293.0,412 293.0,406 293.0,400 293.0,394 293.0,388 293.0,382 293.0,376 293.0,370 293.0,364 293.0,358 293.0,352 293.0,346 293.2,340 293.4,334 293.7,328 294.0,322 294.1,316 294.2,310 294.2,304 294.2,298 294.2,292 294.2,286 294.2,280 294.2,274 294.2,268 294.2,262 294.1,256 294.1,250 294.0,244 294.0,238 294.0,232 293.9,226 293.9,220 293.9,214 293.9,208 293.9,202 293.9,196 293.9,190 293.9,184 293.9,178 293.9,172 293.9,166 293.9,160 293.9,154 293.9,148 310.9,148 310.8,154 310.7,160 310.7,166 310.6,172 310.6,178 310.6,184 310.6,190 310.6,196 310.6,202 310.6,208 310.6,214 310.6,220 310.7,226 310.9,232 311.2,238 311.6,244 311.9,250 312.1,256 312.1,262 312.1,268 312.1,274 312.1,280 312.1,286 312.1,292 312.1,298 312.1,304 312.1,310 312.1,316 312.1,322 312.0,328 311.9,334 311.9,340 311.8,346 311.7,352 311.7,358 311.7,364 311.7,370 311.7,376 311.7,382 311.7,388 311.7,394 311.7,400 311.8,406 312.1,412 312.5,418 312.9,424 313.3,430 313.6,436 313.6,442 313.6,448 313.6,454 313.6,460 313.6,466 313.6,472 313.6,478 313.6,484 313.6,490 313.6,496 313.6,502 313.5,508 313.5,514 313.4,520 313.4,526 313.4,532 313.3,538 313.3,544 313.3,550 313.3,556 313.3,562 313.3,568 313.3,574 313.3,580 313.4,586 313.6,592 313.8,598 314.1,604 314.3,610 314.5,616 314.5,622 314.5,628 314.5,634 314.5,640 314.5,646 314.5,652 314.5,658 314.5,664 314.5,670 314.5,676 314.5,682 314.4,688 314.4,694 314.3,700 314.3,706 314.2,712 314.2,718 314.2,724 314.2,730 314.2,736 314.2,742 314.2,748 314.2,754 314.2,760 314.3,766 314.5,772 314.7,778 315.0,784 315.3,790 315.5,796 315.5,802 315.5,808 315.5,814 315.5,820 315.5,826 315.5,832 315.5,838 315.5,844 315.5,850 315.5,856 315.4,862 315.4,868 315.3,874 315.3,880 315.2,886 315.2,892 315.2,898 315.2,904 315.2,910 315.2,916 315.2,922 315.2,928 315.2,934 315.2,940 315.2,946 315.4,952 315.8,958 316.1,964 316.4,970 316.6,976 316.6,982 316.6,988 316.6,994 316.6,1000 316.6,1006 316.6,1012 316.6,1018 316.6,1024 316.6,1030 316.6,1036 316.5,1042 316.5,1048 316.3,1054 316.2,1060 316.1,1066 316.1,1072 316.1,1078 316.1,1084 316.1,1090 316.1,1096 316.1,1102 316.1,1108 316.1,1114 316.1,1120 316.1,1126 316.5,1132 317.1,1138 317.8,1144 318.3,1150 318.6,1156 318.6,1162 318.6,1168 318.6,1174 318.6,1180 318.6,1186 318.6,1192 318.6,1198 318.6,1204 318.6,1210 318.6,1216 318.6,1222 318.5,1228 318.3,1234 318.1,1240 318.0,1246 317.9,1252 317.8,1258 317.8,1264 317.8,1270 317.8,1276 317.8,1282 317.8,1288 317.8,1294 317.8,1300 318.0,1306 318.6,1312 319.5,1318 320.4,1324 321.2,1330 321.7,1336 321.7,1342 321.7,1348 321.7,1354 321.7,1360 321.7,1366 321.7,1372 321.7,1378 321.7,1384 321.7,1390 321.7,1396 321.7,1402 321.7,1408 321.7,1414 321.7,1420 321.7,1426 321.7,1432 321.7,1438 321.7,1444 321.7,1450 321.7,1456 321.7,1462 321.7,1468 321.7,1474 321.7,1480"/><polyline class="bark" points="286.4,1480 286.8,1474 287.2,1468 287.6,1462 288.0,1456 288.3,1450 288.4,1444 288.5,1438 288.4,1432 288.3,1426 288.6,1420 289.2,1414 290.0,1408 290.7,1402 291.1,1396 291.0,1390 290.7,1384 290.6,1378 290.5,1372 290.6,1366 290.7,1360 291.0,1354 291.3,1348 291.6,1342 291.9,1336 292.0,1330 291.9,1324 291.7,1318 291.5,1312 291.3,1306 291.3,1300 291.1,1294 290.9,1288 290.6,1282 290.3,1276 289.9,1270 289.6,1264 289.3,1258 289.1,1252 289.0,1246 289.4,1240 290.2,1234 291.2,1228 292.3,1222 293.1,1216 293.5,1210 293.8,1204 294.1,1198 294.4,1192 294.6,1186 294.7,1180 294.7,1174 294.7,1168 294.5,1162 294.2,1156 293.8,1150 293.2,1144 292.7,1138 292.2,1132 291.8,1126 291.6,1120 291.5,1114 291.4,1108 291.5,1102 291.6,1096 291.8,1090 292.0,1084 292.3,1078 292.6,1072 292.9,1066 293.5,1060 294.2,1054 294.9,1048 295.5,1042 295.8,1036 295.8,1030 295.6,1024 295.3,1018 295.1,1012 294.8,1006 294.6,1000 294.3,994 294.2,988 294.0,982 293.9,976 293.9,970 293.8,964 293.8,958 293.9,952 294.1,946 294.4,940 294.6,934 294.8,928 295.0,922 295.1,916 295.1,910 295.1,904 295.0,898 294.8,892 294.6,886 294.6,880 294.7,874 294.9,868 295.1,862 295.2,856 295.1,850 295.1,844 295.1,838 295.3,832 295.4,826 295.6,820 295.9,814 296.1,808 296.3,802 296.5,796 296.5,790 296.5,784 296.4,778 296.2,772 296.1,766 295.9,760 295.7,754 295.5,748 295.2,742 295.0,736 294.8,730 294.7,724 294.6,718 294.5,712 294.6,706 294.9,700 295.3,694 295.9,688 296.4,682 296.8,676 297.1,670 297.3,664 297.4,658 297.5,652 297.5,646 297.5,640 297.4,634 297.2,628 297.1,622 296.8,616 296.5,610 296.2,604 295.9,598 295.7,592 295.5,586 295.5,580 295.6,574 295.6,568 295.8,562 296.0,556 296.2,550 296.4,544 296.6,538 296.8,532 296.9,526 297.1,520 297.4,514 297.6,508 297.7,502 297.8,496 297.6,490 297.4,484 297.2,478 297.0,472 296.9,466 296.7,460 296.7,454 296.6,448 296.7,442 296.7,436 296.8,430 296.8,424 296.9,418 297.0,412 297.1,406 297.2,400 297.3,394 297.4,388 297.4,382 297.4,376 297.3,370 297.2,364 297.0,358 296.8,352 296.7,346 296.6,340 296.7,334 296.8,328 297.0,322 297.1,316 297.2,310 297.2,304 297.4,298 297.5,292 297.7,286 297.9,280 298.0,274 298.2,268 298.3,262 298.3,256 298.3,250 298.1,244 297.9,238 297.7,232 297.5,226 297.3,220 297.2,214 297.0,208 296.9,202 296.8,196 296.7,190 296.7,184 296.7,178 296.8,172 296.9,166 297.1,160 297.3,154 297.4,148"/><polyline class="barkl" points="293.8,1480 293.5,1474 293.3,1468 293.3,1462 293.3,1456 293.5,1450 293.8,1444 294.2,1438 294.6,1432 295.1,1426 295.9,1420 297.0,1414 298.2,1408 299.2,1402 299.7,1396 299.8,1390 299.6,1384 299.4,1378 299.1,1372 298.7,1366 298.3,1360 298.0,1354 297.7,1348 297.4,1342 297.2,1336 296.8,1330 296.4,1324 296.1,1318 295.9,1312 295.9,1306 296.2,1300 296.6,1294 296.9,1288 297.2,1282 297.4,1276 297.5,1270 297.6,1264 297.5,1258 297.3,1252 297.2,1246 297.2,1240 297.5,1234 297.9,1228 298.3,1222 298.4,1216 298.3,1210 298.2,1204 298.2,1198 298.2,1192 298.4,1186 298.6,1180 298.9,1174 299.2,1168 299.4,1162 299.7,1156 299.7,1150 299.6,1144 299.3,1138 299.0,1132 298.8,1126 298.6,1120 298.4,1114 298.2,1108 297.9,1102 297.6,1096 297.3,1090 297.1,1084 296.9,1078 296.8,1072 296.8,1066 297.1,1060 297.7,1054 298.4,1048 299.1,1042 299.7,1036 300.0,1030 300.2,1024 300.5,1018 300.6,1012 300.7,1006 300.8,1000 300.7,994 300.6,988 300.4,982 300.1,976 299.7,970 299.3,964 298.8,958 298.4,952 298.2,946 298.0,940 298.0,934 298.1,928 298.2,922 298.4,916 298.6,910 298.8,904 299.1,898 299.3,892 299.6,886 299.9,880 300.3,874 300.7,868 300.9,862 301.0,856 300.9,850 300.7,844 300.4,838 300.2,832 300.0,826 299.8,820 299.6,814 299.5,808 299.5,802 299.5,796 299.5,790 299.5,784 299.6,778 299.6,772 299.8,766 300.0,760 300.2,754 300.3,748 300.4,742 300.4,736 300.4,730 300.3,724 300.1,718 299.9,712 299.7,706 299.6,700 299.6,694 299.7,688 299.9,682 300.0,676 300.0,670 300.0,664 300.1,658 300.3,652 300.5,646 300.7,640 300.9,634 301.1,628 301.3,622 301.4,616 301.4,610 301.2,604 301.1,598 300.8,592 300.6,586 300.4,580 300.2,574 300.0,568 299.8,562 299.6,556 299.5,550 299.4,544 299.4,538 299.4,532 299.5,526 299.8,520 300.2,514 300.6,508 301.0,502 301.3,496 301.5,490 301.6,484 301.7,478 301.7,472 301.7,466 301.6,460 301.4,454 301.3,448 301.1,442 300.8,436 300.5,430 300.2,424 299.9,418 299.6,412 299.5,406 299.5,400 299.6,394 299.7,388 299.9,382 300.1,376 300.3,370 300.4,364 300.6,358 300.7,352 300.8,346 300.9,340 301.1,334 301.2,328 301.2,322 301.2,316 301.0,310 300.9,304 300.7,298 300.5,292 300.4,286 300.4,280 300.4,274 300.4,268 300.5,262 300.6,256 300.6,250 300.7,244 300.7,238 300.7,232 300.7,226 300.8,220 300.9,214 300.9,208 300.8,202 300.8,196 300.6,190 300.5,184 300.3,178 300.2,172 300.0,166 299.9,160 299.8,154 299.8,148"/><polyline class="bark" points="304.0,1480 303.8,1474 303.5,1468 303.2,1462 302.7,1456 302.3,1450 301.9,1444 301.6,1438 301.3,1432 301.2,1426 301.5,1420 302.1,1414 303.0,1408 303.9,1402 304.7,1396 305.2,1390 305.5,1384 305.9,1378 306.2,1372 306.4,1366 306.5,1360 306.6,1354 306.5,1348 306.3,1342 306.0,1336 305.3,1330 304.4,1324 303.4,1318 302.5,1312 301.8,1306 301.5,1300 301.4,1294 301.4,1288 301.4,1282 301.6,1276 301.8,1270 302.1,1264 302.5,1258 302.8,1252 303.2,1246 303.8,1240 304.5,1234 305.1,1228 305.6,1222 305.9,1216 305.8,1210 305.6,1204 305.3,1198 305.0,1192 304.7,1186 304.4,1180 304.1,1174 303.9,1168 303.8,1162 303.7,1156 303.5,1150 303.3,1144 303.1,1138 303.0,1132 303.0,1126 303.3,1120 303.6,1114 303.8,1108 304.0,1102 304.1,1096 304.1,1090 304.1,1084 303.9,1078 303.7,1072 303.5,1066 303.4,1060 303.5,1054 303.6,1048 303.7,1042 303.8,1036 303.8,1030 303.7,1024 303.8,1018 303.9,1012 304.1,1006 304.3,1000 304.6,994 304.9,988 305.1,982 305.3,976 305.3,970 305.2,964 305.0,958 304.7,952 304.4,946 304.2,940 304.0,934 303.7,928 303.5,922 303.2,916 303.0,910 302.8,904 302.8,898 302.7,892 302.8,886 303.1,880 303.5,874 304.0,868 304.5,862 304.9,856 305.1,850 305.3,844 305.5,838 305.6,832 305.6,826 305.5,820 305.4,814 305.3,808 305.0,802 304.8,796 304.4,790 304.0,784 303.6,778 303.3,772 303.1,766 303.0,760 303.1,754 303.2,748 303.4,742 303.6,736 303.8,730 304.0,724 304.2,718 304.4,712 304.6,706 304.8,700 305.0,694 305.1,688 305.2,682 305.2,676 305.0,670 304.8,664 304.6,658 304.4,652 304.2,646 304.0,640 304.0,634 304.0,628 304.0,622 304.1,616 304.1,610 304.2,604 304.2,598 304.2,592 304.3,586 304.5,580 304.6,574 304.7,568 304.7,562 304.7,556 304.6,550 304.4,544 304.2,538 304.0,532 303.8,526 303.7,520 303.7,514 303.7,508 303.8,502 303.9,496 304.0,490 304.1,484 304.2,478 304.4,472 304.6,466 304.8,460 305.0,454 305.1,448 305.3,442 305.3,436 305.2,430 304.9,424 304.5,418 304.1,412 303.8,406 303.5,400 303.4,394 303.2,388 303.0,382 302.9,376 302.9,370 302.8,364 302.9,358 303.0,352 303.1,346 303.4,340 303.7,334 304.1,328 304.4,322 304.6,316 304.8,310 304.8,304 304.8,298 304.8,292 304.7,286 304.6,280 304.4,274 304.3,268 304.1,262 303.9,256 303.6,250 303.3,244 303.1,238 302.9,232 302.8,226 302.8,220 302.9,214 303.1,208 303.3,202 303.4,196 303.6,190 303.7,184 303.8,178 303.9,172 303.9,166 303.9,160 303.9,154 303.8,148"/><polyline class="barkl" points="311.4,1480 311.8,1474 312.2,1468 312.7,1462 313.0,1456 313.4,1450 313.6,1444 313.7,1438 313.6,1432 313.5,1426 313.4,1420 313.3,1414 313.2,1408 313.2,1402 313.0,1396 312.7,1390 312.5,1384 312.3,1378 312.2,1372 312.2,1366 312.3,1360 312.6,1354 312.8,1348 313.2,1342 313.5,1336 313.5,1330 313.1,1324 312.5,1318 312.0,1312 311.5,1306 311.4,1300 311.3,1294 311.1,1288 310.8,1282 310.5,1276 310.1,1270 309.8,1264 309.5,1258 309.3,1252 309.2,1246 309.3,1240 309.7,1234 310.2,1228 310.7,1222 311.2,1216 311.5,1210 311.8,1204 312.1,1198 312.4,1192 312.6,1186 312.8,1180 312.8,1174 312.8,1168 312.7,1162 312.5,1156 312.0,1150 311.2,1144 310.4,1138 309.6,1132 309.0,1126 308.7,1120 308.6,1114 308.5,1108 308.6,1102 308.7,1096 308.8,1090 309.1,1084 309.3,1078 309.6,1072 310.0,1066 310.4,1060 310.8,1054 311.2,1048 311.4,1042 311.5,1036 311.5,1030 311.3,1024 311.1,1018 310.8,1012 310.6,1006 310.3,1000 310.1,994 309.9,988 309.7,982 309.7,976 309.5,970 309.4,964 309.2,958 309.2,952 309.3,946 309.5,940 309.7,934 310.0,928 310.1,922 310.3,916 310.3,910 310.3,904 310.2,898 310.1,892 309.9,886 309.7,880 309.6,874 309.6,868 309.5,862 309.4,856 309.3,850 309.2,844 309.3,838 309.3,832 309.5,826 309.7,820 309.9,814 310.2,808 310.4,802 310.6,796 310.6,790 310.5,784 310.3,778 310.0,772 309.8,766 309.6,760 309.4,754 309.2,748 309.0,742 308.8,736 308.5,730 308.4,724 308.3,718 308.2,712 308.3,706 308.4,700 308.7,694 309.0,688 309.3,682 309.6,676 309.9,670 310.1,664 310.2,658 310.3,652 310.4,646 310.4,640 310.3,634 310.1,628 310.0,622 309.7,616 309.4,610 309.0,604 308.6,598 308.2,592 308.0,586 307.9,580 307.9,574 308.0,568 308.1,562 308.3,556 308.5,550 308.7,544 308.9,538 309.1,532 309.3,526 309.4,520 309.6,514 309.7,508 309.7,502 309.6,496 309.4,490 309.3,484 309.1,478 308.9,472 308.7,466 308.5,460 308.4,454 308.4,448 308.4,442 308.5,436 308.4,430 308.3,424 308.1,418 307.9,412 307.9,406 308.0,400 308.1,394 308.2,388 308.3,382 308.2,376 308.2,370 308.1,364 307.9,358 307.8,352 307.6,346 307.5,340 307.5,334 307.5,328 307.5,322 307.5,316 307.5,310 307.6,304 307.7,298 307.9,292 308.0,286 308.2,280 308.4,274 308.5,268 308.7,262 308.7,256 308.6,250 308.3,244 308.0,238 307.6,232 307.3,226 307.1,220 306.9,214 306.8,208 306.6,202 306.5,196 306.4,190 306.4,184 306.4,178 306.5,172 306.6,166 306.8,160 307.0,154 307.2,148"/><ellipse class="knot" cx="293.1" cy="1444" rx="5" ry="8"/><ellipse class="knot2" cx="293.1" cy="1444" rx="2.2" ry="4"/><ellipse class="knot" cx="306.8" cy="1184" rx="5" ry="8"/><ellipse class="knot2" cx="306.8" cy="1184" rx="2.2" ry="4"/><ellipse class="knot" cx="296.8" cy="924" rx="5" ry="8"/><ellipse class="knot2" cx="296.8" cy="924" rx="2.2" ry="4"/><ellipse class="knot" cx="305.2" cy="664" rx="5" ry="8"/><ellipse class="knot2" cx="305.2" cy="664" rx="2.2" ry="4"/><ellipse class="knot" cx="301.1" cy="424" rx="5" ry="8"/><ellipse class="knot2" cx="301.1" cy="424" rx="2.2" ry="4"/><path class="off off-y" style="stroke-width:6.1" d="M260.5,1393.8 C260.5,1363.8 265.8,1350.0 283.8,1326.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(268.4,1350.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(268.4,1364.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M265.4,1357.6 C225.4,1351.6 158.0,1325 158.0,1359"/><circle class="linkdot link-ad" cx="265.4" cy="1357.6" r="5"/><circle class="linkdot link-ad" cx="158.0" cy="1359" r="5"/><rect class="gbase" x="-52" y="1359" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="-52" y="1359" width="244" height="90" rx="10"/><text x="-40" y="1390" class="gta" text-anchor="start">Цена по акции и</text><text x="-40" y="1415" class="gta" text-anchor="start">пробное занятие,</text><text x="-40" y="1440" class="gta" text-anchor="start">анонс в соцсетях</text><circle class="node-c" cx="302.3" cy="1404" r="15"/><text x="302.3" y="1409" class="node-t" text-anchor="middle">1</text><path class="off off-y" style="stroke-width:5.3" d="M339.5,1303.8 C339.5,1273.8 336.2,1260.0 318.2,1236.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(333.0,1260.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(333.0,1274.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M335.6,1267.6 C375.6,1261.6 442.0,1235 442.0,1269"/><circle class="linkdot link-ad" cx="335.6" cy="1267.6" r="5"/><circle class="linkdot link-ad" cx="442.0" cy="1269" r="5"/><rect class="gbase" x="408" y="1269" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="408" y="1269" width="244" height="90" rx="10"/><text x="420" y="1300" class="gta" text-anchor="start">Сайт с дизайном</text><text x="420" y="1325" class="gta" text-anchor="start">от подрядчика,</text><text x="420" y="1350" class="gta" text-anchor="start">обновляет админ</text><circle class="node-c" cx="301.1" cy="1314" r="15"/><text x="301.1" y="1319" class="node-t" text-anchor="middle">2</text><path class="off off-y" style="stroke-width:5.4" d="M260.5,1213.8 C260.5,1183.8 269.0,1170.0 287.0,1146.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(270.5,1170.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(270.5,1184.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-o" d="M267.0,1177.6 C227.0,1171.6 158.0,1145 158.0,1179"/><circle class="linkdot link-od" cx="267.0" cy="1177.6" r="5"/><circle class="linkdot link-od" cx="158.0" cy="1179" r="5"/><rect class="gbase" x="-52" y="1179" width="244" height="90" rx="10"/><rect class="gbox gbox-o" x="-52" y="1179" width="244" height="90" rx="10"/><text x="-40" y="1210" class="gto" text-anchor="start">Собственник сам</text><text x="-40" y="1235" class="gto" text-anchor="start">ведёт абонементы</text><text x="-40" y="1260" class="gto" text-anchor="start">и расписание</text><circle class="node-c" cx="302.4" cy="1224" r="15"/><text x="302.4" y="1229" class="node-t" text-anchor="middle">3</text><path class="off off-y" style="stroke-width:3" d="M339.5,1123.8 C339.5,1093.8 332.0,1080 314.0,1056" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(333.0,1080.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(333.0,1094.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-o" d="M335.6,1087.6 C375.6,1081.6 442.0,1055 442.0,1089"/><circle class="linkdot link-od" cx="335.6" cy="1087.6" r="5"/><circle class="linkdot link-od" cx="442.0" cy="1089" r="5"/><rect class="gbase" x="408" y="1089" width="244" height="90" rx="10"/><rect class="gbox gbox-o" x="408" y="1089" width="244" height="90" rx="10"/><text x="420" y="1120" class="gto" text-anchor="start">Собственник на</text><text x="420" y="1145" class="gto" text-anchor="start">занятии подсаживает</text><text x="420" y="1170" class="gto" text-anchor="start">в группу по уровню</text><circle class="node-c" cx="301.7" cy="1134" r="15"/><text x="301.7" y="1139" class="node-t" text-anchor="middle">4</text><path class="off off-y" style="stroke-width:5.0" d="M260.5,1033.8 C260.5,1003.8 271.3,990.0 289.3,966.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(272.1,990.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(272.1,1004.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M268.1,997.6 C228.1,991.6 158.0,965 158.0,999"/><circle class="linkdot link-ad" cx="268.1" cy="997.6" r="5"/><circle class="linkdot link-ad" cx="158.0" cy="999" r="5"/><rect class="gbase" x="-52" y="999" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="-52" y="999" width="244" height="90" rx="10"/><text x="-40" y="1030" class="gta" text-anchor="start">Форма на сайте</text><text x="-40" y="1055" class="gta" text-anchor="start">вместо звонка, но</text><text x="-40" y="1080" class="gta" text-anchor="start">ждёт ответа админа</text><circle class="node-c" cx="302.6" cy="1044" r="15"/><text x="302.6" y="1049" class="node-t" text-anchor="middle">5</text><path class="off off-y" style="stroke-width:4.5" d="M339.5,943.8 C339.5,913.8 333.3,900.0 315.3,876.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(331.0,900.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(331.0,914.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M334.2,907.6 C374.2,901.6 442.0,875 442.0,909"/><circle class="linkdot link-ad" cx="334.2" cy="907.6" r="5"/><circle class="linkdot link-ad" cx="442.0" cy="909" r="5"/><rect class="gbase" x="408" y="909" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="408" y="909" width="244" height="90" rx="10"/><text x="420" y="940" class="gta" text-anchor="start">Бронь через сайт</text><text x="420" y="965" class="gta" text-anchor="start">или сервис записи</text><text x="420" y="990" class="gta" text-anchor="start">за отдельную плату</text><circle class="node-c" cx="302.3" cy="954" r="15"/><text x="302.3" y="959" class="node-t" text-anchor="middle">6</text><path class="off off-y" style="stroke-width:4.7" d="M260.5,853.8 C260.5,823.8 272.9,810.0 290.9,786.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(273.2,810.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(273.2,824.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M268.9,817.6 C228.9,811.6 158.0,785 158.0,819"/><circle class="linkdot link-ad" cx="268.9" cy="817.6" r="5"/><circle class="linkdot link-ad" cx="158.0" cy="819" r="5"/><rect class="gbase" x="-52" y="819" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="-52" y="819" width="244" height="90" rx="10"/><text x="-40" y="850" class="gta" text-anchor="start">Оплата на месте</text><text x="-40" y="875" class="gta" text-anchor="start">после занятия,</text><text x="-40" y="900" class="gta" text-anchor="start">неявки за ваш счёт</text><circle class="node-c" cx="303.0" cy="864" r="15"/><text x="303.0" y="869" class="node-t" text-anchor="middle">7</text><path class="off off-y" style="stroke-width:4.4" d="M339.5,763.8 C339.5,733.8 332.3,720.0 314.3,696.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(330.4,720.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(330.4,734.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M333.7,727.6 C373.7,721.6 442.0,695 442.0,729"/><circle class="linkdot link-ad" cx="333.7" cy="727.6" r="5"/><circle class="linkdot link-ad" cx="442.0" cy="729" r="5"/><rect class="gbase" x="408" y="729" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="408" y="729" width="244" height="90" rx="10"/><text x="420" y="760" class="gta" text-anchor="start">Перенос по звонку</text><text x="420" y="785" class="gta" text-anchor="start">или в чате, место</text><text x="420" y="810" class="gta" text-anchor="start">освобождает админ</text><circle class="node-c" cx="302.6" cy="774" r="15"/><text x="302.6" y="779" class="node-t" text-anchor="middle">8</text><path class="off off-y" style="stroke-width:3" d="M260.5,673.8 C260.5,643.8 268.0,630 286.0,606" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(268.4,630.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(268.4,644.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M265.4,637.6 C225.4,631.6 158.0,605 158.0,639"/><circle class="linkdot link-ad" cx="265.4" cy="637.6" r="5"/><circle class="linkdot link-ad" cx="158.0" cy="639" r="5"/><rect class="gbase" x="-52" y="639" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="-52" y="639" width="244" height="90" rx="10"/><text x="-40" y="670" class="gta" text-anchor="start">Админ накануне</text><text x="-40" y="695" class="gta" text-anchor="start">пишет каждому</text><text x="-40" y="720" class="gta" text-anchor="start">в мессенджер</text><circle class="node-c" cx="303.2" cy="684" r="15"/><text x="303.2" y="689" class="node-t" text-anchor="middle">9</text><path class="off off-y" style="stroke-width:3" d="M339.5,583.8 C339.5,553.8 332.0,540 314.0,516" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(333.0,540.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(333.0,554.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M335.6,547.6 C375.6,541.6 442.0,515 442.0,549"/><circle class="linkdot link-ad" cx="335.6" cy="547.6" r="5"/><circle class="linkdot link-ad" cx="442.0" cy="549" r="5"/><rect class="gbase" x="408" y="549" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="408" y="549" width="244" height="90" rx="10"/><text x="420" y="580" class="gta" text-anchor="start">Админ отмечает</text><text x="420" y="605" class="gta" text-anchor="start">визиты в журнале</text><text x="420" y="630" class="gta" text-anchor="start">или таблице</text><circle class="node-c" cx="302.8" cy="594" r="15"/><text x="302.8" y="599" class="node-t" text-anchor="middle">10</text><path class="off off-y" style="stroke-width:3" d="M260.5,493.8 C260.5,463.8 268.0,450 286.0,426" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(268.4,450.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(268.4,464.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-o" d="M265.4,457.6 C225.4,451.6 158.0,425 158.0,459"/><circle class="linkdot link-od" cx="265.4" cy="457.6" r="5"/><circle class="linkdot link-od" cx="158.0" cy="459" r="5"/><rect class="gbase" x="-52" y="459" width="244" height="90" rx="10"/><rect class="gbox gbox-o" x="-52" y="459" width="244" height="90" rx="10"/><text x="-40" y="490" class="gto" text-anchor="start">Собственник сам</text><text x="-40" y="515" class="gto" text-anchor="start">ведёт мини-группы</text><text x="-40" y="540" class="gto" text-anchor="start">по уровню</text><circle class="node-c" cx="303.2" cy="504" r="15"/><text x="303.2" y="509" class="node-t" text-anchor="middle">11</text><path class="off off-y" style="stroke-width:4.6" d="M339.5,403.8 C339.5,373.8 329.9,360.0 311.9,336.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(328.7,360.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(328.7,374.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-o" d="M332.5,367.6 C372.5,361.6 442.0,335 442.0,369"/><circle class="linkdot link-od" cx="332.5" cy="367.6" r="5"/><circle class="linkdot link-od" cx="442.0" cy="369" r="5"/><rect class="gbase" x="408" y="369" width="244" height="90" rx="10"/><rect class="gbox gbox-o" x="408" y="369" width="244" height="90" rx="10"/><text x="420" y="400" class="gto" text-anchor="start">Собственник ведёт</text><text x="420" y="425" class="gto" text-anchor="start">группу сильнее и</text><text x="420" y="450" class="gto" text-anchor="start">турниры в чатах</text><circle class="node-c" cx="302.6" cy="414" r="15"/><text x="302.6" y="419" class="node-t" text-anchor="middle">12</text><path class="off off-y" style="stroke-width:4.4" d="M260.5,313.8 C260.5,283.8 276.1,270.0 294.1,246.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(275.3,270.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(275.3,284.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M270.5,277.6 C230.5,271.6 158.0,245 158.0,279"/><circle class="linkdot link-ad" cx="270.5" cy="277.6" r="5"/><circle class="linkdot link-ad" cx="158.0" cy="279" r="5"/><rect class="gbase" x="-52" y="279" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="-52" y="279" width="244" height="90" rx="10"/><text x="-40" y="310" class="gta" text-anchor="start">Акция в рассылке</text><text x="-40" y="335" class="gta" text-anchor="start">по базе, вручную</text><text x="-40" y="360" class="gta" text-anchor="start">в мессенджере</text><circle class="node-c" cx="303.0" cy="324" r="15"/><text x="303.0" y="329" class="node-t" text-anchor="middle">13</text><path class="off off-y" style="stroke-width:4.5" d="M339.5,223.8 C339.5,193.8 328.8,180.0 310.8,156.0" marker-end="url(#arrYc)"/><path class="leaf leaf-y" transform="translate(328.0,180.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-y" transform="translate(328.0,194.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-a" d="M331.9,187.6 C371.9,181.6 442.0,155 442.0,189"/><circle class="linkdot link-ad" cx="331.9" cy="187.6" r="5"/><circle class="linkdot link-ad" cx="442.0" cy="189" r="5"/><rect class="gbase" x="408" y="189" width="244" height="90" rx="10"/><rect class="gbox gbox-a" x="408" y="189" width="244" height="90" rx="10"/><text x="420" y="220" class="gta" text-anchor="start">Админ напоминает</text><text x="420" y="245" class="gta" text-anchor="start">о продлении,</text><text x="420" y="270" class="gta" text-anchor="start">оплата переводом</text><circle class="node-c" cx="302.5" cy="234" r="15"/><text x="302.5" y="239" class="node-t" text-anchor="middle">14</text><circle class="node-ring" cx="302.3" cy="1404" r="21"/><circle class="node-ring" cx="301.1" cy="1314" r="21"/><circle class="node-ring" cx="302.4" cy="1224" r="21"/><circle class="node-ring" cx="301.7" cy="1134" r="21"/><circle class="node-ring" cx="302.6" cy="1044" r="21"/><circle class="node-ring" cx="302.3" cy="954" r="21"/><circle class="node-ring" cx="303.0" cy="864" r="21"/><circle class="node-ring" cx="302.6" cy="774" r="21"/><circle class="node-ring" cx="303.2" cy="684" r="21"/><circle class="node-ring" cx="302.8" cy="594" r="21"/><circle class="node-ring" cx="303.2" cy="504" r="21"/><circle class="node-ring" cx="302.6" cy="414" r="21"/><circle class="node-ring" cx="303.0" cy="324" r="21"/><circle class="node-ring" cx="302.5" cy="234" r="21"/><circle class="node-c" cx="300" cy="1494" r="15"/><text x="300" y="1499" class="node-t" text-anchor="middle">0</text><circle class="node-ring" cx="300" cy="1494" r="21"/><ellipse class="crown crown-y foliage" cx="266" cy="134.0" rx="30" ry="11.2"/><ellipse class="crown crown-y foliage" cx="334" cy="134.0" rx="30" ry="11.2"/><ellipse class="crown crown-y foliage" cx="282" cy="121.0" rx="30" ry="11.9"/><ellipse class="crown crown-y foliage" cx="318" cy="121.0" rx="30" ry="11.9"/><ellipse class="crown crown-y" cx="300" cy="130" rx="46" ry="14.0"/><ellipse class="hl" cx="286" cy="125.1" rx="20" ry="4.2"/><text x="300" y="54" class="crown-t2" text-anchor="middle">Постоянный клиент</text><text x="300" y="78" class="tl" text-anchor="middle">итоговая конверсия</text><path class="pline" d="M-60,4 L-52,4"/><path class="link link-o" d="M192,4 C236,4 258,60 262,116"/><circle class="linkdot link-od" cx="192" cy="4" r="5"/><circle class="linkdot link-od" cx="262" cy="116" r="5"/><rect class="gbase" x="-52" y="-40" width="244" height="88" rx="10"/><rect class="gbox gbox-o" x="-52" y="-40" width="244" height="88" rx="10"/><text x="-40" y="-12" class="gto" text-anchor="start">Собственник сам</text><text x="-40" y="13" class="gto" text-anchor="start">сводит выручку</text><text x="-40" y="38" class="gto" text-anchor="start">по кассе и таблицам</text><text x="650" y="-6" class="score score-y" text-anchor="end"><tspan class="score-s">автоматизировано </tspan><tspan class="score-b">2</tspan></text><text x="650" y="30" class="score score-y" text-anchor="end"><tspan class="score-s">ручных </tspan><tspan class="score-b">14</tspan></text><rect class="hit" data-n="1" x="-52" y="1359" width="244" height="90" rx="10"/><rect class="hit" data-n="2" x="408" y="1269" width="244" height="90" rx="10"/><rect class="hit" data-n="3" x="-52" y="1179" width="244" height="90" rx="10"/><rect class="hit" data-n="4" x="408" y="1089" width="244" height="90" rx="10"/><rect class="hit" data-n="5" x="-52" y="999" width="244" height="90" rx="10"/><rect class="hit" data-n="6" x="408" y="909" width="244" height="90" rx="10"/><rect class="hit" data-n="7" x="-52" y="819" width="244" height="90" rx="10"/><rect class="hit" data-n="8" x="408" y="729" width="244" height="90" rx="10"/><rect class="hit" data-n="9" x="-52" y="639" width="244" height="90" rx="10"/><rect class="hit" data-n="10" x="408" y="549" width="244" height="90" rx="10"/><rect class="hit" data-n="11" x="-52" y="459" width="244" height="90" rx="10"/><rect class="hit" data-n="12" x="408" y="369" width="244" height="90" rx="10"/><rect class="hit" data-n="13" x="-52" y="279" width="244" height="90" rx="10"/><rect class="hit" data-n="14" x="408" y="189" width="244" height="90" rx="10"/><rect class="hit" data-n="0" x="397.7" y="1556" width="158" height="104" rx="10"/><rect class="hit" data-n="15" x="-52" y="-40" width="244" height="88" rx="10"/>
+  </svg>
+  </div>
+  <div class="cost cost-y"><span class="cost-l">Траты на привлечение и ведение</span><b>30–110 тыс. ₽ в месяц</b><span>Сайт, запись, соцсети и реклама своими силами или через подрядчиков. Ориентир рынка, не данные Alliby; время владельца не считаем.</span><ul class="cost-ul"><li>Сайт: разработка 30–150 тыс. ₽ разово, поддержка 1–5 тыс. ₽ в месяц; цены и расписание обновляете сами.</li><li>Запись и учёт: сервис или таблица, 1–5 тыс. ₽ в месяц; напоминания вручную.</li><li>Привлечение: специалист по соцсетям 15–40 тыс. ₽ в месяц плюс реклама 10–50 тыс. ₽ в месяц.</li><li>Любая правка идёт через подрядчика, ответы клиентам на вас.</li></ul></div>
+</section>
+<section class="tree">
+  <h2 class="tree-h">Дерево с Alliby</h2>
+  <p class="tree-p">К обычным клиентам и вашим каналам (синий корень) добавляются клиенты из Alliby: заведение видно в приложении, а реклама знакомит людей с новыми направлениями. Каждое решение (точечная линия) создаёт зелёный отросток, который возвращает клиента на ствол, поэтому верхушка шире. Решения выделены зелёным: эту работу администратора и собственника Alliby делает автоматически. Малое дерево справа: ещё одно заведение, которое растёт из корней первого.</p>
+  <div class="treewrap" role="img" aria-label="Дерево клиента с Alliby">
+  <svg viewBox="-110 -42 1350 1742" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glowb"><stop offset="0" style="stop-color:var(--crown);stop-opacity:.22"/><stop offset="1" style="stop-color:var(--crown);stop-opacity:0"/></radialGradient>
+    <marker id="arrGb" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="22" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arr-g"/></marker>
+    <marker id="arrYb" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="22" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arr-y"/></marker>
+    <marker id="arrDb" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="arr-d"/></marker>
+  </defs>
+  <ellipse cx="300" cy="130" rx="260" ry="190" fill="url(#glowb)"/><ellipse class="soil" cx="300" cy="1490" rx="150" ry="14"/><ellipse class="soil2" cx="300" cy="1488" rx="96" ry="8"/><path class="pline" d="M-110,1494 L702.0,1494"/><path class="pline" d="M-110,1404 L702.0,1404"/><path class="pline" d="M-110,1314 L702.0,1314"/><path class="pline" d="M-110,1224 L702.0,1224"/><path class="pline" d="M-110,1134 L702.0,1134"/><path class="pline" d="M-110,1044 L702.0,1044"/><path class="pline" d="M-110,954 L702.0,954"/><path class="pline" d="M-110,864 L702.0,864"/><path class="pline" d="M-110,774 L702.0,774"/><path class="pline" d="M-110,684 L702.0,684"/><path class="pline" d="M-110,594 L702.0,594"/><path class="pline" d="M-110,504 L702.0,504"/><path class="pline" d="M-110,414 L702.0,414"/><path class="pline" d="M-110,324 L702.0,324"/><path class="pline" d="M-110,234 L702.0,234"/><path class="root root-n" style="stroke-width:15.4" d="M91.0,1558 C91.0,1526 269.2,1516 269.2,1480"/><rect class="rbox-n" x="12.0" y="1556" width="158" height="104" rx="12"/><text x="21.0" y="1584" class="tb" text-anchor="start">Знают вас</text><text x="21.0" y="1609" class="t" text-anchor="start">друзья, район,</text><text x="21.0" y="1632" class="t" text-anchor="start">вывеска</text><path class="root root-n" style="stroke-width:18.2" d="M253.0,1558 C253.0,1526 286.0,1516 286.0,1480"/><rect class="rbox-n" x="174.0" y="1556" width="158" height="104" rx="12"/><text x="183.0" y="1584" class="tb" text-anchor="start">Хотят начать</text><text x="183.0" y="1609" class="t" text-anchor="start">фигура, ЗОЖ,</text><text x="183.0" y="1632" class="t" text-anchor="start">самооценка</text><path class="root root-y" style="stroke-width:9.8" d="M415.0,1558 C415.0,1526 300.0,1516 300.0,1480"/><rect class="rbox-a" x="336.0" y="1556" width="158" height="104" rx="12"/><text x="345.0" y="1584" class="tba" text-anchor="start">Сайт и соцсети</text><text x="345.0" y="1609" class="tya" text-anchor="start">реклама и посты,</text><text x="345.0" y="1632" class="tya" text-anchor="start">ведёт админ</text><path class="root root-g" style="stroke-width:15.4" d="M577.0,1558 C577.0,1526 312.6,1516 312.6,1480"/><rect class="rbox-b" x="498.0" y="1556" width="158" height="104" rx="12"/><text x="507.0" y="1584" class="tbb" text-anchor="start">В приложении</text><text x="507.0" y="1609" class="tgb" text-anchor="start">карта, поиск,</text><text x="507.0" y="1632" class="tgb" text-anchor="start">раздел «Спорт»</text><path class="root root-g" style="stroke-width:18.2" d="M739.0,1558 C739.0,1526 329.4,1516 329.4,1480"/><rect class="rbox-b" x="660.0" y="1556" width="158" height="104" rx="12"/><text x="669.0" y="1584" class="tbb" text-anchor="start">Реклама Alliby</text><text x="669.0" y="1609" class="tgb" text-anchor="start">знакомит с</text><text x="669.0" y="1632" class="tgb" text-anchor="start">направлением</text><path class="dead" style="stroke-width:30.8" d="M300,1408 C245.0,1406 210.0,1386 174,1366"/><text x="172" y="1377" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:22.5" d="M300,1318 C355.0,1316 390.0,1296 426,1276"/><text x="428" y="1287" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:24.8" d="M300,1228 C245.0,1226 210.0,1206 174,1186"/><text x="172" y="1197" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:17.8" d="M300,1138 C355.0,1136 390.0,1116 426,1096"/><text x="428" y="1107" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:20.1" d="M300,1048 C245.0,1046 210.0,1026 174,1006"/><text x="172" y="1017" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:12.7" d="M300,958 C355.0,956 390.0,936 426,916"/><text x="428" y="927" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:16.5" d="M300,868 C245.0,866 210.0,846 174,826"/><text x="172" y="837" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:12.3" d="M300,778 C355.0,776 390.0,756 426,736"/><text x="428" y="747" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:14.6" d="M300,688 C245.0,686 210.0,666 174,646"/><text x="172" y="657" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:11.9" d="M300,598 C355.0,596 390.0,576 426,556"/><text x="428" y="567" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:12.9" d="M300,508 C245.0,506 210.0,486 174,466"/><text x="172" y="477" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:16.1" d="M300,418 C355.0,416 390.0,396 426,376"/><text x="428" y="387" class="tl2" text-anchor="start">✕</text><path class="dead" style="stroke-width:12.4" d="M300,328 C245.0,326 210.0,306 174,286"/><text x="172" y="297" class="tl2" text-anchor="end">✕</text><path class="dead" style="stroke-width:14.3" d="M300,238 C355.0,236 390.0,216 426,196"/><text x="428" y="207" class="tl2" text-anchor="start">✕</text><polygon class="trunk" points="261.5,1480 261.5,1474 261.5,1468 261.5,1462 261.5,1456 261.5,1450 261.5,1444 261.5,1438 261.5,1432 261.6,1426 262.9,1420 265.1,1414 267.8,1408 270.2,1402 271.9,1396 272.3,1390 272.3,1384 272.3,1378 272.3,1372 272.3,1366 272.3,1360 272.3,1354 272.3,1348 272.1,1342 271.4,1336 270.4,1330 269.2,1324 268.1,1318 267.2,1312 266.9,1306 266.9,1300 266.9,1294 266.9,1288 266.9,1282 266.9,1276 266.9,1270 266.9,1264 266.9,1258 266.9,1252 267.0,1246 267.9,1240 269.6,1234 271.6,1228 273.5,1222 274.8,1216 275.1,1210 275.1,1204 275.1,1198 275.1,1192 275.1,1186 275.1,1180 275.1,1174 275.1,1168 274.9,1162 274.4,1156 273.6,1150 272.7,1144 271.9,1138 271.2,1132 271.0,1126 271.0,1120 271.0,1114 271.0,1108 271.0,1102 271.0,1096 271.0,1090 271.0,1084 271.0,1078 271.0,1072 271.0,1066 271.7,1060 273.0,1054 274.6,1048 276.0,1042 276.9,1036 277.1,1030 277.1,1024 277.1,1018 277.1,1012 277.1,1006 277.1,1000 277.1,994 277.1,988 277.0,982 276.6,976 276.0,970 275.3,964 274.7,958 274.2,952 274.0,946 274.0,940 274.0,934 274.0,928 274.0,922 274.0,916 274.0,910 274.0,904 274.0,898 274.0,892 274.1,886 274.6,880 275.6,874 276.7,868 277.7,862 278.4,856 278.6,850 278.6,844 278.6,838 278.6,832 278.6,826 278.6,820 278.6,814 278.6,808 278.5,802 278.2,796 277.8,790 277.3,784 276.8,778 276.5,772 276.3,766 276.3,760 276.3,754 276.3,748 276.3,742 276.3,736 276.3,730 276.3,724 276.3,718 276.3,712 276.3,706 276.8,700 277.6,694 278.5,688 279.3,682 279.9,676 280.0,670 280.0,664 280.0,658 280.0,652 280.0,646 280.0,640 280.0,634 280.0,628 280.0,622 279.8,616 279.4,610 279.0,604 278.6,598 278.3,592 278.2,586 278.2,580 278.2,574 278.2,568 278.2,562 278.2,556 278.2,550 278.2,544 278.2,538 278.2,532 278.2,526 278.6,520 279.2,514 279.9,508 280.6,502 281.1,496 281.2,490 281.2,484 281.2,478 281.2,472 281.2,466 281.2,460 281.2,454 281.2,448 281.1,442 280.9,436 280.7,430 280.3,424 280.0,418 279.8,412 279.7,406 279.7,400 279.7,394 279.7,388 279.7,382 279.7,376 279.7,370 279.7,364 279.7,358 279.7,352 279.7,346 280.0,340 280.6,334 281.3,328 281.9,322 282.4,316 282.5,310 282.5,304 282.5,298 282.5,292 282.5,286 282.5,280 282.5,274 282.5,268 282.4,262 282.2,256 282.0,250 281.7,244 281.4,238 281.2,232 281.1,226 281.1,220 281.1,214 281.1,208 281.1,202 281.1,196 281.1,190 281.1,184 281.1,178 281.1,172 281.1,166 281.1,160 281.1,154 281.1,148 323.9,148 323.5,154 323.1,160 322.8,166 322.5,172 322.5,178 322.5,184 322.5,190 322.5,196 322.5,202 322.5,208 322.5,214 322.5,220 322.6,226 323.1,232 324.0,238 324.9,244 325.6,250 326.0,256 326.1,262 326.1,268 326.1,274 326.1,280 326.1,286 326.1,292 326.1,298 326.1,304 326.1,310 326.1,316 325.9,322 325.6,328 325.1,334 324.7,340 324.2,346 323.9,352 323.9,358 323.9,364 323.9,370 323.9,376 323.9,382 323.9,388 323.9,394 323.9,400 324.0,406 324.7,412 325.7,418 326.8,424 327.7,430 328.2,436 328.3,442 328.3,448 328.3,454 328.3,460 328.3,466 328.3,472 328.3,478 328.3,484 328.3,490 328.3,496 328.2,502 328.0,508 327.7,514 327.4,520 327.2,526 327.0,532 327.0,538 327.0,544 327.0,550 327.0,556 327.0,562 327.0,568 327.0,574 327.0,580 327.1,586 327.5,592 328.0,598 328.7,604 329.2,610 329.5,616 329.5,622 329.5,628 329.5,634 329.5,640 329.5,646 329.5,652 329.5,658 329.5,664 329.5,670 329.5,676 329.5,682 329.2,688 329.0,694 328.7,700 328.4,706 328.2,712 328.2,718 328.2,724 328.2,730 328.2,736 328.2,742 328.2,748 328.2,754 328.2,760 328.3,766 328.7,772 329.3,778 330.0,784 330.6,790 330.9,796 330.9,802 330.9,808 330.9,814 330.9,820 330.9,826 330.9,832 330.9,838 330.9,844 330.9,850 330.9,856 330.8,862 330.6,868 330.3,874 330.0,880 329.7,886 329.5,892 329.4,898 329.4,904 329.4,910 329.4,916 329.4,922 329.4,928 329.4,934 329.4,940 329.5,946 330.0,952 330.7,958 331.4,964 332.0,970 332.3,976 332.4,982 332.4,988 332.4,994 332.4,1000 332.4,1006 332.4,1012 332.4,1018 332.4,1024 332.4,1030 332.4,1036 332.2,1042 331.8,1048 331.3,1054 330.7,1060 330.2,1066 329.9,1072 329.8,1078 329.8,1084 329.8,1090 329.8,1096 329.8,1102 329.8,1108 329.8,1114 329.8,1120 330.0,1126 330.8,1132 331.9,1138 333.2,1144 334.3,1150 334.9,1156 334.9,1162 334.9,1168 334.9,1174 334.9,1180 334.9,1186 334.9,1192 334.9,1198 334.9,1204 334.9,1210 334.9,1216 334.7,1222 334.1,1228 333.4,1234 332.6,1240 331.9,1246 331.4,1252 331.3,1258 331.3,1264 331.3,1270 331.3,1276 331.3,1282 331.3,1288 331.3,1294 331.3,1300 331.6,1306 332.7,1312 334.3,1318 336.1,1324 337.6,1330 338.4,1336 338.5,1342 338.5,1348 338.5,1354 338.5,1360 338.5,1366 338.5,1372 338.5,1378 338.5,1384 338.5,1390 338.5,1396 338.5,1402 338.5,1408 338.5,1414 338.5,1420 338.5,1426 338.5,1432 338.5,1438 338.5,1444 338.5,1450 338.5,1456 338.5,1462 338.5,1468 338.5,1474 338.5,1480"/><polyline class="bark" points="275.8,1480 276.5,1474 277.3,1468 278.0,1462 278.7,1456 279.2,1450 279.5,1444 279.6,1438 279.5,1432 279.2,1426 279.7,1420 280.8,1414 282.3,1408 283.5,1402 284.2,1396 284.0,1390 283.6,1384 283.3,1378 283.2,1372 283.3,1366 283.6,1360 284.0,1354 284.6,1348 285.1,1342 285.2,1336 284.8,1330 284.1,1324 283.3,1318 282.5,1312 282.1,1306 281.9,1300 281.7,1294 281.2,1288 280.7,1282 280.1,1276 279.4,1270 278.8,1264 278.3,1258 277.9,1252 277.8,1246 278.6,1240 280.3,1234 282.3,1228 284.4,1222 286.0,1216 286.8,1210 287.4,1204 287.9,1198 288.4,1192 288.8,1186 289.0,1180 289.1,1174 289.0,1168 288.7,1162 287.9,1156 286.6,1150 285.1,1144 283.5,1138 282.2,1132 281.4,1126 281.0,1120 280.8,1114 280.7,1108 280.8,1102 281.0,1096 281.4,1090 281.9,1084 282.5,1078 283.1,1072 283.8,1066 284.9,1060 286.4,1054 287.9,1048 289.2,1042 289.8,1036 289.8,1030 289.4,1024 288.9,1018 288.4,1012 287.9,1006 287.3,1000 286.9,994 286.5,988 286.2,982 285.8,976 285.4,970 284.9,964 284.6,958 284.6,952 284.9,946 285.4,940 286.0,934 286.4,928 286.8,922 287.0,916 287.1,910 287.0,904 286.7,898 286.4,892 286.0,886 285.9,880 286.2,874 286.7,868 287.1,862 287.4,856 287.3,850 287.2,844 287.3,838 287.5,832 287.9,826 288.3,820 288.8,814 289.4,808 289.8,802 290.0,796 289.9,790 289.6,784 289.1,778 288.6,772 288.2,766 287.8,760 287.4,754 286.9,748 286.4,742 285.9,736 285.5,730 285.1,724 284.9,718 284.9,712 285.0,706 285.7,700 286.7,694 287.9,688 289.2,682 290.1,676 290.7,670 291.1,664 291.4,658 291.6,652 291.7,646 291.6,640 291.4,634 291.0,628 290.6,622 289.9,616 289.1,610 288.1,604 287.3,598 286.7,592 286.3,586 286.2,580 286.3,574 286.5,568 286.9,562 287.3,556 287.7,550 288.2,544 288.7,538 289.1,532 289.5,526 290.0,520 290.6,514 291.1,508 291.5,502 291.6,496 291.2,490 290.8,484 290.3,478 289.9,472 289.5,466 289.2,460 289.0,454 289.0,448 289.0,442 289.0,436 289.0,430 289.0,424 289.0,418 289.0,412 289.2,406 289.6,400 289.8,394 290.0,388 290.1,382 290.0,376 289.8,370 289.5,364 289.1,358 288.7,352 288.3,346 288.3,340 288.5,334 288.8,328 289.2,322 289.6,316 289.7,310 289.9,304 290.2,298 290.6,292 291.0,286 291.5,280 291.9,274 292.2,268 292.5,262 292.5,256 292.2,250 291.7,244 291.1,238 290.5,232 289.9,226 289.5,220 289.1,214 288.7,208 288.4,202 288.1,196 287.9,190 287.9,184 288.0,178 288.2,172 288.5,166 288.9,160 289.4,154 289.9,148"/><polyline class="barkl" points="288.9,1480 288.5,1474 288.2,1468 288.1,1462 288.2,1456 288.5,1450 289.1,1444 289.7,1438 290.5,1432 291.3,1426 292.8,1420 294.7,1414 296.8,1408 298.5,1402 299.5,1396 299.6,1390 299.4,1384 298.9,1378 298.3,1372 297.7,1366 297.0,1360 296.4,1354 295.9,1348 295.4,1342 294.6,1336 293.6,1330 292.4,1324 291.3,1318 290.7,1312 290.6,1306 291.1,1300 291.8,1294 292.4,1288 292.9,1282 293.3,1276 293.6,1270 293.6,1264 293.5,1258 293.3,1252 293.1,1246 293.4,1240 294.1,1234 295.0,1228 295.8,1222 296.2,1216 296.0,1210 295.8,1204 295.7,1198 295.8,1192 296.1,1186 296.5,1180 297.0,1174 297.6,1168 298.1,1162 298.3,1156 298.1,1150 297.5,1144 296.7,1138 295.9,1132 295.4,1126 295.0,1120 294.6,1114 294.1,1108 293.5,1102 293.0,1096 292.4,1090 291.9,1084 291.6,1078 291.4,1072 291.4,1066 292.2,1060 293.5,1054 295.1,1048 296.6,1042 297.8,1036 298.5,1030 299.0,1024 299.4,1018 299.8,1012 300.0,1006 300.0,1000 299.9,994 299.7,988 299.3,982 298.5,976 297.5,970 296.3,964 295.1,958 294.1,952 293.5,946 293.2,940 293.2,934 293.3,928 293.5,922 293.9,916 294.4,910 294.9,904 295.4,898 296.0,892 296.5,886 297.3,880 298.2,874 299.1,868 299.7,862 299.9,856 299.6,850 299.2,844 298.7,838 298.1,832 297.6,826 297.2,820 296.9,814 296.7,808 296.6,802 296.5,796 296.3,790 296.2,784 296.1,778 296.1,772 296.4,766 296.8,760 297.3,754 297.6,748 297.8,742 297.8,736 297.7,730 297.5,724 297.2,718 296.7,712 296.3,706 296.2,700 296.3,694 296.6,688 296.9,682 297.1,676 297.1,670 297.2,664 297.4,658 297.8,652 298.2,646 298.7,640 299.2,634 299.6,628 300.0,622 300.2,616 300.0,610 299.6,604 299.0,598 298.4,592 297.8,586 297.4,580 296.9,574 296.4,568 295.9,562 295.5,556 295.2,550 295.1,544 295.0,538 295.1,532 295.4,526 296.1,520 297.0,514 298.0,508 299.0,502 299.8,496 300.2,490 300.5,484 300.7,478 300.7,472 300.6,466 300.4,460 300.1,454 299.7,448 299.2,442 298.6,436 297.8,430 296.9,424 296.0,418 295.3,412 295.0,406 295.0,400 295.2,394 295.5,388 295.9,382 296.3,376 296.8,370 297.2,364 297.5,358 297.8,352 298.1,346 298.5,340 299.0,334 299.4,328 299.6,322 299.5,316 299.2,310 298.7,304 298.3,298 298.0,292 297.7,286 297.5,280 297.5,274 297.6,268 297.8,262 297.9,256 298.0,250 297.9,244 297.8,238 297.8,232 297.9,226 298.1,220 298.2,214 298.3,208 298.2,202 298.0,196 297.7,190 297.3,184 296.9,178 296.5,172 296.2,166 296.0,160 295.9,154 295.9,148"/><polyline class="bark" points="307.2,1480 306.8,1474 306.3,1468 305.6,1462 304.9,1456 304.1,1450 303.4,1444 302.8,1438 302.3,1432 302.0,1426 302.6,1420 303.8,1414 305.4,1408 307.0,1402 308.3,1396 309.1,1390 309.8,1384 310.4,1378 311.0,1372 311.4,1366 311.6,1360 311.7,1354 311.6,1348 311.2,1342 310.4,1336 308.9,1330 306.9,1324 304.7,1318 302.8,1312 301.6,1306 301.0,1300 300.8,1294 300.7,1288 300.9,1282 301.1,1276 301.6,1270 302.2,1264 302.8,1258 303.5,1252 304.4,1246 305.7,1240 307.3,1234 308.8,1228 309.9,1222 310.4,1216 310.3,1210 309.9,1204 309.3,1198 308.8,1192 308.2,1186 307.6,1180 307.1,1174 306.8,1168 306.5,1162 306.2,1156 305.6,1150 304.9,1144 304.2,1138 303.8,1132 303.8,1126 304.3,1120 304.9,1114 305.3,1108 305.7,1102 305.9,1096 306.0,1090 305.9,1084 305.6,1078 305.2,1072 304.9,1066 304.9,1060 305.2,1054 305.7,1048 306.1,1042 306.3,1036 306.2,1030 306.1,1024 306.2,1018 306.5,1012 306.9,1006 307.3,1000 307.9,994 308.4,988 308.9,982 309.2,976 309.1,970 308.6,964 308.0,958 307.3,952 306.7,946 306.3,940 305.8,934 305.2,928 304.7,922 304.2,916 303.7,910 303.4,904 303.2,898 303.2,892 303.4,886 304.0,880 305.0,874 306.2,868 307.3,862 308.2,856 308.7,850 309.2,844 309.5,838 309.7,832 309.7,826 309.6,820 309.4,814 309.0,808 308.5,802 307.9,796 307.0,790 305.9,784 304.9,778 304.1,772 303.6,766 303.5,760 303.6,754 303.9,748 304.3,742 304.7,736 305.2,730 305.7,724 306.2,718 306.7,712 307.1,706 307.6,700 308.1,694 308.6,688 308.8,682 308.8,676 308.4,670 307.9,664 307.4,658 306.9,652 306.5,646 306.2,640 306.1,634 306.0,628 306.1,622 306.2,616 306.2,610 306.2,604 306.1,598 306.2,592 306.4,586 306.7,580 307.0,574 307.2,568 307.2,562 307.1,556 306.9,550 306.5,544 306.1,538 305.7,532 305.3,526 305.1,520 305.2,514 305.4,508 305.6,502 305.9,496 306.0,490 306.2,484 306.5,478 307.0,472 307.4,466 307.9,460 308.3,454 308.7,448 309.0,442 309.0,436 308.6,430 307.9,424 306.9,418 305.9,412 305.1,406 304.5,400 304.1,394 303.7,388 303.3,382 303.1,376 302.9,370 302.9,364 303.0,358 303.2,352 303.7,346 304.5,340 305.4,334 306.4,328 307.3,322 307.9,316 308.2,310 308.4,304 308.4,298 308.3,292 308.1,286 307.8,280 307.4,274 307.0,268 306.5,262 306.0,256 305.3,250 304.5,244 303.8,238 303.2,232 303.0,226 303.1,220 303.4,214 303.7,208 304.2,202 304.6,196 304.9,190 305.3,184 305.5,178 305.7,172 305.9,166 306.0,160 306.0,154 305.9,148"/><polyline class="barkl" points="320.2,1480 320.9,1474 321.7,1468 322.5,1462 323.1,1456 323.7,1450 324.1,1444 324.2,1438 324.2,1432 324.0,1426 323.8,1420 323.6,1414 323.5,1408 323.3,1402 323.1,1396 322.6,1390 322.1,1384 321.8,1378 321.6,1372 321.7,1366 321.9,1360 322.3,1354 322.8,1348 323.4,1342 323.8,1336 323.6,1330 322.8,1324 321.6,1318 320.4,1312 319.6,1306 319.4,1300 319.2,1294 318.8,1288 318.3,1282 317.7,1276 317.0,1270 316.4,1264 315.8,1258 315.4,1252 315.5,1246 316.1,1240 317.2,1234 318.5,1228 319.7,1222 320.7,1216 321.3,1210 321.9,1204 322.5,1198 323.0,1192 323.4,1186 323.7,1180 323.8,1174 323.8,1168 323.6,1162 323.1,1156 322.0,1150 320.4,1144 318.6,1138 317.0,1132 315.8,1126 315.2,1120 314.9,1114 314.8,1108 314.8,1102 315.0,1096 315.4,1090 315.9,1084 316.4,1078 317.0,1072 317.9,1066 319.0,1060 320.1,1054 321.1,1048 321.8,1042 322.1,1036 321.9,1030 321.6,1024 321.1,1018 320.6,1012 320.1,1006 319.5,1000 319.1,994 318.7,988 318.4,982 318.1,976 317.8,970 317.3,964 317.0,958 316.8,952 316.9,946 317.4,940 317.9,934 318.4,928 318.8,922 319.1,916 319.2,910 319.2,904 319.0,898 318.7,892 318.4,886 318.2,880 318.1,874 318.1,868 318.0,862 317.9,856 317.7,850 317.6,844 317.6,838 317.8,832 318.1,826 318.5,820 319.0,814 319.5,808 320.0,802 320.4,796 320.4,790 320.1,784 319.6,778 319.0,772 318.4,766 318.1,760 317.6,754 317.2,748 316.6,742 316.1,736 315.7,730 315.3,724 315.1,718 315.0,712 315.2,706 315.6,700 316.4,694 317.2,688 318.1,682 318.7,676 319.3,670 319.7,664 320.0,658 320.3,652 320.4,646 320.3,640 320.2,634 319.9,628 319.5,622 318.9,616 318.1,610 317.1,604 316.1,598 315.3,592 314.7,586 314.5,580 314.6,574 314.7,568 315.0,562 315.4,556 315.9,550 316.4,544 316.8,538 317.3,532 317.8,526 318.3,520 318.7,514 319.0,508 319.2,502 319.0,496 318.7,490 318.2,484 317.8,478 317.3,472 316.9,466 316.6,460 316.4,454 316.3,448 316.3,442 316.4,436 316.2,430 315.8,424 315.3,418 314.9,412 314.8,406 315.1,400 315.4,394 315.6,388 315.7,382 315.7,376 315.5,370 315.2,364 314.9,358 314.5,352 314.3,346 314.3,340 314.4,334 314.6,328 314.8,322 314.9,316 315.0,310 315.1,304 315.4,298 315.8,292 316.2,286 316.6,280 317.0,274 317.4,268 317.7,262 317.8,256 317.5,250 316.8,244 315.9,238 314.9,232 314.1,226 313.7,220 313.2,214 312.8,208 312.5,202 312.2,196 312.0,190 311.9,184 311.9,178 312.1,172 312.6,166 313.2,160 313.9,154 314.6,148"/><ellipse class="knot" cx="287.7" cy="1444" rx="5" ry="8"/><ellipse class="knot2" cx="287.7" cy="1444" rx="2.2" ry="4"/><ellipse class="knot" cx="312.2" cy="1184" rx="5" ry="8"/><ellipse class="knot2" cx="312.2" cy="1184" rx="2.2" ry="4"/><ellipse class="knot" cx="290.7" cy="924" rx="5" ry="8"/><ellipse class="knot2" cx="290.7" cy="924" rx="2.2" ry="4"/><ellipse class="knot" cx="308.7" cy="664" rx="5" ry="8"/><ellipse class="knot2" cx="308.7" cy="664" rx="2.2" ry="4"/><ellipse class="knot" cx="298.9" cy="424" rx="5" ry="8"/><ellipse class="knot2" cx="298.9" cy="424" rx="2.2" ry="4"/><path class="off off-g" style="stroke-width:21.0" d="M229.9,1393.8 C229.9,1363.8 251.6,1350.0 269.6,1326.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(248.9,1350.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(248.9,1364.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M243.0,1357.6 C203.0,1351.6 108.0,1325 108.0,1359"/><circle class="linkdot link-bd" cx="243.0" cy="1357.6" r="5"/><circle class="linkdot link-bd" cx="108.0" cy="1359" r="5"/><rect class="gbase" x="-102" y="1359" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="-102" y="1359" width="244" height="90" rx="10"/><text x="-90" y="1390" class="gtb" text-anchor="start">Персональные группы:</text><text x="-90" y="1415" class="gtb" text-anchor="start">цена, время и зал</text><text x="-90" y="1440" class="gtb" text-anchor="start">под клиента</text><circle class="node-c" cx="304.0" cy="1404" r="15"/><text x="304.0" y="1409" class="node-t" text-anchor="middle">1</text><path class="off off-g" style="stroke-width:16.3" d="M370.1,1303.8 C370.1,1273.8 351.1,1260.0 333.1,1236.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(353.0,1260.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(353.0,1274.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M358.4,1267.6 C398.4,1261.6 492.0,1235 492.0,1269"/><circle class="linkdot link-bd" cx="358.4" cy="1267.6" r="5"/><circle class="linkdot link-bd" cx="492.0" cy="1269" r="5"/><rect class="gbase" x="458" y="1269" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="458" y="1269" width="244" height="90" rx="10"/><text x="470" y="1300" class="gtb" text-anchor="start">Единый дизайн Alliby,</text><text x="470" y="1325" class="gtb" text-anchor="start">расписание и цены</text><text x="470" y="1350" class="gtb" text-anchor="start">всегда актуальны</text><circle class="node-c" cx="300.3" cy="1314" r="15"/><text x="300.3" y="1319" class="node-t" text-anchor="middle">2</text><path class="off off-g" style="stroke-width:17.6" d="M229.9,1213.8 C229.9,1183.8 255.0,1170.0 273.0,1146.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(251.2,1170.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(251.2,1184.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M244.7,1177.6 C204.7,1171.6 108.0,1145 108.0,1179"/><circle class="linkdot link-bd" cx="244.7" cy="1177.6" r="5"/><circle class="linkdot link-bd" cx="108.0" cy="1179" r="5"/><rect class="gbase" x="-102" y="1179" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="-102" y="1179" width="244" height="90" rx="10"/><text x="-90" y="1210" class="gtb" text-anchor="start">Окна всех тренеров</text><text x="-90" y="1235" class="gtb" text-anchor="start">на неделю, абонемент</text><text x="-90" y="1260" class="gtb" text-anchor="start">дешевле разовых</text><circle class="node-c" cx="303.7" cy="1224" r="15"/><text x="303.7" y="1229" class="node-t" text-anchor="middle">3</text><path class="off off-g" style="stroke-width:13.7" d="M370.1,1123.8 C370.1,1093.8 349.1,1080.0 331.1,1056.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(351.6,1080.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(351.6,1094.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M357.4,1087.6 C397.4,1081.6 492.0,1055 492.0,1089"/><circle class="linkdot link-bd" cx="357.4" cy="1087.6" r="5"/><circle class="linkdot link-bd" cx="492.0" cy="1089" r="5"/><rect class="gbase" x="458" y="1089" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="458" y="1089" width="244" height="90" rx="10"/><text x="470" y="1120" class="gtb" text-anchor="start">Донабор в идущую</text><text x="470" y="1145" class="gtb" text-anchor="start">группу своего</text><text x="470" y="1170" class="gtb" text-anchor="start">уровня</text><circle class="node-c" cx="301.3" cy="1134" r="15"/><text x="301.3" y="1139" class="node-t" text-anchor="middle">4</text><path class="off off-g" style="stroke-width:15.0" d="M229.9,1033.8 C229.9,1003.8 257.6,990.0 275.6,966.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(252.9,990.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(252.9,1004.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M246.0,997.6 C206.0,991.6 108.0,965 108.0,999"/><circle class="linkdot link-bd" cx="246.0" cy="997.6" r="5"/><circle class="linkdot link-bd" cx="108.0" cy="999" r="5"/><rect class="gbase" x="-102" y="999" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="-102" y="999" width="244" height="90" rx="10"/><text x="-90" y="1030" class="gtb" text-anchor="start">Сам выбирает дату,</text><text x="-90" y="1055" class="gtb" text-anchor="start">тренера и занятие,</text><text x="-90" y="1080" class="gtb" text-anchor="start">без звонка</text><circle class="node-c" cx="303.8" cy="1044" r="15"/><text x="303.8" y="1049" class="node-t" text-anchor="middle">5</text><path class="off off-g" style="stroke-width:10.8" d="M370.1,943.8 C370.1,913.8 348.2,900.0 330.2,876.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(351.0,900.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(351.0,914.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M356.9,907.6 C396.9,901.6 492.0,875 492.0,909"/><circle class="linkdot link-bd" cx="356.9" cy="907.6" r="5"/><circle class="linkdot link-bd" cx="492.0" cy="909" r="5"/><rect class="gbase" x="458" y="909" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="458" y="909" width="244" height="90" rx="10"/><text x="470" y="940" class="gtb" text-anchor="start">Аренда на время:</text><text x="470" y="965" class="gtb" text-anchor="start">площадка и инвентарь</text><text x="470" y="990" class="gtb" text-anchor="start">с шагом и ценой</text><circle class="node-c" cx="302.3" cy="954" r="15"/><text x="302.3" y="959" class="node-t" text-anchor="middle">6</text><path class="off off-g" style="stroke-width:12.9" d="M229.9,853.8 C229.9,823.8 259.5,810.0 277.5,786.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(254.2,810.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(254.2,824.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M246.9,817.6 C206.9,811.6 108.0,785 108.0,819"/><circle class="linkdot link-bd" cx="246.9" cy="817.6" r="5"/><circle class="linkdot link-bd" cx="108.0" cy="819" r="5"/><rect class="gbase" x="-102" y="819" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="-102" y="819" width="244" height="90" rx="10"/><text x="-90" y="850" class="gtb" text-anchor="start">Предоплата или пост-</text><text x="-90" y="875" class="gtb" text-anchor="start">оплата — на выбор</text><text x="-90" y="900" class="gtb" text-anchor="start">для каждой позиции</text><circle class="node-c" cx="304.1" cy="864" r="15"/><text x="304.1" y="869" class="node-t" text-anchor="middle">7</text><path class="off off-g" style="stroke-width:10.5" d="M370.1,763.8 C370.1,733.8 346.9,720.0 328.9,696.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(350.1,720.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(350.1,734.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M356.2,727.6 C396.2,721.6 492.0,695 492.0,729"/><circle class="linkdot link-bd" cx="356.2" cy="727.6" r="5"/><circle class="linkdot link-bd" cx="492.0" cy="729" r="5"/><rect class="gbase" x="458" y="729" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="458" y="729" width="244" height="90" rx="10"/><text x="470" y="760" class="gtb" text-anchor="start">Перенос и отмена</text><text x="470" y="785" class="gtb" text-anchor="start">записи в приложении</text><text x="470" y="810" class="gtb" text-anchor="start">в пару нажатий</text><circle class="node-c" cx="302.7" cy="774" r="15"/><text x="302.7" y="779" class="node-t" text-anchor="middle">8</text><path class="off off-g" style="stroke-width:11.8" d="M229.9,673.8 C229.9,643.8 261.1,630.0 279.1,606.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(255.3,630.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(255.3,644.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M247.7,637.6 C207.7,631.6 108.0,605 108.0,639"/><circle class="linkdot link-bd" cx="247.7" cy="637.6" r="5"/><circle class="linkdot link-bd" cx="108.0" cy="639" r="5"/><rect class="gbase" x="-102" y="639" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="-102" y="639" width="244" height="90" rx="10"/><text x="-90" y="670" class="gtb" text-anchor="start">Напоминания: пуш</text><text x="-90" y="695" class="gtb" text-anchor="start">перед занятием,</text><text x="-90" y="720" class="gtb" text-anchor="start">запись в календарь</text><circle class="node-c" cx="304.2" cy="684" r="15"/><text x="304.2" y="689" class="node-t" text-anchor="middle">9</text><path class="off off-g" style="stroke-width:10.3" d="M370.1,583.8 C370.1,553.8 345.6,540.0 327.6,516.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(349.3,540.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(349.3,554.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M355.6,547.6 C395.6,541.6 492.0,515 492.0,549"/><circle class="linkdot link-bd" cx="355.6" cy="547.6" r="5"/><circle class="linkdot link-bd" cx="492.0" cy="549" r="5"/><rect class="gbase" x="458" y="549" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="458" y="549" width="244" height="90" rx="10"/><text x="470" y="580" class="gtb" text-anchor="start">QR-списание у</text><text x="470" y="605" class="gtb" text-anchor="start">сотрудника, остаток</text><text x="470" y="630" class="gtb" text-anchor="start">виден обоим</text><circle class="node-c" cx="303.0" cy="594" r="15"/><text x="303.0" y="599" class="node-t" text-anchor="middle">10</text><path class="off off-g" style="stroke-width:10.9" d="M229.9,493.8 C229.9,463.8 262.4,450.0 280.4,426.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(256.2,450.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(256.2,464.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M248.4,457.6 C208.4,451.6 108.0,425 108.0,459"/><circle class="linkdot link-bd" cx="248.4" cy="457.6" r="5"/><circle class="linkdot link-bd" cx="108.0" cy="459" r="5"/><rect class="gbase" x="-102" y="459" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="-102" y="459" width="244" height="90" rx="10"/><text x="-90" y="490" class="gtb" text-anchor="start">Своя группа одного</text><text x="-90" y="515" class="gtb" text-anchor="start">уровня, цена тренера</text><text x="-90" y="540" class="gtb" text-anchor="start">делится на всех</text><circle class="node-c" cx="304.3" cy="504" r="15"/><text x="304.3" y="509" class="node-t" text-anchor="middle">11</text><path class="off off-g" style="stroke-width:12.7" d="M370.1,403.8 C370.1,373.8 343.0,360.0 325.0,336.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(347.5,360.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(347.5,374.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M354.3,367.6 C394.3,361.6 492.0,335 492.0,369"/><circle class="linkdot link-bd" cx="354.3" cy="367.6" r="5"/><circle class="linkdot link-bd" cx="492.0" cy="369" r="5"/><rect class="gbase" x="458" y="369" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="458" y="369" width="244" height="90" rx="10"/><text x="470" y="400" class="gtb" text-anchor="start">Переход в группу</text><text x="470" y="425" class="gtb" text-anchor="start">сильнее, мастер-</text><text x="470" y="450" class="gtb" text-anchor="start">классы и турниры</text><circle class="node-c" cx="302.4" cy="414" r="15"/><text x="302.4" y="419" class="node-t" text-anchor="middle">12</text><path class="off off-g" style="stroke-width:10.6" d="M229.9,313.8 C229.9,283.8 263.8,270.0 281.8,246.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(257.1,270.4) rotate(28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(257.1,284.4) rotate(150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M249.1,277.6 C209.1,271.6 108.0,245 108.0,279"/><circle class="linkdot link-bd" cx="249.1" cy="277.6" r="5"/><circle class="linkdot link-bd" cx="108.0" cy="279" r="5"/><rect class="gbase" x="-102" y="279" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="-102" y="279" width="244" height="90" rx="10"/><text x="-90" y="310" class="gtb" text-anchor="start">Пуш с акцией тем,</text><text x="-90" y="335" class="gtb" text-anchor="start">кто не был 7, 30</text><text x="-90" y="360" class="gtb" text-anchor="start">или 90 дней</text><circle class="node-c" cx="303.8" cy="324" r="15"/><text x="303.8" y="329" class="node-t" text-anchor="middle">13</text><path class="off off-g" style="stroke-width:11.7" d="M370.1,223.8 C370.1,193.8 341.4,180.0 323.4,156.0" marker-end="url(#arrGb)"/><path class="leaf leaf-g" transform="translate(346.4,180.4) rotate(-28)" d="M0,0 C6,-12 20,-12 26,-2 C18,8 6,8 0,0Z"/><path class="leaf leaf-g" transform="translate(346.4,194.4) rotate(-150)" d="M0,0 C6,-10 16,-10 20,-2 C14,6 6,6 0,0Z"/><path class="link link-b" d="M353.5,187.6 C393.5,181.6 492.0,155 492.0,189"/><circle class="linkdot link-bd" cx="353.5" cy="187.6" r="5"/><circle class="linkdot link-bd" cx="492.0" cy="189" r="5"/><rect class="gbase" x="458" y="189" width="244" height="90" rx="10"/><rect class="gbox gbox-b" x="458" y="189" width="244" height="90" rx="10"/><text x="470" y="220" class="gtb" text-anchor="start">Продление в пару</text><text x="470" y="245" class="gtb" text-anchor="start">нажатий, остаток</text><text x="470" y="270" class="gtb" text-anchor="start">виден заранее</text><circle class="node-c" cx="302.3" cy="234" r="15"/><text x="302.3" y="239" class="node-t" text-anchor="middle">14</text><circle class="node-ring" cx="304.0" cy="1404" r="21"/><circle class="node-ring" cx="300.3" cy="1314" r="21"/><circle class="node-ring" cx="303.7" cy="1224" r="21"/><circle class="node-ring" cx="301.3" cy="1134" r="21"/><circle class="node-ring" cx="303.8" cy="1044" r="21"/><circle class="node-ring" cx="302.3" cy="954" r="21"/><circle class="node-ring" cx="304.1" cy="864" r="21"/><circle class="node-ring" cx="302.7" cy="774" r="21"/><circle class="node-ring" cx="304.2" cy="684" r="21"/><circle class="node-ring" cx="303.0" cy="594" r="21"/><circle class="node-ring" cx="304.3" cy="504" r="21"/><circle class="node-ring" cx="302.4" cy="414" r="21"/><circle class="node-ring" cx="303.8" cy="324" r="21"/><circle class="node-ring" cx="302.3" cy="234" r="21"/><circle class="node-c" cx="300" cy="1494" r="15"/><text x="300" y="1499" class="node-t" text-anchor="middle">0</text><circle class="node-ring" cx="300" cy="1494" r="21"/><path class="loop" d="M254,130 L-106,130 L-106,1608 L8,1608" marker-end="url(#arrDb)"/><ellipse class="crown crown-g foliage" cx="266" cy="139.9" rx="30" ry="27.6"/><ellipse class="crown crown-g foliage" cx="334" cy="139.9" rx="30" ry="27.6"/><ellipse class="crown crown-g foliage" cx="282" cy="107.8" rx="30" ry="29.4"/><ellipse class="crown crown-g foliage" cx="318" cy="107.8" rx="30" ry="29.4"/><ellipse class="crown crown-g" cx="300" cy="130" rx="46" ry="34.6"/><ellipse class="hl" cx="286" cy="117.9" rx="20" ry="10.4"/><text x="260" y="66" class="crown-t2" text-anchor="end">Постоянный клиент</text><text x="260" y="90" class="tl" text-anchor="end">итоговая конверсия</text><text x="1230" y="-6" class="score score-g" text-anchor="end"><tspan class="score-s">автоматизировано </tspan><tspan class="score-b">16</tspan></text><text x="1230" y="30" class="score score-g" text-anchor="end"><tspan class="score-s">ручных </tspan><tspan class="score-b">0</tspan></text><path class="off" style="stroke-width:7" d="M296,50 C296,70 294,86 294,113" marker-end="url(#arrGb)"/><path class="pline" d="M-110,4 L120,4"/><rect class="gbase" x="120" y="-40" width="350" height="88" rx="10"/><rect class="gbox gbox-b" x="120" y="-40" width="350" height="88" rx="10"/><text x="132" y="-15" class="tbb" text-anchor="start">15 · Аналитика</text><text x="132" y="9" class="tgb" text-anchor="start">выручка по позициям и занятиям:</text><text x="132" y="32" class="tgb" text-anchor="start">видно, что интересно, цены точнее</text><path class="root root-g" style="stroke-width:9" d="M815,1608 L870,1608"/><path class="root root-g" style="stroke-width:9" d="M943,1558 C943,1526 1015,1516 1015,1480"/><rect class="rbox-g" x="864" y="1556" width="158" height="104" rx="12"/><text x="873" y="1584" class="tbg" text-anchor="start">Из первого</text><text x="873" y="1609" class="tg" text-anchor="start">тот же контент,</text><text x="873" y="1632" class="tg" text-anchor="start">одна учётка</text><path class="root root-n" style="stroke-width:8" d="M1113,1558 C1113,1526 1015,1516 1015,1480"/><rect class="rbox-n" x="1034" y="1556" width="158" height="104" rx="12"/><text x="1043" y="1584" class="tb" text-anchor="start">Свои клиенты</text><text x="1043" y="1609" class="t" text-anchor="start">нового</text><text x="1043" y="1632" class="t" text-anchor="start">заведения</text><path class="trunkL" d="M1015,1480 L1015,1034"/><path class="dead" style="stroke-width:11" d="M1015,1377 C989,1375 973,1364 957,1352"/><path class="off" style="stroke-width:6.5" d="M981,1367 C981,1347 1006,1324 1009,1310" marker-end="url(#arrGb)"/><path class="dead" style="stroke-width:11" d="M1015,1267 C1041,1265 1057,1254 1073,1242"/><path class="off" style="stroke-width:6.5" d="M1049,1257 C1049,1237 1024,1214 1021,1200" marker-end="url(#arrGb)"/><path class="dead" style="stroke-width:11" d="M1015,1157 C989,1155 973,1144 957,1132"/><path class="off" style="stroke-width:6.5" d="M981,1147 C981,1127 1006,1104 1009,1090" marker-end="url(#arrGb)"/><ellipse class="crown crown-g" cx="1015" cy="1014" rx="34" ry="17"/><text x="1015" y="956" class="crown-t2" text-anchor="middle">Ещё одно заведение</text><text x="1015" y="980" class="tl" text-anchor="middle">та же схема</text><rect class="hit" data-n="1" x="-102" y="1359" width="244" height="90" rx="10"/><rect class="hit" data-n="2" x="458" y="1269" width="244" height="90" rx="10"/><rect class="hit" data-n="3" x="-102" y="1179" width="244" height="90" rx="10"/><rect class="hit" data-n="4" x="458" y="1089" width="244" height="90" rx="10"/><rect class="hit" data-n="5" x="-102" y="999" width="244" height="90" rx="10"/><rect class="hit" data-n="6" x="458" y="909" width="244" height="90" rx="10"/><rect class="hit" data-n="7" x="-102" y="819" width="244" height="90" rx="10"/><rect class="hit" data-n="8" x="458" y="729" width="244" height="90" rx="10"/><rect class="hit" data-n="9" x="-102" y="639" width="244" height="90" rx="10"/><rect class="hit" data-n="10" x="458" y="549" width="244" height="90" rx="10"/><rect class="hit" data-n="11" x="-102" y="459" width="244" height="90" rx="10"/><rect class="hit" data-n="12" x="458" y="369" width="244" height="90" rx="10"/><rect class="hit" data-n="13" x="-102" y="279" width="244" height="90" rx="10"/><rect class="hit" data-n="14" x="458" y="189" width="244" height="90" rx="10"/><rect class="hit" data-n="0" x="336" y="1556" width="482" height="104" rx="10"/><rect class="hit" data-n="15" x="120" y="-40" width="350" height="88" rx="10"/>
+  </svg>
+  </div>
+  <div class="costs2">
+  <div class="cost cost-g"><span class="cost-l">Траты на привлечение и ведение</span><b>930–1 600 ₽ в месяц</b><span>Подписка Alliby Бизнес: от 930 ₽ при оплате на год, первый месяц бесплатно. Запись, бронь, напоминания и абонементы в одном приложении, витрина на карте бесплатна.</span><ul class="cost-ul"><li>Клиентов приводит витрина: карта, поиск рядом, раздел «Спорт».</li><li>Запись, оплата, напоминания и QR-списание уже встроены.</li><li>Расписание тренеров и абонементы ведёте в кабинете; мастер-классы и соревнования создаёте там же.</li><li>Свой сайт и подрядчики не обязательны.</li><li>Аналитика показывает пустые занятия и спрос.</li><li>Пунктир слева на схеме: друзья и подарочные абонементы возвращают клиентов в корни.</li></ul></div>
+  <div class="cost cost-g"><span class="cost-l">Ещё одно заведение</span><b>+500 ₽ за заведение</b><span>Без нового сайта, подрядчиков и отдельных сервисов записи.</span><ul class="cost-ul"><li>Контент переиспользуется.</li><li>Управление из одного кабинета.</li><li>Расписание и учёт групп и тренеров нового заведения там же.</li></ul></div>
+  </div>
+</section>
+</div></div>
+<p class="tree-p note">Толщина условная: ствол внизу равен сумме корней, красная ветка отнимает от ствола свою толщину, отросток возвращает часть. Цифры на схеме не данные, они показывают логику. Оба дерева нарисованы в одном масштабе. Синим показаны привлечение и удержание своими силами, зелёным — с Alliby. Номера этапов в разделе ниже свои, у каждого указано, к каким проблемам на схеме он относится.</p>
+<h2 class="tree-h detail-h">Подробно по этапам</h2>
+<!-- /TREE -->
+  <!-- 0 -->
+  <section class="stage">
+    <div class="rail"><div class="node">А</div><i></i></div>
+    <div class="body">
+      <h2>Потребность</h2>
+      <p class="map">На схеме: корни дерева и проблема 0</p>
+      <div class="chips">
+        <span class="chip">Фигура и форма</span>
+        <span class="chip">Здоровый образ жизни</span>
+        <span class="chip">Самоутверждение</span>
+        <span class="chip">Привлечь внимание</span>
+        <span class="chip">Быть как в соцсетях</span>
+      </div>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Уходит, если</span><p>Хочет, но откладывает: «с понедельника».</p></div>
+        <div class="box gain"><span class="tag">Alliby</span><p>Подарочный абонемент даёт готовый повод начать прямо сейчас.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1 -->
+  <section class="stage">
+    <div class="rail"><div class="node">Б</div><i></i></div>
+    <div class="body">
+      <h2>Три условия выбора</h2>
+      <p class="map">На схеме: проблемы 1 и 3</p>
+      <p class="thinks">Чтобы выбрать секцию, клиенту нужно минимум два условия из трёх.</p>
+      <div class="cols3">
+        <div class="card">
+          <h3>Локация</h3>
+          <p class="thinks">Рядом с домом или работой</p>
+          <p class="thinks"><b>Имеющуюся точку Alliby не двигает, но решает локацию масштабированием:</b> можно открыть новое заведение ближе к клиентам и вести его из той же учётной записи. Фото, тренеры, абонементы и описания переиспользуются, поэтому новая точка запускается быстро.</p>
+        </div>
+        <div class="card">
+          <h3>Цена</h3>
+          <p class="thinks">По карману</p>
+          <div class="box gain"><span class="tag">Alliby</span><p>Помогает подобрать цену: абонементы, персональные группы, разные ставки тренеров, цены по дням и времени.</p></div>
+        </div>
+        <div class="card">
+          <h3>Интерес</h3>
+          <p class="thinks">Нравится это направление</p>
+          <div class="box gain"><span class="tag">Alliby</span><p>Помогает создать интерес в разумной мере: фото, профиль тренера, описание, подарок другу.</p></div>
+        </div>
+      </div>
+      <div class="rule">Два из трёх: клиент выбирает. Одно: не выбирает никого. Alliby добавляет недостающее: из двух условий делает три, из одного два. Даже локацию: через лёгкое масштабирование и новое заведение.</div>
+
+      <div class="sub">Чего не хватает и что с этим делает Alliby</div>
+      <div class="sub2">Совпали два условия: Alliby даёт третье, и вы выигрываете у конкурентов</div>
+      <div class="cols3">
+        <div class="card combo">
+          <p class="eq">Локация + интерес</p>
+          <p class="miss">Не хватает цены. Клиент уходит к тому, кто дешевле.</p>
+          <div class="box gain"><span class="tag">Alliby даёт цену</span><p>Персональные группы, абонементы, цены ниже в непопулярные часы. Условий три, клиент выбирает вас.</p></div>
+        </div>
+        <div class="card combo">
+          <p class="eq">Локация + цена</p>
+          <p class="miss">Не хватает интереса. Направление не цепляет.</p>
+          <div class="box gain"><span class="tag">Alliby даёт интерес</span><p>Фото зала и занятий, тренер с описанием, подарочный абонемент другу. Условий три, клиент выбирает вас.</p></div>
+        </div>
+        <div class="card combo">
+          <p class="eq">Цена + интерес</p>
+          <p class="miss">Не хватает локации. Заведение далеко от клиента.</p>
+          <div class="box gain"><span class="tag">Alliby даёт локацию</span><p>Лёгкое масштабирование: откройте новое заведение ближе к клиентам за 500 ₽. Контент переиспользуется, управление через одну учётную запись.</p></div>
+        </div>
+      </div>
+      <div class="sub2">Совпало только одно: Alliby даёт второе</div>
+      <div class="cols3">
+        <div class="card combo">
+          <p class="eq">Только локация</p>
+          <p class="miss">Рядом, но ни цена, ни направление не привлекают.</p>
+          <div class="box gain"><span class="tag">Alliby даёт цену или интерес</span><p>Абонемент или персональная группа, фото зала, профиль тренера. Условий уже два, клиент выбирает.</p></div>
+        </div>
+        <div class="card combo">
+          <p class="eq">Только цена</p>
+          <p class="miss">Подходит по цене, но направление не цепляет.</p>
+          <div class="box gain"><span class="tag">Alliby даёт интерес</span><p>Фото зала и занятий, тренер с регалиями, подарочный абонемент другу.</p></div>
+        </div>
+        <div class="card combo">
+          <p class="eq">Только интерес</p>
+          <p class="miss">Нравится направление, но дорого.</p>
+          <div class="box gain"><span class="tag">Alliby даёт цену</span><p>Персональные группы по цене тренера, абонементы дешевле разовых занятий.</p></div>
+        </div>
+      </div>
+      <div class="box gain"><span class="tag">Alliby стимулирует</span><p>Рассылки клиентам заведения: новые группы и расписание приходят тем, кому условия уже подходят.</p></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="stage">
+    <div class="rail"><div class="node">В</div><i></i></div>
+    <div class="body">
+      <h2>Выбор</h2>
+      <p class="map">На схеме: проблемы 2, 3 и 4</p>
+      <p class="thinks">Тренер и его регалии, фото зала, цена, расписание.</p>
+
+      <div class="cols2">
+        <div class="card">
+          <h3>Доверие</h3>
+          <div class="box loss"><span class="tag">Уходит, если</span><p>Невзрачный дизайн, мало фото, цены и расписание устарели.</p></div>
+          <div class="box gain"><span class="tag">Alliby</span>
+            <p>Своего сайта может не быть, о дизайне волноваться не надо: вас представляет единый аккуратный дизайн Alliby. Цены и расписание берутся из кабинета, поэтому всегда актуальны.</p>
+            <p>Фото зала и тренировок, профиль тренера с описанием и регалиями.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Расписание</h3>
+          <div class="box loss"><span class="tag">Уходит, если</span><p>Нет нужных дней и времени: вечера, выходные.</p></div>
+          <div class="box gain"><span class="tag">Alliby</span>
+            <p>Вы создаёте аккаунты сотрудников для приглашённых тренеров и загружаете всю неделю. Больше тренеров, больше окон.</p>
+            <p>Клиент оставляет заявку на день и время или присоединяется к готовой группе.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Цена и формат</h3>
+        <div class="ladder">
+          <div class="step"><b>Групповые занятия</b><span>Недорого, но мало развития. Клиент не видит прогресса и уходит.</span></div>
+          <div class="step"><b>Индивидуальные</b><span>Быстрый рост, но дорого. Мало кто готов платить постоянно.</span></div>
+          <div class="step hit"><b>Персональные групповые</b><span>Тренер заранее указывает цену, клиенты сами собирают группу. Развитие близко к индивидуальному, цена ниже.</span></div>
+        </div>
+        <div class="box gain"><span class="tag">Alliby</span>
+          <ul>
+            <li>Персональные групповые занятия: клиенты сами формируют группу под цену тренера.</li>
+            <li>Абонементы дешевле разовых занятий.</li>
+            <li>Подарочные абонементы приводят новых клиентов.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="stage">
+    <div class="rail"><div class="node">Г</div><i></i></div>
+    <div class="body">
+      <h2>Запись</h2>
+      <p class="map">На схеме: проблемы 5 и 6</p>
+      <p class="thinks">Хочу записаться сейчас.</p>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Уходит, если</span><p>Нужно звонить и ждать ответа. Желание остывает за час.</p></div>
+        <div class="box gain"><span class="tag">Alliby</span><p>Клиент сам выбирает дату, тренера и тренировку, без звонка и ожидания ответа.</p><p>Площадку и инвентарь бронирует на нужное время так же.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="stage">
+    <div class="rail"><div class="node">Д</div><i></i></div>
+    <div class="body">
+      <h2>Оплата</h2>
+      <p class="map">На схеме: проблема 7</p>
+      <p class="thinks">Платить вперёд не хочется, а заведению нужна гарантия, что клиент придёт.</p>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Уходит, если</span><p>Требуют оплату вперёд за всё подряд. Или не требуют ничего, и заведение теряет деньги на неявках.</p></div>
+        <div class="box gain"><span class="tag">Alliby</span><p>Ответвление «Оплата»: для каждой позиции вы сами выбираете предоплату или постоплату. Например, предоплата для персональных занятий и постоплата для групповых.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="stage">
+    <div class="rail"><div class="node">Е</div><i></i></div>
+    <div class="body">
+      <h2>Первые занятия</h2>
+      <p class="map">На схеме: проблемы 8–11</p>
+      <p class="thinks">Первые три-четыре недели решают, останется ли клиент.</p>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Уходит, если</span><p>Забыл про занятие, не вписалось в день, не видит прогресса.</p></div>
+        <div class="box gain"><span class="tag">Alliby</span><p>Напоминания, запись в календарь телефона, остаток абонемента и списание по QR. В малой группе тренер видит каждого, поэтому прогресс заметен.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="stage">
+    <div class="rail"><div class="node">Ж</div><i></i></div>
+    <div class="body">
+      <h2>Развитие</h2>
+      <p class="map">На схеме: проблемы 11 и 12</p>
+      <p class="thinks">Чтобы расти, нужно ходить чаще, а лучше брать индивидуальные занятия. Они дорогие.</p>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Уходит, если</span><p>Не видит роста: общая группа не двигает вперёд, индивидуальные не по карману, дальше потолок.</p></div>
+        <div class="box gain"><span class="tag">Alliby</span>
+          <ul>
+            <li>Персональные групповые занятия: рост близок к индивидуальному, цена ниже.</li>
+            <li>Чаще ходить выгоднее: абонементы дешевле разовых занятий.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="cols2">
+        <div class="card">
+          <h3>Группы по опыту</h3>
+          <div class="box gain"><span class="tag">Alliby</span>
+            <p>Развитие решается созданием нескольких групп по уровню. Alliby ведёт учёт разных групп и тренеров, а для наёмных тренеров вы создаёте расписание и управляете им в приложении.</p><p>Человек чувствует прогресс и превосходство над собой прежним и над новичками.</p>
+            <p>Он видит перспективу: впереди более опытные участники, и до них можно дорасти.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Регулярные события</h3>
+          <div class="box gain"><span class="tag">Alliby</span>
+            <p>Заведение создаёт регулярные события: мастер-классы и соревнования. Они дают цель, повод проверить себя и собирают людей разных уровней.</p>
+          </div>
+        </div>
+      </div>
+      <div class="rule">Основа верхушки: люди, которые вложили средства и постоянно, заметно развиваются. Они остаются надолго и подтягивают остальных.</div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="stage">
+    <div class="rail"><div class="node">З</div><i></i></div>
+    <div class="body">
+      <h2>Продление</h2>
+      <p class="map">На схеме: проблемы 13 и 14</p>
+      <p class="thinks">Абонемент заканчивается.</p>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Уходит, если</span><p>Лень писать тренеру, лето, пропуски: абонемент просто закончился.</p></div>
+        <div class="box gain"><span class="tag">Alliby</span><p>Продление в приложении, остаток всегда виден. Подарочный абонемент другу возвращает интерес.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="stage">
+    <div class="rail"><div class="node">И</div><i></i></div>
+    <div class="body">
+      <h2>Рост</h2>
+      <p class="map">На схеме: пунктир к корням и малое дерево</p>
+      <p class="thinks">Хочу привести друга и показать результат.</p>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Уходит, если</span><p>Друг не знает, где вы занимаетесь.</p></div>
+        <div class="box gain"><span class="tag">Alliby</span><p>Подарочный абонемент приводит друга сразу к вам, друзья могут заниматься в одной группе.</p><p>Если клиентов больше, чем мест, откройте ещё одно заведение: доплата 500 ₽, контент переиспользуется, управление из той же учётной записи.</p></div>
+      </div>
+      <div class="loop"><b>Круг замыкается.</b><span>Довольный клиент приводит друзей к корням дерева, и они проходят путь заново.</span></div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="stage">
+    <div class="rail"><div class="node">К</div></div>
+    <div class="body">
+      <h2>Аналитика</h2>
+      <p class="map">На схеме: проблема 15, отросток «Аналитика» у верхушки</p>
+      <p class="thinks">Отросток без красной ветки: клиент здесь не уходит, а заведение зарабатывает больше.</p>
+      <div class="pair">
+        <div class="box loss"><span class="tag">Теряете, если</span><p>Вы не видите, какие занятия пустуют и какие цены стоят давно. Расписание и стоимость держатся на привычке.</p></div>
+        <div class="box gain"><span class="tag">Alliby</span><ul><li>Видно заполненность занятий и групп: убираете то, что не окупается.</li><li>Видно, на что есть спрос: актуализируете стоимость.</li><li>Видна выручка по каждой позиции: понятно, что приносит деньги и что интересно клиентам.</li><li>Итог: прибыль растёт без новых клиентов.</li></ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="summary">
+    <h2>Четыре места, где вы теряете клиентов</h2>
+    <div class="sum3">
+      <div class="card">
+        <h3>Вас не нашли</h3>
+        <p>Корни дерева. Alliby показывает вас тем, кто ищет спорт рядом, среди местных заведений без сетей.</p>
+      </div>
+      <div class="card">
+        <h3>Вам не поверили</h3>
+        <p>Проблема 2. Свой сайт не обязателен: вас представляет дизайн Alliby, с фото зала, профилями тренеров и актуальным расписанием.</p>
+      </div>
+      <div class="card">
+        <h3>Не подошли цена, формат и день</h3>
+        <p>Проблемы 1, 3 и 4. Персональные группы, абонементы и неделя с несколькими тренерами закрывают разрыв между дешёвой группой и дорогой личной тренировкой.</p>
+      </div>
+      <div class="card">
+        <h3>Не видят роста</h3>
+        <p>Проблемы 11 и 12. Группы по опыту, персональные группы, мастер-классы и соревнования дают прогресс и перспективу. Те, кто вложился и растёт, становятся основой верхушки.</p>
+      </div>
+    </div>
+    <p class="foot">Схема для встреч с владельцами секций и клубов. Дерево для направления «Спорт».</p>
+  </section>
+<script>
+document.fonts.ready.then(() => {  // ждём шрифт: перенос строк меряется по нему
+  // Блоки уровня n: всё, что лежит внутри прозрачного .hit с тем же data-n, собираем в <g class="lvl">
+  const Y = n => n == 0 ? 1494 : n == 15 ? 4 : 1404 - 90 * (n - 1);
+  const FULL = {"0": ["0 · Привлечение", "О заведении знают только соседи и друзья, новых людей мало.", "a", "Админ ведёт соцсети и запускает рекламу, подрядчикам платите вы.", "Заведение видно на карте и в поиске приложения, реклама Alliby знакомит людей с направлением."], "1": ["1 · Выбор", "Клиент выбирает по цене, локации и интересу. Если сошлось меньше двух условий, уходит.", "a", "Админ объявляет акцию и пробное занятие. Это снижает цену, но не решает локацию и интерес.", "Удобная система персональных групповых тренировок: клиент выбирает тренера, время и зал, собирает группу своего уровня, цена тренера делится на всех. Дешевле личного тренера, интереснее общей группы, ближе к дому."], "2": ["2 · Доверие", "По устаревшим ценам и невзрачной странице клиент решает, что заведение заброшено.", "a", "Сайт делает подрядчик, цены и расписание админ обновляет вручную и часто с опозданием.", "Единое оформление витрины. Расписание и цены берутся из кабинета, поэтому всегда актуальны."], "3": ["3 · Цена и расписание", "Разовое занятие дорого, а в удобный день тренировки нет.", "o", "Собственник сам придумывает абонементы и доп. время, расписание держит в таблице.", "Клиент видит окна всех тренеров на неделю, абонемент сразу показан дешевле разовых."], "4": ["4 · Куда вписаться", "Группа уже занимается, новичок не знает, можно ли прийти в середине.", "o", "Собственник прямо на занятии решает, в какую группу посадить новичка.", "Донабор: клиент записывается в идущую группу своего уровня, свободные места видны."], "5": ["5 · Запись", "Чтобы записаться, надо звонить. Пока дозвонился, желание остыло.", "a", "Форма на сайте вместо звонка, но заявка ждёт, пока админ ответит.", "Клиент сам выбирает дату, тренера и занятие, запись подтверждена сразу."], "6": ["6 · Площадка и инвентарь", "Корт или стол нельзя занять заранее: приходишь, а всё занято.", "a", "Бронь через сайт или отдельный сервис за доплату, админ сводит её вручную.", "Аренда по времени с шагом и ценой, занятые слоты видны всем."], "7": ["7 · Оплата", "Не все готовы платить вперёд, а без предоплаты растут неявки.", "a", "Оплата на месте после занятия, админ ведёт кассу, неявки за ваш счёт.", "Для каждой позиции выбираете предоплату или оплату на месте."], "8": ["8 · Не могу прийти", "Занятие пропадает, платить за него обидно, и клиент не возвращается.", "a", "Перенос по звонку или в чате, место освобождает админ.", "Перенос и отмена в пару нажатий, место сразу освобождается для других."], "9": ["9 · День занятия", "Клиент просто забыл про занятие.", "a", "Админ накануне пишет каждому в мессенджер.", "Пуш перед занятием и запись в календаре телефона."], "10": ["10 · Учёт визитов", "Спор, сколько занятий осталось по абонементу.", "a", "Админ отмечает визиты в журнале или таблице.", "Списание по QR у сотрудника, остаток видят и клиент, и заведение."], "11": ["11 · Мотивация", "Личный тренер дорог, а в большой общей группе скучно и мало внимания.", "o", "Собственник сам собирает мини-группы по уровню и ведёт занятия.", "Клиенты одного уровня собираются в свою группу, цена тренера делится на всех."], "12": ["12 · Развитие", "Клиент упёрся в потолок и не видит новой цели.", "o", "Собственник переводит в группу сильнее, турниры собирает в чатах.", "Переход в группу сильнее, мастер-классы и турниры с записью в приложении."], "13": ["13 · Пропал надолго", "Клиент ушёл на паузу, и никто о нём не вспомнил.", "a", "Админ вручную делает рассылку с акцией по базе.", "Автоматический пуш с акцией тем, кто не был 7, 30 или 90 дней."], "14": ["14 · Продление", "Абонемент кончился, продлевать лень.", "a", "Админ напоминает о продлении и принимает оплату переводом.", "Остаток виден заранее, продление в пару нажатий."], "15": ["15 · Выручка", "Неясно, какие занятия приносят деньги, а какие пустуют.", "o", "Собственник сводит выручку по кассе и таблицам.", "Аналитика по позициям и занятиям: что интересно клиентам, что убрать, где поднять цену."]};
+  const lvls = {}, plines = {};
+  document.querySelectorAll('.probwrap svg, .treewrap svg').forEach(svg => {
+    // уровень 0 в деревьях — все корни: у каждого облака своя зона, облако увеличивается целиком
+    if (svg.closest('.treewrap')) {
+      const first = svg.querySelector('.hit');
+      svg.querySelectorAll('.hit[data-n="0"]').forEach(h => h.remove());
+      svg.querySelectorAll(':scope > rect[class^="rbox"]').forEach(b => {
+        const h = mk('rect', { class: 'hit zoom', 'data-n': 0, rx: 12 });
+        ['x', 'y', 'width', 'height'].forEach(k => h.setAttribute(k, b.getAttribute(k)));
+        svg.insertBefore(h, first);
+      });
+    }
+    const hits = [...svg.querySelectorAll('.hit')];
+    const items = [...svg.children].filter(el => el.matches('rect:not(.hit), text'));
+    hits.forEach(h => {
+      const n = h.dataset.n, x = +h.getAttribute('x'), y = +h.getAttribute('y'), w = +h.getAttribute('width'), hh = +h.getAttribute('height');
+      const inside = items.filter(el => {
+        const ex = +el.getAttribute('x'), ey = +el.getAttribute('y');
+        return ex >= x - 1 && ex <= x + w + 1 && ey >= y - 1 && ey <= y + hh + 1;
+      });
+      if (!inside.length) return;
+      const zoom = h.classList.contains('zoom');
+      const g = mk('g', { class: zoom ? 'lvl zoom' : 'lvl' }), short = mk('g', { class: 'short' });
+      inside.forEach(el => short.appendChild(el));
+      g.appendChild(short);
+      svg.insertBefore(g, hits[0]);           // поверх дерева, но под зонами наведения
+      if (!zoom) g.appendChild(full(svg, n, inside.filter(el => el.tagName === 'rect'), x, y, w, hh));
+      (lvls[n] = lvls[n] || []).push(g);
+    });
+    // корни при увеличении расступаются, чтобы не наезжать друг на друга
+    const roots = [...svg.querySelectorAll('.lvl.zoom')].map(g => {
+      const b = g.querySelector('rect');
+      return { g, x: +b.getAttribute('x'), w: +b.getAttribute('width') };
+    }).sort((a, b) => a.x - b.x);
+    if (roots.length) {
+      const S = 1.2, gap = 8, vb = svg.viewBox.baseVal;
+      const total = roots.reduce((t, r) => t + r.w * S, 0) + gap * (roots.length - 1);
+      const mid = (roots[0].x + roots.at(-1).x + roots.at(-1).w) / 2;
+      let left = Math.max(vb.x, Math.min(mid - total / 2, vb.x + vb.width - total));
+      roots.forEach(r => {
+        const dx = left + r.w * S / 2 - (r.x + r.w / 2);
+        r.g.dataset.tf = `translate(${dx.toFixed(1)}px, -12px) scale(${S})`;
+        left += r.w * S + gap;
+      });
+    }
+    svg.querySelectorAll('.pline').forEach(p => {
+      const m = /^M\s*[-\d.]+,([-\d.]+)\s*L\s*[-\d.]+,([-\d.]+)$/.exec(p.getAttribute('d').trim());
+      if (!m || m[1] !== m[2]) return;
+      for (let n = 0; n <= 15; n++) if (Y(n) === +m[1]) (plines[n] = plines[n] || []).push(p);
+    });
+  });
+  function mk(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  // Развёрнутый блок: тот же цвет, шире и выше, текст переносится по словам
+  function full(svg, n, rects, x, y, w, h) {
+    const [title, prob, who, manual, alb] = FULL[n];
+    const kind = svg.closest('.probwrap') ? 'p' : rects.some(r => /-b\b/.test(r.getAttribute('class'))) ? 'b' : rects.some(r => /-o\b/.test(r.getAttribute('class'))) ? 'o' : 'a';
+    const cfg = {
+      p: ['lbox', 'pt', title, 'pl fb', prob],
+      a: ['gbox gbox-a', 'fh gta', 'АДМИНИСТРАТОР', 'gta fb', manual],
+      o: ['gbox gbox-o', 'fh gto', 'СОБСТВЕННИК', 'gto fb', manual],
+      b: ['gbox gbox-b', 'fh gtb', 'ALLIBY', 'gtb fb', alb],
+    }[kind];
+    const extra = kind === 'p' || w > 300 ? 0 : svg.viewBox.baseVal.width > 1000 ? 230 : 130, W = w + extra, pad = 16, lh = 32;
+    const fx = kind === 'p' ? x : x + w / 2 < 300 ? x : x - extra;
+    const g = mk('g', { class: 'full' });
+    const rect = mk('rect', { class: cfg[0], x: fx, width: W, rx: 12 });
+    g.appendChild(rect);
+    const lines = [], probe = mk('text', { class: cfg[3] });
+    svg.appendChild(probe);
+    let line = '';
+    for (const word of cfg[4].split(' ')) {
+      probe.textContent = line ? line + ' ' + word : word;
+      if (line && probe.getComputedTextLength() > W - 2 * pad) { lines.push(line); line = word; }
+      else line = probe.textContent;
+    }
+    lines.push(line); probe.remove();
+    const H = pad * 2 + 22 + lines.length * lh;
+    let top = y + h / 2 - H / 2;
+    top = Math.max(-40, Math.min(top, 1700 - H));
+    rect.setAttribute('y', top); rect.setAttribute('height', H);
+    const head = mk('text', { class: cfg[1], x: fx + pad, y: top + pad + 16 });
+    head.textContent = cfg[2]; g.appendChild(head);
+    lines.forEach((t, i) => {
+      const el = mk('text', { class: cfg[3], x: fx + pad, y: top + pad + 22 + lh * (i + 1) - 4 });
+      el.textContent = t; g.appendChild(el);
+    });
+    return g;
+  }
+  let cur = null;
+  function set(n) {
+    if (cur === n) return;
+    if (cur !== null) [...(lvls[cur] || []), ...(plines[cur] || [])].forEach(e => e.classList.remove('on'));
+    cur = n;
+    if (n !== null) [...(lvls[n] || []), ...(plines[n] || [])].forEach(e => e.classList.add('on'));
+    document.querySelectorAll('.lvl.zoom').forEach(g => { g.querySelector('.short').style.transform = g.classList.contains('on') ? g.dataset.tf : ''; });
+    // развёрнутый блок поверх соседних уровней
+    if (n !== null) (lvls[n] || []).forEach(g => g.parentNode.insertBefore(g, g.parentNode.querySelector('.hit')));
+  }
+  document.querySelectorAll('.hit').forEach(h => {
+    h.addEventListener('mouseenter', () => set(h.dataset.n));
+    h.addEventListener('mouseleave', () => set(null));
+    h.addEventListener('click', e => { e.stopPropagation(); set(cur === h.dataset.n ? null : h.dataset.n); });
+  });
+  document.addEventListener('click', () => set(null));
+});
+</script>
+</main>
+</body>
+</html>
