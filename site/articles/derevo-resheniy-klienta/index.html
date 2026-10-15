@@ -371,6 +371,12 @@
   .pline.on { stroke: var(--ink); stroke-width: 2.5; opacity: 1; }
 
   @media (max-width: 860px) {
+    .trees-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .trees { display: block; min-width: 0; width: 1150px; }
+    .tree { display: block; margin-bottom: 22px; }
+    .tree > :not(.probwrap):not(.treewrap) { position: sticky; left: 0; max-width: calc(100vw - 32px); }
+    .tree > .tree-h { margin-bottom: 6px; }
+    .tree > .tree-p { margin-bottom: 10px; }
     .cols3, .sum3, .ladder { grid-template-columns: 1fr; }
   }
   @media (max-width: 640px) {
@@ -413,7 +419,7 @@
 <div class="trees-scroll"><div class="trees">
 <section class="tree probs-col">
   <h2 class="tree-h">Проблемы клиента</h2>
-  <p class="tree-p">Где клиент уходит со ствола. Пунктир ведёт к узлу и решению с тем же номером. Наведите на проблему или решение, чтобы развернуть полное описание уровня.</p>
+  <p class="tree-p">Где клиент уходит со ствола. Пунктир ведёт к узлу и решению с тем же номером. Наведите или нажмите на проблему или решение, чтобы развернуть полное описание уровня.</p>
   <div class="probwrap"><svg viewBox="0 -42 340 1742" xmlns="http://www.w3.org/2000/svg"><path class="pline" d="M300,4 L362,4"/><rect class="lbox" x="2" y="-38" width="306" height="84" rx="10"/><text x="14" y="-10" class="pt" text-anchor="start">15 · Выручка</text><text x="14" y="13" class="pl" text-anchor="start">✕ Неясно, что приносит</text><text x="14" y="36" class="pl" text-anchor="start">деньги и что интересно</text><path class="pline" d="M300,1494 L362,1494"/><rect class="lbox" x="2" y="1452" width="306" height="84" rx="10"/><text x="14" y="1480" class="pt" text-anchor="start">0 · Привлечение</text><text x="14" y="1503" class="pl" text-anchor="start">✕ О заведении не знают,</text><text x="14" y="1526" class="pl" text-anchor="start">новых клиентов мало</text><path class="pline" d="M300,1404 L362,1404"/><rect class="lbox" x="2" y="1362" width="306" height="84" rx="10"/><text x="14" y="1390" class="pt" text-anchor="start">1 · Выбор</text><text x="14" y="1413" class="pl" text-anchor="start">✕ Не сошлись цена,</text><text x="14" y="1436" class="pl" text-anchor="start">локация или интерес</text><path class="pline" d="M300,1314 L362,1314"/><rect class="lbox" x="2" y="1272" width="306" height="84" rx="10"/><text x="14" y="1300" class="pt" text-anchor="start">2 · Доверие</text><text x="14" y="1323" class="pl" text-anchor="start">✕ Невзрачный дизайн,</text><text x="14" y="1346" class="pl" text-anchor="start">неактуальная информация</text><path class="pline" d="M300,1224 L362,1224"/><rect class="lbox" x="2" y="1182" width="306" height="84" rx="10"/><text x="14" y="1210" class="pt" text-anchor="start">3 · Цена и расписание</text><text x="14" y="1233" class="pl" text-anchor="start">✕ Дорого или нет</text><text x="14" y="1256" class="pl" text-anchor="start">нужного дня</text><path class="pline" d="M300,1134 L362,1134"/><rect class="lbox" x="2" y="1092" width="306" height="84" rx="10"/><text x="14" y="1120" class="pt" text-anchor="start">4 · Куда вписаться</text><text x="14" y="1143" class="pl" text-anchor="start">✕ Группа уже идёт,</text><text x="14" y="1166" class="pl" text-anchor="start">не знает, куда войти</text><path class="pline" d="M300,1044 L362,1044"/><rect class="lbox" x="2" y="1002" width="306" height="84" rx="10"/><text x="14" y="1030" class="pt" text-anchor="start">5 · Запись</text><text x="14" y="1053" class="pl" text-anchor="start">✕ Надо звонить,</text><text x="14" y="1076" class="pl" text-anchor="start">желание остыло</text><path class="pline" d="M300,954 L362,954"/><rect class="lbox" x="2" y="912" width="306" height="84" rx="10"/><text x="14" y="940" class="pt" text-anchor="start">6 · Площадка и инвентарь</text><text x="14" y="963" class="pl" text-anchor="start">✕ Нельзя занять корт</text><text x="14" y="986" class="pl" text-anchor="start">или стол заранее</text><path class="pline" d="M300,864 L362,864"/><rect class="lbox" x="2" y="822" width="306" height="84" rx="10"/><text x="14" y="850" class="pt" text-anchor="start">7 · Оплата</text><text x="14" y="873" class="pl" text-anchor="start">✕ Не хочет платить</text><text x="14" y="896" class="pl" text-anchor="start">вперёд, уходит</text><path class="pline" d="M300,774 L362,774"/><rect class="lbox" x="2" y="732" width="306" height="84" rx="10"/><text x="14" y="760" class="pt" text-anchor="start">8 · Не могу прийти</text><text x="14" y="783" class="pl" text-anchor="start">✕ Занятие пропадает,</text><text x="14" y="806" class="pl" text-anchor="start">платить обидно</text><path class="pline" d="M300,684 L362,684"/><rect class="lbox" x="2" y="642" width="306" height="84" rx="10"/><text x="14" y="670" class="pt" text-anchor="start">9 · День занятия</text><text x="14" y="693" class="pl" text-anchor="start">✕ Забыл прийти</text><text x="14" y="716" class="pl" text-anchor="start">на занятие</text><path class="pline" d="M300,594 L362,594"/><rect class="lbox" x="2" y="552" width="306" height="84" rx="10"/><text x="14" y="580" class="pt" text-anchor="start">10 · Учёт визитов</text><text x="14" y="603" class="pl" text-anchor="start">✕ Спор об остатке</text><text x="14" y="626" class="pl" text-anchor="start">визитов по абонементу</text><path class="pline" d="M300,504 L362,504"/><rect class="lbox" x="2" y="462" width="306" height="84" rx="10"/><text x="14" y="490" class="pt" text-anchor="start">11 · Мотивация</text><text x="14" y="513" class="pl" text-anchor="start">✕ Личный тренер дорог,</text><text x="14" y="536" class="pl" text-anchor="start">в общей группе скучно</text><path class="pline" d="M300,414 L362,414"/><rect class="lbox" x="2" y="372" width="306" height="84" rx="10"/><text x="14" y="400" class="pt" text-anchor="start">12 · Развитие</text><text x="14" y="423" class="pl" text-anchor="start">✕ Упёрся в потолок,</text><text x="14" y="446" class="pl" text-anchor="start">нет новой цели</text><path class="pline" d="M300,324 L362,324"/><rect class="lbox" x="2" y="282" width="306" height="84" rx="10"/><text x="14" y="310" class="pt" text-anchor="start">13 · Пропал надолго</text><text x="14" y="333" class="pl" text-anchor="start">✕ Ушёл на паузу,</text><text x="14" y="356" class="pl" text-anchor="start">заведение не напомнило</text><path class="pline" d="M300,234 L362,234"/><rect class="lbox" x="2" y="192" width="306" height="84" rx="10"/><text x="14" y="220" class="pt" text-anchor="start">14 · Продление</text><text x="14" y="243" class="pl" text-anchor="start">✕ Абонемент кончился,</text><text x="14" y="266" class="pl" text-anchor="start">продлевать лень</text><rect class="hit" data-n="0" x="2" y="1452" width="306" height="84" rx="10"/><rect class="hit" data-n="1" x="2" y="1362" width="306" height="84" rx="10"/><rect class="hit" data-n="2" x="2" y="1272" width="306" height="84" rx="10"/><rect class="hit" data-n="3" x="2" y="1182" width="306" height="84" rx="10"/><rect class="hit" data-n="4" x="2" y="1092" width="306" height="84" rx="10"/><rect class="hit" data-n="5" x="2" y="1002" width="306" height="84" rx="10"/><rect class="hit" data-n="6" x="2" y="912" width="306" height="84" rx="10"/><rect class="hit" data-n="7" x="2" y="822" width="306" height="84" rx="10"/><rect class="hit" data-n="8" x="2" y="732" width="306" height="84" rx="10"/><rect class="hit" data-n="9" x="2" y="642" width="306" height="84" rx="10"/><rect class="hit" data-n="10" x="2" y="552" width="306" height="84" rx="10"/><rect class="hit" data-n="11" x="2" y="462" width="306" height="84" rx="10"/><rect class="hit" data-n="12" x="2" y="372" width="306" height="84" rx="10"/><rect class="hit" data-n="13" x="2" y="282" width="306" height="84" rx="10"/><rect class="hit" data-n="14" x="2" y="192" width="306" height="84" rx="10"/><rect class="hit" data-n="15" x="2" y="-38" width="306" height="84" rx="10"/></svg></div>
   <div></div>
 </section>
@@ -735,6 +741,8 @@ document.fonts.ready.then(() => {  // ждём шрифт: перенос стр
   // Блоки уровня n: всё, что лежит внутри прозрачного .hit с тем же data-n, собираем в <g class="lvl">
   const Y = n => n == 0 ? 1494 : n == 15 ? 4 : 1404 - 90 * (n - 1);
   const FULL = {"0": ["0 · Привлечение", "О заведении знают только соседи и друзья, новых людей мало.", "a", "Админ ведёт соцсети и запускает рекламу, подрядчикам платите вы.", "Заведение видно на карте и в поиске приложения, реклама Alliby знакомит людей с направлением."], "1": ["1 · Выбор", "Клиент выбирает по цене, локации и интересу. Если сошлось меньше двух условий, уходит.", "a", "Админ объявляет акцию и пробное занятие. Это снижает цену, но не решает локацию и интерес.", "Удобная система персональных групповых тренировок: клиент выбирает тренера, время и зал, собирает группу своего уровня, цена тренера делится на всех. Дешевле личного тренера, интереснее общей группы, ближе к дому."], "2": ["2 · Доверие", "По устаревшим ценам и невзрачной странице клиент решает, что заведение заброшено.", "a", "Сайт делает подрядчик, цены и расписание админ обновляет вручную и часто с опозданием.", "Единое оформление витрины. Расписание и цены берутся из кабинета, поэтому всегда актуальны."], "3": ["3 · Цена и расписание", "Разовое занятие дорого, а в удобный день тренировки нет.", "o", "Собственник сам придумывает абонементы и доп. время, расписание держит в таблице.", "Клиент видит окна всех тренеров на неделю, абонемент сразу показан дешевле разовых."], "4": ["4 · Куда вписаться", "Группа уже занимается, новичок не знает, можно ли прийти в середине.", "o", "Собственник прямо на занятии решает, в какую группу посадить новичка.", "Донабор: клиент записывается в идущую группу своего уровня, свободные места видны."], "5": ["5 · Запись", "Чтобы записаться, надо звонить. Пока дозвонился, желание остыло.", "a", "Форма на сайте вместо звонка, но заявка ждёт, пока админ ответит.", "Клиент сам выбирает дату, тренера и занятие, запись подтверждена сразу."], "6": ["6 · Площадка и инвентарь", "Корт или стол нельзя занять заранее: приходишь, а всё занято.", "a", "Бронь через сайт или отдельный сервис за доплату, админ сводит её вручную.", "Аренда по времени с шагом и ценой, занятые слоты видны всем."], "7": ["7 · Оплата", "Не все готовы платить вперёд, а без предоплаты растут неявки.", "a", "Оплата на месте после занятия, админ ведёт кассу, неявки за ваш счёт.", "Для каждой позиции выбираете предоплату или оплату на месте."], "8": ["8 · Не могу прийти", "Занятие пропадает, платить за него обидно, и клиент не возвращается.", "a", "Перенос по звонку или в чате, место освобождает админ.", "Перенос и отмена в пару нажатий, место сразу освобождается для других."], "9": ["9 · День занятия", "Клиент просто забыл про занятие.", "a", "Админ накануне пишет каждому в мессенджер.", "Пуш перед занятием и запись в календаре телефона."], "10": ["10 · Учёт визитов", "Спор, сколько занятий осталось по абонементу.", "a", "Админ отмечает визиты в журнале или таблице.", "Списание по QR у сотрудника, остаток видят и клиент, и заведение."], "11": ["11 · Мотивация", "Личный тренер дорог, а в большой общей группе скучно и мало внимания.", "o", "Собственник сам собирает мини-группы по уровню и ведёт занятия.", "Клиенты одного уровня собираются в свою группу, цена тренера делится на всех."], "12": ["12 · Развитие", "Клиент упёрся в потолок и не видит новой цели.", "o", "Собственник переводит в группу сильнее, турниры собирает в чатах.", "Переход в группу сильнее, мастер-классы и турниры с записью в приложении."], "13": ["13 · Пропал надолго", "Клиент ушёл на паузу, и никто о нём не вспомнил.", "a", "Админ вручную делает рассылку с акцией по базе.", "Автоматический пуш с акцией тем, кто не был 7, 30 или 90 дней."], "14": ["14 · Продление", "Абонемент кончился, продлевать лень.", "a", "Админ напоминает о продлении и принимает оплату переводом.", "Остаток виден заранее, продление в пару нажатий."], "15": ["15 · Выручка", "Неясно, какие занятия приносят деньги, а какие пустуют.", "o", "Собственник сводит выручку по кассе и таблицам.", "Аналитика по позициям и занятиям: что интересно клиентам, что убрать, где поднять цену."]};
+  const MOBILE = matchMedia('(max-width: 860px)').matches;  // на телефоне схема повёрнута на 90° вправо
+  matchMedia('(max-width: 860px)').addEventListener('change', () => location.reload());
   const lvls = {}, plines = {};
   document.querySelectorAll('.probwrap svg, .treewrap svg').forEach(svg => {
     // уровень 0 в деревьях — все корни: у каждого облака своя зона, облако увеличивается целиком
@@ -757,11 +765,12 @@ document.fonts.ready.then(() => {  // ждём шрифт: перенос стр
       });
       if (!inside.length) return;
       const zoom = h.classList.contains('zoom');
-      const g = mk('g', { class: zoom ? 'lvl zoom' : 'lvl' }), short = mk('g', { class: 'short' });
+      const g = mk('g', { class: zoom ? 'lvl zoom' : 'lvl', 'data-n': n }), short = mk('g', { class: 'short' });
       inside.forEach(el => short.appendChild(el));
       g.appendChild(short);
       svg.insertBefore(g, hits[0]);           // поверх дерева, но под зонами наведения
       if (!zoom) g.appendChild(full(svg, n, inside.filter(el => el.tagName === 'rect'), x, y, w, hh));
+      g._hit = h;
       (lvls[n] = lvls[n] || []).push(g);
     });
     // корни при увеличении расступаются, чтобы не наезжать друг на друга
@@ -791,6 +800,82 @@ document.fonts.ready.then(() => {  // ждём шрифт: перенос стр
     for (const k in attrs) el.setAttribute(k, attrs[k]);
     return el;
   }
+  function wrap(svg, cls, text, width) {
+    const lines = [], probe = mk('text', { class: cls });
+    svg.appendChild(probe);
+    let line = '';
+    for (const word of text.split(' ')) {
+      probe.textContent = line ? line + ' ' + word : word;
+      if (line && probe.getComputedTextLength() > width) { lines.push(line); line = word; }
+      else line = probe.textContent;
+    }
+    lines.push(line); probe.remove();
+    return lines;
+  }
+  // Блок, повёрнутый обратно на -90°: в повёрнутой схеме стоит ровно, ширина Wt по экрану
+  function uprightBox(svg, rectCls, rx, cx, cy, Wt, title, tcls, body, bcls, pad, lh) {
+    const tl = title ? wrap(svg, tcls, title, Wt - 2 * pad) : [];
+    const bl = body ? wrap(svg, bcls, body, Wt - 2 * pad) : [];
+    const Ht = pad * 2 + (tl.length + bl.length) * lh - (lh - 20);
+    const g = mk('g', { transform: `rotate(-90 ${cx} ${cy})` });
+    g.appendChild(mk('rect', { class: rectCls, x: cx - Wt / 2, y: cy - Ht / 2, width: Wt, height: Ht, rx }));
+    let ty = cy - Ht / 2 + pad + 17;
+    [...tl.map(t => [t, tcls]), ...bl.map(t => [t, bcls])].forEach(([t, c]) => {
+      const el = mk('text', { class: c, x: cx - Wt / 2 + pad, y: ty });
+      el.textContent = t; g.appendChild(el); ty += lh;
+    });
+    return { g, Ht };
+  }
+  // Короткий блок схемы → ровный узкий блок с тем же текстом, перенесённым заново
+  function uprightShort(svg, c, Wt, newCx) {
+    const rect = c.querySelector('rect');
+    const x = +rect.getAttribute('x'), y = +rect.getAttribute('y'), w = +rect.getAttribute('width'), h = +rect.getAttribute('height');
+    const cx = newCx ?? x + w / 2, cy = y + h / 2;
+    const texts = [...c.querySelectorAll('text')];
+    const title = texts.length > 1 && /^(pt|tb|fh)/.test(texts[0].getAttribute('class')) ? texts.shift() : null;
+    const body = texts.map(t => t.textContent.trim()).reduce((a, t) => !a ? t : /-$/.test(a) ? a + t : a + ' ' + t, '');
+    const { g, Ht } = uprightBox(svg, rect.getAttribute('class'), rect.getAttribute('rx') || 10, cx, cy, Wt,
+      title && title.textContent.trim(), title && title.getAttribute('class'),
+      body, texts.length ? texts.at(-1).getAttribute('class') : '', Wt < 165 ? 9 : 12, 24);
+    c.replaceChildren(g);
+    return { cx, cy, Ht };
+  }
+  // Мобильная раскладка: всё содержимое svg поворачиваем на 90° по часовой, тексты ставим ровно
+  function mobilize(svg) {
+    const vb = svg.viewBox.baseVal, vx = vb.x, vw = vb.width, vy = vb.y, vh = vb.height, prob = !!svg.closest('.probwrap');
+    const rot = mk('g', { transform: 'rotate(90)' });
+    [...svg.childNodes].forEach(el => { if (el.nodeName !== 'defs') rot.appendChild(el); });
+    svg.appendChild(rot);
+    let lo = Infinity, hi = -Infinity;
+    rot.querySelectorAll('.lvl').forEach(g => {
+      const zoom = g.classList.contains('zoom'), n = +g.dataset.n, Wt = zoom ? 158 : 172;
+      // проблемы стоят на каждом уровне подряд — раскладываем их в два ряда
+      // у Alliby блок 15 стоит на стволе — уводим его вверх, чтобы не наезжал на «Постоянный клиент»
+      const b = uprightShort(svg, g.querySelector('.short'), Wt, prob ? (n % 2 ? 88 : 266) : n === 15 && vw > 1000 ? 20 : undefined);
+      const h = g._hit;
+      h.setAttribute('x', b.cx - b.Ht / 2); h.setAttribute('width', b.Ht);
+      h.setAttribute('y', b.cy - Wt / 2); h.setAttribute('height', Wt);
+      lo = Math.min(lo, b.cx - b.Ht / 2); hi = Math.max(hi, b.cx + b.Ht / 2);
+      if (prob) (plines[n] || []).forEach(p => p.setAttribute('d', `M${b.cx + b.Ht / 2},${Y(n)} L362,${Y(n)}`));
+    });
+    // остальные подписи (номера узлов, «Постоянный клиент», счёт): ставим ровно, строки одной подписи — вместе
+    const loose = [...rot.querySelectorAll('text')].filter(t => !t.closest('.lvl') && !t.classList.contains('tl2'));
+    const groups = [];
+    loose.forEach(t => {
+      const x = +t.getAttribute('x'), y = +t.getAttribute('y'), last = groups.at(-1);
+      if (last && Math.abs(last.x - x) < 1 && y > last.y && y - last.y < 45 && t.previousElementSibling === last.els.at(-1)) { last.els.push(t); last.y = y; }
+      else groups.push({ x, y, y0: y, els: [t] });
+    });
+    groups.forEach(gr => {
+      const fs = parseFloat(getComputedStyle(gr.els[0]).fontSize) || 16;
+      const g = mk('g', { transform: `rotate(-90 ${gr.x} ${gr.y0 - fs * 0.35})` });
+      gr.els[0].before(g);
+      gr.els.forEach(el => g.appendChild(el));
+    });
+    if (prob) { lo = Math.min(lo, 0); hi = Math.max(hi, 365); }
+    else { lo = Math.min(lo, vx); hi = Math.max(hi, vx + vw); }
+    svg.setAttribute('viewBox', `${-(vy + vh)} ${lo - 8} ${vh + 60} ${hi - lo + 16}`);  // +60: блок 15 у правого края
+  }
   // Развёрнутый блок: тот же цвет, шире и выше, текст переносится по словам
   function full(svg, n, rects, x, y, w, h) {
     const [title, prob, who, manual, alb] = FULL[n];
@@ -801,20 +886,20 @@ document.fonts.ready.then(() => {  // ждём шрифт: перенос стр
       o: ['gbox gbox-o', 'fh gto', 'СОБСТВЕННИК', 'gto fb', manual],
       b: ['gbox gbox-b', 'fh gtb', 'ALLIBY', 'gtb fb', alb],
     }[kind];
+    if (MOBILE) {
+      const W = 320, cy = Math.max(-42 + W / 2, Math.min(y + h / 2, 1700 - W / 2));
+      const { g } = uprightBox(svg, cfg[0], 12, x + w / 2, cy, W, cfg[2], cfg[1], cfg[4], cfg[3], 16, 30);
+      // поворот — на внутренней группе: CSS-анимация lvlpop перетирает transform самого .full
+      const wrapG = mk('g', { class: 'full' });
+      wrapG.appendChild(g);
+      return wrapG;
+    }
     const extra = kind === 'p' || w > 300 ? 0 : svg.viewBox.baseVal.width > 1000 ? 230 : 130, W = w + extra, pad = 16, lh = 32;
     const fx = kind === 'p' ? x : x + w / 2 < 300 ? x : x - extra;
     const g = mk('g', { class: 'full' });
     const rect = mk('rect', { class: cfg[0], x: fx, width: W, rx: 12 });
     g.appendChild(rect);
-    const lines = [], probe = mk('text', { class: cfg[3] });
-    svg.appendChild(probe);
-    let line = '';
-    for (const word of cfg[4].split(' ')) {
-      probe.textContent = line ? line + ' ' + word : word;
-      if (line && probe.getComputedTextLength() > W - 2 * pad) { lines.push(line); line = word; }
-      else line = probe.textContent;
-    }
-    lines.push(line); probe.remove();
+    const lines = wrap(svg, cfg[3], cfg[4], W - 2 * pad);
     const H = pad * 2 + 22 + lines.length * lh;
     let top = y + h / 2 - H / 2;
     top = Math.max(-40, Math.min(top, 1700 - H));
@@ -827,6 +912,7 @@ document.fonts.ready.then(() => {  // ждём шрифт: перенос стр
     });
     return g;
   }
+  if (MOBILE) document.querySelectorAll('.probwrap svg, .treewrap svg').forEach(mobilize);
   let cur = null;
   function set(n) {
     if (cur === n) return;
