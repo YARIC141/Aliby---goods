@@ -693,17 +693,9 @@ footer{
 .ag-btn.ag-courier{--ag-c:var(--teal);--ag-c-deep:var(--teal-deep);--ag-rgb:20,184,166}
 @media(max-width:480px){.ag-btns{flex-direction:column;align-items:center;gap:12px}.ag-btn{flex:none;width:100%;max-width:210px;font-size:16px}.ag-main{padding:15px 12px}.ag-open{width:48px}}
 /* Разделы Клиент / Бизнес / Курьер: свёрнуты в полоску, открыт максимум один */
-.seg.fold:not(.open){padding-top:28px;padding-bottom:28px;cursor:pointer}
-.seg.fold:not(.open) .seg-inner > :not(.seg-head){display:none!important} /* !important: у части блоков инлайн display */
-.seg.fold:not(.open) .seg-head{margin-bottom:0}
-.seg.fold:not(.open) .seg-head > :not(.seg-eyebrow):not(.seg-h2):not(.fold-more){display:none}
-.seg.fold:not(.open) .seg-eyebrow{margin-bottom:12px}
-.seg.fold:not(.open) .seg-h2{font-size:clamp(20px,3vw,28px);margin-bottom:10px}
-.seg.fold:not(.open):hover .fold-more{background:rgba(var(--accent-rgb),.12)}
-.fold-more{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r-pill);border:1px solid rgba(var(--accent-rgb),.35);background:none;color:var(--accent);font:600 14px/1 var(--font-sans);cursor:pointer;transition:background .16s}
-.seg.fold.open .fold-more{display:none}
-.seg-switch{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:0 0 44px}
-.seg-switch-bottom{margin:48px 0 0}
+/* Разделы Клиент / Бизнес / Курьер: скрыты, кнопка «Кто ты?» открывает один из них */
+.seg.fold:not(.open){display:none}
+.seg-switch{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:48px 0 0}
 .seg-switch-label{width:100%;text-align:center;font:600 13px/1 var(--font-sans);letter-spacing:.05em;text-transform:uppercase;color:var(--fg-2);opacity:.8}
 .sw-btn{padding:12px 22px;border:0;border-radius:var(--r-pill);background:var(--ag-c);color:#fff;font:700 15px/1 var(--font-sans);cursor:pointer;box-shadow:0 8px 24px rgba(var(--ag-rgb),.28);transition:background .16s,transform .16s}
 .sw-btn:hover{background:var(--ag-c-deep);transform:translateY(-1px)}
@@ -2542,7 +2534,7 @@ function closeVideoModal() {
     });
   }
 })();
-// Разделы Клиент / Бизнес / Курьер свёрнуты; открыт максимум один, сверху и снизу — переходы на остальные
+// Разделы Клиент / Бизнес / Курьер скрыты; кнопка «Кто ты?» открывает один, внизу раздела — переходы на остальные
 var FOLD_IDS = { client: 'directions-clients', business: 'directions-business', courier: 'alliby-carry' };
 var FOLD_NAMES = { client: 'Для клиентов', business: 'Для бизнеса', courier: 'Для курьеров' };
 function openSeg(id) {
@@ -2551,30 +2543,20 @@ function openSeg(id) {
 (function () {
   document.querySelectorAll('.seg.fold').forEach(function (sec) {
     var me = sec.dataset.aud, inner = sec.querySelector('.seg-inner');
-    function bar(cls) {
+    function bar() {
       var d = document.createElement('div');
-      d.className = 'seg-switch ' + cls;
+      d.className = 'seg-switch';
       d.innerHTML = '<div class="seg-switch-label">Другие разделы</div>';
       Object.keys(FOLD_IDS).forEach(function (t) {
         if (t === me) return;
         var b = document.createElement('button');
         b.type = 'button'; b.className = 'sw-btn ag-' + t; b.textContent = FOLD_NAMES[t];
-        b.addEventListener('click', function (e) { e.stopPropagation(); scrollToAudience(t); });
+        b.addEventListener('click', function () { scrollToAudience(t); });
         d.appendChild(b);
       });
       return d;
     }
-    inner.insertBefore(bar('seg-switch-top'), inner.firstChild);
-    inner.appendChild(bar('seg-switch-bottom'));
-    var more = document.createElement('button');
-    more.type = 'button'; more.className = 'fold-more';
-    more.innerHTML = 'Развернуть <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-    sec.querySelector('.seg-head').appendChild(more);
-    // свёрнутая полоска целиком кликабельна
-    sec.addEventListener('click', function (e) {
-      if (sec.classList.contains('open') || e.target.closest('a')) return;
-      scrollToAudience(me);
-    });
+    inner.appendChild(bar());
   });
   // ссылки на раздел или на что-то внутри него (меню, футер, #dir-…) сначала раскрывают раздел
   function openFor(hash) {
