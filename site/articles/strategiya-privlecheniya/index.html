@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Стратегия привлечения Alliby</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap">
+<style>
+  /* Визуализация маркетинговой и SEO-стратегии Alliby, 2026-10-16.
+     Основа: STRATEGY-2026-10-13.md, SEO-STRATEGY-2026-10-13-v2.md, SEO-WAVE-A-2026-10-13.md + веб-исследование. */
+  :root {
+    --bg: #f2f5f9; --surface: #ffffff; --surface2: #f7f9fc; --ink: #13202e; --muted: #556374; --line: #d9e0e8;
+    --brand: #e8743b; --brand-soft: #fdebe1;
+    --biz: #2f6fd1; --biz-soft: #e5eefb;
+    --cli: #17653f; --cli-soft: #e7f6ee;
+    --loss: #9c2a2a; --loss-soft: #fdeeee;
+    --hot: #e8743b; --warm: #e8b23b; --cold: #b7c2cf;
+    --font-body: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-display: 'Unbounded', 'Onest', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1620; --surface: #172230; --surface2: #1b2938; --ink: #e8edf3; --muted: #9ba9b9; --line: #26354a;
+      --brand-soft: #3a2619; --biz: #7fb0f5; --biz-soft: #1a2c47; --cli: #93dab3; --cli-soft: #153227;
+      --loss: #f2a8a8; --loss-soft: #3a1e22; --cold: #3b4a5c;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1620; --surface: #172230; --surface2: #1b2938; --ink: #e8edf3; --muted: #9ba9b9; --line: #26354a;
+    --brand-soft: #3a2619; --biz: #7fb0f5; --biz-soft: #1a2c47; --cli: #93dab3; --cli-soft: #153227;
+    --loss: #f2a8a8; --loss-soft: #3a1e22; --cold: #3b4a5c;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--font-body); }
+  .page { max-width: 1120px; margin: 0 auto; padding: 28px 16px 64px; }
+  h1, h2, h3, h4, p { margin: 0; }
+  h1, h2, h3 { text-wrap: balance; font-family: var(--font-display); font-weight: 600; }
+  h1 { font-size: clamp(26px, 4.4vw, 40px); line-height: 1.15; }
+  h2 { font-size: clamp(21px, 3vw, 28px); line-height: 1.2; }
+  h3 { font-size: 17px; line-height: 1.3; }
+  a { color: var(--biz); }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+
+  .brandline { font: 600 12px/1 var(--font-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+  .brandline b { width: 10px; height: 10px; border-radius: 3px; background: var(--brand); }
+  .head { display: grid; gap: 14px; margin-bottom: 22px; }
+  .lead { font-size: 18px; color: var(--muted); max-width: 760px; }
+
+  nav.toc { position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px);
+    display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+  nav.toc a { flex: none; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 14px; font-weight: 500; }
+  nav.toc a span { color: var(--brand); font-weight: 600; margin-right: 6px; }
+  .themebtn { margin-left: auto; flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+
+  section.block { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px clamp(16px, 3vw, 32px); margin-bottom: 22px; scroll-margin-top: 64px; }
+  .sec-h { display: grid; gap: 8px; margin-bottom: 20px; }
+  .num { font: 600 13px/1 var(--font-display); color: var(--brand); letter-spacing: .06em; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 860px) { .grid3, .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .grid2, .grid3, .grid4 { grid-template-columns: 1fr; } }
+  .card { background: var(--surface2); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 8px; align-content: start; }
+  .card p, .card li { font-size: 15px; }
+  .card ul { margin: 0; padding-left: 18px; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; border-radius: 6px; padding: 2px 8px; background: var(--brand-soft); color: var(--brand); width: fit-content; }
+  .tag.biz { background: var(--biz-soft); color: var(--biz); }
+  .tag.cli { background: var(--cli-soft); color: var(--cli); }
+  .tag.loss { background: var(--loss-soft); color: var(--loss); }
+  .callout { border-left: 4px solid var(--brand); background: var(--brand-soft); border-radius: 0 12px 12px 0; padding: 14px 16px; font-size: 15px; }
+  .callout b { color: var(--ink); }
+
+  /* 1. Цикл */
+  .cycle-wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 22px; align-items: center; margin-bottom: 20px; }
+  @media (max-width: 860px) { .cycle-wrap { grid-template-columns: 1fr; } }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { font-family: var(--font-body); fill: var(--ink); }
+  .s-biz { fill: var(--biz-soft); stroke: var(--biz); stroke-width: 2; }
+  .s-cli { fill: var(--cli-soft); stroke: var(--cli); stroke-width: 2; }
+  .s-loss { stroke: var(--loss); fill: none; stroke-width: 2.5; stroke-dasharray: 7 6; }
+  .s-loss-t { fill: var(--loss); font-size: 14px; font-weight: 500; }
+  .s-ok { stroke: var(--brand); fill: none; stroke-width: 3; }
+  .s-ok-t { fill: var(--ink); font-size: 13.5px; }
+  .s-title { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+  .s-cap { fill: var(--muted); font-size: 13px; }
+  .s-dot { fill: var(--brand); }
+  .s-dot-t { fill: #fff; font-weight: 600; font-size: 13px; }
+  .anim { animation: dash 1.6s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -26; } }
+  @media (prefers-reduced-motion: reduce) { .anim { animation: none; } }
+
+  .breakers .card { border-top: 4px solid var(--brand); }
+  .breakers .card .k { font: 600 24px/1 var(--font-display); color: var(--brand); }
+
+  /* 2. Путь бизнеса */
+  .seg-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .seg-tabs button { border: 1px solid var(--line); background: var(--surface2); color: var(--ink); border-radius: 10px; padding: 9px 14px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; text-align: left; }
+  .seg-tabs button small { display: block; color: var(--muted); font-weight: 400; font-size: 12px; }
+  .seg-tabs button[aria-selected="true"] { border-color: var(--brand); background: var(--brand-soft); }
+  .seg-desc { margin-bottom: 14px; }
+  .journey { display: grid; grid-template-columns: repeat(9, minmax(200px, 1fr)); gap: 10px; overflow-x: auto; padding-bottom: 10px; scroll-snap-type: x proximity; }
+  .stage { scroll-snap-align: start; background: var(--surface2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 8px; align-content: start; position: relative; }
+  .stage .st-n { font: 600 12px/1 var(--font-display); color: var(--muted); }
+  .stage h4 { font-size: 15px; font-weight: 600; }
+  .stage .heat { height: 6px; border-radius: 3px; background: var(--cold); }
+  .stage.h3 .heat { background: var(--hot); } .stage.h2 .heat { background: var(--warm); }
+  .stage.h3 { border-color: var(--hot); box-shadow: 0 0 0 1px var(--hot) inset; }
+  .stage dl { margin: 0; display: grid; gap: 6px; font-size: 13.5px; }
+  .stage dt { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .stage dd { margin: 0; }
+  .stage dd.al { color: var(--brand); font-weight: 500; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 22px; height: 6px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+
+  /* Тепловая карта */
+  .heatmap { overflow-x: auto; margin-top: 22px; }
+  .heatmap table { border-collapse: separate; border-spacing: 4px; min-width: 760px; width: 100%; font-size: 13px; }
+  .heatmap th { font-weight: 600; text-align: left; padding: 4px 6px; color: var(--muted); font-size: 12px; vertical-align: bottom; }
+  .heatmap td { height: 34px; border-radius: 7px; text-align: center; font-weight: 600; }
+  .heatmap td.l { text-align: left; font-weight: 500; padding: 0 8px; background: none; white-space: nowrap; }
+  .hm3 { background: var(--hot); color: #fff; } .hm2 { background: var(--warm); color: #13202e; } .hm1 { background: var(--cold); color: var(--ink); }
+
+  /* 3. Каналы */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters button { border: 1px solid var(--line); background: var(--surface2); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .filters button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .channels { display: grid; gap: 10px; }
+  .ch { display: grid; grid-template-columns: 150px minmax(0, 1.3fr) minmax(0, 1fr) 120px; gap: 14px; align-items: start; background: var(--surface2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .ch .stg { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .ch h4 { font-size: 15.5px; font-weight: 600; margin-bottom: 4px; }
+  .ch p { font-size: 14px; }
+  .ch .seo { font-size: 13.5px; }
+  .ch .seo b { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .ch .meta { display: grid; gap: 6px; justify-items: start; font-size: 12.5px; }
+  .prio { font-weight: 700; border-radius: 6px; padding: 2px 8px; font-size: 12px; }
+  .p1 { background: var(--hot); color: #fff; } .p2 { background: var(--warm); color: #13202e; } .p3 { background: var(--cold); color: var(--ink); }
+  @media (max-width: 860px) { .ch { grid-template-columns: 1fr; gap: 8px; } }
+
+  /* Адресная реклама */
+  .geo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 22px; align-items: center; margin-bottom: 22px; }
+  @media (max-width: 860px) { .geo { grid-template-columns: 1fr; } }
+  .geo-ring { fill: none; stroke-width: 2; }
+  .geo-pin { fill: var(--brand); }
+  .geo-l { font-size: 13px; }
+  .geo-list { display: grid; gap: 10px; }
+  .geo-list .card { border-left: 4px solid var(--brand); }
+  .geo-list .card.b { border-left-color: var(--biz); }
+  .geo-list .card.c { border-left-color: var(--cli); }
+
+  /* 4. Итоги */
+  .matrix-wrap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 860px) { .matrix-wrap { grid-template-columns: 1fr; } }
+  .mx-q { fill: var(--surface2); stroke: var(--line); }
+  .mx-q.best { fill: var(--brand-soft); }
+  .mx-ax { fill: var(--muted); font-size: 12px; }
+  .mx-pt { fill: var(--brand); stroke: var(--surface); stroke-width: 2; }
+  .mx-pt.b { fill: var(--biz); } .mx-pt.c { fill: var(--cli); }
+  .mx-l { font-size: 12px; fill: var(--ink); font-weight: 500; }
+  .road { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+  @media (max-width: 760px) { .road { grid-template-columns: 1fr; } }
+  .road .card h3 { font-size: 15px; }
+  .kpi { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+  @media (max-width: 760px) { .kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi .card .v { font: 600 22px/1.1 var(--font-display); color: var(--brand); }
+  .kpi .card .t { font-size: 13px; color: var(--muted); }
+  .dont li { margin-bottom: 4px; }
+  .sources { font-size: 13px; color: var(--muted); }
+  .sources ol { padding-left: 20px; margin: 8px 0 0; }
+  .sources li { margin-bottom: 3px; }
+  footer { font-size: 13px; color: var(--muted); text-align: center; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="head">
+    <div class="brandline"><b></b>Alliby · маркетинг и SEO · 16.10.2026</div>
+    <h1>Как Alliby набирает заведения и клиентов одновременно</h1>
+    <p class="lead">Четыре темы: замкнутый круг «нет клиентов — нет бизнеса», путь разных бизнесов от идеи до роста, каналы рекламы на каждом этапе этого пути и итоговые выводы. Основа — стратегия от 13.10 (волны A/B), SEO-план и веб-исследование.</p>
+  </header>
+
+  <nav class="toc" aria-label="Разделы">
+    <a href="#s1"><span>1</span>Нет клиента — нет бизнеса</a>
+    <a href="#s2"><span>2</span>Путь бизнеса</a>
+    <a href="#s3"><span>3</span>Каналы по точкам</a>
+    <a href="#s4"><span>4</span>Выводы</a>
+    <button class="themebtn" type="button" id="themeBtn">Тема</button>
+  </nav>
+
+  <!-- ================= 1 ================= -->
+  <section class="block" id="s1">
+    <div class="sec-h">
+      <div class="num">ТЕМА 1</div>
+      <h2>Проблема «нет клиента — нет бизнеса»</h2>
+      <p class="muted">Классическая проблема курицы и яйца для двусторонней платформы. Заведению неинтересно приложение без клиентов, а клиенту — приложение без заведений. Пока обе стороны ждут друг друга, сеть не растёт. Небольшие сети склонны распадаться сами: новые участники уходят, не найдя никого на другой стороне<sup>[1]</sup>.</p>
+    </div>
+
+    <div class="cycle-wrap">
+      <svg viewBox="0 0 520 380" role="img" aria-label="Замкнутый круг: бизнесы ждут клиентов, клиенты ждут бизнесы">
+        <defs>
+          <marker id="aL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--loss)"/></marker>
+          <marker id="aB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--brand)"/></marker>
+        </defs>
+        <rect class="s-biz" x="20" y="135" width="150" height="110" rx="18"/>
+        <text class="s-title" x="95" y="180" text-anchor="middle">Бизнес</text>
+        <text class="s-cap" x="95" y="203" text-anchor="middle">секция, студия,</text>
+        <text class="s-cap" x="95" y="220" text-anchor="middle">квест, кафе</text>
+        <rect class="s-cli" x="350" y="135" width="150" height="110" rx="18"/>
+        <text class="s-title" x="425" y="180" text-anchor="middle">Клиенты</text>
+        <text class="s-cap" x="425" y="203" text-anchor="middle">жители города,</text>
+        <text class="s-cap" x="425" y="220" text-anchor="middle">родители</text>
+        <path class="s-loss anim" d="M120,130 C170,40 350,40 400,130" marker-end="url(#aL)"/>
+        <text class="s-loss-t" x="260" y="42" text-anchor="middle">«В приложении нет клиентов —</text>
+        <text class="s-loss-t" x="260" y="60" text-anchor="middle">зачем мне подключаться?»</text>
+        <path class="s-loss anim" d="M400,250 C350,340 170,340 120,250" marker-end="url(#aL)"/>
+        <text class="s-loss-t" x="260" y="335" text-anchor="middle">«В приложении нет моих заведений —</text>
+        <text class="s-loss-t" x="260" y="353" text-anchor="middle">зачем мне его ставить?»</text>
+        <circle cx="260" cy="190" r="38" fill="var(--loss-soft)" stroke="var(--loss)" stroke-width="2"/>
+        <text x="260" y="186" text-anchor="middle" style="fill:var(--loss);font-weight:600;font-size:14px">стоп</text>
+        <text x="260" y="204" text-anchor="middle" style="fill:var(--loss);font-size:12px">0 ↔ 0</text>
+      </svg>
+      <div style="display:grid;gap:12px">
+        <div class="callout"><b>Ключевой вывод исследования.</b> Запуск начинается не с идеального продукта, а с первой ценности для одной из сторон. Платформы, которые преодолели проблему, давали поставщику пользу без условий и ставили себе метрику: первая заявка для каждого нового поставщика — в течение первого месяца<sup>[2]</sup>.</div>
+        <div class="card">
+          <span class="tag">Какая сторона первая</span>
+          <p>Для Alliby это <b>бизнес</b>. Заведение — «трудная» сторона: их меньше, они приносят деньги (подписка), и каждое приводит за собой готовую аудиторию. Клиенты приходят вслед за своим заведением, а не наоборот<sup>[3]</sup>.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin:6px 0 12px">Четыре способа разорвать круг</h3>
+    <div class="grid4 breakers">
+      <div class="card">
+        <div class="k">01</div>
+        <h3>Полезен сам по себе</h3>
+        <p>«Приходи ради инструмента, оставайся ради сети»<sup>[1]</sup>. Запись, абонементы, расписание и пуши работают, даже если у Alliby 0 своих клиентов. Заведение платит за порядок в делах, а не за трафик.</p>
+        <span class="tag">в продажах: «это ваша CRM и приложение»</span>
+      </div>
+      <div class="card">
+        <div class="k">02</div>
+        <h3>Перенос своей аудитории</h3>
+        <p>Волна A. Секция переводит в Alliby учеников, которых раньше вела в WhatsApp или тетради. Каждое подключение = +50–300 клиентов, которые уже ходят в это место.</p>
+        <span class="tag cli">клиент приходит со своим заведением</span>
+      </div>
+      <div class="card">
+        <div class="k">03</div>
+        <h3>Атомная сеть</h3>
+        <p>Важен не размер, а плотность: минимальная сеть, где всем есть смысл остаться<sup>[1]</sup>. Это Самара и спорт/образование/досуг для семей. Родитель ребёнка из секции видит в том же приложении студию и квест рядом.</p>
+        <span class="tag biz">один город, одна аудитория</span>
+      </div>
+      <div class="card">
+        <div class="k">04</div>
+        <h3>Гарантия первой пользы</h3>
+        <p>Внутренняя метрика: каждое новое заведение получает первую онлайн-запись или оплату в течение 14–30 дней. Если запись не пришла — менеджер помогает с QR и рассылкой своим клиентам.</p>
+        <span class="tag">метрика активации</span>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:16px"><b>05 · Адресная реклама вокруг заведения снимает возражение «у вас нет клиентов».</b> Alliby может сам показать рекламу приложения людям, которые регулярно бывают по адресу подключённого заведения: в Яндексе это геосегмент «регулярно посещает, живёт или работает» с радиусом от 500 м<sup>[9]</sup>. Предложение заведению меняется: не «приведите своих клиентов», а «мы сами донесём до ваших клиентов, что записываться теперь можно в приложении». Подробно — в теме 3.</div>
+
+    <h3 style="margin:24px 0 10px">Маховик после разрыва круга</h3>
+    <svg viewBox="0 0 1000 250" role="img" aria-label="Маховик: заведения волны A приводят своих клиентов, база клиентов привлекает новые заведения волны B">
+      <defs><marker id="aF" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--brand)"/></marker></defs>
+      <g>
+        <rect class="s-biz" x="10" y="60" width="200" height="96" rx="14"/>
+        <text x="110" y="92" text-anchor="middle" style="font-weight:600">Волна A</text>
+        <text class="s-cap" x="110" y="114" text-anchor="middle">действующие секции,</text>
+        <text class="s-cap" x="110" y="131" text-anchor="middle">студии, досуг без сайта</text>
+        <path class="s-ok" d="M214,108 L262,108" marker-end="url(#aF)"/>
+        <rect class="s-cli" x="268" y="60" width="200" height="96" rx="14"/>
+        <text x="368" y="92" text-anchor="middle" style="font-weight:600">Их клиенты</text>
+        <text class="s-cap" x="368" y="114" text-anchor="middle">ставят приложение,</text>
+        <text class="s-cap" x="368" y="131" text-anchor="middle">чтобы записаться к «своим»</text>
+        <path class="s-ok" d="M472,108 L520,108" marker-end="url(#aF)"/>
+        <rect class="s-cli" x="526" y="60" width="200" height="96" rx="14"/>
+        <text x="626" y="92" text-anchor="middle" style="font-weight:600">1–2 тыс. активных</text>
+        <text class="s-cap" x="626" y="114" text-anchor="middle">видят каталог города,</text>
+        <text class="s-cap" x="626" y="131" text-anchor="middle">пробуют соседние места</text>
+        <path class="s-ok" d="M730,108 L778,108" marker-end="url(#aF)"/>
+        <rect class="s-biz" x="784" y="60" width="200" height="96" rx="14"/>
+        <text x="884" y="92" text-anchor="middle" style="font-weight:600">Волна B</text>
+        <text class="s-cap" x="884" y="114" text-anchor="middle">новые заведения идут</text>
+        <text class="s-cap" x="884" y="131" text-anchor="middle">за готовой аудиторией</text>
+        <path class="s-ok" d="M884,160 C884,225 110,225 110,160" marker-end="url(#aF)" style="stroke-dasharray:6 6"/>
+        <text class="s-ok-t" x="497" y="240" text-anchor="middle">больше заведений → больше поводов поставить приложение → круг ускоряется</text>
+        <text class="s-cap" x="497" y="30" text-anchor="middle">Пока клиентов меньше 1–2 тыс., новым заведениям продаём инструмент, а не трафик</text>
+      </g>
+    </svg>
+  </section>
+
+  <!-- ================= 2 ================= -->
+  <section class="block" id="s2">
+    <div class="sec-h">
+      <div class="num">ТЕМА 2</div>
+      <h2>Путь бизнеса: где владелец может встретить Alliby</h2>
+      <p class="muted">Девять этапов от идеи до роста для пяти типов бизнеса. Для каждого этапа указано, что делает владелец, где он ищет информацию и кого слушает, и в какой точке может появиться Alliby. Цветная полоса — насколько этап «горячий» для нас: есть ли у владельца в этот момент боль, которую мы снимаем.</p>
+    </div>
+    <div class="seg-tabs" role="tablist" id="segTabs"></div>
+    <p class="seg-desc muted small" id="segDesc"></p>
+    <div class="journey" id="journey"></div>
+    <div class="legend">
+      <span><i style="background:var(--hot)"></i>горячая точка — боль есть сейчас, решение ищут активно</span>
+      <span><i style="background:var(--warm)"></i>тёплая — можно заронить идею, решение отложено</span>
+      <span><i style="background:var(--cold)"></i>холодная — не до нас</span>
+    </div>
+
+    <h3 style="margin-top:26px">Тепловая карта: все сегменты на одном экране</h3>
+    <p class="muted small" style="margin-top:6px">Цифра — сила точки контакта (3 — горячая). Видно главное: у действующих заведений горячие этапы — «рутина» и «боль роста», у новых — «онлайн-присутствие» и «первые клиенты».</p>
+    <div class="heatmap"><table id="heat"></table></div>
+  </section>
+
+  <!-- ================= 3 ================= -->
+  <section class="block" id="s3">
+    <div class="sec-h">
+      <div class="num">ТЕМА 3</div>
+      <h2>Способы рекламы по точкам пути</h2>
+      <p class="muted">Каждый канал привязан к этапу пути из темы 2. Для каждого указано SEO-продолжение: какой материал на alliby.ru поймает этого же человека в поиске Яндекса. Приоритет: <span class="prio p1">P1</span> делаем в ближайшие 90 дней, <span class="prio p2">P2</span> — после первых кейсов, <span class="prio p3">P3</span> — на волне B.</p>
+    </div>
+    <h3 style="margin-bottom:6px">Адресная реклама по адресам заведений</h3>
+    <p class="muted small" style="margin-bottom:14px">Адреса заведений у нас уже есть: подключённые партнёры в Alliby и 84 заведения Самары в базе partners/samara. По этим адресам можно собрать аудиторию в Яндекс Аудиториях (окружности 0,5–10 км, до 1 000 точек в одном сегменте) или в VK Рекламе (точки на карте) и показывать рекламу именно этим людям<sup>[9]</sup>.</p>
+    <div class="geo">
+      <svg viewBox="0 0 420 330" role="img" aria-label="Три аудитории вокруг адреса заведения">
+        <circle class="geo-ring" cx="210" cy="165" r="150" style="stroke:var(--line);stroke-dasharray:5 6"/>
+        <circle class="geo-ring" cx="210" cy="165" r="100" style="stroke:var(--cli);fill:var(--cli-soft);fill-opacity:.55"/>
+        <circle class="geo-ring" cx="210" cy="165" r="44" style="stroke:var(--biz);fill:var(--biz-soft)"/>
+        <path class="geo-pin" d="M210,138 c-11,0 -19,8 -19,19 c0,14 19,32 19,32 s19,-18 19,-32 c0,-11 -8,-19 -19,-19z"/>
+        <circle cx="210" cy="157" r="6" fill="var(--surface)"/>
+        <text class="geo-l" x="210" y="226" text-anchor="middle" style="font-weight:600">заведение</text>
+        <text class="geo-l" x="210" y="92" text-anchor="middle" style="fill:var(--cli);font-weight:600">r 500 м · регулярно бывают</text>
+        <text class="geo-l" x="210" y="108" text-anchor="middle" style="fill:var(--muted)">клиенты и сотрудники</text>
+        <text class="geo-l" x="210" y="292" text-anchor="middle" style="fill:var(--muted)">1–3 км · живут рядом</text>
+        <text class="geo-l" x="210" y="308" text-anchor="middle" style="fill:var(--muted)">будущие клиенты района</text>
+        <text class="geo-l" x="210" y="20" text-anchor="middle" style="fill:var(--muted)">× до 1 000 адресов в одном сегменте</text>
+      </svg>
+      <div class="geo-list">
+        <div class="card c"><span class="tag cli">Сценарий 1 · P1 · клиенты партнёров</span><h3>«Ваша секция теперь в Alliby»</h3><p>Сегмент «регулярно бывают» вокруг адресов подключённых заведений. В объявлении — приложение Alliby: записываться, платить абонемент, получать напоминания. Ускоряет перенос аудитории волны A без усилий владельца. Только с согласия заведения.</p></div>
+        <div class="card b"><span class="tag biz">Сценарий 2 · P1 · владельцы и тренеры</span><h3>Реклама Alliby Бизнес по адресам целевых заведений</h3><p>Тот же сегмент по адресам секций, студий и квестов из базы, объявление — о записи и абонементах для бизнеса, ведёт на статьи о рутине. Прогревает перед личным визитом продажника: «я вас уже видел в рекламе».</p></div>
+        <div class="card"><span class="tag">Сценарий 3 · P3 · район</span><h3>Жители вокруг плотных кластеров</h3><p>Радиус 1–3 км вокруг районов, где подключено несколько заведений. Включаем, когда в каталоге района есть из чего выбрать, — иначе платим за установку пустого приложения.</p></div>
+        <p class="muted small">Ограничения: в сегменте нужно минимум 100 идентификаторов, поэтому маленькие заведения объединяем в один сегмент. Окно данных «регулярно бывают» — 45 дней. В объявлении рекламируем приложение Alliby, а не продвигаем конкретное заведение.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:10px">Все каналы по этапам пути</h3>
+    <div class="filters" id="chFilters"></div>
+    <div class="channels" id="channels"></div>
+    <div class="callout" style="margin-top:16px"><b>Ограничения из стратегии, которые соблюдают все каналы:</b> Alliby не продвигает заведения онлайн (нет страниц заведений и рейтингов «лучшие X»). Онлайн-запись входит только в подписку от 930 ₽/мес при оплате за год, формулировок «бесплатная запись» нет. Кейс КНТС публикуем только с согласия клуба. Адресную рекламу по клиентам заведения запускаем только с его согласия.</div>
+  </section>
+
+  <!-- ================= 4 ================= -->
+  <section class="block" id="s4">
+    <div class="sec-h">
+      <div class="num">ТЕМА 4</div>
+      <h2>Итоговые выводы по стратегии</h2>
+    </div>
+
+    <div class="grid3" style="margin-bottom:22px">
+      <div class="card"><span class="tag">Вывод 1</span><h3>Круг разрываем со стороны бизнеса</h3><p>Продаём инструмент (запись, абонементы, приложение заведения), а не аудиторию. Клиенты приходят вместе со «своим» заведением. До 1–2 тыс. активных клиентов не обещаем трафик.</p></div>
+      <div class="card"><span class="tag">Вывод 2</span><h3>Горячая точка — рутина действующих заведений</h3><p>Владелец секции, который ведёт запись в мессенджере и теряет оплаты, — самый «тёплый» покупатель. Отсюда фокус волны A: личные продажи + SEO по запросам боли (учёт, пропуски, абонементы).</p></div>
+      <div class="card"><span class="tag">Вывод 3</span><h3>SEO — поддержка, а не мотор</h3><p>SEO ловит тех, кто ищет решение сам, и даёт продажам материалы: ссылку на статью, чек-лист, калькулятор. Распределение усилий: ~60% личные продажи, ~20% SEO, ~20% партнёрства и сообщества.</p></div>
+      <div class="card"><span class="tag biz">Вывод 4</span><h3>Встраиваемся в чужие точки пути</h3><p>Новый бизнес проходит через банк, «Мой бизнес», арендодателя, Яндекс Карты. Партнёрство с ними дешевле рекламы: за нас говорит тот, кому владелец уже доверяет.</p></div>
+      <div class="card"><span class="tag cli">Вывод 5</span><h3>Клиентская реклама — адресная, вокруг своих заведений</h3><p>QR на ресепшене и в чате группы плюс адресная онлайн-реклама по людям, которые уже ходят в подключённые заведения. Широкая реклама по городу — только после того, как в каталоге будет плотность.</p></div>
+      <div class="card"><span class="tag loss">Вывод 6</span><h3>Метрика успеха — активация, а не регистрации</h3><p>Регистрация заведения ничего не стоит, если в нём нет записей. Главный KPI: доля заведений с первой онлайн-записью за 30 дней.</p></div>
+    </div>
+
+    <div class="matrix-wrap">
+      <div>
+        <h3 style="margin-bottom:10px">Матрица «эффект / затраты»</h3>
+        <svg viewBox="0 0 520 420" role="img" aria-label="Матрица приоритетов каналов">
+          <rect class="mx-q best" x="50" y="10" width="225" height="185" rx="8"/>
+          <rect class="mx-q" x="285" y="10" width="225" height="185" rx="8"/>
+          <rect class="mx-q" x="50" y="205" width="225" height="185" rx="8"/>
+          <rect class="mx-q" x="285" y="205" width="225" height="185" rx="8"/>
+          <text class="mx-ax" x="60" y="30" style="font-weight:600;fill:var(--brand)">Делать первым</text>
+          <text class="mx-ax" x="295" y="30" style="font-weight:600">Большие ставки</text>
+          <text class="mx-ax" x="60" y="225" style="font-weight:600">Попутно</text>
+          <text class="mx-ax" x="295" y="225" style="font-weight:600">Не сейчас</text>
+          <text class="mx-ax" x="280" y="410" text-anchor="middle">затраты (время, деньги) →</text>
+          <text class="mx-ax" transform="rotate(-90 20 200)" x="20" y="200" text-anchor="middle">эффект →</text>
+          <g id="mxPts"></g>
+        </svg>
+        <div class="legend"><span><i style="background:var(--brand)"></i>продажи / B2B</span><span><i style="background:var(--biz)"></i>партнёрства</span><span><i style="background:var(--cli)"></i>клиентская сторона</span></div>
+      </div>
+      <div class="card">
+        <span class="tag loss">Не делаем</span>
+        <ul class="dont">
+          <li>Страницы заведений, рейтинги и подборки «лучшие секции Самары»: Alliby не продвигает заведения онлайн.</li>
+          <li>Обещания «бесплатной онлайн-записи» и «клиентов из приложения» до 1–2 тыс. активных.</li>
+          <li>Широкую рекламу по городу до появления плотного каталога (иначе платим за установку пустого приложения). Адресная реклама вокруг подключённых заведений — можно и нужно.</li>
+          <li>Сравнительные статьи с выдуманными цифрами о конкурентах (YCLIENTS, DIKIDI): только честные сравнения по публичным тарифам.</li>
+          <li>Широкую географию: сначала плотность в Самаре.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">План на 90 дней</h3>
+    <div class="road">
+      <div class="card">
+        <span class="tag">Месяц 1 · фундамент</span>
+        <ul>
+          <li>Подключить Яндекс Вебмастер и Метрику, цели на заявку.</li>
+          <li>3 статьи кластера «рутина»: запись в WhatsApp → онлайн-запись, учёт абонементов, пропуски.</li>
+          <li>Скрипт продаж волны A + список 30 секций/студий Самары без сайта.</li>
+          <li>Набор «перенеси своих клиентов»: QR-плакат, текст для чата группы.</li>
+          <li>Собрать адреса 84 заведений из базы в геосегмент и запустить прогрев владельцев.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag">Месяц 2 · первые кейсы</span>
+        <ul>
+          <li>10 подключённых заведений волны A, у каждого первая онлайн-запись.</li>
+          <li>Кейс КНТС (с согласия клуба): «до/после» в цифрах.</li>
+          <li>Пилот адресной рекламы по клиентам 3–5 подключённых заведений: r 500 м, «регулярно бывают», сравнить установки до и после.</li>
+          <li>Заявка в центр «Мой бизнес» Самара на семинар или вебинар для предпринимателей.</li>
+          <li>Карточки в каталогах CRM (crmindex и аналоги).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag">Месяц 3 · партнёрства</span>
+        <ul>
+          <li>Узнать условия партнёрства с Яндекс Картами по онлайн-записи (кнопка «Записаться»).</li>
+          <li>2–3 арендодателя залов/помещений: рекомендация Alliby арендаторам.</li>
+          <li>Telegram/VK-сообщества тренеров и педагогов: полезный контент, без спама.</li>
+          <li>Ретроспектива: какие каналы дали активированные заведения → бюджет на месяц 4.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:26px">KPI на конец 90 дней</h3>
+    <div class="kpi">
+      <div class="card"><div class="v">25–30</div><div class="t">активных заведений (есть записи или оплаты за последние 30 дней)</div></div>
+      <div class="card"><div class="v">≥ 60%</div><div class="t">заведений получают первую онлайн-запись за 30 дней</div></div>
+      <div class="card"><div class="v">1 000+</div><div class="t">активных клиентов, пришедших через свои заведения</div></div>
+      <div class="card"><div class="v">10+</div><div class="t">заявок в месяц из органики, адресной рекламы и партнёрств</div></div>
+    </div>
+    <p class="muted small" style="margin-top:10px">Цифры KPI — ориентиры для проверки гипотез, а не прогноз. Пересматриваем по итогам месяца 2.</p>
+  </section>
+
+  <section class="block sources">
+    <h3 style="color:var(--ink)">Источники исследования</h3>
+    <ol>
+      <li>Andrew Chen, «The Cold Start Problem» (2021): атомные сети, «come for the tool, stay for the network» — <a href="https://productandrew.substack.com/p/product-31">конспект</a>, <a href="https://www.antoinebuteau.com/lessons-from-andrew-chen/">lessons from Andrew Chen</a></li>
+      <li>Т-Бизнес секреты, «Создание MVP двусторонней платформы» — <a href="https://secrets.tbank.ru/blogi-kompanij/sozdanie-mvp-dvustoronnej-platformy/">secrets.tbank.ru</a></li>
+      <li>Applico, «Marketplaces and the Chicken and Egg Problem: Supply or Demand First?» — <a href="https://applicoinc.com/?p=12378">applicoinc.com</a>; Dokan — <a href="https://dokan.co/blog/495333/chicken-and-egg-problem-in-marketplaces/">dokan.co</a></li>
+      <li>Яндекс Бизнес, онлайн-запись в профиле компании и подключение через партнёров — <a href="https://yandex.ru/support/sprav/manage/booking.html">yandex.ru/support/sprav</a>, <a href="https://yandex.ru/maps/booking">yandex.ru/maps/booking</a></li>
+      <li>Как владельцы студий выбирают CRM — <a href="https://www.bitrix24.ru/journal/crm-dlya-trenera/">Битрикс24: CRM для тренера</a>, <a href="https://www.sostav.ru/blogs/282415/62037">Sostav: CRM для мини-студий</a>, <a href="https://crmindex.ru/for/stretching">crmindex.ru</a></li>
+      <li>Партнёрские программы банков по РКО и экосистемам — <a href="https://www.sostav.ru/blogs/264343/88493">Sostav</a>, <a href="https://pampadu.ru/affiliate-program/rko/al-fa-bank-rko/">Пампаду</a></li>
+      <li>Открытие детской спортивной секции: ИП, без лицензии — <a href="https://secrets.tbank.ru/check-list/kak-otkryt-sportivnuyu-shkolu-s-nulya/">Т-Бизнес чек-лист</a></li>
+      <li>Самарская область: 126,4 тыс. субъектов МСП (2022), 212,9 тыс. самозанятых (2023), 10-е место в РФ — <a href="https://oboz.info/v-samarskoj-oblasti-oborot-subektov-msp-prevysil-2-trln-rublej">oboz.info</a>; центр «Мой бизнес» — <a href="https://www.nalog.gov.ru/rn63/news/activities_fts/10999419/">nalog.gov.ru</a></li>
+      <li>Яндекс Аудитории, сегмент на основе геолокации: окружности 0,5–10 км, до 1 000 точек, «регулярно посещает, живёт или работает» за 45 дней, минимум 100 идентификаторов — <a href="https://yandex.ru/support/audience/segments/geo.html">yandex.ru/support/audience</a></li>
+      <li>Внутренние документы: STRATEGY-2026-10-13.md, SEO-STRATEGY-2026-10-13-v2.md, SEO-WAVE-A-2026-10-13.md</li>
+    </ol>
+  </section>
+  <footer>Alliby · рабочий материал (тестовый сайт, не индексируется)</footer>
+</div>
+
+<script>
+/* ---------- Тема ---------- */
+(() => {
+  const btn = document.getElementById('themeBtn'), root = document.documentElement;
+  let t = null; try { t = localStorage.getItem('alliby-theme'); } catch (e) {}
+  if (t) root.dataset.theme = t;
+  btn.onclick = () => {
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('alliby-theme', root.dataset.theme); } catch (e) {}
+  };
+})();
+
+/* ---------- Тема 2: путь бизнеса ---------- */
+const STAGES = ['Идея и расчёт', 'Регистрация и счёт', 'Помещение', 'Оснащение и касса', 'Онлайн-присутствие', 'Первые клиенты', 'Рутина', 'Боль роста', 'Масштаб'];
+// [heat 1..3, что делает, где ищет / кого слушает, точка Alliby]
+const SEGS = {
+  sport: {
+    name: 'Действующая секция / студия', sub: 'спорт, танцы, образование · волна A',
+    desc: 'Тренер или педагог уже работает 1–5 лет, 30–300 учеников, сайта нет. Запись и оплата идут в WhatsApp/Telegram, учёт — в тетради или Excel. Главный сегмент волны A.',
+    st: [
+      [1, 'Решение уйти «на себя» из клуба/школы', 'Коллеги-тренеры, федерация', '—'],
+      [1, 'ИП или самозанятость', 'Госуслуги, ФНС, банк', 'Упоминание в чек-листе «как открыть секцию»'],
+      [2, 'Аренда зала по часам в школе, ДК, ТЦ', 'Авито, знакомые, администрация школ', 'Арендодатель рекомендует Alliby арендаторам'],
+      [1, 'Инвентарь, СБП или перевод на карту', 'Магазины, банк', 'Приём оплаты абонементов в приложении'],
+      [2, 'Группа VK, карточка в 2ГИС/Яндексе', 'Яндекс Бизнес, советы коллег', 'Кнопка записи в карточке ведёт в Alliby'],
+      [2, 'Сарафан, родительские чаты, листовки', 'Родители, школы', 'QR-плакат + адресная реклама Alliby вокруг зала'],
+      [3, 'Запись, переносы, напоминания в мессенджере, оплаты вручную', 'Яндекс: «программа для учёта учеников», коллеги', 'Главная точка: SEO по боли + личная продажа'],
+      [3, 'Пропуски, долги по абонементам, ни минуты на себя', 'Каталоги CRM, Telegram-чаты тренеров', 'Кейс КНТС, калькулятор потерь'],
+      [2, 'Второй тренер, вторая площадка', 'Партнёры, федерации', 'Несколько мастеров и филиалов в одном кабинете'],
+    ]
+  },
+  fun: {
+    name: 'Развлечения и досуг', sub: 'квесты, батуты, антикафе, мастер-классы',
+    desc: 'Бронирование слотов и праздников, пик по выходным, много звонков. Часто есть сайт-визитка без нормальной записи. В базе партнёров Самары — 27 таких мест.',
+    st: [
+      [1, 'Выбор формата, франшиза или своё', 'Каталоги франшиз, форумы', '—'],
+      [1, 'ООО/ИП, расчётный счёт', 'Банк, бухгалтер', 'Партнёрский каталог сервисов банка'],
+      [2, 'Аренда в ТЦ или отдельное помещение', 'Авито, ТЦ, брокеры', 'Пакет «открытие в ТЦ» через управляющую компанию'],
+      [2, 'Касса, эквайринг, оборудование', 'ЦТО, поставщики касс', 'Рекомендация через интегратора касс'],
+      [3, 'Сайт, карточки на картах, VK, отзывы', 'Яндекс Бизнес, агентства', 'Онлайн-бронь слотов, кнопка в Картах'],
+      [3, 'Акции открытия, промо в городских пабликах', 'Городские паблики, блогеры', 'Адресная реклама вокруг ТЦ; SEO: «как запустить онлайн-бронь праздников»'],
+      [2, 'Бронь по телефону, накладки слотов', 'Коллеги, CRM-каталоги', 'Слоты, предоплата, напоминания'],
+      [2, 'Сезонность, пустые будни', 'Маркетологи, вебинары', 'Пуши постоянным клиентам'],
+      [1, 'Вторая точка', 'Франчайзер', '—'],
+    ]
+  },
+  newbiz: {
+    name: 'Новое заведение', sub: 'открывается с нуля · волна B',
+    desc: 'Своей базы клиентов ещё нет. Владелец параллельно решает сотню задач и хватается за любой способ получить первых клиентов. Наш аргумент силён только при 1–2 тыс. активных клиентов в Alliby.',
+    st: [
+      [2, 'Идея, бизнес-план, грант или соцконтракт', '«Мой бизнес», Госуслуги, YouTube', 'Семинар в «Мой бизнес»: «цифровой старт заведения»'],
+      [2, 'Регистрация, выбор банка и РКО', 'Банки, ФНС, Госуслуги', 'Витрина сервисов в кабинете банка'],
+      [2, 'Поиск и ремонт помещения', 'Авито, ЦИАН, брокеры', 'Арендодатели и коворкинги'],
+      [2, 'Касса, ОФД, эквайринг, мебель', 'ЦТО, интеграторы', 'Связка «касса + запись»'],
+      [3, 'Карточки на картах, соцсети, сайт', 'Яндекс Бизнес, 2ГИС, агентства', 'Приложение заведения вместо сайта'],
+      [3, 'Нужны первые клиенты любой ценой', 'Городские паблики, Авито Услуги', 'Адресная реклама вокруг нового адреса; каталог Alliby — после 1–2 тыс. клиентов'],
+      [2, 'Налаживание процессов', 'Коллеги, YouTube', 'Запись, абонементы, пуши'],
+      [2, 'Удержание клиентов', 'Маркетологи', 'Пуши, программа лояльности'],
+      [1, 'Рост', '—', '—'],
+    ]
+  },
+  master: {
+    name: 'Мастер / самозанятый', sub: 'репетитор, тренер, мастер',
+    desc: 'Работает один, часто выезжает или арендует кабинет. В Самарской области самозанятых больше 200 тыс. Чувствителен к цене, уже знает YCLIENTS и DIKIDI.',
+    st: [
+      [1, 'Уход из найма', 'Знакомые', '—'],
+      [1, 'Самозанятость в «Мой налог»', 'Госуслуги, банк', '—'],
+      [1, 'Кабинет по часам или выезд', 'Авито', '—'],
+      [1, 'Перевод по СБП', 'Банк', '—'],
+      [2, 'Профиль на Авито, Профи.ру, в VK', 'Агрегаторы услуг', 'Ссылка на запись в Alliby в профиле'],
+      [2, 'Агрегаторы, сарафан', 'Профи, Авито, соцсети', '—'],
+      [3, 'Расписание в голове или заметках', 'App Store, поиск «приложение для записи»', 'SEO + ASO, мастер в Alliby'],
+      [2, 'Неявки, нет предоплаты', 'Блоги, чаты мастеров', 'Предоплата и напоминания'],
+      [1, 'Студия с наймом', '—', 'Переход в формат заведения'],
+    ]
+  },
+  food: {
+    name: 'Кафе / фуд', sub: 'кофейня, бургерная, доставка',
+    desc: 'Главное — заказы и доставка, а не запись. Сильная конкуренция агрегаторов (Яндекс Еда, Delivery Club/Маркет Деливери) с высокими комиссиями. Для стратегии — сегмент второго плана.',
+    st: [
+      [1, 'Концепция, франшиза', 'Франчайзеры', '—'],
+      [1, 'ООО/ИП, ЕГАИС, сертификаты', 'Бухгалтер, банк', '—'],
+      [1, 'Помещение с вытяжкой', 'Брокеры', '—'],
+      [2, 'Касса, iiko/r_keeper, эквайринг', 'Интеграторы ресторанных систем', 'Интеграция или партнёрство с интегратором'],
+      [3, 'Карты, меню онлайн, агрегаторы доставки', 'Яндекс Еда, Яндекс Бизнес', 'Своё приложение без комиссий агрегатора'],
+      [2, 'Промо открытия', 'Городские паблики', 'QR-меню и предзаказ'],
+      [2, 'Комиссии агрегаторов съедают маржу', 'Чаты рестораторов', 'SEO: «своя доставка без комиссии»'],
+      [2, 'Удержание и повторные заказы', 'Маркетологи', 'Пуши, бонусы'],
+      [1, 'Сеть', '—', '—'],
+    ]
+  }
+};
+const segTabs = document.getElementById('segTabs'), journey = document.getElementById('journey'), segDesc = document.getElementById('segDesc');
+function esc(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function showSeg(key) {
+  [...segTabs.children].forEach(b => b.setAttribute('aria-selected', b.dataset.k === key));
+  const s = SEGS[key];
+  segDesc.textContent = s.desc;
+  journey.innerHTML = s.st.map((r, i) => `
+    <div class="stage h${r[0]}">
+      <div class="st-n">ЭТАП ${i + 1}</div>
+      <h4>${STAGES[i]}</h4>
+      <div class="heat"></div>
+      <dl>
+        <div><dt>Что делает</dt><dd>${esc(r[1])}</dd></div>
+        <div><dt>Где ищет / кого слушает</dt><dd>${esc(r[2])}</dd></div>
+        <div><dt>Точка Alliby</dt><dd class="${r[3] === '—' ? '' : 'al'}">${esc(r[3])}</dd></div>
+      </dl>
+    </div>`).join('');
+}
+Object.entries(SEGS).forEach(([k, s], i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.k = k;
+  b.innerHTML = `${esc(s.name)}<small>${esc(s.sub)}</small>`;
+  b.onclick = () => showSeg(k);
+  segTabs.appendChild(b);
+});
+showSeg('sport');
+// тепловая карта
+document.getElementById('heat').innerHTML =
+  `<tr><th></th>${STAGES.map((s, i) => `<th>${i + 1}. ${s}</th>`).join('')}</tr>` +
+  Object.values(SEGS).map(s => `<tr><td class="l">${esc(s.name)}</td>${s.st.map(r => `<td class="hm${r[0]}">${r[0]}</td>`).join('')}</tr>`).join('');
+
+/* ---------- Тема 3: каналы ---------- */
+// [этап, канал, описание, SEO-продолжение, сегменты, приоритет, сторона]
+const CH = [
+  ['Рутина · 7', 'Личные продажи волны A', 'Список секций и студий Самары без сайта (2ГИС, VK, Яндекс Карты), визит на тренировку, демонстрация на телефоне за 10 минут, перенос учеников за вечер.', 'Ссылки на статьи кластера «рутина» как материал после встречи', 'sport fun', 1, 'b'],
+  ['Рутина · 7', 'SEO по запросам боли', 'Владелец сам ищет решение: «программа для учёта учеников», «как вести абонементы», «онлайн-запись в секцию». Статьи + лид-магнит (шаблон, калькулятор).', 'Кластеры 1–3 из SEO-WAVE-A: учёт, абонементы, запись', 'sport master fun', 1, 'b'],
+  ['Боль роста · 8', 'Кейсы и калькулятор потерь', 'Цифры «до/после» на реальном клубе (КНТС, с согласия). Калькулятор: сколько денег теряется на пропусках и неоплаченных абонементах.', 'Страница кейса + калькулятор как отдельная посадочная', 'sport fun', 1, 'b'],
+  ['Боль роста · 8', 'Каталоги CRM и сервисов записи', 'Владельцы сравнивают решения в каталогах (crmindex и аналоги) и в обзорах на vc.ru и Sostav. Карточка Alliby с честными тарифами.', 'Статья «как выбрать сервис записи для секции: 7 критериев»', 'sport fun master', 2, 'b'],
+  ['Рутина · 7', 'Сообщества тренеров и педагогов', 'Telegram и VK-чаты тренеров, федерации по видам спорта, методобъединения педагогов доп. образования. Полезный контент и ответы на вопросы, без рассылок.', 'Посевы статей в Дзен/VK, см. дистрибуцию SEO-WAVE-A', 'sport', 2, 'b'],
+  ['Онлайн-присутствие · 5', 'Партнёрство с Яндекс Картами', 'Кнопка «Записаться» в карточке организации подключается через партнёрские сервисы записи. Стать таким партнёром = Alliby появляется там, где клиент уже ищет секцию.', 'Инструкция «как добавить онлайн-запись в Яндекс Карты»', 'sport fun newbiz master', 2, 'p'],
+  ['Идея · 1', 'Центр «Мой бизнес» Самара', 'Центр проводит обучение и помогает с продвижением и цифровыми сервисами. Формат: семинар «цифровой старт заведения» и участие в форумах предпринимателей.', 'Чек-лист «открыть секцию/студию в Самаре» с шагами и ссылками', 'newbiz', 2, 'p'],
+  ['Регистрация · 2', 'Банки: витрины сервисов и РКО', 'Банки развивают экосистемы и партнёрские программы для бизнеса. Долгий вход для стартапа, но точный охват: каждый новый ИП открывает счёт.', 'Статья «что подключить после открытия ИП: сервисы для секции»', 'newbiz fun', 3, 'p'],
+  ['Помещение · 3', 'Арендодатели залов и помещений', 'Школы, ДК, фитнес-клубы сдают залы по часам, ТЦ — помещения под досуг. Арендодатель рекомендует Alliby арендаторам (бонус или скидка арендатору).', 'Страница «для арендодателей залов» (без каталога заведений)', 'sport fun newbiz', 2, 'p'],
+  ['Оснащение · 4', 'Интеграторы касс и ЦТО', 'Ставят кассы и эквайринг, первыми видят новое заведение. Реферальное вознаграждение за подключение.', '—', 'newbiz food fun', 3, 'p'],
+  ['Первые клиенты · 6', 'Адресная реклама: клиенты партнёров', 'Яндекс Аудитории или VK Реклама: люди, которые регулярно бывают в радиусе 500 м от подключённого заведения. Объявление «записывайтесь в приложении». Только с согласия заведения.', 'Посадочная app.alliby.ru: «ваше заведение уже в Alliby»', 'sport fun food', 1, 'c'],
+  ['Боль роста · 8', 'Адресная реклама: владельцы и тренеры', 'Геосегмент по адресам целевых заведений из partners/samara. Прогрев перед визитом продажника, объявление ведёт на статьи о рутине.', 'Кластеры «рутина» и «абонементы» как посадочные', 'sport fun newbiz', 1, 'b'],
+  ['Первые клиенты · 6', 'QR и офлайн внутри заведения', 'Плакат на ресепшене, сообщение в чат группы, ссылка в описании VK. Клиенты переходят в Alliby, чтобы записываться к своему заведению.', 'Посадочная app.alliby.ru: «вас пригласило ваше заведение»', 'sport fun food master', 1, 'c'],
+  ['Первые клиенты · 6', 'Адресная реклама: жители района', 'Радиус 1–3 км вокруг районов, где подключено несколько заведений. Только когда в каталоге района есть выбор.', '—', 'sport fun newbiz food', 3, 'c'],
+  ['Первые клиенты · 6', 'Родительские сообщества', 'Чаты школ и детских садов, районные паблики. Источник клиентов для заведений; для Alliby — после плотности каталога.', 'Статьи для родителей: «как выбрать секцию для ребёнка» (без рейтингов заведений)', 'sport', 3, 'c'],
+  ['Онлайн-присутствие · 5', 'Профили на агрегаторах услуг', 'Мастера и репетиторы живут на Авито и Профи.ру. Ссылка «записаться» в профиле ведёт в Alliby.', 'Инструкция «как принимать запись с Авито без переписки»', 'master', 3, 'b'],
+  ['Рутина · 7', 'Своя доставка без комиссии (фуд)', 'Аргумент против комиссий агрегаторов доставки. Отдельная воронка, не главный фокус.', 'Статья «своё приложение кафе vs агрегатор: расчёт»', 'food', 3, 'b'],
+];
+const FILT = { all: 'Все', sport: 'Секции/студии', fun: 'Досуг', newbiz: 'Новые', master: 'Мастера', food: 'Кафе', p1: 'Только P1' };
+const chF = document.getElementById('chFilters'), chL = document.getElementById('channels');
+function showCh(f) {
+  [...chF.children].forEach(b => b.setAttribute('aria-pressed', b.dataset.f === f));
+  const list = CH.filter(c => f === 'all' || (f === 'p1' ? c[5] === 1 : c[4].split(' ').includes(f))).sort((a, b) => a[5] - b[5]);
+  const side = { b: ['продажи / B2B', ''], p: ['партнёрство', 'biz'], c: ['клиенты', 'cli'] };
+  chL.innerHTML = list.map(c => `
+    <div class="ch">
+      <div class="stg">${esc(c[0])}</div>
+      <div><h4>${esc(c[1])}</h4><p>${esc(c[2])}</p></div>
+      <div class="seo"><b>SEO-продолжение</b>${esc(c[3])}</div>
+      <div class="meta"><span class="prio p${c[5]}">P${c[5]}</span><span class="tag ${side[c[6]][1]}">${side[c[6]][0]}</span></div>
+    </div>`).join('');
+}
+Object.entries(FILT).forEach(([k, v]) => {
+  const b = document.createElement('button'); b.type = 'button'; b.dataset.f = k; b.textContent = v; b.onclick = () => showCh(k); chF.appendChild(b);
+});
+showCh('all');
+
+/* ---------- Тема 4: матрица ---------- */
+// [подпись, затраты 0..1, эффект 0..1, класс]
+const PTS = [
+  ['Личные продажи A', .30, .90, ''], ['QR в заведениях', .12, .78, 'c'], ['Кейс + калькулятор', .22, .70, ''],
+  ['SEO «рутина»', .38, .62, ''], ['Сообщества тренеров', .18, .45, ''], ['Каталоги CRM', .10, .32, ''],
+  ['Яндекс Карты (партнёр)', .78, .85, 'b'], ['Мой бизнес', .40, .40, 'b'], ['Арендодатели', .35, .55, 'b'],
+  ['Банки', .90, .62, 'b'], ['Кассы/ЦТО', .70, .30, 'b'], ['Широкая реклама', .80, .22, 'c'],
+  ['Адресная реклама', .44, .80, 'c'],
+];
+const sx = v => 50 + v * 460, sy = v => 390 - v * 380;
+document.getElementById('mxPts').innerHTML = PTS.map(p => {
+  const x = sx(p[1]), y = sy(p[2]), right = x > 380;
+  return `<circle class="mx-pt ${p[3]}" cx="${x}" cy="${y}" r="7"/><text class="mx-l" x="${right ? x - 11 : x + 11}" y="${y + 4}" text-anchor="${right ? 'end' : 'start'}">${esc(p[0])}</text>`;
+}).join('');
+</script>
+</body>
+</html>
