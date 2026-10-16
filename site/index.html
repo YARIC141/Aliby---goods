@@ -463,13 +463,23 @@ html[data-theme="light"] .dv-road{background:rgba(0,0,0,.08)}
 
 /* ── CTA ── */
 #cta{
-  padding:100px clamp(20px,5vw,80px);text-align:center;
+  padding:64px clamp(20px,5vw,80px);text-align:center;
   background:radial-gradient(ellipse 80% 70% at 50% 50%, oklch(0.62 0.19 38 / .12) 0%, transparent 70%);
   border-top:1px solid var(--line);
 }
 .cta-h2{font:400 clamp(30px,5vw,48px)/1.12 var(--font-display);letter-spacing:-.02em;margin-bottom:16px}
 .cta-sub{font:400 18px/1.6 var(--font-sans);color:var(--fg-2);max-width:500px;margin:0 auto 40px}
 .cta-btns{display:flex;align-items:center;gap:14px;justify-content:center;flex-wrap:wrap}
+.app-tiles{display:flex;gap:clamp(16px,4vw,48px);justify-content:center;flex-wrap:wrap}
+.app-tile{display:flex;flex-direction:column;align-items:center;gap:12px;width:180px}
+.app-tile-main{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--fg)}
+.app-tile-main img{width:96px;height:96px;border-radius:22px;box-shadow:0 12px 30px rgba(0,0,0,.35);margin-bottom:8px;transition:transform .16s}
+.app-tile-main:hover img{transform:translateY(-3px)}
+.app-tile-name{font:700 17px/1.2 var(--font-sans)}
+.app-tile-cap{font:600 12px/1 var(--font-sans);color:var(--fg-3)}
+.app-tile-gp{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--bg-1);font:600 12px/1 var(--font-sans);color:var(--fg-2);text-decoration:none;transition:color .16s,border-color .16s}
+.app-tile-gp:hover{color:var(--fg);border-color:var(--fg-3)}
+@media(max-width:480px){.app-tile{width:140px}.app-tile-main img{width:80px;height:80px;border-radius:18px}}
 .btn-primary{
   display:inline-flex;align-items:center;gap:10px;padding:15px 32px;border-radius:var(--r-pill);
   background:var(--brand);color:#fff;font:700 16px/1 var(--font-sans);text-decoration:none;
@@ -1604,18 +1614,21 @@ html[data-theme="light"] .dir-tab[aria-selected="true"]{background:var(--dir-sur
   </div>
 </section>
 
-<!-- CTA -->
+<!-- ПРИЛОЖЕНИЯ -->
 <section id="cta">
-  <h2 class="cta-h2">Как начать</h2>
-  <p class="cta-sub">Покупателю — установить приложение и найти заведение рядом. Заведению — зарегистрироваться, добавить каталог и открыть витрину; первое заведение бесплатно.</p>
-  <div class="cta-btns">
-    <a class="cta-play-badge" href="https://play.google.com/store/apps/details?id=ru.alliby.app&amp;pcampaignid=web_share" target="_blank" rel="noopener" aria-label="Скачать в Google Play">
-      <img src="https://play.google.com/intl/ru_ru/badges/static/images/badges/ru_badge_web_generic.png" alt="Доступно в Google Play" height="54">
-    </a>
-    <a class="btn-blue" href="#pricing" onclick="goToBusinessTerms();return false">
-      Alliby для бизнеса
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-    </a>
+  <div class="app-tiles">
+    <div class="app-tile">
+      <a class="app-tile-main" href="https://app.alliby.ru/"><img src="assets/apps/client.png" width="96" height="96" alt="Иконка Alliby" loading="lazy"><b class="app-tile-name c-client">Alliby</b><span class="app-tile-cap">Для клиентов</span></a>
+      <a class="app-tile-gp" href="https://play.google.com/store/apps/details?id=ru.alliby.app&amp;pcampaignid=web_share" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 28.99 31.99" aria-hidden="true"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg> Google Play</a>
+    </div>
+    <div class="app-tile">
+      <a class="app-tile-main" href="https://admin.alliby.ru/"><img src="assets/apps/business.png" width="96" height="96" alt="Иконка Alliby Business" loading="lazy"><b class="app-tile-name c-business">Alliby Business</b><span class="app-tile-cap">Для бизнеса</span></a>
+      <a class="app-tile-gp" href="https://play.google.com/store/apps/details?id=ru.alliby_business.app&amp;pcampaignid=web_share" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 28.99 31.99" aria-hidden="true"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg> Google Play</a>
+    </div>
+    <div class="app-tile">
+      <a class="app-tile-main" href="https://carry.alliby.ru/"><img src="assets/apps/carry.png" width="96" height="96" alt="Иконка Alliby Carry" loading="lazy"><b class="app-tile-name c-carry">Alliby Carry</b><span class="app-tile-cap">Для курьеров</span></a>
+      <a class="app-tile-gp" href="https://play.google.com/store/apps/details?id=ru.alliby_carry.app&amp;pcampaignid=web_share" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 28.99 31.99" aria-hidden="true"><path d="M13.54 15.28.12 29.34a3.66 3.66 0 0 0 5.33 2.16l15.1-8.6Z" style="fill:#ea4335"/><path d="m27.11 12.89-6.53-3.74-7.35 6.45 7.38 7.28 6.48-3.7a3.54 3.54 0 0 0 1.5-4.79 3.62 3.62 0 0 0-1.5-1.5z" style="fill:#fbbc04"/><path d="M.12 2.66a3.57 3.57 0 0 0-.12.92v24.84a3.57 3.57 0 0 0 .12.92L14 15.64Z" style="fill:#4285f4"/><path d="m13.64 16 6.94-6.85L5.5.51A3.73 3.73 0 0 0 3.63 0 3.64 3.64 0 0 0 .12 2.65Z" style="fill:#34a853"/></svg> Google Play</a>
+    </div>
   </div>
 </section>
 
